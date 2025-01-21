@@ -60,17 +60,17 @@ public class DomainUserConsentServiceImpl implements DomainUserConsentService {
 
     @Override
     public Completable revokeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
-        return scopeApprovalService.revokeByConsent(domain.getId(), userId, consentId, principal);
+        return scopeApprovalService.revokeByConsent(domain, userId, consentId, principal);
     }
 
     @Override
     public Completable revokeConsents(UserId userId, io.gravitee.am.identityprovider.api.User principal) {
-        return scopeApprovalService.revokeByUser(domain.getId(), userId, principal);
+        return scopeApprovalService.revokeByUser(domain, userId, principal);
     }
 
     @Override
     public Completable revokeConsents(UserId userId, String clientId, io.gravitee.am.identityprovider.api.User principal) {
-        return scopeApprovalService.revokeByUserAndClient(domain.getId(), userId, clientId, principal);
+        return scopeApprovalService.revokeByUserAndClient(domain, userId, clientId, principal);
     }
 
 }

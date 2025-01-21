@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.AccessPolicyRepository;
 import io.gravitee.am.repository.management.api.ResourceRepository;
 import io.gravitee.am.service.exception.AccessPolicyNotFoundException;
@@ -59,6 +62,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyList;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -82,7 +86,9 @@ public class ResourceServiceTest {
     private ScopeService scopeService;
 
     @Mock
-    private UserService userService;
+    private DataPlaneRegistry dataPlaneRegistry;
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private ApplicationService applicationService;
@@ -96,11 +102,15 @@ public class ResourceServiceTest {
     private static final String RESOURCE_ID = "resourceId";
     private static final String POLICY_ID = "policyId";
 
+    private final Domain DOMAIN = new Domain();
+
     @Before
     public void setUp() {
+        DOMAIN.setId(DOMAIN_ID);
         when(repository.findByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Flowable.just(new Resource().setId(RESOURCE_ID)));
         when(repository.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.just(new Resource().setId(RESOURCE_ID)));
         when(scopeService.findByDomainAndKeys(DOMAIN_ID, Arrays.asList("scope"))).thenReturn(Single.just(Arrays.asList(new Scope("scope"))));
+        lenient().when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
     }
 
     @Test
@@ -243,7 +253,7 @@ public class ResourceServiceTest {
     @Test
     public void findByDomainAndClientAndResources() {
         when(repository.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList())).thenReturn(Flowable.empty());
-        TestSubscriber testSubscriber = service.findByDomainAndClientAndResources(DOMAIN_ID, CLIENT_ID, Collections.emptyList()).test();
+        TestSubscriber testSubscriber = service.findByDomainAndClientAndResources(DOMAIN, CLIENT_ID, Collections.emptyList()).test();
         testSubscriber.assertComplete().assertNoErrors();
         verify(repository, times(1)).findByDomainAndClientAndResources(anyString(), anyString(), anyList());
     }
@@ -251,7 +261,7 @@ public class ResourceServiceTest {
     @Test
     public void findByDomainAndClientResource() {
         when(repository.findByDomainAndClientAndResources(eq(DOMAIN_ID), eq(CLIENT_ID), anyList())).thenReturn(Flowable.empty());
-        TestObserver testObserver = service.findByDomainAndClientResource(DOMAIN_ID, CLIENT_ID, RESOURCE_ID).test();
+        TestObserver testObserver = service.findByDomainAndClientResource(DOMAIN, CLIENT_ID, RESOURCE_ID).test();
         testObserver.assertComplete().assertNoErrors();
         verify(repository, times(1)).findByDomainAndClientAndResources(eq(DOMAIN_ID), eq(CLIENT_ID), anyList());
     }
@@ -494,14 +504,14 @@ public class ResourceServiceTest {
 
     @Test
     public void getMetadata_noResources_null() {
-        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(null).test();
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(DOMAIN, null).test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(map -> map.isEmpty());
     }
 
     @Test
     public void getMetadata_noResources_empty() {
-        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(Collections.emptyList()).test();
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(DOMAIN, Collections.emptyList()).test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(map -> map.isEmpty());
     }
@@ -514,9 +524,9 @@ public class ResourceServiceTest {
         resource.setUserId(USER_ID);
         List<Resource> resources = Collections.singletonList(resource);
 
-        when(userService.findByIdIn(anyList())).thenReturn(Flowable.just(new User()));
+        when(userRepository.findByIdIn(anyList())).thenReturn(Flowable.just(new User()));
         when(applicationService.findByIdIn(anyList())).thenReturn(Flowable.just(new Application()));
-        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(resources).test();
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(DOMAIN, resources).test();
         testObserver.assertComplete().assertNoErrors();
     }
 }

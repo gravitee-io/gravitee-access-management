@@ -17,6 +17,7 @@ package io.gravitee.am.management.service.dataplane;
 
 import io.gravitee.am.common.factor.FactorSecurityType;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.management.service.dataplane.impl.CredentialManagementServiceImpl;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
@@ -27,7 +28,6 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.CredentialCurrentlyUsedException;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -72,7 +72,7 @@ public class CredentialManagementServiceTest {
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
-    private UserService userService;
+    private UserRepository userRepository;
 
     private final static String DOMAIN = "domain1";
 
@@ -80,8 +80,9 @@ public class CredentialManagementServiceTest {
 
     @Before
     public void init() {
-        when(dataPlaneRegistry.getCredentialRepository(any())).thenReturn(credentialRepository);
         this.domain.setId(DOMAIN);
+        when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
+        when(dataPlaneRegistry.getCredentialRepository(any())).thenReturn(credentialRepository);
     }
 
     @Test
@@ -269,7 +270,7 @@ public class CredentialManagementServiceTest {
         user.setFactors(List.of(enrolledFactor));
         when(credentialRepository.findById(anyString())).thenReturn(Maybe.just(credential));
         when(credentialRepository.delete(anyString())).thenReturn(Completable.complete());
-        when(userService.findById(any(UserId.class))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(any(UserId.class))).thenReturn(Maybe.just(user));
 
         TestObserver testObserver = credentialService.delete(domain, "my-credential").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -293,7 +294,7 @@ public class CredentialManagementServiceTest {
 
         user.setFactors(List.of(enrolledFactor));
         when(credentialRepository.findById(any())).thenReturn(Maybe.just(credential));
-        when(userService.findById(any(UserId.class))).thenReturn(Maybe.just(user));
+        when(userRepository.findById(any(UserId.class))).thenReturn(Maybe.just(user));
 
         TestObserver testObserver = credentialService.delete(domain, "my-credential").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.management.service;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.analytics.AnalyticsResponse;
 import io.reactivex.rxjava3.core.Single;
 
 public interface ApplicationAnalyticsService {
 
-    Single<AnalyticsResponse> execute(AnalyticsQuery query);
+    Single<AnalyticsResponse> execute(Domain domain, AnalyticsQuery query);
 }

@@ -20,11 +20,12 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
-import io.gravitee.am.management.service.impl.UserServiceImpl;
+import io.gravitee.am.management.service.impl.ManagementUserServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
@@ -32,16 +33,20 @@ import io.gravitee.am.model.Email;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
@@ -83,7 +88,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -99,7 +103,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.service.validators.email.EmailValidatorImpl.EMAIL_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_LAX_PATTERN;
 import static io.gravitee.am.service.validators.user.UserValidatorImpl.NAME_STRICT_PATTERN;
@@ -128,15 +131,16 @@ import static org.mockito.Mockito.when;
  */
 @SuppressWarnings("ReactiveStreamsUnusedPublisher")
 @ExtendWith(MockitoExtension.class)
-public class UserServiceTest {
+public class ManagementUserServiceTest {
 
-    public static final String DOMAIN_ID = "domain#1";
-    public static final String PASSWORD = "password";
-    public static final String NEW_USERNAME = "newUsername";
-    public static final String USERNAME = "username";
+    private static final String DOMAIN_ID = "domain#1";
+    private static final String PASSWORD = "password";
+    private static final String NEW_USERNAME = "newUsername";
+    private static final String USERNAME = "username";
+    private static final Domain DOMAIN = new Domain(DOMAIN_ID);
 
     @InjectMocks
-    private final UserService userService = new UserServiceImpl();
+    private final ManagementUserService userService = new ManagementUserServiceImpl();
 
     @Mock
     private PasswordService passwordService;
@@ -154,7 +158,10 @@ public class UserServiceTest {
     private ApplicationService applicationService;
 
     @Mock
-    private io.gravitee.am.service.UserService commonUserService;
+    private UserRepository userRepository;
+
+    @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
     private LoginAttemptService loginAttemptService;
@@ -199,9 +206,10 @@ public class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        ((UserServiceImpl) userService).setExpireAfter(24 * 3600);
+        ((ManagementUserServiceImpl) userService).setExpireAfter(24 * 3600);
         lenient().when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.never());
         lenient().when(identityProviderManager.getIdentityProvider(any())).thenReturn(Optional.of(new IdentityProvider()));
+        lenient().when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
     }
 
     @Test
@@ -218,14 +226,14 @@ public class UserServiceTest {
         newUser.setPassword("myPassword");
         newUser.setClient(clientId);
 
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
         userService.create(domain, newUser, null)
                 .test()
                 .assertNotComplete()
                 .assertError(UserProviderNotFoundException.class);
-        verify(commonUserService, never()).create(any());
+        verify(userRepository, never()).create(any());
     }
 
 
@@ -245,15 +253,15 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.empty());
         when(applicationService.findByDomainAndClientId(domainId, newUser.getClient())).thenReturn(Maybe.empty());
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
         User user = new User();
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domain");
-        when(commonUserService.create(any())).thenReturn(Single.just(user));
+        when(userRepository.create(any())).thenReturn(Single.just(user));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
@@ -262,9 +270,9 @@ public class UserServiceTest {
                 .assertComplete()
                 .assertNoErrors();
 
-        verify(commonUserService, times(1)).create(any());
+        verify(userRepository, times(1)).create(any());
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        verify(commonUserService).create(argument.capture());
+        verify(userRepository).create(argument.capture());
     }
 
     @Test
@@ -283,7 +291,7 @@ public class UserServiceTest {
         Application application = mock(Application.class);
         when(application.getDomain()).thenReturn("other-domain");
 
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(application));
 
@@ -291,7 +299,7 @@ public class UserServiceTest {
                 .test()
                 .assertNotComplete()
                 .assertError(ClientNotFoundException.class);
-        verify(commonUserService, never()).create(any());
+        verify(userRepository, never()).create(any());
     }
 
     @Test
@@ -311,8 +319,8 @@ public class UserServiceTest {
                 .test()
                 .assertNotComplete()
                 .assertError(UserInvalidException.class);
-        verify(commonUserService, never()).findByDomainAndUsernameAndSource(any(), any(), any());
-        verify(commonUserService, never()).create(any());
+        verify(userRepository, never()).findByUsernameAndSource(any(), any(), any());
+        verify(userRepository, never()).create(any());
     }
 
     @Test
@@ -329,13 +337,13 @@ public class UserServiceTest {
         newUser.setPassword("MyPassword");
         newUser.setClient(clientId);
 
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(new User()));
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.just(new User()));
 
         userService.create(domain, newUser, null)
                 .test()
                 .assertNotComplete()
                 .assertError(UserAlreadyExistsException.class);
-        verify(commonUserService, never()).create(any());
+        verify(userRepository, never()).create(any());
     }
 
     @Test
@@ -360,7 +368,7 @@ public class UserServiceTest {
         preRegisteredUser.setId("userId");
         preRegisteredUser.setReferenceId("domain");
         preRegisteredUser.setPreRegistration(true);
-        preRegisteredUser.setReferenceType(DOMAIN);
+        preRegisteredUser.setReferenceType(ReferenceType.DOMAIN);
         preRegisteredUser.setReferenceId("domain");
 
         UserProvider userProvider = mock(UserProvider.class);
@@ -370,19 +378,19 @@ public class UserServiceTest {
         client.setDomain("domain");
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(domainService.findById(domainId)).thenReturn(Maybe.just(domain));
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
-        when(commonUserService.create(any())).thenReturn(Single.just(preRegisteredUser));
-        when(commonUserService.findById(any(), anyString(), anyString())).thenReturn(Single.just(preRegisteredUser));
+        when(userRepository.create(any())).thenReturn(Single.just(preRegisteredUser));
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(preRegisteredUser));
 
         userService.create(domain, newUser, null)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
-        verify(commonUserService, times(1)).create(any());
+        verify(userRepository, times(1)).create(any());
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        verify(commonUserService).create(argument.capture());
+        verify(userRepository).create(argument.capture());
 
         // Wait few ms to let time to background thread to be executed.
         Thread.sleep(500);
@@ -418,13 +426,13 @@ public class UserServiceTest {
         client.setDomain("domain");
 
         when(jwtBuilder.sign(any())).thenReturn("token");
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         User user = new User();
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domain");
-        when(commonUserService.create(any())).thenReturn(Single.just(user));
+        when(userRepository.create(any())).thenReturn(Single.just(user));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
         when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(Maybe.just(new Email()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
@@ -433,9 +441,9 @@ public class UserServiceTest {
                 .test()
                 .assertComplete()
                 .assertNoErrors();
-        verify(commonUserService, times(1)).create(any());
+        verify(userRepository, times(1)).create(any());
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        verify(commonUserService).create(argument.capture());
+        verify(userRepository).create(argument.capture());
 
         assertNotNull(argument.getValue().getRegistrationUserUri());
         assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
@@ -473,14 +481,14 @@ public class UserServiceTest {
         client.setSettings(settings);
 
         when(jwtBuilder.sign(any())).thenReturn("token");
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
 
         User user = new User();
         user.setReferenceId("domain");
-        user.setReferenceType(DOMAIN);
-        when(commonUserService.create(any())).thenReturn(Single.just(user));
+        user.setReferenceType(ReferenceType.DOMAIN);
+        when(userRepository.create(any())).thenReturn(Single.just(user));
         when(domainService.buildUrl(any(Domain.class), eq("/confirmRegistration"))).thenReturn("http://localhost:8092/test/confirmRegistration");
         when(emailService.getEmailTemplate(eq(Template.REGISTRATION_CONFIRMATION), any())).thenReturn(Maybe.just(new Email()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
@@ -489,9 +497,9 @@ public class UserServiceTest {
                 .test()
                 .assertComplete()
                 .assertNoErrors();
-        verify(commonUserService, times(1)).create(any());
+        verify(userRepository, times(1)).create(any());
         ArgumentCaptor<User> argument = ArgumentCaptor.forClass(User.class);
-        verify(commonUserService).create(argument.capture());
+        verify(userRepository).create(argument.capture());
 
         Assert.assertNotNull(argument.getValue().getRegistrationUserUri());
         assertEquals("http://localhost:8092/test/confirmRegistration", argument.getValue().getRegistrationUserUri());
@@ -509,7 +517,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setReferenceId("domain");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn("idp-id");
@@ -518,9 +526,9 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.just(idpUser));
         when(userProvider.updatePassword(any(), any())).thenReturn(Single.just(idpUser));
 
-        when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
@@ -544,7 +552,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setReferenceId("domain");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
         io.gravitee.am.identityprovider.api.User idpUser = mock(io.gravitee.am.identityprovider.api.DefaultUser.class);
         when(idpUser.getId()).thenReturn("idp-id");
@@ -553,9 +561,9 @@ public class UserServiceTest {
         when(userProvider.findByUsername(user.getUsername())).thenReturn(Maybe.empty());
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
 
-        when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(commonUserService.update(any())).thenReturn(Single.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
@@ -577,7 +585,7 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setReferenceId("domain");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
         Set<Role> roles = new HashSet<>();
         Role role1 = new Role();
@@ -587,15 +595,15 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
-        when(commonUserService.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
 
-        userService.assignRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+        userService.assignRoles(DOMAIN, user.getId(), rolesIds)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
-        verify(commonUserService, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
     }
 
     @Test
@@ -606,14 +614,14 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
 
-        when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        userService.assignRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+        userService.assignRoles(DOMAIN, user.getId(), rolesIds)
                 .test()
                 .assertNotComplete()
                 .assertError(RoleNotFoundException.class);
-        verify(commonUserService, never()).update(any());
+        verify(userRepository, never()).update(any());
     }
 
     @Test
@@ -624,7 +632,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setReferenceId("domain");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
 
         Set<Role> roles = new HashSet<>();
@@ -635,15 +643,15 @@ public class UserServiceTest {
         roles.add(role1);
         roles.add(role2);
 
-        when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(roles));
-        when(commonUserService.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(userRepository.update(any(), any())).thenAnswer(a -> Single.just(a.getArgument(0)));
 
-        userService.revokeRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+        userService.revokeRoles(DOMAIN, user.getId(), rolesIds)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
-        verify(commonUserService, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
     }
 
     @Test
@@ -654,14 +662,14 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
 
-        when(commonUserService.findById(eq(DOMAIN), eq(DOMAIN_ID), eq("user-id"))).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(roleService.findByIdIn(rolesIds)).thenReturn(Single.just(Collections.emptySet()));
 
-        userService.revokeRoles(DOMAIN, DOMAIN_ID, user.getId(), rolesIds)
+        userService.revokeRoles(DOMAIN, user.getId(), rolesIds)
                 .test()
                 .assertNotComplete()
                 .assertError(RoleNotFoundException.class);
-        verify(commonUserService, never()).update(any());
+        verify(userRepository, never()).update(any());
     }
 
     @Test
@@ -677,7 +685,7 @@ public class UserServiceTest {
         PasswordSettingsStatus passwordEvaluation = PasswordSettingsStatus.builder().defaultPolicy(false).build();
 
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
-        doReturn(Maybe.empty()).when(commonUserService).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
+        doReturn(Maybe.empty()).when(userRepository).findByUsernameAndSource(any(), anyString(), anyString());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(passwordEvaluation);
         userService.create(domain, newUser, null)
@@ -698,11 +706,11 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setReferenceId("domain");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
         var passwordEvaluation = PasswordSettingsStatus.builder().defaultPolicy(false).build();
 
-        when(commonUserService.findById(eq(DOMAIN), eq(domain.getId()), eq("user-id"))).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.evaluate(anyString(), any(), any())).thenReturn(passwordEvaluation);
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
@@ -722,11 +730,11 @@ public class UserServiceTest {
         User user = new User();
         user.setId("user-id");
         user.setSource("idp-id");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domain");
 
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
-        when(commonUserService.findById(DOMAIN, domain.getId(), "user-id")).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
@@ -747,7 +755,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
 
-        verify(commonUserService, times(0)).update(any());
+        verify(userRepository, times(0)).update(any());
     }
 
     @Test
@@ -760,15 +768,13 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
 
-
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.error(new UserNotFoundException(user.getId())));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.empty());
         var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
 
-        verify(commonUserService, times(0)).update(any());
+        verify(userRepository, times(0)).update(any(), any());
     }
 
     @Test
@@ -781,11 +787,10 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.just(user));
 
         var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
@@ -793,7 +798,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
 
-        verify(commonUserService, times(0)).update(any());
+        verify(userRepository, times(0)).update(any());
     }
 
     @Test
@@ -806,11 +811,10 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
@@ -819,7 +823,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserProviderNotFoundException.class);
 
-        verify(commonUserService, times(0)).update(any());
+        verify(userRepository, times(0)).update(any());
     }
 
     @Test
@@ -832,12 +836,10 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
-                .thenReturn(Maybe.empty());
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource()))).thenReturn(Maybe.empty());
         final UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("Could not find user")));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
@@ -847,7 +849,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(UserNotFoundException.class);
 
-        verify(commonUserService, times(0)).update(any());
+        verify(userRepository, times(0)).update(any());
     }
 
     @Test
@@ -860,11 +862,10 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setUsername(USERNAME);
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
 
         final UserProvider userProvider = mock(UserProvider.class);
@@ -880,7 +881,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(InvalidUserException.class);
 
-        verify(commonUserService, times(0)).update(any());
+        verify(userRepository, times(0)).update(any());
     }
 
     @Test
@@ -894,13 +895,12 @@ public class UserServiceTest {
         user.setUsername(USERNAME);
         user.setFactors(List.of());
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
-        when(commonUserService.update(user)).thenReturn(Single.error(new TechnicalManagementException("an unexpected error has occurred")));
+        when(userRepository.update(any(), any())).thenReturn(Single.error(new TechnicalException("an unexpected error has occurred")));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -925,7 +925,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(TechnicalManagementException.class);
 
-        verify(commonUserService, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(2)).updateUsername(any(), anyString());
 
         verify(credentialService, times(2)).findByUsername(any(), eq(USERNAME));
@@ -943,13 +943,12 @@ public class UserServiceTest {
         user.setUsername(USERNAME);
         user.setFactors(List.of());
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
-        when(commonUserService.update(user)).thenReturn(Single.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -972,7 +971,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(commonUserService, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
         verify(credentialService, never()).update(any(), any());
@@ -990,13 +989,12 @@ public class UserServiceTest {
         user.setUsername(USERNAME);
         user.setFactors(List.of());
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
-        when(commonUserService.update(user)).thenReturn(Single.just(user));
+        when(userRepository.update(argThat(argUser -> argUser.getId().equals(user.getId())), any(UserRepository.UpdateActions.class))).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -1023,7 +1021,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(commonUserService, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
@@ -1050,13 +1048,12 @@ public class UserServiceTest {
         user.setUsername(USERNAME);
         user.setFactors(List.of(enrolledFactor));
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(any(), eq(NEW_USERNAME), eq(user.getSource())))
                 .thenReturn(Maybe.empty());
-        when(commonUserService.update(user)).thenReturn(Single.just(user));
+        when(userRepository.update(argThat(argUser -> argUser.getId().equals(user.getId())), any(UserRepository.UpdateActions.class))).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -1078,7 +1075,7 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(commonUserService, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
@@ -1104,7 +1101,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domain");
 
         var updatedUser = new UpdateUser();
@@ -1116,9 +1113,8 @@ public class UserServiceTest {
         additionalInformation.put("customClaim", "claim");
         updatedUser.setAdditionalInformation(additionalInformation);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.update(DOMAIN, domain.getId(), user.getId(), updatedUser)).thenReturn(Single.just(user));
+        when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -1132,12 +1128,12 @@ public class UserServiceTest {
         when(userProvider.update(any(), any())).thenReturn(Single.just(idpUserUpdated));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        var observer = userService.update(domain.getId(), user.getId(), updatedUser).test();
+        var observer = userService.update(domain, user.getId(), updatedUser).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(commonUserService, times(1)).update(DOMAIN, domain.getId(), user.getId(), updatedUser);
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).update(any(), any());
     }
 
@@ -1150,15 +1146,14 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setUsername(USERNAME);
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domain");
 
         var updatedUser = new UpdateUser();
         updatedUser.setSource("idp-user-id");
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.update(DOMAIN, domain.getId(), user.getId(), updatedUser)).thenReturn(Single.just(user));
+        when(userRepository.findById(domain.asReference(), UserId.internal(user.getId()))).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -1168,12 +1163,12 @@ public class UserServiceTest {
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.error(new UserNotFoundException("User not found in idp")));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        var observer = userService.update(domain.getId(), user.getId(), updatedUser).test();
+        var observer = userService.update(domain, user.getId(), updatedUser).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(commonUserService, times(1)).update(DOMAIN, domain.getId(), user.getId(), updatedUser);
+        verify(userRepository, times(1)).update(any(),any());
     }
 
     @Test
@@ -1184,26 +1179,24 @@ public class UserServiceTest {
         var user = new User();
         user.setId("user-id");
         user.setSource("idp-user-id");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId("domain");
 
         var updatedUser = new UpdateUser();
         updatedUser.setSource("idp-user-id");
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.update(DOMAIN, domain.getId(), user.getId(), updatedUser))
-                .thenReturn(Single.just(user));
+        when(userRepository.findById(any(Reference.class),any())).thenReturn(Maybe.just(user));
+        when(userRepository.update(any(), any())).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
-        var observer = userService.update(domain.getId(), user.getId(), updatedUser).test();
+        var observer = userService.update(domain, user.getId(), updatedUser).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(commonUserService, times(1)).update(DOMAIN, domain.getId(), user.getId(), updatedUser);
+        verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(0)).update(any(), any());
     }
 
@@ -1222,8 +1215,7 @@ public class UserServiceTest {
         user.setSource("idp-user-id");
         user.setUsername(USERNAME);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
+        when(userRepository.findById(any(Reference.class), any())).thenReturn(Maybe.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
 
@@ -1234,7 +1226,7 @@ public class UserServiceTest {
                 .thenReturn(Maybe.error(new IOException("Other issue")));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        var observer = userService.update(domain.getId(), user.getId(), updatedUser).test();
+        var observer = userService.update(domain, user.getId(), updatedUser).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertError(IOException.class);
@@ -1253,13 +1245,11 @@ public class UserServiceTest {
         user.setAccountLockedUntil(new Date());
         user.setAccountNonLocked(false);
         user.setReferenceId(domain.getId());
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
-        when(commonUserService.findById(DOMAIN, domain.getId(), user.getId()))
-                .thenReturn(Single.just(user));
-        when(commonUserService.findByUsernameAndSource(DOMAIN, domain.getId(), NEW_USERNAME, user.getSource()))
-                .thenReturn(Maybe.empty());
-        when(commonUserService.update(user)).thenReturn(Single.just(user));
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
+        when(userRepository.findByUsernameAndSource(domain.asReference(), NEW_USERNAME, user.getSource())).thenReturn(Maybe.empty());
+        when(userRepository.update(argThat(argUser -> argUser.getId().equals(user.getId())), any(UserRepository.UpdateActions.class))).thenReturn(Single.just(user));
 
         final UserProvider userProvider = mock(UserProvider.class);
         final DefaultUser defaultUser = new DefaultUser(NEW_USERNAME);
@@ -1276,13 +1266,13 @@ public class UserServiceTest {
         observer.awaitDone(10, TimeUnit.SECONDS);
         observer.assertComplete();
 
-        verify(commonUserService, times(1)).update(argThat(argument -> {
+        verify(userRepository, times(1)).update(argThat(argument -> {
             assertEquals(NEW_USERNAME, argument.getUsername());
             assertTrue(argument.isAccountNonLocked());
             assertNull(argument.getAccountLockedUntil());
             assertNull(argument.getAccountLockedAt());
             return true;
-        }));
+        }), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(loginAttemptService, times(1)).reset(any());
     }
@@ -1301,7 +1291,7 @@ public class UserServiceTest {
 
         when(domainService.findById(domain.getId())).thenReturn(Maybe.empty());
 
-        userService.sendRegistrationConfirmation(domain.getId(), user.getId(), null)
+        userService.sendRegistrationConfirmation(domain, user.getId(), null)
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(DomainNotFoundException.class);
@@ -1320,9 +1310,9 @@ public class UserServiceTest {
         user.setRegistrationCompleted(false);
 
         when(domainService.findById(domain.getId())).thenReturn(Maybe.just(domain));
-        when(userService.findById(ReferenceType.DOMAIN, domain.getId(), user.getId())).thenReturn(Single.just(user));
+        when(userService.findById(domain, user.getId())).thenReturn(Maybe.just(user));
 
-        userService.sendRegistrationConfirmation(domain.getId(), user.getId(), null)
+        userService.sendRegistrationConfirmation(domain, user.getId(), null)
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(UserInvalidException.class)
@@ -1341,16 +1331,16 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setIdentities(userIdentities);
         user.setReferenceId("domain");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-        when(commonUserService.findById(eq("user-id"))).thenReturn(Maybe.just(user));
-        when(commonUserService.update(userCaptor.capture())).thenReturn(Single.just(user));
-        userService.unlinkIdentity(user.getId(), extraUserId, null)
+        when(userRepository.findById(eq("user-id"))).thenReturn(Maybe.just(user));
+        when(userRepository.update(userCaptor.capture(), any(UserRepository.UpdateActions.class))).thenReturn(Single.just(user));
+        userService.unlinkIdentity(DOMAIN, user.getId(), extraUserId, null)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
-        verify(commonUserService, times(1)).update(any());
+        verify(userRepository, times(1)).update(any(), any());
         User expectedUser = userCaptor.getValue();
         Assert.assertTrue(expectedUser.getIdentities().isEmpty());
     }
@@ -1366,12 +1356,12 @@ public class UserServiceTest {
         user.setSource("idp-id");
         user.setIdentities(null);
 
-        when(commonUserService.findById(eq("user-id"))).thenReturn(Maybe.just(user));
-        userService.unlinkIdentity(user.getId(), extraUserId, null)
+        when(userRepository.findById(eq("user-id"))).thenReturn(Maybe.just(user));
+        userService.unlinkIdentity(DOMAIN, user.getId(), extraUserId, null)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
-        verify(commonUserService, never()).update(any());
+        verify(userRepository, never()).update(any());
     }
 
     @Test
@@ -1387,9 +1377,9 @@ public class UserServiceTest {
         user.setRegistrationCompleted(true);
 
         when(domainService.findById(domain.getId())).thenReturn(Maybe.just(domain));
-        when(userService.findById(ReferenceType.DOMAIN, domain.getId(), user.getId())).thenReturn(Single.just(user));
+        when(userService.findById(domain, user.getId())).thenReturn(Maybe.just(user));
 
-        userService.sendRegistrationConfirmation(domain.getId(), user.getId(), null)
+        userService.sendRegistrationConfirmation(domain, user.getId(), null)
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(UserInvalidException.class)
@@ -1404,7 +1394,7 @@ public class UserServiceTest {
         user.setId("user-id");
         user.setSource("idp-id");
         user.setClient("client-id");
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(domain.getId());
         user.setUsername(USERNAME);
         user.setPreRegistration(true);
@@ -1412,10 +1402,10 @@ public class UserServiceTest {
         user.setRegistrationUserUri(registrationUri);
 
         when(domainService.findById(domain.getId())).thenReturn(Maybe.just(domain));
-        when(userService.findById(ReferenceType.DOMAIN, domain.getId(), user.getId())).thenReturn(Single.just(user));
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
         when(applicationService.findById(user.getClient())).thenReturn(Maybe.just(application));
 
-        userService.sendRegistrationConfirmation(domain.getId(), user.getId(), null)
+        userService.sendRegistrationConfirmation(domain, user.getId(), null)
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete();
@@ -1426,7 +1416,7 @@ public class UserServiceTest {
     @Test
     public void shouldNotUpdateUserWithoutAnId(){
         TestObserver<User> observer = new TestObserver<>();
-        userService.update(ReferenceType.DOMAIN, "domain_id", null, new UpdateUser(), new DefaultUser())
+        userService.update(DOMAIN, null, new UpdateUser(), new DefaultUser())
                 .subscribe(observer);
         observer.assertError(throwable -> throwable.getMessage().equals("User id is required"));
     }
@@ -1440,12 +1430,11 @@ public class UserServiceTest {
         User user = new User();
         user.setInternal(false);
 
-        Mockito.when(userService.findById(any(), any(), any())).thenReturn(Single.just(user));
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
 
         // when
         TestObserver<User> observer = new TestObserver<>();
-        userService.update(ReferenceType.DOMAIN, "id", "id", updateUser, new DefaultUser())
-                .subscribe(observer);
+        userService.update(DOMAIN, "id", updateUser, new DefaultUser()).subscribe(observer);
 
         // then
         observer.assertError(throwable -> throwable.getMessage().equals("forceResetPassword is forbidden on external users"));
@@ -1470,7 +1459,7 @@ public class UserServiceTest {
         newUser.setClient(clientId);
 
         // when
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(applicationService.findById(newUser.getClient())).thenReturn(Maybe.just(client));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.just(new PasswordPolicy()));
@@ -1504,11 +1493,11 @@ public class UserServiceTest {
         user.setSource("unknown-idp");
         user.setPassword("myPassword");
         user.setClient(clientId);
-        user.setReferenceType(DOMAIN);
+        user.setReferenceType(ReferenceType.DOMAIN);
         user.setReferenceId(domain.getId());
 
         // when
-        when(userService.findById(any(), anyString(), anyString())).thenReturn(Single.just(user));
+        when(userRepository.findById(any(), any())).thenReturn(Maybe.just(user));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(Optional.of(new IdentityProvider()));
         when(applicationService.findById(user.getClient())).thenReturn(Maybe.just(client));

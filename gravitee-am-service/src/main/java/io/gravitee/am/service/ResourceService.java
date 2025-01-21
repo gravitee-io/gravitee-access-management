@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
@@ -41,10 +42,10 @@ public interface ResourceService {
     Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size);
     Flowable<Resource> findByResources(List<String> resourceIds);
     Flowable<Resource> listByDomainAndClientAndUser(String domain, String client, String userId);
-    Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds);
+    Flowable<Resource> findByDomainAndClientAndResources(Domain domain, String client, List<String> resourceIds);
     Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resourceId);
-    Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId);
-    Single<Map<String, Map<String, Object>>> getMetadata(List<Resource> resources);
+    Maybe<Resource> findByDomainAndClientResource(Domain domain, String client, String resourceId);
+    Single<Map<String, Map<String, Object>>> getMetadata(Domain domain, List<Resource> resources);
     Single<Resource> create(NewResource newResource, String domain, String client, String userId);
     Single<Resource> update(NewResource newResource, String domain, String client, String userId, String resourceId);
     Single<Resource> update(Resource resource);

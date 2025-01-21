@@ -21,7 +21,7 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -38,7 +38,7 @@ import java.util.Map;
 @Slf4j
 public class PatchUserAction extends AbstractUserAction {
 
-    public PatchUserAction(UserService userService, Domain domain, Client client) {
+    public PatchUserAction(ProvisioningUserService userService, Domain domain, Client client) {
         super(userService, domain, client);
     }
 

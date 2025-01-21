@@ -21,6 +21,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.management.service.AnalyticsService;
 import io.gravitee.am.management.service.AuditService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.analytics.AnalyticsCountResponse;
 import io.gravitee.am.model.analytics.AnalyticsGroupByResponse;
 import io.gravitee.am.model.analytics.AnalyticsHistogramResponse;
@@ -28,9 +29,9 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.analytics.AnalyticsResponse;
 import io.gravitee.am.model.analytics.Bucket;
 import io.gravitee.am.model.analytics.Timestamp;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.UserService;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,14 +60,14 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     private ApplicationService applicationService;
 
     @Autowired
-    private UserService userService;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Override
-    public Single<AnalyticsResponse> execute(AnalyticsQuery query) {
+    public Single<AnalyticsResponse> execute(Domain domain, AnalyticsQuery query) {
         return switch (query.getType()) {
             case DATE_HISTO -> executeDateHistogram(query);
-            case GROUP_BY -> executeGroupBy(query);
-            case COUNT -> executeCount(query);
+            case GROUP_BY -> executeGroupBy(domain, query);
+            case COUNT -> executeCount(domain, query);
         };
     }
 
@@ -101,7 +102,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 });
     }
 
-    private Single<AnalyticsResponse> executeGroupBy(AnalyticsQuery query) {
+    private Single<AnalyticsResponse> executeGroupBy(Domain domain, AnalyticsQuery query) {
         AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder()
                 .types(Collections.singletonList(query.getField().toUpperCase()));
         queryBuilder.from(query.getFrom());
@@ -117,7 +118,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 return executeGroupBy(query.getDomain(), queryBuilder.build(), query.getType())
                         .flatMap(analyticsResponse -> fetchMetadata((AnalyticsGroupByResponse) analyticsResponse));
             case Field.USER_STATUS, Field.USER_REGISTRATION:
-                return userService.statistics(query).map(AnalyticsGroupByResponse::new);
+                return dataPlaneRegistry.getUserRepository(domain).statistics(query).map(AnalyticsGroupByResponse::new);
             case Field.USER_LOGIN:
                 queryBuilder.types(List.of(USER_LOGIN, USER_WEBAUTHN_LOGIN));
                 queryBuilder.field("type");
@@ -159,7 +160,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     }
 
-    private Single<AnalyticsResponse> executeCount(AnalyticsQuery query) {
+    private Single<AnalyticsResponse> executeCount(Domain domain, AnalyticsQuery query) {
         AuditReportableCriteria.Builder queryBuilder = new AuditReportableCriteria.Builder();
         if (query.getField().equalsIgnoreCase(USER_LOGIN)) {
             queryBuilder.types(EventType.loginTypes());
@@ -173,7 +174,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         return switch (query.getField()) {
             case Field.APPLICATION ->
                     applicationService.countByDomain(query.getDomain()).map(AnalyticsCountResponse::new);
-            case Field.USER -> userService.countByDomain(query.getDomain()).map(AnalyticsCountResponse::new);
+            case Field.USER -> dataPlaneRegistry.getUserRepository(domain).countByReference(domain.asReference()).map(AnalyticsCountResponse::new);
             default -> auditService.aggregate(query.getDomain(), queryBuilder.build(), query.getType())
                     .map(values -> values.values().isEmpty() ? new AnalyticsCountResponse(0L) : new AnalyticsCountResponse((Long) values.values().iterator().next()));
         };

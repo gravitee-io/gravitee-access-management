@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -40,7 +40,7 @@ import java.util.Optional;
  */
 public class GroupEndpoint extends AbstractGroupEndpoint {
 
-    public GroupEndpoint(ScimGroupService groupService, ObjectMapper objectMapper, UserService userService, SubjectManager subjectManager) {
+    public GroupEndpoint(ScimGroupService groupService, ObjectMapper objectMapper, ProvisioningUserService userService, SubjectManager subjectManager) {
         super(groupService, objectMapper, userService, subjectManager);
     }
 
