@@ -76,6 +76,7 @@ import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidDataPlaneException;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
@@ -342,7 +343,7 @@ public class DomainServiceImpl implements DomainService {
         // generate hrid
         String hrid = IdGenerator.generate(newDomain.getName());
         if (dataPlaneRegistry.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
-            return Single.error(new TechnicalManagementException("An error occurred while trying to create a domain. Data plane with provided Id doesn't exist"));
+            return Single.error(new InvalidDataPlaneException("An error occurred while trying to create a domain. Data Plane with provided Id doesn't exist."));
         }
         return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
                 .isEmpty()

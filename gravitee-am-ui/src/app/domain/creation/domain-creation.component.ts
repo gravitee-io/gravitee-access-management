@@ -45,6 +45,8 @@ export class DomainCreationComponent implements OnInit {
     if (this.dataPlanes.length === 1) {
       this.domain.dataPlaneId = this.dataPlanes[0].id;
       this.oneDataPlane = true;
+    } else {
+      this.dataPlanes.sort((a, b) => a.name.localeCompare(b.name));
     }
   }
 
