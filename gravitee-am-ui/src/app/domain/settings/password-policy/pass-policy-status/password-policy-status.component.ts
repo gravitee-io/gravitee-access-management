@@ -26,6 +26,18 @@ enum RuleStatus {
   INVALID,
   CHECKING,
 }
+const MESSAGES = {
+  commonPasswordString: 'Should not be a common password',
+  reusePasswordString: 'Should not reuse a recent password',
+  regexAdminString: 'Matches the regular expression configured by admin',
+  hasLengthString: 'Has at least {} characters',
+  containsNumberString: 'Contains a number',
+  containsSpecialCharacterString: 'Contains a special character',
+  containsLowerAndUpperCaseString: 'Contains both lowercase and uppercase letters',
+  sameCharactersString: "Doesn't contain the same character {} times in a row",
+  matchesRegexString: 'Matches the regex {}',
+  notContainsProfileInformationString: 'Should not contain information from profile',
+};
 
 type PasswordRule = { id: string; check: (val: PasswordInput) => Promise<PasswordRuleResult[]> };
 type PasswordRuleResult = { id: string; description: string; status: RuleStatus };
@@ -96,22 +108,28 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
   private getRules(policy: MaybeDefaultPasswordPolicy) {
     const _rules: PasswordRule[] = [];
     if (policy.regex) {
-      _rules.push(this.regexRule('regex', policy.regex, 'matches the regular expression configured by admin'));
+      _rules.push(this.regexRule('regex', policy.regex, MESSAGES.regexAdminString));
       // special case for the default fallback policy, there shouldn't be any other rules
       return _rules;
     }
     if (policy.minLength) {
-      _rules.push(this.syncRule('minLength', `has at least ${policy.minLength} characters`, ({ pass }) => pass.length >= policy.minLength));
+      _rules.push(
+        this.syncRule(
+          'minLength',
+          this.formatString(MESSAGES.hasLengthString, policy.minLength),
+          ({ pass }) => pass.length >= policy.minLength,
+        ),
+      );
     }
     if (policy.includeNumbers) {
-      _rules.push(this.regexRule('numbers', /\d/, 'contains a number'));
+      _rules.push(this.regexRule('numbers', /\d/, MESSAGES.containsNumberString));
     }
     if (policy.includeSpecialCharacters) {
-      _rules.push(this.regexRule('specialCharacters', /[^a-zA-Z0-9]/, 'contains a special character'));
+      _rules.push(this.regexRule('specialCharacters', /[^a-zA-Z0-9]/, MESSAGES.containsSpecialCharacterString));
     }
     if (policy.lettersInMixedCase) {
       _rules.push(
-        this.syncRule('mixedCase', 'has lower- and uppercase letters', ({ pass }) => {
+        this.syncRule('mixedCase', MESSAGES.containsLowerAndUpperCaseString, ({ pass }) => {
           return pass != pass.toLowerCase() && pass != pass.toUpperCase();
         }),
       );
@@ -121,7 +139,7 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
         this.regexRule(
           'consecutiveChars',
           `(.)\\1{${policy.maxConsecutiveLetters - 1}}`,
-          `doesn't contain the same character ${policy.maxConsecutiveLetters} times in a row`,
+          this.formatString(MESSAGES.sameCharactersString, policy.maxConsecutiveLetters),
           true,
         ),
       );
@@ -148,14 +166,14 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
                 if (this.policy.excludePasswordsInDictionary === true) {
                   this.ruleResults['dictionary'] = {
                     id: 'dictionary',
-                    description: 'Should not be a common password',
+                    description: MESSAGES.commonPasswordString,
                     status: RuleStatus.CHECKING,
                   };
                 }
                 if (this.policy.passwordHistoryEnabled === true && profile.id != null) {
                   this.ruleResults['history'] = {
                     id: 'history',
-                    description: 'Should not re-use a recent password',
+                    description: MESSAGES.reusePasswordString,
                     status: RuleStatus.CHECKING,
                   };
                 }
@@ -169,14 +187,14 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
           if (policyResult.excludePasswordsInDictionary != null) {
             results.push({
               id: 'dictionary',
-              description: 'Should not be a common password',
+              description: MESSAGES.commonPasswordString,
               status: policyResult.excludePasswordsInDictionary ? RuleStatus.VALID : RuleStatus.INVALID,
             });
           }
           if (policyResult.recentPasswordsNotReused != null && profile.id != null) {
             results.push({
               id: 'history',
-              description: 'Should not re-use a recent password',
+              description: MESSAGES.reusePasswordString,
               status: policyResult.recentPasswordsNotReused ? RuleStatus.VALID : RuleStatus.INVALID,
             });
           }
@@ -187,7 +205,7 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
   }
 
   private regexRule(id: string, regex: string | RegExp, description?: string, shouldNotMatch: boolean = false): PasswordRule {
-    description = description || `matches the regex: ${regex}`;
+    description = description || this.formatString(MESSAGES.matchesRegexString, regex.toString());
     const check = shouldNotMatch ? ({ pass }: PasswordInput) => pass.match(regex) == null : ({ pass }) => pass.match(regex) != null;
     return this.syncRule(id, description, check);
   }
@@ -241,6 +259,10 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
         !(profile.email && lowercasePass.includes(profile.email))
       );
     };
-    return this.syncRule('profile', 'should not contain information from profile', doCheck);
+    return this.syncRule('profile', MESSAGES.notContainsProfileInformationString, doCheck);
+  }
+
+  formatString(template: string, value: string | number): string {
+    return template.replace('{}', String(value));
   }
 }
