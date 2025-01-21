@@ -145,14 +145,14 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
             // add a spinner after a tiny delay, to avoid blinking on fast connections
             timer(100).pipe(
               map(() => {
-                if (this.policy.excludePasswordsInDictionary != null) {
+                if (this.policy.excludePasswordsInDictionary === true) {
                   this.ruleResults['dictionary'] = {
                     id: 'dictionary',
                     description: 'Should not be a common password',
                     status: RuleStatus.CHECKING,
                   };
                 }
-                if (this.policy.passwordHistoryEnabled != null && profile.id != null) {
+                if (this.policy.passwordHistoryEnabled === true && profile.id != null) {
                   this.ruleResults['history'] = {
                     id: 'history',
                     description: 'Should not re-use a recent password',
