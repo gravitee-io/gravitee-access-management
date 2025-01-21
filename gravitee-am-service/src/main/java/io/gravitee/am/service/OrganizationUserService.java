@@ -16,20 +16,61 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.AccountAccessToken;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.UserId;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.model.NewAccountAccessToken;
+import io.gravitee.am.service.model.NewUser;
+import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.List;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface OrganizationUserService extends CommonUserService {
+public interface OrganizationUserService {
+
+
+    Flowable<User> findByIdIn(List<String> ids);
+
+    Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
+
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
+
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
+    Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria);
+
+    @Deprecated
+    default Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source) {
+        return findByUsernameAndSource(new Reference(referenceType, referenceId), username, source);
+    }
+
+    Maybe<User> findByUsernameAndSource(Reference reference, String username, String source);
+
+    /** @deprecated prefer findById(Reference, UserId) for new code
+     */
+    Single<User> findById(ReferenceType referenceType, String referenceId, String id);
+
+    Single<User> findById(Reference reference, UserId userId);
+
+    Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source);
+
+    Single<User> create(ReferenceType referenceType, String referenceId, NewUser newUser);
+
+    Single<User> create(User user);
+
+    Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser);
+
+    Single<User> update(User user);
 
     /**
      * Set the ORGANIZATION_USER role to a newly create user.
