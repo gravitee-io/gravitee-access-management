@@ -152,7 +152,7 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
                     status: RuleStatus.CHECKING,
                   };
                 }
-                if (this.policy.passwordHistoryEnabled != null) {
+                if (this.policy.passwordHistoryEnabled != null && profile.id != null) {
                   this.ruleResults['history'] = {
                     id: 'history',
                     description: 'Should not re-use a recent password',
@@ -173,7 +173,7 @@ export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
               status: policyResult.excludePasswordsInDictionary ? RuleStatus.VALID : RuleStatus.INVALID,
             });
           }
-          if (policyResult.recentPasswordsNotReused != null) {
+          if (policyResult.recentPasswordsNotReused != null && profile.id != null) {
             results.push({
               id: 'history',
               description: 'Should not re-use a recent password',
