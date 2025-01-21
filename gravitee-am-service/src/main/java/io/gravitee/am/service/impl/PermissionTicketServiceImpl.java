@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.model.uma.Resource;
@@ -54,7 +55,7 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
     private ResourceService resourceService;
 
     @Override
-    public Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String domain, String client) {
+    public Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, Domain domain, String client) {
         //Get list of requested resources (same Id may appear twice with difference scopes)
         List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).distinct().toList();
         //Compare with current registered resource set and return permission ticket if everything's correct.
@@ -66,7 +67,7 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
                                 String userId = fetchedResourceSet.get(0).getUserId();
                                 PermissionTicket toCreate = new PermissionTicket();
                                 return toCreate.setPermissionRequest(permissionRequests)
-                                        .setDomain(domain)
+                                        .setDomain(domain.getId())
                                         .setClientId(client)
                                         .setUserId(userId)
                                         .setCreatedAt(new Date())

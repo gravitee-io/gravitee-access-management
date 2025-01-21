@@ -15,27 +15,33 @@
  */
 package io.gravitee.am.gateway.handler.common.user.impl;
 
+import io.gravitee.am.business.user.CreateUserRule;
+import io.gravitee.am.business.user.UpdateUserRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.mfa.InvalidFactorAttributeException;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.common.user.UserStore;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.scim.Attribute;
-import io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.UserAuditBuilder;
+import io.gravitee.am.service.validators.user.UserValidator;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -50,10 +56,13 @@ import static java.util.Optional.ofNullable;
  * @author GraviteeSource Team
  */
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserGatewayServiceImpl implements UserGatewayService, InitializingBean {
 
     @Autowired
-    protected io.gravitee.am.service.UserService userService;
+    protected Domain domain;
+
+    @Autowired
+    protected DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
     protected UserStore userStore;
@@ -64,34 +73,53 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserEnhancer userEnhancer;
 
+    @Autowired
+    private UserValidator userValidator;
+
+    private UserRepository userRepository;
+
+    protected final UserRepository getUserRepository() {
+        return userRepository;
+    }
+
+    protected final UserValidator getUserValidator() {
+        return userValidator;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.userRepository = dataPlaneRegistry.getUserRepository(domain);
+    }
+
     @Override
     public Maybe<User> findById(String id) {
-        return userStore.get(id).switchIfEmpty(Maybe.defer(() -> userService.findById(id)));
+        return userStore.get(id).switchIfEmpty(Maybe.defer(() -> userRepository.findById(id)));
     }
 
     @Override
     public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
-        return userService.findByExternalIdAndSource(ReferenceType.DOMAIN, domain, externalId, source);
+        return userRepository.findByExternalIdAndSource(Reference.domain(domain), externalId, source);
     }
 
     @Override
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        return userService.findByDomainAndUsernameAndSource(domain, username, source);
+        return userRepository.findByUsernameAndSource(Reference.domain(domain), username, source);
     }
 
     @Override
     public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities) {
-        return userService.findByUsernameAndSource(ReferenceType.DOMAIN, domain, username, source, includeLinkedIdentities);
+        return userRepository.findByUsernameAndSource(Reference.domain(domain), username, source, includeLinkedIdentities);
     }
 
     @Override
     public Single<List<User>> findByDomainAndCriteria(String domain, FilterCriteria criteria) {
-        return userService.search(ReferenceType.DOMAIN, domain, criteria).toList();
+        return userRepository.search(Reference.domain(domain), criteria).toList();
     }
 
     @Override
     public Single<User> create(User user) {
-        return userService.create(user)
+        return new CreateUserRule(userValidator, userRepository::create)
+                .create(user)
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).user(user1)))
                 .doOnError(err -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).reference(new Reference(user.getReferenceType(), user.getReferenceId())).throwable(err)))
                 .flatMap(persistedUser -> userStore.add(persistedUser).switchIfEmpty(Single.just(persistedUser)));
@@ -99,7 +127,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Single<User> update(User user, UpdateActions updateActions) {
-        return userService.update(user, updateActions)
+        final var action = new UpdateUserRule(userValidator, userRepository::update);
+        return action.update(user, updateActions)
                 .flatMap(persistedUser -> userStore.add(persistedUser).switchIfEmpty(Single.just(persistedUser)));
     }
 

@@ -26,7 +26,7 @@ import io.gravitee.am.gateway.handler.scim.model.BulkRequest;
 import io.gravitee.am.gateway.handler.scim.model.BulkResponse;
 import io.gravitee.am.gateway.handler.scim.model.Error;
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
@@ -64,7 +64,7 @@ public class BulkServiceImpl implements BulkService {
     private final static String BULK_PATH_PATTERN = "/Bulk(/)?";
     private final static Pattern USER_PATH_PATTERN = Pattern.compile("/Users/(.*)");
 
-    private UserService userService;
+    private ProvisioningUserService userService;
     private Domain domain;
 
     @Override

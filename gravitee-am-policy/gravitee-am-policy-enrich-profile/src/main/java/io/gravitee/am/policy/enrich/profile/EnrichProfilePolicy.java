@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.policy.enrich.profile;
 
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.policy.enrich.profile.configuration.EnrichProfilePolicyConfiguration;
 import io.gravitee.am.policy.enrich.profile.configuration.Property;
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-import static io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions.none;
+import static io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions.none;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -127,7 +127,7 @@ public class EnrichProfilePolicy {
     }
 
     protected Single<User> enrichProfile(ExecutionContext context) {
-        UserService userService = context.getComponent(UserService.class);
+        UserGatewayService userService = context.getComponent(UserGatewayService.class);
         User user = (User)context.getAttribute("user");
         return userService.update(user, none());
     }

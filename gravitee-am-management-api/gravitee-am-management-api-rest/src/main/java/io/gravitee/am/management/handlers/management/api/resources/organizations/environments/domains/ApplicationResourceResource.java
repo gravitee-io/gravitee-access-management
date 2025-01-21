@@ -17,13 +17,13 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.model.ResourceEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.uma.Resource;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.ResourceService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
@@ -64,7 +64,7 @@ public class ApplicationResourceResource extends AbstractResource {
     private ResourceService resourceService;
 
     @Autowired
-    private UserService userService;
+    private DataPlaneRegistry dataPlaneRegistry; // FIXEME: to remove the UMA will manage... user search should be managed by the ResourceService
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -81,25 +81,25 @@ public class ApplicationResourceResource extends AbstractResource {
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("application") String application,
             @PathParam("resource") String resource,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_RESOURCE, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMap(application1 -> resourceService.findByDomainAndClientResource(domain, application1.getId(), resource)
-                                .flatMap(r -> userService.findById(r.getUserId())
-                                        .map(Optional::ofNullable)
-                                        .defaultIfEmpty(Optional.empty())
-                                        .map(optUser -> {
-                                            ResourceEntity resourceEntity = new ResourceEntity(r);
-                                            resourceEntity.setUserDisplayName(optUser.isPresent() ? optUser.get().getDisplayName() : "Unknown user");
-                                            return resourceEntity;
-                                        }).toMaybe())))
+        checkAnyPermission(organizationId, environmentId, domainId, application, Permission.APPLICATION_RESOURCE, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> applicationService.findById(application)
+                            .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
+                            .flatMap(application1 -> resourceService.findByDomainAndClientResource(domain, application1.getId(), resource)
+                                    .flatMap(r -> dataPlaneRegistry.getUserRepository(domain).findById(r.getUserId())
+                                            .map(Optional::ofNullable)
+                                            .defaultIfEmpty(Optional.empty())
+                                            .map(optUser -> {
+                                                ResourceEntity resourceEntity = new ResourceEntity(r);
+                                                resourceEntity.setUserDisplayName(optUser.isPresent() ? optUser.get().getDisplayName() : "Unknown user");
+                                                return resourceEntity;
+                                            }).toMaybe()))))
                 .subscribe(response::resume, response::resume);
     }
 

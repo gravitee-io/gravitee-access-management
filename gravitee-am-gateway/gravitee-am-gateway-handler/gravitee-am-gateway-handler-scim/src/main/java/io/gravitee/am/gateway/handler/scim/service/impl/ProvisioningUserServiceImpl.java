@@ -22,6 +22,8 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
@@ -34,8 +36,8 @@ import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.model.Member;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.model.User;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordHistory;
@@ -44,7 +46,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.UserRepository;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
@@ -75,6 +77,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.text.MessageFormat;
@@ -86,7 +89,6 @@ import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
-import static io.gravitee.am.repository.management.api.CommonUserRepository.UpdateActions;
 import static java.lang.Boolean.FALSE;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
@@ -95,9 +97,9 @@ import static java.util.Optional.ofNullable;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class UserServiceImpl implements UserService {
+public class ProvisioningUserServiceImpl implements ProvisioningUserService, InitializingBean {
     private static final String PARAMETER_EXIST_ERROR = "User with {0} [{1}] already exists";
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProvisioningUserServiceImpl.class);
     private static final String DEFAULT_IDP_PREFIX = "default-idp-";
     public static final String FIELD_PASSWORD_IS_INVALID = "The provided password does not meet the password policy requirements.";
 
@@ -110,8 +112,11 @@ public class UserServiceImpl implements UserService {
             StandardClaims.ZONEINFO,
             StandardClaims.LOCALE);
 
-    @Autowired
+
     private UserRepository userRepository;
+
+    @Autowired
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
     private ScimGroupService groupService;
@@ -156,11 +161,16 @@ public class UserServiceImpl implements UserService {
     private TokenService tokenService;
 
     @Override
+    public void afterPropertiesSet() throws Exception {
+        this.userRepository = dataPlaneRegistry.getUserRepository(domain);
+    }
+
+    @Override
     public Single<ListResponse<User>> list(Filter filter, int startIndex, int size, String baseUrl) {
         LOGGER.debug("Find users by domain: {}", domain.getId());
         Single<Page<io.gravitee.am.model.User>> findUsers = filter != null ?
-                userRepository.searchScim(ReferenceType.DOMAIN, domain.getId(), FilterCriteria.convert(filter), startIndex, size) :
-                userRepository.findAllScim(ReferenceType.DOMAIN, domain.getId(), startIndex, size);
+                userRepository.searchScim(domain.asReference(), FilterCriteria.convert(filter), startIndex, size) :
+                userRepository.findAllScim(domain.asReference(), startIndex, size);
 
         return findUsers
                 .concatMap(userPage -> {
@@ -233,8 +243,8 @@ public class UserServiceImpl implements UserService {
 
         // check if user is unique
         return Single.zip(
-                        userRepository.findByUsernameAndSource(ReferenceType.DOMAIN, domain.getId(), user.getUserName(), source).isEmpty(),
-                        userRepository.findByExternalIdAndSource(ReferenceType.DOMAIN, domain.getId(), user.getExternalId(), source).isEmpty(),
+                        userRepository.findByUsernameAndSource(domain.asReference(), user.getUserName(), source).isEmpty(),
+                        userRepository.findByExternalIdAndSource(domain.asReference(), user.getExternalId(), source).isEmpty(),
                         (isNoUsername, isNoExternalId) -> {
                             if (FALSE.equals(isNoUsername)) {
                                 throw new UniquenessException(MessageFormat.format(PARAMETER_EXIST_ERROR, "username", user.getUserName()));

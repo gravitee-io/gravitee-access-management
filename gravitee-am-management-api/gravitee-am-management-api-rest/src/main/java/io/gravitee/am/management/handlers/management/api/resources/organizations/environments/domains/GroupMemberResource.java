@@ -18,7 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -56,7 +56,7 @@ public class GroupMemberResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private UserService userService;
+    private ManagementUserService userService;
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -84,7 +84,7 @@ public class GroupMemberResource extends AbstractResource {
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> domainGroupService.findById(domain, group)
-                                .flatMap(group1 -> userService.findById(userId)
+                                .flatMap(group1 -> userService.findById(domain, userId)
                                         .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
                                         .flatMap(user -> {
                                             if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
@@ -129,7 +129,8 @@ public class GroupMemberResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain -> domainGroupService.findById(domain, group).flatMap(group1 -> userService.findById(userId)
+                        .flatMapSingle(domain -> domainGroupService.findById(domain, group)
+                                .flatMap(group1 -> userService.findById(domain, userId)
                                 .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
                                 .flatMap(user -> {
                                     if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {

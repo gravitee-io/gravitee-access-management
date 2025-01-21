@@ -25,7 +25,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.manager.subject.SubjectManagerV1;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
@@ -106,7 +106,7 @@ public class IDTokenServiceTest {
     private ExecutionContextFactory executionContextFactory;
 
     @Spy
-    private SubjectManager subjectManager = new SubjectManagerV1(mock(UserService.class));
+    private SubjectManager subjectManager = new SubjectManagerV1(mock(UserGatewayService.class));
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 

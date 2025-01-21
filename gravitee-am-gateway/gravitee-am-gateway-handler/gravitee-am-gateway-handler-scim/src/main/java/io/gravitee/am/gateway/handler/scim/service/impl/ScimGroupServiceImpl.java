@@ -21,6 +21,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.GroupRepository;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
@@ -33,7 +34,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -70,8 +70,6 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
 
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private Domain domain;
@@ -83,9 +81,12 @@ public class ScimGroupServiceImpl implements ScimGroupService, InitializingBean 
     private AuditService auditService;
 
     private GroupRepository groupRepository;
-    
+
+    private UserRepository userRepository;
+
     @Override
     public void afterPropertiesSet() throws Exception {
+        this.userRepository = dataPlaneRegistry.getUserRepository(domain);
         this.groupRepository = dataPlaneRegistry.getGroupRepository(domain);
     }
 

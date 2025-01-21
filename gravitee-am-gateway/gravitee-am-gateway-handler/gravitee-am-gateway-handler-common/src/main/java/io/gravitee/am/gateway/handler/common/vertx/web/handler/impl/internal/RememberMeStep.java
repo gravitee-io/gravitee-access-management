@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.rxjava3.core.Single;
@@ -38,10 +38,10 @@ public class RememberMeStep extends AuthenticationFlowStep {
     private static final Logger logger = LoggerFactory.getLogger(RememberMeStep.class);
 
     private final JWTService jwtService;
-    private final UserService userService;
+    private final UserGatewayService userService;
     private final String cookieName;
 
-    public RememberMeStep(Handler<RoutingContext> handler, JWTService jwtService, UserService userService, String cookieName) {
+    public RememberMeStep(Handler<RoutingContext> handler, JWTService jwtService, UserGatewayService userService, String cookieName) {
         super(handler);
         this.jwtService = jwtService;
         this.userService = userService;

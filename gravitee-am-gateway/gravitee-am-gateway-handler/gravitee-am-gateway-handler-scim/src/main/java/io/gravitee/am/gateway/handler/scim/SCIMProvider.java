@@ -31,7 +31,7 @@ import io.gravitee.am.gateway.handler.scim.resources.users.UsersEndpoint;
 import io.gravitee.am.gateway.handler.scim.service.BulkService;
 import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
 import io.gravitee.am.gateway.handler.scim.service.ServiceProviderConfigService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.model.Domain;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
@@ -60,7 +60,7 @@ public class SCIMProvider extends AbstractProtocolProvider {
     private ServiceProviderConfigService serviceProviderConfigService;
 
     @Autowired
-    private UserService userService;
+    private ProvisioningUserService userService;
 
     @Autowired
     private ScimGroupService groupService;

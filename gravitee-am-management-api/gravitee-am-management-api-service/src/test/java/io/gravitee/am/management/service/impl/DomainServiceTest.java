@@ -18,8 +18,10 @@ package io.gravitee.am.management.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
@@ -72,7 +74,6 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
@@ -82,7 +83,6 @@ import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -238,7 +238,7 @@ public class DomainServiceTest {
     private ExtensionGrantService extensionGrantService;
 
     @Mock
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Mock
     private UserActivityManagementService userActivityService;
@@ -1017,6 +1017,7 @@ public class DomainServiceTest {
         final AuthenticationDeviceNotifier authDeviceNotifier = new AuthenticationDeviceNotifier();
         authDeviceNotifier.setId(AUTH_DEVICE_ID);
 
+        when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(mockApplications));
@@ -1033,7 +1034,7 @@ public class DomainServiceTest {
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(complete());
-        when(userService.deleteByDomain(any())).thenReturn(complete());
+        when(userRepository.deleteByReference(any())).thenReturn(complete());
         when(userActivityService.deleteByDomain(any())).thenReturn(complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope), 0, 1)));
@@ -1089,7 +1090,7 @@ public class DomainServiceTest {
         verify(identityProviderService, times(1)).delete(DOMAIN_ID, IDP_ID);
         verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
         verify(roleService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
-        verify(userService, times(1)).deleteByDomain(any());
+        verify(userRepository, times(1)).deleteByReference(any());
         verify(userActivityService, times(1)).deleteByDomain(any());
         verify(scopeService, times(1)).delete(SCOPE_ID, true);
         verify(domainGroupService, times(1)).delete(any(), eq(GROUP_ID), any());
@@ -1108,6 +1109,7 @@ public class DomainServiceTest {
 
     @Test
     public void shouldDeleteWithoutRelatedData() {
+        when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
@@ -1116,7 +1118,7 @@ public class DomainServiceTest {
         when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(), 0, 1)));
-        when(userService.deleteByDomain(any())).thenReturn(complete());
+        when(userRepository.deleteByReference(any())).thenReturn(complete());
         when(userActivityService.deleteByDomain(any())).thenReturn(complete());
         when(domainGroupService.findAll(any())).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());

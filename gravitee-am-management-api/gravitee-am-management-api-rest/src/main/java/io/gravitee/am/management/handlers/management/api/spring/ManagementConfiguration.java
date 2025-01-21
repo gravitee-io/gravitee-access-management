@@ -24,11 +24,10 @@ import io.gravitee.am.management.handlers.management.api.authentication.service.
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration;
 import io.gravitee.am.management.handlers.management.api.spring.security.WebMvcConfiguration;
-import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -58,12 +57,11 @@ public class ManagementConfiguration {
     }
 
     @Bean
-    ScopeApprovalAdapter scopeApprovalAdapter(DomainService domainService,
-ScopeApprovalService scopeApprovalService,
+    ScopeApprovalAdapter scopeApprovalAdapter(ScopeApprovalService scopeApprovalService,
         ApplicationService applicationService,
         ScopeService scopeService,
-        UserService userService) {
-        return new ScopeApprovalAdapterImpl(domainService, scopeApprovalService, applicationService, scopeService, userService);
+        DataPlaneRegistry dataPlaneRegistry) {
+        return new ScopeApprovalAdapterImpl(scopeApprovalService, applicationService, scopeService, dataPlaneRegistry);
     }
     @Bean
     public UserBulkConfiguration bulkEndpointConfiguration(
