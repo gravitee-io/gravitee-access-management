@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import static io.gravitee.am.common.jwt.Claims.GIO_INTERNAL_SUB;
 import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_OBJECT_FROM_URI;
 import static io.gravitee.am.common.utils.ConstantKeys.STRONG_AUTH_COMPLETED_KEY;
@@ -128,6 +129,7 @@ public class AuthorizationRequestParseParametersHandler extends AbstractAuthoriz
         ctx.clearUser();
         ctx.session().remove(STRONG_AUTH_COMPLETED_KEY);
         ctx.session().remove(USER_ID_KEY);
+        ctx.session().remove(GIO_INTERNAL_SUB);
     }
 
     private void parsePKCEParameter(RoutingContext context, Client client) {
