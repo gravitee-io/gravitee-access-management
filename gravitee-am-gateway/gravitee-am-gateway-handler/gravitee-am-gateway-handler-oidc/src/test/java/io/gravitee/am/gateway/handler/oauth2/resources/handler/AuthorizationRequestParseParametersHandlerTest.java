@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.ResponseType;
 import io.gravitee.am.common.oidc.AcrValues;
@@ -432,6 +433,7 @@ public class AuthorizationRequestParseParametersHandlerTest extends RxWebTestBas
 
         Mockito.verify(session, times(1)).remove(STRONG_AUTH_COMPLETED_KEY);
         Mockito.verify(session, times(1)).remove(USER_ID_KEY);
+        Mockito.verify(session, times(1)).remove(Claims.GIO_INTERNAL_SUB);
     }
 
 
