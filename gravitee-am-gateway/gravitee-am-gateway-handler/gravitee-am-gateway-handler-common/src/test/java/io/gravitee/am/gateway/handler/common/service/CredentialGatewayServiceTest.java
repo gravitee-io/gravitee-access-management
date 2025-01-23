@@ -42,7 +42,6 @@ import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -65,17 +64,16 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class CredentialGatewayServiceTest {
 
-    @InjectMocks
-    private CredentialGatewayService credentialService = new CredentialGatewayServiceImpl();
-
-    @Mock
-    private CredentialRepository credentialRepository;
-
     @Mock
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private CredentialRepository credentialRepository;
+
+    private CredentialGatewayService credentialService;
 
     private final static String DOMAIN = "domain1";
 
@@ -86,6 +84,7 @@ public class CredentialGatewayServiceTest {
         this.domain.setId(DOMAIN);
         when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(dataPlaneRegistry.getCredentialRepository(any())).thenReturn(credentialRepository);
+        credentialService = new CredentialGatewayServiceImpl(dataPlaneRegistry);
     }
 
     @Test

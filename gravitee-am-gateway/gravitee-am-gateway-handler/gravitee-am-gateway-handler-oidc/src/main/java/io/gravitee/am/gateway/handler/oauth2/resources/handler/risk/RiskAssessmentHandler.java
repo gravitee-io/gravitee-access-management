@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.risk;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.model.Device;
@@ -29,7 +30,6 @@ import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessage;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
@@ -66,14 +66,14 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(RiskAssessmentHandler.class);
     private static final String RISK_ASSESSMENT_SERVICE = "service:risk-assessment";
-    private final DeviceService deviceService;
+    private final DeviceGatewayService deviceService;
     private final ObjectMapper objectMapper;
     private final EventBus eventBus;
     private final UserActivityGatewayService userActivityService;
     private final Domain domain;
 
     public RiskAssessmentHandler(
-            DeviceService deviceService,
+            DeviceGatewayService deviceService,
             UserActivityGatewayService userActivityService,
             EventBus eventBus,
             ObjectMapper objectMapper,
@@ -126,7 +126,7 @@ public class RiskAssessmentHandler implements Handler<RoutingContext> {
 
             if (deviceAssessment.isEnabled() && rememberDevice.isActive()) {
                 logger.debug("Decorating assessment with devices");
-                return deviceService.findByDomainAndUser(client.getDomain(), userId)
+                return deviceService.findByDomainAndUser(domain, userId)
                         .map(Device::getDeviceId)
                         .toList().flatMap(deviceIds -> {
                             assessmentMessage.getData().setDevices(new Devices()

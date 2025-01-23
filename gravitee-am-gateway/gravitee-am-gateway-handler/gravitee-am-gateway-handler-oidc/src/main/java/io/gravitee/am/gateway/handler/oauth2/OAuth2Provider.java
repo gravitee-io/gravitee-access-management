@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
@@ -75,7 +76,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.Trans
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.common.http.MediaType;
@@ -192,7 +192,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private ScopeManager scopeManager;
 
     @Autowired
-    private DeviceService deviceService;
+    private DeviceGatewayService deviceService;
 
     @Autowired
     private UserActivityGatewayService userActivityService;
