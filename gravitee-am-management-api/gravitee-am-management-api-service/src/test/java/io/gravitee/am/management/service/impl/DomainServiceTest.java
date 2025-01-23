@@ -1038,7 +1038,7 @@ public class DomainServiceTest {
         when(userActivityService.deleteByDomain(any())).thenReturn(complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope), 0, 1)));
-        when(scopeService.delete(SCOPE_ID, true)).thenReturn(complete());
+        when(scopeService.delete(any(), eq(SCOPE_ID), eq(true))).thenReturn(complete());
         when(group.getId()).thenReturn(GROUP_ID);
         when(domainGroupService.findAll(any())).thenReturn(Flowable.just(group));
         when(domainGroupService.delete(any(), anyString(), any())).thenReturn(complete());
@@ -1092,7 +1092,7 @@ public class DomainServiceTest {
         verify(roleService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
         verify(userRepository, times(1)).deleteByReference(any());
         verify(userActivityService, times(1)).deleteByDomain(any());
-        verify(scopeService, times(1)).delete(SCOPE_ID, true);
+        verify(scopeService, times(1)).delete(any(), eq(SCOPE_ID), eq(true));
         verify(domainGroupService, times(1)).delete(any(), eq(GROUP_ID), any());
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
@@ -1151,7 +1151,7 @@ public class DomainServiceTest {
         verify(identityProviderService, never()).delete(anyString(), anyString());
         verify(extensionGrantService, never()).delete(anyString(), anyString());
         verify(roleService, never()).delete(eq(DOMAIN), eq(DOMAIN_ID), anyString());
-        verify(scopeService, never()).delete(anyString(), anyBoolean());
+        verify(scopeService, never()).delete(any(), anyString(), anyBoolean());
         verify(formService, never()).delete(anyString(), anyString());
         verify(emailTemplateService, never()).delete(anyString());
         verify(reporterService, never()).delete(anyString());
