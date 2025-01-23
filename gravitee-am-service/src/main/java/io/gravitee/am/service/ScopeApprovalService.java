@@ -33,13 +33,13 @@ import java.util.List;
  */
 public interface ScopeApprovalService {
 
-    Maybe<ScopeApproval> findById(String id);
+    Maybe<ScopeApproval> findById(Domain domain, String id);
 
-    Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId);
+    Flowable<ScopeApproval> findByDomainAndUser(Domain domain, UserId userId);
 
-    Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String client);
+    Flowable<ScopeApproval> findByDomainAndUserAndClient(Domain domain, UserId userId, String client);
 
-    Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals, User principal);
+    Single<List<ScopeApproval>> saveConsent(Domain domain, Client client, List<ScopeApproval> approvals, User principal);
 
     Completable revokeByConsent(Domain domain, UserId userId, String consentId, User principal);
 

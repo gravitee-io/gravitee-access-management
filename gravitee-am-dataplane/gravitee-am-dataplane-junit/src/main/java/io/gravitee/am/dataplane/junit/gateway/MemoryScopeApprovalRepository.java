@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.junit.gateway;
+package io.gravitee.am.dataplane.junit.gateway;
 
+import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
+import io.gravitee.am.dataplane.junit.MemoryRepository;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
-import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
-import io.gravitee.am.repository.junit.MemoryRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -26,7 +26,7 @@ import io.reactivex.rxjava3.core.Single;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MemoryScopeApprovalRepository extends MemoryRepository<ScopeApproval, String> implements ScopeApprovalRepository {
+public class MemoryScopeApprovalRepository extends MemoryRepository<ScopeApproval, String> implements io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository {
 
 
     @Override

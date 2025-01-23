@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.model.NewScope;
@@ -55,7 +56,7 @@ public interface ScopeService {
 
     Single<Scope> update(String domain, String id, UpdateSystemScope updateScope);
 
-    Completable delete(String scopeId, boolean force, User principal);
+    Completable delete(Domain domain, String scopeId, boolean force, User principal);
 
     Single<Page<Scope>> search(String domain, String query, int page, int size);
 
@@ -77,7 +78,7 @@ public interface ScopeService {
         return update(domain, id, updateScope, null);
     }
 
-    default Completable delete(String scopeId, boolean force) {
-        return delete(scopeId, force, null);
+    default Completable delete(Domain domain, String scopeId, boolean force) {
+        return delete(domain, scopeId, force, null);
     }
 }

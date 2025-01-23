@@ -65,7 +65,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
         doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
-        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findById(scopeApproval.getId());
+        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findById(mockDomain, scopeApproval.getId());
 
         final Response response = target("domains")
                 .path(domainId)
