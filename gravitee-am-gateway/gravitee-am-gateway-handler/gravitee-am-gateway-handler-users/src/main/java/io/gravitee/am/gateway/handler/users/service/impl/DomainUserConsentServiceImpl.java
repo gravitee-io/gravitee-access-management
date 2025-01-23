@@ -44,17 +44,17 @@ public class DomainUserConsentServiceImpl implements DomainUserConsentService {
 
     @Override
     public Single<Set<ScopeApproval>> consents(UserId userId) {
-        return scopeApprovalService.findByDomainAndUser(domain.getId(), userId).collect(HashSet::new, Set::add);
+        return scopeApprovalService.findByDomainAndUser(domain, userId).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Single<Set<ScopeApproval>> consents(UserId userId, String clientId) {
-        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), userId, clientId).collect(HashSet::new, Set::add);
+        return scopeApprovalService.findByDomainAndUserAndClient(domain, userId, clientId).collect(HashSet::new, Set::add);
     }
 
     @Override
     public Maybe<ScopeApproval> consent(String consentId) {
-        return scopeApprovalService.findById(consentId)
+        return scopeApprovalService.findById(domain, consentId)
                 .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consentId)));
     }
 

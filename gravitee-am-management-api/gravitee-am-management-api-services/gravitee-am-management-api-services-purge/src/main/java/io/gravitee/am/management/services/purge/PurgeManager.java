@@ -50,10 +50,10 @@ public class PurgeManager {
 
     @Lazy
     @Autowired
-    protected LoginAttemptRepository loginAttemptRepository;
+    protected LoginAttemptRepository loginAttemptRepository; // FIXME Need use DataPlane Repository
     @Lazy
     @Autowired
-    protected PermissionTicketRepository permissionTicketRepository;
+    protected PermissionTicketRepository permissionTicketRepository;  // FIXME Need use DataPlane Repository
     @Lazy
     @Autowired
     protected AccessTokenRepository accessTokenRepository;
@@ -65,7 +65,7 @@ public class PurgeManager {
     protected RequestObjectRepository requestObjectRepository;
     @Lazy
     @Autowired
-    protected ScopeApprovalRepository scopeApprovalRepository;
+    protected ScopeApprovalRepository scopeApprovalRepository; // FIXME Need use DataPlane Repository
     @Lazy
     @Autowired
     protected AuthorizationCodeRepository authorizationCodeRepository;
@@ -80,10 +80,10 @@ public class PurgeManager {
     protected CibaAuthRequestRepository cibaAuthRequestRepository;
     @Lazy
     @Autowired
-    protected DeviceRepository deviceRepository;
+    protected DeviceRepository deviceRepository; // FIXME Need use DataPlane Repository
     @Lazy
     @Autowired
-    protected UserActivityRepository userActivityRepository;
+    protected UserActivityRepository userActivityRepository;  // FIXME Need use DataPlane Repository
 
     protected List<TableName> tables = asList(TableName.values());
 

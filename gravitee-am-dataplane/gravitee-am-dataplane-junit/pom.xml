@@ -21,38 +21,26 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.gravitee.am</groupId>
-        <artifactId>gravitee-am-parent</artifactId>
+        <groupId>io.gravitee.am.dataplane</groupId>
+        <artifactId>gravitee-am-dataplane</artifactId>
         <version>4.7.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.dataplane</groupId>
-    <artifactId>gravitee-am-dataplane</artifactId>
-    <packaging>pom</packaging>
-
-    <name>Gravitee IO - Access Management - DataPlane</name>
-    <modules>
-        <module>gravitee-am-dataplane-api</module>
-        <module>gravitee-am-dataplane-test</module>
-        <module>gravitee-am-dataplane-mongodb</module>
-        <module>gravitee-am-dataplane-junit</module>
-    </modules>
-
-    <properties>
-        <skip-dataplane-tests>true</skip-dataplane-tests>
-        <maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
-    </properties>
-
+    <artifactId>gravitee-am-dataplane-junit</artifactId>
+    <name>Gravitee IO - Access Management - DataPlane JUnit</name>
 
     <dependencies>
         <dependency>
-            <groupId>io.gravitee.am.model</groupId>
-            <artifactId>gravitee-am-model</artifactId>
+            <groupId>io.gravitee.am.dataplane</groupId>
+            <artifactId>gravitee-am-dataplane-api</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
-            <groupId>io.gravitee.plugin</groupId>
-            <artifactId>gravitee-plugin-core</artifactId>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-api</artifactId>
+            <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
