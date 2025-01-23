@@ -33,6 +33,7 @@ import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DeviceIdentifierPluginService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
@@ -48,6 +49,7 @@ import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
+import io.gravitee.am.management.service.dataplane.DeviceManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
@@ -58,7 +60,6 @@ import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DeviceIdentifierService;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
@@ -66,7 +67,6 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationGroupService;
@@ -260,7 +260,7 @@ public abstract class JerseySpringTest {
     protected DeviceIdentifierService deviceIdentifierService;
 
     @Autowired
-    protected DeviceService deviceService;
+    protected DeviceManagementService deviceService;
 
     @Autowired
     protected AuthenticationDeviceNotifierPluginService authDeviceNotifierPluginService;
@@ -577,8 +577,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public DeviceService deviceService() {
-            return mock(DeviceService.class);
+        public DeviceManagementService deviceService() {
+            return mock(DeviceManagementService.class);
         }
 
         @Bean

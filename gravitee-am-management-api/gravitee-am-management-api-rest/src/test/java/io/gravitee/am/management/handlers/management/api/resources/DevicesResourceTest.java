@@ -29,6 +29,7 @@ import org.mockito.Mockito;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -54,7 +55,7 @@ public class DevicesResourceTest extends JerseySpringTest {
 
         doReturn(Flowable.just(
                 List.of(device, device2, device3)
-        )).when(deviceService).findByDomainAndUser(Mockito.eq(domainId), Mockito.any());
+        )).when(deviceService).findByDomainAndUser(any(), Mockito.any());
         doReturn(Maybe.just(user)).when(userService).findById(mockDomain, userId);
 
         final Response response = target("domains")
