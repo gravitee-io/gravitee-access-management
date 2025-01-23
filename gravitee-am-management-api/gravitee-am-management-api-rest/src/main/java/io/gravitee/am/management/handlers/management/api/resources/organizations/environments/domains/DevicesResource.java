@@ -18,10 +18,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.ManagementUserService;
+import io.gravitee.am.management.service.dataplane.DeviceManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.MediaType;
@@ -57,7 +57,7 @@ public class DevicesResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private DeviceService deviceService;
+    private DeviceManagementService deviceService;
 
     @Autowired
     private ManagementUserService userService;
@@ -83,9 +83,10 @@ public class DevicesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER_DEVICE, Acl.LIST)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMap(domain -> this.userService.findById(domain, userId))
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
-                        .flatMapSingle(user -> this.deviceService.findByDomainAndUser(domainId, user.getFullId()).toList()))
+                        .flatMap(domain ->
+                                this.userService.findById(domain, userId)
+                                        .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                                        .flatMapSingle(user -> this.deviceService.findByDomainAndUser(domain, user.getFullId()).toList())))
                 .subscribe(response::resume, response::resume);
     }
 

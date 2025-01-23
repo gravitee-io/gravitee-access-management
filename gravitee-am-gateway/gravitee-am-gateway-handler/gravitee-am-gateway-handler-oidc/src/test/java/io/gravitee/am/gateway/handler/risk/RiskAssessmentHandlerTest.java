@@ -19,6 +19,7 @@ package io.gravitee.am.gateway.handler.risk;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.risk.RiskAssessmentHandler;
@@ -29,7 +30,6 @@ import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.risk.assessment.api.assessment.Assessment;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
@@ -73,7 +73,7 @@ import static org.mockito.Mockito.when;
 public class RiskAssessmentHandlerTest {
 
     @Mock
-    private DeviceService deviceService;
+    private DeviceGatewayService deviceService;
 
     @Mock
     private UserActivityGatewayService userActivityService;
@@ -170,7 +170,7 @@ public class RiskAssessmentHandlerTest {
         when(eventBus.request(anyString(), anyString())).thenReturn(Single.just(mockMessage));
 
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), any());
+                .when(deviceService).findByDomainAndUser(any(), any());
 
         handler.handle(routingContext);
 
@@ -196,7 +196,7 @@ public class RiskAssessmentHandlerTest {
         routingContext.session().put(DEVICE_ID, "deviceId");
 
         doReturn(Flowable.error(new IllegalArgumentException()))
-                .when(deviceService).findByDomainAndUser(anyString(), any());
+                .when(deviceService).findByDomainAndUser(any(), any());
 
         handler.handle(routingContext);
 

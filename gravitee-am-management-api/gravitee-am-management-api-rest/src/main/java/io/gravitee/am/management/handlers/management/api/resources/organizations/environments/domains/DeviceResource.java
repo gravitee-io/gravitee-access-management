@@ -17,10 +17,10 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.dataplane.DeviceManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,7 +43,7 @@ public class DeviceResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private DeviceService deviceService;
+    private DeviceManagementService deviceService;
 
     @DELETE
     @Operation(summary = "Delete a device",
@@ -56,15 +56,15 @@ public class DeviceResource extends AbstractResource {
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @PathParam("device") String device,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER_DEVICE, Acl.DELETE)
-                .andThen(domainService.findById(domain).switchIfEmpty(Maybe.error(new DomainNotFoundException(domain))))
-                .flatMapCompletable(__ -> deviceService.delete(domain, UserId.internal(user), device, authenticatedUser))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER_DEVICE, Acl.DELETE)
+                .andThen(domainService.findById(domainId).switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId))))
+                .flatMapCompletable(domain -> deviceService.delete(domain, UserId.internal(user), device, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
