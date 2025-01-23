@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -23,9 +25,9 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ScopeRepository;
-import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.MalformedIconUriException;
 import io.gravitee.am.service.exception.ScopeAlreadyExistsException;
@@ -43,6 +45,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -68,6 +71,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -104,7 +108,15 @@ public class ScopeServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
+
     private final static String DOMAIN = "domain1";
+
+    @Before
+    public void setUp() throws Exception {
+        lenient().when(dataPlaneRegistry.getScopeApprovalRepository(any())).thenReturn(scopeApprovalRepository);
+    }
 
     @Test
     public void shouldFindById() {
@@ -600,7 +612,7 @@ public class ScopeServiceTest {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.empty());
 
         TestObserver testObserver = new TestObserver();
-        scopeService.delete("my-scope", false).subscribe(testObserver);
+        scopeService.delete(new Domain(DOMAIN), "my-scope", false).subscribe(testObserver);
 
         testObserver.assertError(ScopeNotFoundException.class);
         testObserver.assertNotComplete();
@@ -611,7 +623,7 @@ public class ScopeServiceTest {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver();
-        scopeService.delete("my-scope", false).subscribe(testObserver);
+        scopeService.delete(new Domain(DOMAIN), "my-scope", false).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -622,7 +634,7 @@ public class ScopeServiceTest {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
 
         TestObserver testObserver = new TestObserver();
-        scopeService.delete("my-scope", false).subscribe(testObserver);
+        scopeService.delete(new Domain(DOMAIN), "my-scope", false).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -633,7 +645,7 @@ public class ScopeServiceTest {
         when(scopeRepository.findById("my-scope")).thenReturn(Maybe.just(new Scope()));
 
         TestObserver testObserver = new TestObserver();
-        scopeService.delete("my-scope", false).subscribe(testObserver);
+        scopeService.delete(new Domain(DOMAIN), "my-scope", false).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -650,7 +662,7 @@ public class ScopeServiceTest {
         when(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = scopeService.delete("my-scope", false).test();
+        TestObserver testObserver = scopeService.delete(new Domain(DOMAIN), "my-scope", false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -689,7 +701,7 @@ public class ScopeServiceTest {
         when(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = scopeService.delete("my-scope", false).test();
+        TestObserver testObserver = scopeService.delete(new Domain(DOMAIN), "my-scope", false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -710,7 +722,7 @@ public class ScopeServiceTest {
         scope.setSystem(true);
         when(scopeRepository.findById("scope-id")).thenReturn(Maybe.just(scope));
 
-        TestObserver testObserver = scopeService.delete("scope-id", false).test();
+        TestObserver testObserver = scopeService.delete(new Domain(DOMAIN), "scope-id", false).test();
         testObserver.assertError(SystemScopeDeleteException.class);
         testObserver.assertNotComplete();
     }

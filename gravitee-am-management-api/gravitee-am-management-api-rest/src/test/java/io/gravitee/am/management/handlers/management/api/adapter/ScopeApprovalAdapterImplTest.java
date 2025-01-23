@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.management.handlers.management.api.adapter;
 
+import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.junit.gateway.MemoryScopeApprovalRepository;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
@@ -24,8 +26,6 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
-import io.gravitee.am.repository.junit.gateway.MemoryScopeApprovalRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.ApplicationService;
@@ -56,7 +56,7 @@ class ScopeApprovalAdapterImplTest {
     private final RefreshTokenRepository refreshTokenRepository = mock();
 
     private final ScopeApprovalRepository scopeApprovalRepository = new MemoryScopeApprovalRepository();
-    private final ScopeApprovalService scopeApprovalService = new ScopeApprovalServiceImpl(scopeApprovalRepository, accessTokenRepository, refreshTokenRepository, dataPlaneRegistry, mock());
+    private final ScopeApprovalService scopeApprovalService = new ScopeApprovalServiceImpl(accessTokenRepository, refreshTokenRepository, dataPlaneRegistry, mock());
     private final ApplicationService appService = mock();
     private final ScopeService scopeService = mock();
 
@@ -65,6 +65,7 @@ class ScopeApprovalAdapterImplTest {
     @BeforeEach
     void setUp() {
         when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
+        when(dataPlaneRegistry.getScopeApprovalRepository(any())).thenReturn(scopeApprovalRepository);
     }
 
     @Test
