@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Set;
@@ -43,13 +44,13 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class UserServiceTest {
+public class DomainUserConsentServiceTest {
 
     @InjectMocks
     private DomainUserConsentService userService = new DomainUserConsentServiceImpl();
 
-    @Mock
-    private Domain domain;
+    @Spy
+    private Domain domain = new Domain("domainId");
 
     @Mock
     private ScopeApprovalService scopeApprovalService;
@@ -57,16 +58,13 @@ public class UserServiceTest {
     @Test
     public void shouldFindUserConsents() {
         final String userId = "userId";
-        final String domainId = "domainId";
-
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId("consentId");
         scopeApproval.setUserId(UserId.internal(userId));
         scopeApproval.setClientId("");
         scopeApproval.setScope("");
 
-        when(domain.getId()).thenReturn(domainId);
-        when(scopeApprovalService.findByDomainAndUser(domainId, UserId.internal(userId))).thenReturn(Flowable.just(scopeApproval));
+        when(scopeApprovalService.findByDomainAndUser(domain, UserId.internal(userId))).thenReturn(Flowable.just(scopeApproval));
 
         TestObserver<Set<ScopeApproval>> testObserver = userService.consents(UserId.internal(userId)).test();
 
@@ -80,7 +78,7 @@ public class UserServiceTest {
         final ScopeApproval scopeApproval = new ScopeApproval();
         scopeApproval.setId("consentId");
 
-        when(scopeApprovalService.findById("consentId")).thenReturn(Maybe.just(scopeApproval));
+        when(scopeApprovalService.findById(domain, "consentId")).thenReturn(Maybe.just(scopeApproval));
 
         TestObserver<ScopeApproval> testObserver = userService.consent("consentId").test();
 
@@ -92,7 +90,7 @@ public class UserServiceTest {
     @Test
     public void shouldNotFindUserConsent_consentNotFound() {
 
-        when(scopeApprovalService.findById(anyString())).thenReturn(Maybe.empty());
+        when(scopeApprovalService.findById(any(), anyString())).thenReturn(Maybe.empty());
 
         userService.consent("consentId").test()
                 .assertNotComplete()
