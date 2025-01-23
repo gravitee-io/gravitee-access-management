@@ -31,9 +31,8 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 
 import java.util.Date;
 import java.util.List;
@@ -47,11 +46,10 @@ import static io.gravitee.am.model.ReferenceType.DOMAIN;
  * @author GraviteeSource Team
  */
 @Slf4j
+@AllArgsConstructor
 public class CredentialGatewayServiceImpl implements CredentialGatewayService {
 
-    @Lazy
-    @Autowired
-    private DataPlaneRegistry dataPlaneRegistry;
+    private final DataPlaneRegistry dataPlaneRegistry;
 
     //FIXME do we have to keep RefTyp & RefId into the repository signatures ?
     //FIXME do we have to create a business Rule for the delete/update method to avoid logic duplication between mAPI and GW?

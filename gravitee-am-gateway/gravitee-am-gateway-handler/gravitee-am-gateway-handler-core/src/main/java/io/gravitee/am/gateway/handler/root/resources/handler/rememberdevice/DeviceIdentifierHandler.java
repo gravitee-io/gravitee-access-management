@@ -16,14 +16,16 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice;
 
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.DeviceService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.AllArgsConstructor;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -38,13 +40,11 @@ import static java.util.Optional.ofNullable;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@AllArgsConstructor
 public class DeviceIdentifierHandler implements Handler<RoutingContext> {
 
-    private final DeviceService deviceService;
-
-    public DeviceIdentifierHandler(DeviceService deviceService) {
-        this.deviceService = deviceService;
-    }
+    private final Domain domain;
+    private final DeviceGatewayService deviceService;
 
     @Override
     public void handle(RoutingContext routingContext) {
@@ -65,7 +65,6 @@ public class DeviceIdentifierHandler implements Handler<RoutingContext> {
     }
 
     private void checkIfDeviceExists(RoutingContext routingContext, Client client, User user, RememberDeviceSettings rememberDeviceSettings) {
-        var domain = client.getDomain();
         var deviceId = routingContext.request().getParam(DEVICE_ID);
         var deviceIdentifierId = rememberDeviceSettings.getDeviceIdentifierId();
         if (isNullOrEmpty(deviceId)) {

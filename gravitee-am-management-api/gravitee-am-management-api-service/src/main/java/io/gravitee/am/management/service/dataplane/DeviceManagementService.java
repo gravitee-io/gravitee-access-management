@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+
+package io.gravitee.am.management.service.dataplane;
+
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Device;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
 
 /**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeviceService {
+public interface DeviceManagementService {
 
-    Flowable<Device> findByDomainAndUser(String domain, UserId user);
+    Flowable<Device> findByDomainAndUser(Domain domain, UserId user);
 
-    Single<Boolean> deviceExists(String domain, String client, UserId user, String rememberDevice, String deviceId);
-
-    Single<Device> create(String domain, String client, UserId user, String rememberDevice, String type, Long timeExpirationMs, String deviceId);
-
-    Completable delete(String domain, UserId user, String id, User authenticatedUser);
+    Completable delete(Domain domain, UserId user, String id, User authenticatedUser);
 
 }
