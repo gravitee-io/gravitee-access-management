@@ -24,6 +24,7 @@ import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
@@ -48,7 +49,6 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.EnrolledFactorProperties;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
@@ -138,7 +138,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final FactorManager factorManager;
     private final UserService userService;
     private final ApplicationContext applicationContext;
-    private final DeviceService deviceService;
+    private final DeviceGatewayService deviceService;
     private final Domain domain;
     private final CredentialGatewayService credentialService;
     private final RateLimiterService rateLimiterService;
@@ -149,7 +149,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     public MFAChallengeEndpoint(FactorManager factorManager,
                                 UserService userService,
                                 TemplateEngine engine,
-                                DeviceService deviceService,
+                                DeviceGatewayService deviceService,
                                 ApplicationContext applicationContext,
                                 Domain domain,
                                 CredentialGatewayService credentialService,
@@ -694,14 +694,14 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
             doRedirect(routingContext.response(), redirectUrl);
         } else {
-            this.deviceService.deviceExists(client.getDomain(), client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
+            this.deviceService.deviceExists(domain, client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
                 if (Boolean.FALSE.equals(isEmpty)) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
                     return Maybe.empty();
                 }
                 var deviceType = routingContext.session().<String>get(DEVICE_TYPE);
                 return this.deviceService.create(
-                                client.getDomain(),
+                                domain,
                                 client.getClientId(),
                                 userId,
                                 rememberDeviceId,
