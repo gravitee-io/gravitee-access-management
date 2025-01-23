@@ -13,27 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
 
-import io.gravitee.am.identityprovider.api.DefaultUser;
+package io.gravitee.am.gateway.handler.common.service;
+
+
+/**
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+
+import io.gravitee.am.dataplane.api.repository.DeviceRepository;
+import io.gravitee.am.gateway.handler.common.service.impl.DeviceGatewayServiceImpl;
 import io.gravitee.am.model.Device;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserId;
-import io.gravitee.am.repository.management.api.DeviceRepository;
-import io.gravitee.am.service.exception.DeviceNotFoundException;
-import io.gravitee.am.service.impl.DeviceServiceImpl;
-import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
 import java.util.List;
@@ -43,29 +49,25 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-/**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
- * @author GraviteeSource Team
- */
-@RunWith(MockitoJUnitRunner.class)
-public class DeviceServiceTest {
-
-    @InjectMocks
-    private DeviceService deviceService = new DeviceServiceImpl();
+@ExtendWith(MockitoExtension.class)
+public class DeviceGatewayServiceTest {
 
     @Mock
     private DeviceRepository deviceRepository;
 
     @Mock
-    private AuditService auditService;
+    private DataPlaneRegistry dataPlaneRegistry;
 
-    private final static String DOMAIN = "domain1";
-    private final static String DOMAIN2 = "domain2";
+    @InjectMocks
+    private DeviceGatewayService deviceService = new DeviceGatewayServiceImpl(dataPlaneRegistry);
+
+    private final static Domain DOMAIN = new Domain("domain1");
+    private final static Domain DOMAIN2 = new Domain("domain2");
     private final static String CLIENT = "client1";
     private final static UserId USER = UserId.internal("user1");
     private final static String DEVICE_IDENTIFIER = "rememberDevice1";
@@ -78,13 +80,12 @@ public class DeviceServiceTest {
     private Device device1;
     private Device device2;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        doNothing().when(auditService).report(any());
         createdAt = new Date();
         expiresAt = new Date(System.currentTimeMillis() + 7200);
         device1 = new Device().setId(UUID.randomUUID().toString()).setReferenceType(ReferenceType.DOMAIN)
-                .setReferenceId(DOMAIN)
+                .setReferenceId(DOMAIN.getId())
                 .setClient(CLIENT)
                 .setUserId(USER)
                 .setDeviceIdentifierId(DEVICE_IDENTIFIER)
@@ -94,7 +95,7 @@ public class DeviceServiceTest {
                 .setExpiresAt(expiresAt);
 
         device2 = new Device().setId(UUID.randomUUID().toString()).setReferenceType(ReferenceType.DOMAIN)
-                .setReferenceId(DOMAIN)
+                .setReferenceId(DOMAIN.getId())
                 .setClient(CLIENT)
                 .setUserId(USER)
                 .setDeviceIdentifierId(REMEMBER_DEVICE2)
@@ -102,30 +103,32 @@ public class DeviceServiceTest {
                 .setDeviceId(DEVICE2)
                 .setCreatedAt(createdAt)
                 .setExpiresAt(expiresAt);
+
+        when(dataPlaneRegistry.getDeviceRepository(any())).thenReturn(deviceRepository);
     }
 
     @Test
     public void mustFindByDomainAndApplicationAndUser() {
-        doReturn(Flowable.fromIterable(List.of(device1, device2))).when(deviceRepository).findByDomainAndClientAndUser(DOMAIN, USER);
+        doReturn(Flowable.fromIterable(List.of(device1, device2))).when(deviceRepository).findByDomainAndClientAndUser(DOMAIN.getId(), USER);
 
         final TestSubscriber<Device> testFull = deviceService.findByDomainAndUser(DOMAIN, USER).test();
         testFull.awaitDone(10, TimeUnit.SECONDS);
         testFull.assertNoErrors();
         testFull.assertValueCount(2);
 
-        verify(deviceRepository, times(1)).findByDomainAndClientAndUser(DOMAIN, USER);
+        verify(deviceRepository, times(1)).findByDomainAndClientAndUser(DOMAIN.getId(), USER);
     }
 
     @Test
     public void mustFindNothing() {
-        doReturn(Flowable.fromIterable(List.of())).when(deviceRepository).findByDomainAndClientAndUser(DOMAIN2, USER);
+        doReturn(Flowable.fromIterable(List.of())).when(deviceRepository).findByDomainAndClientAndUser(DOMAIN2.getId(), USER);
 
         final TestSubscriber<Device> testEmpty = deviceService.findByDomainAndUser(DOMAIN2, USER).test();
         testEmpty.awaitDone(10, TimeUnit.SECONDS);
         testEmpty.assertNoErrors();
         testEmpty.assertValueCount(0);
 
-        verify(deviceRepository, times(1)).findByDomainAndClientAndUser(DOMAIN2, USER);
+        verify(deviceRepository, times(1)).findByDomainAndClientAndUser(DOMAIN2.getId(), USER);
     }
 
     @Test
@@ -140,8 +143,8 @@ public class DeviceServiceTest {
 
     @Test
     public void mustReturn_SingleBoolean() {
-        doReturn(Maybe.empty()).when(deviceRepository).findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(DOMAIN, CLIENT, USER, DEVICE_IDENTIFIER, DEVICE1);
-        doReturn(Maybe.just(device2)).when(deviceRepository).findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(DOMAIN2, CLIENT, USER, DEVICE_IDENTIFIER, DEVICE1);
+        doReturn(Maybe.empty()).when(deviceRepository).findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(DOMAIN.getId(), CLIENT, USER, DEVICE_IDENTIFIER, DEVICE1);
+        doReturn(Maybe.just(device2)).when(deviceRepository).findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(DOMAIN2.getId(), CLIENT, USER, DEVICE_IDENTIFIER, DEVICE1);
 
         final TestObserver<Boolean> testObserverEmpty = deviceService.deviceExists(DOMAIN, CLIENT, USER, DEVICE_IDENTIFIER, DEVICE1).test();
         testObserverEmpty.awaitDone(10, TimeUnit.SECONDS);
@@ -152,32 +155,5 @@ public class DeviceServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
         testObserver.assertValue(FALSE::equals);
-    }
-
-    @Test
-    public void mustNotDelete_deviceDoesNotExist() {
-        doReturn(Maybe.empty()).when(deviceRepository).findById(device1.getId());
-
-        deviceService.delete(DOMAIN, USER, device1.getId(), new DefaultUser())
-                .test()
-                .assertFailure(DeviceNotFoundException.class);
-    }
-
-    @Test
-    public void mustNotDelete_deviceDoesNotBelongToContext() {
-        doReturn(Maybe.just(device1)).when(deviceRepository).findById(device1.getId());
-
-        deviceService.delete(DOMAIN2, USER, device1.getId(), new DefaultUser())
-                .test()
-                .assertFailure(DeviceNotFoundException.class);
-    }
-
-    @Test
-    public void mustDeleteDevice() {
-        doReturn(Maybe.just(device1)).when(deviceRepository).findById(device1.getId());
-        doReturn(Completable.complete()).when(deviceRepository).delete(device1.getId());
-
-        deviceService.delete(DOMAIN, USER, device1.getId(), new DefaultUser())
-                .test().assertNoErrors();
     }
 }
