@@ -578,7 +578,7 @@ public class DomainServiceImpl implements DomainService {
                             // delete scopes
                             .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
                                     .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(s.getId(), true)).toList();
+                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(domain, s.getId(), true)).toList();
                                         return Completable.concat(deleteScopesCompletable);
                                     })
                             )
