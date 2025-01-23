@@ -18,12 +18,10 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.AuditService;
@@ -65,10 +63,6 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
 
     @Lazy
     @Autowired
-    private ScopeApprovalRepository scopeApprovalRepository;
-
-    @Lazy
-    @Autowired
     private AccessTokenRepository accessTokenRepository;
 
     @Lazy
@@ -82,9 +76,9 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     private AuditService auditService;
 
     @Override
-    public Maybe<ScopeApproval> findById(String id) {
+    public Maybe<ScopeApproval> findById(Domain domain, String id) {
         LOGGER.debug("Find scope approval by id: {}", id);
-        return scopeApprovalRepository.findById(id)
+        return dataPlaneRegistry.getScopeApprovalRepository(domain).findById(id)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a scope approval by id: {}", id);
                     return Maybe.error(new TechnicalManagementException(
@@ -93,9 +87,9 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId) {
+    public Flowable<ScopeApproval> findByDomainAndUser(Domain domain, UserId userId) {
         LOGGER.debug("Find scope approvals by domain: {} and user: {}", domain, userId);
-        return scopeApprovalRepository.findByDomainAndUser(domain, userId)
+        return dataPlaneRegistry.getScopeApprovalRepository(domain).findByDomainAndUser(domain.getId(), userId)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a scope approval for domain: {} and user: {}", domain, userId);
                     return Flowable.error(new TechnicalManagementException(
@@ -104,9 +98,9 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String client) {
+    public Flowable<ScopeApproval> findByDomainAndUserAndClient(Domain domain, UserId userId, String client) {
         LOGGER.debug("Find scope approvals by domain: {} and user: {} and client: {}", domain, userId, client);
-        return scopeApprovalRepository.findByDomainAndUserAndClient(domain, userId, client)
+        return dataPlaneRegistry.getScopeApprovalRepository(domain).findByDomainAndUserAndClient(domain.getId(), userId, client)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find a scope approval for domain: {}, user: {} and client: {}", domain, userId, client);
                     return Flowable.error(new TechnicalManagementException(
@@ -115,19 +109,19 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Single<List<ScopeApproval>> saveConsent(String domain, Client client, List<ScopeApproval> approvals, User principal) {
+    public Single<List<ScopeApproval>> saveConsent(Domain domain, Client client, List<ScopeApproval> approvals, User principal) {
         LOGGER.debug("Save approvals for user: {}", approvals.get(0).getUserId());
         return Observable.fromIterable(approvals)
-                .flatMapSingle(approval -> scopeApprovalRepository.upsert(approval))
+                .flatMapSingle(approval -> dataPlaneRegistry.getScopeApprovalRepository(domain).upsert(approval))
                 .toList()
                 .doOnSuccess(__ -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
-                        .reference(Reference.domain(domain))
+                        .reference(domain.asReference())
                         .client(client)
                         .principal(principal)
                         .type(EventType.USER_CONSENT_CONSENTED)
                         .approvals(approvals)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
-                        .reference(Reference.domain(domain))
+                        .reference(domain.asReference())
                         .client(client)
                         .principal(principal)
                         .type(EventType.USER_CONSENT_CONSENTED)
@@ -142,6 +136,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     @Override
     public Completable revokeByConsent(Domain domain, UserId userId, String consentId, User principal) {
         LOGGER.debug("Revoke approval for consent: {} and user: {}", consentId, userId);
+        final var scopeApprovalRepository = dataPlaneRegistry.getScopeApprovalRepository(domain);
         return dataPlaneRegistry.getUserRepository(domain).findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> scopeApprovalRepository.findById(consentId)
@@ -149,13 +144,13 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                         .flatMapCompletable(scopeApproval -> scopeApprovalRepository.delete(consentId)
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
                                         .type(EventType.USER_CONSENT_REVOKED)
-                                        .reference(Reference.domain(domain.getId()))
+                                        .reference(domain.asReference())
                                         .principal(principal)
                                         .user(user)
                                         .approvals(Collections.singleton(scopeApproval))))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
                                         .type(EventType.USER_CONSENT_REVOKED)
-                                        .reference(Reference.domain(domain.getId()))
+                                        .reference(domain.asReference())
                                         .principal(principal)
                                         .user(user)
                                         .throwable(throwable)))
@@ -175,20 +170,20 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     @Override
     public Completable revokeByUser(Domain domain, UserId userId, User principal) {
         LOGGER.debug("Revoke approvals for domain: {} and user: {}", domain, userId);
-
+        final var scopeApprovalRepository = dataPlaneRegistry.getScopeApprovalRepository(domain);
         return dataPlaneRegistry.getUserRepository(domain).findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> scopeApprovalRepository.findByDomainAndUser(domain.getId(), user.getFullId()).collect(HashSet<ScopeApproval>::new, Set::add)
                         .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUser(domain.getId(), user.getFullId())
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
                                         .type(EventType.USER_CONSENT_REVOKED)
-                                        .reference(Reference.domain(domain.getId()))
+                                        .reference(domain.asReference())
                                         .principal(principal)
                                         .user(user)
                                         .approvals(scopeApprovals)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
                                         .type(EventType.USER_CONSENT_REVOKED)
-                                        .reference(Reference.domain(domain.getId()))
+                                        .reference(domain.asReference())
                                         .principal(principal)
                                         .user(user)
                                         .throwable(throwable))))
@@ -208,6 +203,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     @Override
     public Completable revokeByUserAndClient(Domain domain, UserId userId, String clientId, User principal) {
         LOGGER.debug("Revoke approvals for domain: {}, user: {} and client: {}", domain, userId, clientId);
+        final var scopeApprovalRepository = dataPlaneRegistry.getScopeApprovalRepository(domain);
         return dataPlaneRegistry.getUserRepository(domain).findById(userId)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
                 .flatMapCompletable(user -> scopeApprovalRepository.findByDomainAndUserAndClient(domain.getId(), user.getFullId(), clientId)
@@ -215,13 +211,13 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                         .flatMapCompletable(scopeApprovals -> scopeApprovalRepository.deleteByDomainAndUserAndClient(domain.getId(), user.getFullId(), clientId)
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
                                         .type(EventType.USER_CONSENT_REVOKED)
-                                        .reference(Reference.domain(domain.getId()))
+                                        .reference(domain.asReference())
                                         .principal(principal)
                                         .user(user)
                                         .approvals(scopeApprovals)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserConsentAuditBuilder.class)
                                         .type(EventType.USER_CONSENT_REVOKED)
-                                        .reference(Reference.domain(domain.getId()))
+                                        .reference(domain.asReference())
                                         .principal(principal)
                                         .user(user)
                                         .throwable(throwable))))

@@ -20,7 +20,6 @@ import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeEntity;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
@@ -48,13 +47,13 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
     public Single<List<ScopeApprovalEntity>> getUserConsents(Domain domain, String rawUserId, String clientId) {
         var userId = UserId.internal(rawUserId);
         return dataPlaneRegistry.getUserRepository(domain)
-                        .findById(Reference.domain(domain.getId()), userId)
+                        .findById(domain.asReference(), userId)
                         .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
                 .flatMapPublisher(u -> {
                     if (clientId == null || clientId.isEmpty()) {
-                        return scopeApprovalService.findByDomainAndUser(domain.getId(), u.getFullId());
+                        return scopeApprovalService.findByDomainAndUser(domain, u.getFullId());
                     }
-                    return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), u.getFullId(), clientId);
+                    return scopeApprovalService.findByDomainAndUserAndClient(domain, u.getFullId(), clientId);
                 })
                 .flatMapSingle(scopeApproval ->
                         getClient(scopeApproval.getDomain(), scopeApproval.getClientId())

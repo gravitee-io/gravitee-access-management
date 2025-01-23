@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -28,8 +29,8 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oauth2.Scope;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.ScopeRepository;
-import io.gravitee.am.repository.gateway.api.ScopeApprovalRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
@@ -81,10 +82,6 @@ public class ScopeServiceImpl implements ScopeService {
     @Autowired
     private ScopeRepository scopeRepository;
 
-    @Lazy
-    @Autowired
-    private ScopeApprovalRepository scopeApprovalRepository;
-
     @Autowired
     private RoleService roleService;
 
@@ -96,6 +93,9 @@ public class ScopeServiceImpl implements ScopeService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Override
     public Maybe<Scope> findById(String id) {
@@ -294,7 +294,7 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Completable delete(String scopeId, boolean force, User principal) {
+    public Completable delete(Domain domain, String scopeId, boolean force, User principal) {
         log.debug("Delete scope {}", scopeId);
         return scopeRepository.findById(scopeId)
                 .switchIfEmpty(Maybe.error(new ScopeNotFoundException(scopeId)))
@@ -344,7 +344,7 @@ public class ScopeServiceImpl implements ScopeService {
                                                     return applicationService.update(application);
                                                 }).toList()))
                                 // 3_ Remove scopes from scope_approvals
-                                .andThen(scopeApprovalRepository.deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey()))
+                                .andThen(dataPlaneRegistry.getScopeApprovalRepository(domain).deleteByDomainAndScopeKey(scope.getDomain(), scope.getKey()))
                                 // 4_ Delete scope
                                 .andThen(scopeRepository.delete(scopeId))
                                 // 5_ create event for sync process
