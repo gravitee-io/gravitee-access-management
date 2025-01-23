@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
@@ -130,7 +131,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
@@ -276,7 +276,7 @@ public class RootProvider extends AbstractProtocolProvider {
     private DeviceIdentifierManager deviceIdentifierManager;
 
     @Autowired
-    private DeviceService deviceService;
+    private DeviceGatewayService deviceService;
 
     @Autowired
     private WebClient webClient;
@@ -362,7 +362,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
         Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService, userActivityService);
         Handler<RoutingContext> rememberDeviceSettingsHandler = new RememberDeviceSettingsHandler();
-        Handler<RoutingContext> deviceIdentifierHandler = new DeviceIdentifierHandler(deviceService);
+        Handler<RoutingContext> deviceIdentifierHandler = new DeviceIdentifierHandler(domain, deviceService);
         Handler<RoutingContext> userActivityHandler = new UserActivityHandler(userActivityService, domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
         Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
