@@ -48,10 +48,7 @@ export const getDomainManagerUrl = (domainId: String) => {
 };
 
 export const getOrganisationManagementUrl = () => {
-    return (
-        process.env.AM_MANAGEMENT_URL +
-        `/management/organizations/${process.env.AM_DEF_ORG_ID}`
-    );
+  return process.env.AM_MANAGEMENT_URL + `/management/organizations/${process.env.AM_DEF_ORG_ID}`;
 };
 
 export function getDomainApi(accessToken) {
@@ -123,10 +120,10 @@ export function getBotDetectionApi(accessToken) {
 }
 
 export function createRandomString(length: number) {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }

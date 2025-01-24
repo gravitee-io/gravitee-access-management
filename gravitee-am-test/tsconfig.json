@@ -1,44 +1,20 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "lib": [
-      "es2020",
-      "dom"
-    ],
-    "types": [
-      "cypress",
-      "node"
-    ],
+    "lib": ["es2020", "dom"],
+    "types": ["cypress", "node"],
     "baseUrl": ".",
     "moduleResolution": "node",
     "paths": {
-      "@management-apis/*": [
-        "api/management/apis/*"
-      ],
-      "@management-models/*": [
-        "api/management/models/*"
-      ],
-      "@management-commands/*": [
-        "api/commands/management/*"
-      ],
-      "@gateway-commands/*": [
-        "api/commands/gateway/*"
-      ],
-      "@utils-commands/*": [
-        "api/commands/utils/*"
-      ],
-      "@api-fixtures/*": [
-        "api/fixtures/*"
-      ]
+      "@management-apis/*": ["api/management/apis/*"],
+      "@management-models/*": ["api/management/models/*"],
+      "@management-commands/*": ["api/commands/management/*"],
+      "@gateway-commands/*": ["api/commands/gateway/*"],
+      "@utils-commands/*": ["api/commands/utils/*"],
+      "@api-fixtures/*": ["api/fixtures/*"]
     },
     "allowSyntheticDefaultImports": true
   },
-  "include": [
-    "**/*.ts",
-    "support/commands.js",
-    "plugins/index.js"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts", "support/commands.js", "plugins/index.js"],
+  "exclude": ["node_modules"]
 }

@@ -17,7 +17,14 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, getDomain, patchDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  deleteDomain,
+  getDomain,
+  patchDomain,
+  setupDomainForTest,
+  startDomain,
+} from '@management-commands/domain-management-commands';
 import { getWellKnownOpenIdConfiguration, performOptions } from '@gateway-commands/oauth-oidc-commands';
 import { delay } from '@utils-commands/misc';
 
@@ -29,12 +36,11 @@ let userInfo;
 
 jest.setTimeout(200000);
 
-
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken()
-  let startedDomain =  await setupDomainForTest("domain-device-id", {accessToken, waitForStart: true})
-  domain = startedDomain.domain
-  userInfo = startedDomain.oidcConfig['userinfo_endpoint']
+  accessToken = await requestAdminAccessToken();
+  let startedDomain = await setupDomainForTest('domain-device-id', { accessToken, waitForStart: true });
+  domain = startedDomain.domain;
+  userInfo = startedDomain.oidcConfig['userinfo_endpoint'];
 });
 
 describe('when using the domains commands', () => {

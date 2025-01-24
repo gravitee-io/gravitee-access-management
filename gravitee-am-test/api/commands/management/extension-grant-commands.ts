@@ -54,5 +54,5 @@ export const updateExtensionGrant = (domainId, accessToken, extensionId, updateE
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     extensionGrant: extensionId,
-    updateExtensionGrant: updateExtension
+    updateExtensionGrant: updateExtension,
   });

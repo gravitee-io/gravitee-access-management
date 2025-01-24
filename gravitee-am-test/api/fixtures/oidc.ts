@@ -13,26 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export const domainOidcCibaConfig = (notifierId) => {
-  return {
-    oidc: {
-      clientRegistrationSettings: {
-        allowLocalhostRedirectUri: true,
-        allowHttpSchemeRedirectUri: true,
-        allowWildCardRedirectUri: true,
-        isDynamicClientRegistrationEnabled: true,
-        isOpenDynamicClientRegistrationEnabled: true,
-      },
-      cibaSettings: {
-        authReqExpiry: 600,
-        tokenReqInterval: 1,
-        bindingMessageLength: 256,
-        deviceNotifiers: [{ id: notifierId }],
-        enabled: true,
-      },
-    },
-  };
-};
 
 export const privateJwk = {
   p: '-JXCCIZsXZ5aNZNtwxMRO67QSycjCxuw6VFKUQL8Iavrnk08K7HWVmncqusAdJV9NZUlqzW8eVxjrbGoTn0WIX-sqwlf3-JJS6KY4vHXh_wxLfmyoKXDDbS3xCa0OOwSA1I9VcFHW73ETTCGjVlOdrtwoMLKhGiZLJJxkhGKiVM',
@@ -48,13 +28,15 @@ export const privateJwk = {
   n: 'uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ',
 };
 
-export const publicJwk = {
-  kty: 'RSA',
-  e: 'AQAB',
-  use: 'sig',
-  kid: '123',
-  n: 'uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ',
-};
+export const publicJwk = [
+  {
+    kty: 'RSA',
+    e: 'AQAB',
+    use: 'sig',
+    kid: '123',
+    n: 'uo-DsCNGkKqJ9jDgzmS3-GCFvezuvb0b0Qux58Y_DzbIPM_6xg9J9J1weCSiWg4GxXcBtbrd6bsc1dyj9yKRpJ3I_t68BCeGvhaQ-LYcfyQ36ckw-ibG3wYHECFoOd5sxSvDnswCy1er5vgMCOf-wzHjfZJAkQudq7gl0-45D_T_syRqbTOZ_GZiNF1mJD0493VGvkLFwsKrLbPUpZeOev74X2rMS8RnLsvglzoS3ycvFKwKk9EcK6wxV6a59h-vCUQy28BJIJYd9W5SNT6M655ZikpacbIsIcaTO0L3FO4UxWGaL7Z6Y5EboO7B8Ev4amrCGzY7WH3Jyc0vY9rEHQ',
+  },
+];
 
 export const oidcApplication = {
   redirect_uris: ['https://callback'],

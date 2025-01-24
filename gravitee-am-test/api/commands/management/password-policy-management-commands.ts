@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getIdpApi, getPasswordPolicyApi,getUserApi } from './service/utils';
+import { getIdpApi, getPasswordPolicyApi, getUserApi } from './service/utils';
 import { UpdatePasswordPolicy } from '../../management/models/UpdatePasswordPolicy';
 import { NewPasswordPolicy } from '../../management/models';
 
@@ -79,7 +79,7 @@ export const assignPasswordPolicyToIdp = (domainId: string, accessToken: string,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     identity: idpId,
-    assignPasswordPolicy: {passwordPolicy: policyId},
+    assignPasswordPolicy: { passwordPolicy: policyId },
   });
 
 export const resetUserPassword = (domainId: string, accessToken: string, user: string, password: string) =>
@@ -88,5 +88,5 @@ export const resetUserPassword = (domainId: string, accessToken: string, user: s
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
     user: user,
-    passwordValue: {password},
+    passwordValue: { password },
   });

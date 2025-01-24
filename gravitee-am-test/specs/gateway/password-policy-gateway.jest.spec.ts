@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, afterEach, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain,waitFor,waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { getIdp } from '@management-commands/idp-management-commands';
 import {
   assignPasswordPolicyToIdp,
@@ -34,7 +34,7 @@ import { createUser, deleteUser, getUser } from '@management-commands/user-manag
 import { User } from '../../api/management/models';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { getWellKnownOpenIdConfiguration, logoutUser } from '@gateway-commands/oauth-oidc-commands';
-import {uniqueName} from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -81,7 +81,7 @@ beforeAll(async () => {
     identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
-  openIdConfiguration = (await waitForDomainStart(domain)).oidcConfig
+  openIdConfiguration = (await waitForDomainStart(domain)).oidcConfig;
 });
 
 describe('password policy management', () => {
@@ -198,9 +198,9 @@ describe('password policy management', () => {
     const userNewPassword = 'newpassTest^&*';
     user = await createOneUser('correct-user-pass-reset', customIdp.id);
 
-    await waitFor(1000)
+    await waitFor(1000);
     await resetUserPassword(domain.id, accessToken, user.id, userNewPassword);
-    await waitFor(1000)
+    await waitFor(1000);
 
     const clientId = app.settings.oauth.clientId;
     const user1TokenResponse = await loginUserNameAndPassword(clientId, user, userNewPassword, false, openIdConfiguration, domain);
@@ -216,7 +216,7 @@ describe('password policy management', () => {
     await assignPasswordPolicyToIdp(domain.id, accessToken, customIdp.id, policy.id);
     const userNewPassword = 'newpassTest^&*';
     user = await createOneUser('incorrect-pass-reset', customIdp.id, '1234352342@#$@Tetssiokiokdsfsjji323j2i3j2i3j2');
-    await waitFor(1000)
+    await waitFor(1000);
 
     await expect(async () => {
       const response = await resetUserPassword(domain.id, accessToken, user.id, userNewPassword);

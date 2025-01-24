@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {waitFor} from '@management-commands/domain-management-commands';
-import {timeout} from '@utils-commands/misc';
+import { waitFor } from '@management-commands/domain-management-commands';
+import { timeout } from '@utils-commands/misc';
 
 export async function withRetry(operation, retries = 50, delay = 100) {
   let success = false;
@@ -32,7 +32,6 @@ export async function withRetry(operation, retries = 50, delay = 100) {
     }
   }
 }
-
 
 export type RetryOptions<T> = {
   /**
@@ -81,7 +80,7 @@ export async function retryUntil<T>(f: () => Promise<T>, cond: (t: T) => boolean
         resolve(result);
         break;
       } else if (timeoutMillis <= 0 && attempts > maxAttempts) {
-        reject(result)
+        reject(result);
         break;
       } else {
         onRetry(result);

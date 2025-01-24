@@ -19,8 +19,12 @@ import { expect } from '@jest/globals';
 
 const cheerio = require('cheerio');
 
-export const initiateLoginFlow = async (clientId, openIdConfiguration, domain, responseType = 'code') => {
-  const params = `?response_type=${responseType}&client_id=${clientId}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+export const initiateLoginFlow = async (clientId, openIdConfiguration, domain, responseType = 'code', redirecrUri?) => {
+  let redirect = `https://auth-nightly.gravitee.io/myApp/callback`;
+  if (redirecrUri != undefined) {
+    redirect = redirecrUri;
+  }
+  const params = `?response_type=${responseType}&client_id=${clientId}&redirect_uri=${redirect}`;
 
   const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
   const loginLocation = authResponse.headers['location'];
@@ -75,16 +79,40 @@ export const postConsent = async (consent) => {
   ).expect(302);
 };
 
-export const loginUserNameAndPassword = async (clientId, user, userPassword, rememberMe, openIdConfiguration, domain) => {
-  return await loginUser(clientId, user.username, userPassword, rememberMe, openIdConfiguration, domain);
+export const loginUserNameAndPassword = async (
+  clientId,
+  user,
+  userPassword,
+  rememberMe,
+  openIdConfiguration,
+  domain,
+  redirectUri?,
+  responseType?,
+) => {
+  return await loginUser(clientId, user.username, userPassword, rememberMe, openIdConfiguration, domain, redirectUri, responseType);
 };
 
 export const loginAdditionalInfoAndPassword = async (clientId, additionalInfo, userPassword, rememberMe, openIdConfiguration, domain) => {
   return await loginUser(clientId, additionalInfo, userPassword, rememberMe, openIdConfiguration, domain);
 };
 
-export const loginUser = async (clientId, nameOrAdditionalInfo, userPassword, rememberMe, openIdConfiguration, domain) => {
-  const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
+export const loginUser = async (
+  clientId,
+  nameOrAdditionalInfo,
+  userPassword,
+  rememberMe,
+  openIdConfiguration,
+  domain,
+  reidrectUri?,
+  responseType?,
+) => {
+  let authResponse;
+  if (responseType != undefined) {
+    authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain, responseType, reidrectUri);
+  } else {
+    authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain, reidrectUri);
+  }
+
   const postLogin = await login(authResponse, nameOrAdditionalInfo, clientId, userPassword, rememberMe);
   //log in failed with error
   if (postLogin.headers['location'].includes('error=login_failed&error_code=invalid_user&error_description=Invalid+or+unknown+user')) {

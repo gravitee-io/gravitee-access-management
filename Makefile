@@ -211,9 +211,6 @@ postman: ## Run postman non regression test (require newman npm module)
 	@newman run postman/collections/graviteeio-am-vhost-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-environment-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 	@newman run postman/collections/graviteeio-am-self-account-management-collection-app-version.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
-    # Run CIBA tests, note that if this collection is executed against the docker-compose the docker.json must be used.
-    # (Delegated service and GW will see each other using the container names and not on localhost)
-	@newman run postman/collections/graviteeio-am-openid-ciba-collection.json -e postman/environment/dev.json --ignore-redirects --insecure --bail
 
 oidctest-run: oidctest-install oidctest-start ## Run openid-certification tools, using same docker network
 

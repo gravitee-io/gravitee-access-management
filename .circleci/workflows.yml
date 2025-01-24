@@ -653,10 +653,6 @@ jobs:
             # Start AM Gateway
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
             
-            # build & start CIBA Delegated Service
-            mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
-            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-            
             # Run Postman tests
             make postman
       - keeper/env-export:
@@ -753,10 +749,6 @@ jobs:
             # Start AM Gateway
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
             
-            # build & start CIBA Delegated Service
-            mvn -s /tmp/workspace/.gravitee.settings.xml -P gio-artifactory-snapshot -P cicd -f gravitee-am-ciba-delegated-service/pom.xml package
-            java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar &
-                       
             # Run Postman tests
             make postman
       - keeper/env-export:

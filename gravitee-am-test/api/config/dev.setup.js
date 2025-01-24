@@ -23,7 +23,7 @@ process.env.AM_DEF_ENV_ID = 'DEFAULT';
 process.env.AM_ADMIN_USERNAME = 'admin';
 process.env.AM_ADMIN_PASSWORD = 'adminadmin';
 process.env.FAKE_SMTP = 'http://localhost:5080';
-process.env.AM_GATEWAY_SYNC_GRACE_PERIOD = '5000'
+process.env.AM_GATEWAY_SYNC_GRACE_PERIOD = '5000';
 // here is some Settings that allow Jest Tests execution on Relational DB
 //process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE="jdbc";
 //process.env.GRAVITEE_REPOSITORIES_OAUTH2_JDBC_DATABASE= "postgres";

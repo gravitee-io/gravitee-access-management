@@ -17,9 +17,9 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { preview } from '@management-commands/form-management-commands';
-import {uniqueName} from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 
 const path = require('path');
 const fs = require('fs');
@@ -39,8 +39,8 @@ let customDraftTheme = {
 };
 
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-themes-preview'), {accessToken, waitForStart: false}).then(it=>it.domain)
+  accessToken = await requestAdminAccessToken();
+  domain = await setupDomainForTest(uniqueName('domain-themes-preview'), { accessToken, waitForStart: false }).then((it) => it.domain);
 });
 
 async function testRequestPreview(template: String, content: String, theme?: any) {

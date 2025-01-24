@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {getDomainApi, getUserApi} from './service/utils';
-import {expect} from '@jest/globals';
-import {NewOrganizationUser, NewUser} from '../../management/models';
+import { getDomainApi, getUserApi } from './service/utils';
+import { expect } from '@jest/globals';
+import { NewOrganizationUser, NewUser } from '../../management/models';
 
 export const createUser = (domainId, accessToken, user) =>
   getUserApi(accessToken).createUser({

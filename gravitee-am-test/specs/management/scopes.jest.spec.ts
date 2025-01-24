@@ -17,7 +17,7 @@
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
-import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
@@ -29,7 +29,7 @@ import {
   patchScope,
   updateScope,
 } from '@management-commands/scope-management-commands';
-import {uniqueName} from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -38,8 +38,8 @@ let domain;
 let scope;
 
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-scopes'), {accessToken, waitForStart: false}).then(it=>it.domain)
+  accessToken = await requestAdminAccessToken();
+  domain = await setupDomainForTest(uniqueName('domain-scopes'), { accessToken, waitForStart: false }).then((it) => it.domain);
 });
 
 describe('when using the scope commands', () => {
