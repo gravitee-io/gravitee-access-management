@@ -70,7 +70,7 @@ class PasswordHistoryHandlerTest {
         user.setId(UUID.randomUUID().toString());
         var userToken = new UserToken(user, null);
         given(userService.verifyToken(any())).willReturn(Maybe.just(userToken));
-        given(passwordHistoryService.passwordAlreadyUsed(any(),any(),any(),any(),any())).willReturn(Single.just(passwordUsed));
+        given(passwordHistoryService.passwordAlreadyUsed(any(),any(),any(),any())).willReturn(Single.just(passwordUsed));
 
         var context = mock(RoutingContext.class);
         var request = mock(HttpServerRequest.class);

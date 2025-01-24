@@ -1070,7 +1070,7 @@ public class DomainServiceTest {
         when(authenticationDeviceNotifierService.delete(any(), eq(AUTH_DEVICE_ID), any())).thenReturn(complete());
         when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(new I18nDictionary()));
         when(i18nDictionaryService.delete(eq(DOMAIN), eq(DOMAIN_ID), any(), any())).thenReturn(complete());
-        when(passwordHistoryService.deleteByReference(DOMAIN, DOMAIN_ID)).thenReturn(complete());
+        when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
         when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
@@ -1135,7 +1135,7 @@ public class DomainServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
         when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
-        when(passwordHistoryService.deleteByReference(DOMAIN, DOMAIN_ID)).thenReturn(complete());
+        when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
         when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());

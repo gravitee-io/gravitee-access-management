@@ -17,10 +17,11 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.management.api.PasswordHistoryRepository;
+import io.gravitee.am.model.Reference;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.PasswordHistoryException;
@@ -52,13 +53,13 @@ import static java.util.Objects.isNull;
 public class PasswordHistoryService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PasswordHistoryService.class);
-    private final PasswordHistoryRepository repository;
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
+    private final DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
-    public PasswordHistoryService(@Lazy PasswordHistoryRepository repository, AuditService auditService, @Named("argon2IdEncoder") PasswordEncoder passwordEncoder) {
-        this.repository = repository;
+    public PasswordHistoryService(@Lazy DataPlaneRegistry dataPlaneRegistry, AuditService auditService, @Named("argon2IdEncoder") PasswordEncoder passwordEncoder) {
+        this.dataPlaneRegistry = dataPlaneRegistry;
         this.auditService = auditService;
         this.passwordEncoder = passwordEncoder;
     }
@@ -67,21 +68,21 @@ public class PasswordHistoryService {
      * Checks that a password has not already been used in the allotted history and adds it if it has not.
      * Returns a {@link PasswordHistory} instance on completion.
      *
-     * @param referenceType    the reference type (DOMAIN, APPLICATION)
-     * @param referenceId      id of the reference
+     * @param domain         domain on which password entry has to be created
      * @param user           id of user for this password
      * @param rawPassword      unencrypted password provided by the user. Passed separate from the user object as its password is nulled after creation to avoid leakage.
      * @param principal        user performing this action
      * @param passwordPolicy domain/application password policy
      * @return Single containing {@link PasswordHistory} or an error if the password was already in the history.
      */
-    public Maybe<PasswordHistory> addPasswordToHistory(ReferenceType referenceType, String referenceId, io.gravitee.am.model.User user, String rawPassword, User principal, PasswordPolicy passwordPolicy) {
+    public Maybe<PasswordHistory> addPasswordToHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, User principal, PasswordPolicy passwordPolicy) {
         LOGGER.debug("Adding password history entry for user {}", user);
         if (rawPassword == null || passwordPolicy == null || isNull(passwordPolicy.getPasswordHistoryEnabled()) || FALSE.equals(passwordPolicy.getPasswordHistoryEnabled())) {
             LOGGER.debug("Password history not added for user {} due to null password or settings, or because paswword history is disabled.", user.getUsername());
             return Maybe.empty();
         }
-        return repository.findUserHistory(referenceType, referenceId, user.getId())
+        final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
+        return repository.findUserHistory(domain.asReference(), user.getId())
                          .toList()
                          .flatMap(passwordHistories -> {
                              if (passwordAlreadyUsed(rawPassword, passwordHistories)) {
@@ -91,9 +92,9 @@ public class PasswordHistoryService {
                              if (passwordCount >= passwordPolicy.getOldPasswords()) {
                                  passwordHistories.sort(comparing(PasswordHistory::getCreatedAt));
                                  return repository.delete(passwordHistories.get(0).getId())
-                                                  .andThen(repository.create(getPasswordHistory(referenceType, referenceId, user, rawPassword)));
+                                                  .andThen(repository.create(getPasswordHistory(domain.asReference(), user, rawPassword)));
                              } else {
-                                 return repository.create(getPasswordHistory(referenceType, referenceId, user, rawPassword));
+                                 return repository.create(getPasswordHistory(domain.asReference(), user, rawPassword));
                              }
                          })
                          .doOnSuccess(a -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
@@ -111,19 +112,19 @@ public class PasswordHistoryService {
     /**
      * Checks if a password is already in the history.
      *
-     * @param referenceType    the reference type (DOMAIN, APPLICATION)
-     * @param referenceId      id of the reference
+     * @param domain         domain on which password entry should be found
      * @param userId           id of user for this password
      * @param password         the password to add
      * @param passwordPolicy domain/application password settings
      * @return Single containing a {@link Boolean} {@code true} if the password is already present the allotted number of previous passwords.
      */
-    public Single<Boolean> passwordAlreadyUsed(ReferenceType referenceType, String referenceId, String userId, String password, PasswordPolicy passwordPolicy) {
+    public Single<Boolean> passwordAlreadyUsed(Domain domain, String userId, String password, PasswordPolicy passwordPolicy) {
         LOGGER.debug("Checking password history for user {}", userId);
         if (passwordPolicy == null || isNull(passwordPolicy.getPasswordHistoryEnabled()) || FALSE.equals(passwordPolicy.getPasswordHistoryEnabled())) {
             return Single.just(false);
         }
-        return repository.findUserHistory(referenceType, referenceId, userId)
+        final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
+        return repository.findUserHistory(domain.asReference(), userId)
                          .toList()
                          .flatMap(passwordHistories -> Single.just(passwordAlreadyUsed(password, passwordHistories)));
     }
@@ -131,50 +132,52 @@ public class PasswordHistoryService {
     /**
      * Returns a user's password history.
      *
-     * @param referenceType    the reference type (DOMAIN, APPLICATION)
-     * @param referenceId      id of the reference
+     * @param domain         domain on which password entry should be found
      * @param userId           id of user for this password
      * @return Flowable containing the user's password history.
      */
-    public Flowable<PasswordHistory> findUserHistory(ReferenceType referenceType, String referenceId, String userId) {
-        return repository.findUserHistory(referenceType, referenceId, userId);
+    public Flowable<PasswordHistory> findUserHistory(Domain domain, String userId) {
+        final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
+        return repository.findUserHistory(domain.asReference(), userId);
     }
 
     /**
      * Find all password history for an application or domain.
      *
-     * @param referenceType type of reference (e.g. DOMAIN, APPLICATION)
-     * @param referenceId ID of the reference
+     * @param domain domain on which password entry should be found
      * @return Flowable containing password histories, if any, for the referenced entity.
      */
-    public Flowable<PasswordHistory> findByReference(ReferenceType referenceType, String referenceId) {
-        LOGGER.debug("Find password histories by reference id {} and reference type {}", referenceId, referenceType);
-        return repository.findByReference(referenceType, referenceId)
+    public Flowable<PasswordHistory> findByReference(Domain domain) {
+        LOGGER.debug("Find password histories by domain id {}", domain.getId());
+        final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
+        return repository.findByReference(domain.asReference())
                          .onErrorResumeNext(ex -> {
-                             LOGGER.error("Error finding password histories by reference id {} and reference type {}", referenceId, referenceType, ex);
+                             LOGGER.error("Error finding password histories by domain id {}", domain.getId(), ex);
                              return Flowable.error(new TechnicalManagementException(
-                                     String.format("Error finding password histories by reference id %s and reference type %s", referenceId, referenceType), ex));
+                                     String.format("Error finding password histories by domain id %s", domain.getId()), ex));
                          });
     }
 
     /**
      * Delete all password history for an application or domain.
      *
-     * @param referenceType type of reference (e.g. DOMAIN, APPLICATION)
-     * @param referenceId ID of the reference
+     * @param domain         domain on which password entry should be found
      * @return Completable that indicates a successful delete operation.
      */
-    public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
-        return repository.deleteByReference(referenceType, referenceId);
+    public Completable deleteByReference(Domain domain) {
+        final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
+        return repository.deleteByReference(domain.asReference());
     }
 
     /**
      * Delete all password history for a user.
      *
+     * @param domain         domain on which password entry should be found
      * @param userId unique ID of the user
      * @return Completable that indicates a successful delete operation.
      */
-    public Completable deleteByUser(String userId) {
+    public Completable deleteByUser(Domain domain, String userId) {
+        final var repository = dataPlaneRegistry.getPasswordHistoryRepository(domain);
         return repository.deleteByUserId(userId);
     }
 
@@ -183,13 +186,13 @@ public class PasswordHistoryService {
                                 .anyMatch(passwordHistory -> passwordEncoder.matches(password, passwordHistory.getPassword()));
     }
 
-    private PasswordHistory getPasswordHistory(ReferenceType referenceType, String referenceId, io.gravitee.am.model.User user, CharSequence rawPassword) {
+    private PasswordHistory getPasswordHistory(Reference reference, io.gravitee.am.model.User user, CharSequence rawPassword) {
         PasswordHistory item = new PasswordHistory();
         item.setUserId(user.getId());
         item.setPassword(passwordEncoder.encode(rawPassword));
         item.setCreatedAt(new Date());
-        item.setReferenceType(referenceType);
-        item.setReferenceId(referenceId);
+        item.setReferenceType(reference.type());
+        item.setReferenceId(reference.id());
         return item;
     }
 }

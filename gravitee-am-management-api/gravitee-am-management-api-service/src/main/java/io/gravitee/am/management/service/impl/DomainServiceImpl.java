@@ -645,7 +645,7 @@ public class DomainServiceImpl implements DomainService {
                             )
                             // delete rate limit
                             .andThen(rateLimiterService.deleteByDomain(domain, DOMAIN))
-                            .andThen(passwordHistoryService.deleteByReference(ReferenceType.DOMAIN, domainId))
+                            .andThen(passwordHistoryService.deleteByReference(domain))
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
                             .andThen(domainRepository.delete(domainId))

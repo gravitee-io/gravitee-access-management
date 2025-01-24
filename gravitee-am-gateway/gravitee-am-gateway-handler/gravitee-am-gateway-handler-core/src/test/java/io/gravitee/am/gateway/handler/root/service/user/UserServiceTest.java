@@ -155,7 +155,7 @@ public class UserServiceTest {
     @Before
     public void before() {
         doReturn(true).when(emailValidator).validate(anyString());
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(domain.getId()).thenReturn("id");
     }
 
@@ -178,7 +178,7 @@ public class UserServiceTest {
 
         when(domain.getAccountSettings()).thenReturn(accountSettings);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
 
         var testObserver = userService.resetPassword(mock(Client.class), user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

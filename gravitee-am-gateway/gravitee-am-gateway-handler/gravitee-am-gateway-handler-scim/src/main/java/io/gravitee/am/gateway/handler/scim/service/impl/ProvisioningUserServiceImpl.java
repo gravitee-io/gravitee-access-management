@@ -88,7 +88,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static java.lang.Boolean.FALSE;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
@@ -485,7 +484,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                         })
                         .andThen(userActivityService.deleteByDomainAndUser(domain, userId))
                         .andThen(rateLimiterService.deleteByUser(user))
-                        .andThen(passwordHistoryService.deleteByUser(userId))
+                        .andThen(passwordHistoryService.deleteByUser(domain, userId))
                         .andThen(verifyAttemptService.deleteByUser(user))
                         .andThen(userRepository.delete(userId))
                         .doOnComplete(() -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
@@ -552,7 +551,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     private Maybe<PasswordHistory> createPasswordHistory(Domain domain, io.gravitee.am.model.User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal, Client client) {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         return passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, passwordPolicyManager.getPolicy(client, provider).orElse(null));
+                .addPasswordToHistory(domain, user, rawPassword, principal, passwordPolicyManager.getPolicy(client, provider).orElse(null));
     }
 
     private io.gravitee.am.model.User convertUserToUpdate(io.gravitee.am.model.User existingUser, User scimUser) {

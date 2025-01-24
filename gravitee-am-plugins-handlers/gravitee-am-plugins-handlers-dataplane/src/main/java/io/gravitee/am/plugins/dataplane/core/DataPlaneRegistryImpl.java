@@ -20,6 +20,7 @@ import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
 import io.gravitee.am.dataplane.api.repository.GroupRepository;
+import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
@@ -100,6 +101,11 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     @Override
     public UserRepository getUserRepository(Domain domain) {
         return getProvider(domain).getUserRepository();
+    }
+
+    @Override
+    public PasswordHistoryRepository getPasswordHistoryRepository(Domain domain) {
+        return getProvider(domain).getPasswordHistoryRepository();
     }
 
     @Override

@@ -172,7 +172,7 @@ public class ProvisioningUserServiceTest {
 
     @Before
     public void setUp() {
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(userRepository.findByExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.empty());
         domain.setId(DOMAIN_ID);
     }
@@ -755,7 +755,7 @@ public class ProvisioningUserServiceTest {
         when(userRepository.delete(userId)).thenReturn(complete());
         when(userActivityService.deleteByDomainAndUser(domain, userId)).thenReturn(complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
-        when(passwordHistoryService.deleteByUser(userId)).thenReturn(complete());
+        when(passwordHistoryService.deleteByUser(any(), eq(userId))).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
 
 
@@ -784,7 +784,7 @@ public class ProvisioningUserServiceTest {
         when(userRepository.delete(userId)).thenReturn(complete());
         when(userActivityService.deleteByDomainAndUser(domain, userId)).thenReturn(complete());
         when(rateLimiterService.deleteByUser(any())).thenReturn(complete());
-        when(passwordHistoryService.deleteByUser(any())).thenReturn(complete());
+        when(passwordHistoryService.deleteByUser(any(), any())).thenReturn(complete());
         when(verifyAttemptService.deleteByUser(any())).thenReturn(complete());
 
         var testObserver = userService.delete(userId, null).test();
