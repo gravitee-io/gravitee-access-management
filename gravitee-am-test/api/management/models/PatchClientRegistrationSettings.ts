@@ -73,13 +73,13 @@ export interface PatchClientRegistrationSettings {
      * @type {boolean}
      * @memberof PatchClientRegistrationSettings
      */
-    dynamicClientRegistrationEnabled?: boolean;
+    isDynamicClientRegistrationEnabled?: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof PatchClientRegistrationSettings
      */
-    openDynamicClientRegistrationEnabled?: boolean;
+    isOpenDynamicClientRegistrationEnabled?: boolean;
     /**
      * 
      * @type {boolean}
@@ -104,8 +104,8 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
         'defaultScopes': !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
         'isAllowedScopesEnabled': !exists(json, 'isAllowedScopesEnabled') ? undefined : json['isAllowedScopesEnabled'],
         'allowedScopes': !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
-        'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
-        'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
+        'isDynamicClientRegistrationEnabled': !exists(json, 'isDynamicClientRegistrationEnabled') ? undefined : json['isDynamicClientRegistrationEnabled'],
+        'isOpenDynamicClientRegistrationEnabled': !exists(json, 'isOpenDynamicClientRegistrationEnabled') ? undefined : json['isOpenDynamicClientRegistrationEnabled'],
         'clientTemplateEnabled': !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
     };
 }
@@ -125,8 +125,8 @@ export function PatchClientRegistrationSettingsToJSON(value?: PatchClientRegistr
         'defaultScopes': value.defaultScopes,
         'isAllowedScopesEnabled': value.isAllowedScopesEnabled,
         'allowedScopes': value.allowedScopes,
-        'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
-        'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
+        'isDynamicClientRegistrationEnabled': value.isDynamicClientRegistrationEnabled,
+        'isOpenDynamicClientRegistrationEnabled': value.isOpenDynamicClientRegistrationEnabled,
         'clientTemplateEnabled': value.clientTemplateEnabled,
     };
 }

@@ -13,26 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-export const domainOidcCibaConfig = (notifierId) => {
-  return {
-    oidc: {
-      clientRegistrationSettings: {
-        allowLocalhostRedirectUri: true,
-        allowHttpSchemeRedirectUri: true,
-        allowWildCardRedirectUri: true,
-        isDynamicClientRegistrationEnabled: true,
-        isOpenDynamicClientRegistrationEnabled: true,
-      },
-      cibaSettings: {
-        authReqExpiry: 600,
-        tokenReqInterval: 1,
-        bindingMessageLength: 256,
-        deviceNotifiers: [{ id: notifierId }],
-        enabled: true,
-      },
-    },
-  };
-};
 
 export const privateJwk = {
   p: '-JXCCIZsXZ5aNZNtwxMRO67QSycjCxuw6VFKUQL8Iavrnk08K7HWVmncqusAdJV9NZUlqzW8eVxjrbGoTn0WIX-sqwlf3-JJS6KY4vHXh_wxLfmyoKXDDbS3xCa0OOwSA1I9VcFHW73ETTCGjVlOdrtwoMLKhGiZLJJxkhGKiVM',

@@ -67,13 +67,13 @@ export interface ClientRegistrationSettings {
      * @type {boolean}
      * @memberof ClientRegistrationSettings
      */
-    dynamicClientRegistrationEnabled?: boolean;
+    isDynamicClientRegistrationEnabled?: boolean;
     /**
      * 
      * @type {boolean}
      * @memberof ClientRegistrationSettings
      */
-    openDynamicClientRegistrationEnabled?: boolean;
+    isOpenDynamicClientRegistrationEnabled?: boolean;
     /**
      * 
      * @type {boolean}
@@ -103,8 +103,8 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
         'allowWildCardRedirectUri': !exists(json, 'allowWildCardRedirectUri') ? undefined : json['allowWildCardRedirectUri'],
         'defaultScopes': !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
         'allowedScopes': !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
-        'dynamicClientRegistrationEnabled': !exists(json, 'dynamicClientRegistrationEnabled') ? undefined : json['dynamicClientRegistrationEnabled'],
-        'openDynamicClientRegistrationEnabled': !exists(json, 'openDynamicClientRegistrationEnabled') ? undefined : json['openDynamicClientRegistrationEnabled'],
+        'isDynamicClientRegistrationEnabled': !exists(json, 'isDynamicClientRegistrationEnabled') ? undefined : json['isDynamicClientRegistrationEnabled'],
+        'isOpenDynamicClientRegistrationEnabled': !exists(json, 'isOpenDynamicClientRegistrationEnabled') ? undefined : json['isOpenDynamicClientRegistrationEnabled'],
         'clientTemplateEnabled': !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
         'allowedScopesEnabled': !exists(json, 'allowedScopesEnabled') ? undefined : json['allowedScopesEnabled'],
     };
@@ -124,8 +124,8 @@ export function ClientRegistrationSettingsToJSON(value?: ClientRegistrationSetti
         'allowWildCardRedirectUri': value.allowWildCardRedirectUri,
         'defaultScopes': value.defaultScopes,
         'allowedScopes': value.allowedScopes,
-        'dynamicClientRegistrationEnabled': value.dynamicClientRegistrationEnabled,
-        'openDynamicClientRegistrationEnabled': value.openDynamicClientRegistrationEnabled,
+        'isDynamicClientRegistrationEnabled': value.isDynamicClientRegistrationEnabled,
+        'isOpenDynamicClientRegistrationEnabled': value.isOpenDynamicClientRegistrationEnabled,
         'clientTemplateEnabled': value.clientTemplateEnabled,
         'allowedScopesEnabled': value.allowedScopesEnabled,
     };
