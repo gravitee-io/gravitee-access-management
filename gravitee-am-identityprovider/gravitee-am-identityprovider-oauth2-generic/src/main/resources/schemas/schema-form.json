@@ -180,7 +180,8 @@
   },
   "required": [
     "clientId",
-    "responseType"
+    "responseType",
+    "responseMode"
   ],
   "anyOf":[
     {
