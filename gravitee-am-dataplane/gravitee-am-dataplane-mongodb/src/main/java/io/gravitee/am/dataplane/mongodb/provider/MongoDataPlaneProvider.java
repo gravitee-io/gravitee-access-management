@@ -21,6 +21,7 @@ import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
 import io.gravitee.am.dataplane.api.repository.GroupRepository;
+import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
@@ -58,6 +59,9 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordHistoryRepository passwordHistoryRepository;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -99,5 +103,10 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Override
     public UserRepository getUserRepository() {
         return userRepository;
+    }
+
+    @Override
+    public PasswordHistoryRepository getPasswordHistoryRepository() {
+        return passwordHistoryRepository;
     }
 }
