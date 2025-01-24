@@ -16,12 +16,18 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain,setupDomainForTest, startDomain,waitForDomainStart } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  deleteDomain,
+  setupDomainForTest,
+  startDomain,
+  waitForDomainStart,
+} from '@management-commands/domain-management-commands';
 import { buildRSA512Certificate } from '@api-fixtures/certificates';
 import { createCertificate } from '@management-commands/certificate-management-commands';
 import { getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { Domain } from 'api/management/models';
-import { delay,uniqueName } from '@utils-commands/misc';
+import { delay, uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -32,14 +38,13 @@ let jwksUriEndpoint: any;
 jest.setTimeout(200000);
 
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('oidc-discovery'), {accessToken}).then(it=>it.domain)
+  accessToken = await requestAdminAccessToken();
+  domain = await setupDomainForTest(uniqueName('oidc-discovery'), { accessToken }).then((it) => it.domain);
 
   const builtCertificate = buildRSA512Certificate();
   const certificateResponse = await createCertificate(domain.id, accessToken, builtCertificate);
   expect(certificateResponse).toBeDefined();
-  await waitForDomainStart(domain)
-
+  await waitForDomainStart(domain);
 });
 
 describe('well-known/openid-configuration', () => {

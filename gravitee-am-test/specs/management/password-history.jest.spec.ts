@@ -16,13 +16,13 @@
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, patchDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, patchDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser, resetUserPassword } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { ResponseError } from '../../api/management/runtime';
 import { createPasswordPolicy } from '@management-commands/password-policy-management-commands';
-import {uniqueName} from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
@@ -33,8 +33,8 @@ let user;
 
 describe('Testing password history...', () => {
   beforeAll(async () => {
-    accessToken = await requestAdminAccessToken()
-    domain = await setupDomainForTest(uniqueName('domain-ph-users'), {accessToken, waitForStart: false}).then(it=>it.domain)
+    accessToken = await requestAdminAccessToken();
+    domain = await setupDomainForTest(uniqueName('domain-ph-users'), { accessToken, waitForStart: false }).then((it) => it.domain);
 
     await createPasswordPolicy(domain.id, accessToken, {
       name: 'default',

@@ -125,7 +125,7 @@ describe('when creating organization users in bulk', () => {
     };
     const response = await performPost(getOrganisationManagementUrl(), '/users/bulk', JSON.stringify(request), {
       'Content-type': 'application/json',
-      Authorization: `Bearer ${accessToken}`
+      Authorization: `Bearer ${accessToken}`,
     });
     expect(response.status).toEqual(413);
     expect(response.body.message).toEqual('The bulk operation exceeds the maximum number of operations (1000).');

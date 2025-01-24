@@ -26,4 +26,3 @@ export const requestAccessToken = (username: string, password: string) => {
     .expect(200)
     .then((res) => res.body.access_token);
 };
-

@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, patchDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
   createApplication,
   deleteApplication,
@@ -28,18 +28,18 @@ import {
   renewApplicationSecrets,
   updateApplication,
 } from '@management-commands/application-management-commands';
-import {Domain} from '@management-models/Domain';
-import {uniqueName} from '@utils-commands/misc';
+import { Domain } from '@management-models/Domain';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
 let accessToken: string;
-let domain: Domain
+let domain: Domain;
 let application;
 
 beforeAll(async () => {
-  accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-applications'), {accessToken}).then(it=>it.domain)
+  accessToken = await requestAdminAccessToken();
+  domain = await setupDomainForTest(uniqueName('domain-applications'), { accessToken }).then((it) => it.domain);
 });
 
 describe('when creating applications', () => {

@@ -40,7 +40,7 @@ import { ResponseError } from '../../api/management/runtime';
 import { checkBulkResponse, uniqueName } from '@utils-commands/misc';
 import { BulkResponse } from '@management-models/BulkResponse';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
-import {createRandomString, getDomainManagerUrl} from '@management-commands/service/utils';
+import { createRandomString, getDomainManagerUrl } from '@management-commands/service/utils';
 
 global.fetch = fetch;
 jest.setTimeout(200000);

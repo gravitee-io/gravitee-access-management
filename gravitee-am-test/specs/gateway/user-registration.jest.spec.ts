@@ -19,7 +19,13 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain,waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  deleteDomain,
+  startDomain,
+  waitForDomainStart,
+  waitForDomainSync,
+} from '@management-commands/domain-management-commands';
 import { getAllUsers, listUsers } from '@management-commands/user-management-commands';
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { createIdp, getAllIdps } from '@management-commands/idp-management-commands';
