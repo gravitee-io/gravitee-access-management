@@ -44,7 +44,6 @@ import io.gravitee.am.service.exception.UserAlreadyExistsException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.exception.UserProviderNotFoundException;
-import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.model.AbstractNewUser;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.NewOrganizationUser;
@@ -99,9 +98,6 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
 
     @Autowired
     protected MembershipService membershipService;
-
-    @Autowired
-    protected PasswordHistoryService passwordHistoryService;
 
     protected io.gravitee.am.service.OrganizationUserService getUserService() {
         return this.userService;
@@ -320,9 +316,7 @@ public class OrganizationUserServiceImpl implements OrganizationUserService {
                         })
                         .andThen(getUserService().delete(userId).ignoreElement())
                         // remove from memberships if user is an administrative user
-                        .andThen(membershipService.findByMember(userId, MemberType.USER)
-                                .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
-                        .andThen(passwordHistoryService.deleteByUser(userId))
+                        .andThen(membershipService.findByMember(userId, MemberType.USER).flatMapCompletable(membership -> membershipService.delete(membership.getId())))
                         .toSingleDefault(user))
                 .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(new Reference(referenceType, referenceId)).throwable(throwable)))
