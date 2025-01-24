@@ -26,7 +26,6 @@ import io.gravitee.am.identityprovider.oauth2.jwt.algo.Signature;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -47,7 +46,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     private String logoutUri;
     private Set<String> scopes;
     private ProviderResponseType responseType;
-    private ProviderResponseMode responseMode;
+    private ProviderResponseMode responseMode = ProviderResponseMode.DEFAULT;
     private boolean useIdTokenForUserInfo;
     private Signature signature = Signature.RSA_RS256;
     private KeyResolver publicKeyResolver;
