@@ -426,7 +426,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                                     .map(Optional::ofNullable)
                                                     .switchIfEmpty(Maybe.just(Optional.empty()))
                                                     .flatMap(optPolicy -> ensurePasswordMatchesPolicy(password, user, optPolicy)
-                                                            .flatMapMaybe(ignore -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, password, principal, optPolicy.orElse(null))))
+                                                            .flatMapMaybe(ignore -> passwordHistoryService.addPasswordToHistory(domain, user, password, principal, optPolicy.orElse(null))))
                                                     .ignoreElement()
                                                     .andThen(Single.defer(() -> userProvider.findByUsername(user.getUsername())
                                                             .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
@@ -698,7 +698,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
         passwordPolicyService.retrievePasswordPolicy(user, client, provider)
                 .map(Optional::of)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
-                .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, optPolicy.orElse(null)))
+                .flatMap(optPolicy -> passwordHistoryService.addPasswordToHistory(domain, user, rawPassword, principal, optPolicy.orElse(null)))
                 .subscribe(passwordHistory -> log.debug("Created password history for user with ID {}", user),
                         throwable -> log.debug("Failed to create password history", throwable));
     }
@@ -780,7 +780,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                         .andThen(rateLimiterService.deleteByUser(user)) // FIXME in the same way as Token, should be deleted by an event
                         .andThen(verifyAttemptService.deleteByUser(user)) // FIXME in the same way as Token, should be deleted by an event
                         .andThen(repository.delete(userId))
-                        .andThen(passwordHistoryService.deleteByUser(userId))
+                        .andThen(passwordHistoryService.deleteByUser(domain, userId))
                         .toSingleDefault(user))
                 .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(domain.asReference()).throwable(throwable)))

@@ -207,7 +207,7 @@ public class ManagementUserServiceTest {
     @BeforeEach
     void setUp() {
         ((ManagementUserServiceImpl) userService).setExpireAfter(24 * 3600);
-        lenient().when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.never());
+        lenient().when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.never());
         lenient().when(identityProviderManager.getIdentityProvider(any())).thenReturn(Optional.of(new IdentityProvider()));
         lenient().when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
     }
@@ -531,7 +531,7 @@ public class ManagementUserServiceTest {
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
@@ -566,7 +566,7 @@ public class ManagementUserServiceTest {
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
@@ -735,7 +735,7 @@ public class ManagementUserServiceTest {
 
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
-        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
+        when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.error(PasswordHistoryException::passwordAlreadyInHistory));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
 
