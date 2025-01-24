@@ -202,7 +202,7 @@ public class PasswordPolicyResource extends AbstractDomainResource {
                                     } else {
                                         return userService.findById(domain, request.userId())
                                                 .defaultIfEmpty(new User())
-                                                .flatMap(u -> passwordHistoryService.passwordAlreadyUsed(ReferenceType.DOMAIN, domainId, request.userId(), request.password(), policy)
+                                                .flatMap(u -> passwordHistoryService.passwordAlreadyUsed(domain, request.userId(), request.password(), policy)
                                                         .map(historyResult -> {
                                                             var evaluationResult = passwordService.evaluate(request.password(), policy, u);
                                                             return evaluationResult.toBuilder().recentPasswordsNotReused(!historyResult).build();
