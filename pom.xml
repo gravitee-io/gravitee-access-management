@@ -115,7 +115,7 @@
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
         <test-container.version>1.20.3</test-container.version>
         <!-- to remove when the BOM will have the version -->
-        <logback.version>1.5.13</logback.version>
+        <logback.version>1.5.16</logback.version>
 
         <!-- R2DBC dependencies -->
         <spring-data-r2dbc.version>3.2.2</spring-data-r2dbc.version>
