@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM graviteeio/java:17-alpine-3.20
+FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0

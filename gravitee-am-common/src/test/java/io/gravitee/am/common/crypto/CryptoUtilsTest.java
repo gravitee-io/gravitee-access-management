@@ -17,12 +17,16 @@ package io.gravitee.am.common.crypto;
 
 import io.gravitee.am.common.utils.SecureRandomString;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
+import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 
 class CryptoUtilsTest {
 
@@ -48,15 +52,18 @@ class CryptoUtilsTest {
 
     @Test
     void malformedInput_shouldThrowExceptionWithMinimumInfo() {
-        var defaultSecret = "s3cR3t4grAv1t3310AMS1g1ingDftK3y";
-        var sourceKey = new SecretKeySpec(defaultSecret.getBytes(), "HmacSHA512");
+        try (MockedStatic<Cipher> crypto = Mockito.mockStatic(Cipher.class)) {
+            crypto.when(() -> Cipher.getInstance(any())).thenThrow(new RuntimeException("Some error"));
+            var defaultSecret = "s3cR3t4grAv1t3310AMS1g1ingDftK3y";
+            var sourceKey = new SecretKeySpec(defaultSecret.getBytes(), "HmacSHA512");
 
-        var encoder = Base64.getUrlEncoder();
-        var input = encoder.encodeToString("aaaa".getBytes()) + "$" + encoder.encodeToString("bbbb".getBytes()) + "$" + encoder.encodeToString("cccc".getBytes());
+            var encoder = Base64.getUrlEncoder();
+            var input = encoder.encodeToString("aaaa".getBytes()) + "$" + encoder.encodeToString("bbbb".getBytes()) + "$" + encoder.encodeToString("cccc".getBytes());
 
-        assertThatThrownBy(()->CryptoUtils.decrypt(input, sourceKey))
-                .isExactlyInstanceOf(RuntimeException.class)
-                .hasMessageMatching("\\[errorId=.+] Error decrypting data");
+            assertThatThrownBy(() -> CryptoUtils.decrypt(input, sourceKey))
+                    .isExactlyInstanceOf(RuntimeException.class)
+                    .hasMessageMatching("\\[errorId=.+] Error decrypting data");
+        }
     }
 
 }
