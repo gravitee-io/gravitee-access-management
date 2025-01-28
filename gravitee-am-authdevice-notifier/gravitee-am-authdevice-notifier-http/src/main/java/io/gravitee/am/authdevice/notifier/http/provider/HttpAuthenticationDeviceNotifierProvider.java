@@ -32,6 +32,8 @@ import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
 import io.vertx.rxjava3.ext.web.client.WebClient;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.springframework.util.StringUtils.hasText;
 
@@ -48,6 +51,8 @@ import static org.springframework.util.StringUtils.hasText;
  * @author GraviteeSource Team
  */
 @Import(HttpAuthenticationDeviceProviderSpringConfiguration.class)
+@AllArgsConstructor
+@NoArgsConstructor
 public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationDeviceNotifierProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpAuthenticationDeviceNotifierProvider.class);
 
@@ -143,7 +148,7 @@ public class HttpAuthenticationDeviceNotifierProvider implements AuthenticationD
         formData.set(TRANSACTION_ID, request.getTransactionId());
         formData.set(STATE, request.getState());
         formData.set(PARAM_SUBJECT, request.getSubject());
-        formData.set(PARAM_SCOPE, request.getScopes());
+        formData.set(PARAM_SCOPE, request.getScopes().stream().collect(Collectors.joining(" ")));
         formData.set(PARAM_EXPIRE, Integer.toString(request.getExpiresIn()));
 
         if (!CollectionUtils.isEmpty(request.getAcrValues())) {
