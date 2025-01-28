@@ -18,8 +18,6 @@ package io.gravitee.am.gateway.handler.ciba.spring;
 import io.gravitee.am.gateway.handler.api.ProtocolConfiguration;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
-import io.gravitee.am.gateway.handler.ciba.ad.AuthenticationDeviceNotifier;
-import io.gravitee.am.gateway.handler.ciba.ad.impl.AuthenticationDeviceNotifierImpl;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
@@ -54,10 +52,5 @@ public class CIBAConfiguration implements ProtocolConfiguration {
     @Bean
     public AuthenticationRequestService authenticationRequestService() {
         return new AuthenticationRequestServiceImpl();
-    }
-
-    @Bean
-    public AuthenticationDeviceNotifier authenticationDeviceNotifier() {
-        return new AuthenticationDeviceNotifierImpl();
     }
 }
