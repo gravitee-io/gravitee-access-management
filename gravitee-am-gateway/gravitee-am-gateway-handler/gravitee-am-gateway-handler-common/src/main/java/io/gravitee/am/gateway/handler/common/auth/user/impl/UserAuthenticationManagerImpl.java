@@ -25,6 +25,7 @@ import io.gravitee.am.common.exception.authentication.NegotiateContinueException
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -41,7 +42,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.event.EventManager;
@@ -251,7 +251,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
         // check if user is locked
         return loginAttemptService
-                .checkAccount(criteria, accountSettings)
+                .checkAccount(domain, criteria, accountSettings)
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
                 .flatMapCompletable(optLoginAttempt -> {
@@ -263,7 +263,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
                     // no exception clear login attempt
                     if (userAuthentication.lastException() == null) {
-                        return loginAttemptService.loginSucceeded(criteria);
+                        return loginAttemptService.loginSucceeded(domain, criteria);
                     }
 
                     if (userAuthentication.lastException() instanceof BadCredentialsException) {
@@ -271,7 +271,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
                         // but we can't control custom IdP that's why we have to check user existence
                         return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider(), true)
-                                .flatMapCompletable(user -> loginAttemptService.loginFailed(criteria, accountSettings)
+                                .flatMapCompletable(user -> loginAttemptService.loginFailed(domain, criteria, accountSettings)
                                         .flatMapCompletable(loginAttempt -> {
                                             if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
                                                 return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);

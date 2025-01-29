@@ -529,7 +529,7 @@ public class ManagementUserServiceTest {
         when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
@@ -564,7 +564,7 @@ public class ManagementUserServiceTest {
         when(userRepository.findById(any(),any())).thenReturn(Maybe.just(user));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
@@ -962,7 +962,7 @@ public class ManagementUserServiceTest {
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
@@ -975,7 +975,7 @@ public class ManagementUserServiceTest {
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
         verify(credentialService, never()).update(any(), any());
-        verify(loginAttemptService, times(1)).reset(any());
+        verify(loginAttemptService, times(1)).reset(any(), any());
     }
 
     @Test
@@ -1008,7 +1008,7 @@ public class ManagementUserServiceTest {
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         var credential = new Credential();
         credential.setUsername(user.getUsername());
@@ -1023,7 +1023,7 @@ public class ManagementUserServiceTest {
 
         verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
-        verify(loginAttemptService, times(1)).reset(any());
+        verify(loginAttemptService, times(1)).reset(any(), any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
         verify(credentialService, times(1)).update(any(), argThat(argument -> NEW_USERNAME.equals(argument.getUsername())));
     }
@@ -1067,7 +1067,7 @@ public class ManagementUserServiceTest {
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
 
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
         var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
@@ -1077,7 +1077,7 @@ public class ManagementUserServiceTest {
 
         verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
-        verify(loginAttemptService, times(1)).reset(any());
+        verify(loginAttemptService, times(1)).reset(any(), any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
 
         assertEquals(1, user.getFactors().size());
@@ -1258,7 +1258,7 @@ public class ManagementUserServiceTest {
         when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(defaultUser));
 
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
         var observer = userService.updateUsername(domain, user.getId(), NEW_USERNAME, null).test();
@@ -1274,7 +1274,7 @@ public class ManagementUserServiceTest {
             return true;
         }), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
-        verify(loginAttemptService, times(1)).reset(any());
+        verify(loginAttemptService, times(1)).reset(any(), any());
     }
 
     @Test
