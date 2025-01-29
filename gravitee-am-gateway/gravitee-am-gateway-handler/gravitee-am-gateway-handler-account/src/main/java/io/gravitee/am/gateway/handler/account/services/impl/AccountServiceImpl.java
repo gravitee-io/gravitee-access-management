@@ -118,6 +118,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
 
     @Autowired
     private ScopeApprovalService scopeApprovalService;
+
     @Autowired
     private LoginAttemptService loginAttemptService;
 

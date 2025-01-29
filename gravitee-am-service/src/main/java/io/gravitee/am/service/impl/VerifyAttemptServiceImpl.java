@@ -22,7 +22,7 @@ import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.gateway.api.VerifyAttemptRepository;
-import io.gravitee.am.repository.management.api.search.VerifyAttemptCriteria;
+import io.gravitee.am.repository.gateway.api.search.VerifyAttemptCriteria;
 import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
