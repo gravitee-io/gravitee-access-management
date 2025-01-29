@@ -21,12 +21,12 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.dataplane.CredentialCommonService;
@@ -105,7 +105,7 @@ public class UpdateUsernameDomainRule extends UpdateUserRule {
                         ))
                         .doOnSuccess(user1 -> {
                             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1));
-                            loginAttemptService.reset(createLoginAttemptCriteria(user1.getReferenceId(), oldUsername.get()))
+                            loginAttemptService.reset(domain, createLoginAttemptCriteria(user1.getReferenceId(), oldUsername.get()))
                                     .onErrorResumeNext(error -> {
                                         log.warn("Could not delete login attempt {}", error.getMessage());
                                         return Completable.complete();

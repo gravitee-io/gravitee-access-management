@@ -326,7 +326,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         when(domain.getAccountSettings()).thenReturn(accountSettings);
         final var attempts = new LoginAttempt();
         attempts.setAttempts(2);
-        when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.just(attempts));
+        when(loginAttemptService.checkAccount(any(), any(), any())).thenReturn(Maybe.just(attempts));
 
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(
@@ -390,7 +390,7 @@ public class SSOSessionHandlerTest extends RxWebTestBase {
         when(domain.getAccountSettings()).thenReturn(accountSettings);
         final var attempts = new LoginAttempt();
         attempts.setAttempts(1);
-        when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.just(attempts));
+        when(loginAttemptService.checkAccount(any(), any(), any())).thenReturn(Maybe.just(attempts));
 
         when(clientSyncService.findById(anyString())).thenReturn(Maybe.empty());
         when(clientSyncService.findByClientId(anyString())).thenAnswer(

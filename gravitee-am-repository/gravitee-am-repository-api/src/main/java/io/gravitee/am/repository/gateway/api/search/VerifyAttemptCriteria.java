@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api.search;
+package io.gravitee.am.repository.gateway.api.search;
 
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
