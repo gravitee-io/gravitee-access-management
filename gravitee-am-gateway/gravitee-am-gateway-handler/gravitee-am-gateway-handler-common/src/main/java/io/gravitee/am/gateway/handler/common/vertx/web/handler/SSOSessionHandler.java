@@ -21,32 +21,32 @@ import io.gravitee.am.common.exception.authentication.AccountLockedException;
 import io.gravitee.am.common.exception.authentication.AccountStatusException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.oauth2.Parameters;
-import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
+
 import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.service.LoginAttemptService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.gravitee.am.service.LoginAttemptService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.handler.HttpException;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -216,7 +216,7 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
                                     .username(user.getUsername())
                                     .build();
                             return loginAttemptService
-                                    .checkAccount(criteria, accountSettings)
+                                    .checkAccount(domain, criteria, accountSettings)
                                     .map(loginAttempt -> {
                                         if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
                                             Map<String, String> details = new HashMap<>();

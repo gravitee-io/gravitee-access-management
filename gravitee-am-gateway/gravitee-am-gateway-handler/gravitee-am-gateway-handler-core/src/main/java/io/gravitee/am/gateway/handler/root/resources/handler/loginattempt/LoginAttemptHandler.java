@@ -16,6 +16,8 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.loginattempt;
 
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria.Builder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.model.ChallengeSettings;
@@ -26,8 +28,6 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria.Builder;
 import io.gravitee.am.service.LoginAttemptService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
@@ -110,6 +110,6 @@ public class LoginAttemptHandler implements Handler<RoutingContext> {
     }
 
     private Maybe<Optional<LoginAttempt>> getLoginAttempt(AccountSettings accountSettings, LoginAttemptCriteria criteria) {
-        return loginAttemptService.checkAccount(criteria, accountSettings).map(Optional::ofNullable).switchIfEmpty(Maybe.just(Optional.empty()));
+        return loginAttemptService.checkAccount(domain, criteria, accountSettings).map(Optional::ofNullable).switchIfEmpty(Maybe.just(Optional.empty()));
     }
 }

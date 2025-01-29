@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.dataplane.api.repository.LoginAttemptRepository;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.repository.gateway.api.LoginAttemptRepository;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.impl.LoginAttemptServiceImpl;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -66,7 +67,7 @@ public class LoginAttemptServiceTest {
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
 
-        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
+        TestObserver testObserver = loginAttemptService.loginFailed(new Domain("domain-1"), loginAttemptCriteria, accountSettings).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
     }
@@ -91,7 +92,7 @@ public class LoginAttemptServiceTest {
         when(loginAttemptRepository.findByCriteria(loginAttemptCriteria)).thenReturn(Maybe.just(loginAttempt));
         when(loginAttemptRepository.update(loginAttempt)).thenReturn(Single.just(loginAttempt));
 
-        TestObserver testObserver = loginAttemptService.loginFailed(loginAttemptCriteria, accountSettings).test();
+        TestObserver testObserver = loginAttemptService.loginFailed(new Domain("domain-1"), loginAttemptCriteria, accountSettings).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
     }

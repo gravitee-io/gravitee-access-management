@@ -18,7 +18,7 @@ package io.gravitee.am.repository.gateway.api;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.management.api.search.VerifyAttemptCriteria;
+import io.gravitee.am.repository.gateway.api.search.VerifyAttemptCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 
