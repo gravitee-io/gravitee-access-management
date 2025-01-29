@@ -281,7 +281,7 @@ public class UpdateUsernameDomainRuleTest {
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
         when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
 
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
@@ -294,7 +294,7 @@ public class UpdateUsernameDomainRuleTest {
         verify(userProvider, times(1)).updateUsername(any(), anyString());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
         verify(credentialService, never()).update(any(), any());
-        verify(loginAttemptService, times(1)).reset(any());
+        verify(loginAttemptService, times(1)).reset(any(), any());
     }
 
     @Test
@@ -324,7 +324,7 @@ public class UpdateUsernameDomainRuleTest {
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
         when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
 
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         var credential = new Credential();
         credential.setUsername(user.getUsername());
@@ -339,7 +339,7 @@ public class UpdateUsernameDomainRuleTest {
 
         verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
-        verify(loginAttemptService, times(1)).reset(any());
+        verify(loginAttemptService, times(1)).reset(any(), any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
         verify(credentialService, times(1)).update(any(), argThat(argument -> NEW_USERNAME.equals(argument.getUsername())));
     }
@@ -380,7 +380,7 @@ public class UpdateUsernameDomainRuleTest {
         when(userProvider.findByUsername(anyString())).thenReturn(Maybe.just(defaultUser));
         when(userProvider.updateUsername(any(), anyString())).thenReturn(Single.just(idpUserUpdated));
 
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(credentialService.findByUsername(any(), eq(user.getUsername()))).thenReturn(Flowable.empty());
 
         var observer = rule.updateUsername(domain, NEW_USERNAME, null, (User user1) -> Single.just(userProvider), () -> Single.just(user)).test();
@@ -390,7 +390,7 @@ public class UpdateUsernameDomainRuleTest {
 
         verify(userRepository, times(1)).update(any(), any());
         verify(userProvider, times(1)).updateUsername(any(), anyString());
-        verify(loginAttemptService, times(1)).reset(any());
+        verify(loginAttemptService, times(1)).reset(any(), any());
         verify(credentialService, times(1)).findByUsername(any(), eq(USERNAME));
 
         assertEquals(1, user.getFactors().size());

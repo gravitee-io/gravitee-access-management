@@ -53,7 +53,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.LoginAttemptService;
@@ -447,7 +447,7 @@ public class UserServiceImpl implements UserService {
                             .client(client.getId())
                             .username(user1.getUsername())
                             .build();
-                    return loginAttemptService.reset(criteria).andThen(Single.just(user1));
+                    return loginAttemptService.reset(domain, criteria).andThen(Single.just(user1));
                 })
                 // delete passwordless devices
                 .flatMap(user1 -> {

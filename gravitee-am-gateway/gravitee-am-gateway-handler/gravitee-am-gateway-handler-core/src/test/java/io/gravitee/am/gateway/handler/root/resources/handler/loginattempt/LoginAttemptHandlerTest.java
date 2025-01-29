@@ -91,7 +91,7 @@ public class LoginAttemptHandlerTest {
 
         final LoginAttempt attempts = new LoginAttempt();
         attempts.setAttempts(5);
-        doReturn(Maybe.just(attempts)).when(loginAttemptService).checkAccount(any(), any());
+        doReturn(Maybe.just(attempts)).when(loginAttemptService).checkAccount(any(), any(), any());
 
         spyRoutingContext = spy(new SpyRoutingContext());
         loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService, userActivityService);
