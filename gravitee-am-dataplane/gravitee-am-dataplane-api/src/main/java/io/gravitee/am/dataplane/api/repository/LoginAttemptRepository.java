@@ -13,31 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.dataplane.api.repository;
 
 import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.LoginAttempt;
-import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.repository.common.CrudRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface LoginAttemptService {
+public interface LoginAttemptRepository extends CrudRepository<LoginAttempt, String> {
 
-    Completable loginSucceeded(Domain domain, LoginAttemptCriteria criteria);
+    Maybe<LoginAttempt> findByCriteria(LoginAttemptCriteria criteria);
 
-    Single<LoginAttempt> loginFailed(Domain domain, LoginAttemptCriteria criteria, AccountSettings accountSettings);
+    Completable delete(LoginAttemptCriteria criteria);
 
-    Completable reset(Domain domain, LoginAttemptCriteria criteria);
-
-    Maybe<LoginAttempt> checkAccount(Domain domain, LoginAttemptCriteria criteria, AccountSettings accountSettings);
-
-    Maybe<LoginAttempt> findById(Domain domain, String id);
-
-
+    default Completable purgeExpiredData() {
+        return Completable.complete();
+    }
 }
