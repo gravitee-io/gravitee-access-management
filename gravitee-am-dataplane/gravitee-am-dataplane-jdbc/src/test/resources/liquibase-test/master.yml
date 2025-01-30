@@ -1,0 +1,3 @@
+databaseChangeLog:
+  - include:
+      - file: liquibase-test/changelogs/v4_7_0/schema.yml
