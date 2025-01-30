@@ -57,9 +57,11 @@ import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.service.impl.CredentialGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.DeviceGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.impl.LoginAttemptGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.UserActivityGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
@@ -354,5 +356,10 @@ public class CommonConfiguration {
     @Bean
     public DeviceGatewayService deviceGatewayService(DataPlaneRegistry dataPlaneRegistry) {
         return new DeviceGatewayServiceImpl(dataPlaneRegistry);
+    }
+
+    @Bean
+    public LoginAttemptGatewayService loginAttemptGatewayService(DataPlaneRegistry dataPlaneRegistry) {
+        return new LoginAttemptGatewayServiceImpl(dataPlaneRegistry);
     }
 }
