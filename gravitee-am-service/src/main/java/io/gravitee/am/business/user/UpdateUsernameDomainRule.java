@@ -28,7 +28,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.dataplane.CredentialCommonService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -55,21 +54,21 @@ import java.util.function.Supplier;
 @Slf4j
 public class UpdateUsernameDomainRule extends UpdateUserRule {
     private Function3<Reference, String, String, Maybe<User>> findUserByUsernameAndSource;
+    private BiFunction<Domain, LoginAttemptCriteria , Completable> resetLoginAttempts;
     private AuditService auditService;
     private CredentialCommonService credentialService;
-    private LoginAttemptService loginAttemptService;
 
     public UpdateUsernameDomainRule(UserValidator validator,
                                     BiFunction<User, UserRepository.UpdateActions, Single<User>> userUpdater,
                                     Function3<Reference, String, String, Maybe<User>> findUserByUsernameAndSource,
                                     AuditService auditService,
                                     CredentialCommonService credentialService,
-                                    LoginAttemptService loginAttemptService) {
+                                    BiFunction<Domain, LoginAttemptCriteria , Completable> resetLoginAttempts) {
         super(validator, userUpdater);
         this.findUserByUsernameAndSource = findUserByUsernameAndSource;
         this.auditService = auditService;
         this.credentialService = credentialService;
-        this.loginAttemptService = loginAttemptService;
+        this.resetLoginAttempts = resetLoginAttempts;
     }
 
     public Single<User> updateUsername(Domain domain, String username, io.gravitee.am.identityprovider.api.User principal, Function<User, Single<UserProvider>> userProviderSupplier, Supplier<Single<User>> userSupplier) {
@@ -105,7 +104,7 @@ public class UpdateUsernameDomainRule extends UpdateUserRule {
                         ))
                         .doOnSuccess(user1 -> {
                             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USERNAME_UPDATED).user(user1));
-                            loginAttemptService.reset(domain, createLoginAttemptCriteria(user1.getReferenceId(), oldUsername.get()))
+                            resetLoginAttempts.apply(domain, createLoginAttemptCriteria(user1.getReferenceId(), oldUsername.get()))
                                     .onErrorResumeNext(error -> {
                                         log.warn("Could not delete login attempt {}", error.getMessage());
                                         return Completable.complete();

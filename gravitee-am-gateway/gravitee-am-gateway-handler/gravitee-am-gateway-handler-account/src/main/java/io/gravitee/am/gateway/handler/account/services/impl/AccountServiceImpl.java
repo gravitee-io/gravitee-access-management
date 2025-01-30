@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
@@ -47,7 +48,6 @@ import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.FactorService;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
@@ -120,7 +120,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
     private ScopeApprovalService scopeApprovalService;
 
     @Autowired
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptGatewayService loginAttemptService;
 
     @Autowired
     private AuditService auditService;
@@ -198,7 +198,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
                 userRepository::findByUsernameAndSource,
                 auditService,
                 credentialService,
-                loginAttemptService).updateUsername(
+                loginAttemptService::reset).updateUsername(
                         domain,
                         newUsername.getUsername(),
                         principal,
