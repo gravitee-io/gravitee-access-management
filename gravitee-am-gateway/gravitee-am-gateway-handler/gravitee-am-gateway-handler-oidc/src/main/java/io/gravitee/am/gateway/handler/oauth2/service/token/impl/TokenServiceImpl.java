@@ -53,10 +53,12 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.Setter;
 import net.minidev.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 import java.util.Date;
@@ -107,6 +109,10 @@ public class TokenServiceImpl implements TokenService {
 
     @Autowired
     private AuditService auditService;
+
+    @Setter
+    @Value("${handlers.oauth2.response.strict:false}")
+    private boolean strictResponse = false;
 
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
@@ -290,8 +296,7 @@ public class TokenServiceImpl implements TokenService {
         token.setExpiresIn(Instant.ofEpochSecond(accessToken.getExp()).minusMillis(System.currentTimeMillis()).getEpochSecond());
         token.setScope(accessToken.getScope());
         // set additional information
-
-        if (oAuth2Request.getAdditionalParameters() != null && !oAuth2Request.getAdditionalParameters().isEmpty()) {
+        if (!strictResponse && oAuth2Request.getAdditionalParameters() != null && !oAuth2Request.getAdditionalParameters().isEmpty()) {
             oAuth2Request.getAdditionalParameters().toSingleValueMap().entrySet().stream()
                     .filter(e -> !Token.getStandardParameters().contains(e.getKey()) && !e.getKey().equals(ID_TOKEN))
                     .forEach(e -> token.getAdditionalInformation().put(e.getKey(), e.getValue()));
