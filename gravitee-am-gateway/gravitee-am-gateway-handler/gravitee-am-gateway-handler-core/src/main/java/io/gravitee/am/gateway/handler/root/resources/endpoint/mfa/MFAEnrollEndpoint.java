@@ -115,7 +115,7 @@ public class MFAEnrollEndpoint extends AbstractEndpoint implements Handler<Routi
         try {
             if (routingContext.user() == null) {
                 logger.warn("User must be authenticated to enroll MFA challenge.");
-                routingContext.fail(401);
+                routingContext.fail(401, new InvalidRequestException("Authentication required to enroll a factor"));
                 return;
             }
             var context = new MfaFilterContext(routingContext, routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY), factorManager, ruleEngine);
