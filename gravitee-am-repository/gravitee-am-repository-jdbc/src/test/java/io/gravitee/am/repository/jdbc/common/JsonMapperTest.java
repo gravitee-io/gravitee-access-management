@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.common;
 
 import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import org.junit.Test;
 
 import java.util.Arrays;
