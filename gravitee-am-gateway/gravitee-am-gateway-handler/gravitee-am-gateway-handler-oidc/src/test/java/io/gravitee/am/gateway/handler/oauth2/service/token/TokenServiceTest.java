@@ -85,7 +85,7 @@ import static org.mockito.Mockito.when;
 public class TokenServiceTest {
 
     @InjectMocks
-    private TokenService tokenService = new TokenServiceImpl();
+    private TokenServiceImpl tokenService = new TokenServiceImpl();
 
     @Mock
     private AccessTokenRepository accessTokenRepository;
@@ -122,6 +122,9 @@ public class TokenServiceTest {
     @Test
     public void shouldCreate() {
         OAuth2Request oAuth2Request = new OAuth2Request();
+        MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
+        additionalParameters.add("key", "value");
+        oAuth2Request.setAdditionalParameters(additionalParameters);
 
         Client client = new Client();
         client.setClientId("my-client-id");
@@ -129,12 +132,41 @@ public class TokenServiceTest {
         ExecutionContext executionContext = mock(ExecutionContext.class);
 
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
-        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
         when(executionContextFactory.create(any())).thenReturn(executionContext);
         doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
         TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        testObserver.assertValue(token -> token.getAdditionalInformation().containsKey("key"));
+
+        verify(tokenManager, times(1)).storeAccessToken(any());
+        verify(accessTokenRepository, never()).delete(anyString());
+        verify(refreshTokenRepository, never()).delete(anyString());
+    }
+
+    @Test
+    public void shouldCreateWithoutAdditionalParameters() {
+        tokenService.setStrictResponse(true);
+        OAuth2Request oAuth2Request = new OAuth2Request();
+        MultiValueMap<String, String> additionalParameters = new LinkedMultiValueMap<>();
+        additionalParameters.add("key", "value");
+        oAuth2Request.setAdditionalParameters(additionalParameters);
+
+        Client client = new Client();
+        client.setClientId("my-client-id");
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+
+        when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenAnswer(ans -> Single.just(ans.getArgument(0)));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        testObserver.assertValue(token -> token.getAdditionalInformation().isEmpty());
 
         verify(tokenManager, times(1)).storeAccessToken(any());
         verify(accessTokenRepository, never()).delete(anyString());
@@ -228,6 +260,7 @@ public class TokenServiceTest {
         verify(refreshTokenRepository, never()).delete(anyString());
     }
 
+    @Test
     public void shouldCreate_withAudArray() {
         OAuth2Request oAuth2Request = new OAuth2Request();
         oAuth2Request.setClientId("my-client-id");
@@ -248,6 +281,12 @@ public class TokenServiceTest {
 
         when(jwtService.encode(any(), any(Client.class))).thenReturn(Single.just(""));
         when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("token-id")));
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        doReturn(Completable.complete()).when(tokenManager).storeAccessToken(any());
+
+        TestObserver<Token> testObserver = tokenService.create(oAuth2Request, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
 
         verify(jwtService).encode(argThat(jwt -> jwt.get(Claims.aud) instanceof List
                 && jwt.getAud().equals(((List)jwt.get(Claims.aud)).get(0))
