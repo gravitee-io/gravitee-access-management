@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSPHandlerFactory;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.CSRFHandlerFactory;
@@ -32,7 +33,6 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessio
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.PolicyChainHandlerImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.vertx.core.http.CookieSameSite;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,7 +68,7 @@ public class WebConfiguration {
     }
 
     @Bean
-    public SSOSessionHandler ssoSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptService loginAttemptService, Domain domain) {
+    public SSOSessionHandler ssoSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptGatewayService loginAttemptService, Domain domain) {
         return new SSOSessionHandler(clientSyncService, authenticationFlowContextService, loginAttemptService, domain);
     }
 

@@ -13,40 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+
+package io.gravitee.am.gateway.handler.common.service.impl;
+
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.LoginAttemptNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.Optional;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
 @Slf4j
-public class LoginAttemptServiceImpl implements LoginAttemptService {
+@AllArgsConstructor
+public class LoginAttemptGatewayServiceImpl implements LoginAttemptGatewayService {
 
-    @Lazy
-    @Autowired
-    private DataPlaneRegistry dataPlaneRegistry;
+    private final DataPlaneRegistry dataPlaneRegistry;
 
     @Override
     public Single<LoginAttempt> loginFailed(Domain domain, LoginAttemptCriteria criteria, AccountSettings accountSettings) {
@@ -83,9 +81,6 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     }
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
                     log.error("An error occurs while trying to add a login attempt", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to add a login attempt", ex));
                 });
@@ -96,18 +91,10 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
         log.debug("Delete login attempt for {}", criteria);
         return dataPlaneRegistry.getLoginAttemptRepository(domain).delete(criteria)
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Completable.error(ex);
-                    }
                     log.error("An error occurs while trying to delete login attempt for {}", criteria, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete login attempt: %s", criteria), ex));
                 });
-    }
-
-    @Override
-    public Completable reset(Domain domain, LoginAttemptCriteria criteria) {
-        return loginSucceeded(domain, criteria);
     }
 
     @Override
