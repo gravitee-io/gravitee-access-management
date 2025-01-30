@@ -35,6 +35,7 @@
         <module>gravitee-am-dataplane-api</module>
         <module>gravitee-am-dataplane-test</module>
         <module>gravitee-am-dataplane-mongodb</module>
+        <module>gravitee-am-dataplane-jdbc</module>
         <module>gravitee-am-dataplane-junit</module>
     </modules>
 
