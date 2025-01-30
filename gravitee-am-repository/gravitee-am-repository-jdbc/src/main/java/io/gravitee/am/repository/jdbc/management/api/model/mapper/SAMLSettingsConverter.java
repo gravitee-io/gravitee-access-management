@@ -17,7 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api.model.mapper;
 
 import com.github.dozermapper.core.DozerConverter;
 import io.gravitee.am.model.SAMLSettings;
-import io.gravitee.am.repository.jdbc.common.JSONMapper;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

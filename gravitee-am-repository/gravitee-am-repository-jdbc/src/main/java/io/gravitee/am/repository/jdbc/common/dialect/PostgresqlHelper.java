@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.jdbc.common.dialect;
 
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.jdbc.common.JSONMapper;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.r2dbc.postgresql.codec.Json;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
