@@ -25,6 +25,7 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
+import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.impl.ManagementUserServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Credential;
@@ -49,7 +50,6 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
@@ -164,7 +164,7 @@ public class ManagementUserServiceTest {
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptManagementService loginAttemptService;
 
     @Mock
     private RoleService roleService;

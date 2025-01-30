@@ -24,14 +24,13 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSession;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
-
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.LoginAttemptService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -69,10 +68,10 @@ public class SSOSessionHandler implements Handler<RoutingContext> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SSOSessionHandler.class);
     private ClientSyncService clientSyncService;
     private AuthenticationFlowContextService authenticationFlowContextService;
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptGatewayService loginAttemptService;
     private Domain domain;
 
-    public SSOSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptService loginAttemptService, Domain domain) {
+    public SSOSessionHandler(ClientSyncService clientSyncService, AuthenticationFlowContextService authenticationFlowContextService, LoginAttemptGatewayService loginAttemptService, Domain domain) {
         this.clientSyncService = clientSyncService;
         this.authenticationFlowContextService = authenticationFlowContextService;
         this.loginAttemptService = loginAttemptService;
