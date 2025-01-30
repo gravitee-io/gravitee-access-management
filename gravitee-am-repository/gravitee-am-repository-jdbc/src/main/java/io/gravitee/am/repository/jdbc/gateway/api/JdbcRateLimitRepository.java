@@ -23,7 +23,7 @@ import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.gateway.api.model.JdbcRateLimit;
 import io.gravitee.am.repository.jdbc.gateway.api.spring.SpringRateLimitRepository;
 import io.gravitee.am.repository.gateway.api.RateLimitRepository;
-import io.gravitee.am.repository.management.api.search.RateLimitCriteria;
+import io.gravitee.am.repository.gateway.api.search.RateLimitCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;

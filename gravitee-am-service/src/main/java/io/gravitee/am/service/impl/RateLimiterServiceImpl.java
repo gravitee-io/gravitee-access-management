@@ -20,7 +20,7 @@ import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.gateway.api.RateLimitRepository;
-import io.gravitee.am.repository.management.api.search.RateLimitCriteria;
+import io.gravitee.am.repository.gateway.api.search.RateLimitCriteria;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;

@@ -22,7 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.gateway.api.RateLimitRepository;
-import io.gravitee.am.repository.management.api.search.RateLimitCriteria;
+import io.gravitee.am.repository.gateway.api.search.RateLimitCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.RateLimitMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;

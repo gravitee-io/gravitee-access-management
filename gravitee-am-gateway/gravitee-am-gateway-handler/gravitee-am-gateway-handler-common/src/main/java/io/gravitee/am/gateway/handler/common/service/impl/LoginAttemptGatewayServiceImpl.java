@@ -13,45 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+
+package io.gravitee.am.gateway.handler.common.service.impl;
+
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.repository.gateway.api.LoginAttemptRepository;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.LoginAttemptService;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.LoginAttemptNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
 import java.util.Optional;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
-public class LoginAttemptServiceImpl implements LoginAttemptService {
+@Slf4j
+@AllArgsConstructor
+public class LoginAttemptGatewayServiceImpl implements LoginAttemptGatewayService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LoginAttemptServiceImpl.class);
-
-    @Lazy
-    @Autowired
-    private LoginAttemptRepository loginAttemptRepository;
+    private final DataPlaneRegistry dataPlaneRegistry;
 
     @Override
-    public Single<LoginAttempt> loginFailed(LoginAttemptCriteria criteria, AccountSettings accountSettings) {
-        LOGGER.debug("Add login attempt for {}", criteria);
+    public Single<LoginAttempt> loginFailed(Domain domain, LoginAttemptCriteria criteria, AccountSettings accountSettings) {
+        log.debug("Add login attempt for {}", criteria);
+        final var loginAttemptRepository = dataPlaneRegistry.getLoginAttemptRepository(domain);
         return loginAttemptRepository.findByCriteria(criteria)
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
@@ -83,49 +81,38 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     }
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to add a login attempt", ex);
+                    log.error("An error occurs while trying to add a login attempt", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to add a login attempt", ex));
                 });
     }
 
     @Override
-    public Completable loginSucceeded(LoginAttemptCriteria criteria) {
-        LOGGER.debug("Delete login attempt for {}", criteria);
-        return loginAttemptRepository.delete(criteria)
+    public Completable loginSucceeded(Domain domain, LoginAttemptCriteria criteria) {
+        log.debug("Delete login attempt for {}", criteria);
+        return dataPlaneRegistry.getLoginAttemptRepository(domain).delete(criteria)
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Completable.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to delete login attempt for {}", criteria, ex);
+                    log.error("An error occurs while trying to delete login attempt for {}", criteria, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete login attempt: %s", criteria), ex));
                 });
     }
 
     @Override
-    public Completable reset(LoginAttemptCriteria criteria) {
-        return loginSucceeded(criteria);
+    public Maybe<LoginAttempt> checkAccount(Domain domain, LoginAttemptCriteria criteria, AccountSettings accountSettings) {
+        log.debug("Check account status for {}", criteria);
+        return dataPlaneRegistry.getLoginAttemptRepository(domain).findByCriteria(criteria);
     }
 
     @Override
-    public Maybe<LoginAttempt> checkAccount(LoginAttemptCriteria criteria, AccountSettings accountSettings) {
-        LOGGER.debug("Check account status for {}", criteria);
-        return loginAttemptRepository.findByCriteria(criteria);
-    }
-
-    @Override
-    public Maybe<LoginAttempt> findById(String id) {
-        LOGGER.debug("Find login attempt by id {}", id);
-        return loginAttemptRepository.findById(id)
+    public Maybe<LoginAttempt> findById(Domain domain, String id) {
+        log.debug("Find login attempt by id {}", id);
+        return dataPlaneRegistry.getLoginAttemptRepository(domain).findById(id)
                 .switchIfEmpty(Maybe.error(new LoginAttemptNotFoundException(id)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Maybe.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to find login attempt by id {}", id, ex);
+                    log.error("An error occurs while trying to find login attempt by id {}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to fin login attempt by id: %s", id), ex));
                 });

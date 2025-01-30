@@ -16,10 +16,10 @@
 package io.gravitee.am.gateway.handler.common.auth.user;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;

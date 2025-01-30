@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.root.service.user.impl.UserServiceImpl;
 import io.gravitee.am.gateway.handler.root.service.user.model.ForgotPasswordParameters;
@@ -120,7 +121,7 @@ public class UserServiceTest {
     private UserGatewayService commonUserService;
 
     @Mock
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptGatewayService loginAttemptService;
 
     @Mock
     private CredentialGatewayService credentialService;
@@ -206,7 +207,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
@@ -258,7 +259,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
@@ -266,7 +267,7 @@ public class UserServiceTest {
 
         verify(credentialService, never()).deleteByUserId(any(), any());
         verify(tokenService, never()).deleteByUser(any());
-        verify(loginAttemptService).reset(argThat(criteria -> criteria.client().equals(clientIdFromClient)));
+        verify(loginAttemptService).reset(any(), argThat(criteria -> criteria.client().equals(clientIdFromClient)));
     }
 
     @Test
@@ -290,7 +291,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
@@ -321,7 +322,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
@@ -356,7 +357,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
 
         var testObserver = userService.resetPassword(client, user).test();
         testObserver.assertComplete();
@@ -976,7 +977,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(credentialService.deleteByUserId(any(), any())).thenReturn(Completable.complete());
 
         var testObserver = userService.resetPassword(client, user).test();
@@ -1012,7 +1013,7 @@ public class UserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(commonUserService.enhance(any())).thenReturn(Single.just(user));
-        when(loginAttemptService.reset(any())).thenReturn(Completable.complete());
+        when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
         when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
 
         var testObserver = userService.resetPassword(client, user).test();

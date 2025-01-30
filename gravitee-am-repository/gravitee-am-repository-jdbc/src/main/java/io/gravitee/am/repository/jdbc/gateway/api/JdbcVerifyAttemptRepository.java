@@ -23,7 +23,7 @@ import io.gravitee.am.repository.jdbc.exceptions.RepositoryIllegalQueryException
 import io.gravitee.am.repository.jdbc.gateway.api.model.JdbcVerifyAttempt;
 import io.gravitee.am.repository.jdbc.gateway.api.spring.SpringVerifyAttemptRepository;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.management.api.search.VerifyAttemptCriteria;
+import io.gravitee.am.repository.gateway.api.search.VerifyAttemptCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;

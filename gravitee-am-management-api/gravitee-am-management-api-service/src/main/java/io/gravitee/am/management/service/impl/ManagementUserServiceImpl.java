@@ -30,6 +30,7 @@ import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
+import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -48,7 +49,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.LoginAttemptService;
@@ -123,7 +124,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
     private JWTBuilder jwtBuilder;
 
     @Autowired
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptManagementService loginAttemptService;
 
     @Autowired
     private ApplicationService applicationService;
@@ -470,7 +471,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                             .client(user.getClient())
                             .username(user.getUsername())
                             .build();
-                    return loginAttemptService.reset(criteria);
+                    return loginAttemptService.reset(domain, criteria);
                 });
     }
 
@@ -536,7 +537,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                         .username(user.getUsername())
                                         .build();
                                 final var action = new UpdateUserRule(userValidator, dataPlaneRegistry.getUserRepository(domain)::update);
-                                return loginAttemptService.reset(criteria).andThen(action.update(user));
+                                return loginAttemptService.reset(domain, criteria).andThen(action.update(user));
                             });
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_LOCKED).user(user1)))
@@ -560,7 +561,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                             .username(user.getUsername())
                             .build();
                     final var action = new UpdateUserRule(userValidator, dataPlaneRegistry.getUserRepository(domain)::update);
-                    return loginAttemptService.reset(criteria).andThen(action.update(user));
+                    return loginAttemptService.reset(domain, criteria).andThen(action.update(user));
                 })
                 .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).user(user1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_UNLOCKED).reference(domain.asReference()).throwable(throwable)))
@@ -741,7 +742,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                 repository::findByUsernameAndSource,
                 auditService,
                 credentialService,
-                loginAttemptService)
+                loginAttemptService::reset)
                 .updateUsername(domain, username, principal,
                         (User user) -> identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
