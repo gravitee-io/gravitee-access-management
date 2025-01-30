@@ -30,6 +30,7 @@ import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
+import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
@@ -51,7 +52,6 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
@@ -123,7 +123,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
     private JWTBuilder jwtBuilder;
 
     @Autowired
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptManagementService loginAttemptService;
 
     @Autowired
     private ApplicationService applicationService;
@@ -741,7 +741,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                 repository::findByUsernameAndSource,
                 auditService,
                 credentialService,
-                loginAttemptService)
+                loginAttemptService::reset)
                 .updateUsername(domain, username, principal,
                         (User user) -> identityProviderManager.getUserProvider(user.getSource())
                                 .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(user.getSource()))),
