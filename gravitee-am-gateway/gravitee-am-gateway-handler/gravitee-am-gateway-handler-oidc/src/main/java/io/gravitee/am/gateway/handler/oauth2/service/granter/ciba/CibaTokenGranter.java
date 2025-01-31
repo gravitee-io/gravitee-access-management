@@ -33,10 +33,12 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static java.util.Collections.emptyMap;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.springframework.util.StringUtils.isEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.*;
 
@@ -111,7 +113,7 @@ public class CibaTokenGranter extends AbstractTokenGranter {
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
         return userAuthenticationManager.loadPreAuthenticatedUser(tokenRequest.getSubject(), tokenRequest)
-                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+                .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException(isBlank(ex.getMessage()) ? "unable to read user profile" : ex.getMessage())));
     }
 
     @Override

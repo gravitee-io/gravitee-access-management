@@ -43,6 +43,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -127,7 +128,10 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                         }
                     }
                 })
-                .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException(ex.getMessage())));
+                .onErrorResumeNext(ex -> {
+                    String msg = StringUtils.isBlank(ex.getMessage()) ? "Unknown error" : ex.getMessage();
+                    return Maybe.error(new InvalidGrantException(msg));
+                });
     }
 
     protected Maybe<User> forgeUserProfile(io.gravitee.am.identityprovider.api.User endUser) {
