@@ -37,6 +37,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 /**
  * Implementation of the Refresh Token Grant Flow
  * See <a href="https://tools.ietf.org/html/rfc6749#section-6">6. Refreshing an Access Token</a>
@@ -108,7 +110,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
         }
 
         return userAuthenticationManager.loadPreAuthenticatedUser(subject, tokenRequest)
-                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+                .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException(isBlank(ex.getMessage()) ? "unable to read user profile" : ex.getMessage())));
     }
 
     @Override
