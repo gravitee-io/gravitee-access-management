@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee</groupId>
         <artifactId>gravitee-parent</artifactId>
-        <version>22.0.25</version>
+        <version>23.0.0</version>
         <relativePath/>
     </parent>
 
@@ -214,7 +214,7 @@
         <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
         <reactor.version>3.5.8</reactor.version>
 
-        <jdk.version>17</jdk.version>
+        <jdk.version>21</jdk.version>
 
         <ongres.scram.version>2.1</ongres.scram.version>
 

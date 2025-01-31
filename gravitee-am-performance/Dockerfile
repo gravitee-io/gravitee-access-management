@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM openjdk:17-slim
+FROM openjdk:21-slim
 
 ENV GATLING_VERSION 3.9.5
 

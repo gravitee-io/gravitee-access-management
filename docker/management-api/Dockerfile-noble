@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM graviteeio/java:17-alpine-3.20 as build-env
+FROM graviteeio/java:21 as build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
@@ -24,7 +24,7 @@ RUN apk update \
     && unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
     && rm /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip
 
-FROM eclipse-temurin:17.0.13_11-jre-noble
+FROM eclipse-temurin:21-jre-noble
 LABEL maintainer="contact@graviteesource.com"
 
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
