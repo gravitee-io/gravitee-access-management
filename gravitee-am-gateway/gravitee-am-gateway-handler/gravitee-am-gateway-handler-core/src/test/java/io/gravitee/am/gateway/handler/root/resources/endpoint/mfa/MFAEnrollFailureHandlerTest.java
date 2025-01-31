@@ -20,6 +20,7 @@ import io.gravitee.am.gateway.handler.root.resources.handler.dummies.MockHttpSer
 import io.gravitee.am.service.exception.EnrollmentChannelValidationException;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
+import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.Session;
 import org.junit.Before;
@@ -35,6 +36,7 @@ import static io.gravitee.am.gateway.handler.common.utils.HashUtil.generateSHA25
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MFAEnrollFailureHandlerTest {
@@ -62,8 +64,22 @@ public class MFAEnrollFailureHandlerTest {
     }
 
     @Test
+    public void should_put_redirect_on_login_if_no_user(){
+        // given
+        Mockito.when(ctx.failure()).thenReturn(new EnrollmentChannelValidationException("errorMessage"));
+        Mockito.when(request.uri()).thenReturn("https://am.com/mfa/enroll");
+
+        // when
+        handler.doHandle(ctx);
+
+        // verify
+        Mockito.verify(response).putHeader(eq("Location"), eq("test-domain/login?error=mfa_enroll_failed&error_code=enrollment_channel_invalid&error_description=errorMessage"));
+    }
+
+    @Test
     public void should_put_error_message_from_exception(){
         // given
+        Mockito.when(ctx.user()).thenReturn(mock(User.class));
         Mockito.when(ctx.failure()).thenReturn(new EnrollmentChannelValidationException("errorMessage"));
         Mockito.when(request.uri()).thenReturn("https://am.com/mfa/enroll");
 
@@ -78,6 +94,7 @@ public class MFAEnrollFailureHandlerTest {
     public void should_put_default_error_message_then_ex_is_missing(){
         // given
         Mockito.when(request.uri()).thenReturn("https://am.com/mfa/enroll");
+        Mockito.when(ctx.user()).thenReturn(mock(User.class));
 
         // when
         handler.doHandle(ctx);

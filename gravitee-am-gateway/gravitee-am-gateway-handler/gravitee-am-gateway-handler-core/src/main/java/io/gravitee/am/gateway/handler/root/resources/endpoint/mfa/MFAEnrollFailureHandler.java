@@ -52,6 +52,11 @@ public class MFAEnrollFailureHandler extends AbstractErrorHandler {
     private String getRedirectUrl(RoutingContext context, String errorDescription){
         MultiMap queryParams = updateQueryParams(context, errorDescription);
         String path = context.get(CONTEXT_PATH) + errorPage;
+        if (context.user() == null) {
+            // user is missing, that mean he didn't signed in so the session may have expired
+            // redirect to the login page
+            path = context.get(CONTEXT_PATH) + RootProvider.PATH_LOGIN;
+        }
         return resolveProxyRequest(context.request(), path, queryParams, true);
     }
 
