@@ -27,17 +27,18 @@ import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.core.env.Environment;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.REGISTRATION_KEEP_PARAMS;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class RegisterSubmissionEndpoint implements Handler<RoutingContext> {
-    public static final String GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS = "legacy.registration.keepParams";
 
     private final boolean keepParams;
 
     public RegisterSubmissionEndpoint(Environment environment) {
-        this.keepParams = environment.getProperty(GATEWAY_ENDPOINT_REGISTRATION_KEEP_PARAMS, boolean.class, true);
+        this.keepParams = REGISTRATION_KEEP_PARAMS.from(environment);
     }
 
     @Override

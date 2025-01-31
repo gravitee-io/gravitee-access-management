@@ -55,6 +55,7 @@ import java.util.Optional;
 import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.doRedirect;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -112,7 +113,7 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
                 final EnrolledFactor factorToUpdate = recoveryFactor.get();
                 factorToUpdate.setStatus(FactorStatus.ACTIVATED);
 
-                userService.updateFactor(endUser.getId(), factorToUpdate, new DefaultUser(endUser))
+                userService.upsertFactor(endUser.getId(), factorToUpdate, new DefaultUser(endUser))
                         .ignoreElement()
                         .subscribe(
                                 () -> {
@@ -169,15 +170,6 @@ public class MFARecoveryCodeEndpoint extends AbstractEndpoint implements Handler
                 .filter(ftr -> ftr.getSecurity() != null && ftr.getSecurity().getType().equals(RECOVERY_CODE))
                 .map(EnrolledFactor::getSecurity)
                 .findFirst();
-    }
-
-    private void doRedirect(RoutingContext routingContext) {
-        final MultiMap queryParams = RequestUtils.getCleanedQueryParams(routingContext.request());
-        final String returnUrl = getReturnUrl(routingContext, queryParams);
-        routingContext.response()
-                .putHeader(io.vertx.core.http.HttpHeaders.LOCATION, returnUrl)
-                .setStatusCode(302)
-                .end();
     }
 
     private Optional<EnrolledFactor> getRecoveryFactor(io.gravitee.am.model.User user) {
