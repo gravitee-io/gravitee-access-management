@@ -120,7 +120,7 @@ public class RefreshTokenGranterTest {
 
         when(tokenRequest.parameters()).thenReturn(parameters);
 
-        when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.error(new InvalidGrantException()));
+        when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.error(new InvalidGrantException("error message")));
 
         granter.grant(tokenRequest, client).test().assertError(InvalidGrantException.class);
     }
