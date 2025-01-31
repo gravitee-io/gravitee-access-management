@@ -44,6 +44,8 @@ import org.springframework.core.env.Environment;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 /**
  * Implementation of the Authorization Code Grant Flow
  * See <a href="https://tools.ietf.org/html/rfc6749#page-24"></a>
@@ -128,7 +130,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
         return userAuthenticationManager.loadPreAuthenticatedUser(tokenRequest.getSubject(), tokenRequest)
-                .onErrorResumeNext(ex -> { return Maybe.error(new InvalidGrantException()); });
+                .onErrorResumeNext(ex -> Maybe.error(new InvalidGrantException(isBlank(ex.getMessage()) ? "unable to read user profile" : ex.getMessage())));
     }
 
     @Override

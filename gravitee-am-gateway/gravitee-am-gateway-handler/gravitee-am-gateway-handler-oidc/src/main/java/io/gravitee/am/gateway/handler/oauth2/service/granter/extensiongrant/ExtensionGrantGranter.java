@@ -38,6 +38,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -160,7 +161,8 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                     }
                 })
                 .onErrorResumeNext(ex -> {
-                    return Maybe.error(new InvalidGrantException(ex.getMessage()));
+                    String msg = StringUtils.isBlank(ex.getMessage()) ? "Unknown error" : ex.getMessage();
+                    return Maybe.error(new InvalidGrantException(msg));
                 });
     }
 

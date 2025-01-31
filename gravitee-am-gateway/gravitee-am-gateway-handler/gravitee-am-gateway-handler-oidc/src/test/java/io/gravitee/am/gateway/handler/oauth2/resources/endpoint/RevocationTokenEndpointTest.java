@@ -94,7 +94,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
             }
         });
 
-        when(revocationTokenService.revoke(any(), any())).thenReturn(Completable.error(new InvalidGrantException()));
+        when(revocationTokenService.revoke(any(), any())).thenReturn(Completable.error(new InvalidGrantException("error message")));
 
         testRequest(
                 HttpMethod.POST, "/oauth/revoke?token=toto",

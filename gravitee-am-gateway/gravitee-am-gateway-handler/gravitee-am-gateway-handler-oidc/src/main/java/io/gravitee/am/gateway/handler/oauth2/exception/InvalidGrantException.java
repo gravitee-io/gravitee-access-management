@@ -28,10 +28,6 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
  */
 public class InvalidGrantException extends OAuth2Exception {
 
-    public InvalidGrantException() {
-        super();
-    }
-
     public InvalidGrantException(String message) {
         super(message);
     }
