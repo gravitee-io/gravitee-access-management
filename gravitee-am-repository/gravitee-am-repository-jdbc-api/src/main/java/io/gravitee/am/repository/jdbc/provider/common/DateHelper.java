@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.jdbc;
+package io.gravitee.am.repository.jdbc.provider.common;
 
 import lombok.experimental.UtilityClass;
 

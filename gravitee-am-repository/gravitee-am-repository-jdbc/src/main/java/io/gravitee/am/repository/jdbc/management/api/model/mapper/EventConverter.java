@@ -20,7 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.repository.jdbc.common.JSONMapper;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

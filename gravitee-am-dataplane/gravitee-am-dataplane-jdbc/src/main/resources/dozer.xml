@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mappings xmlns="http://dozermapper.github.io/schema/bean-mapping"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://dozermapper.github.io/schema/bean-mapping http://dozermapper.github.io/schema/bean-mapping.xsd">
+    <configuration>
+        <custom-converters>
+            <converter type="io.gravitee.am.dataplane.jdbc.mapper.LocalDateConverter">
+                <class-a>java.util.Date</class-a>
+                <class-b>java.time.LocalDateTime</class-b>
+            </converter>
+        </custom-converters>
+    </configuration>
+
+
+
+
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.User</class-a>
+        <class-b>io.gravitee.am.dataplane.jdbc.repository.model.JdbcUser</class-b>
+        <field custom-converter="io.gravitee.am.dataplane.jdbc.mapper.MapToStringConverter">
+            <a>additionalInformation</a>
+            <b>additionalInformation</b>
+            <a-hint>java.util.Map</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.dataplane.jdbc.mapper.X509Converter">
+            <a>x509Certificates</a>
+            <b>x509Certificates</b>
+            <a-hint>java.util.List</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.dataplane.jdbc.mapper.EnrolledFactorsConverter">
+            <a>factors</a>
+            <b>factors</b>
+            <a-hint>java.util.List</a-hint>
+        </field>
+    </mapping>
+
+</mappings>

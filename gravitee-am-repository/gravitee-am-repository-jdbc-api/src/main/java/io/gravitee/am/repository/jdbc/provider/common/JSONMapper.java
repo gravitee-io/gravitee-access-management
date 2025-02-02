@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.jdbc.common;
+package io.gravitee.am.repository.jdbc.provider.common;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.jose.ECKey;
 import io.gravitee.am.model.jose.JWK;
+import io.gravitee.am.model.jose.OCTKey;
+import io.gravitee.am.model.jose.OKPKey;
+import io.gravitee.am.model.jose.RSAKey;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -142,5 +148,28 @@ public class JSONMapper {
         public void setProperties(Map<String, Object> properties) {
             this.properties = properties;
         }
+    }
+
+    /**
+     * @author Eric LELEU (eric.leleu at graviteesource.com)
+     * @author GraviteeSource Team
+     */
+
+    @JsonTypeInfo(
+            use = JsonTypeInfo.Id.NAME,
+            include = JsonTypeInfo.As.EXISTING_PROPERTY,
+            property = "kty")
+    @JsonSubTypes({
+            // OCTKey has a lower case value.
+            @JsonSubTypes.Type(value = OCTKey.class, name = "oct"),
+            @JsonSubTypes.Type(value = OKPKey.class, name = "OKP"),
+            @JsonSubTypes.Type(value = RSAKey.class, name = "RSA"),
+            @JsonSubTypes.Type(value = ECKey.class, name = "EC")
+    })
+    /**
+     * This Mixin allows to manage the JWK class hierarchy in order to Serialize/deserialize JWK
+     * entry into the Application.settings.oauth configuration
+     */
+    public static class JWKMixIn {
     }
 }

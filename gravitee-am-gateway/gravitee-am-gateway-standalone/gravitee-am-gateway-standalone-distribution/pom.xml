@@ -453,6 +453,13 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>io.gravitee.am.dataplane</groupId>
+            <artifactId>gravitee-am-dataplane-jdbc</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>io.gravitee.am.resource.mock</groupId>
             <artifactId>gravitee-am-resource-mfa-mock</artifactId>
             <version>${gravitee-resource-mfa-mock.version}</version>
@@ -488,6 +495,12 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.dataplane</groupId>
                                     <artifactId>gravitee-am-dataplane-mongodb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.dataplane</groupId>
+                                    <artifactId>gravitee-am-dataplane-jdbc</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

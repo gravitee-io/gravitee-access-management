@@ -23,7 +23,7 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
-import io.gravitee.am.repository.jdbc.common.JSONMapper;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.Identity;

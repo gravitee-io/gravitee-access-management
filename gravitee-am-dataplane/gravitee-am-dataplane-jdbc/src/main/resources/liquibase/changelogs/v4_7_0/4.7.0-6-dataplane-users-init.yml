@@ -1,0 +1,706 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-6-users
+      author: lgw
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: users
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_users
+                  name: id
+                  type: VARCHAR(64)
+              - column:
+                  name: external_id
+                  type: VARCHAR(255)
+              - column:
+                  name: username
+                  type: VARCHAR(320)
+              - column:
+                  name: email
+                  type: VARCHAR(320)
+              - column:
+                  name: display_name
+                  type: VARCHAR(255)
+              - column:
+                  name: nick_name
+                  type: VARCHAR(255)
+              - column:
+                  name: first_name
+                  type: VARCHAR(255)
+              - column:
+                  name: last_name
+                  type: VARCHAR(255)
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+              - column:
+                  name: type
+                  type: VARCHAR(64)
+              - column:
+                  name: preferred_language
+                  type: VARCHAR(10)
+              - column:
+                  name: account_non_expired
+                  type: BOOLEAN
+              - column:
+                  name: account_locked_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: account_locked_until
+                  type: TIMESTAMP(6)
+              - column:
+                  name: account_non_locked
+                  type: BOOLEAN
+              - column:
+                  name: credentials_non_expired
+                  type: BOOLEAN
+              - column:
+                  name: enabled
+                  type: BOOLEAN
+              - column:
+                  name: internal
+                  type: BOOLEAN
+              - column:
+                  name: pre_registration
+                  type: BOOLEAN
+              - column:
+                  name: registration_completed
+                  type: BOOLEAN
+              - column:
+                  name: newsletter
+                  type: BOOLEAN
+              - column:
+                  name: registration_user_uri
+                  type: VARCHAR(1024)
+              - column:
+                  name: registration_access_token
+                  type: TEXT
+              - column:
+                  name: reference_type
+                  type: VARCHAR(64)
+              - column:
+                  name: reference_id
+                  type: VARCHAR(255)
+              - column:
+                  name: source
+                  type: VARCHAR(64)
+              - column:
+                  name: client
+                  type: VARCHAR(64)
+              - column:
+                  name: logins_count
+                  type: INTEGER
+              - column:
+                  name: logged_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: x509_certificates
+                  type: CLOB
+              - column:
+                  name: factors
+                  type: CLOB
+              - column:
+                  name: additional_information
+                  type: CLOB
+              - column:
+                  name: last_password_reset
+                  type: TIMESTAMP(6)
+              - column:
+                  name: last_logout_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: mfa_enrollment_skipped_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: last_username_reset
+                  type: TIMESTAMP(6)
+              - column:
+                  name: last_login_with_credentials
+                  type: TIMESTAMP(6)
+              - column:
+                  name: last_identity_used
+                  type: VARCHAR(255)
+              - column:
+                  name: force_reset_password
+                  type: BOOLEAN
+            tableName: users
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE users ALTER additional_information TYPE JSONB USING additional_information::jsonb
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users MODIFY additional_information JSON;
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE users ALTER x509_certificates TYPE JSON USING x509_certificates::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users MODIFY x509_certificates JSON;
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE users ALTER factors TYPE JSON USING x509_certificates::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users MODIFY factors JSON;
+
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_email ON users USING BTREE (reference_id, reference_type, ((additional_information->>'email')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_family_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'family_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_given_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'given_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_middle_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'middle_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_locale ON users USING BTREE (reference_id, reference_type, ((additional_information->>'locale')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_zoneinfo ON users USING BTREE (reference_id, reference_type, ((additional_information->>'zoneinfo')))
+
+        - sql:
+            dbms: postgresql
+            sql: "CREATE INDEX idx_users_reference_upper_username_source ON users USING btree(reference_id, reference_type, UPPER(username), source);"
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users MODIFY additional_information JSON;
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_email VARCHAR(320) AS (JSON_UNQUOTE(additional_information->"$.email"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_family_name VARCHAR(128) AS (JSON_UNQUOTE(additional_information->"$.family_name"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_given_name VARCHAR(128) AS (JSON_UNQUOTE(additional_information->"$.given_name")) ;
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_middle_name VARCHAR(128) AS (JSON_UNQUOTE(additional_information->"$.middle_name"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_profile VARCHAR(1024) AS (JSON_UNQUOTE(additional_information->"$.profile"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_locale VARCHAR(35) AS (JSON_UNQUOTE(additional_information->"$.locale"));
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE users ADD additional_information_zoneinfo VARCHAR(256) AS (JSON_UNQUOTE(additional_information->"$.zoneinfo"));
+
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_email VARCHAR(320) AS (JSON_VALUE(additional_information, "$.email"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_family_name VARCHAR(128) AS (JSON_VALUE(additional_information, "$.family_name"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_given_name VARCHAR(128) AS (JSON_VALUE(additional_information, "$.given_name"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_middle_name VARCHAR(128) AS (JSON_VALUE(additional_information, "$.middle_name"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_profile VARCHAR(1024) AS (JSON_VALUE(additional_information, "$.profile"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_locale VARCHAR(35) AS (JSON_VALUE(additional_information, "$.locale"));
+        - sql:
+            dbms: mariadb
+            sql: ALTER TABLE users ADD additional_information_zoneinfo VARCHAR(256) AS (JSON_VALUE(additional_information, "$.zoneinfo"));
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_email ON users(reference_id, reference_type, additional_information_email);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_family_name ON users(reference_id, reference_type, additional_information_family_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_given_name ON users(reference_id, reference_type, additional_information_given_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_middle_name ON users(reference_id, reference_type, additional_information_middle_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_locale ON users(reference_id, reference_type, additional_information_locale);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_zoneinfo ON users(reference_id, reference_type, additional_information_zoneinfo);
+
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_email AS JSON_VALUE(additional_information, '$.email');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_family_name AS JSON_VALUE(additional_information, '$.family_name');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_given_name AS JSON_VALUE(additional_information, '$.given_name');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_middle_name AS JSON_VALUE(additional_information, '$.middle_name');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_profile AS JSON_VALUE(additional_information, '$.profile');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_locale AS JSON_VALUE(additional_information, '$.locale');
+        - sql:
+            dbms: mssql
+            sql: ALTER TABLE users ADD additional_information_zoneinfo AS JSON_VALUE(additional_information, '$.zoneinfo');
+
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_email ON users(reference_id, reference_type, additional_information_email);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_family_name ON users(reference_id, reference_type, additional_information_family_name);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_given_name ON users(reference_id, reference_type, additional_information_given_name);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_middle_name ON users(reference_id, reference_type, additional_information_middle_name);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_locale ON users(reference_id, reference_type, additional_information_locale);
+        - sql:
+            dbms: mssql
+            sql: CREATE INDEX idx_users_additional_information_zoneinfo ON users(reference_id, reference_type, additional_information_zoneinfo);
+        - addUniqueConstraint:
+            columnNames: username, source
+            constraintName: users_username_source_unique
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName: idx_users_reference
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: email
+            indexName: idx_users_reference_email
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: username
+            indexName: idx_users_reference_username
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: display_name
+            indexName: idx_users_reference_displayname
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: first_name
+            indexName: idx_users_reference_firstname
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: last_name
+            indexName: idx_users_reference_lastname
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: username
+              - column:
+                  name: source
+            indexName: idx_users_reference_username_source
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: external_id
+            indexName: idx_users_reference_external
+            tableName: users
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: external_id
+              - column:
+                  name: source
+            indexName: idx_users_reference_externalid_source
+            tableName: users
+
+  - changeSet:
+      id: dp-init-6-user_entitlements
+      author: lgw
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: user_entitlements
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: entitlement
+                  type: VARCHAR(64)
+            tableName: user_entitlements
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_entitlements_user
+            tableName: user_entitlements
+
+  - changeSet:
+      id: dp-init-6-user_roles
+      author: lgw
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: user_roles
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: role
+                  type: VARCHAR(64)
+            tableName: user_roles
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_roles_user
+            tableName: user_roles
+  - changeSet:
+      id: dp-init-6-user_addresses
+      author: lgw
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: user_addresses
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  name: type
+                  type: VARCHAR(64)
+              - column:
+                  name: formatted
+                  type: VARCHAR(255)
+              - column:
+                  name: street_address
+                  type: VARCHAR(255)
+              - column:
+                  name: locality
+                  type: VARCHAR(255)
+              - column:
+                  name: region
+                  type: VARCHAR(255)
+              - column:
+                  name: postal_code
+                  type: VARCHAR(64)
+              - column:
+                  name: country
+                  type: VARCHAR(64)
+              - column:
+                  name: primary
+                  type: BOOLEAN
+            tableName: user_addresses
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_addresses_user
+            tableName: user_addresses
+  - changeSet:
+      id: dp-init-6-user_attributes
+      author: lgw
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: user_attributes
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_field
+                  type: VARCHAR(64)
+              - column:
+                  name: value
+                  type: TEXT
+              - column:
+                  name: type
+                  type: VARCHAR(128)
+              - column:
+                  name: primary
+                  type: BOOLEAN
+            tableName: user_attributes
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_attributes_user
+            tableName: user_attributes
+
+  - changeSet:
+      id: dp-init-6-dynamic_user_roles
+      author: lgw
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: dynamic_user_roles
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: role
+                  type: VARCHAR(64)
+            tableName: dynamic_user_roles
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_dynamic_user_roles
+            tableName: dynamic_user_roles
+
+  - changeSet:
+      id: dp-init-6-user_activities
+      author: lgw
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: user_activities
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_user_activities
+                  name: id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reference_id
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reference_type
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_activity_type
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_activity_key
+                  type: VARCHAR(255)
+              - column:
+                  name: latitude
+                  type: DOUBLE
+              - column:
+                  name: longitude
+                  type: DOUBLE
+              - column:
+                  name: user_agent
+                  type: TEXT
+              - column:
+                  name: login_attempts
+                  type: INTEGER
+              - column:
+                  name: created_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: expire_at
+                  type: TIMESTAMP(6)
+            tableName: user_activities
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName: idx_user_activities_reference_type_identifier
+            tableName: user_activities
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: user_activity_type
+              - column:
+                  name: user_activity_key
+            indexName: idx_user_activities_reference_type_identifier_type_key
+            tableName: user_activities
+
+
+  - changeSet:
+      id: dp-init-6-user_identities
+      author: lgw
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: user_identities
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: identity_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: provider_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: linked_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: additional_information
+                  type: CLOB
+              - column:
+                  name: username
+                  type: VARCHAR(320)
+            tableName: user_identities
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE user_identities ALTER additional_information TYPE JSON USING additional_information::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE user_identities MODIFY additional_information JSON;
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_user_identities_user
+            tableName: user_identities
+
+        - createIndex:
+            columns:
+              - column:
+                  name: username
+              - column:
+                  name: provider_id
+            indexName: idx_user_identities_username_provider
+            tableName: user_identities

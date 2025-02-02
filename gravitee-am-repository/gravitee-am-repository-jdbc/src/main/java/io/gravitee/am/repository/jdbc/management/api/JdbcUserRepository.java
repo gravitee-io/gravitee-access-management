@@ -28,6 +28,7 @@ import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
+import io.gravitee.am.repository.jdbc.provider.common.OffsetPageRequest;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;

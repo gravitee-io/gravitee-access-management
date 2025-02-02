@@ -17,7 +17,7 @@ package io.gravitee.am.repository.jdbc.gateway.api.model;
 
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
-import io.gravitee.am.repository.jdbc.DateHelper;
+import io.gravitee.am.repository.jdbc.provider.common.DateHelper;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

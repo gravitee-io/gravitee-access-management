@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.repository.jdbc.management.api;
+package io.gravitee.am.repository.jdbc.provider.common;
 
 
 import org.springframework.data.domain.AbstractPageRequest;

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.dozermapper.core.DozerConverter;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.repository.jdbc.common.JSONMapper;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 
 import java.util.Map;
 import java.util.Set;
