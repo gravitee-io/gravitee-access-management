@@ -29,6 +29,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
+import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.resource.api.ResourceProvider;
 import io.gravitee.am.resource.api.email.EmailSenderProvider;
@@ -122,9 +123,10 @@ public class EmailFactorProvider extends OTPFactorProvider {
             EmailService emailService = context.getComponent(EmailService.class);
 
             // Code Expiration date is present, that mean the code has not been validated
-            // check if the code has expired to know if we have to generate a new code or send the same
-            if (enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class) != null &&
-                    Instant.now().isAfter(Instant.ofEpochMilli(enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class)))) {
+            // check if the code has expired to know if we have to generate a new code for PENDING factor
+            final var expireAt = enrolledFactor.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class);
+            final var codeExpired = expireAt != null && Instant.now().isAfter(Instant.ofEpochMilli(expireAt));
+            if (enrolledFactor.getStatus() != FactorStatus.PENDING_ACTIVATION || codeExpired) {
                 incrementMovingFactor(enrolledFactor);
             }
 
