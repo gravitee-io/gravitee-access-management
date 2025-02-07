@@ -31,7 +31,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.r2dbc.connection.R2dbcTransactionManager;
@@ -111,8 +110,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
                     .append(poolWrapper.getJdbcDriver())
                     .append("://")
                     .append(poolWrapper.getJdbcHostname())
-                    .append(jdbcPort != null ? ":": "")
-                    .append(jdbcPort != null ? jdbcPort : "")
+                    .append(jdbcPort != null ? ":" + jdbcPort : "")
                     .append(SQLSERVER_DRIVER.equals(getDriver()) ? ";databaseName=" : "/")
                     .append(poolWrapper.getJdbcDatabase())
                     .toString();
