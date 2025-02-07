@@ -130,7 +130,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         System.setProperty("liquibase.databaseChangeLogLockTableName", "dp_databasechangeloglock");
 
         try (ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader())) {
-            final Liquibase liquibase = new Liquibase("liquibase/master.yml", resourceAccessor, new JdbcConnection(connection));
+            final Liquibase liquibase = new Liquibase("liquibase/dp-master.yml", resourceAccessor, new JdbcConnection(connection));
             liquibase.update((Contexts) null);
         } catch (Exception ex) {
             LOGGER.error("Failed to set up database: ", ex);
