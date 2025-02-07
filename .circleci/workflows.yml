@@ -530,15 +530,19 @@ jobs:
             curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
             curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
 
-            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
-            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
+            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
 
             cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
+            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
-
+            
             cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
+            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
             
             # EXPORT env var to start AM using SMTP Server
@@ -574,6 +578,14 @@ jobs:
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
+            export gravitee_dataPlanes_0_id=default
+            export gravitee_dataPlanes_0_jdbc_database=postgres
+            export gravitee_dataPlanes_0_jdbc_driver=postgresql
+            export gravitee_dataPlanes_0_jdbc_host=localhost
+            export gravitee_dataPlanes_0_jdbc_password=T0pS3cr3t
+            export gravitee_dataPlanes_0_jdbc_port=5432
+            export gravitee_dataPlanes_0_jdbc_username=postgres
+            export gravitee_dataPlanes_0_type=jdbc
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay  
             export gravitee_services_sync_cron="*/2 * * * * *"
@@ -699,17 +711,22 @@ jobs:
             curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
             curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
 
-            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
-            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
+            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
 
             cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
+            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
 
             cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
+            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
             # EXPORT env vart to start AM using PSQL
+            
             export GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
             export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
             export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST=localhost
@@ -731,6 +748,14 @@ jobs:
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
+            export gravitee_dataPlanes_0_id=default
+            export gravitee_dataPlanes_0_jdbc_database=postgres
+            export gravitee_dataPlanes_0_jdbc_driver=postgresql
+            export gravitee_dataPlanes_0_jdbc_host=localhost
+            export gravitee_dataPlanes_0_jdbc_password=T0pS3cr3t
+            export gravitee_dataPlanes_0_jdbc_port=5432
+            export gravitee_dataPlanes_0_jdbc_username=postgres
+            export gravitee_dataPlanes_0_type=jdbc
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
