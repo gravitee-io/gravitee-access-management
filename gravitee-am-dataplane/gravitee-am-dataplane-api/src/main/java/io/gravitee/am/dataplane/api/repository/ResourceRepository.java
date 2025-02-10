@@ -30,6 +30,7 @@ import java.util.List;
  */
 public interface ResourceRepository extends CrudRepository<Resource, String> {
 
+    Flowable<Resource> findByDomain(String domain);
     Single<Page<Resource>> findByDomain(String domain, int page, int size);
     Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size);
     Flowable<Resource> findByResources(List<String> resources);

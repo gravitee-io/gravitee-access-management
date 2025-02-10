@@ -68,6 +68,14 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
     }
 
     @Override
+    public Flowable<Resource> findByDomain(String domain) {
+        CriteriaDefinition whereClause = from(where("domain").is(domain));
+        return fluxToFlowable(getTemplate().select(Query.query(whereClause)
+                .sort(Sort.by("id").ascending()), JdbcResource.class))
+                .map(this::toEntity);
+    }
+
+    @Override
     public Single<Page<Resource>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
         CriteriaDefinition whereClause = from(where("domain").is(domain));
