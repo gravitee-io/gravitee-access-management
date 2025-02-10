@@ -11,10 +11,6 @@
         </custom-converters>
     </configuration>
 
-
-
-
-
     <mapping map-null="false">
         <class-a>io.gravitee.am.model.User</class-a>
         <class-b>io.gravitee.am.dataplane.jdbc.repository.model.JdbcUser</class-b>
@@ -34,5 +30,4 @@
             <a-hint>java.util.List</a-hint>
         </field>
     </mapping>
-
 </mappings>
