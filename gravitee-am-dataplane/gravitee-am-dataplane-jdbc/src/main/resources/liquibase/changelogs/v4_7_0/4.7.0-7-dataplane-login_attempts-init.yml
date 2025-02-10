@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-7-login_attempts
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: login_attempts
+      changes:
+        - createTable:
+            tableName: login_attempts
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: false } }
+              - column: {name: client, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: identity_provider, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: username, type: nvarchar(320), constraints: { nullable: true } }
+              - column: {name: attempts, type: integer, constraints: { nullable: true } }
+              - column: {name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_login_attempts
+            columnNames: id
+            tableName: login_attempts
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_login_attempts_expire
+            tableName: login_attempts
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client
+              - column:
+                  name: username
+            indexName:  idx_login_attempts_domain_client_username
+            tableName:  login_attempts
+            unique:  false
