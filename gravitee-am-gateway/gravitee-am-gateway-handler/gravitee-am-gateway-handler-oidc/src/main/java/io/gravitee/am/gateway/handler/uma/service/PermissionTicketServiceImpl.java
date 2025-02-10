@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+package io.gravitee.am.gateway.handler.uma.service;
 
+import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.model.uma.Resource;
-import io.gravitee.am.repository.management.api.PermissionTicketRepository;
-import io.gravitee.am.service.PermissionTicketService;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.InvalidPermissionRequestException;
 import io.gravitee.am.service.exception.InvalidPermissionTicketException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -42,20 +42,29 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Component
-public class PermissionTicketServiceImpl implements PermissionTicketService {
+public class PermissionTicketServiceImpl implements PermissionTicketService, InitializingBean {
 
     @Value("${uma.permission.validity:60000}")
     private int umaPermissionValidity;
 
-    @Lazy
     @Autowired
-    private PermissionTicketRepository repository;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
     private ResourceService resourceService;
 
+    @Autowired
+    private Domain domain;
+
+    private PermissionTicketRepository permissionTicketRepository;
+
     @Override
-    public Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, Domain domain, String client) {
+    public void afterPropertiesSet() throws Exception {
+        this.permissionTicketRepository = dataPlaneRegistry.getPermissionTicketRepository(domain);
+    }
+
+    @Override
+    public Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String client) {
         //Get list of requested resources (same Id may appear twice with difference scopes)
         List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).distinct().toList();
         //Compare with current registered resource set and return permission ticket if everything's correct.
@@ -73,19 +82,19 @@ public class PermissionTicketServiceImpl implements PermissionTicketService {
                                         .setCreatedAt(new Date())
                                         .setExpireAt(new Date(System.currentTimeMillis()+umaPermissionValidity));
                             })
-                ).flatMap(repository::create);
+                ).flatMap(permissionTicketRepository::create);
     }
 
     @Override
     public Maybe<PermissionTicket> findById(String id) {
-        return repository.findById(id);
+        return permissionTicketRepository.findById(id);
     }
 
     @Override
     public Single<PermissionTicket> remove(String id) {
-        return repository.findById(id)
+        return permissionTicketRepository.findById(id)
                 .switchIfEmpty(Single.error(new InvalidPermissionTicketException()))
-                .flatMap(permissionTicket -> repository.delete(permissionTicket.getId()).andThen(Single.just(permissionTicket)));
+                .flatMap(permissionTicket -> permissionTicketRepository.delete(permissionTicket.getId()).andThen(Single.just(permissionTicket)));
     }
 
     /**

@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.gateway.handler.uma.service;
 
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.reactivex.rxjava3.core.Maybe;
@@ -29,7 +28,7 @@ import java.util.List;
  */
 public interface PermissionTicketService {
 
-    Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, Domain domain, String client);
+    Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String client);
     Maybe<PermissionTicket> findById(String id);
     Single<PermissionTicket> remove(String id);
 }
