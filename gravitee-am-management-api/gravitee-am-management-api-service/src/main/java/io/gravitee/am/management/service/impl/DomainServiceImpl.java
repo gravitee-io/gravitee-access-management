@@ -28,6 +28,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
@@ -67,7 +68,6 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
@@ -221,7 +221,7 @@ public class DomainServiceImpl implements DomainService {
     private EnvironmentService environmentService;
 
     @Autowired
-    private ResourceService resourceService;
+    private UMAResourceManagementService resourceService;
 
     @Autowired
     private AlertTriggerService alertTriggerService;
@@ -611,11 +611,8 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(factor -> factorService.delete(domainId, factor.getId()))
                             )
                             // delete uma resources
-                            .andThen(resourceService.findByDomain(domainId)
-                                    .flatMapCompletable(resources -> {
-                                        List<Completable> deletedResourceCompletable = resources.stream().map(resourceService::delete).toList();
-                                        return Completable.concat(deletedResourceCompletable);
-                                    })
+                            .andThen(resourceService.findByDomain(domain)
+                                    .flatMapCompletable(resource -> resourceService.delete(domain, resource))
                             )
                             // delete alert triggers
                             .andThen(alertTriggerService.findByDomainAndCriteria(domainId, new AlertTriggerCriteria())
