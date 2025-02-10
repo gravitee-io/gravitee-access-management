@@ -61,6 +61,7 @@ public abstract class AbstractJdbcRepository {
     protected static final UserIdFields DEFAULT_USER_ID_FIELDS = new UserIdFields(USER_ID_FIELD, USER_SOURCE_FIELD, USER_EXTERNAL_ID_FIELD);
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
+
     @Autowired
     @Getter
     private R2dbcEntityTemplate template;

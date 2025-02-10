@@ -18,22 +18,27 @@ package io.gravitee.am.dataplane.mongodb.provider;
 import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
+import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
 import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.dataplane.api.repository.LoginAttemptRepository;
 import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
+import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
+import io.gravitee.am.dataplane.api.repository.ResourceRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 
 @Slf4j
+@Getter
 @Import({MongoDataPlaneSpringConfiguration.class})
 public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBean {
 
@@ -67,6 +72,15 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Autowired
     private LoginAttemptRepository loginAttemptRepository;
 
+    @Autowired
+    private AccessPolicyRepository accessPolicyRepository;
+
+    @Autowired
+    private ResourceRepository resourceRepository;
+
+    @Autowired
+    private PermissionTicketRepository permissionTicketRepository;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         log.info("DataPlane provider loaded with id {}", dataPlaneDescription.id());
@@ -77,45 +91,5 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
         if (mongoClientWrapper != null) {
             mongoClientWrapper.releaseClient();
         }
-    }
-
-    @Override
-    public CredentialRepository getCredentialRepository() {
-        return credentialRepository;
-    }
-
-    @Override
-    public DeviceRepository getDeviceRepository() {
-        return deviceRepository;
-    }
-
-    @Override
-    public GroupRepository getGroupRepository() {
-        return groupRepository;
-    }
-
-    @Override
-    public ScopeApprovalRepository getScopeApprovalRepository() {
-        return scopeApprovalRepository;
-    }
-
-    @Override
-    public UserActivityRepository getUserActivityRepository() {
-        return userActivityRepository;
-    }
-
-    @Override
-    public UserRepository getUserRepository() {
-        return userRepository;
-    }
-
-    @Override
-    public PasswordHistoryRepository getPasswordHistoryRepository() {
-        return passwordHistoryRepository;
-    }
-
-    @Override
-    public LoginAttemptRepository getLoginAttemptRepository() {
-        return loginAttemptRepository;
     }
 }
