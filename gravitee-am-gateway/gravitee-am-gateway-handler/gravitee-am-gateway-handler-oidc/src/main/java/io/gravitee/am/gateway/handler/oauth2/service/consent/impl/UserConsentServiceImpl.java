@@ -50,6 +50,7 @@ import static java.util.Objects.nonNull;
 public class UserConsentServiceImpl implements UserConsentService {
 
     private final int approvalExpirySeconds;
+
     @Autowired
     private ScopeApprovalService scopeApprovalService;
 

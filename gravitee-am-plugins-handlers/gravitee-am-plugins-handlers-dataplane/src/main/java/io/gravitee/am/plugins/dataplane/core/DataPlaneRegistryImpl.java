@@ -17,11 +17,14 @@ package io.gravitee.am.plugins.dataplane.core;
 
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
+import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
 import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.dataplane.api.repository.LoginAttemptRepository;
 import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
+import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
+import io.gravitee.am.dataplane.api.repository.ResourceRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
@@ -112,6 +115,21 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     @Override
     public LoginAttemptRepository getLoginAttemptRepository(Domain domain) {
         return getProvider(domain).getLoginAttemptRepository();
+    }
+
+    @Override
+    public AccessPolicyRepository getAccessPolicyRepository(Domain domain) {
+        return getProvider(domain).getAccessPolicyRepository();
+    }
+
+    @Override
+    public ResourceRepository getResourceRepository(Domain domain) {
+        return getProvider(domain).getResourceRepository();
+    }
+
+    @Override
+    public PermissionTicketRepository getPermissionTicketRepository(Domain domain) {
+        return getProvider(domain).getPermissionTicketRepository();
     }
 
     @Override

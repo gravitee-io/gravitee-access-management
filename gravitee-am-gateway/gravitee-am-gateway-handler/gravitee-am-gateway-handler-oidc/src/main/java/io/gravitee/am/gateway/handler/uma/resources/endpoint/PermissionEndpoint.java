@@ -22,10 +22,10 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.uma.resources.request.PermissionTicketRequest;
 import io.gravitee.am.gateway.handler.uma.resources.response.PermissionTicketResponse;
+import io.gravitee.am.gateway.handler.uma.service.PermissionTicketService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
-import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
@@ -66,7 +66,7 @@ public class PermissionEndpoint implements Handler<RoutingContext> {
         this.extractRequest(context)
                 .flatMap(this::bodyValidation)
                 .map(this::toPermissionRequest)
-                .flatMap(permissionRequests -> permissionTicketService.create(permissionRequests, domain, client.getId()))
+                .flatMap(permissionRequests -> permissionTicketService.create(permissionRequests, client.getId()))
                 .map(PermissionTicketResponse::from)
                 .subscribe(
                         permission -> context.response()
