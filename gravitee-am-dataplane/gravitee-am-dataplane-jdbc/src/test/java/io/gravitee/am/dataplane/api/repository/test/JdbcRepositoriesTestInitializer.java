@@ -62,6 +62,11 @@ public class JdbcRepositoriesTestInitializer implements DataPlaneTestInitializer
                 "user_addresses",
                 "user_attributes",
                 "user_identities",
+                "login_attempts",
+                "uma_resource_scopes",
+                "uma_resource_set",
+                "uma_access_policies",
+                "uma_permission_ticket",
                 dialect.toSql(SqlIdentifier.quoted("groups"))
 
         );
