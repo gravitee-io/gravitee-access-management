@@ -27,9 +27,9 @@ import io.gravitee.am.gateway.handler.uma.resources.endpoint.ResourceRegistratio
 import io.gravitee.am.gateway.handler.uma.resources.handler.MethodNotSupportedHandler;
 import io.gravitee.am.gateway.handler.uma.resources.handler.UMAProtectionApiAccessHandler;
 import io.gravitee.am.gateway.handler.uma.resources.handler.UmaExceptionHandler;
+import io.gravitee.am.gateway.handler.uma.service.PermissionTicketService;
 import io.gravitee.am.gateway.handler.uma.service.discovery.UMADiscoveryService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;

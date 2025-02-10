@@ -35,11 +35,11 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolve
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.uma.service.PermissionTicketService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
