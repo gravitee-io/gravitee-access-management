@@ -15,15 +15,13 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.management.handlers.management.api.model.ResourceEntity;
+import io.gravitee.am.management.handlers.management.api.adapter.UMAResourceManagementAdapter;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.uma.Resource;
-import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
@@ -43,8 +41,6 @@ import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Optional;
-
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -61,10 +57,7 @@ public class ApplicationResourceResource extends AbstractResource {
     private ApplicationService applicationService;
 
     @Autowired
-    private ResourceService resourceService;
-
-    @Autowired
-    private DataPlaneRegistry dataPlaneRegistry; // FIXEME: to remove the UMA will manage... user search should be managed by the ResourceService
+    private UMAResourceManagementAdapter resourceService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -91,15 +84,7 @@ public class ApplicationResourceResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMap(domain -> applicationService.findById(application)
                             .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                            .flatMap(application1 -> resourceService.findByDomainAndClientResource(domain, application1.getId(), resource)
-                                    .flatMap(r -> dataPlaneRegistry.getUserRepository(domain).findById(r.getUserId())
-                                            .map(Optional::ofNullable)
-                                            .defaultIfEmpty(Optional.empty())
-                                            .map(optUser -> {
-                                                ResourceEntity resourceEntity = new ResourceEntity(r);
-                                                resourceEntity.setUserDisplayName(optUser.isPresent() ? optUser.get().getDisplayName() : "Unknown user");
-                                                return resourceEntity;
-                                            }).toMaybe()))))
+                            .flatMap(application1 -> resourceService.findByDomainAndClientResource(domain, application1.getId(), resource))))
                 .subscribe(response::resume, response::resume);
     }
 
