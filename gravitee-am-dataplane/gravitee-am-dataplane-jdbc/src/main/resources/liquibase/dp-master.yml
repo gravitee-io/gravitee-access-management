@@ -11,3 +11,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_7_0/4.7.0-5-dataplane-scope_approvals-init.yml
   - include:
       - file: liquibase/changelogs/v4_7_0/4.7.0-6-dataplane-users-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-7-dataplane-login_attempts-init.yml
