@@ -235,6 +235,7 @@ public class ResourceServiceImpl implements ResourceService {
                 });
     }
 
+
     @Override
     public Flowable<AccessPolicy> findAccessPoliciesByResources(List<String> resourceIds) {
         log.debug("Find access policies by resources {}", resourceIds);
