@@ -208,8 +208,8 @@
             and does not supply or bundle the mysql-connector-java in the software as per the license in:
             https://github.com/mysql/mysql-connector-j/blob/release/8.0/LICENSE
             -->
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
             <version>8.0.33</version>
             <scope>test</scope>
         </dependency>
