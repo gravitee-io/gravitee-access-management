@@ -26,6 +26,7 @@ import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -49,7 +50,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.UserInvalidException;
@@ -163,7 +163,7 @@ public class ProvisioningUserServiceTest {
     private PasswordPolicyManager passwordPolicyManager;
 
     @Mock
-    private RoleService roleService;
+    private RoleManager roleManager;
 
     private static final String DOMAIN_ID = "domain";
 
@@ -236,7 +236,7 @@ public class ProvisioningUserServiceTest {
         when(newUser.getRoles()).thenReturn(Arrays.asList("role-wrong-1", "role-wrong-2"));
 
         when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(Collections.emptySet()));
+        when(roleManager.findByIdIn(newUser.getRoles())).thenReturn(Flowable.empty());
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertNotComplete();
@@ -344,7 +344,7 @@ public class ProvisioningUserServiceTest {
         when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
-        when(roleService.findByIdIn(newUser.getRoles())).thenReturn(Single.just(roles));
+        when(roleManager.findByIdIn(newUser.getRoles())).thenReturn(Flowable.fromIterable(roles));
 
         ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
         when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(createdUser));
@@ -469,7 +469,7 @@ public class ProvisioningUserServiceTest {
 
         final Role r2 = new Role();
         r2.setId("r2");
-        when(roleService.findByIdIn(any())).thenReturn(Single.just(Set.of(r2)));
+        when(roleManager.findByIdIn(any())).thenReturn(Flowable.just(r2));
         when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
         when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
