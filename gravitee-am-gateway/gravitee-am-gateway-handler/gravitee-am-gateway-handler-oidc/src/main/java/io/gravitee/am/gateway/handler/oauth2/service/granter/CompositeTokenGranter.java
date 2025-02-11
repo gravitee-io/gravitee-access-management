@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
@@ -40,7 +41,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.reactivex.rxjava3.core.Observable;
@@ -81,7 +81,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private PermissionTicketService permissionTicketService;
 
     @Autowired
-    private ResourceService resourceService;
+    private UMAResourceGatewayService resourceService;
 
     @Autowired
     private RulesEngine rulesEngine;

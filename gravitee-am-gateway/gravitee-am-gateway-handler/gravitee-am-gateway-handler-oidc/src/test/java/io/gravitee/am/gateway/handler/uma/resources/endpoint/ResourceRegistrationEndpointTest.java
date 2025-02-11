@@ -19,11 +19,11 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.Resource;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.ResourceNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -62,7 +62,7 @@ import static org.mockito.Mockito.when;
 public class ResourceRegistrationEndpointTest {
 
     private final Domain domain = Domain.builder().id(DOMAIN_ID).build();
-    private final ResourceService service = mock();
+    private final UMAResourceGatewayService service = mock();
     private final SubjectManager subjectManager = mock();
 
     @Mock
@@ -100,7 +100,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void list_anyError() {
-        when(service.listByDomainAndClientAndUser(anyString(), anyString(), anyString())).thenReturn(Flowable.error(new RuntimeException()));
+        when(service.listByClientAndUser(anyString(), anyString())).thenReturn(Flowable.error(new RuntimeException()));
         endpoint.handle(context);
         verify(context, times(1)).fail(errCaptor.capture());
         Assert.assertTrue("Error must be propagated", errCaptor.getValue() instanceof RuntimeException);
@@ -108,7 +108,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void list_noResources() {
-        when(service.listByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Flowable.empty());
+        when(service.listByClientAndUser(CLIENT_ID, USER_ID)).thenReturn(Flowable.empty());
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
@@ -117,7 +117,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void list_withResources() {
-        when(service.listByDomainAndClientAndUser(DOMAIN_ID, CLIENT_ID, USER_ID)).thenReturn(Flowable.just(new Resource().setId(RESOURCE_ID)));
+        when(service.listByClientAndUser(CLIENT_ID, USER_ID)).thenReturn(Flowable.just(new Resource().setId(RESOURCE_ID)));
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
@@ -136,7 +136,7 @@ public class ResourceRegistrationEndpointTest {
     @Test
     public void create_noResource() {
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
-        when(service.create(any(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
+        when(service.create(any(), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
         endpoint.create(context);
         verify(context).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof ResourceNotFoundException);
@@ -147,7 +147,7 @@ public class ResourceRegistrationEndpointTest {
         ArgumentCaptor<String> strCaptor = ArgumentCaptor.forClass(String.class);
         when(context.get(CONTEXT_PATH)).thenReturn(DOMAIN_PATH);
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
-        when(service.create(any(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.just(new Resource().setId(RESOURCE_ID)));
+        when(service.create(any(), eq(CLIENT_ID), eq(USER_ID))).thenReturn(Single.just(new Resource().setId(RESOURCE_ID)));
         when(request.host()).thenReturn("host");
         when(request.scheme()).thenReturn("http");
         endpoint.create(context);
@@ -160,7 +160,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void get_noResource() {
-        when(service.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
+        when(service.findByClientAndUserAndResource(CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
         endpoint.get(context);
         verify(context).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof ResourceNotFoundException);
@@ -168,7 +168,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void get_withResource() {
-        when(service.findByDomainAndClientAndUserAndResource(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.just(new Resource().setId(RESOURCE_ID)));
+        when(service.findByClientAndUserAndResource(CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Maybe.just(new Resource().setId(RESOURCE_ID)));
         endpoint.get(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
@@ -186,7 +186,7 @@ public class ResourceRegistrationEndpointTest {
     @Test
     public void update_noResource() {
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
-        when(service.update(any(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
+        when(service.update(any(), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.error(new ResourceNotFoundException(RESOURCE_ID)));
         endpoint.update(context);
         verify(context).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof ResourceNotFoundException);
@@ -195,7 +195,7 @@ public class ResourceRegistrationEndpointTest {
     @Test
     public void update_withResource() {
         when(context.getBodyAsJson()).thenReturn(new JsonObject("{\"id\":\"rs_id\",\"resource_scopes\":[\"scope\"]}"));
-        when(service.update(any(), eq(DOMAIN_ID), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.just(new Resource()));
+        when(service.update(any(), eq(CLIENT_ID), eq(USER_ID), eq(RESOURCE_ID))).thenReturn(Single.just(new Resource()));
         endpoint.update(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
@@ -204,7 +204,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void delete_noResource() {
-        when(service.delete(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Completable.error(new ResourceNotFoundException(RESOURCE_ID)));
+        when(service.delete(CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Completable.error(new ResourceNotFoundException(RESOURCE_ID)));
         endpoint.delete(context);
         verify(context).fail(errCaptor.capture());
         Assert.assertTrue(errCaptor.getValue() instanceof ResourceNotFoundException);
@@ -212,7 +212,7 @@ public class ResourceRegistrationEndpointTest {
 
     @Test
     public void delete_withResource() {
-        when(service.delete(DOMAIN_ID, CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Completable.complete());
+        when(service.delete(CLIENT_ID, USER_ID, RESOURCE_ID)).thenReturn(Completable.complete());
         endpoint.delete(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(response, times(1)).setStatusCode(intCaptor.capture());
