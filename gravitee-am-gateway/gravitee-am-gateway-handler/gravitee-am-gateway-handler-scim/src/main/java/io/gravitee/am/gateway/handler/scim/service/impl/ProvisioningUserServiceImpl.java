@@ -26,6 +26,7 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
@@ -51,7 +52,6 @@ import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RateLimiterService;
-import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -121,7 +121,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     private ScimGroupService groupService;
 
     @Autowired
-    private RoleService roleService;
+    private RoleManager roleManager;
 
     @Autowired
     private Domain domain;
@@ -536,7 +536,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
             return Completable.complete();
         }
 
-        return roleService.findByIdIn(roles)
+        return roleManager.findByIdIn(roles).toList()
                 .map(roles1 -> {
                     if (roles1.size() != roles.size()) {
                         // find difference between the two list
