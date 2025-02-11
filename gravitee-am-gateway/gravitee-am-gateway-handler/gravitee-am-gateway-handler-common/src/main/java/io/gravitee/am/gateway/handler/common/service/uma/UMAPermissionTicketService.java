@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.uma.service;
+package io.gravitee.am.gateway.handler.common.service.uma;
 
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
@@ -26,7 +26,7 @@ import java.util.List;
  * @author Alexandre FARIA (contact at alexandrefaria.net)
  * @author GraviteeSource Team
  */
-public interface PermissionTicketService {
+public interface UMAPermissionTicketService {
 
     Single<PermissionTicket> create(List<PermissionRequest> requestedPermission, String client);
     Maybe<PermissionTicket> findById(String id);

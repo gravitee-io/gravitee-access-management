@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.common.service.impl;
+package io.gravitee.am.gateway.handler.common.service.uma.impl;
 
 
 import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
 import io.gravitee.am.dataplane.api.repository.ResourceRepository;
-import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
