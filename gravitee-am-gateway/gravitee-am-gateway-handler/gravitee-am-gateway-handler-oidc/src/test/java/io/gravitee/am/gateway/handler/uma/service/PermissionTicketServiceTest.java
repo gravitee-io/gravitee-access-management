@@ -16,12 +16,12 @@
 package io.gravitee.am.gateway.handler.uma.service;
 
 import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
+import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.InvalidPermissionRequestException;
 import io.gravitee.am.service.exception.InvalidPermissionTicketException;
 import io.reactivex.rxjava3.core.Completable;
@@ -63,7 +63,7 @@ public class PermissionTicketServiceTest {
     PermissionTicketRepository repository;
 
     @Mock
-    private ResourceService resourceService;
+    private UMAResourceGatewayService resourceService;
 
     @Mock
     private Domain domain;
@@ -87,7 +87,7 @@ public class PermissionTicketServiceTest {
         //Prepare request & resource
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
 
-        when(resourceService.findByDomainAndClientAndResources(domain, CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.empty());
+        when(resourceService.findByClientAndResources(CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.empty());
         TestObserver<PermissionTicket> testObserver = service.create(request, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -100,7 +100,7 @@ public class PermissionTicketServiceTest {
         //Prepare request & resource
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
 
-        when(resourceService.findByDomainAndClientAndResources(domain, CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.just(new Resource().setId("one").setResourceScopes(Arrays.asList("not","same"))));
+        when(resourceService.findByClientAndResources(CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.just(new Resource().setId("one").setResourceScopes(Arrays.asList("not","same"))));
         TestObserver<PermissionTicket> testObserver = service.create(request, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -113,7 +113,7 @@ public class PermissionTicketServiceTest {
         //Prepare request & resource
         List<PermissionRequest> request = Arrays.asList(new PermissionRequest().setResourceId("one").setResourceScopes(Arrays.asList("a","b")));
 
-        when(resourceService.findByDomainAndClientAndResources(domain, CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.just(new Resource().setId("one").setResourceScopes(Arrays.asList("a","b"))));
+        when(resourceService.findByClientAndResources(CLIENT_ID, Arrays.asList("one"))).thenReturn(Flowable.just(new Resource().setId("one").setResourceScopes(Arrays.asList("a","b"))));
         when(repository.create(any())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
         TestObserver<PermissionTicket> testObserver = service.create(request, CLIENT_ID).test();
@@ -133,7 +133,7 @@ public class PermissionTicketServiceTest {
         // Prepare Resource
         Flowable<Resource> found = FlowableRange.just(new Resource().setId("one").setResourceScopes(Arrays.asList("not", "same")));
 
-        when(resourceService.findByDomainAndClientAndResources(domain, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
+        when(resourceService.findByClientAndResources(CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
         TestObserver<PermissionTicket> testObserver = service.create(request, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -153,7 +153,7 @@ public class PermissionTicketServiceTest {
         Flowable<Resource> found = Flowable.fromIterable(request)
                 .map(s -> new Resource().setId(s.getResourceId()).setResourceScopes(s.getResourceScopes()).setUserId("user_"+s.getResourceId()));
 
-        when(resourceService.findByDomainAndClientAndResources(domain, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
+        when(resourceService.findByClientAndResources(CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
         TestObserver<PermissionTicket> testObserver = service.create(request, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -175,7 +175,7 @@ public class PermissionTicketServiceTest {
                 new Resource().setId("two").setResourceScopes(Arrays.asList("not","same"))
         );
 
-        when(resourceService.findByDomainAndClientAndResources(domain, CLIENT_ID,Arrays.asList("one","two"))).thenReturn(found);
+        when(resourceService.findByClientAndResources(CLIENT_ID,Arrays.asList("one","two"))).thenReturn(found);
         TestObserver<PermissionTicket> testObserver = service.create(request, CLIENT_ID).test();
 
         testObserver.assertNotComplete();
@@ -195,7 +195,7 @@ public class PermissionTicketServiceTest {
         Flowable<Resource> found = Flowable.fromIterable(request)
                 .map(s -> new Resource().setId(s.getResourceId()).setResourceScopes(s.getResourceScopes()));
 
-        when(resourceService.findByDomainAndClientAndResources(domain, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
+        when(resourceService.findByClientAndResources(CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
         when(repository.create(any())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
         TestObserver<PermissionTicket> testObserver = service.create(request, CLIENT_ID).test();
@@ -221,7 +221,7 @@ public class PermissionTicketServiceTest {
 
         ArgumentCaptor<PermissionTicket> permissionTicketArgumentCaptor = ArgumentCaptor.forClass(PermissionTicket.class);
 
-        when(resourceService.findByDomainAndClientAndResources(domain, CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
+        when(resourceService.findByClientAndResources(CLIENT_ID, Arrays.asList("one","two"))).thenReturn(found);
         when(repository.create(permissionTicketArgumentCaptor.capture())).thenReturn(Single.just(new PermissionTicket().setId("success")));
 
         TestObserver<PermissionTicket> testObserver = service.create(request, CLIENT_ID).test();
