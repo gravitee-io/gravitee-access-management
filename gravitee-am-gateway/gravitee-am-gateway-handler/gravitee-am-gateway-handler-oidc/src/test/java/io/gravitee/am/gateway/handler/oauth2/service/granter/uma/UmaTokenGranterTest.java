@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
@@ -45,7 +46,6 @@ import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.InvalidPermissionTicketException;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -115,7 +115,7 @@ public class UmaTokenGranterTest {
     private PermissionTicketService permissionTicketService;
 
     @Mock
-    private ResourceService resourceService;
+    private UMAResourceGatewayService resourceService;
 
     @Mock
     private RulesEngine rulesEngine;

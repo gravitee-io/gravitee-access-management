@@ -16,12 +16,12 @@
 package io.gravitee.am.gateway.handler.uma.service;
 
 import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
+import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.InvalidPermissionRequestException;
 import io.gravitee.am.service.exception.InvalidPermissionTicketException;
 import io.reactivex.rxjava3.core.Maybe;
@@ -51,7 +51,7 @@ public class PermissionTicketServiceImpl implements PermissionTicketService, Ini
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
-    private ResourceService resourceService;
+    private UMAResourceGatewayService resourceService;
 
     @Autowired
     private Domain domain;
@@ -68,7 +68,7 @@ public class PermissionTicketServiceImpl implements PermissionTicketService, Ini
         //Get list of requested resources (same Id may appear twice with difference scopes)
         List<String> requestedResourcesIds = requestedPermission.stream().map(PermissionRequest::getResourceId).distinct().toList();
         //Compare with current registered resource set and return permission ticket if everything's correct.
-        return resourceService.findByDomainAndClientAndResources(domain, client, requestedResourcesIds)
+        return resourceService.findByClientAndResources(client, requestedResourcesIds)
                 .toList()
                 .flatMap(fetchedResourceSet ->
                     this.validatePermissionRequest(requestedPermission, fetchedResourceSet, requestedResourcesIds)
