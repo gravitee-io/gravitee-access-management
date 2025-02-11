@@ -19,13 +19,13 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyCondition;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.AccessPolicyNotFoundException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -58,10 +58,10 @@ import static io.gravitee.am.gateway.handler.uma.constants.UMAConstants.UMA_PATH
 public class ResourceAccessPoliciesEndpoint {
 
     private final Domain domain;
-    private final ResourceService resourceService;
+    private final UMAResourceGatewayService resourceService;
     private final SubjectManager subjectManager;
 
-    public ResourceAccessPoliciesEndpoint(Domain domain, ResourceService resourceService, SubjectManager subjectManager) {
+    public ResourceAccessPoliciesEndpoint(Domain domain, UMAResourceGatewayService resourceService, SubjectManager subjectManager) {
         this.domain = domain;
         this.resourceService = resourceService;
         this.subjectManager = subjectManager;
@@ -73,7 +73,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String resource = context.request().getParam(RESOURCE_ID);
 
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.findAccessPolicies(domain.getId(), client.getId(), userid.id(), resource)
+                .flatMapSingle(userid -> resourceService.findAccessPolicies(client.getId(), userid.id(), resource)
                         .map(AccessPolicy::getId)
                         .toList())
                 .subscribe(
@@ -98,7 +98,7 @@ public class ResourceAccessPoliciesEndpoint {
 
         // store the access policy
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.createAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid.id(), resource))
+                .flatMapSingle(userid -> resourceService.createAccessPolicy(accessPolicy, client.getId(), userid.id(), resource))
                 .subscribe(
                         p ->
                                 context.response()
@@ -119,7 +119,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String accessPolicyId = context.request().getParam(POLICY_ID);
 
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.findAccessPolicy(domain.getId(), client.getId(), userid.id(), resource, accessPolicyId)
+                .flatMapSingle(userid -> resourceService.findAccessPolicy(client.getId(), userid.id(), resource, accessPolicyId)
                         .switchIfEmpty(Single.error(new AccessPolicyNotFoundException(accessPolicyId))))
                 .subscribe(
                         response -> context.response()
@@ -142,7 +142,7 @@ public class ResourceAccessPoliciesEndpoint {
 
         // update the access policy
         subjectManager.findUserIdBySub(accessToken)
-                .flatMapSingle(userid -> resourceService.updateAccessPolicy(accessPolicy, domain.getId(), client.getId(), userid.id(), resource, accessPolicyId))
+                .flatMapSingle(userid -> resourceService.updateAccessPolicy(accessPolicy, client.getId(), userid.id(), resource, accessPolicyId))
                 .subscribe(
                         response -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
@@ -160,7 +160,7 @@ public class ResourceAccessPoliciesEndpoint {
         final String accessPolicy = context.request().getParam(POLICY_ID);
 
         subjectManager.findUserIdBySub(accessToken).flatMapCompletable(userId ->
-                        resourceService.deleteAccessPolicy(domain.getId(), client.getId(), userId.id(), resource, accessPolicy))
+                        resourceService.deleteAccessPolicy(client.getId(), userId.id(), resource, accessPolicy))
                 .subscribe(
                         () -> context.response()
                                 .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
