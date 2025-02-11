@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.uma.service.PermissionTicketService;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionTicket;
@@ -55,7 +55,7 @@ public class PermissionEndpointTest {
     private Domain domain;
 
     @Mock
-    private PermissionTicketService permissionTicketService;
+    private UMAPermissionTicketService permissionTicketService;
 
     @Mock
     private Client client;
