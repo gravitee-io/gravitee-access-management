@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.common.service;
+package io.gravitee.am.gateway.handler.common.service.uma;
 
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.uma.service;
+package io.gravitee.am.gateway.handler.common.service.uma;
 
 import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
-import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.uma.impl.UMAPermissionTicketServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
  * @author GraviteeSource Team
  */
 @RunWith(MockitoJUnitRunner.class)
-public class PermissionTicketServiceTest {
+public class UMAPermissionTicketServiceTest {
 
     @Mock
     DataPlaneRegistry dataPlaneRegistry;
@@ -69,7 +69,7 @@ public class PermissionTicketServiceTest {
     private Domain domain;
     
     @InjectMocks
-    PermissionTicketServiceImpl service = new PermissionTicketServiceImpl();
+    UMAPermissionTicketServiceImpl service = new UMAPermissionTicketServiceImpl();
 
     private static final String DOMAIN_ID = "domainId";
     private static final String CLIENT_ID = "clientId";
