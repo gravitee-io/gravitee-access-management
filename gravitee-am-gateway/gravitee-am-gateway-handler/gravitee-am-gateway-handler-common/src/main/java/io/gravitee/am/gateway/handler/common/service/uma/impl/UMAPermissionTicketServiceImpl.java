@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.uma.service;
+package io.gravitee.am.gateway.handler.common.service.uma.impl;
 
 import io.gravitee.am.dataplane.api.repository.PermissionTicketRepository;
-import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 @Component
-public class PermissionTicketServiceImpl implements PermissionTicketService, InitializingBean {
+public class UMAPermissionTicketServiceImpl implements UMAPermissionTicketService, InitializingBean {
 
     @Value("${uma.permission.validity:60000}")
     private int umaPermissionValidity;

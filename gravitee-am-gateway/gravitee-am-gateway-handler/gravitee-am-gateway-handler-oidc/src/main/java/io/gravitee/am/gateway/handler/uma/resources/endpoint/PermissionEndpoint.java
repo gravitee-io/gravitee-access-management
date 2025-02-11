@@ -22,7 +22,7 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.uma.resources.request.PermissionTicketRequest;
 import io.gravitee.am.gateway.handler.uma.resources.response.PermissionTicketResponse;
-import io.gravitee.am.gateway.handler.uma.service.PermissionTicketService;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionRequest;
@@ -51,10 +51,10 @@ import java.util.stream.Collectors;
  */
 public class PermissionEndpoint implements Handler<RoutingContext> {
 
-    private PermissionTicketService permissionTicketService;
+    private UMAPermissionTicketService permissionTicketService;
     private Domain domain;
 
-    public PermissionEndpoint(Domain domain, PermissionTicketService permissionTicketService) {
+    public PermissionEndpoint(Domain domain, UMAPermissionTicketService permissionTicketService) {
         this.domain = domain;
         this.permissionTicketService = permissionTicketService;
     }
