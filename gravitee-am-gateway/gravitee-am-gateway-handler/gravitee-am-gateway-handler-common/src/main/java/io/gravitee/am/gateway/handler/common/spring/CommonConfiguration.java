@@ -58,10 +58,12 @@ import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.service.impl.CredentialGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.DeviceGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.LoginAttemptGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.impl.UMAResourceGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.impl.UserActivityGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
@@ -88,6 +90,7 @@ import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.node.api.cache.CacheManager;
@@ -361,5 +364,10 @@ public class CommonConfiguration {
     @Bean
     public LoginAttemptGatewayService loginAttemptGatewayService(DataPlaneRegistry dataPlaneRegistry) {
         return new LoginAttemptGatewayServiceImpl(dataPlaneRegistry);
+    }
+
+    @Bean
+    public UMAResourceGatewayService umaResourceGatewayService(Domain domain, DataPlaneRegistry dataPlaneRegistry, ScopeService scopeService) {
+        return new UMAResourceGatewayServiceImpl(domain, dataPlaneRegistry, scopeService);
     }
 }
