@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 @Component
 public class SingleDataPlaneLoader implements DataPlaneLoader {
     private static final String DATA_PLANE_KEY = "repositories.gateway";
-    private static final String DATA_PLANE_ID_KEY = DATA_PLANE_KEY + ".dataPlane";
+    private static final String DATA_PLANE_ID_KEY = DATA_PLANE_KEY + ".dataPlane.id";
     private static final String DATA_PLANE_TYPE_KEY = DATA_PLANE_KEY + ".type";
 
     @Autowired

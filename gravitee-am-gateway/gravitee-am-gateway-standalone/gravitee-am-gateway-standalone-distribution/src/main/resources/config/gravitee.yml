@@ -352,7 +352,8 @@ repositories:
   gateway:
     type: mongodb
     use-management-settings: true
-    dataPlane: default
+    dataPlane:
+      id: default
     mongodb:
       dbname: ${ds.mongodb.dbname}
       host: ${ds.mongodb.host}
