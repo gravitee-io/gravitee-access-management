@@ -25,6 +25,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -45,6 +46,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
+import static io.gravitee.am.dataplane.api.DataPlaneDescription.DEFAULT_DATA_PLANE_ID;
 import static io.gravitee.node.api.Node.META_ENVIRONMENTS;
 import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
 import static java.util.Arrays.asList;
@@ -64,7 +66,6 @@ import static org.mockito.Mockito.when;
 public class SyncManagerTest {
 
     private static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
-    private static final String ENVIRONMENTS_SYSTEM_PROPERTY = "environments";
     private static final String ORGANIZATIONS_SYSTEM_PROPERTY = "organizations";
 
     @InjectMocks
@@ -96,6 +97,7 @@ public class SyncManagerTest {
     @Before
     public void before() throws Exception {
         lenient().when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(), META_ENVIRONMENTS, new HashSet<>()));
+        lenient().when(environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey()+".dataPlane.id", String.class, DEFAULT_DATA_PLANE_ID)).thenReturn(DEFAULT_DATA_PLANE_ID);
         syncManager.afterPropertiesSet();
         when(defaultReactor.isStarted()).thenReturn(true);
     }
@@ -130,6 +132,7 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.refresh();
@@ -145,10 +148,12 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
 
         syncManager.refresh();
@@ -164,14 +169,43 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain3 = new Domain();
         domain3.setId("domain-3");
         domain3.setReferenceId("env-3");
         domain3.setEnabled(false);
+        domain3.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+        when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3));
+
+        syncManager.refresh();
+
+        verify(securityDomainManager, times(2)).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).update(any(Domain.class));
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+    @Test
+    public void init_test_multiple_domains_oneAnotherDataPlane() {
+        final Domain domain = new Domain();
+        domain.setId("domain-1");
+        domain.setReferenceId("env-1");
+        domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+        final Domain domain2 = new Domain();
+        domain2.setId("domain-2");
+        domain2.setReferenceId("env-2");
+        domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+        final Domain domain3 = new Domain();
+        domain3.setId("domain-3");
+        domain3.setReferenceId("env-3");
+        domain3.setEnabled(true);
+        domain3.setDataPlaneId(UUID.randomUUID().toString());
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2, domain3));
 
         syncManager.refresh();
@@ -187,6 +221,7 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.refresh();
@@ -211,6 +246,7 @@ public class SyncManagerTest {
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
         domain.setUpdatedAt(new Date(System.currentTimeMillis() - 60 * 1000));
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
         syncManager.refresh();
@@ -224,6 +260,7 @@ public class SyncManagerTest {
         domainToUpdate.setReferenceId("env-1");
         domainToUpdate.setEnabled(true);
         domainToUpdate.setUpdatedAt(new Date());
+        domainToUpdate.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
         when(domainRepository.findById(domainToUpdate.getId())).thenReturn(Maybe.just(domainToUpdate));
@@ -307,6 +344,7 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(node.metadata()).thenReturn(Map.of(META_ENVIRONMENTS, new HashSet<>(asList("env-1"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
@@ -329,11 +367,13 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(node.metadata()).thenReturn(Map.of(META_ENVIRONMENTS, new HashSet<>(asList("env-1"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
@@ -359,10 +399,12 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(node.metadata()).thenReturn(Map.of(META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-2"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
@@ -388,10 +430,12 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(node.metadata()).thenReturn(Map.of(META_ENVIRONMENTS, new HashSet<>(asList("env-1"))));
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain, domain2));
@@ -421,10 +465,12 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(asList("org-1")),
                 META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-2"))));
@@ -469,19 +515,23 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         final Domain domain3 = new Domain();
         domain3.setId("domain-3");
         domain3.setReferenceId("env-3");
         domain3.setEnabled(true);
+        domain3.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain4 = new Domain();
         domain4.setId("domain-4");
         domain4.setReferenceId("env-4");
         domain4.setEnabled(true);
+        domain4.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(asList("org-1", "org-2")),
                 META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-2", "env-3", "env-4"))));
@@ -529,19 +579,23 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         final Domain domain3 = new Domain();
         domain3.setId("domain-3");
         domain3.setReferenceId("env-3");
         domain3.setEnabled(true);
+        domain3.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain4 = new Domain();
         domain4.setId("domain-4");
         domain4.setReferenceId("env-4");
         domain4.setEnabled(true);
+        domain4.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(asList("org-1", "org-2")),
                 META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-4"))));
@@ -587,20 +641,24 @@ public class SyncManagerTest {
         domain.setId("domain-1");
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain2 = new Domain();
         domain2.setId("domain-2");
         domain2.setReferenceId("env-2");
         domain2.setEnabled(true);
+        domain2.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         final Domain domain3 = new Domain();
         domain3.setId("domain-3");
         domain3.setReferenceId("env-3");
         domain3.setEnabled(true);
+        domain3.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
         final Domain domain4 = new Domain();
         domain4.setId("domain-4");
         domain4.setTags(Collections.singleton("private"));
         domain4.setReferenceId("env-4");
         domain4.setEnabled(true);
+        domain4.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(node.metadata()).thenReturn(Map.of(META_ORGANIZATIONS, new HashSet<>(asList("org-1", "org-2")),
                 META_ENVIRONMENTS, new HashSet<>(asList("env-1", "env-2", "env-3", "env-4"))));
@@ -624,6 +682,7 @@ public class SyncManagerTest {
         domain.setReferenceId("env-1");
         domain.setEnabled(true);
         domain.setTags(new HashSet<>(asList(domainTags)));
+        domain.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
         when(domainRepository.findAll()).thenReturn(Flowable.just(domain));
 
