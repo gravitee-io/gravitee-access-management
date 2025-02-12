@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization;
 
 import io.gravitee.am.common.oauth2.ResponseMode;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.manager.session.SessionManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.AccessDeniedException;
 import io.gravitee.am.gateway.handler.oauth2.exception.ServerErrorException;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
@@ -55,11 +56,13 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     private final Flow flow;
     private final ThymeleafTemplateEngine engine;
     private final PushedAuthorizationRequestService parService;
+    private final SessionManager sessionManager;
 
     public AuthorizationEndpoint(Flow flow, ThymeleafTemplateEngine engine, PushedAuthorizationRequestService parService) {
         this.flow = flow;
         this.engine = engine;
         this.parService = parService;
+        this.sessionManager = new SessionManager();
     }
 
     @Override
@@ -142,17 +145,6 @@ public class AuthorizationEndpoint implements Handler<RoutingContext> {
     }
 
     private void cleanSession(RoutingContext context) {
-        context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
-        context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
-        context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY);
-        context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
-        context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-        context.session().remove(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
-        context.session().remove(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY);
+        sessionManager.cleanSessionAfterAuth(context);
     }
 }
