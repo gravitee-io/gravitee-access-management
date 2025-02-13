@@ -22,6 +22,7 @@ import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Credential;
@@ -43,9 +44,12 @@ import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
+import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
@@ -53,17 +57,22 @@ import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
+import io.vertx.rxjava3.ext.web.sstore.SessionStore;
+import io.vertx.rxjava3.ext.web.sstore.cookie.CookieSessionStore;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -237,6 +246,83 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                     assertEquals("1234", enrolledFactor.getChannel().getAdditionalData().get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+   }
+
+    @Test
+    public void shouldSendCode_withEmail_tidUsedAsMovingFactor() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+        when(factorProvider.sendChallenge(any())).thenReturn(Completable.complete());
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+        when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.GET);
+        Client client = new Client();
+        client.setFactors(Collections.singleton("factorId"));
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+        mfaChallengeEndpoint.handle(spyRoutingContext);
+
+        int attempt = 20;
+        while (!spyRoutingContext.ended() && attempt > 0) {
+            Thread.sleep(1000);
+            --attempt;
+        }
+
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertNull(spyRoutingContext.response().headers().get("location"));
+        assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
+    }
+
+    @Test
+    public void shouldVerify_withEmail_tidRemovedFromSession() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.verify(any())).thenReturn(Completable.complete());
+        ArgumentCaptor<EnrolledFactor> enrolledFactorArgumentCaptor = ArgumentCaptor.forClass(EnrolledFactor.class);
+        when(factorProvider.changeVariableFactorSecurity(enrolledFactorArgumentCaptor.capture())).thenReturn(Single.just(new EnrolledFactor()));
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+        when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
+        when(userService.upsertFactor(any(), any(), any())).thenReturn(Single.just(mock(User.class)));
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.POST);
+        Client client = new Client();
+        client.setFactors(Collections.singleton("factorId"));
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+
+        spyRoutingContext.request().formAttributes().add("code", "123456");
+        spyRoutingContext.request().formAttributes().add("factorId", "factorId");
+
+        mfaChallengeEndpoint.handle(spyRoutingContext);
+
+        int attempt = 20;
+        while (!spyRoutingContext.ended() && attempt > 0) {
+            Thread.sleep(1000);
+            --attempt;
+        }
+
+        assertFalse(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        String location = spyRoutingContext.response().headers().get("location");
+        assertNotNull(location);
+        assertTrue(location.contains("/oauth/authorize"));
     }
 
     @Test
