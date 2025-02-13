@@ -29,14 +29,27 @@ import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.mfa.utils.MfaUtils;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
-import io.gravitee.am.model.*;
+import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Factor;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.RememberDeviceSettings;
+import io.gravitee.am.model.Template;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.EnrolledFactorChannel.Type;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.*;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DeviceService;
+import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.RateLimiterService;
+import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -62,13 +75,36 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
-import static io.gravitee.am.common.factor.FactorSecurityType.*;
+import static io.gravitee.am.common.factor.FactorSecurityType.RECOVERY_CODE;
+import static io.gravitee.am.common.factor.FactorSecurityType.SHARED_SECRET;
+import static io.gravitee.am.common.factor.FactorSecurityType.WEBAUTHN_CREDENTIAL;
 import static io.gravitee.am.common.factor.FactorType.FIDO2;
-import static io.gravitee.am.common.utils.ConstantKeys.*;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ALREADY_EXISTS_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_ID;
+import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_TYPE;
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ALTERNATIVES_ENABLE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.RATE_LIMIT_ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.TRANSACTION_ID_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.VERIFY_ATTEMPT_ERROR_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextHelper.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
@@ -89,6 +125,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
 
     private static final String REMEMBER_DEVICE_CONSENT = "rememberDeviceConsent";
     public static final String REMEMBER_DEVICE_CONSENT_ON = "on";
+    public static final String PREVIOUS_TRANSACTION_ID_KEY = "prev-tid";
 
     private final FactorManager factorManager;
     private final UserService userService;
@@ -235,7 +272,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         final Factor factor = getFactor(routingContext, client, endUser);
         final FactorProvider factorProvider = factorManager.get(factorId);
         final FactorContext factorCtx = new FactorContext(applicationContext, new HashMap<>());
-        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorCtx);
+        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorCtx, false);
         factorCtx.getData().putAll(getEvaluableAttributes(routingContext));
         factorCtx.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
         factorCtx.registerData(FactorContext.KEY_CODE, code);
@@ -295,6 +332,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             }
             // save enrolled factor if needed and redirect to the original url
             routingContext.session().put(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY, factorId);
+            routingContext.session().remove(PREVIOUS_TRANSACTION_ID_KEY);
             if (routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY) != null || factorProvider.useVariableFactorSecurity(factorContext)) {
                 enrolledFactor.setStatus(FactorStatus.ACTIVATED);
                 saveFactor(endUser, factorProvider.changeVariableFactorSecurity(enrolledFactor), fh -> {
@@ -368,7 +406,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         if (rememberDeviceSettings.isActive() && rememberDeviceConsent) {
             saveDeviceAndRedirect(routingContext, client, user.getId(), rememberDeviceSettings, returnURL);
         } else {
-            doRedirect(routingContext.request().response(), returnURL);
+            doRedirect(routingContext.response(), returnURL);
         }
     }
 
@@ -419,7 +457,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         // create factor context
         final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         final FactorContext factorContext = new FactorContext(applicationContext, new HashMap<>());
-        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext);
+        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, true);
         factorContext.getData().putAll(getEvaluableAttributes(routingContext));
         factorContext.registerData(FactorContext.KEY_CLIENT, client);
         factorContext.registerData(KEY_USER, endUser);
@@ -493,7 +531,8 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                              FactorProvider factorProvider,
                                              Factor factor,
                                              User endUser,
-                                             FactorContext factorContext) {
+                                             FactorContext factorContext,
+                                             boolean onSendMessage) {
         // enrolled factor can be either in session (if user come from mfa/enroll page)
         // or from the user enrolled factor list
         final String savedFactorId = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
@@ -534,10 +573,15 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             // if the factor provider uses a moving factor security mechanism,
             // we ensure that every data has been shared with the user enrolled factor
             if (factorProvider.useVariableFactorSecurity(factorContext)) {
+                String tid = routingContext.session().get(PREVIOUS_TRANSACTION_ID_KEY);
+                if (onSendMessage) {
+                    tid = routingContext.get(TRANSACTION_ID_KEY);
+                    routingContext.session().put(PREVIOUS_TRANSACTION_ID_KEY, tid);
+                }
                 enrolledFactor.setSecurity(new EnrolledFactorSecurity(SHARED_SECRET,
                         routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY)));
                 Map<String, Object> additionalData = new Maps.MapBuilder(new HashMap())
-                        .put(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(endUser.getId()))
+                        .put(FactorDataKeys.KEY_MOVING_FACTOR, MovingFactorUtils.generateInitialMovingFactor(tid))
                         .build();
                 getEnrolledFactor(factor, endUser).ifPresent(ef -> {
                     additionalData.put(FactorDataKeys.KEY_EXPIRE_AT, ef.getSecurity().getData(FactorDataKeys.KEY_EXPIRE_AT, Long.class));
