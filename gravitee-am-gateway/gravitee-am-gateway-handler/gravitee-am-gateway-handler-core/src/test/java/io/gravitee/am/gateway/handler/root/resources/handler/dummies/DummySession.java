@@ -68,13 +68,13 @@ public class DummySession extends Session {
             }
 
             @Override
-            public <T> T remove(String s) {
-                return null;
+            public <T> T remove(String key) {
+                return (T)data.remove(key);
             }
 
             @Override
             public Map<String, Object> data() {
-                return null;
+                return data;
             }
 
             @Override
@@ -120,6 +120,11 @@ public class DummySession extends Session {
     }
 
     @Override
+    public <T> T remove(String key) {
+        return (T)data.remove(key);
+    }
+
+    @Override
     public <T> T get(String key) {
         return (T) data.get(key);
     }
@@ -134,5 +139,10 @@ public class DummySession extends Session {
     public Session putIfAbsent(String key, Object obj) {
         data.putIfAbsent(key, obj);
         return this;
+    }
+
+    @Override
+    public Map<String, Object> data() {
+        return data;
     }
 }
