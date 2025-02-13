@@ -274,17 +274,8 @@ describe('MFA', () => {
 
       expect(authorize2.headers['location']).toBeDefined();
       expect(authorize2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
-      await performGet(authorize2.headers['location'], '', {
-        Cookie: authorize2.headers['set-cookie'],
-      }).expect(200);
 
-      const email = await getLastEmail();
-      expect(email).toBeDefined();
-      const verificationCode = email.contents[0].data.match('.*class="otp-code".*<span[^>]*>.([0-9]{6}).<\\/span>')[1];
-      expect(verificationCode).toBeDefined();
-      await clearEmails();
-
-      const successfulVerification = await verifyFactor(authorize2, verificationCode, emailFactor);
+      const successfulVerification = await verifyFactorOnEmailEnrollment(authorize2, emailFactor);
       await logoutUser(openIdConfiguration.end_session_endpoint, successfulVerification);
     });
 
@@ -769,6 +760,33 @@ const verifyFactor = async (challenge, code, factor) => {
       Cookie: challengeResponse.headers['set-cookie'],
       'Content-type': 'application/x-www-form-urlencoded',
     },
+  ).expect(302);
+
+  expect(successfulVerification.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
+  return successfulVerification;
+};
+
+const verifyFactorOnEmailEnrollment = async (challenge, factor) => {
+  const challengeResponse = await extractXsrfTokenAndActionResponse(challenge);
+
+  const email = await getLastEmail();
+  expect(email).toBeDefined();
+  const verificationCode = email.contents[0].data.match('.*class="otp-code".*<span[^>]*>.([0-9]{6}).<\\/span>')[1];
+  expect(verificationCode).toBeDefined();
+  await clearEmails();
+
+  const successfulVerification = await performPost(
+      challengeResponse.action,
+      '',
+      {
+        factorId: factor.id,
+        code: verificationCode,
+        'X-XSRF-TOKEN': challengeResponse.token,
+      },
+      {
+        Cookie: challengeResponse.headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+      },
   ).expect(302);
 
   expect(successfulVerification.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);

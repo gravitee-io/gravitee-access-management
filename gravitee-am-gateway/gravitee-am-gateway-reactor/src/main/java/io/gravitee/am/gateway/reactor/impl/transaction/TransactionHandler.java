@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.reactor.impl.transaction;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.common.utils.UUID;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -47,6 +48,7 @@ public class TransactionHandler implements Handler<RoutingContext> {
             context.request().headers().set(transactionHeader, transactionId);
         }
         context.response().headers().set(transactionHeader,transactionId);
+        context.put(ConstantKeys.TRANSACTION_ID_KEY, transactionId);
 
         context.next();
     }
