@@ -60,6 +60,7 @@ import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
 import io.vertx.rxjava3.ext.web.sstore.SessionStore;
 import io.vertx.rxjava3.ext.web.sstore.cookie.CookieSessionStore;
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -282,6 +283,126 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         }
 
         assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertNull(spyRoutingContext.response().headers().get("location"));
+        assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
+    }
+
+    @Test
+    public void shouldSendSameCode_withEmail_afterErrorValidation() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+        when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.GET);
+        Client client = new Client();
+        client.setFactors(Collections.singleton("factorId"));
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+        String previousTid = UUID.randomUUID().toString();
+        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+        spyRoutingContext.putParam(ConstantKeys.ERROR_PARAM_KEY, "dummy_error");
+
+        mfaChallengeEndpoint.handle(spyRoutingContext);
+
+        int attempt = 20;
+        while (!spyRoutingContext.ended() && attempt > 0) {
+            Thread.sleep(1000);
+            --attempt;
+        }
+
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertNull(spyRoutingContext.response().headers().get("location"));
+        assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
+    }
+
+    @Test
+    public void shouldSendSameCode_withEmail_afterRateLimitError() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.GET);
+        Client client = new Client();
+        client.setFactors(Collections.singleton("factorId"));
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+        String previousTid = UUID.randomUUID().toString();
+        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+
+        when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
+        when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(false));
+
+        mfaChallengeEndpoint.handle(spyRoutingContext);
+
+        int attempt = 20;
+        while (!spyRoutingContext.ended() && attempt > 0) {
+            Thread.sleep(1000);
+            --attempt;
+        }
+
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertEquals(previousTid, spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        assertTrue(spyRoutingContext.response().headers().get("location").contains("request_limit_error"));
+    }
+
+    @Test
+    public void shouldSendAnotherCode_withEmail_ifRateLimiteSuccessful() throws Exception {
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.needChallengeSending()).thenReturn(true);
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(true);
+        when(factorProvider.sendChallenge(any())).thenReturn(Completable.complete());
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factorId");
+        when(factor.getFactorType()).thenReturn(FactorType.EMAIL);
+        when(factorManager.get("factorId")).thenReturn(factorProvider);
+        when(factorManager.getFactor("factorId")).thenReturn(factor);
+        when(templateEngine.render(any(Map.class), any())).thenReturn(Single.just(Buffer.buffer()));
+
+        SpyRoutingContext spyRoutingContext = new SpyRoutingContext();
+        spyRoutingContext.setMethod(HttpMethod.GET);
+        Client client = new Client();
+        client.setFactors(Collections.singleton("factorId"));
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_ID_KEY, "factorId");
+        spyRoutingContext.session().put(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS, "user01@acme.fr");
+        spyRoutingContext.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(new User())));
+        spyRoutingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+        spyRoutingContext.put(ConstantKeys.TRANSACTION_ID_KEY, UUID.randomUUID().toString());
+        String previousTid = UUID.randomUUID().toString();
+        spyRoutingContext.session().put(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY, previousTid);
+
+        when(rateLimiterService.isRateLimitEnabled()).thenReturn(true);
+        when(rateLimiterService.tryConsume(any(), any(), any(), any())).thenReturn(Single.just(true));
+
+        mfaChallengeEndpoint.handle(spyRoutingContext);
+
+        int attempt = 20;
+        while (!spyRoutingContext.ended() && attempt > 0) {
+            Thread.sleep(1000);
+            --attempt;
+        }
+
+        assertTrue(spyRoutingContext.session().data().containsKey(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
+        Assertions.assertThat(previousTid).isNotEqualTo(spyRoutingContext.session().data().get(MFAChallengeEndpoint.PREVIOUS_TRANSACTION_ID_KEY));
         assertNull(spyRoutingContext.response().headers().get("location"));
         assertEquals(MediaType.TEXT_HTML, spyRoutingContext.response().headers().get(HttpHeaders.CONTENT_TYPE));
     }
