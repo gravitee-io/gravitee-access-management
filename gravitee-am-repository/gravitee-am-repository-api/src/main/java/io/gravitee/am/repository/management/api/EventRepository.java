@@ -27,4 +27,6 @@ public interface EventRepository extends CrudRepository<Event, String> {
 
     Flowable<Event> findByTimeFrame(long from, long to);
 
+    Flowable<Event> findByTimeFrameAndDataPlaneId(long from, long to, String dataPlaneId);
+
 }

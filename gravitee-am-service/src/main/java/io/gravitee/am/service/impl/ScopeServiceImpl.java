@@ -120,19 +120,19 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Single<Scope> create(String domain, NewScope newScope, User principal) {
-        log.debug("Create a new scope {} for domain {}", newScope, domain);
+    public Single<Scope> create(Domain domain, NewScope newScope, User principal) {
+        log.debug("Create a new scope {} for domain {}", newScope, domain.getId());
         // replace all whitespace by an underscore (whitespace is a reserved keyword to separate tokens)
         String scopeKey = newScope.getKey().replaceAll("\\s+", "_");
-        return scopeRepository.findByDomainAndKey(domain, scopeKey)
+        return scopeRepository.findByDomainAndKey(domain.getId(), scopeKey)
                 .isEmpty()
                 .map(empty -> {
                     if (!empty) {
-                        throw new ScopeAlreadyExistsException(scopeKey, domain);
+                        throw new ScopeAlreadyExistsException(scopeKey, domain.getId());
                     }
                     Scope scope = new Scope();
                     scope.setId(RandomString.generate());
-                    scope.setDomain(domain);
+                    scope.setDomain(domain.getId());
                     scope.setKey(scopeKey);
                     scope.setName(newScope.getName());
                     scope.setDescription(newScope.getDescription());
@@ -150,7 +150,7 @@ public class ScopeServiceImpl implements ScopeService {
                 .flatMap(scope -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(scope));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -161,22 +161,22 @@ public class ScopeServiceImpl implements ScopeService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a scope", ex));
                 })
                 .doOnSuccess(scope -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).scope(scope)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).reference(Reference.domain(domain)).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
     }
 
     @Override
-    public Single<Scope> create(String domain, NewSystemScope newScope) {
-        log.debug("Create a new system scope {} for domain {}", newScope, domain);
+    public Single<Scope> create(Domain domain, NewSystemScope newScope) {
+        log.debug("Create a new system scope {} for domain {}", newScope, domain.getId());
         String scopeKey = newScope.getKey().toLowerCase();
-        return scopeRepository.findByDomainAndKey(domain, scopeKey)
+        return scopeRepository.findByDomainAndKey(domain.getId(), scopeKey)
                 .isEmpty()
                 .flatMap(empty -> {
                     if (!empty) {
-                        throw new ScopeAlreadyExistsException(scopeKey, domain);
+                        throw new ScopeAlreadyExistsException(scopeKey, domain.getId());
                     }
                     Scope scope = new Scope();
                     scope.setId(RandomString.generate());
-                    scope.setDomain(domain);
+                    scope.setDomain(domain.getId());
                     scope.setKey(scopeKey);
                     scope.setSystem(true);
                     scope.setClaims(newScope.getClaims());
@@ -192,7 +192,7 @@ public class ScopeServiceImpl implements ScopeService {
                 .flatMap(scope -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(scope));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -204,7 +204,7 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Single<Scope> patch(String domain, String id, PatchScope patchScope, User principal) {
+    public Single<Scope> patch(Domain domain, String id, PatchScope patchScope, User principal) {
         log.debug("Patching a scope {} for domain {}", id, domain);
         return scopeRepository.findById(id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
@@ -222,8 +222,8 @@ public class ScopeServiceImpl implements ScopeService {
     }
 
     @Override
-    public Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal) {
-        log.debug("Update a scope {} for domain {}", id, domain);
+    public Single<Scope> update(Domain domain, String id, UpdateScope updateScope, User principal) {
+        log.debug("Update a scope {} for domain {}", id, domain.getId());
         return scopeRepository.findById(id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
                 .flatMap(oldScope -> {
@@ -250,7 +250,7 @@ public class ScopeServiceImpl implements ScopeService {
                 });
     }
 
-    private Single<Scope> update(String domain, Scope toUpdate, Scope oldValue, User principal) {
+    private Single<Scope> update(Domain domain, Scope toUpdate, Scope oldValue, User principal) {
 
         toUpdate.setUpdatedAt(new Date());
         return this.validateIconUri(toUpdate)
@@ -258,15 +258,15 @@ public class ScopeServiceImpl implements ScopeService {
                 .flatMap(scope1 -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope1.getId(), ReferenceType.DOMAIN, scope1.getDomain(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(scope1));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(scope1));
                 })
                 .doOnSuccess(scope1 -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).oldValue(oldValue).scope(scope1)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).reference(Reference.domain(domain)).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_UPDATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
     }
 
     @Override
-    public Single<Scope> update(String domain, String id, UpdateSystemScope updateScope) {
-        log.debug("Update a system scope {} for domain {}", id, domain);
+    public Single<Scope> update(Domain domain, String id, UpdateSystemScope updateScope) {
+        log.debug("Update a system scope {} for domain {}", id, domain.getId());
         return scopeRepository.findById(id)
                 .switchIfEmpty(Single.error(new ScopeNotFoundException(id)))
                 .flatMap(scope -> {
@@ -282,7 +282,7 @@ public class ScopeServiceImpl implements ScopeService {
                 .flatMap(scope -> {
                     // create event for sync process
                     Event event = new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(scope));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(scope));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -350,7 +350,7 @@ public class ScopeServiceImpl implements ScopeService {
                                 // 5_ create event for sync process
                                 .andThen(
                                         Completable.fromSingle(
-                                                eventService.create(new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.DELETE))))
+                                                eventService.create(new Event(Type.SCOPE, new Payload(scope.getId(), ReferenceType.DOMAIN, scope.getDomain(), Action.DELETE)), domain))
                                 )
                                 .doOnComplete(() -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).scope(scope)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ScopeAuditBuilder.class).principal(principal).type(EventType.SCOPE_DELETED).reference(Reference.domain(scope.getDomain())).throwable(throwable)))

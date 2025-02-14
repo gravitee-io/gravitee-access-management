@@ -41,8 +41,8 @@ public class EventRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testFindByTimeFrame() {
-        final long from = 1571214259000l;
-        final long to =  1571214281000l;
+        final long from = 1571214259000L;
+        final long to = 1571214281000L;
         // create event
         Event event = new Event();
         event.setType(Type.DOMAIN);
@@ -72,6 +72,76 @@ public class EventRepositoryTest extends AbstractManagementTest {
         testSubscriber.assertNoErrors();
         testSubscriber.assertValueCount(1);
         testSubscriber.assertValue(evt -> evt.getId().equals(expectedEvent.getId()));
+    }
+
+    @Test
+    public void testFindByTimeFrameWithDataPlaneId() {
+        final long from = 1571214259000L;
+        final long to = 1571214281000L;
+        // create event for default DP
+        Event event = new Event();
+        event.setType(Type.DOMAIN);
+        event.setCreatedAt(new Date(from));
+        event.setUpdatedAt(event.getCreatedAt());
+        event.setDataPlaneId("default");
+        event.setEnvironmentId("envId");
+        Event expectedEvent = eventRepository.create(event).blockingGet();
+
+        // create event for default123 DP
+        Event event123 = new Event();
+        event123.setType(Type.DOMAIN);
+        event123.setCreatedAt(new Date(from));
+        event123.setUpdatedAt(event.getCreatedAt());
+        event123.setDataPlaneId("default123");
+        event123.setEnvironmentId("envId123");
+        eventRepository.create(event123).blockingGet();
+
+        // fetch events
+        TestSubscriber<Event> testSubscriber = eventRepository.findByTimeFrameAndDataPlaneId(from, to, "default").test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(evt -> evt.getId().equals(expectedEvent.getId())
+                && evt.getDataPlaneId().equals(expectedEvent.getDataPlaneId())
+                && evt.getEnvironmentId().equals(expectedEvent.getEnvironmentId()));
+    }
+
+    @Test
+    public void testFindByTimeFrameWithDataPlaneId_withNullDataPlaneId() {
+        final long from = 1571214259000L;
+        final long to = 1571214281000L;
+        // create event for default DP
+        Event event = new Event();
+        event.setType(Type.DOMAIN);
+        event.setCreatedAt(new Date(from));
+        event.setUpdatedAt(event.getCreatedAt());
+        event.setDataPlaneId("default");
+        eventRepository.create(event).blockingGet();
+
+        // create event for default123 DP
+        Event event123 = new Event();
+        event123.setType(Type.DOMAIN);
+        event123.setCreatedAt(new Date(from));
+        event123.setUpdatedAt(event.getCreatedAt());
+        event123.setDataPlaneId("default123");
+        eventRepository.create(event123).blockingGet();
+
+        // create event for default123 DP
+        Event eventNull = new Event();
+        eventNull.setType(Type.MEMBERSHIP);
+        eventNull.setCreatedAt(new Date(from));
+        eventNull.setUpdatedAt(event.getCreatedAt());
+        eventRepository.create(eventNull).blockingGet();
+
+        // fetch events
+        TestSubscriber<Event> testSubscriber = eventRepository.findByTimeFrameAndDataPlaneId(from, to, "default").test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(2);
     }
 
     @Test

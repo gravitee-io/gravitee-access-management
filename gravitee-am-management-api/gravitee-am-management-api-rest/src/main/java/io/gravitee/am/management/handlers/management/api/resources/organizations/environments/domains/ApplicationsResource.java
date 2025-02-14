@@ -155,7 +155,7 @@ public class ApplicationsResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> applicationService.create(domain, newApplication, authenticatedUser)
+                        .flatMapSingle(existingDomain -> applicationService.create(existingDomain, newApplication, authenticatedUser)
                                 .map(application -> Response
                                         .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application.getId()))
                                         .entity(application)
