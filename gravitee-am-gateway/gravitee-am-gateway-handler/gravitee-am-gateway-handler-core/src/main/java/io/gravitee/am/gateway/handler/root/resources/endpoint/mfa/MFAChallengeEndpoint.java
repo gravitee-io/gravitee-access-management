@@ -476,19 +476,24 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         factorContext.registerData(FactorContext.KEY_CLIENT, client);
         factorContext.registerData(KEY_USER, endUser);
         factorContext.registerData(FactorContext.KEY_REQUEST, new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())));
-        final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, true);
-        factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
-
         if (!factorProvider.needChallengeSending() || routingContext.get(ConstantKeys.ERROR_PARAM_KEY) != null
                 || routingContext.get(RATE_LIMIT_ERROR_PARAM_KEY) != null || routingContext.get(VERIFY_ATTEMPT_ERROR_PARAM_KEY) != null) {
             // do not send challenge in case of error param to avoid useless code generation
-            handler.handle(Future.succeededFuture(enrolledFactor));
+            // to provide EnrolledFactor we call the getEnrolledFactor but the overrideMovingFactor is set to false
+            // so during the enrollement phase, in case of wrong code provided by the user, the code is not reset
+            // otherwise the persisted value will not be the same as the one computed based on the session information
+            final EnrolledFactor currentEnrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, false);
+            handler.handle(Future.succeededFuture(currentEnrolledFactor));
             return;
         }
 
         if (rateLimiterService.isRateLimitEnabled()) {
             rateLimiterService.tryConsume(endUser.getId(), factor.getId(), endUser.getClient(), client.getDomain())
                     .subscribe(allowRequest -> {
+                                // if sendMessage is allowed, then get the EnrolledFactor with code reinitialiation to manage the movingFactor reset
+                                // during enrollment phase (if the user refresh the page)
+                                final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, allowRequest);
+                                factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
                                 if (allowRequest) {
                                     sendChallenge(routingContext, factorProvider, factorContext,endUser, client, factor, handler);
                                 } else {
@@ -499,6 +504,8 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                             error -> handler.handle(Future.failedFuture(error))
                     );
         } else {
+            final EnrolledFactor enrolledFactor = getEnrolledFactor(routingContext, factorProvider, factor, endUser, factorContext, true);
+            factorContext.registerData(FactorContext.KEY_ENROLLED_FACTOR, enrolledFactor);
             sendChallenge(routingContext, factorProvider, factorContext, endUser, client, factor, handler);
         }
     }
@@ -567,7 +574,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                              Factor factor,
                                              User endUser,
                                              FactorContext factorContext,
-                                             boolean onSendMessage) {
+                                             boolean overrideMovingFactor) {
         // enrolled factor can be either in session (if user come from mfa/enroll page)
         // or from the user enrolled factor list
         final String savedFactorId = routingContext.session().get(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
@@ -610,7 +617,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             // we ensure that every data has been shared with the user enrolled factor
             if (factorProvider.useVariableFactorSecurity(factorContext)) {
                 String tid = routingContext.session().get(PREVIOUS_TRANSACTION_ID_KEY);
-                if (onSendMessage) {
+                if (overrideMovingFactor) {
                     tid = routingContext.get(TRANSACTION_ID_KEY);
                     routingContext.session().put(PREVIOUS_TRANSACTION_ID_KEY, tid);
                 }

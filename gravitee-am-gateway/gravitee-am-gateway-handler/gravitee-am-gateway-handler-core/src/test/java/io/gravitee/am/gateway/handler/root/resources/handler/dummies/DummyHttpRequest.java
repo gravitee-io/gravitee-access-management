@@ -32,6 +32,7 @@ import io.vertx.core.streams.WriteStream;
 
 import javax.net.ssl.SSLSession;
 import javax.security.cert.X509Certificate;
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 import org.mockito.Mockito;
@@ -130,7 +131,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public String uri() {
-        return null;
+        return URI.create("http://client").toString();
     }
 
     @Override
