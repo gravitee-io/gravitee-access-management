@@ -51,6 +51,7 @@ import static io.gravitee.node.api.Node.META_ENVIRONMENTS;
 import static io.gravitee.node.api.Node.META_ORGANIZATIONS;
 import static java.util.Arrays.asList;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -230,7 +231,7 @@ public class SyncManagerTest {
         event.setType(Type.DOMAIN);
         event.setPayload(new Payload("domain-1", ReferenceType.DOMAIN, "domain-1", Action.DELETE));
 
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
+        when(eventRepository.findByTimeFrameAndDataPlaneId(any(Long.class), any(Long.class), anyString())).thenReturn(Flowable.just(event));
 
         syncManager.refresh();
 
@@ -262,7 +263,7 @@ public class SyncManagerTest {
         domainToUpdate.setUpdatedAt(new Date());
         domainToUpdate.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
 
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event));
+        when(eventRepository.findByTimeFrameAndDataPlaneId(any(Long.class), any(Long.class), anyString())).thenReturn(Flowable.just(event));
         when(domainRepository.findById(domainToUpdate.getId())).thenReturn(Maybe.just(domainToUpdate));
         when(securityDomainManager.get(domainToUpdate.getId())).thenReturn(domain);
 
@@ -284,11 +285,48 @@ public class SyncManagerTest {
         event.setCreatedAt(new Date());
         event.setPayload(new Payload("idp-1", ReferenceType.DOMAIN, "domain-1", Action.UPDATE));
 
-        when(eventRepository.findByTimeFrame(any(Long.class), any(Long.class))).thenReturn(Flowable.just(event, event));
+        when(eventRepository.findByTimeFrameAndDataPlaneId(any(Long.class), any(Long.class),anyString())).thenReturn(Flowable.just(event, event));
 
         syncManager.refresh();
 
         verify(eventManager, times(1)).publishEvent(any(), any());
+        verify(securityDomainManager, never()).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).update(any(Domain.class));
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+    @Test
+    public void shouldSyncEventsOnlyForDataPlane(){
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        syncManager.refresh();
+
+        Event event = new Event();
+        event.setId(UUID.randomUUID().toString());
+        event.setType(Type.IDENTITY_PROVIDER);
+        event.setCreatedAt(new Date());
+        event.setPayload(new Payload("idp-1", ReferenceType.DOMAIN, "domain-1", Action.UPDATE));
+        event.setDataPlaneId(DEFAULT_DATA_PLANE_ID);
+
+        when(eventRepository.findByTimeFrameAndDataPlaneId(any(Long.class), any(Long.class), anyString())).thenReturn(Flowable.just(event));
+
+        syncManager.refresh();
+
+        verify(eventManager, times(1)).publishEvent(any(), any());
+        verify(securityDomainManager, never()).deploy(any(Domain.class));
+        verify(securityDomainManager, never()).update(any(Domain.class));
+        verify(securityDomainManager, never()).undeploy(any(String.class));
+    }
+
+    @Test
+    public void shouldNotSyncEventsThatDataPlaneIdNotMatch(){
+        when(domainRepository.findAll()).thenReturn(Flowable.empty());
+        syncManager.refresh();
+
+        when(eventRepository.findByTimeFrameAndDataPlaneId(any(Long.class), any(Long.class), anyString())).thenReturn(Flowable.empty());
+
+        syncManager.refresh();
+
+        verify(eventManager, never()).publishEvent(any(), any());
         verify(securityDomainManager, never()).deploy(any(Domain.class));
         verify(securityDomainManager, never()).update(any(Domain.class));
         verify(securityDomainManager, never()).undeploy(any(String.class));

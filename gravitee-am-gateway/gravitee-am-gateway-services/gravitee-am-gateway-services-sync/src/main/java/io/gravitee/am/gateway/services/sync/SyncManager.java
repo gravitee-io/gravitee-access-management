@@ -114,7 +114,7 @@ public class SyncManager implements InitializingBean {
 
     private List<String> environmentIds;
 
-    private String dataplaneId;
+    private String dataPlaneId;
 
     private long lastRefreshAt = -1;
 
@@ -172,13 +172,13 @@ public class SyncManager implements InitializingBean {
 
                 final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
                 final long to = nextLastRefreshAt + timeframeAfterDelay;
-                Single<List<Event>> findEvents = eventRepository.findByTimeFrame(from, to).toList();
+                Single<List<Event>> findEvents = eventRepository.findByTimeFrameAndDataPlaneId(from, to, dataPlaneId).toList();
                 if (this.eventsTimeOut > 0) {
                     findEvents = findEvents.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
                 }
                 List<Event> events = findEvents.blockingGet();
 
-                if (events != null && !events.isEmpty()) {
+                if (!events.isEmpty()) {
                     gatewayMetricProvider.updateSyncEvents(events.size());
 
                     // Extract only the latest events by type and id
@@ -307,7 +307,7 @@ public class SyncManager implements InitializingBean {
     }
 
     private boolean hasMatchingDataplane(Domain domain) {
-        return dataplaneId.equals(domain.getDataPlaneId());
+        return dataPlaneId.equals(domain.getDataPlaneId());
     }
 
     private boolean hasMatchingEnvironments(Domain domain) {
@@ -327,7 +327,7 @@ public class SyncManager implements InitializingBean {
         environments = getSystemValues(ENVIRONMENTS_SYSTEM_PROPERTY);
         organizations = getSystemValues(ORGANIZATIONS_SYSTEM_PROPERTY);
         this.environmentIds = new ArrayList<>((Set<String>) node.metadata().get(Node.META_ENVIRONMENTS));
-        dataplaneId =  environment.getProperty(DATAPLANE_ID_PROPERTY, String.class, DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        dataPlaneId =  environment.getProperty(DATAPLANE_ID_PROPERTY, String.class, DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
     }
 
     private Optional<List<String>> getSystemValues(String key) {

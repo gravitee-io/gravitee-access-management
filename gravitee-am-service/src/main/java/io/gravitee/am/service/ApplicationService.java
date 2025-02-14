@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewApplication;
@@ -57,9 +58,9 @@ public interface ApplicationService {
 
     Maybe<Application> findByDomainAndClientId(String domain, String clientId);
 
-    Single<Application> create(String domain, NewApplication newApplication, User principal);
+    Single<Application> create(Domain domain, NewApplication newApplication, User principal);
 
-    Single<Application> create(Application application);
+    Single<Application> create(Domain domain, Application application);
 
     Single<Application> update(Application application);
 
@@ -67,9 +68,9 @@ public interface ApplicationService {
 
     Single<Application> patch(String domain, String id, PatchApplication patchApplication, User principal);
 
-    Single<Application> renewClientSecret(String domain, String id, User principal);
+    Single<Application> renewClientSecret(Domain domain, String id, User principal);
 
-    Completable delete(String id, User principal);
+    Completable delete(String id, User principal, Domain domain);
 
     Single<Long> count();
 
@@ -85,7 +86,7 @@ public interface ApplicationService {
                 .map(pagedApplications -> (pagedApplications.getData() == null) ? Collections.emptySet() : new HashSet<>(pagedApplications.getData()));
     }
 
-    default Single<Application> create(String domain, NewApplication newApplication) {
+    default Single<Application> create(Domain domain, NewApplication newApplication) {
         return create(domain, newApplication, null);
     }
 
@@ -93,11 +94,11 @@ public interface ApplicationService {
         return patch(domain, id, patchApplication, null);
     }
 
-    default Single<Application> renewClientSecret(String domain, String id) {
+    default Single<Application> renewClientSecret(Domain domain, String id) {
         return renewClientSecret(domain, id, null);
     }
 
-    default Completable delete(String id) {
-        return delete(id, null);
+    default Completable delete(String id, Domain domain) {
+        return delete(id, null, domain);
     }
 }

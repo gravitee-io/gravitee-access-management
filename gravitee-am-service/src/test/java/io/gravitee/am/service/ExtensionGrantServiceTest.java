@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -74,7 +75,7 @@ public class ExtensionGrantServiceTest {
     @Mock
     private AuditService auditService;
 
-    private final static String DOMAIN = "domain1";
+    private final static Domain DOMAIN = new Domain("domain1");
 
     @Test
     public void shouldFindById() {
@@ -108,8 +109,8 @@ public class ExtensionGrantServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(new ExtensionGrant()));
-        TestSubscriber<ExtensionGrant> testSubscriber = extensionGrantService.findByDomain(DOMAIN).test();
+        when(extensionGrantRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(new ExtensionGrant()));
+        TestSubscriber<ExtensionGrant> testSubscriber = extensionGrantService.findByDomain(DOMAIN.getId()).test();
         testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
@@ -119,9 +120,9 @@ public class ExtensionGrantServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
+        when(extensionGrantRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestSubscriber testSubscriber = extensionGrantService.findByDomain(DOMAIN).test();
+        TestSubscriber testSubscriber = extensionGrantService.findByDomain(DOMAIN.getId()).test();
 
         testSubscriber.assertError(TechnicalManagementException.class);
         testSubscriber.assertNotComplete();
@@ -131,9 +132,9 @@ public class ExtensionGrantServiceTest {
     public void shouldCreate() {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
-        when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = extensionGrantService.create(DOMAIN, newExtensionGrant).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -149,7 +150,7 @@ public class ExtensionGrantServiceTest {
     public void shouldCreate_technicalException() {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
-        when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.error(TechnicalException::new));
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<ExtensionGrant> testObserver = new TestObserver<>();
         extensionGrantService.create(DOMAIN, newExtensionGrant).subscribe(testObserver);
@@ -164,7 +165,7 @@ public class ExtensionGrantServiceTest {
     public void shouldCreate2_technicalException() {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
-        when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.create(any(ExtensionGrant.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<ExtensionGrant> testObserver = new TestObserver<>();
@@ -180,7 +181,7 @@ public class ExtensionGrantServiceTest {
     public void shouldCreate_existingExtensionGrant() {
         NewExtensionGrant newExtensionGrant = Mockito.mock(NewExtensionGrant.class);
         when(newExtensionGrant.getName()).thenReturn("my-extension-grant");
-        when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
 
         TestObserver<ExtensionGrant> testObserver = new TestObserver<>();
         extensionGrantService.create(DOMAIN, newExtensionGrant).subscribe(testObserver);
@@ -196,11 +197,11 @@ public class ExtensionGrantServiceTest {
         UpdateExtensionGrant updateExtensionGrant = Mockito.mock(UpdateExtensionGrant.class);
         when(updateExtensionGrant.getName()).thenReturn("my-extension-grant");
         ExtensionGrant extensionGrant = new ExtensionGrant();
-        extensionGrant.setDomain(DOMAIN);
+        extensionGrant.setDomain(DOMAIN.getId());
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(extensionGrant));
-        when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.empty());
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.empty());
         when(extensionGrantRepository.update(any(ExtensionGrant.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = extensionGrantService.update(DOMAIN, "my-extension-grant", updateExtensionGrant).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -232,7 +233,7 @@ public class ExtensionGrantServiceTest {
         UpdateExtensionGrant updateExtensionGrant = Mockito.mock(UpdateExtensionGrant.class);
         when(updateExtensionGrant.getName()).thenReturn("my-extension-grant");
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
-        when(extensionGrantRepository.findByDomainAndName(DOMAIN, "my-extension-grant")).thenReturn(Maybe.error(TechnicalException::new));
+        when(extensionGrantRepository.findByDomainAndName(DOMAIN.getId(), "my-extension-grant")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver testObserver = extensionGrantService.update(DOMAIN, "my-extension-grant", updateExtensionGrant).test();
         testObserver.assertError(TechnicalManagementException.class);
@@ -247,12 +248,12 @@ public class ExtensionGrantServiceTest {
     public void shouldDelete_notExistingExtensionGrant() {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
+        TestObserver testObserver = extensionGrantService.delete(DOMAIN.getId(), "my-extension-grant").test();
 
         testObserver.assertError(ExtensionGrantNotFoundException.class);
         testObserver.assertNotComplete();
 
-        verify(applicationService, never()).findByDomainAndExtensionGrant(eq(DOMAIN), anyString());
+        verify(applicationService, never()).findByDomainAndExtensionGrant(eq(DOMAIN.getId()), anyString());
         verify(extensionGrantRepository, never()).delete(anyString());
     }
 
@@ -262,9 +263,9 @@ public class ExtensionGrantServiceTest {
         extensionGrant.setId("extension-grant-id");
         extensionGrant.setGrantType("extension-grant-type");
         when(extensionGrantRepository.findById(extensionGrant.getId())).thenReturn(Maybe.just(extensionGrant));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType() + "~" + extensionGrant.getId())).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), extensionGrant.getGrantType() + "~" + extensionGrant.getId())).thenReturn(Single.just(Collections.singleton(new Application())));
 
-        TestObserver testObserver = extensionGrantService.delete(DOMAIN, extensionGrant.getId()).test();
+        TestObserver testObserver = extensionGrantService.delete(DOMAIN.getId(), extensionGrant.getId()).test();
 
         testObserver.assertError(ExtensionGrantWithApplicationsException.class);
         testObserver.assertNotComplete();
@@ -285,10 +286,10 @@ public class ExtensionGrantServiceTest {
         extensionGrant2.setCreatedAt(new Date());
 
         when(extensionGrantRepository.findById(extensionGrant.getId())).thenReturn(Maybe.just(extensionGrant));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType() + "~" + extensionGrant.getId())).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant.getGrantType())).thenReturn(Single.just(Collections.singleton(new Application())));
-        when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(extensionGrant, extensionGrant2));
-        TestObserver testObserver = extensionGrantService.delete(DOMAIN, extensionGrant.getId()).test();
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), extensionGrant.getGrantType() + "~" + extensionGrant.getId())).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), extensionGrant.getGrantType())).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(extensionGrantRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(extensionGrant, extensionGrant2));
+        TestObserver testObserver = extensionGrantService.delete(DOMAIN.getId(), extensionGrant.getId()).test();
 
         testObserver.assertError(ExtensionGrantWithApplicationsException.class);
         testObserver.assertNotComplete();
@@ -302,21 +303,21 @@ public class ExtensionGrantServiceTest {
         extensionGrant.setId("extension-grant-id");
         extensionGrant.setGrantType("extension-grant-type");
         extensionGrant.setCreatedAt(new Date(System.currentTimeMillis() - 60 * 1000));
-        extensionGrant.setDomain(DOMAIN);
+        extensionGrant.setDomain(DOMAIN.getId());
 
         ExtensionGrant extensionGrant2 = new ExtensionGrant();
         extensionGrant2.setId("extension-grant-id-2");
         extensionGrant2.setGrantType("extension-grant-type");
         extensionGrant2.setCreatedAt(new Date());
-        extensionGrant2.setDomain(DOMAIN);
+        extensionGrant2.setDomain(DOMAIN.getId());
 
         when(extensionGrantRepository.findById(extensionGrant2.getId())).thenReturn(Maybe.just(extensionGrant2));
         when(extensionGrantRepository.delete(extensionGrant2.getId())).thenReturn(Completable.complete());
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant2.getGrantType() + "~" + extensionGrant2.getId())).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, extensionGrant2.getGrantType())).thenReturn(Single.just(Collections.singleton(new Application())));
-        when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(extensionGrant, extensionGrant2));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), extensionGrant2.getGrantType() + "~" + extensionGrant2.getId())).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), extensionGrant2.getGrantType())).thenReturn(Single.just(Collections.singleton(new Application())));
+        when(extensionGrantRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(extensionGrant, extensionGrant2));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        TestObserver testObserver = extensionGrantService.delete(DOMAIN, extensionGrant2.getId()).test();
+        TestObserver testObserver = extensionGrantService.delete(DOMAIN.getId(), extensionGrant2.getId()).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -330,7 +331,7 @@ public class ExtensionGrantServiceTest {
     public void shouldDelete_technicalException() {
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(new ExtensionGrant()));
 
-        TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
+        TestObserver testObserver = extensionGrantService.delete(DOMAIN.getId(), "my-extension-grant").test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -341,15 +342,15 @@ public class ExtensionGrantServiceTest {
         ExtensionGrant existingExtensionGrant = Mockito.mock(ExtensionGrant.class);
         when(existingExtensionGrant.getId()).thenReturn("my-extension-grant");
         when(existingExtensionGrant.getGrantType()).thenReturn("my-extension-grant");
-        when(existingExtensionGrant.getDomain()).thenReturn(DOMAIN);
+        when(existingExtensionGrant.getDomain()).thenReturn(DOMAIN.getId());
         when(extensionGrantRepository.findById("my-extension-grant")).thenReturn(Maybe.just(existingExtensionGrant));
         when(extensionGrantRepository.delete("my-extension-grant")).thenReturn(Completable.complete());
-        when(extensionGrantRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(existingExtensionGrant));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant~my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
-        when(applicationService.findByDomainAndExtensionGrant(DOMAIN, "my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
+        when(extensionGrantRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(existingExtensionGrant));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "my-extension-grant~my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
+        when(applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "my-extension-grant")).thenReturn(Single.just(Collections.emptySet()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = extensionGrantService.delete(DOMAIN, "my-extension-grant").test();
+        TestObserver testObserver = extensionGrantService.delete(DOMAIN.getId(), "my-extension-grant").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();

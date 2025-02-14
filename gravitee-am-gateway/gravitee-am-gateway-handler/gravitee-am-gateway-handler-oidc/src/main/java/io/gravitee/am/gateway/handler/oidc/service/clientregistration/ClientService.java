@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Completable;
@@ -35,20 +36,20 @@ public interface ClientService {
 
     Maybe<Client> findById(String id);
 
-    Single<Client> create(Client client);
+    Single<Client> create(Domain domain, Client client);
 
-    Single<Client> renewClientSecret(String domain, String id, User principal);
+    Single<Client> renewClientSecret(Domain domain, String id, User principal);
 
-    Completable delete(String clientId, User principal);
+    Completable delete(String clientId, User principal, Domain domain);
 
     Single<Client> update(Client client);
 
-    default Single<Client> renewClientSecret(String domain, String id) {
+    default Single<Client> renewClientSecret(Domain domain, String id) {
         return renewClientSecret(domain, id, null);
     }
 
-    default Completable delete(String clientId) {
-        return delete(clientId, null);
+    default Completable delete(String clientId, Domain domain) {
+        return delete(clientId, null, domain);
     }
 
 }

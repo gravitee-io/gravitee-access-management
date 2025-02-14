@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
+import lombok.Getter;
+import lombok.Setter;
 import org.bson.Document;
 import org.bson.codecs.pojo.annotations.BsonId;
 
@@ -23,6 +25,8 @@ import org.bson.codecs.pojo.annotations.BsonId;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class EventMongo extends Auditable {
 
     @BsonId
@@ -32,27 +36,7 @@ public class EventMongo extends Auditable {
 
     private Document payload;
 
-    public String getId() {
-        return id;
-    }
+    private String dataPlaneId;
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public Document getPayload() {
-        return payload;
-    }
-
-    public void setPayload(Document payload) {
-        this.payload = payload;
-    }
+    private String environmentId;
 }
