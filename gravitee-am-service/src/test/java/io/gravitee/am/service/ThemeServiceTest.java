@@ -88,7 +88,7 @@ public class ThemeServiceTest {
     public void testCreate() {
         Theme theme = new Theme();
         when(repository.create(any())).thenReturn(Single.just(theme));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(repository.findByReference(any(), any())).thenReturn(Maybe.empty());
 
         when(themeValidator.validate(any())).thenReturn(Completable.complete());
@@ -105,7 +105,7 @@ public class ThemeServiceTest {
 
         verify(repository).create(argThat(input -> ReferenceType.DOMAIN.equals(input.getReferenceType()) && DOMAIN_ID_1.equals(input.getReferenceId())));
         verify(auditService).report(any());
-        verify(eventService).create(any());
+        verify(eventService).create(any(), any());
     }
 
     @Test
@@ -236,7 +236,7 @@ public class ThemeServiceTest {
         when(repository.findById(eq(THEME_ID))).thenReturn(Maybe.just(existingTheme));
 
         when(repository.update(any())).thenReturn(Single.just(new Theme()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(themeValidator.validate(any())).thenReturn(Completable.complete());
 
         final TestObserver<Theme> test = cut.update(domain, updatedTheme, new DefaultUser()).test();
@@ -246,7 +246,7 @@ public class ThemeServiceTest {
 
         verify(repository).update(any());
         verify(auditService).report(any());
-        verify(eventService).create(any());
+        verify(eventService).create(any(), any());
     }
 
     @Test
@@ -309,7 +309,7 @@ public class ThemeServiceTest {
         domain.setId(DOMAIN_ID_1);
 
         when(repository.delete(any())).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         final TestObserver<Void> test = cut.delete(domain, "themeid", new DefaultUser()).test();
 
@@ -318,7 +318,7 @@ public class ThemeServiceTest {
 
         verify(repository).delete(any());
         verify(auditService).report(any());
-        verify(eventService).create(any());
+        verify(eventService).create(any(), any());
     }
 
     @Test

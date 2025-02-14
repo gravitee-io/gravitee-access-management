@@ -16,6 +16,9 @@
 package io.gravitee.am.model.common.event;
 
 import io.gravitee.am.common.event.Type;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 import java.util.Date;
 
@@ -23,6 +26,9 @@ import java.util.Date;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
+@ToString
 public class Event {
 
     private String id;
@@ -30,6 +36,8 @@ public class Event {
     private Payload payload;
     private Date createdAt;
     private Date updatedAt;
+    private String dataPlaneId;
+    private String environmentId;
 
     public Event() { }
 
@@ -37,55 +45,10 @@ public class Event {
         this.type = type;
         this.payload = payload;
     }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Type getType() {
-        return type;
-    }
-
-    public void setType(Type type) {
+    public Event(Type type, Payload payload, String dataPlaneId, String environmentId) {
         this.type = type;
-    }
-
-    public Payload getPayload() {
-        return payload;
-    }
-
-    public void setPayload(Payload payload) {
         this.payload = payload;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "{\"_class\":\"Event\", " +
-                "\"id\":" + (id == null ? "null" : "\"" + id + "\"") + ", " +
-                "\"type\":" + (type == null ? "null" : type) + ", " +
-                "\"payload\":" + (payload == null ? "null" : payload) + ", " +
-                "\"createdAt\":" + (createdAt == null ? "null" : createdAt) + ", " +
-                "\"updatedAt\":" + (updatedAt == null ? "null" : updatedAt) +
-                "}";
+        this.dataPlaneId = dataPlaneId;
+        this.environmentId = environmentId;
     }
 }

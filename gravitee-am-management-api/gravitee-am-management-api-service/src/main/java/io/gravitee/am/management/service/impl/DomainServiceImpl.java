@@ -415,7 +415,7 @@ public class DomainServiceImpl implements DomainService {
                 // create event for sync process
                 .flatMap(domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
-                    return eventService.create(event).flatMap(e -> Single.just(domain));
+                    return eventService.create(event, domain).flatMap(e -> Single.just(domain));
                 })
                 .flatMap(domain -> reporterService.notifyInheritedReporters(Reference.organization(organizationId), Reference.domain(domain.getId()), Action.CREATE)
                         .andThen(Single.just(domain)))
@@ -461,7 +461,7 @@ public class DomainServiceImpl implements DomainService {
                 // create event for sync process
                 .flatMap(domain1 -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(domain1));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(domain1));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
@@ -495,7 +495,7 @@ public class DomainServiceImpl implements DomainService {
                             // create event for sync process
                             .flatMap(domain1 -> {
                                 Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(domain1));
+                                return eventService.create(event, domain1).flatMap(__ -> Single.just(domain1));
                             })
                             .doOnSuccess(domain1 -> {
                                 auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1));
@@ -545,7 +545,7 @@ public class DomainServiceImpl implements DomainService {
                     // delete applications
                     return applicationService.findByDomain(domainId)
                             .flatMapCompletable(applications -> {
-                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId())).toList();
+                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId(), domain)).toList();
                                 return Completable.concat(deleteApplicationsCompletable);
                             })
                             // delete identity providers
@@ -651,7 +651,7 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
                             .andThen(domainRepository.delete(domainId))
-                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE)))))
+                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.DOMAIN_DELETED)
@@ -710,7 +710,7 @@ public class DomainServiceImpl implements DomainService {
                     scope.setName(systemScope.getLabel());
                     scope.setDescription(systemScope.getDescription());
                     scope.setDiscovery(systemScope.isDiscovery());
-                    return scopeService.create(domain.getId(), scope);
+                    return scopeService.create(domain, scope);
                 })
                 .lastOrError()
                 .map(scope -> domain);
@@ -719,7 +719,7 @@ public class DomainServiceImpl implements DomainService {
 
     private Single<Domain> createDefaultCertificate(Domain domain) {
         return certificateService
-                .create(domain.getId())
+                .create(domain)
                 .map(certificate -> domain);
     }
 

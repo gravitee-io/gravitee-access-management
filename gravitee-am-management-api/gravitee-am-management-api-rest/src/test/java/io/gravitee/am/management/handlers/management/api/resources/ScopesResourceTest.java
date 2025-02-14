@@ -37,7 +37,6 @@ import java.util.Set;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -97,7 +96,7 @@ public class ScopesResourceTest extends JerseySpringTest {
         scope.setName("scope-name");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(scope)).when(scopeService).create(eq(domainId), any(NewScope.class), any());
+        doReturn(Single.just(scope)).when(scopeService).create(any(Domain.class), any(NewScope.class), any());
 
         final Response response = target("domains")
                 .path(domainId)

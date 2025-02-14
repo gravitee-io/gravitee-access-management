@@ -45,6 +45,7 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lte;
+import static com.mongodb.client.model.Filters.or;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_UPDATED_AT;
 
@@ -57,6 +58,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
 
     private static final Logger log = LoggerFactory.getLogger(MongoEventRepository.class);
     public static final String ACTION = "action";
+    public static final String DATA_PLANE_ID = "dataPlaneId";
     private MongoCollection<EventMongo> eventsCollection;
 
     @PostConstruct
@@ -64,6 +66,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         eventsCollection = mongoOperations.getCollection("events", EventMongo.class);
         super.init(eventsCollection);
         super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
+        super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1).append(DATA_PLANE_ID, 1), new IndexOptions().name("u1dp1")));
     }
 
     @Override
@@ -73,6 +76,17 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         if (to > from) {
             filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
         }
+        return Flowable.fromPublisher(withMaxTime(eventsCollection.find(and(filters)))).map(this::convert);
+    }
+
+    @Override
+    public Flowable<Event> findByTimeFrameAndDataPlaneId(long from, long to, String dataPlaneId) {
+        List<Bson> filters = new ArrayList<>();
+        filters.add(gte(FIELD_UPDATED_AT, new Date(from)));
+        if (to > from) {
+            filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
+        }
+        filters.add(or(eq(DATA_PLANE_ID, dataPlaneId), eq(DATA_PLANE_ID, null)));
         return Flowable.fromPublisher(withMaxTime(eventsCollection.find(and(filters)))).map(this::convert);
     }
 
@@ -110,6 +124,8 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         eventMongo.setPayload(convert(event.getPayload()));
         eventMongo.setCreatedAt(event.getCreatedAt());
         eventMongo.setUpdatedAt(event.getUpdatedAt());
+        eventMongo.setDataPlaneId(event.getDataPlaneId());
+        eventMongo.setEnvironmentId(event.getEnvironmentId());
         return eventMongo;
     }
 
@@ -129,6 +145,8 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
             log.info("Invalid event type '{}', the event will be ignored by synchronization process.", eventMongo.getType());
             event.setType(Type.UNKNOWN);
         }
+        event.setDataPlaneId(eventMongo.getDataPlaneId());
+        event.setEnvironmentId(eventMongo.getEnvironmentId());
 
         return event;
     }

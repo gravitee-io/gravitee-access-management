@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -26,6 +28,8 @@ import java.time.LocalDateTime;
  * @author GraviteeSource Team
  */
 @Table("events")
+@Getter
+@Setter
 public class JdbcEvent {
     @Id
     private String id;
@@ -35,44 +39,8 @@ public class JdbcEvent {
     private LocalDateTime createdAt;
     @Column("updated_at")
     private LocalDateTime updatedAt;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getPayload() {
-        return payload;
-    }
-
-    public void setPayload(String payload) {
-        this.payload = payload;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+    @Column("data_plane_id")
+    private String dataPlaneId;
+    @Column("environment_id")
+    private String environmentId;
 }

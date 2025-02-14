@@ -160,3 +160,5 @@ databaseChangeLog:
 
   - include:
       - file: liquibase/changelogs/v4_7_0/4.7.0-update-domain-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-update-events-table.yml
