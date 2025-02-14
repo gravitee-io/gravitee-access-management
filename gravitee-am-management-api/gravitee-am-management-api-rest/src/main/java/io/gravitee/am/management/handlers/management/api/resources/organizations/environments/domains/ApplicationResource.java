@@ -218,7 +218,9 @@ public class ApplicationResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.DELETE)
-                .andThen(applicationService.delete(application, authenticatedUser))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapCompletable(exitingDomain -> applicationService.delete(application, authenticatedUser, exitingDomain)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
@@ -248,7 +250,7 @@ public class ApplicationResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_OPENID, Acl.READ)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> applicationService.renewClientSecret(domain, application, authenticatedUser)))
+                        .flatMapSingle(exitingDomain -> applicationService.renewClientSecret(exitingDomain, application, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

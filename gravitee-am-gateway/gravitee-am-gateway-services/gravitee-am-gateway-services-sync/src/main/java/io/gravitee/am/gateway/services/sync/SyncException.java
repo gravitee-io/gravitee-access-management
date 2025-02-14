@@ -13,23 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.gateway.services.sync;
 
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.common.event.Event;
-import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
-
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface EventService {
-
-    Single<Event> create(Event event);
-
-    Single<Event> create(Event event, Domain domain);
-
-    Single<List<Event>> findByTimeFrame(long from, long to);
+public class SyncException extends Exception {
+    public SyncException(String message) {
+        super(message);
+    }
 }

@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.service.model.NewExtensionGrant;
 import io.gravitee.am.service.model.UpdateExtensionGrant;
@@ -34,17 +35,17 @@ public interface ExtensionGrantService {
 
     Flowable<ExtensionGrant> findByDomain(String tokenGranter);
 
-    Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant, User principal);
+    Single<ExtensionGrant> create(Domain domain, NewExtensionGrant newExtensionGrant, User principal);
 
-    Single<ExtensionGrant> update(String domain, String id, UpdateExtensionGrant updateExtensionGrant, User principal);
+    Single<ExtensionGrant> update(Domain domain, String id, UpdateExtensionGrant updateExtensionGrant, User principal);
 
     Completable delete(String domain, String certificateId, User principal);
 
-    default Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant) {
+    default Single<ExtensionGrant> create(Domain domain, NewExtensionGrant newExtensionGrant) {
         return create(domain, newExtensionGrant, null);
     }
 
-    default Single<ExtensionGrant> update(String domain, String id, UpdateExtensionGrant updateExtensionGrant) {
+    default Single<ExtensionGrant> update(Domain domain, String id, UpdateExtensionGrant updateExtensionGrant) {
         return update(domain, id, updateExtensionGrant, null);
     }
 

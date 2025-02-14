@@ -56,7 +56,7 @@ public class EmailResourceTest extends JerseySpringTest {
 
         doReturn(Completable.complete()).when(emailResourceValidator).validate(any());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new Email())).when(emailTemplateService).update(eq(domainId), eq(emailId), any(), any(User.class));
+        doReturn(Single.just(new Email())).when(emailTemplateService).update(any(Domain.class), eq(emailId), any(), any(User.class));
 
         final Response response = target("domains")
                 .path(domainId)

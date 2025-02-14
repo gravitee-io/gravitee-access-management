@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -88,12 +89,12 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
     }
 
     @Override
-    public Single<AuthenticationDeviceNotifier> create(String domain, NewAuthenticationDeviceNotifier newADNotifier, User principal) {
-        log.debug("Create a new authentication device notifier {} for domain {}", newADNotifier, domain);
+    public Single<AuthenticationDeviceNotifier> create(Domain domain, NewAuthenticationDeviceNotifier newADNotifier, User principal) {
+        log.debug("Create a new authentication device notifier {} for domain {}", newADNotifier, domain.getId());
 
         AuthenticationDeviceNotifier notifier = new AuthenticationDeviceNotifier();
         notifier.setId(newADNotifier.getId() == null ? RandomString.generate() : newADNotifier.getId());
-        notifier.setReferenceId(domain);
+        notifier.setReferenceId(domain.getId());
         notifier.setReferenceType(ReferenceType.DOMAIN);
         notifier.setName(newADNotifier.getName());
         notifier.setType(newADNotifier.getType());
@@ -105,7 +106,7 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                 .flatMap(authDeviceNotifier -> {
                     // create event for sync process
                     Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(authDeviceNotifier.getId(), authDeviceNotifier.getReferenceType(), authDeviceNotifier.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(authDeviceNotifier));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(authDeviceNotifier));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -121,14 +122,14 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                         .authDeviceNotifier(authDeviceNotifier)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
                         .principal(principal)
-                        .reference(Reference.domain(domain))
+                        .reference(Reference.domain(domain.getId()))
                         .type(EventType.AUTH_DEVICE_NOTIFIER_CREATED)
                         .throwable(throwable)));
     }
 
     @Override
-    public Single<AuthenticationDeviceNotifier> update(String domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier, User principal) {
-        log.debug("Update AuthenticationDevice Notifier {} for domain {}", id, domain);
+    public Single<AuthenticationDeviceNotifier> update(Domain domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier, User principal) {
+        log.debug("Update AuthenticationDevice Notifier {} for domain {}", id, domain.getId());
 
         return adNotifierRepository.findById(id)
                 .switchIfEmpty(Single.error(new BotDetectionNotFoundException(id)))
@@ -142,7 +143,7 @@ public class AuthenticationDeviceNotifierServiceImpl implements AuthenticationDe
                             .flatMap(notifier -> {
                                 // create event for sync process
                                 Event event = new Event(Type.AUTH_DEVICE_NOTIFIER, new Payload(notifier.getId(), notifier.getReferenceType(), notifier.getReferenceId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(notifier));
+                                return eventService.create(event, domain).flatMap(__ -> Single.just(notifier));
                             })
                             .doOnSuccess(notifier -> auditService.report(AuditBuilder.builder(AuthDeviceNotifierAuditBuilder.class)
                                     .principal(principal)

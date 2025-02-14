@@ -129,7 +129,7 @@ public class ScopeResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> scopeService.patch(domain, scope, patchScope, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> scopeService.patch(existingDomain, scope, patchScope, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -159,7 +159,7 @@ public class ScopeResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> scopeService.update(domain, scope, updateScope, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> scopeService.update(existingDomain, scope, updateScope, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

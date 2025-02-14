@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -96,7 +95,7 @@ public class ExtensionGrantsResourceTest extends JerseySpringTest {
         extensionGrant.setName("extensionGrant-name");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(extensionGrant)).when(extensionGrantService).create(eq(domainId), any(), any());
+        doReturn(Single.just(extensionGrant)).when(extensionGrantService).create(any(Domain.class), any(), any());
         doReturn(Completable.complete()).when(extensionGrantPluginService).checkPluginDeployment(any());
 
         final Response response = target("domains")

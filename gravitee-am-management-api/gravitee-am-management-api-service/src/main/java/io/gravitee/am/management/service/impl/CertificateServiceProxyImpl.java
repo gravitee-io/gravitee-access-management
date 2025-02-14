@@ -23,6 +23,7 @@ import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.service.ApplicationService;
@@ -155,7 +156,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
-    public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal) {
+    public Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal) {
         return certificateService.create(domain, newCertificate, principal, false)
                 .flatMap(cert -> filterSensitiveData(cert)
                     .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
@@ -170,7 +171,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
-    public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal) {
+    public Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal) {
         return certificateService.findById(id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .flatMap(oldCertificate -> filterSensitiveData(oldCertificate)
@@ -196,7 +197,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
-    public Single<Certificate> rotate(String domain, User principal) {
+    public Single<Certificate> rotate(Domain domain, User principal) {
         return certificateService.rotate(domain, principal);
     }
 

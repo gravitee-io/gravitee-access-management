@@ -123,7 +123,7 @@ public class ServiceResourceResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_RESOURCE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> resourceService.update(domain, resource, updateResource, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> resourceService.update(existingDomain, resource, updateResource, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

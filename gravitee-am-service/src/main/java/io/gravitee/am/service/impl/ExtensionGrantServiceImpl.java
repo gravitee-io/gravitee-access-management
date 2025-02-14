@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -101,10 +102,10 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
     }
 
     @Override
-    public Single<ExtensionGrant> create(String domain, NewExtensionGrant newExtensionGrant, User principal) {
-        LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain);
+    public Single<ExtensionGrant> create(Domain domain, NewExtensionGrant newExtensionGrant, User principal) {
+        LOGGER.debug("Create a new extension grant {} for domain {}", newExtensionGrant, domain.getId());
 
-        return extensionGrantRepository.findByDomainAndName(domain, newExtensionGrant.getName())
+        return extensionGrantRepository.findByDomainAndName(domain.getId(), newExtensionGrant.getName())
                 .isEmpty()
                 .flatMap(empty -> {
                     if (!empty) {
@@ -113,7 +114,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                         String extensionGrantId = RandomString.generate();
                         ExtensionGrant extensionGrant = new ExtensionGrant();
                         extensionGrant.setId(extensionGrantId);
-                        extensionGrant.setDomain(domain);
+                        extensionGrant.setDomain(domain.getId());
                         extensionGrant.setName(newExtensionGrant.getName());
                         extensionGrant.setGrantType(newExtensionGrant.getGrantType());
                         extensionGrant.setIdentityProvider(newExtensionGrant.getIdentityProvider());
@@ -128,7 +129,7 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                                 .flatMap(extensionGrant1 -> {
                                     // create event for sync process
                                     Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant1.getId(), ReferenceType.DOMAIN, extensionGrant1.getDomain(), Action.CREATE));
-                                    return eventService.create(event).flatMap(__ -> Single.just(extensionGrant1));
+                                    return eventService.create(event, domain).flatMap(__ -> Single.just(extensionGrant1));
                                 });
 
                     }
@@ -142,16 +143,16 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a extension grant", ex));
                 })
                 .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_CREATED).extensionGrant(extensionGrant)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.EXTENSION_GRANT_CREATED).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.EXTENSION_GRANT_CREATED).throwable(throwable)));
     }
 
     @Override
-    public Single<ExtensionGrant> update(String domain, String id, UpdateExtensionGrant updateExtensionGrant, User principal) {
-        LOGGER.debug("Update a extension grant {} for domain {}", id, domain);
+    public Single<ExtensionGrant> update(Domain domain, String id, UpdateExtensionGrant updateExtensionGrant, User principal) {
+        LOGGER.debug("Update a extension grant {} for domain {}", id, domain.getId());
 
         return extensionGrantRepository.findById(id)
                 .switchIfEmpty(Single.error(new ExtensionGrantNotFoundException(id)))
-                .flatMap(tokenGranter -> extensionGrantRepository.findByDomainAndName(domain, updateExtensionGrant.getName())
+                .flatMap(tokenGranter -> extensionGrantRepository.findByDomainAndName(domain.getId(), updateExtensionGrant.getName())
                         .map(Optional::of)
                         .defaultIfEmpty(Optional.empty())
                         .flatMap(existingTokenGranter -> {
@@ -174,10 +175,10 @@ public class ExtensionGrantServiceImpl implements ExtensionGrantService {
                             .flatMap(extensionGrant -> {
                                 // create event for sync process
                                 Event event = new Event(Type.EXTENSION_GRANT, new Payload(extensionGrant.getId(), ReferenceType.DOMAIN, extensionGrant.getDomain(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(extensionGrant));
+                                return eventService.create(event, domain).flatMap(__ -> Single.just(extensionGrant));
                             })
                             .doOnSuccess(extensionGrant -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).type(EventType.EXTENSION_GRANT_UPDATED).oldValue(oldExtensionGrant).extensionGrant(extensionGrant)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.EXTENSION_GRANT_UPDATED).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ExtensionGrantAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.EXTENSION_GRANT_UPDATED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
