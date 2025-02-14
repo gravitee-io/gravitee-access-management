@@ -86,7 +86,7 @@ public class EmailResource extends AbstractResource {
                 .andThen(emailResourceValidator.validate(updateEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> emailTemplateService.update(domain, email, updateEmail, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> emailTemplateService.update(existingDomain, email, updateEmail, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

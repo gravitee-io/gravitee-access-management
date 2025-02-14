@@ -41,7 +41,6 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -113,7 +112,7 @@ public class ApplicationsResourceTest extends JerseySpringTest {
         application.setType(ApplicationType.SERVICE);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(application)).when(applicationService).create(eq(domainId), any(NewApplication.class), any());
+        doReturn(Single.just(application)).when(applicationService).create(any(Domain.class), any(NewApplication.class), any());
 
         final Response response = target("domains")
                 .path(domainId)

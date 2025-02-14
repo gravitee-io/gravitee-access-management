@@ -131,7 +131,7 @@ public class ServiceResourcesResource extends AbstractResource {
                 .andThen(resourceValidator.validate(new ResourceHolder(newResource.getType(), newResource.getConfiguration())))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> resourceService.create(domain, newResource, authenticatedUser))
+                        .flatMapSingle(existingDomain -> resourceService.create(existingDomain, newResource, authenticatedUser))
                         .map(resource -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/resources/" + resource.getId()))
                                 .entity(resource)

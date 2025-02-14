@@ -70,10 +70,10 @@ public class OpenIDScopeUpgraderTest {
     @Test
     public void shouldCreateSystemScope() {
         when(scopeService.findByDomainAndKey(eq(DOMAIN_ID), anyString())).thenReturn(Maybe.empty());
-        when(scopeService.create(anyString(),any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
 
         assertTrue(openIDScopeUpgrader.upgrade());
-        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
+        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(any(), any(NewSystemScope.class));
     }
 
     @Test
@@ -99,11 +99,11 @@ public class OpenIDScopeUpgraderTest {
         when(scopeService.findByDomainAndKey(DOMAIN_ID, "openid")).thenReturn(Maybe.just(openId));
         when(scopeService.findByDomainAndKey(DOMAIN_ID, "phone")).thenReturn(Maybe.just(phone));
         when(scopeService.findByDomainAndKey(DOMAIN_ID, "email")).thenReturn(Maybe.just(email));
-        when(scopeService.create(anyString(),any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
-        when(scopeService.update(anyString(), anyString(), any(UpdateSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeService.create(any(),any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeService.update(any(), anyString(), any(UpdateSystemScope.class))).thenReturn(Single.just(new Scope()));
 
         assertTrue(openIDScopeUpgrader.upgrade());
-        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length-3)).create(anyString(), any(NewSystemScope.class));
-        verify(scopeService, times(2)).update(anyString(), anyString(), any(UpdateSystemScope.class));
+        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length-3)).create(any(), any(NewSystemScope.class));
+        verify(scopeService, times(2)).update(any(), anyString(), any(UpdateSystemScope.class));
     }
 }

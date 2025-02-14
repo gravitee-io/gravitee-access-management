@@ -36,7 +36,6 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -101,7 +100,7 @@ public class DeviceIdentifiersResourceTest extends JerseySpringTest {
         deviceIdentifier.setName("deviceIdentifier-name");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(deviceIdentifier)).when(deviceIdentifierService).create(eq(domainId), any(), any());
+        doReturn(Single.just(deviceIdentifier)).when(deviceIdentifierService).create(any(Domain.class), any(), any());
         doReturn(Completable.complete()).when(deviceIdentifierPluginService).checkPluginDeployment(any());
 
         final Response response = target("domains")

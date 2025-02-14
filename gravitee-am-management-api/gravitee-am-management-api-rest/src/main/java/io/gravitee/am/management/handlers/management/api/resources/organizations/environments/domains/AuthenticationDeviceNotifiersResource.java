@@ -114,7 +114,7 @@ public class AuthenticationDeviceNotifiersResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_AUTHDEVICE_NOTIFIER, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> authDeviceNotifierService.create(domain, newDeviceNotifier, authenticatedUser))
+                        .flatMapSingle(existingDomain -> authDeviceNotifierService.create(existingDomain, newDeviceNotifier, authenticatedUser))
                         .map(deviceNotifier -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/auth-device-notifiers/" + deviceNotifier.getId()))
                                 .entity(deviceNotifier)

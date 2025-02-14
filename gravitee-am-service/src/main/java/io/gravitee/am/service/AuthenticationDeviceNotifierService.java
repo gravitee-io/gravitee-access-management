@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.model.NewAuthenticationDeviceNotifier;
 import io.gravitee.am.service.model.UpdateAuthenticationDeviceNotifier;
 import io.reactivex.rxjava3.core.Completable;
@@ -34,17 +35,17 @@ public interface AuthenticationDeviceNotifierService {
 
     Flowable<AuthenticationDeviceNotifier> findByDomain(String domain);
 
-    Single<AuthenticationDeviceNotifier> create(String domain, NewAuthenticationDeviceNotifier notifier, User principal);
+    Single<AuthenticationDeviceNotifier> create(Domain domain, NewAuthenticationDeviceNotifier notifier, User principal);
 
-    Single<AuthenticationDeviceNotifier> update(String domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier, User principal);
+    Single<AuthenticationDeviceNotifier> update(Domain domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier, User principal);
 
     Completable delete(String domain, String notifierId, User principal);
 
-    default Single<AuthenticationDeviceNotifier> create(String domain, NewAuthenticationDeviceNotifier notifier) {
+    default Single<AuthenticationDeviceNotifier> create(Domain domain, NewAuthenticationDeviceNotifier notifier) {
         return create(domain, notifier, null);
     }
 
-    default Single<AuthenticationDeviceNotifier> update(String domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier) {
+    default Single<AuthenticationDeviceNotifier> update(Domain domain, String id, UpdateAuthenticationDeviceNotifier updateNotifier) {
         return update(domain, id, updateNotifier, null);
     }
 

@@ -16,11 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -92,9 +92,9 @@ public class ApplicationEmailResource extends AbstractResource {
                 .andThen(emailTemplateValidator.validate(updateEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> applicationService.findById(application))
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(__ -> emailTemplateService.update(domain, application, email, updateEmail)))
+                        .flatMap(existingDomain -> applicationService.findById(application)
+                                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
+                                .flatMapSingle(__ -> emailTemplateService.update(existingDomain, application, email, updateEmail))))
                 .subscribe(response::resume, response::resume);
     }
 

@@ -40,9 +40,9 @@ public interface ScopeService {
 
     Maybe<Scope> findById(String id);
 
-    Single<Scope> create(String domain, NewScope scope, User principal);
+    Single<Scope> create(Domain domain, NewScope scope, User principal);
 
-    Single<Scope> create(String domain, NewSystemScope scope);
+    Single<Scope> create(Domain domain, NewSystemScope scope);
 
     Single<Page<Scope>> findByDomain(String domain, int page, int size);
 
@@ -50,11 +50,11 @@ public interface ScopeService {
 
     Single<List<Scope>> findByDomainAndKeys(String domain, List<String> scopeKeys);
 
-    Single<Scope> patch(String domain, String id, PatchScope patchScope, User principal);
+    Single<Scope> patch(Domain domain, String id, PatchScope patchScope, User principal);
 
-    Single<Scope> update(String domain, String id, UpdateScope updateScope, User principal);
+    Single<Scope> update(Domain domain, String id, UpdateScope updateScope, User principal);
 
-    Single<Scope> update(String domain, String id, UpdateSystemScope updateScope);
+    Single<Scope> update(Domain domain, String id, UpdateSystemScope updateScope);
 
     Completable delete(Domain domain, String scopeId, boolean force, User principal);
 
@@ -66,15 +66,15 @@ public interface ScopeService {
      */
     Single<Boolean> validateScope(String domain, List<String> scopes);
 
-    default Single<Scope> create(String domain, NewScope scope) {
+    default Single<Scope> create(Domain domain, NewScope scope) {
         return create(domain, scope, null);
     }
 
-    default Single<Scope> patch(String domain, String id, PatchScope patchScope) {
+    default Single<Scope> patch(Domain domain, String id, PatchScope patchScope) {
         return patch(domain, id, patchScope, null);
     }
 
-    default Single<Scope> update(String domain, String id, UpdateScope updateScope) {
+    default Single<Scope> update(Domain domain, String id, UpdateScope updateScope) {
         return update(domain, id, updateScope, null);
     }
 
