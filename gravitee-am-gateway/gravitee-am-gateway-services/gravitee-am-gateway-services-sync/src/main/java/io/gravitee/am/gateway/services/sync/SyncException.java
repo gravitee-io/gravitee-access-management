@@ -13,35 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.common.event;
+package io.gravitee.am.gateway.services.sync;
 
-import io.gravitee.am.common.event.Type;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-
-import java.util.Date;
-
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-@Getter
-@Setter
-@ToString
-public class Event {
-
-    private String id;
-    private Type type;
-    private Payload payload;
-    private Date createdAt;
-    private Date updatedAt;
-    private String dataPlaneId;
-
-    public Event() { }
-
-    public Event(Type type, Payload payload) {
-        this.type = type;
-        this.payload = payload;
+public class SyncException extends Exception {
+    public SyncException(String message) {
+        super(message);
     }
 }

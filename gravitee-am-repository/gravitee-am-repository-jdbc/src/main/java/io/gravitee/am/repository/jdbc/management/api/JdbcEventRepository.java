@@ -50,13 +50,15 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
     public static final String COL_PAYLOAD = "payload";
     public static final String COL_CREATED_AT = "created_at";
     public static final String COL_UPDATED_AT = "updated_at";
+    public static final String COL_DATA_PLANE_ID = "data_plane_id";
 
     private static final List<String> columns = List.of(
             COL_ID,
             COL_TYPE,
             COL_PAYLOAD,
             COL_CREATED_AT,
-            COL_UPDATED_AT
+            COL_UPDATED_AT,
+            COL_DATA_PLANE_ID
     );
 
     private String INSERT_STATEMENT;
@@ -89,6 +91,16 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
     }
 
     @Override
+    public Flowable<Event> findByTimeFrameAndDataPlaneId(long from, long to, String dataPlaneId) {
+        LOGGER.debug("findByTimeFrame({}, {}) for data plane {}", from, to, dataPlaneId);
+        return eventRepository.findByTimeFrameAndDataPlaneId(
+                        LocalDateTime.ofInstant(Instant.ofEpochMilli(from), UTC),
+                        LocalDateTime.ofInstant(Instant.ofEpochMilli(to), UTC),
+                        dataPlaneId)
+                .map(this::toEntity);
+    }
+
+    @Override
     public Maybe<Event> findById(String id) {
         LOGGER.debug("findById({})", id);
         return eventRepository.findById(id).map(this::toEntity);
@@ -106,6 +118,8 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_PAYLOAD, item.getPayload());
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        insertSpec = addQuotedField(insertSpec, COL_DATA_PLANE_ID, item.getDataPlaneId(), String.class);
+
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
@@ -122,6 +136,7 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
         update = databaseDialectHelper.addJsonField(update, COL_PAYLOAD, item.getPayload());
         update = addQuotedField(update, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
+        update = addQuotedField(update, COL_DATA_PLANE_ID, item.getDataPlaneId(), String.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
         return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());

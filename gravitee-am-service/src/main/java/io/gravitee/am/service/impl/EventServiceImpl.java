@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,12 +47,31 @@ public class EventServiceImpl implements EventService {
     @Autowired
     private EventRepository eventRepository;
 
+    @Lazy
+    @Autowired
+    private DomainRepository domainRepository;
+
     @Override
     public Single<Event> create(Event event) {
         LOGGER.debug("Create a new event {}", event);
 
         event.setCreatedAt(new Date());
         event.setUpdatedAt(event.getCreatedAt());
+
+        if (event.getPayload().getReferenceType().equals(ReferenceType.DOMAIN)) {
+            return domainRepository.findById(event.getPayload().getReferenceId())
+                    .flatMapSingle(domain -> {
+                        event.setDataPlaneId(domain.getDataPlaneId());
+                        return eventCreation(event);
+                    })
+                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(event.getPayload().getReferenceId())))
+                    .toSingle();
+        } else {
+            return eventCreation(event);
+        }
+    }
+
+    private Single<Event> eventCreation(Event event) {
         return eventRepository.create(event)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -58,6 +81,7 @@ public class EventServiceImpl implements EventService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an event", ex));
                 });
     }
+
 
     @Override
     public Single<List<Event>> findByTimeFrame(long from, long to) {

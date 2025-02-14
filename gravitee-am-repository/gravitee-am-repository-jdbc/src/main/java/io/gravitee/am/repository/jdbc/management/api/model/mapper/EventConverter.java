@@ -49,6 +49,7 @@ public class EventConverter extends DozerConverter<Event, JdbcEvent> {
             result.setPayload(JSONMapper.toJson(event.getPayload()));
             result.setCreatedAt(dateConverter.convertTo(event.getCreatedAt(), null));
             result.setUpdatedAt(dateConverter.convertTo(event.getUpdatedAt(), null));
+            result.setDataPlaneId(event.getDataPlaneId());
         }
         return result;
     }
@@ -73,6 +74,7 @@ public class EventConverter extends DozerConverter<Event, JdbcEvent> {
                 LOGGER.info("Invalid event type '{}', the event will be ignored by synchronization process.", jdbcEvent.getType());
                 result.setType(Type.UNKNOWN);
             }
+            result.setDataPlaneId(jdbcEvent.getDataPlaneId());
         }
         return result;
     }
