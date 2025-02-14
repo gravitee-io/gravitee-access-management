@@ -98,7 +98,7 @@ public class ApplicationResourcesResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> applicationService.findById(application)
                         .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
-                        .flatMap(application1 -> resourceService.findByDomainAndClient(domainId, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
+                        .flatMap(application1 -> resourceService.findByDomainAndClient(domain, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
                         .flatMap(pagedResources -> Observable.fromIterable(pagedResources.getData())
                                 .flatMapSingle(r -> resourceService.countAccessPolicyByResource(domain, r.getId())
                                         .map(policies -> {

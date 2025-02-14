@@ -27,6 +27,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -202,8 +203,8 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal, boolean isSystem) {
-        log.debug("Create a new certificate {} for domain {}", newCertificate, domain);
+    public Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal, boolean isSystem) {
+        log.debug("Create a new certificate {} for domain {}", newCertificate, domain.getId());
         return certificatePluginService
                 .getSchema(newCertificate.getType())
                 .switchIfEmpty(Single.error(() -> new CertificatePluginSchemaNotFoundException(newCertificate.getType())))
@@ -211,8 +212,8 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMap(schema -> {
                     try {
                         var certificate = schema.getFileKey()
-                                .map(fileKey -> createCertificateWithEmbeddedKeys(domain, newCertificate, isSystem, fileKey))
-                                .orElseGet(() -> createCertificate(domain, newCertificate, isSystem));
+                                .map(fileKey -> createCertificateWithEmbeddedKeys(domain.getId(), newCertificate, isSystem, fileKey))
+                                .orElseGet(() -> createCertificate(domain.getId(), newCertificate, isSystem));
                         return certificateRepository.create(validate(certificate));
                     } catch (CertificateException ex) {
                         log.error("An error occurs while trying to create certificate configuration", ex);
@@ -226,7 +227,7 @@ public class CertificateServiceImpl implements CertificateService {
                 // create event for sync process
                 .flatMap(certificate -> {
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate.getId(), ReferenceType.DOMAIN, certificate.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(certificate));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(certificate));
                 })
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to create a certificate", ex);
@@ -272,8 +273,8 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal) {
-        log.debug("Update a certificate {} for domain {}", id, domain);
+    public Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal) {
+        log.debug("Update a certificate {} for domain {}", id, domain.getId());
         return certificateRepository.findById(id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .flatMap((Function<Certificate, SingleSource<CertificateWithSchema>>) certificate -> certificatePluginService.getSchema(certificate.getType())
@@ -307,7 +308,7 @@ public class CertificateServiceImpl implements CertificateService {
                 // create event for sync process
                 .flatMap(certificate1 -> {
                     Event event = new Event(Type.CERTIFICATE, new Payload(certificate1.getId(), ReferenceType.DOMAIN, certificate1.getDomain(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(certificate1));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(certificate1));
                 })
                 .onErrorResumeNext(ex -> {
                     log.error("An error occurs while trying to update a certificate", ex);
@@ -407,7 +408,7 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Single<Certificate> create(String domain) {
+    public Single<Certificate> create(Domain domain) {
         // Define the default certificate
         // Create a default PKCS12 certificate: io.gravitee.am.certificate.pkcs12.PKCS12Configuration
         NewCertificate certificate = new NewCertificate();
@@ -450,8 +451,8 @@ public class CertificateServiceImpl implements CertificateService {
     }
 
     @Override
-    public Single<Certificate> rotate(String domain, User principal) {
-        return this.innerFindByDomain(domain)// search using inner method to not go through the CertificateServiceProxy filtering
+    public Single<Certificate> rotate(Domain domain, User principal) {
+        return this.innerFindByDomain(domain.getId())// search using inner method to not go through the CertificateServiceProxy filtering
                 .filter(Certificate::isSystem)
                 .sorted(new CertificateTimeComparator())
                 .firstElement()
@@ -467,10 +468,10 @@ public class CertificateServiceImpl implements CertificateService {
                         NewCertificate rotatedCertificate = new NewCertificate();
                         rotatedCertificate.setName("Default " + DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").format(now));
                         rotatedCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
-                        rotatedCertificate.setConfiguration(generateCertificateConfiguration(domain, deprecatedCert.getConfiguration(), now));
+                        rotatedCertificate.setConfiguration(generateCertificateConfiguration(domain.getId(), deprecatedCert.getConfiguration(), now));
                         return create(domain, rotatedCertificate, true).map(newCertificate -> {
                             final var task = new AssignSystemCertificate(applicationService, certificateRepository, taskManager);
-                            final var definition = new AssignSystemCertificateDefinition(domain, newCertificate.getId(), deprecatedCert.getId());
+                            final var definition = new AssignSystemCertificateDefinition(domain.getId(), newCertificate.getId(), deprecatedCert.getId());
                             definition.setDelay(delay);
                             definition.setUnit(TimeUnit.valueOf(timeUnit.toUpperCase()));
                             task.setDefinition(definition);
@@ -484,12 +485,12 @@ public class CertificateServiceImpl implements CertificateService {
                 })
                 .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
                         .principal(principal)
-                        .reference(Reference.domain(domain))
+                        .reference(Reference.domain(domain.getId()))
                         .type(EventType.CERTIFICATE_CREATED)
                         .certificate(certificate)))
                 .doOnError(error -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
                         .principal(principal)
-                        .reference(Reference.domain(domain))
+                        .reference(Reference.domain(domain.getId()))
                         .type(EventType.CERTIFICATE_CREATED).throwable(error)));
     }
 

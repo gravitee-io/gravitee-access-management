@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.service.model.NewServiceResource;
 import io.gravitee.am.service.model.UpdateServiceResource;
@@ -34,9 +35,9 @@ public interface ServiceResourceService {
 
     Flowable<ServiceResource> findByDomain(String domain);
 
-    Single<ServiceResource> create(String domain, NewServiceResource res, User principal);
+    Single<ServiceResource> create(Domain domain, NewServiceResource res, User principal);
 
-    Single<ServiceResource> update(String domain, String id, UpdateServiceResource updateServiceResource, User principal);
+    Single<ServiceResource> update(Domain domain, String id, UpdateServiceResource updateServiceResource, User principal);
 
     Completable delete(String domain, String resId, User principal);
 

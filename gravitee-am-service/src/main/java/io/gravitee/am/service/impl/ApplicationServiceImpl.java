@@ -29,6 +29,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -280,14 +281,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> create(String domain, NewApplication newApplication, User principal) {
+    public Single<Application> create(Domain domain, NewApplication newApplication, User principal) {
         LOGGER.debug("Create a new application {} for domain {}", newApplication, domain);
         Application application = new Application();
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
         application.setDescription(newApplication.getDescription());
         application.setType(newApplication.getType());
-        application.setDomain(domain);
+        application.setDomain(domain.getId());
         application.setMetadata(newApplication.getMetadata());
 
         // apply default oauth 2.0 settings
@@ -330,14 +331,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> create(Application application) {
+    public Single<Application> create(Domain domain, Application application) {
         LOGGER.debug("Create a new application {} ", application);
 
         if (application.getDomain() == null || application.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on application"));
         }
 
-        return create0(application.getDomain(), application, null)
+        return create0(domain, application, null)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -432,7 +433,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> renewClientSecret(String domain, String id, User principal) {
+    public Single<Application> renewClientSecret(Domain domain, String id, User principal) {
         LOGGER.debug("Renew client secret for application {} and domain {}", id, domain);
         return applicationRepository.findById(id)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
@@ -476,10 +477,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
-                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));
+                    return eventService.create(event, domain).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(updatedApplication)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -499,7 +500,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Completable delete(String id, User principal) {
+    public Completable delete(String id, User principal, Domain domain) {
         LOGGER.debug("Delete application {}", id);
         return applicationRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
@@ -507,7 +508,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     // create event for sync process
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.DELETE));
                     return applicationRepository.delete(id)
-                            .andThen(Completable.fromSingle(eventService.create(event)))
+                            .andThen(Completable.fromSingle(eventService.create(event, domain)))
                             // delete email templates
                             .andThen(emailTemplateService.findByClient(ReferenceType.DOMAIN, application.getDomain(), application.getId())
                                     .flatMapCompletable(email -> emailTemplateService.delete(email.getId()))
@@ -561,7 +562,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    private Single<Application> create0(String domain, Application application, User principal) {
+    private Single<Application> create0(Domain domain, Application application, User principal) {
         // created and updated date
         application.setCreatedAt(new Date());
         application.setUpdatedAt(application.getCreatedAt());
@@ -583,7 +584,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         // check uniqueness
-        return checkApplicationUniqueness(domain, application)
+        return checkApplicationUniqueness(domain.getId(), application)
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
                 .flatMap(this::validateApplicationAuthMethod)
@@ -622,7 +623,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));
+                    return eventService.create(event, domain).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(application1 -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(application1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(application.getDomain())).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));

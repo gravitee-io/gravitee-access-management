@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-update-events-table
+      author: GraviteeSource Team
+      changes:
+        #############################
+        # events #
+        ############################
+        - addColumn:
+            tableName: events
+            columns:
+              - column: { name: data_plane_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: environment_id, type: nvarchar(64), constraints: { nullable: true } }
+        - createIndex:
+            columns:
+              - column:
+                  name: updated_at
+              - column:
+                  name: data_plane_id
+            indexName: idx_events_updated_at_data_plane_id
+            tableName: events
+            unique: false
+

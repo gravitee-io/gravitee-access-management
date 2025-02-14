@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -97,11 +98,11 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
     }
 
     @Override
-    public Single<ServiceResource> create(String domain, NewServiceResource newServiceResource, User principal) {
+    public Single<ServiceResource> create(Domain domain, NewServiceResource newServiceResource, User principal) {
         log.debug("Create a new resource {} for domain {}", newServiceResource, domain);
         ServiceResource resource = new ServiceResource();
         resource.setId(newServiceResource.getId() == null ? RandomString.generate() : newServiceResource.getId());
-        resource.setReferenceId(domain);
+        resource.setReferenceId(domain.getId());
         resource.setReferenceType(ReferenceType.DOMAIN);
         resource.setName(newServiceResource.getName());
         resource.setType(newServiceResource.getType());
@@ -113,7 +114,7 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                 .flatMap(resource1 -> {
                     // send sync event to refresh plugins that are using this resource
                     Event event = new Event(Type.RESOURCE, new Payload(resource1.getId(), resource1.getReferenceType(), resource1.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(resource1));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(resource1));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -126,7 +127,7 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
     }
 
     @Override
-    public Single<ServiceResource> update(String domain, String id, UpdateServiceResource updateResource, User principal) {
+    public Single<ServiceResource> update(Domain domain, String id, UpdateServiceResource updateResource, User principal) {
         log.debug("Update a resource {} for domain {}", id, domain);
 
         return serviceResourceRepository.findById(id)
@@ -142,7 +143,7 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                                     .flatMap(resource1 -> {
                                         // send sync event to refresh plugins that are using this resource
                                         Event event = new Event(Type.RESOURCE, new Payload(resource1.getId(), resource1.getReferenceType(), resource1.getReferenceId(), Action.UPDATE));
-                                        return eventService.create(event).flatMap(__ -> Single.just(resource1));
+                                        return eventService.create(event, domain).flatMap(__ -> Single.just(resource1));
                                     })));
                 })
                 .onErrorResumeNext(ex -> {

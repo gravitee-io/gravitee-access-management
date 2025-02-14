@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -87,7 +86,7 @@ public class EmailsResourceTest extends JerseySpringTest {
         newEmail.setExpiresAfter(1000);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(new Email())).when(emailTemplateService).create(eq(domainId), any(), any(User.class));
+        doReturn(Single.just(new Email())).when(emailTemplateService).create(any(Domain.class), any(), any(User.class));
 
         final Response response = target("domains")
                 .path(domainId)
