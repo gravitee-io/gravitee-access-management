@@ -42,6 +42,7 @@ import org.mockito.Mockito;
 
 import javax.net.ssl.SSLSession;
 import javax.security.cert.X509Certificate;
+import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 
@@ -139,7 +140,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public String uri() {
-        return null;
+        return URI.create("http://client").toString();
     }
 
     @Override
