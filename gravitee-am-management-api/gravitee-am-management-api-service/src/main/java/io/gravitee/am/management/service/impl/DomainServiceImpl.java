@@ -33,6 +33,7 @@ import io.gravitee.am.management.service.dataplane.UserActivityManagementService
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
@@ -57,6 +58,7 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ExtensionGrantService;
@@ -249,6 +251,9 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private PasswordPolicyService passwordPolicyService;
+
+    @Autowired
+    private EntrypointService entrypointService;
 
     @Autowired
     private DefaultIdentityProviderService defaultIdentityProviderService;
@@ -672,6 +677,27 @@ public class DomainServiceImpl implements DomainService {
     @Override
     public String buildUrl(Domain domain, String path, MultiMap queryParams) {
         return domainReadService.buildUrl(domain, path, queryParams);
+    }
+
+    @Override
+    public Single<List<Entrypoint>> listEntryPoint(Domain domain, String organizationId) {
+        return entrypointService.findAll(organizationId)
+                .filter(entrypoint -> entrypoint.isDefaultEntrypoint()
+                        || (entrypoint.getTags() != null && !entrypoint.getTags().isEmpty() && domain.getTags() != null && entrypoint.getTags().stream().anyMatch(tag -> domain.getTags().contains(tag))))
+                .toList()
+                .map(filteredEntrypoints -> {
+                    if (filteredEntrypoints.size() > 1) {
+                        // Remove default entrypoint if another entrypoint has matched.
+                        filteredEntrypoints.removeIf(Entrypoint::isDefaultEntrypoint);
+                    } else if (filteredEntrypoints.get(0).isDefaultEntrypoint()) {
+                        // default entrypoint present, we check if the DataPlane description contains a GatewayUrl
+                        // if so, we use it otherwise we keep the default entrypoint
+                        ofNullable(this.dataPlaneRegistry.getDescription(domain).gatewayUrl())
+                                .ifPresent(url -> filteredEntrypoints.get(0).setUrl(url));
+                    }
+
+                    return filteredEntrypoints;
+                });
     }
 
     private Single<Domain> createSystemScopes(Domain domain) {
