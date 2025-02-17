@@ -105,24 +105,24 @@ public class AccountEndpointHandlerTest extends RxWebTestBase {
         accountEndpointHandler = new AccountEndpointHandler(accountService, domain);
 
         router.route()
+                .handler(BodyHandler.create())
                 .handler(ctx -> {
                     ctx.put(ConstantKeys.USER_CONTEXT_KEY, user);
                     ctx.put(ConstantKeys.TOKEN_CONTEXT_KEY, jwt);
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
-                .handler(BodyHandler.create())
                 .failureHandler(new ErrorHandler());
     }
 
     private void initUserContextKeyValue(User user) {
         router.getRoutes().clear();
         router.route()
+                .handler(BodyHandler.create())
                 .handler(ctx -> {
                     ctx.put(ConstantKeys.USER_CONTEXT_KEY, user);
                     ctx.next();
                 })
-                .handler(BodyHandler.create())
                 .failureHandler(new ErrorHandler());
     }
 

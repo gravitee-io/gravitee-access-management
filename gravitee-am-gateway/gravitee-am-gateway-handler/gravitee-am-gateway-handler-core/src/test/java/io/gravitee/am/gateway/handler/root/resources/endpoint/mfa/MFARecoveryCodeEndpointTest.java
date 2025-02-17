@@ -86,12 +86,12 @@ public class MFARecoveryCodeEndpointTest extends RxWebTestBase {
         mfaRecoveryCodeEndpoint = new MFARecoveryCodeEndpoint(templateEngine, domain, userService, factorManager, applicationContext);
 
         router.route()
+                .handler(BodyHandler.create())
                 .handler(ctx -> {
                     ctx.setUser(io.vertx.rxjava3.ext.auth.User.newInstance(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
-                })
-                .handler(BodyHandler.create());
+                });
     }
 
     @Test
