@@ -64,11 +64,11 @@ public class LoginAuthenticationHandlerTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
         router.get(RootProvider.PATH_LOGIN)
+                .handler(SessionHandler.create(SessionStore.create(vertx)))
                 .handler(rc -> {
                     rc.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     rc.next();
                 })
-                .handler(SessionHandler.create(SessionStore.create(vertx)))
                 .handler(new LoginAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(checkContextAssertions())
                 .handler(rc -> rc.response().setStatusCode(200).send("completed"))
