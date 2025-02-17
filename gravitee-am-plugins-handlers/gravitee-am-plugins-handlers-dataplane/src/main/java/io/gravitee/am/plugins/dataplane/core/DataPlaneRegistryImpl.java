@@ -64,17 +64,34 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     @Override
     public DataPlaneProvider getProvider(Domain domain) {
         Objects.requireNonNull(domain, "Domain is required to provide DataPlane");
-        var dataPlaneId = domain.getDataPlaneId();
-        if (!hasText(dataPlaneId)) {
-            log.warn("Domain '{}' has empty dataPlaneId, upgrader may have to be executed. Fallback to 'default'.", domain.getId());
-            dataPlaneId = DEFAULT_DATA_PLANE_ID;
-        }
+        final var dataPlaneId = extractDataPlaneId(domain);
 
         final var provider = dataPlanProviders.get(dataPlaneId);
         if (provider == null) {
             throw new IllegalDataPlaneIdException(dataPlaneId);
         }
         return provider;
+    }
+
+    @Override
+    public DataPlaneDescription getDescription(Domain domain) {
+        Objects.requireNonNull(domain, "Domain is required to provide DataPlane Description");
+        final var dataPlaneId = extractDataPlaneId(domain);
+
+        final var desc = dataPlanDescriptions.get(dataPlaneId);
+        if (desc == null) {
+            throw new IllegalDataPlaneIdException(dataPlaneId);
+        }
+        return desc;
+    }
+
+    private String extractDataPlaneId(Domain domain) {
+        var dataPlaneId = domain.getDataPlaneId();
+        if (!hasText(dataPlaneId)) {
+            log.warn("Domain '{}' has empty dataPlaneId, upgrader may have to be executed. Fallback to 'default'.", domain.getId());
+            dataPlaneId = DEFAULT_DATA_PLANE_ID;
+        }
+        return dataPlaneId;
     }
 
     @Override

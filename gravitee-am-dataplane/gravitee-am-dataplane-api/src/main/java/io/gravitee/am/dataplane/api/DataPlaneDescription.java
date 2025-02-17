@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.dataplane.api;
 
-public record DataPlaneDescription(String id, String name, String type, String propertiesBase) {
+public record DataPlaneDescription(String id, String name, String type, String propertiesBase, String gatewayUrl) {
     public static final String DEFAULT_DATA_PLANE_ID = "default";
 
     public boolean isDefault(){
