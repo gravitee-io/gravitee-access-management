@@ -105,12 +105,12 @@ public class AccountFactorsEndpointHandlerTest extends RxWebTestBase {
 
 
         router.route()
+                .handler(BodyHandler.create())
                 .handler(ctx -> {
                     ctx.put(ConstantKeys.USER_CONTEXT_KEY, user);
                     ctx.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
                     ctx.next();
                 })
-                .handler(BodyHandler.create())
                 .failureHandler(new ErrorHandler());
     }
 
