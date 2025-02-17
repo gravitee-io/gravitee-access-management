@@ -62,11 +62,11 @@ public class AccountWebAuthnCredentialsEndpointHandlerTest extends RxWebTestBase
         when(user.getId()).thenReturn("user-id");
 
         router.route()
+                .handler(BodyHandler.create())
                 .handler(ctx -> {
                     ctx.put(ConstantKeys.USER_CONTEXT_KEY, user);
                     ctx.next();
                 })
-                .handler(BodyHandler.create())
                 .failureHandler(new ErrorHandler());
     }
 
