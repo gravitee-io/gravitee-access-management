@@ -73,7 +73,7 @@
 
     <properties>
         <awaitility.version>4.2.1</awaitility.version>
-        <gravitee-bom.version>8.1.20</gravitee-bom.version>
+        <gravitee-bom.version>8.2.9</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
         <gravitee-plugin.version>4.2.0</gravitee-plugin.version>
         <gravitee-node.version>6.4.4</gravitee-node.version>
@@ -113,8 +113,6 @@
         <ognl.version>3.3.4</ognl.version>
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
         <test-container.version>1.17.6</test-container.version>
-        <!-- to remove when the BOM will have the version -->
-        <logback.version>1.5.13</logback.version>
 
         <!-- R2DBC dependencies -->
         <spring-data-r2dbc.version>3.2.2</spring-data-r2dbc.version>
@@ -134,7 +132,7 @@
         due to the spring-security-crypto dep into
         the gravitee-am-service module
         -->
-        <spring-security.version>6.2.8</spring-security.version>
+        <spring-security.version>6.4.2</spring-security.version>
 
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>3.0.0</gravitee-policy-callout-http.version>
@@ -215,28 +213,6 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- to remove when BOM will contain the version -->
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>${logback.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.security</groupId>
-                <artifactId>spring-security-bom</artifactId>
-                <version>${spring-security.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
             <!-- Import bom to properly inherit all dependencies -->
             <dependency>
                 <groupId>io.gravitee</groupId>
