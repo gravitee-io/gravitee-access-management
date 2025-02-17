@@ -45,6 +45,8 @@ public interface DataPlaneRegistry {
 
     DataPlaneProvider getProvider(Domain domain);
 
+    DataPlaneDescription getDescription(Domain domain);
+
     CredentialRepository getCredentialRepository(Domain domain);
 
     DeviceRepository getDeviceRepository(Domain domain);
