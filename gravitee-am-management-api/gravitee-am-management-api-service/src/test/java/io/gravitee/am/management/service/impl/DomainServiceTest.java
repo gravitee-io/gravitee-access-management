@@ -31,6 +31,7 @@ import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.Factor;
@@ -69,6 +70,7 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ExtensionGrantService;
@@ -142,6 +144,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class DomainServiceTest {
 
+    public static final String ENTRYPOINT_ID1 = "entrypoint-1";
+    public static final String TAG_ID2 = "tag#2";
+    public static final String TAG_ID1 = "tag#1";
+    public static final String ENTRYPOINT_ID2 = "entrypoint-2";
+    public static final String ENTRYPOINT_ID_DEFAULT = "DEFAULT";
     private static final String DOMAIN_ID = "id-domain";
     private static final String IDP_ID = "id-idp";
     private static final String CERTIFICATE_ID = "id-certificate";
@@ -313,6 +320,9 @@ public class DomainServiceTest {
     private DomainReadService domainReadService;
 
     @Mock
+    private EntrypointService entrypointService;
+
+    @Mock
     private DefaultIdentityProviderService defaultIdentityProviderService;
 
 
@@ -368,7 +378,7 @@ public class DomainServiceTest {
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
         domain.setDataPlaneId("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -418,7 +428,7 @@ public class DomainServiceTest {
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
         domain.setDataPlaneId("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -467,7 +477,7 @@ public class DomainServiceTest {
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
         domain.setDataPlaneId("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -507,7 +517,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -524,7 +534,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
 
@@ -542,7 +552,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.just(new Domain()));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -1382,6 +1392,147 @@ public class DomainServiceTest {
         domainService.update("any-id", domain).test().assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).update(any(Domain.class));
+    }
+
+
+    @Test
+    public void shouldGetEntrypoint_entrypoint1() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Arrays.asList(TAG_ID2));
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Collections.emptyList());
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>(Arrays.asList(TAG_ID1, TAG_ID2)));
+
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1 &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID1)));
+    }
+
+    @Test
+    public void shouldGetEntrypoint_default() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Collections.emptyList());
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Collections.emptyList());
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        defaultEntrypoint.setUrl("http://localhost:8092");
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>());
+
+        when(dataPlaneRegistry.getDescription(mockDomain)).thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", null));
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1 &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID_DEFAULT)) &&
+                entrypoints.get(0).getUrl().equals(defaultEntrypoint.getUrl()));
+    }
+
+    @Test
+    public void shouldGetEntrypoint_default_overrideUrl() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Collections.emptyList());
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Collections.emptyList());
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        defaultEntrypoint.setUrl("http://localhost:8092");
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>());
+
+        DataPlaneDescription dataPlaneDescription = new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", "http://dataplane:8092");
+        when(dataPlaneRegistry.getDescription(mockDomain)).thenReturn(dataPlaneDescription);
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1 &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID_DEFAULT)) &&
+                entrypoints.get(0).getUrl().equals(dataPlaneDescription.gatewayUrl()));
+    }
+
+    @Test
+    public void shouldGetEntrypoints_Entrypoint1And2() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Arrays.asList(TAG_ID1));
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Arrays.asList(TAG_ID2));
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>(Arrays.asList(TAG_ID1, TAG_ID2)));
+
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 2 &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID1)) &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID2)));
     }
 
     private static CorsSettings getCorsSettings(Set<String> allowedOrigins) {

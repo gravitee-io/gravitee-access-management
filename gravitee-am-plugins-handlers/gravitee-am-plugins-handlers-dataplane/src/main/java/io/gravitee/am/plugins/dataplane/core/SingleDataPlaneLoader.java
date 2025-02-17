@@ -32,6 +32,7 @@ import java.util.function.Consumer;
 public class SingleDataPlaneLoader implements DataPlaneLoader {
     private static final String DATA_PLANE_KEY = "repositories.gateway";
     private static final String DATA_PLANE_ID_KEY = DATA_PLANE_KEY + ".dataPlane.id";
+    private static final String DATA_PLANE_GW_URL_KEY = DATA_PLANE_KEY + ".dataPlane.url";
     private static final String DATA_PLANE_TYPE_KEY = DATA_PLANE_KEY + ".type";
 
     @Autowired
@@ -40,7 +41,8 @@ public class SingleDataPlaneLoader implements DataPlaneLoader {
     @Override
     public void load(Consumer<DataPlaneDescription> storage) {
         var dataPlaneId = configuration.getProperty(DATA_PLANE_ID_KEY, String.class, "default");
+        var dataPlaneUrl = configuration.getProperty(DATA_PLANE_GW_URL_KEY, String.class);
         var dataPlaneType = configuration.getProperty(DATA_PLANE_TYPE_KEY, String.class, "mongodb");
-        storage.accept(new DataPlaneDescription(dataPlaneId, dataPlaneId, dataPlaneType, DATA_PLANE_KEY));
+        storage.accept(new DataPlaneDescription(dataPlaneId, dataPlaneId, dataPlaneType, DATA_PLANE_KEY, dataPlaneUrl));
     }
 }

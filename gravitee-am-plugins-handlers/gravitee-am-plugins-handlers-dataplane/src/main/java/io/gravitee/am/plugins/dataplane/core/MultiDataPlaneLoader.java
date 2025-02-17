@@ -73,6 +73,8 @@ public class MultiDataPlaneLoader implements DataPlaneLoader {
             throw new IllegalStateException("Invalid data plan definition, type is required");
         }
         final var dataPlanName = configuration.getProperty(base + ".name", String.class, dataPlanId);
-        return new DataPlaneDescription(dataPlanId, dataPlanName, dataPlanType, base);
+
+        final var dataPlaneUrl = configuration.getProperty(base + ".gateway.url", String.class);
+        return new DataPlaneDescription(dataPlanId, dataPlanName, dataPlanType, base, dataPlaneUrl);
     }
 }
