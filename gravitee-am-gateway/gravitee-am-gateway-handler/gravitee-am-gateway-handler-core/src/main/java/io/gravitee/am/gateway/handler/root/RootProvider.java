@@ -70,6 +70,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
@@ -313,7 +314,6 @@ public class RootProvider extends AbstractProtocolProvider {
     @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
     private String rememberMeCookieName;
 
-
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -359,6 +359,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
         Handler<RoutingContext> userRememberMeHandler = new UserRememberMeRequestHandler(jwtService, domain, rememberMeCookieName);
         Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain, userService);
+        Handler<RoutingContext> returnUrlValidationHandler = new ReturnUrlValidationHandler(domain);
 
         // Root policy chain handler
         rootRouter.route()
@@ -375,6 +376,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.get(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN_IDENTIFIER))
                 .handler(localeHandler)
@@ -383,6 +385,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.post(PATH_IDENTIFIER_FIRST_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(botDetectionHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(userRememberMeHandler)
@@ -395,6 +398,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(clientRequestParseHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_LOGIN))
                 .handler(new LoginHideFormHandler(domain))
                 .handler(new LoginSelectionRuleHandler(false))
@@ -404,6 +408,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.post(PATH_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(botDetectionHandler)
                 .handler(loginAttemptHandler)
                 .handler(new LoginFormHandler(userAuthProvider))
@@ -467,11 +472,13 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(localeHandler)
                 .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext));
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
@@ -481,12 +488,14 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengeAlternativesEndpoint(thymeleafTemplateEngine, factorManager, domain));
         rootRouter.route(PATH_MFA_RECOVERY_CODE)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(localeHandler)
                 .handler(new MFARecoveryCodeEndpoint(thymeleafTemplateEngine, domain, userService, factorManager, applicationContext));
 
@@ -496,6 +505,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.get(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_WEBAUTHN_REGISTER))
@@ -503,6 +513,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.post(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnRegisterHandler(factorService, factorManager, domain, webAuthn, credentialService))
                 .handler(webAuthnRememberDeviceHandler)
@@ -518,6 +529,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.get(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new LoginSocialAuthenticationHandler(identityProviderManager, jwtService, certificateManager))
                 .handler(localeHandler)
@@ -526,6 +538,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.post(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(webAuthnAccessHandler)
                 .handler(new WebAuthnLoginHandler(factorService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
                 .handler(userRememberMeHandler)
