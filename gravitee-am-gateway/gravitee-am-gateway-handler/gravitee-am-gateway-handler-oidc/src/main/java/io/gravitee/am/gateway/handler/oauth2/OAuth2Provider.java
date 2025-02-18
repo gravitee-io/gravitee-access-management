@@ -70,6 +70,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
@@ -90,6 +91,7 @@ import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 /**
@@ -255,6 +257,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
         RedirectUriValidationHandler redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
+        ReturnUrlValidationHandler returnUrlValidationHandler = new ReturnUrlValidationHandler(domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
 
         // Authorization endpoint
@@ -271,6 +274,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
@@ -288,6 +292,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_CONSENT))
                 .handler(localeHandler)
@@ -299,6 +304,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)
                 .handler(new UserConsentProcessHandler(userConsentService, domain))
                 .handler(policyChainHandler.create(ExtensionPoint.POST_CONSENT))
