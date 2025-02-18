@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestObjectException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
+import io.gravitee.am.common.exception.oauth2.ReturnUrlMismatchException;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.ErrorInfo;
@@ -167,7 +168,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
             authorizationRequest.setRedirectUri(defaultErrorURL);
         }
         // user set a wrong redirect_uri, go to default error page
-        if (oAuth2Exception instanceof RedirectMismatchException) {
+        if (oAuth2Exception instanceof RedirectMismatchException || oAuth2Exception instanceof ReturnUrlMismatchException) {
             authorizationRequest.setRedirectUri(defaultErrorURL);
         }
         // check if the redirect_uri request parameter is allowed
