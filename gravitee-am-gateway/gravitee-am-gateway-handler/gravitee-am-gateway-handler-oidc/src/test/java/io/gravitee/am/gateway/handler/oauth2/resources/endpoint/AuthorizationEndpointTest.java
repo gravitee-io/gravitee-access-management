@@ -39,6 +39,7 @@ import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -47,6 +48,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServerOptions;
 import io.vertx.rxjava3.ext.auth.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
@@ -156,6 +158,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(new RedirectUriValidationHandler(domain))
+                .handler(new ReturnUrlValidationHandler(domain))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(ctx -> {
                     authorizationEndpointHandler.handle(ctx);
@@ -1480,6 +1483,92 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                     assertTrue(location.endsWith("/test/oauth/error?client_id=client-id&error=invalid_request&error_description=Missing+parameter%3A+response_type"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldNotInvokeAuthEndpointIfReturnUrlIsWrong() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?return_url=http://wrong.url&response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("error=return_url_mismatch"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+
+    }
+
+    @Test
+    public void shouldInvokeAuthEndpointIfReturnUrlIsCorrect_matchRedirectUri() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?return_url=http://localhost:9999/callback&response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertFalse(location.contains("error=return_url_mismatch"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+
+    }
+
+    @Test
+    public void shouldInvokeAuthEndpointIfReturnUrlIsCorrect_matchRequestDomain() throws Exception {
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+        client.setRedirectUris(Collections.singletonList("http://localhost:9999/callback"));
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setApproved(true);
+        authorizationRequest.setResponseType(ResponseType.CODE);
+        authorizationRequest.setRedirectUri("http://localhost:9999/callback");
+
+        when(clientSyncService.findByClientId("client-id")).thenReturn(Maybe.just(client));
+
+        HttpServerOptions httpServerOptions = getHttpServerOptions();
+        System.err.println(httpServerOptions);
+
+        String serverRequestHost = "http://localhost:" + httpServerOptions.getPort() + "/test";
+
+        testRequest(
+                HttpMethod.GET,
+                "/oauth/authorize?return_url=" + serverRequestHost + "&response_type=code&client_id=client-id&redirect_uri=http://localhost:9999/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertFalse(location.contains("error=return_url_mismatch"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+
     }
 
     @Test
