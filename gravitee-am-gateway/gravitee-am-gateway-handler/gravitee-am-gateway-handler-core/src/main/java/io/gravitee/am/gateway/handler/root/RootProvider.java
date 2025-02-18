@@ -601,8 +601,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // Forgot password route
         final var forgotPasswordAccessHandler = new ForgotPasswordAccessHandler(domain);
-        final var resetPasswordFailureHandler = new ErrorHandler(PATH_RESET_PASSWORD);
-        rootRouter.route(GET, PATH_FORGOT_PASSWORD)
+       rootRouter.route(GET, PATH_FORGOT_PASSWORD)
                 .handler(clientRequestParseHandler)
                 .handler(forgotPasswordAccessHandler)
                 .handler(localeHandler)
@@ -633,8 +632,6 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(deviceIdentifierHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_RESET_PASSWORD))
                 .handler(new ResetPasswordSubmissionEndpoint(userService, environment));
-        rootRouter.route(PATH_RESET_PASSWORD)
-                .failureHandler(resetPasswordFailureHandler);
 
         rootRouter.route(HttpMethod.POST, PASSWORD_HISTORY)
                   .handler(clientRequestParseHandlerOptional)
@@ -901,5 +898,7 @@ public class RootProvider extends AbstractProtocolProvider {
         router.route(PATH_MFA_RECOVERY_CODE).failureHandler(errorHandler);
 
         router.route(PATH_CONFIRM_REGISTRATION).failureHandler(errorHandler);
+
+        router.route(PATH_RESET_PASSWORD).failureHandler(errorHandler);
     }
 }
