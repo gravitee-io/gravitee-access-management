@@ -13,16 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.dataplane.api.repository;
+package io.gravitee.am.gateway.services.purge;
 
-import io.gravitee.am.model.uma.PermissionTicket;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.common.ExpiredDataSweeper;
+import java.util.Arrays;
+import java.util.Optional;
 
 /**
- * @author Alexandre FARIA (contact at alexandrefaria.net)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PermissionTicketRepository extends CrudRepository<PermissionTicket, String>, ExpiredDataSweeper {
+public enum TableName {
+    access_tokens,
+    authorization_codes,
+    refresh_tokens,
+    scope_approvals,
+    request_objects,
+    login_attempts,
+    uma_permission_ticket,
+    auth_flow_ctx,
+    pushed_authorization_requests,
+    ciba_auth_requests,
+    user_activities,
+    devices;
 
+    public static Optional<TableName> getValueOf(String value) {
+        return Arrays.stream(TableName.values()).filter(tableName -> tableName.name().equals(value)).findFirst();
+    }
 }
