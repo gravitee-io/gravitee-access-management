@@ -19,6 +19,7 @@ import io.gravitee.am.model.Device;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -27,7 +28,7 @@ import io.reactivex.rxjava3.core.Maybe;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeviceRepository extends CrudRepository<Device, String> {
+public interface DeviceRepository extends CrudRepository<Device, String>, ExpiredDataSweeper {
 
     Maybe<Device> findByReferenceAndClientAndUserAndDeviceIdentifierAndDeviceId(
             ReferenceType referenceType, String referenceId, String client, UserId user, String rememberDevice, String deviceId);
@@ -41,10 +42,5 @@ public interface DeviceRepository extends CrudRepository<Device, String> {
     default Flowable<Device> findByDomainAndClientAndUser(String domain, UserId user) {
         return findByReferenceAndUser(ReferenceType.DOMAIN, domain, user);
     }
-
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
-
 
 }
