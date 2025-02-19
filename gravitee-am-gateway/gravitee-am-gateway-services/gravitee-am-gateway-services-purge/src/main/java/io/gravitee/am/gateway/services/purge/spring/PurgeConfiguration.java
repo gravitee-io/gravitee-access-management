@@ -13,24 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.oidc.api;
+package io.gravitee.am.gateway.services.purge.spring;
 
-import io.gravitee.am.repository.common.ExpiredDataSweeper;
-import io.gravitee.am.repository.oidc.model.RequestObject;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
+import io.gravitee.am.gateway.services.purge.PurgeManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface RequestObjectRepository extends ExpiredDataSweeper {
+@Configuration
+public class PurgeConfiguration {
 
-    Maybe<RequestObject> findById(String id);
+    @Bean
+    public PurgeManager providePurgeManager() {
+        return new PurgeManager();
+    }
 
-    Single<RequestObject> create(RequestObject requestObject);
-
-    Completable delete(String id);
-
+    @Bean
+    public TaskScheduler taskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setThreadNamePrefix("jdbc-purge-");
+        return scheduler;
+    }
 }
