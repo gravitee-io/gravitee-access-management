@@ -39,6 +39,7 @@ import io.gravitee.am.gateway.handler.oidc.service.flow.Flow;
 import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -156,6 +157,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(new RedirectUriValidationHandler(domain))
+                .handler(new ReturnUrlValidationHandler(domain, "https://gateway.url"))
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(ctx -> {
                     authorizationEndpointHandler.handle(ctx);
