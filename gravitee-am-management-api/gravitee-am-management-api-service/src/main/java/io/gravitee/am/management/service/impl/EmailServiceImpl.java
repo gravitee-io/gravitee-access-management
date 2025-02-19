@@ -38,8 +38,8 @@ import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainService;
+import io.gravitee.am.service.i18n.DomainBasedDictionaryProvider;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
-import io.gravitee.am.service.i18n.ThreadLocalDomainDictionaryProvider;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
@@ -95,7 +95,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
 
     private final I18nDictionaryService i18nDictionaryService;
 
-    private final ThreadLocalDomainDictionaryProvider dictionaryProvider;
+    private final DomainBasedDictionaryProvider dictionaryProvider;
 
     private final Environment environment;
 
@@ -122,7 +122,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         this.registrationVerifySubject = registrationVerifySubject();
         this.registrationVerifyExpireAfter = registrationVerifyExpireAfter();
         this.certificateExpirySubject = certificateExpirySubject();
-        this.dictionaryProvider = new ThreadLocalDomainDictionaryProvider();
+        this.dictionaryProvider = new DomainBasedDictionaryProvider();
         this.i18nDictionaryService = i18nDictionaryService;
 
     }
