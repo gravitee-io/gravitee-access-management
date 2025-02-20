@@ -18,6 +18,7 @@ package io.gravitee.am.repository.gateway.api;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -27,7 +28,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, String> {
+public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, String>, ExpiredDataSweeper {
 
     Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId);
 
@@ -40,9 +41,5 @@ public interface ScopeApprovalRepository extends CrudRepository<ScopeApproval, S
     Completable deleteByDomainAndUserAndClient(String domain, UserId userId, String client);
 
     Completable deleteByDomainAndUser(String domain, UserId userId);
-
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
 
 }

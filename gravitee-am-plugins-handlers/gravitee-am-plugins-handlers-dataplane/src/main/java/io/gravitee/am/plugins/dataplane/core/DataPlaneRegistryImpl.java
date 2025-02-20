@@ -66,6 +66,11 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
         Objects.requireNonNull(domain, "Domain is required to provide DataPlane");
         final var dataPlaneId = extractDataPlaneId(domain);
 
+        return getProviderById(dataPlaneId);
+    }
+
+    @Override
+    public DataPlaneProvider getProviderById(String dataPlaneId) {
         final var provider = dataPlanProviders.get(dataPlaneId);
         if (provider == null) {
             throw new IllegalDataPlaneIdException(dataPlaneId);

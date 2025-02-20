@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.oidc.api;
 
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -24,7 +25,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface CibaAuthRequestRepository {
+public interface CibaAuthRequestRepository extends ExpiredDataSweeper {
 
     Maybe<CibaAuthRequest> findById(String id);
 
@@ -38,7 +39,4 @@ public interface CibaAuthRequestRepository {
 
     Completable delete(String id);
 
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
 }

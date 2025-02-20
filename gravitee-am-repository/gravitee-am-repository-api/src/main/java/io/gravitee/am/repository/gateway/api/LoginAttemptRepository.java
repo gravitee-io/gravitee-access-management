@@ -17,6 +17,7 @@ package io.gravitee.am.repository.gateway.api;
 
 import io.gravitee.am.model.LoginAttempt;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -25,13 +26,10 @@ import io.reactivex.rxjava3.core.Maybe;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface LoginAttemptRepository extends CrudRepository<LoginAttempt, String> {
+public interface LoginAttemptRepository extends CrudRepository<LoginAttempt, String>, ExpiredDataSweeper {
 
     Maybe<LoginAttempt> findByCriteria(LoginAttemptCriteria criteria);
 
     Completable delete(LoginAttemptCriteria criteria);
 
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
 }

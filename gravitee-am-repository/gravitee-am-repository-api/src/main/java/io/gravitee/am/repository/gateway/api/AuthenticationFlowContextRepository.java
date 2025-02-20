@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.gateway.api;
 
 import io.gravitee.am.model.AuthenticationFlowContext;
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -26,7 +27,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthenticationFlowContextRepository {
+public interface AuthenticationFlowContextRepository extends ExpiredDataSweeper {
     Maybe<AuthenticationFlowContext> findById(String id);
     /**
      * Find last context data for given sessionId
@@ -65,7 +66,4 @@ public interface AuthenticationFlowContextRepository {
      */
     Completable delete(String transactionId, int version);
 
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
 }

@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.dataplane.api.repository;
+package io.gravitee.am.repository.common;
 
-import io.gravitee.am.model.uma.PermissionTicket;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.common.ExpiredDataSweeper;
+import io.reactivex.rxjava3.core.Completable;
 
-/**
- * @author Alexandre FARIA (contact at alexandrefaria.net)
- * @author GraviteeSource Team
- */
-public interface PermissionTicketRepository extends CrudRepository<PermissionTicket, String>, ExpiredDataSweeper {
+public interface ExpiredDataSweeper {
 
+    default Completable purgeExpiredData() {
+        return Completable.complete();
+    }
 }

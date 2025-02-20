@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.oauth2.api;
 
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -24,7 +25,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PushedAuthorizationRequestRepository {
+public interface PushedAuthorizationRequestRepository extends ExpiredDataSweeper {
 
     Maybe<PushedAuthorizationRequest> findById(String id);
 
@@ -32,7 +33,4 @@ public interface PushedAuthorizationRequestRepository {
 
     Completable delete(String id);
 
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
 }

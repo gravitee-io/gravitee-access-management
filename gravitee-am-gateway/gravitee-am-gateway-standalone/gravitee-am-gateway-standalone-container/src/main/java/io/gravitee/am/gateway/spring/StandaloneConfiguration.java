@@ -34,6 +34,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneProvider;
 import io.gravitee.am.plugins.dataplane.spring.DataPlaneSpringConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantSpringConfiguration;
@@ -155,5 +156,10 @@ public class StandaloneConfiguration {
     @Bean
     public DataPlaneRegistry dataPlaneRegistry(SingleDataPlaneLoader loader, DataPlanePluginManager manager) {
         return new DataPlaneRegistryImpl(loader, manager);
+    }
+
+    @Bean
+    public SingleDataPlaneProvider singleDataPlaneProvider(DataPlaneRegistry dataPlaneRegistry){
+        return new SingleDataPlaneProvider(dataPlaneRegistry);
     }
 }
