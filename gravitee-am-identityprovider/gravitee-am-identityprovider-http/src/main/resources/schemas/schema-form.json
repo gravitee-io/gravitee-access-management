@@ -117,7 +117,6 @@
                 "baseURL" : {
                   "type" : "string",
                   "title": "Base URL",
-                  "default": "https://api.gravitee.io/users?username={#user.username}",
                   "description": "Resource URL (support EL)"
                 },
                 "httpMethod" : {
