@@ -72,8 +72,8 @@
     </modules>
 
     <properties>
-        <awaitility.version>4.2.0</awaitility.version>
-        <gravitee-bom.version>8.2.9</gravitee-bom.version>
+        <awaitility.version>4.2.1</awaitility.version>
+        <gravitee-bom.version>8.2.10</gravitee-bom.version>
         <gravitee-common.version>3.4.0</gravitee-common.version>
         <gravitee-plugin.version>3.1.0</gravitee-plugin.version>
         <gravitee-node.version>5.18.2</gravitee-node.version>
