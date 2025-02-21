@@ -18,7 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.revocation.impl;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.oidc.Client;
@@ -35,9 +35,9 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class RevocationTokenServiceImpl implements RevocationTokenService {
+public class OAuthRevocationTokenServiceImpl implements OAuthRevocationTokenService {
 
-    private static final Logger logger = LoggerFactory.getLogger(RevocationTokenServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(OAuthRevocationTokenServiceImpl.class);
 
     @Autowired
     private TokenService tokenService;

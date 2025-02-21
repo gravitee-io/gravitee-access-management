@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.users.service;
 
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.users.service.impl.DomainUserConsentServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
@@ -54,6 +55,9 @@ public class DomainUserConsentServiceTest {
 
     @Mock
     private ScopeApprovalService scopeApprovalService;
+
+    @Mock
+    private RevokeTokenGatewayService revokeTokenGatewayService;
 
     @Test
     public void shouldFindUserConsents() {
@@ -102,7 +106,7 @@ public class DomainUserConsentServiceTest {
         final var userId = UserId.internal("userId");
         final String domainId = "domainId";
 
-        when(scopeApprovalService.revokeByUser(any(Domain.class), any(UserId.class), any())).thenReturn(Completable.complete());
+        when(scopeApprovalService.revokeByUser(any(Domain.class), any(UserId.class), any(), any())).thenReturn(Completable.complete());
 
        userService.revokeConsents(userId, null).test()
                .assertComplete()
@@ -115,7 +119,7 @@ public class DomainUserConsentServiceTest {
         final String userId = "userId";
         final String consentId = "consentId";
 
-        when(scopeApprovalService.revokeByConsent(any(Domain.class), any(UserId.class), eq(consentId), any())).thenReturn(Completable.complete());
+        when(scopeApprovalService.revokeByConsent(any(Domain.class), any(UserId.class), eq(consentId), any(), any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = userService.revokeConsent(UserId.internal(userId), consentId, null).test();
 

@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.permissions.Permission;
@@ -58,6 +59,9 @@ public class UserConsentResource extends AbstractResource {
 
     @Autowired
     private ApplicationService applicationService;
+
+    @Autowired
+    private RevokeTokenManagementService revokeTokenManagementService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -112,7 +116,7 @@ public class UserConsentResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapCompletable(domain -> scopeApprovalService.revokeByConsent(domain, UserId.internal(user), consent, authenticatedUser)))
+                        .flatMapCompletable(domain -> scopeApprovalService.revokeByConsent(domain, UserId.internal(user), consent, revokeTokenManagementService::sendProcessRequest, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

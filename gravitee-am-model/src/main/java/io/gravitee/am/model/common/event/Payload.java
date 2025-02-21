@@ -18,6 +18,7 @@ package io.gravitee.am.model.common.event;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.token.RevokeToken;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class Payload extends HashMap<String, Object> {
     private static final String REFERENCE_TYPE = "referenceType";
     private static final String REFERENCE_ID = "referenceId";
     private static final String ACTION = "action";
+    public static final String REVOKE_TOKEN_DEFINITION = "revokeTokenDef";
 
     public Payload(String id, Reference reference, Action action) {
         this(id, reference.type(), reference.id(), action);
@@ -69,5 +71,18 @@ public class Payload extends HashMap<String, Object> {
 
     public Action getAction() {
         return (Action) get(ACTION);
+    }
+
+    public RevokeToken getRevokeToken() {
+        return (RevokeToken) get(REVOKE_TOKEN_DEFINITION);
+    }
+
+    public static Payload from(RevokeToken request) {
+        final var data = new HashMap<String, Object>();
+        data.put(REFERENCE_TYPE, ReferenceType.DOMAIN.name());
+        data.put(REFERENCE_ID, request.getDomainId());
+        data.put(ACTION, Action.DELETE);
+        data.put(REVOKE_TOKEN_DEFINITION, request);
+        return new Payload(data);
     }
 }

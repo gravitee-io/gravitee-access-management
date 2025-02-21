@@ -17,6 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
@@ -74,6 +75,9 @@ public class ApplicationResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Autowired
+    private RevokeTokenManagementService revokeTokenManagementService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -284,7 +288,7 @@ public class ApplicationResource extends AbstractResource {
         return resourceContext.getResource(ApplicationFlowsResource.class);
     }
 
-    public void updateInternal(String organizationId, String environmentId, String domain, String application, PatchApplication patchApplication, final AsyncResponse response) {
+    public void updateInternal(String organizationId, String environmentId, String domainId, String application, PatchApplication patchApplication, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
         Set<Permission> requiredPermissions = patchApplication.getRequiredPermissions();
@@ -294,12 +298,12 @@ public class ApplicationResource extends AbstractResource {
             response.resume(new BadRequestException("You need to specify at least one value to update."));
         } else {
             Completable.merge(requiredPermissions.stream()
-                    .map(permission -> checkAnyPermission(organizationId, environmentId, domain, application, permission, Acl.UPDATE))
+                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, application, permission, Acl.UPDATE))
                     .collect(Collectors.toList()))
-                    .andThen(domainService.findById(domain)
-                            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                            .flatMapSingle(patch -> applicationService.patch(domain, application, patchApplication, authenticatedUser)
-                                    .flatMap(updatedApplication -> findAllPermissions(authenticatedUser, organizationId, environmentId, domain, application)
+                    .andThen(domainService.findById(domainId)
+                            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                            .flatMapSingle(domain -> applicationService.patch(domain, application, patchApplication, authenticatedUser, revokeTokenManagementService::deleteByApplication)
+                                    .flatMap(updatedApplication -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId, application)
                                             .map(userPermissions -> filterApplicationInfos(updatedApplication, userPermissions)))))
                     .subscribe(response::resume, response::resume);
         }
