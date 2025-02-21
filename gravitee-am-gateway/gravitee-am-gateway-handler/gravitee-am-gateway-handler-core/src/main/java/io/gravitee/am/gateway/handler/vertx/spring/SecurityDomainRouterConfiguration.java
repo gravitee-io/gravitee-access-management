@@ -30,7 +30,6 @@ import org.springframework.context.annotation.Import;
  */
 @Import({
         ThymeleafConfiguration.class,
-        ServiceConfiguration.class,
         FreemarkerConfiguration.class
 })
 @Configuration
