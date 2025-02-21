@@ -28,7 +28,7 @@ import java.util.Locale;
  */
 public class FreemarkerMessageResolverTest {
 
-    private DictionaryProvider directoryProvider = new FileSystemDictionaryProvider("src/test/resources/i18n_default");
+    private DictionaryProvider directoryProvider = FileSystemDictionaryProvider.getInstance("src/test/resources/i18n_default");
 
     private FreemarkerMessageResolver cut;
 

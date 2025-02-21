@@ -53,7 +53,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         this.emailSender = new EmailSender(mailSender, templatesPath);
-        this.defaultDictionaryProvider = new FileSystemDictionaryProvider(Paths.get(templatesPath, "i18n").toFile().getAbsolutePath());
+        this.defaultDictionaryProvider = FileSystemDictionaryProvider.getInstance(Paths.get(templatesPath, "i18n").toFile().getAbsolutePath());
     }
 
     @Override
