@@ -19,7 +19,7 @@ import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.revocation.RevocationTokenEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -48,7 +48,7 @@ public class RevocationTokenEndpointTest extends RxWebTestBase {
     private RevocationTokenEndpoint revocationTokenEndpointHandler = new RevocationTokenEndpoint();
 
     @Mock
-    private RevocationTokenService revocationTokenService;
+    private OAuthRevocationTokenService revocationTokenService;
 
     @Override
     public void setUp() throws Exception {

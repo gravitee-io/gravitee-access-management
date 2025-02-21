@@ -29,6 +29,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -57,7 +58,6 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
@@ -99,6 +99,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
@@ -152,9 +153,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ScopeService scopeService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -389,7 +387,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> patch(String domain, String id, PatchApplication patchApplication, User principal) {
+    public Single<Application> patch(Domain domain, String id, PatchApplication patchApplication, User principal, BiFunction<Domain, Application, Completable> revokeTokenProcessor) {
         LOGGER.debug("Patch an application {} for domain {}", id, domain);
 
         return applicationRepository.findById(id)
@@ -412,7 +410,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return innerUpdate(existingApplication, toPatch, principal)
                             .flatMap(app -> {
                                 if (toPatch.isEnabled() != existingApplication.isEnabled() && !toPatch.isEnabled()) {
-                                    return tokenService.deleteByApplication(app).onErrorComplete().toSingleDefault(app);
+                                    return revokeTokenProcessor.apply(domain, app).onErrorComplete().toSingleDefault(app);
                                 } else {
                                     return Single.just(app);
                                 }

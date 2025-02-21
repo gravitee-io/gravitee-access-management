@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.service.revocation;
-
-import io.gravitee.am.model.oidc.Client;
-import io.reactivex.rxjava3.core.Completable;
+package io.gravitee.am.common.event;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface RevocationTokenService {
+public enum UserEvent {
 
-    Completable revoke(RevocationTokenRequest request, Client client);
+    DELETE;
+
+    public static UserEvent actionOf(Action action) {
+        return switch (action) {
+            case DELETE -> UserEvent.DELETE;
+            default -> null;
+        };
+    }
 }

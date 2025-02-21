@@ -19,6 +19,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeEntity;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
@@ -33,12 +34,12 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 @RequiredArgsConstructor
-
 public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
 
     public static final String UNKNOWN_ID = "unknown-id";
 
     private final ScopeApprovalService scopeApprovalService;
+    private final RevokeTokenManagementService revokeTokenManagementService;
     private final ApplicationService applicationService;
     private final ScopeService scopeService;
     private final DataPlaneRegistry dataPlaneRegistry;
@@ -69,9 +70,9 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
     public Completable revokeUserConsents(Domain domain, String rawUserId, String clientId, User authenticatedUser) {
         var userId = UserId.internal(rawUserId);
         if (clientId == null || clientId.isEmpty()) {
-            return scopeApprovalService.revokeByUser(domain, userId, authenticatedUser);
+            return scopeApprovalService.revokeByUser(domain, userId, revokeTokenManagementService::sendProcessRequest, authenticatedUser);
         }
-        return scopeApprovalService.revokeByUserAndClient(domain, userId, clientId, authenticatedUser);
+        return scopeApprovalService.revokeByUserAndClient(domain, userId, clientId, revokeTokenManagementService::sendProcessRequest, authenticatedUser);
     }
 
     private String getScopeBase(String scope) {

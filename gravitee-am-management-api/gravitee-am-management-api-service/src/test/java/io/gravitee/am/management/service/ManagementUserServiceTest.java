@@ -18,6 +18,7 @@ package io.gravitee.am.management.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.factor.FactorDataKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
@@ -26,6 +27,7 @@ import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.management.service.impl.ManagementUserServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Credential;
@@ -50,11 +52,11 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -182,7 +184,7 @@ public class ManagementUserServiceTest {
     private MembershipService membershipService;
 
     @Mock
-    private TokenService tokenService;
+    private RevokeTokenManagementService tokenService;
 
     @Mock
     private PasswordHistoryService passwordHistoryService;
@@ -192,6 +194,12 @@ public class ManagementUserServiceTest {
 
     @Mock
     private PasswordPolicyService passwordPolicyService;
+
+    @Mock
+    private EventService eventService;
+
+    @Mock
+    private UserActivityManagementService userActivityManagementService;
 
     @Spy
     private UserValidator userValidator = new UserValidatorImpl(
@@ -530,7 +538,7 @@ public class ManagementUserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
-        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
@@ -540,7 +548,41 @@ public class ManagementUserServiceTest {
                 .assertComplete()
                 .assertNoErrors();
 
-        verify(tokenService).deleteByUser(any());
+        verify(tokenService).deleteByUser(any(), any());
+    }
+
+    @Test
+    void should_delete_user() {
+        Domain domain = new Domain();
+        domain.setId("domain");
+
+        User user = new User();
+        user.setId("user-id");
+        user.setExternalId("ext-user-id");
+        user.setSource("idp-id");
+        user.setReferenceId("domain");
+        user.setReferenceType(ReferenceType.DOMAIN);
+
+        when(userRepository.findById(any(Reference.class), any(UserId.class))).thenReturn(Maybe.just(user));
+
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.delete(any())).thenReturn(Completable.complete());
+        when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
+        when(userActivityManagementService.deleteByDomainAndUser(any(), any())).thenReturn(Completable.complete());
+        when(userRepository.delete(anyString())).thenReturn(Completable.complete());
+        when(passwordHistoryService.deleteByUser(any(), anyString())).thenReturn(Completable.complete());
+
+        when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
+        when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
+
+        userService.delete(domain, user.getId(), null)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(tokenService).deleteByUser(any(), any());
+        verify(auditService).report(argThat(auditBuilder -> auditBuilder.build(new ObjectMapper()).getOutcome().getStatus() == Status.SUCCESS));
+        verify(eventService).create(argThat(arg -> arg.getType() == Type.USER && arg.getPayload().getId().equals(user.getId())));
     }
 
     @Test
@@ -565,7 +607,7 @@ public class ManagementUserServiceTest {
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userRepository.update(any(), any())).thenReturn(Single.just(user));
         when(loginAttemptService.reset(any(), any())).thenReturn(Completable.complete());
-        when(tokenService.deleteByUser(any())).thenReturn(Completable.complete());
+        when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());
         when(passwordHistoryService.addPasswordToHistory(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new PasswordHistory()));
         when(passwordPolicyService.retrievePasswordPolicy(any(), any(), any())).thenReturn(Maybe.empty());
         when(passwordService.evaluate(anyString(),any(),any())).thenReturn(PasswordSettingsStatus.builder().build());
@@ -575,7 +617,7 @@ public class ManagementUserServiceTest {
                 .assertComplete()
                 .assertNoErrors();
         verify(userProvider, times(1)).create(any());
-        verify(tokenService).deleteByUser(any());
+        verify(tokenService).deleteByUser(any(), any());
     }
 
     @Test

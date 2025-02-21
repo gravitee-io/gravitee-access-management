@@ -534,11 +534,11 @@ liquibase:
 ## This section allows rate limit for SMS and Email factors.
 ## The number of SMS or Email challenge can be limited for a specific time period of Hours, Minutes or Seconds
 
-#mfa_rate:
-#  enabled: true
-#  limit: 5
-#  timePeriod: 15
-#  timeUnit: Minutes
+mfa_rate:
+  enabled: true
+  limit: 5
+  timePeriod: 1
+  timeUnit: Minutes
 
 #applications:
 #  secret:

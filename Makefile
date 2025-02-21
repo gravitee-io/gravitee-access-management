@@ -273,12 +273,14 @@ pluginsJdbc: # Copy plugins to Gateway and Management API
 
 commonPluginsGateway: # Copy plugins to Gateway
 	@mkdir -p $(GIO_AM_GATEWAY_PLUGINS)
+	@rm -fr $(GIO_AM_GATEWAY_PLUGINS)/.work
 	@rm -fr $(GIO_AM_GATEWAY_PLUGINS)/*.zip
 	@cp -fr gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/target/distribution/plugins/*.zip $(GIO_AM_GATEWAY_PLUGINS)
 
 
 commonPluginsManagement: # Copy plugins to Management API
 	@mkdir -p $(GIO_AM_MANAGEMENT_API_PLUGINS)
+	@rm -fr $(GIO_AM_MANAGEMENT_API_PLUGINS)/.work
 	@rm -fr $(GIO_AM_MANAGEMENT_API_PLUGINS)/*.zip
 	@cp -fr gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/target/distribution/plugins/*.zip $(GIO_AM_MANAGEMENT_API_PLUGINS)
 

@@ -26,6 +26,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.service.
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration;
 import io.gravitee.am.management.handlers.management.api.spring.security.WebMvcConfiguration;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
@@ -61,10 +62,11 @@ public class ManagementConfiguration {
 
     @Bean
     ScopeApprovalAdapter scopeApprovalAdapter(ScopeApprovalService scopeApprovalService,
+        RevokeTokenManagementService revokeTokenManagementService,
         ApplicationService applicationService,
         ScopeService scopeService,
         DataPlaneRegistry dataPlaneRegistry) {
-        return new ScopeApprovalAdapterImpl(scopeApprovalService, applicationService, scopeService, dataPlaneRegistry);
+        return new ScopeApprovalAdapterImpl(scopeApprovalService, revokeTokenManagementService, applicationService, scopeService, dataPlaneRegistry);
     }
 
     @Bean
