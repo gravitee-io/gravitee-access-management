@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.adapter;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.junit.gateway.MemoryScopeApprovalRepository;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
@@ -42,11 +43,12 @@ import org.junit.jupiter.api.Test;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ScopeApprovalAdapterImplTest {
-
 
     public static final String TEST_DOMAIN_ID = "test-domain";
     public static final Domain TEST_DOMAIN = new Domain(TEST_DOMAIN_ID);
@@ -56,16 +58,18 @@ class ScopeApprovalAdapterImplTest {
     private final RefreshTokenRepository refreshTokenRepository = mock();
 
     private final ScopeApprovalRepository scopeApprovalRepository = new MemoryScopeApprovalRepository();
-    private final ScopeApprovalService scopeApprovalService = new ScopeApprovalServiceImpl(accessTokenRepository, refreshTokenRepository, dataPlaneRegistry, mock());
+    private final ScopeApprovalService scopeApprovalService = new ScopeApprovalServiceImpl(dataPlaneRegistry, mock());
+    private final RevokeTokenManagementService revokeTokenManagementService = mock(RevokeTokenManagementService.class);
     private final ApplicationService appService = mock();
     private final ScopeService scopeService = mock();
 
-    private final ScopeApprovalAdapterImpl underTest = new ScopeApprovalAdapterImpl(scopeApprovalService, appService, scopeService, dataPlaneRegistry);
+    private final ScopeApprovalAdapterImpl underTest = new ScopeApprovalAdapterImpl(scopeApprovalService, revokeTokenManagementService, appService, scopeService, dataPlaneRegistry);
 
     @BeforeEach
     void setUp() {
         when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(dataPlaneRegistry.getScopeApprovalRepository(any())).thenReturn(scopeApprovalRepository);
+        lenient().when(revokeTokenManagementService.sendProcessRequest(any(), any())).thenReturn(Completable.complete());
     }
 
     @Test
@@ -108,6 +112,9 @@ class ScopeApprovalAdapterImplTest {
                 .test()
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete();
+
+        verify(revokeTokenManagementService).sendProcessRequest(any(), any());
+
     }
 
     private ScopeApproval approvalWithUser(String userId) {

@@ -27,6 +27,7 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -49,9 +50,8 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.service.RateLimiterService;
-import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.EmailValidatorImpl;
@@ -168,7 +168,7 @@ public class ProvisioningUserServiceTest {
     private static final String DOMAIN_ID = "domain";
 
     @Mock
-    private TokenService tokenService;
+    private RevokeTokenGatewayService tokenService;
 
     @Before
     public void setUp() {

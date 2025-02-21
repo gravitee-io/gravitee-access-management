@@ -58,6 +58,16 @@ import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.gateway.handler.common.service.impl.RevokeTokenGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.mfa.DomainEventListener;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.UserEventListener;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.DomainEventListenerImpl;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.RateLimiterServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.UserEventListenerImpl;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.VerifyAttemptServiceImpl;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
@@ -377,4 +387,29 @@ public class CommonConfiguration {
     public UMAPermissionTicketService umaPermissionTicketService() {
         return new UMAPermissionTicketServiceImpl();
     }
+
+    @Bean
+    public RevokeTokenGatewayService revokeTokenGatewayService() {
+        return new RevokeTokenGatewayServiceImpl();
+    }
+
+    @Bean
+    public RateLimiterService rateLimiterService() {
+        return new RateLimiterServiceImpl();
+    }
+    @Bean
+    public VerifyAttemptService verifyAttemptService() {
+        return new VerifyAttemptServiceImpl();
+    }
+
+    @Bean
+    public UserEventListener userEventListener() {
+        return new UserEventListenerImpl();
+    }
+
+    @Bean
+    public DomainEventListener domainEventListener() {
+        return new DomainEventListenerImpl();
+    }
+
 }
