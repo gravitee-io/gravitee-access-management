@@ -68,12 +68,10 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -241,13 +239,7 @@ public class DomainServiceImpl implements DomainService {
     private ThemeService themeService;
 
     @Autowired
-    private RateLimiterService rateLimiterService;
-
-    @Autowired
     private PasswordHistoryService passwordHistoryService;
-
-    @Autowired
-    private VerifyAttemptService verifyAttemptService;
 
     @Autowired
     private PasswordPolicyService passwordPolicyService;
@@ -645,11 +637,8 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(theme -> themeService.delete(domain, theme.getId(), principal)
                                     )
                             )
-                            // delete rate limit
-                            .andThen(rateLimiterService.deleteByDomain(domain, DOMAIN))
                             .andThen(passwordHistoryService.deleteByReference(domain))
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
-                            .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)

@@ -20,12 +20,14 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.token.RevokeToken;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -41,13 +43,10 @@ public interface ScopeApprovalService {
 
     Single<List<ScopeApproval>> saveConsent(Domain domain, Client client, List<ScopeApproval> approvals, User principal);
 
-    Completable revokeByConsent(Domain domain, UserId userId, String consentId, User principal);
+    Completable revokeByConsent(Domain domain, UserId userId, String consentId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal);
 
-    Completable revokeByUser(Domain domain, UserId userId, User principal);
+    Completable revokeByUser(Domain domain, UserId userId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal);
 
-    Completable revokeByUserAndClient(Domain domain, UserId userId, String clientId, User principal);
+    Completable revokeByUserAndClient(Domain domain, UserId userId, String clientId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal);
 
-    default Completable revokeByConsent(Domain domain, UserId userId, String consentId) {
-        return revokeByConsent(domain, userId, consentId, null);
-    }
 }
