@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
@@ -130,6 +131,9 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
 
     @Autowired
     private SubjectManager subjectManager;
+
+    @Autowired
+    private RevokeTokenGatewayService revokeTokenGatewayService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -314,7 +318,7 @@ public class AccountServiceImpl implements AccountService, InitializingBean {
 
     @Override
     public Completable removeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
-        return scopeApprovalService.revokeByConsent(domain, userId, consentId, principal);
+        return scopeApprovalService.revokeByConsent(domain, userId, consentId, revokeTokenGatewayService::process, principal);
     }
 
     private io.gravitee.am.identityprovider.api.User convert(io.gravitee.am.model.User user) {

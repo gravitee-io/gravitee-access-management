@@ -20,6 +20,7 @@ import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
@@ -90,6 +91,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -170,7 +172,10 @@ public class ApplicationServiceTest {
     private ClientSecret clientSecret;
 
     @Mock
-    private TokenService tokenService;
+    private BiFunction<Domain, Application, Completable> revokeToken;
+
+    @Mock
+    private User principal;
 
     private final static Domain DOMAIN = new Domain("domain1");
 
@@ -905,7 +910,7 @@ public class ApplicationServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
 
-        TestObserver<Application> testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -950,7 +955,7 @@ public class ApplicationServiceTest {
         when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -964,7 +969,7 @@ public class ApplicationServiceTest {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
@@ -977,7 +982,7 @@ public class ApplicationServiceTest {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
@@ -990,7 +995,7 @@ public class ApplicationServiceTest {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
 
         testObserver.assertError(ApplicationNotFoundException.class);
         testObserver.assertNotComplete();
@@ -1110,7 +1115,7 @@ public class ApplicationServiceTest {
         settings.setOauth(Optional.of(oAuthSettings));
         toPatch.setSettings(Optional.of(settings));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), APP_ID, toPatch).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, APP_ID, toPatch, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1228,7 +1233,7 @@ public class ApplicationServiceTest {
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1275,7 +1280,7 @@ public class ApplicationServiceTest {
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1316,7 +1321,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         doReturn(false).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -1347,7 +1352,7 @@ public class ApplicationServiceTest {
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1377,7 +1382,7 @@ public class ApplicationServiceTest {
         when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1498,7 +1503,7 @@ public class ApplicationServiceTest {
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1524,7 +1529,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1550,7 +1555,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1576,7 +1581,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1602,7 +1607,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1627,7 +1632,7 @@ public class ApplicationServiceTest {
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
 
@@ -1654,7 +1659,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
 
@@ -1683,7 +1688,7 @@ public class ApplicationServiceTest {
         when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1794,7 +1799,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1820,7 +1825,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1840,7 +1845,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1860,7 +1865,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1880,7 +1885,7 @@ public class ApplicationServiceTest {
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN.getId(), "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1911,7 +1916,7 @@ public class ApplicationServiceTest {
 
         var factorId = UUID.randomUUID().toString();
         PatchApplication patch = mfaConfigurationPatch(factorId);
-        applicationService.patch(client.getDomain(), client.getId(), patch)
+        applicationService.patch(new Domain(client.getDomain()), client.getId(), patch, principal, revokeToken)
                 .test()
                 .assertValue(app -> app.getSettings().getMfa().getFactor().getDefaultFactorId().equals(factorId))
                 .assertNoErrors();
@@ -1924,14 +1929,14 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(tokenService.deleteByApplication(any())).thenAnswer(invocation -> Completable.complete());
+        when(revokeToken.apply(any(), any())).thenAnswer(invocation -> Completable.complete());
 
         var patch =  PatchApplication.builder().enabled(Optional.of(false)).build();
-        applicationService.patch(client.getDomain(), client.getId(), patch)
+        applicationService.patch(new Domain(client.getDomain()), client.getId(), patch, principal, revokeToken)
                 .test()
                 .assertNoErrors();
 
-        verify(tokenService, times(1)).deleteByApplication(any());
+        verify(revokeToken).apply(any(), any());
     }
 
     @Test
@@ -1941,14 +1946,14 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(tokenService.deleteByApplication(any())).thenAnswer(invocation -> Completable.error(new RuntimeException()));
+        when(revokeToken.apply(any(), any())).thenAnswer(invocation -> Completable.error(new RuntimeException()));
 
         var patch =  PatchApplication.builder().enabled(Optional.of(false)).build();
-        applicationService.patch(client.getDomain(), client.getId(), patch)
+        applicationService.patch(new Domain(client.getDomain()), client.getId(), patch, principal, revokeToken)
                 .test()
                 .assertNoErrors();
 
-        verify(tokenService, times(1)).deleteByApplication(any());
+        verify(revokeToken).apply(any(), any());
     }
 
     @Test
@@ -1960,11 +1965,11 @@ public class ApplicationServiceTest {
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
 
         var patch =  PatchApplication.builder().enabled(Optional.of(false)).build();
-        applicationService.patch(client.getDomain(), client.getId(), patch)
+        applicationService.patch(new Domain(client.getDomain()), client.getId(), patch, principal, revokeToken)
                 .test()
                 .assertNoErrors();
 
-        verify(tokenService, never()).deleteByApplication(any());
+        verify(revokeToken, never()).apply(any(), any());
     }
 
     private PatchApplication mfaConfigurationPatch(String factorId) {

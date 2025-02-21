@@ -80,12 +80,10 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidDomainException;
@@ -305,13 +303,7 @@ public class DomainServiceTest {
     private ThemeService themeService;
 
     @Mock
-    private RateLimiterService rateLimiterService;
-
-    @Mock
     private PasswordHistoryService passwordHistoryService;
-
-    @Mock
-    private VerifyAttemptService verifyAttemptService;
 
     @Mock
     private PasswordPolicyService passwordPolicyService;
@@ -1083,8 +1075,6 @@ public class DomainServiceTest {
         when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
-        when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
-        when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
 
@@ -1144,9 +1134,7 @@ public class DomainServiceTest {
         when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
-        when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
-        when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
 

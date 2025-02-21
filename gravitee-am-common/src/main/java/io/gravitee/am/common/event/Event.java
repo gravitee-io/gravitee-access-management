@@ -51,6 +51,8 @@ public abstract class Event {
             case I18N_DICTIONARY -> I18nDictionaryEvent.actionOf(action);
             case THEME -> ThemeEvent.actionOf(action);
             case PASSWORD_POLICY -> PasswordPolicyEvent.actionOf(action);
+            case REVOKE_TOKEN -> RevokeTokenEvent.actionOf(action);
+            case USER -> UserEvent.actionOf(action);
             default -> null;
         };
     }

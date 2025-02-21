@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+package io.gravitee.am.gateway.handler.common.service.mfa.impl;
 
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
@@ -24,15 +25,12 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.gateway.api.VerifyAttemptRepository;
 import io.gravitee.am.repository.gateway.api.search.VerifyAttemptCriteria;
 import io.gravitee.am.service.EmailService;
-import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.Optional;
@@ -41,9 +39,8 @@ import java.util.Optional;
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
+@Slf4j
 public class VerifyAttemptServiceImpl implements VerifyAttemptService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(VerifyAttemptServiceImpl.class);
 
     @Autowired
     EmailService emailService;
@@ -56,7 +53,7 @@ public class VerifyAttemptServiceImpl implements VerifyAttemptService {
     public Maybe<VerifyAttempt> checkVerifyAttempt(User user, String factorId, Client client, Domain domain) {
         final AccountSettings accountSettings = AccountSettings.getInstance(domain, client);
         if (accountSettings == null || !accountSettings.isMfaChallengeAttemptsDetectionEnabled()) {
-            LOGGER.debug("MFA brute force detection is disabled, won't check verify attempt.");
+            log.debug("MFA brute force detection is disabled, won't check verify attempt.");
             return Maybe.empty();
         }
 
@@ -64,7 +61,7 @@ public class VerifyAttemptServiceImpl implements VerifyAttemptService {
 
         return getVerifyAttemptIfExists(criteria, accountSettings)
                 .doOnSuccess(verifyAttempt -> {
-                    LOGGER.debug("VerifyAttempt value: [{}]", verifyAttempt);
+                    log.debug("VerifyAttempt value: [{}]", verifyAttempt);
                     if (!verifyAttempt.isAllowRequest()) {
                         throw new MFAValidationAttemptException(verifyAttempt, "Maximum verification limit exceed");
                     }
@@ -111,19 +108,19 @@ public class VerifyAttemptServiceImpl implements VerifyAttemptService {
 
     @Override
     public Completable delete(String id) {
-        LOGGER.debug("delete verify attempt id: {}", id);
+        log.debug("delete verify attempt id: {}", id);
         return verifyAttemptRepository.delete(id);
     }
 
     @Override
     public Completable deleteByUser(User user) {
-        LOGGER.debug("deleteByUser userID: {}", user.getId());
+        log.debug("deleteByUser userID: {}", user.getId());
         return verifyAttemptRepository.deleteByUser(user.getId());
     }
 
     @Override
     public Completable deleteByDomain(Domain domain, ReferenceType referenceType) {
-        LOGGER.debug("deleteByDomain domainId: {}", domain.getId());
+        log.debug("deleteByDomain domainId: {}", domain.getId());
         return verifyAttemptRepository.deleteByDomain(domain.getId(), referenceType);
     }
 

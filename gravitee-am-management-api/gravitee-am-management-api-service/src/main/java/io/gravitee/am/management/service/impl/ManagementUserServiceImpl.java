@@ -18,10 +18,13 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.business.user.UpdateUserRule;
 import io.gravitee.am.business.user.UpdateUsernameDomainRule;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.jwt.JWTBuilder;
@@ -29,6 +32,7 @@ import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.ManagementUserService;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
@@ -45,19 +49,18 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -138,7 +141,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
     private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
-    protected TokenService tokenService;
+    protected RevokeTokenManagementService tokenService;
 
     @Autowired
     protected PasswordPolicyService passwordPolicyService;
@@ -162,13 +165,9 @@ public class ManagementUserServiceImpl implements ManagementUserService {
     protected AuditService auditService;
 
     @Autowired
-    protected RateLimiterService rateLimiterService;
-
-    @Autowired
     protected PasswordHistoryService passwordHistoryService;
-
     @Autowired
-    protected VerifyAttemptService verifyAttemptService;
+    private EventService eventService;
 
     @Override
     public Single<Page<User>> search(Domain domain, String query, int page, int size) {
@@ -394,7 +393,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
     @Override
     public Single<User> updateStatus(Domain domain, String userId, boolean status, io.
             gravitee.am.identityprovider.api.User principal) {
-        Completable removeTokens = status ? Completable.complete() : tokenService.deleteByUser(User.simpleUser(userId, DOMAIN, domain.getId())); // FIXME, token service shouldn't be use, event should be sent
+        Completable removeTokens = status ? Completable.complete() : tokenService.deleteByUser(domain, User.simpleUser(userId, DOMAIN, domain.getId()));
         final var userRepository = dataPlaneRegistry.getUserRepository(domain);
         return userRepository.findById(domain.asReference(), UserId.internal(userId))
                 .switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(userId))))
@@ -454,7 +453,7 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                                         })
                                         // after audit, invalidate tokens whatever is the domain or app settings
                                         // as it is an admin action here, we want to force the user to login
-                                        .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUser(updatedUser)
+                                        .flatMap(updatedUser -> Single.defer(() -> tokenService.deleteByUser(domain, updatedUser)
                                                 .toSingleDefault(updatedUser)
                                                 .onErrorResumeNext(err -> {
                                                     log.warn("Tokens not invalidated for user {} due to : {}", userId, err.getMessage());
@@ -752,6 +751,8 @@ public class ManagementUserServiceImpl implements ManagementUserService {
     @Override
     public Single<User> delete(Domain domain, String userId, io.gravitee.am.identityprovider.api.User principal) {
         final var repository = dataPlaneRegistry.getUserRepository(domain);
+        final var eventPayload = new Payload(userId, Reference.domain(domain.getId()), Action.DELETE);
+        final var deleteUseEvent = new Event(Type.USER, eventPayload);
         return repository.findById(domain.asReference(), UserId.internal(userId))
                 .switchIfEmpty(Single.defer(() -> Single.error(new UserNotFoundException(userId))))
                 .flatMap(user -> identityProviderManager.getUserProvider(user.getSource())
@@ -776,15 +777,13 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                         })
                         // Delete trace of user activity
                         .andThen(userActivityService.deleteByDomainAndUser(domain, userId))
-                        // Delete rate limit
-                        .andThen(rateLimiterService.deleteByUser(user)) // FIXME in the same way as Token, should be deleted by an event
-                        .andThen(verifyAttemptService.deleteByUser(user)) // FIXME in the same way as Token, should be deleted by an event
-                        .andThen(repository.delete(userId))
                         .andThen(passwordHistoryService.deleteByUser(domain, userId))
+                        .andThen(repository.delete(userId))
+                        .andThen(eventService.create(deleteUseEvent).ignoreElement())
                         .toSingleDefault(user))
                 .doOnSuccess(u -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).user(u)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_DELETED).reference(domain.asReference()).throwable(throwable)))
-                .flatMap(user -> tokenService.deleteByUser(user).toSingleDefault(user));// FIXME should be deleted by an event
+                .flatMap(user -> tokenService.deleteByUser(domain, user).toSingleDefault(user));
     }
 
 
