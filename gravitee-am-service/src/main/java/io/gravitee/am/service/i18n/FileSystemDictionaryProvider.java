@@ -27,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,7 +44,29 @@ public class FileSystemDictionaryProvider implements DictionaryProvider {
 
     private final Map<String, Properties> propertiesMap;
 
-    public FileSystemDictionaryProvider(String i18nDirectory) {
+    /**
+     * Keep a FileSystemDictionaryProvider per directory.
+     */
+    private static Map<String, FileSystemDictionaryProvider> instances = new ConcurrentHashMap<>();
+
+    /**
+     * Synchronized method to initialize the FileSystemDictionaryProvider.
+     * As this provider cannot be modified once created, we introduce this method to
+     * be able to have a single instance per directory across all the Domains
+     * 
+     * @param i18nDirectory
+     * @return
+     */
+    public static synchronized FileSystemDictionaryProvider getInstance(String i18nDirectory) {
+        var instance = instances.get(i18nDirectory);
+        if (instance == null) {
+            instance = new FileSystemDictionaryProvider(i18nDirectory);
+            instances.put(i18nDirectory, instance);
+        }
+        return instance;
+    }
+
+    private FileSystemDictionaryProvider(String i18nDirectory) {
         final var directory = Paths.get(i18nDirectory).toFile();
         if (directory.exists() && directory.isDirectory()) {
             this.propertiesMap = Stream.of(directory.listFiles())
