@@ -102,7 +102,7 @@ public class ScopeUpgraderTest {
                 .thenReturn(Single.just(new Page<>(Collections.singleton(domainScope),0, 1)));
         when(applicationService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(app)));
         when(roleService.findByDomain(domain.getId())).thenReturn(Single.just(Collections.singleton(role)));
-        when(scopeService.create(any(String.class), any(NewScope.class))).thenReturn(Single.just(new Scope()));
+        when(scopeService.create(any(Domain.class), any(NewScope.class))).thenReturn(Single.just(new Scope()));
 
         scopeUpgrader.upgrade();
 
@@ -110,7 +110,7 @@ public class ScopeUpgraderTest {
         verify(scopeService, times(3)).findByDomain(domain.getId(), 0, Integer.MAX_VALUE);
         verify(applicationService, times(1)).findByDomain(domain.getId());
         verify(roleService, times(1)).findByDomain(domain.getId());
-        verify(scopeService, times(2)).create(any(String.class), any(NewScope.class));
+        verify(scopeService, times(2)).create(any(Domain.class), any(NewScope.class));
     }
 
     @Test
@@ -134,7 +134,7 @@ public class ScopeUpgraderTest {
         verify(scopeService, times(1)).findByDomain(domain.getId(), 0, Integer.MAX_VALUE);
         verify(applicationService, never()).findByDomain(domain.getId());
         verify(roleService, never()).findByDomain(domain.getId());
-        verify(scopeService, never()).create(any(String.class), any(NewScope.class));
+        verify(scopeService, never()).create(any(Domain.class), any(NewScope.class));
 
     }
 
@@ -163,7 +163,7 @@ public class ScopeUpgraderTest {
         verify(scopeService, times(1)).findByDomain(domain.getId(), 0, Integer.MAX_VALUE);
         verify(applicationService, times(1)).findByDomain(domain.getId());
         verify(roleService, times(1)).findByDomain(domain.getId());
-        verify(scopeService, never()).create(any(String.class), any(NewScope.class));
+        verify(scopeService, never()).create(any(Domain.class), any(NewScope.class));
 
     }
 
@@ -197,7 +197,7 @@ public class ScopeUpgraderTest {
         verify(scopeService, times(1)).findByDomain(domain.getId(), 0, Integer.MAX_VALUE);
         verify(applicationService, times(1)).findByDomain(domain.getId());
         verify(roleService, times(1)).findByDomain(domain.getId());
-        verify(scopeService, never()).create(any(String.class), any(NewScope.class));
+        verify(scopeService, never()).create(any(Domain.class), any(NewScope.class));
 
     }
 }

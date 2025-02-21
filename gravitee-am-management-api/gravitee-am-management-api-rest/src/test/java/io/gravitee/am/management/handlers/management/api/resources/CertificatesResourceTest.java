@@ -38,7 +38,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -182,7 +181,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just("certificate-schema")).when(certificatePluginService).getSchema(anyString());
-        doReturn(Single.just(certificate)).when(certificateService).create(eq(domainId), any(), any());
+        doReturn(Single.just(certificate)).when(certificateService).create(any(Domain.class), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -203,7 +202,7 @@ public class CertificatesResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just("certificate-schema")).when(certificatePluginService).getSchema(anyString());
-        doReturn(Single.just(certificate)).when(certificateService).rotate(eq(domainId), any());
+        doReturn(Single.just(certificate)).when(certificateService).rotate(any(Domain.class), any());
 
         final Response response = target("domains")
                 .path(domainId)

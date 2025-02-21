@@ -83,7 +83,7 @@ public class ScopeUpgrader extends AsyncUpgrader {
                 .flatMapObservable(Observable::fromIterable)
                 .filter(app -> app.getSettings() != null && app.getSettings().getOauth() != null)
                 .flatMap(app -> Observable.fromIterable(app.getSettings().getOauth().getScopes()))
-                .flatMapSingle(scope -> createScope(domain.getId(), scope))
+                .flatMapSingle(scope -> createScope(domain, scope))
                 .toList();
     }
 
@@ -93,12 +93,12 @@ public class ScopeUpgrader extends AsyncUpgrader {
                 .flatMapObservable(Observable::fromIterable)
                 .filter(role -> role.getOauthScopes() != null)
                 .flatMap(role -> Observable.fromIterable(role.getOauthScopes()))
-                .flatMapSingle(scope -> createScope(domain.getId(), scope))
+                .flatMapSingle(scope -> createScope(domain, scope))
                 .toList();
     }
 
-    private Single<Scope> createScope(String domain, String scopeKey) {
-        return scopeService.findByDomain(domain, 0, Integer.MAX_VALUE)
+    private Single<Scope> createScope(Domain domain, String scopeKey) {
+        return scopeService.findByDomain(domain.getId(), 0, Integer.MAX_VALUE)
                 .flatMap(scopes -> {
                     Optional<Scope> optScope = scopes.getData().stream().filter(scope -> scope.getKey().equalsIgnoreCase(scopeKey)).findFirst();
                     if (optScope.isEmpty()) {

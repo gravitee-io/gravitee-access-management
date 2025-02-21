@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.am.service.model.UpdateDeviceIdentifier;
 import io.reactivex.rxjava3.core.Completable;
@@ -34,17 +35,17 @@ public interface DeviceIdentifierService {
 
     Flowable<DeviceIdentifier> findByDomain(String domain);
 
-    Single<DeviceIdentifier> create(String domain, NewDeviceIdentifier newDeviceIdentifier, User principal);
+    Single<DeviceIdentifier> create(Domain domain, NewDeviceIdentifier newDeviceIdentifier, User principal);
 
-    Single<DeviceIdentifier> update(String domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier, User principal);
+    Single<DeviceIdentifier> update(Domain domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier, User principal);
 
     Completable delete(String domain, String deviceIdentifierId, User principal);
 
-    default Single<DeviceIdentifier> create(String domain, NewDeviceIdentifier newDeviceIdentifier) {
+    default Single<DeviceIdentifier> create(Domain domain, NewDeviceIdentifier newDeviceIdentifier) {
         return create(domain, newDeviceIdentifier, null);
     }
 
-    default Single<DeviceIdentifier> update(String domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier) {
+    default Single<DeviceIdentifier> update(Domain domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier) {
         return update(domain, id, updateDeviceIdentifier, null);
     }
 

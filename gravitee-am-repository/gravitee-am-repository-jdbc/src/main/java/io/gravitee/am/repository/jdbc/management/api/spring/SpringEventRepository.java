@@ -30,4 +30,7 @@ import java.time.LocalDateTime;
 public interface SpringEventRepository extends RxJava3CrudRepository<JdbcEvent, String> {
     @Query("select * from events e where e.updated_at >= :from and e.updated_at <= :to")
     Flowable<JdbcEvent> findByTimeFrame(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    @Query("select * from events e where e.updated_at >= :from and e.updated_at <= :to and (e.data_plane_id = :dataPlaneId or e.data_plane_id is null)")
+    Flowable<JdbcEvent> findByTimeFrameAndDataPlaneId(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to, @Param("dataPlaneId") String dataPlaneId);
 }

@@ -136,7 +136,7 @@ public class ScopesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> scopeService.create(domain, newScope, authenticatedUser)
+                        .flatMapSingle(existingDomain -> scopeService.create(existingDomain, newScope, authenticatedUser)
                                 .map(scope -> Response
                                         .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/scopes/" + scope.getId()))
                                         .entity(scope)

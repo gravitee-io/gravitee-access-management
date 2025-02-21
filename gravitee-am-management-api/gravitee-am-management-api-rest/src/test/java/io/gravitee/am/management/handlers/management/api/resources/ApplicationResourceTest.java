@@ -329,7 +329,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION))).when(permissionService).findAllPermissions(any(User.class), eq(ReferenceType.APPLICATION), anyString());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockClient)).when(applicationService).renewClientSecret(eq(domainId), eq(clientId), any());
+        doReturn(Single.just(mockClient)).when(applicationService).renewClientSecret(any(Domain.class), eq(clientId), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -354,7 +354,7 @@ public class ApplicationResourceTest extends JerseySpringTest {
         mockClient.setDomain(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new ApplicationNotFoundException(clientId))).when(applicationService).renewClientSecret(eq(domainId), eq(clientId), any());
+        doReturn(Single.error(new ApplicationNotFoundException(clientId))).when(applicationService).renewClientSecret(any(Domain.class), eq(clientId), any());
 
         final Response response = target("domains")
                 .path(domainId)

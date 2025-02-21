@@ -118,7 +118,7 @@ public class ThemeServiceImpl implements ThemeService {
                                             .flatMap(createdTheme -> {
                                                 Event event = new Event(THEME, new Payload(createdTheme.getId(), createdTheme.getReferenceType(), createdTheme.getReferenceId(), Action.CREATE));
                                                 return eventService
-                                                        .create(event)
+                                                        .create(event, domain)
                                                         .flatMap(createdEvent -> Single.just(createdTheme));
                                             })
                                             .onErrorResumeNext(ex -> {
@@ -171,7 +171,7 @@ public class ThemeServiceImpl implements ThemeService {
                             .flatMap(newTheme -> {
                                 Event event = new Event(THEME, new Payload(newTheme.getId(), newTheme.getReferenceType(), newTheme.getReferenceId(), Action.UPDATE));
                                 return eventService
-                                        .create(event)
+                                        .create(event, domain)
                                         .flatMap(createdEvent -> Single.just(newTheme));
                             })
                             .onErrorResumeNext(ex -> {
@@ -207,7 +207,7 @@ public class ThemeServiceImpl implements ThemeService {
             return this.themeRepository.delete(themeId)
                     .doOnComplete(() -> {
                         Event event = new Event(THEME, new Payload(theme.getId(), theme.getReferenceType(), theme.getReferenceId(), Action.DELETE));
-                        eventService.create(event).ignoreElement().subscribe();
+                        eventService.create(event, domain).ignoreElement().subscribe();
                         auditService.report(AuditBuilder
                                 .builder(ThemeAuditBuilder.class)
                                 .principal(principal)

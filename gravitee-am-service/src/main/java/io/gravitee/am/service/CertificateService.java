@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.model.NewCertificate;
 import io.gravitee.am.service.model.UpdateCertificate;
 import io.reactivex.rxjava3.core.Completable;
@@ -42,16 +43,16 @@ public interface CertificateService {
      * This method is used to create a default certificate (mainly used when creating a new domain).
      * @return
      */
-    Single<Certificate> create(String domain);
+    Single<Certificate> create(Domain domain);
 
     /**
      * Request the generation of a new system certificate for the given domain
      * @param domain
      * @return the new Certificate
      */
-    Single<Certificate> rotate(String domain, User principal);
+    Single<Certificate> rotate(Domain domain, User principal);
 
-    default Single<Certificate> create(String domain, NewCertificate newCertificate, User principal) {
+    default Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal) {
         return this.create(domain, newCertificate, principal, false);
     }
 
@@ -64,19 +65,19 @@ public interface CertificateService {
      * @param isSystem
      * @return
      */
-    Single<Certificate> create(String domain, NewCertificate newCertificate, User principal, boolean isSystem);
+    Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal, boolean isSystem);
 
-    Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal);
+    Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal);
 
     Completable delete(String certificateId, User principal);
 
     Completable updateExpirationDate(String certificateId, Date expirationDate);
 
-    default Single<Certificate> create(String domain, NewCertificate newCertificate, boolean isSystem) {
+    default Single<Certificate> create(Domain domain, NewCertificate newCertificate, boolean isSystem) {
         return create(domain, newCertificate, null, isSystem);
     }
 
-    default Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate) {
+    default Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate) {
         return update(domain, id, updateCertificate, null);
     }
 

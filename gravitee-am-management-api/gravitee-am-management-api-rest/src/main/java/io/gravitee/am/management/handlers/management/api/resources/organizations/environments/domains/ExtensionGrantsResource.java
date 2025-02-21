@@ -17,11 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewExtensionGrant;
@@ -33,7 +33,6 @@ import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -124,7 +123,7 @@ public class ExtensionGrantsResource extends AbstractResource {
                 .andThen(extensionGrantPluginService.checkPluginDeployment(newExtensionGrant.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> extensionGrantService.create(domain, newExtensionGrant, authenticatedUser)
+                        .flatMapSingle(existingDomain -> extensionGrantService.create(existingDomain, newExtensionGrant, authenticatedUser)
                                 .map(extensionGrant -> Response
                                         .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/extensionGrants/" + extensionGrant.getId()))
                                         .entity(extensionGrant)

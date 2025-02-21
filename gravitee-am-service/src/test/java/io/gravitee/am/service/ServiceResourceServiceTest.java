@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -78,7 +79,7 @@ public class ServiceResourceServiceTest {
     @Mock
     private ResourceValidator resourceValidator;
 
-    private final static String DOMAIN = "domain1";
+    private final static Domain DOMAIN = new Domain("domain1");
 
     @Test
     public void shouldFindById() {
@@ -104,8 +105,8 @@ public class ServiceResourceServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(resourceRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new ServiceResource()));
-        TestSubscriber<ServiceResource> testObserver = resourceService.findByDomain(DOMAIN).test();
+        when(resourceRepository.findByReference(ReferenceType.DOMAIN, DOMAIN.getId())).thenReturn(Flowable.just(new ServiceResource()));
+        TestSubscriber<ServiceResource> testObserver = resourceService.findByDomain(DOMAIN.getId()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -123,14 +124,14 @@ public class ServiceResourceServiceTest {
         record.setName(resource.getName());
         record.setType(resource.getType());
         record.setConfiguration(resource.getConfiguration());
-        record.setReferenceId(DOMAIN);
+        record.setReferenceId(DOMAIN.getId());
         record.setReferenceType(ReferenceType.DOMAIN);
         record.setCreatedAt(new Date());
         record.setUpdatedAt(new Date());
 
         when(resourceRepository.create(argThat(bean -> bean.getName().equals(resource.getName()))))
                 .thenReturn(Single.just(record));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<ServiceResource> testObserver = resourceService.create(DOMAIN, resource, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -170,7 +171,7 @@ public class ServiceResourceServiceTest {
         record.setName(resource.getName());
         record.setType("rtype");
         record.setConfiguration(resource.getConfiguration());
-        record.setReferenceId(DOMAIN);
+        record.setReferenceId(DOMAIN.getId());
         record.setReferenceType(ReferenceType.DOMAIN);
         record.setCreatedAt(new Date());
         record.setUpdatedAt(new Date());
@@ -178,7 +179,7 @@ public class ServiceResourceServiceTest {
         when(resourceRepository.findById(record.getId())).thenReturn(Maybe.just(record));
         when(resourceValidator.validate(any())).thenReturn(Completable.complete());
         when(resourceRepository.update(argThat(bean -> bean.getId().equals(record.getId())))).thenReturn(Single.just(record));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver<ServiceResource> testObserver = resourceService.update(DOMAIN, record.getId(), resource, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -200,7 +201,7 @@ public class ServiceResourceServiceTest {
         record.setName(resource.getName());
         record.setType("rtype");
         record.setConfiguration(resource.getConfiguration());
-        record.setReferenceId(DOMAIN);
+        record.setReferenceId(DOMAIN.getId());
         record.setReferenceType(ReferenceType.DOMAIN);
         record.setCreatedAt(new Date());
         record.setUpdatedAt(new Date());
@@ -222,7 +223,7 @@ public class ServiceResourceServiceTest {
         testObserver.assertError(ServiceResourceNotFoundException.class);
 
         verify(auditService, never()).report(any());
-        verify(eventService, never()).create(any());
+        verify(eventService, never()).create(any(), any());
         verify(resourceRepository, never()).update(any());
     }
 
@@ -230,7 +231,7 @@ public class ServiceResourceServiceTest {
     public void shouldDelete_returnNotFound() {
         when(resourceRepository.findById(any())).thenReturn(Maybe.empty());
 
-        TestObserver<Void> testObserver = resourceService.delete(DOMAIN, UUID.randomUUID().toString(), null).test();
+        TestObserver<Void> testObserver = resourceService.delete(DOMAIN.getId(), UUID.randomUUID().toString(), null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(ServiceResourceNotFoundException.class);
 
@@ -242,7 +243,7 @@ public class ServiceResourceServiceTest {
     public void shouldDelete() {
         ServiceResource record = new ServiceResource();
         record.setId("resid");
-        record.setReferenceId(DOMAIN);
+        record.setReferenceId(DOMAIN.getId());
         record.setReferenceType(ReferenceType.DOMAIN);
         record.setCreatedAt(new Date());
         record.setUpdatedAt(new Date());
@@ -250,9 +251,9 @@ public class ServiceResourceServiceTest {
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(resourceRepository.findById(record.getId())).thenReturn(Maybe.just(record));
         when(resourceRepository.delete(record.getId())).thenReturn(Completable.complete());
-        when(factorService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+        when(factorService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
 
-        TestObserver<Void> testObserver = resourceService.delete(DOMAIN, record.getId(), null).test();
+        TestObserver<Void> testObserver = resourceService.delete(DOMAIN.getId(), record.getId(), null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNoErrors();
 
@@ -263,7 +264,7 @@ public class ServiceResourceServiceTest {
     public void shouldNotDelete_CurrentlyUsed() {
         ServiceResource record = new ServiceResource();
         record.setId("resid");
-        record.setReferenceId(DOMAIN);
+        record.setReferenceId(DOMAIN.getId());
         record.setReferenceType(ReferenceType.DOMAIN);
         record.setCreatedAt(new Date());
         record.setUpdatedAt(new Date());
@@ -272,9 +273,9 @@ public class ServiceResourceServiceTest {
         Factor factor = new Factor();
         factor.setName("Factor");
         factor.setConfiguration("{\"ref\": \"" + record.getId() + "\"}");
-        when(factorService.findByDomain(DOMAIN)).thenReturn(Flowable.just(factor));
+        when(factorService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(factor));
 
-        TestObserver<Void> testObserver = resourceService.delete(DOMAIN, record.getId(), null).test();
+        TestObserver<Void> testObserver = resourceService.delete(DOMAIN.getId(), record.getId(), null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(ServiceResourceCurrentlyUsedException.class);
 
