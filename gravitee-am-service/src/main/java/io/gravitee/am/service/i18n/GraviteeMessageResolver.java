@@ -36,7 +36,7 @@ public class GraviteeMessageResolver extends AbstractMessageResolver {
     private final DynamicDictionaryProvider domainBasedDictionaryProvider;
 
     public GraviteeMessageResolver(String i18nLocation) {
-        this(new FileSystemDictionaryProvider(i18nLocation), new DomainBasedDictionaryProvider());
+        this(FileSystemDictionaryProvider.getInstance(i18nLocation), new DomainBasedDictionaryProvider());
     }
 
     public GraviteeMessageResolver(FileSystemDictionaryProvider fileSystemDictionaryProvider, DynamicDictionaryProvider domainBasedDictionaryProvider) {
