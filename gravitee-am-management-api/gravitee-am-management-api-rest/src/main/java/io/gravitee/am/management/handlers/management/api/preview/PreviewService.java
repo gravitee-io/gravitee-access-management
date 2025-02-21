@@ -82,7 +82,7 @@ public class PreviewService implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        final FileSystemDictionaryProvider fileSystemDictionaryProvider = new FileSystemDictionaryProvider(templatesDirectory.endsWith("/") ? templatesDirectory + "i18n/" : templatesDirectory + "/i18n/");
+        final FileSystemDictionaryProvider fileSystemDictionaryProvider = FileSystemDictionaryProvider.getInstance(templatesDirectory.endsWith("/") ? templatesDirectory + "i18n/" : templatesDirectory + "/i18n/");
         if (this.templateEngine instanceof SpringTemplateEngine) {
             this.graviteeMessageResolver = new SpringGraviteeMessageSource(fileSystemDictionaryProvider, domainBasedDictionaryProvider);
             ((SpringTemplateEngine) this.templateEngine).setMessageSource((MessageSource) this.graviteeMessageResolver);
