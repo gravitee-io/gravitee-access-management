@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.gateway.handler.common.service.mfa;
 
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.RateLimiterServiceImpl;
 import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.repository.gateway.api.RateLimitRepository;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.impl.RateLimiterServiceImpl;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;

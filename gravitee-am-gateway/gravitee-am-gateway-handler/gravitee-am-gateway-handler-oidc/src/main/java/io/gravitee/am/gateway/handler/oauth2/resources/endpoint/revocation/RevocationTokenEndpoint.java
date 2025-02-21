@@ -20,7 +20,7 @@ import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenRequest;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -38,12 +38,12 @@ import org.slf4j.LoggerFactory;
 public class RevocationTokenEndpoint implements Handler<RoutingContext> {
 
     private final static Logger logger = LoggerFactory.getLogger(RevocationTokenEndpoint.class);
-    private RevocationTokenService revocationTokenService;
+    private OAuthRevocationTokenService revocationTokenService;
 
     public RevocationTokenEndpoint() {
     }
 
-    public RevocationTokenEndpoint(RevocationTokenService revocationTokenService) {
+    public RevocationTokenEndpoint(OAuthRevocationTokenService revocationTokenService) {
         this.revocationTokenService = revocationTokenService;
     }
 
