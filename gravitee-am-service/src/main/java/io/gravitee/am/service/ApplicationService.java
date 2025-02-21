@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewApplication;
@@ -30,6 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -65,7 +67,7 @@ public interface ApplicationService {
 
     Single<Application> updateType(String domain, String id, ApplicationType type, User principal);
 
-    Single<Application> patch(String domain, String id, PatchApplication patchApplication, User principal);
+    Single<Application> patch(Domain domain, String id, PatchApplication patchApplication, User principal, BiFunction<Domain, Application, Completable> revokeTokenProcessor);
 
     Single<Application> renewClientSecret(String domain, String id, User principal);
 
@@ -87,10 +89,6 @@ public interface ApplicationService {
 
     default Single<Application> create(String domain, NewApplication newApplication) {
         return create(domain, newApplication, null);
-    }
-
-    default Single<Application> patch(String domain, String id, PatchApplication patchApplication) {
-        return patch(domain, id, patchApplication, null);
     }
 
     default Single<Application> renewClientSecret(String domain, String id) {

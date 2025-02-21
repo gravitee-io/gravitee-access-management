@@ -27,6 +27,7 @@ import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
@@ -51,9 +52,8 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.service.RateLimiterService;
-import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.AbstractNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
@@ -157,7 +157,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
     private PasswordPolicyManager passwordPolicyManager;
 
     @Autowired
-    private TokenService tokenService;
+    private RevokeTokenGatewayService tokenService;
 
     @Override
     public void afterPropertiesSet() throws Exception {

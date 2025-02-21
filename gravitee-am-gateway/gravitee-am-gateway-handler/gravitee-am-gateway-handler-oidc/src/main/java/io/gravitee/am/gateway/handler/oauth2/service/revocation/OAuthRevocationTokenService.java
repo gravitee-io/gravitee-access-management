@@ -13,39 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.common.event;
+package io.gravitee.am.gateway.handler.oauth2.service.revocation;
+
+import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Completable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public enum Type {
+public interface OAuthRevocationTokenService {
 
-    DOMAIN,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    RESOURCE,
-    FLOW,
-    ALERT_TRIGGER,
-    ALERT_NOTIFIER,
-    BOT_DETECTION,
-    AUTH_DEVICE_NOTIFIER,
-    DEVICE_IDENTIFIER,
-    I18N_DICTIONARY,
-    THEME,
-    PASSWORD_POLICY,
-    UNKNOWN, // used during unmarshalling to avoid Exception which will block the sync process
-    REVOKE_TOKEN
+    Completable revoke(RevocationTokenRequest request, Client client);
 }

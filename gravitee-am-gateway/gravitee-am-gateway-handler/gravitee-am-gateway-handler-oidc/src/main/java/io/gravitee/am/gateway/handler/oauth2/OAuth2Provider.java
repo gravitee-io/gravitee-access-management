@@ -61,7 +61,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -126,7 +126,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private IntrospectionService introspectionService;
 
     @Autowired
-    private RevocationTokenService revocationTokenService;
+    private OAuthRevocationTokenService revocationTokenService;
 
     @Autowired
     private OpenIDDiscoveryService openIDDiscoveryService;

@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service;
+package io.gravitee.am.gateway.handler.common.service.mfa;
 
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.VerifyAttemptServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.gateway.api.VerifyAttemptRepository;
-import io.gravitee.am.service.impl.VerifyAttemptServiceImpl;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;

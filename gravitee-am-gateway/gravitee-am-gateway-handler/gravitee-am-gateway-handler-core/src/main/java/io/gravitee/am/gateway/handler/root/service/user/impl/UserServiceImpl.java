@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
@@ -57,7 +58,6 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
@@ -158,7 +158,7 @@ public class UserServiceImpl implements UserService {
     private JWTService jwtService;
 
     @Autowired
-    private TokenService tokenService;
+    private RevokeTokenGatewayService tokenService;
 
     @Autowired
     private EmailValidator emailValidator;

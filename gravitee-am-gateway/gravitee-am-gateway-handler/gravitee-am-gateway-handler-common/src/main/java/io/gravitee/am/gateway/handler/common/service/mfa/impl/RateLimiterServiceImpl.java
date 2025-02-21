@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.impl;
+package io.gravitee.am.gateway.handler.common.service.mfa.impl;
 
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.repository.gateway.api.RateLimitRepository;
 import io.gravitee.am.repository.gateway.api.search.RateLimitCriteria;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.Optional;
@@ -40,10 +38,8 @@ import java.util.Optional;
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Component
+@Slf4j
 public class RateLimiterServiceImpl implements RateLimiterService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RateLimiterServiceImpl.class);
-
     @Value("${mfa_rate.enabled:false}")
     private boolean isEnabled;
 
@@ -68,26 +64,26 @@ public class RateLimiterServiceImpl implements RateLimiterService {
     @Override
     public Single<Boolean> tryConsume(String userId, String factorId, String client, String domainId) {
         if (timePeriod <= 0 || limit <= 0) {
-            LOGGER.warn("Either timePeriod or limit is set to 0. Current value timePeriod: {}, limit: {}", limit, timePeriod);
+            log.warn("Either timePeriod or limit is set to 0. Current value timePeriod: {}, limit: {}", limit, timePeriod);
             return Single.just(false);
         }
 
         final RateLimitCriteria criteria = buildCriteria(userId, factorId, client);
         return getRateLimit(criteria, domainId).flatMap(rateLimit -> {
-            LOGGER.debug("RateLimit value: [{}]", rateLimit);
+            log.debug("RateLimit value: [{}]", rateLimit);
             return Single.just(rateLimit.isAllowRequest());
         });
     }
 
     @Override
     public Completable deleteByUser(User user) {
-        LOGGER.debug("deleteByUser userID: {}", user.getId());
+        log.debug("deleteByUser userID: {}", user.getId());
         return rateLimitRepository.deleteByUser(user.getId());
     }
 
     @Override
     public Completable deleteByDomain(Domain domain, ReferenceType referenceType) {
-        LOGGER.debug("deleteByDomain domainId: {}", domain.getId());
+        log.debug("deleteByDomain domainId: {}", domain.getId());
         return rateLimitRepository.deleteByDomain(domain.getId(), referenceType);
     }
 
@@ -121,7 +117,7 @@ public class RateLimiterServiceImpl implements RateLimiterService {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
-                    LOGGER.error("An error occurs while trying to add/update rate limit", ex);
+                    log.error("An error occurs while trying to add/update rate limit", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to add/update rate limit.", ex));
                 });
     }

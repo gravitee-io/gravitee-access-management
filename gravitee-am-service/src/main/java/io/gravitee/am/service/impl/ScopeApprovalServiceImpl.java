@@ -21,9 +21,8 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.token.RevokeToken;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
-import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
-import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -42,13 +41,13 @@ import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,14 +59,6 @@ import java.util.Set;
 public class ScopeApprovalServiceImpl implements ScopeApprovalService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(ScopeApprovalServiceImpl.class);
-
-    @Lazy
-    @Autowired
-    private AccessTokenRepository accessTokenRepository;
-
-    @Lazy
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     private DataPlaneRegistry dataPlaneRegistry;
@@ -134,7 +125,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Completable revokeByConsent(Domain domain, UserId userId, String consentId, User principal) {
+    public Completable revokeByConsent(Domain domain, UserId userId, String consentId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal) {
         LOGGER.debug("Revoke approval for consent: {} and user: {}", consentId, userId);
         final var scopeApprovalRepository = dataPlaneRegistry.getScopeApprovalRepository(domain);
         return dataPlaneRegistry.getUserRepository(domain).findById(userId)
@@ -154,8 +145,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                                         .principal(principal)
                                         .user(user)
                                         .throwable(throwable)))
-                                .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId()),
-                                        refreshTokenRepository.deleteByDomainIdClientIdAndUserId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId())))))
+                                .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUserAndClientId(scopeApproval.getDomain(), scopeApproval.getClientId(), scopeApproval.getUserId())))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -168,7 +158,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Completable revokeByUser(Domain domain, UserId userId, User principal) {
+    public Completable revokeByUser(Domain domain, UserId userId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal) {
         LOGGER.debug("Revoke approvals for domain: {} and user: {}", domain, userId);
         final var scopeApprovalRepository = dataPlaneRegistry.getScopeApprovalRepository(domain);
         return dataPlaneRegistry.getUserRepository(domain).findById(userId)
@@ -187,8 +177,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                                         .principal(principal)
                                         .user(user)
                                         .throwable(throwable))))
-                        .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdAndUserId(domain.getId(), userId),
-                                refreshTokenRepository.deleteByDomainIdAndUserId(domain.getId(), userId))))
+                        .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUser(domain.getId(), userId))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);
@@ -201,7 +190,7 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
     }
 
     @Override
-    public Completable revokeByUserAndClient(Domain domain, UserId userId, String clientId, User principal) {
+    public Completable revokeByUserAndClient(Domain domain, UserId userId, String clientId, BiFunction<Domain, RevokeToken, Completable> revokeTokenProcessor, User principal) {
         LOGGER.debug("Revoke approvals for domain: {}, user: {} and client: {}", domain, userId, clientId);
         final var scopeApprovalRepository = dataPlaneRegistry.getScopeApprovalRepository(domain);
         return dataPlaneRegistry.getUserRepository(domain).findById(userId)
@@ -221,8 +210,8 @@ public class ScopeApprovalServiceImpl implements ScopeApprovalService {
                                         .principal(principal)
                                         .user(user)
                                         .throwable(throwable))))
-                        .andThen(Completable.mergeArrayDelayError(accessTokenRepository.deleteByDomainIdClientIdAndUserId(domain.getId(), clientId, userId),
-                                refreshTokenRepository.deleteByDomainIdClientIdAndUserId(domain.getId(), clientId, userId))))
+
+                        .andThen(revokeTokenProcessor.apply(domain, RevokeToken.byUserAndClientId(domain.getId(), clientId, userId))))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Completable.error(ex);

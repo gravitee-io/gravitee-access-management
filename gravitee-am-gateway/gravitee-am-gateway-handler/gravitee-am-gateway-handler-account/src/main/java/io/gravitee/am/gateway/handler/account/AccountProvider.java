@@ -28,7 +28,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthP
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorHandler;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.Router;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;

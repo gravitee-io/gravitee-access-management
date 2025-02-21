@@ -16,36 +16,23 @@
 package io.gravitee.am.common.event;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * This event is used to ask for a token to be revoked by the Gateway.
+ * This is typically used by the Management API when a user is deleted
+ * to notify the Gateway than the delete need to be done no the AccessTokenRepository
+ * which is linked to the OAuth2 scope. This event has been introduced with the DataPlane
+ * split as due to this split Management API doesn't have direct access to the OAuth2 & Gateway
+ * repository scopes.
+ *
  * @author GraviteeSource Team
  */
-public enum Type {
+public enum RevokeTokenEvent {
 
-    DOMAIN,
-    APPLICATION,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    RESOURCE,
-    FLOW,
-    ALERT_TRIGGER,
-    ALERT_NOTIFIER,
-    BOT_DETECTION,
-    AUTH_DEVICE_NOTIFIER,
-    DEVICE_IDENTIFIER,
-    I18N_DICTIONARY,
-    THEME,
-    PASSWORD_POLICY,
-    UNKNOWN, // used during unmarshalling to avoid Exception which will block the sync process
-    REVOKE_TOKEN
+    REVOKE;
+
+    public static RevokeTokenEvent actionOf(Action action) {
+        return switch (action) {
+            case DELETE -> RevokeTokenEvent.REVOKE;
+            default -> null;
+        };
+    }
 }

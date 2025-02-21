@@ -47,6 +47,7 @@ import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.DeviceManagementService;
@@ -78,7 +79,6 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.UserEmail;
@@ -167,7 +167,7 @@ public abstract class JerseySpringTest {
     protected CertificatePluginService certificatePluginService;
 
     @Autowired
-    protected TokenService tokenService;
+    protected RevokeTokenManagementService tokenService;
 
     @Autowired
     protected ExtensionGrantPluginService extensionGrantPluginService;
@@ -397,8 +397,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public TokenService tokenService() {
-            return mock(TokenService.class);
+        public RevokeTokenManagementService tokenService() {
+            return mock(RevokeTokenManagementService.class);
         }
 
         @Bean
