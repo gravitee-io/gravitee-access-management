@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
-import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.UserActivityService;
@@ -24,7 +22,6 @@ import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
-import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -40,7 +37,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.USER_ACTIVITY_ENABLED;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_ACTIVITY_RETENTION_TIME;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_IP_LOCATION;
 import static io.gravitee.am.common.utils.ConstantKeys.USER_CONSENT_USER_AGENT;
-import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static java.lang.Boolean.TRUE;
 
 /**
@@ -91,20 +87,6 @@ public abstract class AbstractEndpoint {
     protected Single<Buffer> renderPage(Map<String, Object> data, Client client) {
         return templateEngine.render(data, getTemplateFileName(client));
     }
-
-    protected final String getReturnUrl(RoutingContext context, MultiMap queryParams) {
-        // look into the session
-        if (context.session().get(ConstantKeys.RETURN_URL_KEY) != null) {
-            return context.session().get(ConstantKeys.RETURN_URL_KEY);
-        }
-        // look into the request parameters
-        if (context.request().getParam(ConstantKeys.RETURN_URL_KEY) != null) {
-            return context.request().getParam(ConstantKeys.RETURN_URL_KEY);
-        }
-        // fallback to the OAuth 2.0 authorize endpoint
-        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
-    }
-
 
     protected void addUserActivityTemplateVariables(RoutingContext routingContext, UserActivityService userActivityService) {
         routingContext.put(USER_ACTIVITY_ENABLED, userActivityService.canSaveUserActivity());

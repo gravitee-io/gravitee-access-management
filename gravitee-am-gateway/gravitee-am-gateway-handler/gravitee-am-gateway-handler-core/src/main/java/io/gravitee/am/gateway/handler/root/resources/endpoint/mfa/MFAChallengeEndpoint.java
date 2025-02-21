@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.session.SessionManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.ApplicationFactorSettings;
@@ -116,6 +117,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTER
 import static io.gravitee.am.factor.api.FactorContext.KEY_USER;
 import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.getEvaluableAttributes;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.getReturnUrl;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
 import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler.getOrigin;
@@ -146,6 +148,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
     private final AuditService auditService;
+    private final SessionManager sessionManager;
 
     public MFAChallengeEndpoint(FactorManager factorManager,
                                 UserService userService,
@@ -169,6 +172,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         this.verifyAttemptService = verifyAttemptService;
         this.emailService = emailService;
         this.auditService = auditService;
+        this.sessionManager = new SessionManager();
     }
 
     @Override
@@ -739,14 +743,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     }
 
     private void cleanSession(RoutingContext ctx) {
-        ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
-        ctx.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-
-        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_ID_KEY);
-        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_SECURITY_VALUE_KEY);
-        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_PHONE_NUMBER);
-        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER);
-        ctx.session().remove(ConstantKeys.ENROLLED_FACTOR_EMAIL_ADDRESS);
+        sessionManager.cleanSessionOnMfaChallenge(ctx);
     }
 
     private boolean userHasFido2Factor(io.gravitee.am.model.User endUser) {
