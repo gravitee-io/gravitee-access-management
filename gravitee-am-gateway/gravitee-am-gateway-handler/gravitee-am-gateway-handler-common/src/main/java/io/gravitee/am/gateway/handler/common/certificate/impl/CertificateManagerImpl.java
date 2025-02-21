@@ -48,6 +48,7 @@ import java.security.Key;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -141,6 +142,10 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
         logger.info("Dispose event listener for certificate events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, CertificateEvent.class, domain.getId());
+        for (Map.Entry<String, Certificate> entry: certificates.entrySet()) {
+            certificateProviderManager.delete(entry.getKey());
+        }
+        certificates.clear();
     }
 
     @Override
