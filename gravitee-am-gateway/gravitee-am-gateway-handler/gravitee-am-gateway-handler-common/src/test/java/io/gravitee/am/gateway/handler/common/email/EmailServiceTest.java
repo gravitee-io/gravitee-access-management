@@ -113,7 +113,7 @@ public class EmailServiceTest {
                 new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher("html"), tcHTML));
         freemarkerConfiguration.setTemplateLoader(new FileTemplateLoader(new File("src/test/resources/templates")));
 
-        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(new FileSystemDictionaryProvider("src/test/resources/templates/i18n"));
+        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(FileSystemDictionaryProvider.getInstance("src/test/resources/templates/i18n"));
 
         when(this.graviteeMessageResolver.getDynamicDictionaryProvider()).thenReturn(this.domainBasedDictionaryProvider);
 

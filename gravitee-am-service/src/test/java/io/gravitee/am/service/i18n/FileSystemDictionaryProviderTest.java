@@ -53,7 +53,7 @@ public class FileSystemDictionaryProviderTest {
 
     @Before
     public void initProvider() {
-        this.directoryProvider = new FileSystemDictionaryProvider(this.directory);
+        this.directoryProvider = FileSystemDictionaryProvider.getInstance(this.directory);
     }
 
     @Test
