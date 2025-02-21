@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
+import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -192,6 +193,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         components.add(ThemeManager.class);
         components.add(ResourceManager.class);
         components.add(AuthenticationDeviceNotifierManager.class);
+        components.add(PasswordPolicyManager.class);
 
         components.forEach(componentClass -> {
             LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);
