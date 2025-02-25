@@ -1,8 +1,8 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Rest API - MongoDB" type="Application" factoryName="Application" folderName="Rest API">
+  <configuration default="false" name="Rest API - MongoDB" type="Application" factoryName="Application" folderName="AM - Mongo Backend">
     <option name="MAIN_CLASS_NAME" value="io.gravitee.am.management.standalone.container.ManagementContainer" />
     <module name="gravitee-am-management-api-standalone-container" />
-    <option name="VM_PARAMETERS" value="-Dgravitee.home=$ProjectFileDir$/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/target/distribution" />
+    <option name="VM_PARAMETERS" value="-Xmx128m -Dgravitee.home=$ProjectFileDir$/gravitee-am-management-api/gravitee-am-management-api-standalone/gravitee-am-management-api-standalone-distribution/target/distribution" />
     <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
     <method v="2">
       <option name="Make" enabled="true" />
