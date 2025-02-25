@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.getReturnUrl;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

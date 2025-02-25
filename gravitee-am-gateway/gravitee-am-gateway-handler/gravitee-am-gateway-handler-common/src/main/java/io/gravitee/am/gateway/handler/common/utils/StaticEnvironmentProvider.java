@@ -19,6 +19,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.springframework.core.env.Environment;
 
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.OIDC_SANITIZE_PARAM_ENCODING;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class StaticEnvironmentProvider {
 
@@ -33,7 +35,7 @@ public class StaticEnvironmentProvider {
 
     public static boolean sanitizeParametersEncoding() {
         if (sanitizeParametersEncoding == null) {
-            sanitizeParametersEncoding = getEnvironmentProperty("legacy.openid.sanitizeParametersEncoding", boolean.class, true);
+            sanitizeParametersEncoding = OIDC_SANITIZE_PARAM_ENCODING.from(env);
         }
         return sanitizeParametersEncoding;
     }

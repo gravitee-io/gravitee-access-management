@@ -48,6 +48,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KE
 import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.STATUS_SIGNED_IN;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
+import static io.gravitee.am.gateway.handler.common.vertx.utils.RedirectHelper.getReturnUrl;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.LOGGER;
 import static io.gravitee.am.gateway.handler.root.RootProvider.PATH_LOGIN_CALLBACK;

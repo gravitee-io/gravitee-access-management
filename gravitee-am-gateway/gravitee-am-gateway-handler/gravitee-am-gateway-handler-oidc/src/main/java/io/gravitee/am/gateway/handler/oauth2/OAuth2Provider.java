@@ -68,6 +68,7 @@ import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
+import io.gravitee.am.gateway.handler.root.resources.handler.BypassDirectRequestHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.TransactionIdHandler;
@@ -91,6 +92,10 @@ import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
+
+import static io.gravitee.am.gateway.core.LegacySettingsKeys.HANDLER_SKIP_BYPASS_DIRECT_REQUEST_HDL;
+
+//import static io.gravitee.am.gateway.core.LegacySettingsKeys.HANDLER_SKIP_BYPASS_DIRECT_REQUEST_HDL;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -281,7 +286,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // Authorization consent endpoint
         Handler<RoutingContext> userConsentPrepareContextHandler = new UserConsentPrepareContextHandler();
+        final var bypassDirectrequestHandler = new BypassDirectRequestHandler(HANDLER_SKIP_BYPASS_DIRECT_REQUEST_HDL.from(environment));
         oauth2Router.route(HttpMethod.GET, "/consent")
+                .handler(bypassDirectrequestHandler)
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
@@ -293,6 +300,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(new UserConsentEndpoint(userConsentService, thymeleafTemplateEngine, domain));
         oauth2Router.route(HttpMethod.POST, "/consent")
+                .handler(bypassDirectrequestHandler)
                 .handler(new AuthorizationRequestParseClientHandler(clientSyncService))
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)

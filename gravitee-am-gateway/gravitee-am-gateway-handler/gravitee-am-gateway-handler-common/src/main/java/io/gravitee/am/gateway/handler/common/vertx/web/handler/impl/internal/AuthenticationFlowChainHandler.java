@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
 import java.util.List;
+
+import static org.springframework.util.StringUtils.hasText;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -34,6 +37,10 @@ public class AuthenticationFlowChainHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
+        if (routingContext.session() != null && !hasText(routingContext.session().get(ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE))) {
+            routingContext.session().put(ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE, ConstantKeys.SESSION_KEY_AUTH_FLOW_STATE_ONGOING);
+        }
+
         new AuthenticationFlowChain(steps)
                 .exitHandler(stepHandler -> stepHandler.handle(routingContext))
                 .handle(routingContext);

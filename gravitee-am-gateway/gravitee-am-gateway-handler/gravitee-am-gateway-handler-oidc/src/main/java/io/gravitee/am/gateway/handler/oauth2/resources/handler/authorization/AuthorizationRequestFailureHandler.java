@@ -26,6 +26,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.session.SessionManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.JWTOAuth2Exception;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
@@ -85,6 +86,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     private final OpenIDDiscoveryService openIDDiscoveryService;
     private final Environment environment;
     private final int codeValidityInSec;
+    private final SessionManager sessionManager;
 
     public AuthorizationRequestFailureHandler(final OpenIDDiscoveryService openIDDiscoveryService,
                                               final JWTService jwtService,
@@ -95,6 +97,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
         this.jweService = jweService;
         this.environment = environment;
         this.codeValidityInSec = this.environment.getProperty("authorization.code.validity", Integer.class, 60000) / 1000;
+        this.sessionManager = new SessionManager();
     }
 
     @Override
@@ -253,20 +256,7 @@ public class AuthorizationRequestFailureHandler implements Handler<RoutingContex
     }
 
     private void cleanSession(RoutingContext context) {
-        if (context.session() != null) {
-            context.session().remove(ConstantKeys.TRANSACTION_ID_KEY);
-            context.session().remove(ConstantKeys.USER_CONSENT_COMPLETED_KEY);
-            context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_ID_CONTEXT_KEY);
-            context.session().remove(ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY);
-            context.session().remove(ConstantKeys.PASSWORDLESS_AUTH_ACTION_KEY);
-            context.session().remove(ConstantKeys.MFA_FACTOR_ID_CONTEXT_KEY);
-            context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY);
-            context.session().remove(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY);
-            context.session().remove(ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY);
-            context.session().remove(ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY);
-            context.session().remove(ConstantKeys.USER_LOGIN_COMPLETED_KEY);
-            context.session().remove(ConstantKeys.MFA_ENROLL_CONDITIONAL_SKIPPED_KEY);
-        }
+        sessionManager.cleanSessionAfterAuth(context);
     }
 
     private void doRedirect(RoutingContext context, String url) {
