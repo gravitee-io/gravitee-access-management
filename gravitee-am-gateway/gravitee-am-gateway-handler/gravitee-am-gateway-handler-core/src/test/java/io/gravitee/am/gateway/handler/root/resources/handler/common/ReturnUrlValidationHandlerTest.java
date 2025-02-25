@@ -128,5 +128,26 @@ public class ReturnUrlValidationHandlerTest {
         Mockito.verify(ctx, Mockito.times(1)).fail(Mockito.argThat(th -> th instanceof ReturnUrlMismatchException));
     }
 
+    @Test
+    public void when_return_url_is_present_but_contains_user_info_should_fail(){
+        Domain domain = new Domain();
+        ReturnUrlValidationHandler handler = new ReturnUrlValidationHandler(domain);
+
+        RoutingContext ctx = Mockito.mock();
+        HttpServerRequest request = Mockito.mock();
+        Mockito.when(ctx.request()).thenReturn(request);
+        Mockito.when(ctx.get(CONTEXT_PATH)).thenReturn("/goto");
+        Mockito.when(request.scheme()).thenReturn("http");
+        Mockito.when(request.host()).thenReturn("somedomain.com");
+        Mockito.when(request.getParam("return_url")).thenReturn("http://user@somedomain.com/goto");
+
+        Client client = new Client();
+        Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+
+        handler.handle(ctx);
+
+        Mockito.verify(ctx, Mockito.times(1)).fail(Mockito.argThat(th -> th instanceof ReturnUrlMismatchException));
+    }
+
 
 }
