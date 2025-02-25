@@ -28,8 +28,6 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOpti
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -41,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 
 import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
 
@@ -121,7 +118,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
             configMap.put("uri", mongoUri);
             configMap.put("host", (mongoHost != null) ? mongoHost : "");
-            configMap.put("port", mongoPort);
+            configMap.put("port", Integer.parseInt(mongoPort));
             configMap.put("enableCredentials", false);
             configMap.put("database", mongoDBName);
             configMap.put("usersCollection", "idp_users_" + lowerCaseId);

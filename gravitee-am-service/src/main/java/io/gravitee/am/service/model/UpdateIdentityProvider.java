@@ -29,7 +29,7 @@ import java.util.Map;
  */
 @Getter
 @Setter
-public class UpdateIdentityProvider implements PluginConfigurationPayload {
+public class UpdateIdentityProvider {
 
     @NotNull
     private String name;

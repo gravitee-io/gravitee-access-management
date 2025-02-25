@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -63,10 +64,12 @@ class ReporterServiceTest {
 
     @Mock
     private EventService eventService;
+    @Mock
+    private PluginConfigurationValidationService validationService;
     private final MockEnvironment environment = new MockEnvironment();
 
     @InjectMocks
-    private ReporterService reporterService = new ReporterServiceImpl(new RepositoriesEnvironment(environment), reporterRepository, null, null);
+    private ReporterService reporterService = new ReporterServiceImpl(new RepositoriesEnvironment(environment), reporterRepository, null, null, validationService);
 
 
     @Test
@@ -99,6 +102,26 @@ class ReporterServiceTest {
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertError(ex -> ex instanceof TechnicalManagementException && ex.getCause() instanceof ReporterConfigurationException);
 
+    }
+
+    @Test
+    void should_validate_config_with_schema() throws Exception{
+        final var reporter = new NewReporter();
+        reporter.setEnabled(true);
+        reporter.setName("Test");
+        reporter.setType("reporter-am-file");
+        reporter.setConfiguration("{\"filename\":\"9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        final var createdReporter = reporterService.create(Reference.domain("domain"), reporter).blockingGet();
+
+        final var observer = reporterService.update(createdReporter.getReference(), createdReporter.getId(), new UpdateReporter(), null, false).test();
+
+        observer.await(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+
+        verify(validationService).validate(any(), any());
     }
 
     @Test

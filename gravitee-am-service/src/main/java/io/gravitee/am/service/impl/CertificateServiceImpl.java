@@ -41,6 +41,7 @@ import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.CertificateNotFoundException;
@@ -149,6 +150,9 @@ public class CertificateServiceImpl implements CertificateService {
 
     @Autowired
     private CertificatePluginManager certificatePluginManager;
+
+    @Autowired
+    private PluginConfigurationValidationService validationService;
 
     @Autowired
     private Environment environment;
@@ -288,6 +292,9 @@ public class CertificateServiceImpl implements CertificateService {
                 .flatMap(oldCertificate -> {
                     try {
                         var certificate = getCertificateToUpdate(updateCertificate, oldCertificate);
+                        // for update validate config against schema here instead of the resource
+                        // as certificate may be system certificate so on the UI config is empty.
+                        validationService.validate(certificate.getType(), certificate.getConfiguration());
                         return certificateRepository.update(validate(certificate));
                     } catch (IOException | CertificateException ex) {
                         log.error("An error occurs while trying to update certificate binaries", ex);

@@ -116,6 +116,9 @@ public class CertificateServiceTest {
     private CertificatePluginService certificatePluginService;
 
     @Mock
+    private PluginConfigurationValidationService validationService;
+
+    @Mock
     private TaskManager taskManager;
 
     @Mock
@@ -320,6 +323,7 @@ public class CertificateServiceTest {
         verify(certificatePluginManager, times(1)).validate(any());
         verify(certificateRepository, times(1)).update(any());
         verify(eventService, times(1)).create(any());
+        verify(validationService).validate(any(), any());
     }
 
     @Test

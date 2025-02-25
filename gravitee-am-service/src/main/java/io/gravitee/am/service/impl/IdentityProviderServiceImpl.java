@@ -35,6 +35,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
@@ -84,17 +85,21 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private final EventService eventService;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
+    private final PluginConfigurationValidationService validationService;
 
     public IdentityProviderServiceImpl(@Lazy IdentityProviderRepository identityProviderRepository,
                                        ApplicationService applicationService,
                                        EventService eventService,
                                        AuditService auditService,
-                                       ObjectMapper objectMapper) {
+                                       ObjectMapper objectMapper,
+                                       PluginConfigurationValidationService validationService
+    ) {
         this.identityProviderRepository = identityProviderRepository;
         this.applicationService = applicationService;
         this.eventService = eventService;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
+        this.validationService = validationService;
     }
 
     @Override
@@ -198,6 +203,10 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     identityToUpdate.setDomainWhitelist(ofNullable(updateIdentityProvider.getDomainWhitelist()).orElse(List.of()));
                     identityToUpdate.setUpdatedAt(new Date());
                     identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(identityToUpdate.getConfiguration()));
+
+                    // for update validate config against schema here instead of the resource
+                    // as idp may be system idp so on the UI config is empty.
+                    validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
 
                     return identityProviderRepository.update(identityToUpdate)
                             .flatMap(identityProvider1 -> {

@@ -28,6 +28,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.TaskManager;
 import io.gravitee.am.service.exception.CertificateWithApplicationsException;
 import io.gravitee.am.service.exception.CertificateWithIdpException;
@@ -78,6 +79,9 @@ class CertificateServiceImplTest {
 
     @Mock
     private TaskManager taskManager;
+
+    @Mock
+    private PluginConfigurationValidationService validationService;
 
     @InjectMocks
     private CertificateServiceImpl service;
