@@ -21,14 +21,12 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.List;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static org.junit.jupiter.api.Assertions.*;
 
 public class ReturnUrlValidationHandlerTest {
 
@@ -121,6 +119,27 @@ public class ReturnUrlValidationHandlerTest {
 
         Client client = new Client();
         client.setRedirectUris(List.of("http://onet.pl"));
+        Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+
+        handler.handle(ctx);
+
+        Mockito.verify(ctx, Mockito.times(1)).fail(Mockito.argThat(th -> th instanceof ReturnUrlMismatchException));
+    }
+
+    @Test
+    public void when_return_url_is_present_but_contains_user_info_should_fail(){
+        Domain domain = new Domain();
+        ReturnUrlValidationHandler handler = new ReturnUrlValidationHandler(domain);
+
+        RoutingContext ctx = Mockito.mock();
+        HttpServerRequest request = Mockito.mock();
+        Mockito.when(ctx.request()).thenReturn(request);
+        Mockito.when(ctx.get(CONTEXT_PATH)).thenReturn("/goto");
+        Mockito.when(request.scheme()).thenReturn("http");
+        Mockito.when(request.host()).thenReturn("somedomain.com");
+        Mockito.when(request.getParam("return_url")).thenReturn("http://user@somedomain.com/goto");
+
+        Client client = new Client();
         Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
 
         handler.handle(ctx);
