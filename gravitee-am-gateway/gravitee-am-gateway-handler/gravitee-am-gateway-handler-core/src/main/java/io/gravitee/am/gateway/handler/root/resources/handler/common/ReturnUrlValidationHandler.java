@@ -22,6 +22,10 @@ import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +35,7 @@ import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderReques
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.*;
 
 @RequiredArgsConstructor
+@Slf4j
 public class ReturnUrlValidationHandler implements Handler<RoutingContext> {
     private final Domain domain;
 
@@ -40,13 +45,19 @@ public class ReturnUrlValidationHandler implements Handler<RoutingContext> {
         if (returnUrl == null) {
             context.next();
         } else {
-            if (checkProxyRequest(returnUrl, context) || checkRegisteredRedirectUris(returnUrl, context)) {
-                context.next();
-            } else {
+            if (!checkProxyRequest(returnUrl, context) && !checkRegisteredRedirectUris(returnUrl, context)) {
                 context.fail(new ReturnUrlMismatchException(String.format("The return_url [ %s ] MUST match the registered callback URL for this application OR this request", returnUrl)));
+            }
+            else if (userInfoPresent(returnUrl)) {
+                context.fail(new ReturnUrlMismatchException(String.format("The return_url [ %s ] MUST NOT contain userInfo part", returnUrl)));
+            }
+            else {
+                context.next();
             }
         }
     }
+
+
 
     private boolean checkProxyRequest(String requestedReturnUrl, RoutingContext context) {
         requestedReturnUrl = requestedReturnUrl.endsWith("/") ? requestedReturnUrl : requestedReturnUrl + "/";
@@ -61,5 +72,15 @@ public class ReturnUrlValidationHandler implements Handler<RoutingContext> {
         return redirectUris
                 .stream()
                 .anyMatch(registeredClientUri -> redirectMatches(requestedReturnUrl, registeredClientUri, uriStrictMatch));
+    }
+
+    private boolean userInfoPresent(String urlAddress) {
+        try {
+            URL url = new URL(urlAddress);
+            return url.getUserInfo() != null;
+        } catch (MalformedURLException ex){
+            log.debug("Return URL malformed", ex);
+            return true;
+        }
     }
 }
