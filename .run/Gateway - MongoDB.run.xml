@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Gateway - MongoDB" type="Application" factoryName="Application" folderName="AM - Mongo Backend">
+    <option name="MAIN_CLASS_NAME" value="io.gravitee.am.gateway.container.GatewayContainer" />
+    <module name="gravitee-am-gateway-standalone-container" />
+    <option name="VM_PARAMETERS" value="-Xmx128m -Dgravitee.home=$ProjectFileDir$/gravitee-am-gateway/gravitee-am-gateway-standalone/gravitee-am-gateway-standalone-distribution/target/distribution" />
+    <option name="WORKING_DIRECTORY" value="$ProjectFileDir$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
