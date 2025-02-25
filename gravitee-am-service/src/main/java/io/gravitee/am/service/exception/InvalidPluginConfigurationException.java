@@ -13,35 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model;
+package io.gravitee.am.service.exception;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import io.gravitee.common.http.HttpStatusCode;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-@Getter
-@Setter
-public class UpdateCertificate {
+public class InvalidPluginConfigurationException extends AbstractManagementException {
 
-    @NotBlank
-    private String name;
-
-    @NotBlank
-    private String type;
-
-    @NotNull
-    private String configuration;
+    protected InvalidPluginConfigurationException(String message) {
+        super(message);
+    }
 
     @Override
-    public String toString() {
-        return "UpdateCertificate{" +
-                "name='" + name + '\'' +
-                ", type='" + type + '\'' +
-                '}';
+    public int getHttpStatusCode() {
+        return HttpStatusCode.BAD_REQUEST_400;
+    }
+
+    public static InvalidPluginConfigurationException fromValidationError(String error) {
+        return new InvalidPluginConfigurationException(error);
     }
 }

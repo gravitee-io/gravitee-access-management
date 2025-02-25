@@ -33,6 +33,7 @@ import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.management.api.ReporterRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.PluginConfigurationValidationService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ReporterConfigurationException;
@@ -95,11 +96,14 @@ public class ReporterServiceImpl implements ReporterService {
 
     private AuditService auditService;
 
-    public ReporterServiceImpl(RepositoriesEnvironment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService) {
+    private PluginConfigurationValidationService validationService;
+
+    public ReporterServiceImpl(RepositoriesEnvironment environment, @Lazy ReporterRepository reporterRepository, EventService eventService, AuditService auditService, PluginConfigurationValidationService validationService) {
         this.environment = environment;
         this.reporterRepository = reporterRepository;
         this.eventService = eventService;
         this.auditService = auditService;
+        this.validationService = validationService;
     }
 
 
@@ -215,6 +219,10 @@ public class ReporterServiceImpl implements ReporterService {
 
                     reporterToUpdate.setInherited(updateReporter.isInherited());
                     reporterToUpdate.setUpdatedAt(new Date());
+
+                    // for update validate config against schema here instead of the resource
+                    // as reporter may be system reporter so on the UI config is empty.
+                    validationService.validate(reporterToUpdate.getType(), reporterToUpdate.getConfiguration());
 
                     return checkReporterConfiguration(reporterToUpdate)
                             .flatMap(ignore -> reporterRepository.update(reporterToUpdate)
@@ -352,7 +360,7 @@ public class ReporterServiceImpl implements ReporterService {
                     : ("_" + reference.id());
             reporterConfig = "{\"uri\":\"" + mongoUri
                     + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
-                    + "\",\"port\":" + mongoPort
+                    + "\",\"port\":" + Integer.parseInt(mongoPort)
                     + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName
                     + "\",\"reportableCollection\":\"reporter_audits" + collectionSuffix
                     + "\",\"bulkActions\":1000,\"flushInterval\":5}";

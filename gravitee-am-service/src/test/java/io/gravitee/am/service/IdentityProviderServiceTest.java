@@ -25,6 +25,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderWithApplicationsException;
+import io.gravitee.am.service.exception.InvalidPluginConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
@@ -39,9 +40,6 @@ import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.apache.commons.text.RandomStringGenerator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Clock;
@@ -55,6 +53,7 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -76,8 +75,10 @@ public class IdentityProviderServiceTest {
 
     private ApplicationService applicationService = mock();
 
+    private PluginConfigurationValidationService validationService = mock();
+
     private IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
-            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper()
+            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(), validationService
     );
 
 
@@ -208,6 +209,26 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldNotUpdate_configValidation_fails() {
+        UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
+        IdentityProvider idp = new IdentityProvider();
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId("domain#1");
+
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        doThrow(InvalidPluginConfigurationException.fromValidationError("test error")).when(validationService).validate(any(), any());
+
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidPluginConfigurationException.class);
+
+        verify(identityProviderRepository, never()).update(any(IdentityProvider.class));
+        verify(eventService, never()).create(any());
+        verify(validationService).validate(any(), any());
+    }
+
+    @Test
     public void shouldUpdate() {
         UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
         IdentityProvider idp = new IdentityProvider();
@@ -226,6 +247,7 @@ public class IdentityProviderServiceTest {
 
         verify(identityProviderRepository, times(1)).update(any(IdentityProvider.class));
         verify(eventService, times(1)).create(any());
+        verify(validationService).validate(any(), any());
     }
 
     @Test
@@ -354,6 +376,7 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldDelete_technicalException() {
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        when(applicationService.findByIdentityProvider(any())).thenReturn(Flowable.error(new TechnicalException()));
 
         TestObserver testObserver = identityProviderService.delete(DOMAIN, "my-identity-provider").test();
 

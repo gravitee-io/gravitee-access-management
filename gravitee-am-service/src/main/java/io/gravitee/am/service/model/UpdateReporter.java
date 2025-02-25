@@ -24,7 +24,7 @@ import lombok.Data;
  * @author GraviteeSource Team
  */
 @Data
-public class UpdateReporter implements PluginConfigurationPayload {
+public class UpdateReporter {
 
     private boolean enabled;
 
