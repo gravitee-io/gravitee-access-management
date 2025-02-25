@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.service;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.jwt.TokenPurpose;
 import io.gravitee.am.model.oidc.Client;
 import lombok.Getter;
@@ -94,6 +95,12 @@ class RedirectUriValidatorTest {
                     .isInstanceOf(ExceptionFromUriChecker.class);
         }
 
+        @Test
+        void operationRequiredRedirect_redirectUriWithUserInfo_shouldFail() {
+            assertThatThrownBy(()->validator.validate(getClient(), "http://user@google.com", TokenPurpose.UNSPECIFIED,strictUriChecker))
+                    .isInstanceOf(RedirectMismatchException.class);
+        }
+
     }
 
     @Nested
@@ -111,6 +118,8 @@ class RedirectUriValidatorTest {
             assertThatCode(()->validator.validate(client, null, strictUriChecker))
                     .doesNotThrowAnyException();
         }
+
+
     }
 
     @Nested
