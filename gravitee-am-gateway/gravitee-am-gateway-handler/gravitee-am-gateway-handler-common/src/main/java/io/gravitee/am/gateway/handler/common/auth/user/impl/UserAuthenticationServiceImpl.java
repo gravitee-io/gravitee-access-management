@@ -247,8 +247,8 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         final boolean accountLinkingMode = linkedAccount != null;
         final Maybe<User> findExistingUser =
                 accountLinkingMode ? userService.findById(linkedAccount) :
-                        userService.findByDomainAndExternalIdAndSource(domain.getId(), externalId, source)
-                                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), username, source)));
+                        userService.findByExternalIdAndSource(externalId, source)
+                                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(username, source)));
 
         return findExistingUser
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(username)))
