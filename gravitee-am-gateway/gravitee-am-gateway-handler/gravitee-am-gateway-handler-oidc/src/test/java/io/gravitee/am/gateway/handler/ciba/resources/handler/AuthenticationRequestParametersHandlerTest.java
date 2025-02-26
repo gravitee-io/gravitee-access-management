@@ -281,7 +281,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user)));
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -310,7 +310,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user, user)));
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user, user)));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -355,7 +355,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user, user)));
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user, user)));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -442,7 +442,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user)));
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
