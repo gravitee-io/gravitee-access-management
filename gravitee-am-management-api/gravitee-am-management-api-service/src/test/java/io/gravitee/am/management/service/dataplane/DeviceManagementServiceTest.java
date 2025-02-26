@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.dataplane;
 
 
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.dataplane.impl.DeviceManagementServiceImpl;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
@@ -25,7 +26,10 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -127,6 +131,19 @@ public class DeviceManagementServiceTest {
         testEmpty.assertValueCount(0);
 
         verify(deviceRepository, times(1)).findByDomainAndClientAndUser(DOMAIN2.getId(), USER);
+    }
+
+    @Test
+    public void mustDelete(){
+        doReturn(Completable.complete()).when(deviceRepository).delete(any());
+        doReturn(Maybe.just(device1)).when(deviceRepository).findById(any());
+
+        TestObserver<Void> testObserver = deviceService.delete(DOMAIN, USER, DEVICE1, new DefaultUser()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+
+        verify(deviceRepository, times(1)).delete(DEVICE1);
+        verify(auditService, times(1)).report(any());
     }
 
 }
