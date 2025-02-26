@@ -18,6 +18,7 @@ package io.gravitee.am.management.service.impl;
 import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
@@ -26,11 +27,9 @@ import io.gravitee.am.plugins.reporter.core.ReporterProviderConfiguration;
 import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.am.reporter.api.provider.NoOpReporter;
 import io.gravitee.am.reporter.api.provider.Reporter;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
-import io.gravitee.am.service.exception.ReporterNotFoundForReferenceException;
 import io.gravitee.am.service.model.NewReporter;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
@@ -38,6 +37,7 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Consumer;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -163,16 +163,16 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
     }
 
     @Override
-    public Optional<Reporter> getReporter(Reference domain) {
+    public Maybe<Reporter> getReporter(Reference domain) {
         if (domain.type() == ReferenceType.DOMAIN || domain.type() == ReferenceType.ORGANIZATION) {
             return doGetReporter(domain);
         } else {
             // Internal reporter must be use for all other resources.
-            return Optional.of(internalReporter);
+            return Maybe.just(internalReporter);
         }
     }
 
-    private Optional<Reporter> doGetReporter(Reference reference) {
+    private Maybe<Reporter> doGetReporter(Reference reference) {
         Optional<Reporter> optionalReporter = auditReporters
                 .entrySet()
                 .stream()
@@ -181,25 +181,24 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                 .filter(Reporter::canSearch)
                 .findFirst();
 
-        if (optionalReporter.isPresent()) {
-            return optionalReporter;
-        }
-
         // reporter can be missing as it can take sometime for the reporter events
         // to propagate across the cluster so if there are at least one reporter for the domain, return the NoOpReporter to avoid
         // too long waiting time that may lead to unexpected even on the UI.
-        try {
-            List<io.gravitee.am.model.Reporter> reporterConfigs = reporterService.findByReference(reference).toList().blockingGet();
-            if (reporterConfigs.isEmpty()) {
-                logger.warn("No reporter exists for {}", reference);
-                return Optional.empty();
-            }
-            logger.warn("Reporter for domain {} isn't bootstrapped yet", reference);
-            return Optional.of(noOpReporter);
-        } catch (Exception ex) {
-            logger.error("An error has occurred while fetching reporter for {}", reference);
-            throw new IllegalStateException("error fetching reporter for %s".formatted(reference), ex);
-        }
+
+        return optionalReporter.map(Maybe::just).orElseGet(() -> reporterService.findByReference(reference)
+                .toList()
+                .flatMapMaybe(reporterConfigs -> {
+                    if (reporterConfigs.isEmpty()) {
+                        logger.warn("No reporter exists for {}", reference);
+                        return Maybe.empty();
+                    }
+                    logger.warn("Reporter for domain {} isn't bootstrapped yet", reference);
+                    return Maybe.just(noOpReporter);
+                })
+                .onErrorResumeNext(error -> {
+                    logger.error("Error occurred when fetching reporter for domain {}", reference, error);
+                    return Maybe.empty();
+                }));
     }
 
     private void deployReporter(String reporterId) {
