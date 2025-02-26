@@ -237,7 +237,7 @@ public class UserServiceImpl implements UserService {
         final var rawPassword = user.getPassword();
         // validate user and then check user uniqueness
         return userValidator.validate(user)
-                .andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source).isEmpty()
+                .andThen(userService.findByUsernameAndSource(user.getUsername(), source).isEmpty()
                         .flatMapMaybe(checkUserPresence(user, source))
                         .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                         .flatMap(userProvider -> userProvider.create(convert(user)))
@@ -497,7 +497,7 @@ public class UserServiceImpl implements UserService {
             return Completable.error(new UserNotFoundException(email));
         }
 
-        return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())
+        return userService.findByCriteria(params.buildCriteria())
                 .flatMap(users -> {
                     List<User> foundUsers = narrowUsersForForgotPassword(client, users);
 
@@ -570,8 +570,8 @@ public class UserServiceImpl implements UserService {
                                     return Single.error(new UserNotFoundException());
                                 }
                                 final UserAuthentication idpUser = optional.get();
-                                return userService.findByDomainAndUsernameAndSource(domain.getId(), idpUser.getUser().getUsername(), idpUser.getSource())
-                                        .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndExternalIdAndSource(domain.getId(), idpUser.getUser().getId(), idpUser.getSource())))
+                                return userService.findByUsernameAndSource(idpUser.getUser().getUsername(), idpUser.getSource())
+                                        .switchIfEmpty(Maybe.defer(() -> userService.findByExternalIdAndSource(idpUser.getUser().getId(), idpUser.getSource())))
                                         .map(Optional::ofNullable)
                                         .defaultIfEmpty(Optional.empty())
                                         .flatMap(optEndUser -> {

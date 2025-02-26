@@ -19,8 +19,8 @@ import io.gravitee.am.business.user.CreateUserRule;
 import io.gravitee.am.business.user.UpdateUserRule;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Maybe;
@@ -44,9 +44,9 @@ public class UserGatewayServiceImplV2 extends UserGatewayServiceImpl {
     private boolean resilientMode = false;
     
     @Override
-    public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
+    public Maybe<User> findByExternalIdAndSource(String externalId, String source) {
         return userStore.getByInternalSub(generateInternalSubFrom(source, externalId))
-                .switchIfEmpty(Maybe.defer(() -> getUserRepository().findByExternalIdAndSource(Reference.domain(domain), externalId, source)
+                .switchIfEmpty(Maybe.defer(() -> getUserRepository().findByExternalIdAndSource(domain.asReference(), externalId, source)
                         .onErrorResumeNext(error -> {
                             if (doesResilientModeEnabled(error)) {
                                 log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by externalId", domain);
@@ -57,8 +57,8 @@ public class UserGatewayServiceImplV2 extends UserGatewayServiceImpl {
     }
 
     @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        return getUserRepository().findByUsernameAndSource(Reference.domain(domain), username, source).onErrorResumeNext(error -> {
+    public Maybe<User> findByUsernameAndSource(String username, String source) {
+        return getUserRepository().findByUsernameAndSource(domain.asReference(), username, source).onErrorResumeNext(error -> {
             if (doesResilientModeEnabled(error)) {
                 log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by username", domain);
                 return Maybe.empty();
@@ -68,8 +68,8 @@ public class UserGatewayServiceImplV2 extends UserGatewayServiceImpl {
     }
 
     @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities) {
-        return getUserRepository().findByUsernameAndSource(Reference.domain(domain), username, source, includeLinkedIdentities).onErrorResumeNext(error -> {
+    public Maybe<User> findByUsernameAndSource(String username, String source, boolean includeLinkedIdentities) {
+        return getUserRepository().findByUsernameAndSource(domain.asReference(), username, source, includeLinkedIdentities).onErrorResumeNext(error -> {
             if (doesResilientModeEnabled(error)) {
                 log.debug("Resilient mode enabled for domain {}, ignore connection error during find user by username", domain);
                 return Maybe.empty();
@@ -79,8 +79,13 @@ public class UserGatewayServiceImplV2 extends UserGatewayServiceImpl {
     }
 
     @Override
-    public Single<List<User>> findByDomainAndCriteria(String domain, FilterCriteria criteria) {
-        return getUserRepository().search(Reference.domain(domain), criteria).toList();
+    public Single<List<User>> findByCriteria(FilterCriteria criteria) {
+        return getUserRepository().search(domain.asReference(), criteria).toList();
+    }
+
+    @Override
+    public Single<Page<User>> findByCriteria(FilterCriteria criteria, int page, int size) {
+        return getUserRepository().search(domain.asReference(), criteria, page, size);
     }
 
     @Override

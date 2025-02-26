@@ -86,7 +86,7 @@ public class SubjectManagerV2 implements SubjectManager {
         final var internalSub = token.getInternalSub();
         final var source = internalSub.substring(0, internalSub.indexOf(SEPARATOR));
         final var extId = internalSub.substring(internalSub.indexOf(SEPARATOR) + 1);
-        return userService.findByDomainAndExternalIdAndSource(domain.getId(), extId, source);
+        return userService.findByExternalIdAndSource(extId, source);
     }
 
     private boolean hasValidInternalSub(JWT token) {
