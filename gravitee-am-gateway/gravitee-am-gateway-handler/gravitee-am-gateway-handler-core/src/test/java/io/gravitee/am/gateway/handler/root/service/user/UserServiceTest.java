@@ -383,7 +383,7 @@ public class UserServiceTest {
 
         UserProvider userProvider = mock(UserProvider.class);
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -409,7 +409,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn(IDP_ID);
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertNotComplete();
@@ -440,7 +440,7 @@ public class UserServiceTest {
         when(domain.getId()).thenReturn("domain-id");
         when(domain.getAccountSettings()).thenReturn(accountSettings);
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -472,7 +472,7 @@ public class UserServiceTest {
         UserProvider userProvider = mock(UserProvider.class);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -502,7 +502,7 @@ public class UserServiceTest {
         UserProvider userProvider = mock(UserProvider.class);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.empty());
 
@@ -535,7 +535,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
 
@@ -563,7 +563,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.getSource()).thenReturn(IDP_ID);
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user)));
 
         var testObserver = userService.forgotPassword(
                 new ForgotPasswordParameters(user.getEmail(), true, true),
@@ -589,7 +589,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
 
         final var mockUserProvider = mock(UserProvider.class);
         when(mockUserProvider.findByEmail(eq(user.getEmail()))).thenReturn(Maybe.just(new DefaultUser()));
@@ -603,7 +603,7 @@ public class UserServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
-        verify(commonUserService, never()).findByDomainAndUsernameAndSource(any(), any(), anyString());
+        verify(commonUserService, never()).findByUsernameAndSource(any(), anyString());
     }
 
     @Test
@@ -620,7 +620,7 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("test");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
 
         final var mockUserProvider = mock(UserProvider.class);
         when(mockUserProvider.findByEmail(any())).thenReturn(Maybe.empty());
@@ -634,7 +634,7 @@ public class UserServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
-        verify(commonUserService, never()).findByDomainAndUsernameAndSource(any(), any(), anyString());
+        verify(commonUserService, never()).findByUsernameAndSource(any(), anyString());
     }
 
 
@@ -653,7 +653,7 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("test");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
 
         final var mockUserProvider = mock(UserProvider.class);
         final var userByEmail = new DefaultUser();
@@ -671,7 +671,7 @@ public class UserServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(UserNotFoundException.class);
-        verify(commonUserService, never()).findByDomainAndUsernameAndSource(any(), any(), anyString());
+        verify(commonUserService, never()).findByUsernameAndSource(any(), anyString());
     }
 
     @Test
@@ -689,7 +689,7 @@ public class UserServiceTest {
         when(user.getUsername()).thenReturn("test");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList()));
 
         final var mockUserProvider = mock(UserProvider.class);
         final var userByEmail = new DefaultUser();
@@ -698,7 +698,7 @@ public class UserServiceTest {
         when(mockUserProvider.findByUsername(any())).thenReturn(Maybe.just(userByEmail));
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(mockUserProvider));
 
-        when(commonUserService.findByDomainAndUsernameAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
+        when(commonUserService.findByUsernameAndSource(any(), any())).thenReturn(Maybe.just(user));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
 
         TestObserver testObserver = userService.forgotPassword(
@@ -708,7 +708,7 @@ public class UserServiceTest {
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
-        verify(commonUserService).findByDomainAndUsernameAndSource(any(), any(), any());
+        verify(commonUserService).findByUsernameAndSource(any(), any());
         verify(commonUserService).update(any());
     }
 
@@ -727,7 +727,7 @@ public class UserServiceTest {
         when(user.isEnabled()).thenReturn(true);
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2)));
 
         UserProvider userProvider = mock(UserProvider.class);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
@@ -765,7 +765,7 @@ public class UserServiceTest {
         when(user2.getSource()).thenReturn("other-idp-client-id");
 
         when(domain.getId()).thenReturn("domain-id");
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2, user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Arrays.asList(user, user2, user)));
 
         TestObserver testObserver = userService.forgotPassword(
                 new ForgotPasswordParameters(user.getEmail(), true, true),
@@ -805,11 +805,11 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(List.of(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(List.of(user)));
         when(identityProviderManager.getUserProvider(IDP_ID)).thenReturn(Maybe.just(userProvider));
         when(commonUserService.create(any())).thenReturn(Single.just(user));
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(commonUserService.findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(Maybe.empty());
+        when(commonUserService.findByExternalIdAndSource(anyString(), anyString())).thenReturn(Maybe.empty());
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
@@ -837,11 +837,11 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
         when(commonUserService.create(any())).thenReturn(Single.just(user));
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
-        when(commonUserService.findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(Maybe.empty());
+        when(commonUserService.findByExternalIdAndSource(anyString(), anyString())).thenReturn(Maybe.empty());
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
@@ -868,15 +868,15 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
-        when(commonUserService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString())).thenReturn(Maybe.just(user));
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(Maybe.just(user));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        verify(commonUserService, never()).findByDomainAndExternalIdAndSource(anyString(), anyString(), anyString());
+        verify(commonUserService, never()).findByExternalIdAndSource(anyString(), anyString());
         verify(commonUserService, never()).create(any());
         verify(commonUserService, times(1)).update(any());
         verify(tokenService, never()).deleteByUser(any());
@@ -908,7 +908,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.empty());
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -931,7 +931,7 @@ public class UserServiceTest {
 
         when(domain.getId()).thenReturn("domain-id");
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.emptyList()));
         when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(userProvider));
 
         var testObserver = userService.forgotPassword(user.getEmail(), client).test();
@@ -1084,7 +1084,7 @@ public class UserServiceTest {
         User user = mock(User.class);
         when(user.getSource()).thenReturn(IDP_ID);
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
         ApplicationIdentityProvider applicationIdentityProvider = mock(ApplicationIdentityProvider.class);
         when(applicationIdentityProvider.getIdentity()).thenReturn("some-id");
@@ -1116,7 +1116,7 @@ public class UserServiceTest {
         when(accountSettings.isCompleteRegistrationWhenResetPassword()).thenReturn(true);
         when(domain.getId()).thenReturn("domain-id");
         when(domain.getAccountSettings()).thenReturn(accountSettings);
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
         when(userProvider.findByUsername("username")).thenReturn(Maybe.just(new DefaultUser("username")));
         when(commonUserService.update(any())).thenReturn(Single.just(user));
@@ -1149,7 +1149,7 @@ public class UserServiceTest {
         when(user.isInactive()).thenReturn(false);
         when(user.getSource()).thenReturn(IDP_ID);
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
         UserProvider userProvider = mock(UserProvider.class);
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(userProvider));
@@ -1174,7 +1174,7 @@ public class UserServiceTest {
         when(user.getEmail()).thenReturn("test@test.com");
         when(user.isInactive()).thenReturn(true);
         when(user.getSource()).thenReturn(IDP_ID);
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
         UserProvider userProvider = mock(UserProvider.class);
         when(identityProviderManager.getUserProvider(any())).thenReturn(Maybe.just(userProvider));
@@ -1204,7 +1204,7 @@ public class UserServiceTest {
         when(user.isInactive()).thenReturn(true);
         when(user.getSource()).thenReturn(IDP_ID);
 
-        when(commonUserService.findByDomainAndCriteria(eq(domain.getId()), any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
+        when(commonUserService.findByCriteria(any(FilterCriteria.class))).thenReturn(Single.just(Collections.singletonList(user)));
 
         UserProvider userProvider = mock(UserProvider.class);
         when(identityProviderManager.getUserProvider(user.getSource())).thenReturn(Maybe.just(userProvider));
@@ -1354,7 +1354,7 @@ public class UserServiceTest {
                 Completable.defer(() -> Completable.error(new IllegalArgumentException("User is not valid")))
         );
 
-        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(
                 Maybe.empty()
         );
 
@@ -1381,7 +1381,7 @@ public class UserServiceTest {
         user.setPreRegistration(false);
         user.setRegistrationCompleted(true);
 
-        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(
                 Maybe.just(user)
         );
 
@@ -1405,7 +1405,7 @@ public class UserServiceTest {
         user.setPreRegistration(false);
         user.setRegistrationCompleted(true);
 
-        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(Maybe.empty());
         when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
 
         final Client client = new Client();
@@ -1430,7 +1430,7 @@ public class UserServiceTest {
         final DefaultUser idpUser = new DefaultUser(user.getUsername());
         idpUser.setId(user.getId());
 
-        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(Maybe.empty());
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));
@@ -1466,7 +1466,7 @@ public class UserServiceTest {
         final DefaultUser idpUser = new DefaultUser(user.getUsername());
         idpUser.setId(user.getId());
 
-        when(commonUserService.findByDomainAndUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString())).thenReturn(Maybe.empty());
 
         UserProvider userProvider = mock(UserProvider.class);
         when(userProvider.create(any())).thenReturn(Single.just(idpUser));

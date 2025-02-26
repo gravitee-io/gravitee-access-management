@@ -119,7 +119,7 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                                             }
                                         })
                                         .switchIfEmpty(getUserService().findById(endUser.getUsername())
-                                                .switchIfEmpty(getUserService().findByDomainAndExternalIdAndSource(client.getDomain(), endUser.getUsername(), retrieveSourceFrom(getExtensionGrant()))))
+                                                .switchIfEmpty(getUserService().findByExternalIdAndSource(endUser.getUsername(), retrieveSourceFrom(getExtensionGrant()))))
                                         .flatMap(user -> retrieveUserByUsernameFromIdp(prov, tokenRequest, user));
                             }
                             return Maybe.empty();
