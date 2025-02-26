@@ -65,7 +65,7 @@ public class DeviceManagementServiceImpl implements DeviceManagementService {
         return dataPlaneRegistry.getDeviceRepository(domain).findById(deviceId)
                 .switchIfEmpty(Maybe.error(new DeviceNotFoundException(deviceId)))
                 .flatMap(device -> {
-                    if (DOMAIN.equals(device.getReferenceType()) && device.getReferenceId().equals(domain) && device.getUserId().id().equals(user.id())) {
+                    if (DOMAIN.equals(device.getReferenceType()) && device.getReferenceId().equals(domain.getId()) && device.getUserId().id().equals(user.id())) {
                         return dataPlaneRegistry.getDeviceRepository(domain).delete(deviceId).andThen(Maybe.just(device));
                     } else {
                         return Maybe.error(new DeviceNotFoundException(deviceId));
