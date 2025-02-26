@@ -195,7 +195,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             .flatMap(preAuth -> {
                                 if (preAuth) {
                                     final String username = authentication.getPrincipal().toString();
-                                    return userService.findByDomainAndUsernameAndSource(domain.getId(), username, authProvider)
+                                    return userService.findByUsernameAndSource(username, authProvider)
                                             .switchIfEmpty(Maybe.error(() -> new UsernameNotFoundException(username)))
                                             .flatMap(user -> {
                                                 final Authentication enhanceAuthentication = new EndUserAuthentication(user, null, authentication.getContext());
@@ -270,7 +270,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         // do not execute login attempt feature for non-existing users
                         // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
                         // but we can't control custom IdP that's why we have to check user existence
-                        return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider(), true)
+                        return userService.findByUsernameAndSource(criteria.username(), criteria.identityProvider(), true)
                                 .flatMapCompletable(user -> loginAttemptService.loginFailed(domain, criteria, accountSettings)
                                         .flatMapCompletable(loginAttempt -> {
                                             if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {

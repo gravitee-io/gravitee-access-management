@@ -84,7 +84,7 @@ public class SubjectManagerV2Test {
 
         TestObserver<User> observer = cut.findUserBySub(token).test();
         observer.assertError(IllegalArgumentException.class);
-        verify(userService, never()).findByDomainAndExternalIdAndSource(any(), any(), any());
+        verify(userService, never()).findByExternalIdAndSource(any(), any());
     }
 
     @Test
@@ -95,7 +95,7 @@ public class SubjectManagerV2Test {
         final var token = new JWT();
         cut.updateJWT(token, user);
 
-        when(userService.findByDomainAndExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
+        when(userService.findByExternalIdAndSource(any(), any())).thenReturn(Maybe.just(user));
         TestObserver<User> observer = cut.findUserBySub(token).test();
 
         observer.await(10, TimeUnit.SECONDS);
@@ -111,7 +111,7 @@ public class SubjectManagerV2Test {
         final var token = new JWT();
         cut.updateJWT(token, user);
 
-        when(userService.findByDomainAndExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
+        when(userService.findByExternalIdAndSource(any(), any())).thenReturn(Maybe.just(user));
         TestObserver<io.gravitee.am.identityprovider.api.User> observer = cut.getPrincipal(token).test();
 
         observer.await(10, TimeUnit.SECONDS);
@@ -129,7 +129,7 @@ public class SubjectManagerV2Test {
         observer.assertNoErrors();
         observer.assertValueCount(0);
 
-        verify(userService, never()).findByDomainAndExternalIdAndSource(any(), any(), any());
+        verify(userService, never()).findByExternalIdAndSource(any(), any());
     }
 
     @Test

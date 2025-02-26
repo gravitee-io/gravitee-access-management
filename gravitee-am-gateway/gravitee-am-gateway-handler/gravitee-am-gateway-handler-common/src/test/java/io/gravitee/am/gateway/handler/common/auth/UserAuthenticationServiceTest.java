@@ -110,8 +110,8 @@ public class UserAuthenticationServiceTest {
         when(createdUser.isEnabled()).thenReturn(true);
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(domain.getId()).thenReturn(domainId);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
-        when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.empty());
+        when(userService.findByUsernameAndSource(username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
         when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -143,7 +143,7 @@ public class UserAuthenticationServiceTest {
         final User foundUser = new User();
         foundUser.setAccountNonLocked(true);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -176,7 +176,7 @@ public class UserAuthenticationServiceTest {
         foundUser.setAccountNonLocked(false);
         foundUser.setAccountLockedUntil(new Date(Instant.now().minusSeconds(60).toEpochMilli()));
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -205,7 +205,7 @@ public class UserAuthenticationServiceTest {
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(false);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver testObserver = userAuthenticationService.connect(user).test();
@@ -233,7 +233,7 @@ public class UserAuthenticationServiceTest {
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
@@ -264,8 +264,8 @@ public class UserAuthenticationServiceTest {
         when(createdUser.getRoles()).thenReturn(Arrays.asList("idp-role", "idp2-role"));
         ExecutionContext executionContext = mock(ExecutionContext.class);
         when(domain.getId()).thenReturn(domainId);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.empty());
-        when(userService.findByDomainAndUsernameAndSource(domainId, username, source)).thenReturn(Maybe.empty());
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.empty());
+        when(userService.findByUsernameAndSource(username, source)).thenReturn(Maybe.empty());
         when(userService.create(any())).thenReturn(Single.just(createdUser));
         when(userService.enhance(createdUser)).thenReturn(Single.just(createdUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -297,7 +297,7 @@ public class UserAuthenticationServiceTest {
         final User foundUser = spy(new User());
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
         when(userService.enhance(any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -332,7 +332,7 @@ public class UserAuthenticationServiceTest {
         foundUser.setAccountNonLocked(true);
         foundUser.setDynamicRoles(Arrays.asList("idp-role", "idp2-role"));
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
         when(userService.enhance(any())).thenAnswer(i -> Single.just(i.getArguments()[0]));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -371,7 +371,7 @@ public class UserAuthenticationServiceTest {
         final User foundUser = mock(User.class);
         when(foundUser.isAccountNonLocked()).thenReturn(true);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -413,7 +413,7 @@ public class UserAuthenticationServiceTest {
         existingUser.setAdditionalInformation(existingAdditionalInformation);
         existingUser.setAccountNonLocked(true);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(existingUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -451,7 +451,7 @@ public class UserAuthenticationServiceTest {
         existingUser.setAdditionalInformation(existingAdditionalInformation);
         existingUser.setAccountNonLocked(true);
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(existingUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(existingUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));

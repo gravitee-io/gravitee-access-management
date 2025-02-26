@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.common.user;
 
 import io.gravitee.am.dataplane.api.repository.UserRepository.UpdateActions;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Maybe;
@@ -44,7 +45,7 @@ public interface UserGatewayService {
      * @param source user identity provider
      * @return end user
      */
-    Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source);
+    Maybe<User> findByExternalIdAndSource(String externalId, String source);
 
     /**
      * Find a user by its domain, its username and its identity provider
@@ -53,9 +54,9 @@ public interface UserGatewayService {
      * @param source user identity provider
      * @return end user
      */
-    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source);
+    Maybe<User> findByUsernameAndSource(String username, String source);
 
-    Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities);
+    Maybe<User> findByUsernameAndSource(String username, String source, boolean includeLinkedIdentities);
 
     /**
      * Find users by security domain and email
@@ -63,7 +64,16 @@ public interface UserGatewayService {
      * @param criteria search criteria
      * @return
      */
-    Single<List<User>> findByDomainAndCriteria(String domain, FilterCriteria criteria);
+    Single<List<User>> findByCriteria(FilterCriteria criteria);
+
+    /**
+     * Find users by security domain and email
+     * @param criteria search criteria
+     * @param page
+     * @param size
+     * @return
+     */
+    Single<Page<User>> findByCriteria(FilterCriteria criteria, int page, int size);
 
     /**
      * Create a new user
