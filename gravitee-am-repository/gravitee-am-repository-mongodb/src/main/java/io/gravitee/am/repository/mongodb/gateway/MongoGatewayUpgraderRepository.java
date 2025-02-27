@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.management;
+package io.gravitee.am.repository.mongodb.gateway;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.management.internal.model.UpgradeRecordMongo;
@@ -22,19 +22,22 @@ import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 
 import static com.mongodb.client.model.Filters.eq;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
-@Repository
-public class MongoUpgraderRepository extends AbstractManagementMongoRepository implements UpgraderRepository {
-    private MongoCollection<UpgradeRecordMongo> upgraderCollection;
 
+@Repository
+@Qualifier("gatewayUpgraderRepository")
+public class MongoGatewayUpgraderRepository extends AbstractGatewayMongoRepository implements UpgraderRepository {
+    private MongoCollection<UpgradeRecordMongo> upgraderCollection;
     @PostConstruct
     public void init() {
-        this.upgraderCollection = mongoOperations.getCollection("upgraders", UpgradeRecordMongo.class);
+        this.upgraderCollection = mongoOperations.getCollection("dp_upgraders", UpgradeRecordMongo.class);
         super.init(upgraderCollection);
     }
+
     @Override
     public Maybe<UpgradeRecord> findById(String id) {
         return Maybe.fromPublisher(upgraderCollection.find(eq(FIELD_ID, id)).first())
