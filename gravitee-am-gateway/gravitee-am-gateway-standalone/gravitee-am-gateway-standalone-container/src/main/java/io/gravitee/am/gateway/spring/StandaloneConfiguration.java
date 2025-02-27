@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.node.GatewayNodeMetadataResolver;
 import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
+import io.gravitee.am.gateway.service.spring.GatewayServiceConfiguration;
 import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
 import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration;
 import io.gravitee.am.plugins.authdevice.notifier.spring.AuthenticationDeviceNotifierSpringConfiguration;
@@ -71,6 +72,7 @@ import org.springframework.core.env.Environment;
         ReactorConfiguration.class,
         VertxServerConfiguration.class,
         DataPlaneSpringConfiguration.class,
+        GatewayServiceConfiguration.class,
         ServiceConfiguration.class,
         IdentityProviderSpringConfiguration.class,
         CertificateSpringConfiguration.class,

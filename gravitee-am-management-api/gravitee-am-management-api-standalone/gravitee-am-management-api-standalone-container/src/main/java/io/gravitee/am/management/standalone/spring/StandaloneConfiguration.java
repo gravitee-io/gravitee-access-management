@@ -17,7 +17,7 @@ package io.gravitee.am.management.standalone.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
-import io.gravitee.am.management.service.spring.ServiceConfiguration;
+import io.gravitee.am.management.service.spring.ManagementServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.node.ManagementNodeMetadataResolver;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
@@ -39,6 +39,7 @@ import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
+import io.gravitee.am.service.spring.ServiceConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.el.ExpressionLanguageInitializer;
@@ -70,8 +71,8 @@ import org.springframework.core.env.Environment;
         PluginConfiguration.class,
         ManagementApiServer.class,
         DataPlaneSpringConfiguration.class,
+        ManagementServiceConfiguration.class,
         ServiceConfiguration.class,
-        io.gravitee.am.service.spring.ServiceConfiguration.class,
         IdentityProviderSpringConfiguration.class,
         CertificateSpringConfiguration.class,
         ExtensionGrantSpringConfiguration.class,

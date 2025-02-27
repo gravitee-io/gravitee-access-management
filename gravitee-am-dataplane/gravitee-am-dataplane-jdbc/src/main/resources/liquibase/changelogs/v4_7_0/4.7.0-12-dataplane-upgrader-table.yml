@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-12-upgraders
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: dp_upgraders
+      changes:
+        - createTable:
+            tableName: dp_upgraders
+            columns:
+              - column: { name: id, type: nvarchar(256), constraints: { nullable: false } }
+              - column: { name: applied_at, type: timestamp(6), constraints: { nullable: false } }
+        - addPrimaryKey:
+            constraintName: pk_dp_upgraders
+            columnNames: id
+            tableName: dp_upgraders
