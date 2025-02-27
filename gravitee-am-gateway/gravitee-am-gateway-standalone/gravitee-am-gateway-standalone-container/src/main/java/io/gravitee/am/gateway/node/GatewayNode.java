@@ -21,6 +21,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.container.AbstractNode;
+import io.gravitee.node.services.upgrader.spring.UpgraderConfiguration;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -54,6 +55,7 @@ public class GatewayNode extends AbstractNode {
         List<Class<? extends LifecycleComponent>> components = super.components();
 
         components.add(DataPlaneRegistryImpl.class);
+        components.addAll(UpgraderConfiguration.getComponents());
         components.add(Reactor.class);
         components.add(VertxEmbeddedContainer.class);
         components.add(AlertEventProducerManager.class);
