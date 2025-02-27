@@ -16,29 +16,25 @@
     limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <parent>
-        <groupId>io.gravitee.am</groupId>
-        <artifactId>gravitee-am-parent</artifactId>
+        <groupId>io.gravitee.am.gateway</groupId>
+        <artifactId>gravitee-am-gateway</artifactId>
         <version>4.7.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.gravitee.am.gateway</groupId>
-    <artifactId>gravitee-am-gateway</artifactId>
-    <packaging>pom</packaging>
+    <artifactId>gravitee-am-gateway-service</artifactId>
+    <name>Gravitee IO - Access Management - Gateway - Service</name>
 
-    <name>Gravitee IO - Access Management - Gateway</name>
+    <dependencies>
+        <dependency>
+            <groupId>io.gravitee.node.services</groupId>
+            <artifactId>gravitee-node-services-upgrader</artifactId>
+        </dependency>
+    </dependencies>
 
-    <modules>
-        <module>gravitee-am-gateway-handler</module>
-        <module>gravitee-am-gateway-standalone</module>
-        <module>gravitee-am-gateway-service</module>
-        <module>gravitee-am-gateway-services</module>
-        <module>gravitee-am-gateway-core</module>
-        <module>gravitee-am-gateway-reactor</module>
-        <module>gravitee-am-gateway-policy</module>
-        <module>gravitee-am-gateway-certificate</module>
-    </modules>
 </project>
