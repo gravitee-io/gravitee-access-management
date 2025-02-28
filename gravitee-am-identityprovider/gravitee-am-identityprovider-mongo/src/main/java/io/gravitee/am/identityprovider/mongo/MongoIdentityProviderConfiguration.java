@@ -18,6 +18,7 @@ package io.gravitee.am.identityprovider.mongo;
 import io.gravitee.am.common.password.PasswordSaltFormat;
 import io.gravitee.am.identityprovider.api.IdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
 
@@ -55,6 +56,8 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private boolean usernameCaseSensitive = false;
 
     private PasswordEncoderOptions passwordEncoderOptions;
+
+    private boolean useSystemCluster;
 
     @Override
     public boolean userProvider() {
@@ -239,5 +242,13 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     public void setPasswordEncoderOptions(PasswordEncoderOptions passwordEncoderOptions) {
         this.passwordEncoderOptions = passwordEncoderOptions;
+    }
+
+    public boolean isUseSystemCluster() {
+        return useSystemCluster;
+    }
+
+    public void setUseSystemCluster(boolean useSystemCluster) {
+        this.useSystemCluster = useSystemCluster;
     }
 }
