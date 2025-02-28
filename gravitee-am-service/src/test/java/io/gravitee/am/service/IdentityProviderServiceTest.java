@@ -15,8 +15,29 @@
  */
 package io.gravitee.am.service;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -38,28 +59,11 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.apache.commons.text.RandomStringGenerator;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -186,7 +190,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = identityProviderService.create(DOMAIN, newIdentityProvider).test();
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -202,7 +206,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
-        identityProviderService.create(DOMAIN, newIdentityProvider).subscribe(testObserver);
+        identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -472,6 +476,28 @@ public class IdentityProviderServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
+    }
+
+    @Test
+    public void shouldAssignDataPlaneId() throws Exception {
+        IdentityProvider idp = new IdentityProvider();
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId("domain#1");
+
+        ArgumentCaptor<IdentityProvider> argumentCaptor = ArgumentCaptor.forClass(IdentityProvider.class);
+        when(identityProviderRepository.update(argumentCaptor.capture())).thenReturn(Single.just(idp));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        final var dataPlaneId = UUID.randomUUID().toString();
+        final var observable = this.identityProviderService.assignDataPlane(idp, dataPlaneId).test();
+
+        observable.await(5, TimeUnit.SECONDS);
+
+        observable.assertNoErrors();
+        Assert.assertEquals(dataPlaneId, argumentCaptor.getValue().getDataPlaneId());
+
+        verify(identityProviderRepository).update(any());
+        verify(eventService).create(any());
     }
 
     @Test

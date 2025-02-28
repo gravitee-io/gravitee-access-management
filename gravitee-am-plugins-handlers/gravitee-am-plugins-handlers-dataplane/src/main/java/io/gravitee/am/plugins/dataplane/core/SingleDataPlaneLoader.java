@@ -40,7 +40,7 @@ public class SingleDataPlaneLoader implements DataPlaneLoader {
 
     @Override
     public void load(Consumer<DataPlaneDescription> storage) {
-        var dataPlaneId = configuration.getProperty(DATA_PLANE_ID_KEY, String.class, "default");
+        var dataPlaneId = configuration.getProperty(DATA_PLANE_ID_KEY, String.class, DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         var dataPlaneUrl = configuration.getProperty(DATA_PLANE_GW_URL_KEY, String.class);
         var dataPlaneType = configuration.getProperty(DATA_PLANE_TYPE_KEY, String.class, "mongodb");
         storage.accept(new DataPlaneDescription(dataPlaneId, dataPlaneId, dataPlaneType, DATA_PLANE_KEY, dataPlaneUrl));

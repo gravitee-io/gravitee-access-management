@@ -31,6 +31,7 @@ import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
+import io.gravitee.am.repository.provider.ConnectionProvider;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
@@ -91,5 +92,15 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
         if (mongoClientWrapper != null) {
             mongoClientWrapper.releaseClient();
         }
+    }
+
+    @Override
+    public boolean canHandle(String backendType) {
+        return ConnectionProvider.BACKEND_TYPE_MONGO.equals(backendType);
+    }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapper() {
+        return this.mongoClientWrapper;
     }
 }
