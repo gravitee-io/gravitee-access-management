@@ -28,8 +28,6 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOpti
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -41,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 
 import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
 
@@ -148,9 +145,9 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             }
 
             configMap.put("host", jdbcHost());
-            configMap.put("port", jdbcPort());
-            configMap.put("protocol", jdbcDriver());
+            configMap.put("port", Integer.parseInt(jdbcPort()));
             configMap.put("database", jdbcDatabase());
+            configMap.put("protocol", jdbcDriver());
             // dash are forbidden in table name, replace them in domainName by underscore
             configMap.put("usersTable", "idp_users_" + tableSuffix);
             configMap.put("user", jdbcUser());
@@ -248,7 +245,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     }
 
     private String jdbcPort() {
-        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.port");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.port", "5432");
     }
 
     private String jdbcDriver() {

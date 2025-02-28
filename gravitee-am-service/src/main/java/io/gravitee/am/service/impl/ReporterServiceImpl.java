@@ -365,7 +365,7 @@ public class ReporterServiceImpl implements ReporterService {
             String jdbcPwd = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.password");
 
             reporterConfig = "{\"host\":\"" + jdbcHost + "\"," +
-                    "\"port\":" + jdbcPort + "," +
+                    "\"port\":" + Integer.parseInt(jdbcPort) + "," +
                     "\"database\":\"" + jdbcDatabase + "\"," +
                     "\"driver\":\"" + jdbcDriver + "\"," +
                     "\"username\":\"" + jdbcUser + "\"," +
