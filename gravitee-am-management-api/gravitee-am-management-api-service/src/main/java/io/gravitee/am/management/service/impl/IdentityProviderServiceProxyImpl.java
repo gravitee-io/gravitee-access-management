@@ -25,6 +25,7 @@ import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.exception.IdentityProviderPluginSchemaNotFoundException;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -129,6 +130,18 @@ public class IdentityProviderServiceProxyImpl extends AbstractSensitiveProxy imp
                                 .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(safeOldIdp).identityProvider(identityProvider1)))
                                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable))))
                 );
+    }
+
+    @Override
+    public Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
+        return identityProviderService.create(domain, newIdentityProvider, principal, system)                .flatMap(this::filterSensitiveData)
+                .doOnSuccess(identityProvider1 -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).identityProvider(identityProvider1)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).principal(principal).type(EventType.IDENTITY_PROVIDER_CREATED).reference(domain.asReference()).throwable(throwable)));
+    }
+
+    @Override
+    public Single<IdentityProvider> assignDataPlane(IdentityProvider identityProvider, String dataPlaneId) {
+        return identityProviderService.assignDataPlane(identityProvider, dataPlaneId);
     }
 
     @Override

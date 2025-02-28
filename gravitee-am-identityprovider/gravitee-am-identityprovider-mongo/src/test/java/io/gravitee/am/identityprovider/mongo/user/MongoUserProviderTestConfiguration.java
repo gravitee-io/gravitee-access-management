@@ -15,6 +15,10 @@
  */
 package io.gravitee.am.identityprovider.mongo.user;
 
+import java.util.UUID;
+
+import static org.mockito.Mockito.mock;
+
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.identityprovider.api.DefaultIdentityProviderMapper;
@@ -27,6 +31,10 @@ import io.gravitee.am.identityprovider.mongo.authentication.EmbeddedClient;
 import io.gravitee.am.identityprovider.mongo.authentication.EmbeddedMongoConnectionProvider;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.reactivex.rxjava3.core.Observable;
 import org.bson.Document;
@@ -34,8 +42,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.UUID;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -63,6 +69,11 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
         Document doc6 = new Document("username", "UserWithCase").append("email", "user02@acme.com").append("alternative_email", "user02-alt@acme.com").append("password", "user02").append("_id", UUID.randomUUID().toString());
         Observable.fromPublisher(collection.insertOne(doc6)).blockingFirst();
 
+    }
+
+    @Bean
+    public DataPlaneRegistry dataPlaneRegistry() {
+        return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class));
     }
 
     @Bean

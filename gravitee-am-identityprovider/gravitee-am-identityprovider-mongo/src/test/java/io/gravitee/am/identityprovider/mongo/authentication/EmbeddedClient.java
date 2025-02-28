@@ -65,7 +65,7 @@ public class EmbeddedClient implements InitializingBean, DisposableBean {
 
         int port = Network.freeServerPort(InetAddress.getLocalHost());
 
-        Version.Main version = Version.Main.V6_0;
+        Version.Main version = Version.Main.V7_0;
         var mongod = Mongod.builder().net(Start.to(Net.class)
                 .initializedWith(Net.builder().port(port).isIpv6(Network.localhostIsIPv6()).build()))
                 .build();

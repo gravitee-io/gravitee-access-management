@@ -394,7 +394,7 @@ public class DomainServiceImpl implements DomainService {
                     if (!createDefaultIdentityProvider) {
                         return Single.just(domain);
                     }
-                    return defaultIdentityProviderService.create(domain.getId()).map(__ -> domain);
+                    return defaultIdentityProviderService.create(domain).map(__ -> domain);
                 })
                 // create default reporter
                 .flatMap(domain -> {
