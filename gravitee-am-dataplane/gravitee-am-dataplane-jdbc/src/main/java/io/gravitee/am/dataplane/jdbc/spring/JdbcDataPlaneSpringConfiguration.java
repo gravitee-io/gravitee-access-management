@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
@@ -41,18 +40,22 @@ public class JdbcDataPlaneSpringConfiguration extends AbstractRepositoryConfigur
     @Autowired
     public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
 
-
     @Autowired
     private DataPlaneDescription description;
+
+    private R2DBCPoolWrapper poolWrapper;
 
     @Override
     @Bean
     public ConnectionFactory connectionFactory() {
-        return getPoolWrapper().getClient();
+        return poolWrapper.getClient();
     }
 
-    private R2DBCPoolWrapper getPoolWrapper() {
-        return (R2DBCPoolWrapper) connectionFactoryProvider.getClientWrapperFromPrefix(description.propertiesBase());
+    private synchronized R2DBCPoolWrapper getPoolWrapper() {
+        if (poolWrapper == null) {
+            poolWrapper = (R2DBCPoolWrapper) connectionFactoryProvider.getClientWrapperFromPrefix(description.propertiesBase());
+        }
+        return poolWrapper;
     }
 
     protected String getDriver() {

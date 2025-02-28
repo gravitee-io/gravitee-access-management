@@ -15,23 +15,6 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.BaseEncoding;
-import io.gravitee.am.common.env.RepositoriesEnvironment;
-import io.gravitee.am.management.service.DefaultIdentityProviderService;
-import io.gravitee.am.model.IdentityProvider;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.repository.Scope;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
-import io.gravitee.am.service.model.NewIdentityProvider;
-import io.reactivex.rxjava3.core.Single;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -42,6 +25,23 @@ import java.util.Optional;
 import java.util.Set;
 
 import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.BaseEncoding;
+import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.management.service.DefaultIdentityProviderService;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.repository.Scope;
+import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
+import io.gravitee.am.service.model.NewIdentityProvider;
+import io.reactivex.rxjava3.core.Single;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 @Slf4j
@@ -69,20 +69,20 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     }
 
     @Override
-    public Single<IdentityProvider> create(String domainId) {
+    public Single<IdentityProvider> create(Domain domain) {
         NewIdentityProvider newIdentityProvider = new NewIdentityProvider();
-        newIdentityProvider.setId(DEFAULT_IDP_PREFIX + domainId.toLowerCase());
+        newIdentityProvider.setId(DEFAULT_IDP_PREFIX + domain.getId().toLowerCase());
         newIdentityProvider.setName(DEFAULT_IDP_NAME);
         if (useMongoRepositories()) {
             newIdentityProvider.setType(DEFAULT_MONGO_IDP_TYPE);
-            newIdentityProvider.setConfiguration(createProviderConfig(domainId, null));
+            newIdentityProvider.setConfiguration(createProviderConfig(domain.getId(), null));
         } else if (useJdbcRepositories()) {
             newIdentityProvider.setType(DEFAULT_JDBC_IDP_TYPE);
-            newIdentityProvider.setConfiguration(createProviderConfig(domainId, newIdentityProvider));
+            newIdentityProvider.setConfiguration(createProviderConfig(domain.getId(), newIdentityProvider));
         } else {
             return Single.error(new IllegalStateException("Unable to create Default IdentityProvider with " + managementBackend() + " backend"));
         }
-        return identityProviderService.create(ReferenceType.DOMAIN, domainId, newIdentityProvider, null, true);
+        return identityProviderService.create(domain, newIdentityProvider, null, true);
     }
 
 

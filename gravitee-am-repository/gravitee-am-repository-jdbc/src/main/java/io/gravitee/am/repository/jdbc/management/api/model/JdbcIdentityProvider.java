@@ -55,4 +55,6 @@ public class JdbcIdentityProvider {
     private LocalDateTime updatedAt;
     @Column("password_policy")
     private String passwordPolicy;
+    @Column("data_plane_id")
+    private String dataPlaneId;
 }

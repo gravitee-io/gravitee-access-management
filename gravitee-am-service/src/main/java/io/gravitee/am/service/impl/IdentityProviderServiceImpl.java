@@ -15,6 +15,17 @@
  */
 package io.gravitee.am.service.impl;
 
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
+
+import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigurationUtils.sanitizeClientAuthCertificate;
+import static java.util.Optional.ofNullable;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -25,6 +36,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -54,17 +66,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.stream.StreamSupport;
-
-import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigurationUtils.sanitizeClientAuthCertificate;
-import static java.util.Optional.ofNullable;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -159,20 +160,20 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     @Override
     public Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
         LOGGER.debug("Create a new identity provider {} for {} {}", newIdentityProvider, referenceType, referenceId);
+        return innerCreate(prepareIdp(newIdentityProvider, referenceType, referenceId, system));
+    }
 
-        var identityProvider = new IdentityProvider();
-        identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
-        identityProvider.setReferenceType(referenceType);
-        identityProvider.setReferenceId(referenceId);
-        identityProvider.setName(newIdentityProvider.getName());
-        identityProvider.setType(newIdentityProvider.getType());
-        identityProvider.setSystem(system);
-        identityProvider.setConfiguration(sanitizeClientAuthCertificate(newIdentityProvider.getConfiguration()));
-        identityProvider.setExternal(newIdentityProvider.isExternal());
-        identityProvider.setDomainWhitelist(ofNullable(newIdentityProvider.getDomainWhitelist()).orElse(List.of()));
-        identityProvider.setCreatedAt(new Date());
-        identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
+    @Override
+    public Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
+        LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain.getId());
 
+        var identityProvider = prepareIdp(newIdentityProvider, ReferenceType.DOMAIN, domain.getId(), system);
+        identityProvider.setDataPlaneId(domain.getDataPlaneId());
+
+        return innerCreate(identityProvider);
+    }
+
+    private Single<IdentityProvider> innerCreate(IdentityProvider identityProvider) {
         return identityProviderRepository.create(identityProvider)
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
@@ -183,6 +184,22 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
                 });
+    }
+
+    private static IdentityProvider prepareIdp(NewIdentityProvider newIdentityProvider, ReferenceType domain, String domain1, boolean system) {
+        var identityProvider = new IdentityProvider();
+        identityProvider.setId(newIdentityProvider.getId() == null ? RandomString.generate() : newIdentityProvider.getId());
+        identityProvider.setReferenceType(domain);
+        identityProvider.setReferenceId(domain1);
+        identityProvider.setName(newIdentityProvider.getName());
+        identityProvider.setType(newIdentityProvider.getType());
+        identityProvider.setSystem(system);
+        identityProvider.setConfiguration(sanitizeClientAuthCertificate(newIdentityProvider.getConfiguration()));
+        identityProvider.setExternal(newIdentityProvider.isExternal());
+        identityProvider.setDomainWhitelist(ofNullable(newIdentityProvider.getDomainWhitelist()).orElse(List.of()));
+        identityProvider.setCreatedAt(new Date());
+        identityProvider.setUpdatedAt(identityProvider.getCreatedAt());
+        return identityProvider;
     }
 
     @Override
@@ -223,6 +240,39 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     LOGGER.error("An error occurs while trying to update an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to update an identity provider", ex));
                 });
+    }
+
+    @Override
+    public Single<IdentityProvider> assignDataPlane(IdentityProvider identityProvider, String dataPlaneId) {
+        LOGGER.debug("Assign dataPlaneId {} to identity provider {}", dataPlaneId, identityProvider.getId());
+
+
+        IdentityProvider identityToUpdate = new IdentityProvider(identityProvider);
+        identityToUpdate.setDataPlaneId(dataPlaneId);
+        identityToUpdate.setUpdatedAt(new Date());
+        identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(identityToUpdate.getConfiguration()));
+
+        // for update validate config against schema here instead of the resource
+        // as idp may be system idp so on the UI config is empty.
+        validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
+
+        return identityProviderRepository.update(identityToUpdate)
+                .flatMap(identityProvider1 -> {
+                    // create event for sync process
+                    Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
+                    return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+
+                    LOGGER.error("An error occurs while trying to update an identity provider", ex);
+                    return Single.error(new TechnicalManagementException("An error occurs while trying to update an identity provider", ex));
+                })
+                .doOnSuccess((updatedIdp) -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).type(EventType.IDENTITY_PROVIDER_UPDATED).oldValue(identityProvider).identityProvider(updatedIdp)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(IdentityProviderAuditBuilder.class).type(EventType.IDENTITY_PROVIDER_UPDATED).reference(new Reference(identityProvider.getReferenceType(), identityProvider.getReferenceId()))
+                        .identityProvider(identityProvider).throwable(throwable)));
     }
 
     @Override

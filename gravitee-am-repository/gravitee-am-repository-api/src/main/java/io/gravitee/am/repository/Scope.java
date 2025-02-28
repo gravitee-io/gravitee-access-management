@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository;
 
+import java.util.Locale;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -39,4 +41,7 @@ public enum Scope {
         return "repositories." + name;
     }
 
+    public static Scope fromName(String name) {
+        return Scope.valueOf(name.toUpperCase(Locale.ROOT));
+    }
 }

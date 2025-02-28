@@ -84,7 +84,7 @@ public class DomainsResourceTest extends JerseySpringTest {
         domain.setDataPlaneId("data-plane-id");
 
         doReturn(Single.just(domain)).when(domainService).create(eq("DEFAULT"), eq("DEFAULT"), any(), any());
-        doReturn(Single.just(new IdentityProvider())).when(defaultIdentityProviderService).create(domain.getId());
+        doReturn(Single.just(new IdentityProvider())).when(defaultIdentityProviderService).create(domain);
         doReturn(Single.just(new Reporter())).when(reporterService).createDefault(argThat(ref -> ref.id().equals(domain.getId())));
 
         final Response response = target("domains").request().post(Entity.json(newDomain));

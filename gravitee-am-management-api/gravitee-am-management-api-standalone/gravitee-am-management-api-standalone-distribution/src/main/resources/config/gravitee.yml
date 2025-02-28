@@ -356,6 +356,10 @@ user:
     maxRequestOperations: 1000
 
 repositories:
+  # specify which scope is used as reference
+  # to initialize the IdentityProviders with the "use system cluster"
+  # option enabled (only management and gateway scopes are allowed as value)
+  system-cluster: management
   # Management repository is used to store global configuration such as domains, clients, ...
   # This is the default configuration using MongoDB (single server)
   # For more information about MongoDB configuration, please have a look to:
