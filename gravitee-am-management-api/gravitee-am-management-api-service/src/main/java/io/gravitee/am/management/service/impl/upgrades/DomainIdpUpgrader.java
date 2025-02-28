@@ -61,7 +61,7 @@ public class DomainIdpUpgrader extends AsyncUpgrader {
                         (isEmpty -> {
                     if (isEmpty) {
                         logger.info("No default idp found for domain {}, update domain", domain.getName());
-                        return defaultIdentityProviderService.create(domain.getId());
+                        return defaultIdentityProviderService.create(domain);
                     }
                     return Single.just(new IdentityProvider());
                 });

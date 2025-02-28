@@ -29,6 +29,10 @@ import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.jdbc.spring.JdbcDataPlaneSpringConfiguration;
+import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
+import io.gravitee.am.repository.provider.ClientWrapper;
+import io.gravitee.am.repository.provider.ConnectionProvider;
+import io.r2dbc.spi.ConnectionFactory;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
@@ -42,6 +46,9 @@ public class JdbcDataPlaneProvider implements DataPlaneProvider, InitializingBea
 
     @Autowired
     private DataPlaneDescription dataPlaneDescription;
+
+    @Autowired
+    private R2DBCPoolWrapper clientWrapper;
 
     @Autowired
     private CredentialRepository credentialRepository;
@@ -79,11 +86,20 @@ public class JdbcDataPlaneProvider implements DataPlaneProvider, InitializingBea
     @Override
     public void afterPropertiesSet() throws Exception {
         log.info("DataPlane provider loaded with id {}", dataPlaneDescription.id());
-
     }
 
     @Override
     public void stop() {
 
+    }
+
+    @Override
+    public boolean canHandle(String backendType) {
+        return ConnectionProvider.BACKEND_TYPE_RDBMS.equals(backendType);
+    }
+
+    @Override
+    public ClientWrapper<ConnectionFactory> getClientWrapper() {
+        return this.clientWrapper;
     }
 }

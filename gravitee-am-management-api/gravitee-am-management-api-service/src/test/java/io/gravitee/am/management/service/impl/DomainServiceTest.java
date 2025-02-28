@@ -361,7 +361,7 @@ public class DomainServiceTest {
     public void shouldCreate() {
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
-        newDomain.setDataPlaneId("default");
+        newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -369,8 +369,8 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
-        domain.setDataPlaneId("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -411,7 +411,7 @@ public class DomainServiceTest {
 
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
-        newDomain.setDataPlaneId("default");
+        newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -419,8 +419,8 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
-        domain.setDataPlaneId("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -460,7 +460,7 @@ public class DomainServiceTest {
 
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
-        newDomain.setDataPlaneId("default");
+        newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -468,8 +468,8 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
-        domain.setDataPlaneId("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
         when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
@@ -509,7 +509,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -526,7 +526,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
 
@@ -544,7 +544,7 @@ public class DomainServiceTest {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
         when(newDomain.getDataPlaneId()).thenReturn("default");
-        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription("default","default","mongodb","test", "http://localhost:8092")));
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.just(new Domain()));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -875,7 +875,7 @@ public class DomainServiceTest {
         domain.setName(DOMAIN_ID);
         domain.setPath("/test");
         domain.setVersion(DomainVersion.V2_0);
-        domain.setDataPlaneId("default");
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
 
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
 
@@ -898,7 +898,7 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setName(DOMAIN_ID);
         domain.setPath("/test");
-        domain.setDataPlaneId("default");
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
 
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.just(domain));
@@ -938,7 +938,7 @@ public class DomainServiceTest {
         domain.setName(DOMAIN_ID);
         domain.setPath("/test");
         domain.setVersion(DomainVersion.V2_0);
-        domain.setDataPlaneId("default");
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
 
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
 
@@ -959,7 +959,7 @@ public class DomainServiceTest {
         updateDomain.setReferenceId(ENVIRONMENT_ID);
         updateDomain.setName(DOMAIN_ID + "1");
         updateDomain.setPath("/test");
-        updateDomain.setDataPlaneId("default");
+        updateDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
 
         Domain domain = new Domain();
         domain.setId(DOMAIN_ID);
@@ -968,11 +968,11 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setName(DOMAIN_ID);
         domain.setPath("/test");
-        domain.setDataPlaneId("default");
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
 
         Domain updatedDomain = new Domain(domain);
         updatedDomain.setName(UUID.randomUUID().toString());
-        updatedDomain.setDataPlaneId("default");
+        updatedDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
 
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.empty());

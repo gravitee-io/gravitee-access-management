@@ -141,6 +141,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         var identityProvider = new IdentityProvider();
         identityProvider.setId(identityProviderMongo.getId());
         identityProvider.setName(identityProviderMongo.getName());
+        identityProvider.setDataPlaneId(identityProviderMongo.getDataPlaneId());
         identityProvider.setType(identityProviderMongo.getType());
         identityProvider.setSystem(identityProviderMongo.isSystem());
         identityProvider.setConfiguration(identityProviderMongo.getConfiguration());
@@ -187,6 +188,7 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
             identityProviderMongo.setId(identityProvider.getId());
             identityProviderMongo.setName(identityProvider.getName());
             identityProviderMongo.setType(identityProvider.getType());
+            identityProviderMongo.setDataPlaneId(identityProvider.getDataPlaneId());
             identityProviderMongo.setSystem(identityProvider.isSystem());
             identityProviderMongo.setConfiguration(identityProvider.getConfiguration());
             identityProviderMongo.setReferenceType(identityProvider.getReferenceType());

@@ -26,6 +26,7 @@ import io.gravitee.am.dataplane.api.repository.ResourceRepository;
 import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.repository.provider.ClientWrapper;
 
 public interface DataPlaneProvider {
 
@@ -52,4 +53,8 @@ public interface DataPlaneProvider {
     ResourceRepository getResourceRepository();
 
     PermissionTicketRepository getPermissionTicketRepository();
+
+    boolean canHandle(String backendType);
+
+    <T> ClientWrapper<T> getClientWrapper();
 }
