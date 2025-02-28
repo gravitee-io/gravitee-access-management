@@ -145,9 +145,9 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             }
 
             configMap.put("host", jdbcHost());
-            configMap.put("port", jdbcPort());
-            configMap.put("protocol", jdbcDriver());
+            configMap.put("port", Integer.parseInt(jdbcPort()));
             configMap.put("database", jdbcDatabase());
+            configMap.put("protocol", jdbcDriver());
             // dash are forbidden in table name, replace them in domainName by underscore
             configMap.put("usersTable", "idp_users_" + tableSuffix);
             configMap.put("user", jdbcUser());
@@ -245,7 +245,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     }
 
     private String jdbcPort() {
-        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.port");
+        return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.port", "5432");
     }
 
     private String jdbcDriver() {
