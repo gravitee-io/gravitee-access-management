@@ -17,12 +17,14 @@ package io.gravitee.am.identityprovider.mongo;
 
 import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.impl.MongoConnectionProvider;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -42,6 +44,9 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     @Autowired
     protected MongoIdentityProviderConfiguration configuration;
 
+    @Autowired
+    protected Environment environment;
+
     protected ClientWrapper<MongoClient> clientWrapper;
 
     protected MongoClient mongoClient;
@@ -59,14 +64,23 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
+        final var systemScope = Scope.fromName(environment.getProperty("repositories.system-cluster", String.class, Scope.MANAGEMENT.getName()));
+        if (!(systemScope == Scope.MANAGEMENT || systemScope == Scope.GATEWAY)) {
+            throw new IllegalStateException("Unable to initialize Mongo Identity Provider, repositories.system-cluster only accept 'management' or 'gateway'");
+        }
+
         if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
             this.clientWrapper = this.identityProviderEntity != null && this.identityProviderEntity.isSystem() ?
-                    this.commonConnectionProvider.getClientWrapper() :
-                    this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
+                    this.commonConnectionProvider.getClientWrapper() : getClientWrapperBasedOnConfig(systemScope);
         } else {
             this.clientWrapper = mongoProvider.getClientFromConfiguration(this.configuration);
         }
         this.mongoClient = this.clientWrapper.getClient();
+    }
+
+    private ClientWrapper getClientWrapperBasedOnConfig(Scope scope) {
+        return this.configuration.isUseSystemCluster() ? this.commonConnectionProvider.getClientWrapper(scope.getName()) :
+                this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
     }
 
     protected String getSafeUsername(String username) {
