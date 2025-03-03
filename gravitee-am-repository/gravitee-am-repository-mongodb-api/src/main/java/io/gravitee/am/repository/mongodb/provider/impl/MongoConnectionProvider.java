@@ -48,22 +48,25 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private ClientWrapper<MongoClient> gatewayMongoClient;
 
     private boolean notUseMngSettingsForOauth2;
+    private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         final var useMngSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
-        final var notUseGatewaySettings = environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+        final var useGwSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", Boolean.class, false);
+        final var useMngSettingsForGateway = environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+        notUseGwSettingsForOauth2 = !useGwSettingsForOauth2;
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
-        notUseMngSettingsForGateway = !notUseGatewaySettings;
+        notUseMngSettingsForGateway = !useMngSettingsForGateway;
         // create the common client just after the bean Initialization to guaranty the uniqueness
         commonMongoClient =
                 new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getRepositoryPropertyKey()).getObject(), getDatabaseName(MANAGEMENT));
-        if (notUseMngSettingsForOauth2) {
-            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject(), getDatabaseName(OAUTH2));
-        }
         if (notUseMngSettingsForGateway) {
             gatewayMongoClient = new MongoClientWrapper(new MongoFactory(environment, GATEWAY.getRepositoryPropertyKey()).getObject(), getDatabaseName(GATEWAY));
+        }
+        if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
+            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject(), getDatabaseName(OAUTH2));
         }
     }
 
@@ -75,7 +78,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public ClientWrapper getClientWrapper(String name) {
         if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
-            return oauthMongoClient;
+            return notUseGwSettingsForOauth2 ? oauthMongoClient : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
             return gatewayMongoClient;
         } else {
