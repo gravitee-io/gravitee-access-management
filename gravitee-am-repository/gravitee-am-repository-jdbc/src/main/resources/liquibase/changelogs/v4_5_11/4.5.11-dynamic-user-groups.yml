@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.5.11
+      author: GraviteeSource Team
+      changes:
+        - createTable:
+            tableName: dynamic_user_groups
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: group_id, type: nvarchar(64), constraints: { nullable: false } }
+        - createIndex:
+            tableName: dynamic_user_groups
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_dynamic_user_groups
+            unique: false
