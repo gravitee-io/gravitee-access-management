@@ -18,6 +18,12 @@ package io.gravitee.am.dataplane.jdbc.repository;
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.jdbc.dialect.ScimSearch;
+import io.gravitee.am.dataplane.jdbc.mapper.EnrolledFactorsConverter;
+import io.gravitee.am.dataplane.jdbc.mapper.MapToStringConverter;
+import io.gravitee.am.dataplane.jdbc.mapper.X509Converter;
+import io.gravitee.am.dataplane.jdbc.repository.model.JdbcUser;
+import io.gravitee.am.dataplane.jdbc.repository.spring.SpringDynamicUserGroupRepository;
 import io.gravitee.am.dataplane.jdbc.repository.spring.SpringDynamicUserRoleRepository;
 import io.gravitee.am.dataplane.jdbc.repository.spring.SpringUserAddressesRepository;
 import io.gravitee.am.dataplane.jdbc.repository.spring.SpringUserAttributesRepository;
@@ -36,11 +42,6 @@ import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
-import io.gravitee.am.dataplane.jdbc.dialect.ScimSearch;
-import io.gravitee.am.dataplane.jdbc.repository.model.JdbcUser;
-import io.gravitee.am.dataplane.jdbc.mapper.EnrolledFactorsConverter;
-import io.gravitee.am.dataplane.jdbc.mapper.MapToStringConverter;
-import io.gravitee.am.dataplane.jdbc.mapper.X509Converter;
 import io.gravitee.am.repository.jdbc.provider.common.OffsetPageRequest;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.r2dbc.spi.R2dbcNonTransientResourceException;
@@ -78,9 +79,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static io.gravitee.am.dataplane.jdbc.dialect.DatabaseDialectHelper.ScimRepository.USERS;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.common.Page.pageFromOffset;
-import static io.gravitee.am.dataplane.jdbc.dialect.DatabaseDialectHelper.ScimRepository.USERS;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Stream.concat;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -239,6 +240,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String REF_TYPE = "refType";
     private static final String EMAIL = "email";
     private static final String USER_ID = "user_id";
+    private static final String DYNAMIC_USER_GROUPS_TABLE = "dynamic_user_groups";
 
     private static final UserIdFields USER_ID_FIELDS = new UserIdFields(USER_COL_ID, USER_COL_SOURCE, USER_COL_EXTERNAL_ID);
 
@@ -256,6 +258,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Autowired
     protected SpringDynamicUserRoleRepository dynamicRoleRepository;
+
+    @Autowired
+    protected SpringDynamicUserGroupRepository dynamicGroupRepository;
 
     @Autowired
     protected SpringUserAddressesRepository addressesRepository;
@@ -958,6 +963,21 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         if (updateActions.updateDynamicRole()) {
             actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), "dynamic_user_roles");
         }
+        if (updateActions.updateDynamicGroup()) {
+            if (item.getDynamicGroups() != null && !item.getDynamicGroups().isEmpty()) {
+                actionFlow = actionFlow.then(Flux.fromIterable(item.getDynamicGroups()).concatMap(group -> {
+                    try {
+                        return getTemplate().getDatabaseClient().sql("INSERT INTO " + DYNAMIC_USER_GROUPS_TABLE + "(user_id, group_id) VALUES(:user, :group)")
+                                .bind("user", item.getId())
+                                .bind("group", group)
+                                .fetch().rowsUpdated();
+                    } catch (Exception e) {
+                        LOGGER.error("An unexpected error has occurred", e);
+                        return Mono.just(0);
+                    }
+                }).map(Number::longValue).reduce(Long::sum));
+            }
+        }
 
         final List<String> entitlements = item.getEntitlements();
         if (entitlements != null && !entitlements.isEmpty() && updateActions.updateEntitlements()) {
@@ -1046,6 +1066,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             Mono<Long> deleteDynamicRoles = getTemplate().delete(JdbcUser.DynamicRole.class).matching(criteria).all();
             result = result.then(deleteDynamicRoles);
         }
+        if (actions.updateDynamicGroup()) {
+            Mono<Long> deleteDynamicGroups = getTemplate().delete(JdbcUser.DynamicGroup.class).matching(criteria).all();
+            result = result.then(deleteDynamicGroups);
+        }
         if (actions.updateAddresses()) {
             Mono<Long> deleteAddresses = getTemplate().delete(JdbcUser.Address.class).matching(criteria).all();
             result = result.then(deleteAddresses);
@@ -1075,6 +1099,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user ->
                         dynamicRoleRepository.findByUserId(user.getId()).map(JdbcUser.DynamicRole::getRole).toList().map(roles -> {
                             user.setDynamicRoles(roles);
+                            return user;
+                        }))
+                .flatMap(user ->
+                        dynamicGroupRepository.findByUserId(user.getId()).map(JdbcUser.DynamicGroup::getGroup).toList().map(groups -> {
+                            user.setDynamicGroups(groups);
                             return user;
                         }))
                 .flatMap(user ->

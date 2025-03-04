@@ -190,6 +190,7 @@ public interface UserRepository extends CrudRepository<User, String> {
             return new UserRepository.UpdateActions()
                     .updateRole(false)
                     .updateDynamicRole(false)
+                    .updateDynamicGroup(false)
                     .updateEntitlements(false)
                     .updateAttributes(false)
                     .updateAddresses(false)
@@ -208,6 +209,7 @@ public interface UserRepository extends CrudRepository<User, String> {
             actions.updateAddresses(needUpdate(existingUser.getAddresses(), updatedUser.getAddresses()));
             actions.updateRole(needUpdate(existingUser.getRoles(), updatedUser.getRoles()));
             actions.updateDynamicRole(needUpdate(existingUser.getDynamicRoles(), updatedUser.getDynamicRoles()));
+            actions.updateDynamicGroup(needUpdate(existingUser.getDynamicGroups(), updatedUser.getDynamicGroups()));
             actions.updateIdentities(needUpdate(existingUser.getIdentities(), updatedUser.getIdentities()));
 
             return actions;

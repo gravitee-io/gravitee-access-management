@@ -248,6 +248,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserver.assertValue(u -> u.getExternalId().equals(user.getExternalId()));
         testObserver.assertValue(u -> u.getRoles().containsAll(user.getRoles()));
         testObserver.assertValue(u -> u.getDynamicRoles().containsAll(user.getDynamicRoles()));
+        testObserver.assertValue(u -> u.getDynamicGroups().containsAll(user.getDynamicGroups()));
         testObserver.assertValue(u -> u.getEntitlements().containsAll(user.getEntitlements()));
         testObserver.assertValue(u -> u.getEmails().size() == 1);
         testObserver.assertValue(u -> u.getPhoneNumbers().size() == 1);
@@ -314,6 +315,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         testObserver.assertValue(u -> u.getExternalId().equals(user.getExternalId()));
         testObserver.assertValue(u -> u.getRoles().containsAll(user.getRoles()));
         testObserver.assertValue(u -> u.getDynamicRoles().containsAll(user.getDynamicRoles()));
+        testObserver.assertValue(u -> u.getDynamicGroups().containsAll(user.getDynamicGroups()));
         testObserver.assertValue(u -> u.getEntitlements().containsAll(user.getEntitlements()));
         testObserver.assertValue(u -> u.getEmails().size() == 1);
         testObserver.assertValue(u -> u.getPhoneNumbers().size() == 1);
@@ -373,6 +375,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userUpdated.setEntitlements(Arrays.asList("updated_ent"));
         userUpdated.setRoles(Arrays.asList("updated_role"));
         userUpdated.setDynamicRoles(Arrays.asList("updated_dynamic_role"));
+        userUpdated.setDynamicGroups(Arrays.asList("updated_dynamic_group"));
 
         final UserRepository.UpdateActions actions = UserRepository.UpdateActions.build(userCreated, userUpdated);
         Assert.assertTrue(actions.updateAddresses());
@@ -380,6 +383,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         Assert.assertTrue(actions.updateEntitlements());
         Assert.assertTrue(actions.updateRole());
         Assert.assertTrue(actions.updateDynamicRole());
+        Assert.assertTrue(actions.updateDynamicGroup());
         Assert.assertTrue(actions.updateIdentities());
 
         TestObserver<User> testObserver = userRepository.update(userUpdated, actions).test();
@@ -409,6 +413,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         // Should have changed too
         testObserver.assertValue(u -> Objects.equals(u.getRoles(), userUpdated.getRoles()));
         testObserver.assertValue(u -> Objects.equals(u.getDynamicRoles(), userUpdated.getDynamicRoles()));
+        testObserver.assertValue(u -> Objects.equals(u.getDynamicGroups(), userUpdated.getDynamicGroups()));
         testObserver.assertValue(u -> Objects.equals(u.getEntitlements(), userUpdated.getEntitlements()));
         testObserver.assertValue(u -> Objects.equals(u.getEmails(), userUpdated.getEmails()));
         testObserver.assertValue(u -> Objects.equals(u.getPhoneNumbers(), userUpdated.getPhoneNumbers()));
@@ -447,6 +452,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         userUpdated.setEntitlements(Arrays.asList("updated_ent"));
         userUpdated.setRoles(Arrays.asList("updated_role"));
         userUpdated.setDynamicRoles(Arrays.asList("updated_dynamic_role"));
+        userUpdated.setDynamicGroups(Arrays.asList("updated_dynamic_group"));
 
         // compare with same object to consider addr, attr, roles... sa unchanged
         final UserRepository.UpdateActions actions = UserRepository.UpdateActions.none();
@@ -455,6 +461,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         Assert.assertFalse(actions.updateEntitlements());
         Assert.assertFalse(actions.updateRole());
         Assert.assertFalse(actions.updateDynamicRole());
+        Assert.assertFalse(actions.updateDynamicGroup());
         Assert.assertFalse(actions.updateIdentities());
 
 
@@ -485,6 +492,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         // Shouldn't have changed
         testObserver.assertValue(u -> Objects.equals(u.getRoles(), user.getRoles()));
         testObserver.assertValue(u -> Objects.equals(u.getDynamicRoles(), user.getDynamicRoles()));
+        testObserver.assertValue(u -> Objects.equals(u.getDynamicGroups(), user.getDynamicGroups()));
         testObserver.assertValue(u -> Objects.equals(u.getIdentities(), Optional.ofNullable(user.getIdentities()).orElse(of())));
         testObserver.assertValue(u -> Objects.equals(u.getEntitlements(), user.getEntitlements()));
         testObserver.assertValue(u -> Objects.equals(u.getEmails(), user.getEmails()));
@@ -534,6 +542,7 @@ public class UserRepositoryTest extends AbstractDataPlaneTest {
         user.setEntitlements(Arrays.asList("ent"+random));
         user.setRoles(Arrays.asList("role"+random));
         user.setDynamicRoles(Arrays.asList("dynamic_role"+random));
+        user.setDynamicGroups(Arrays.asList("dynamic_group"+random));
 
         Address addr = new Address();
         addr.setCountry("fr");

@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-13-dataplane-dynamic-user-group
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: dynamic_user_groups
+      changes:
+        - createTable:
+            tableName: dynamic_user_groups
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: group_id, type: nvarchar(64), constraints: { nullable: false } }
+        - createIndex:
+            tableName: dynamic_user_groups
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_dynamic_user_groups
+            unique: false
