@@ -16,15 +16,9 @@
 package io.gravitee.am.management.service.spring;
 
 import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
-import io.gravitee.am.management.service.impl.upgrades.system.spring.SystemUpgraderConfiguration;
-import io.gravitee.node.api.upgrader.UpgraderRepository;
-import io.gravitee.node.services.upgrader.UpgraderServiceImpl;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.Lazy;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -36,13 +30,7 @@ import org.springframework.context.annotation.Lazy;
 @Import({FreemarkerConfiguration.class,
         PlatformNotifierConfiguration.class,
         EmailNotifierConfiguration.class,
-        SystemUpgraderConfiguration.class})
+        ManagementUpgraderConfiguration.class})
 public class ManagementServiceConfiguration {
-
-    @Bean
-    public UpgraderServiceImpl upgraderService(io.gravitee.node.api.configuration.Configuration configuration,
-                                               @Lazy @Qualifier("managementUpgraderRepository") UpgraderRepository upgraderRepository) {
-        return new UpgraderServiceImpl(configuration, upgraderRepository);
-    }
 
 }

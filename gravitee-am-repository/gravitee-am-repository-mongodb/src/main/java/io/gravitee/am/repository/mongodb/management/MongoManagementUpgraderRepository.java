@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.management;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.repository.mongodb.management.internal.model.UpgradeRecordMongo;
+import io.gravitee.am.repository.upgrader.UpgraderTargets;
 import io.gravitee.node.api.upgrader.UpgradeRecord;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.reactivex.rxjava3.core.Maybe;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Repository;
 
 import static com.mongodb.client.model.Filters.eq;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.upgrader.UpgraderTargets.MANAGEMENT_UPGRADER_TARGET;
 
 @Repository
 @Qualifier("managementUpgraderRepository")
@@ -35,7 +37,7 @@ public class MongoManagementUpgraderRepository extends AbstractManagementMongoRe
 
     @PostConstruct
     public void init() {
-        this.upgraderCollection = mongoOperations.getCollection("upgraders", UpgradeRecordMongo.class);
+        this.upgraderCollection = mongoOperations.getCollection(MANAGEMENT_UPGRADER_TARGET, UpgradeRecordMongo.class);
         super.init(upgraderCollection);
     }
     @Override

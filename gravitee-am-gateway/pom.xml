@@ -34,7 +34,6 @@
     <modules>
         <module>gravitee-am-gateway-handler</module>
         <module>gravitee-am-gateway-standalone</module>
-        <module>gravitee-am-gateway-service</module>
         <module>gravitee-am-gateway-services</module>
         <module>gravitee-am-gateway-core</module>
         <module>gravitee-am-gateway-reactor</module>

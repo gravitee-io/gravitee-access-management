@@ -13,30 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.gateway;
+package io.gravitee.am.dataplane.mongodb.repository;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.repository.mongodb.management.internal.model.UpgradeRecordMongo;
+import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.dataplane.mongodb.repository.model.UpgradeRecordMongo;
+import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.gravitee.am.repository.upgrader.UpgraderTargets;
 import io.gravitee.node.api.upgrader.UpgradeRecord;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import static com.mongodb.client.model.Filters.eq;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.upgrader.UpgraderTargets.DATAPLANE_UPGRADER_TARGET;
 
-@Repository
-@Qualifier("gatewayUpgraderRepository")
-public class MongoGatewayUpgraderRepository extends AbstractGatewayMongoRepository implements UpgraderRepository {
+@Component
+@Qualifier("dataplaneUpgraderRepository")
+public class MongoDataplaneUpgraderRepository extends AbstractMongoRepository implements UpgraderRepository {
+
+    @Autowired
+    protected MongoDatabase mongoOperations;
+
     private MongoCollection<UpgradeRecordMongo> upgraderCollection;
     @PostConstruct
     public void init() {
-        this.upgraderCollection = mongoOperations.getCollection(UpgraderTargets.GATEWAY_UPGRADER_TARGET, UpgradeRecordMongo.class);
+        this.upgraderCollection = mongoOperations.getCollection(DATAPLANE_UPGRADER_TARGET, UpgradeRecordMongo.class);
         super.init(upgraderCollection);
     }
 

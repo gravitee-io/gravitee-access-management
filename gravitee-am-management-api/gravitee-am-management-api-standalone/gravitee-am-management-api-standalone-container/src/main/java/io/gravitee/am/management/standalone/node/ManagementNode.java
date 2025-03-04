@@ -20,13 +20,12 @@ import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.IdentityProviderManager;
-import io.gravitee.am.management.service.impl.upgrades.system.spring.SystemUpgraderConfiguration;
+import io.gravitee.am.management.service.spring.ManagementUpgraderConfiguration;
 import io.gravitee.am.management.service.tasks.TasksLoader;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.jetty.node.JettyNode;
-import io.gravitee.node.services.upgrader.spring.UpgraderConfiguration;
 import io.gravitee.plugin.alert.AlertEventProducerManager;
 import io.gravitee.plugin.alert.AlertTriggerProviderManager;
 import io.gravitee.plugin.core.internal.PluginEventListener;
@@ -69,8 +68,7 @@ public class ManagementNode extends JettyNode {
     public List<Class<? extends LifecycleComponent>> components() {
         List<Class<? extends LifecycleComponent>> components = super.components();
         components.add(DataPlaneRegistryImpl.class);
-        components.addAll(SystemUpgraderConfiguration.getComponents());
-        components.addAll(UpgraderConfiguration.getComponents());
+        components.addAll(ManagementUpgraderConfiguration.getComponents());
         components.add(PluginEventListener.class);
         components.add(AuditReporterManager.class);
         components.add(IdentityProviderManager.class);
