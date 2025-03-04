@@ -32,11 +32,13 @@ import io.gravitee.am.dataplane.jdbc.spring.JdbcDataPlaneSpringConfiguration;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.r2dbc.spi.ConnectionFactory;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
 @Slf4j
@@ -82,6 +84,10 @@ public class JdbcDataPlaneProvider implements DataPlaneProvider, InitializingBea
 
     @Autowired
     private PermissionTicketRepository permissionTicketRepository;
+
+    @Autowired
+    @Qualifier("dataplaneUpgraderRepository")
+    private UpgraderRepository upgraderRepository;
 
     @Override
     public void afterPropertiesSet() throws Exception {

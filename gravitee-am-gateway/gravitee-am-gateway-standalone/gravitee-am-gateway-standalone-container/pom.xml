@@ -66,12 +66,6 @@
         <!-- Gravitee.io Access Management -->
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
-            <artifactId>gravitee-am-gateway-service</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.gateway</groupId>
             <artifactId>gravitee-am-gateway-reactor</artifactId>
             <version>${project.version}</version>
         </dependency>

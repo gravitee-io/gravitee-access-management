@@ -32,10 +32,12 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.dataplane.mongodb.spring.MongoDataPlaneSpringConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+import io.gravitee.node.api.upgrader.UpgraderRepository;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 
 @Slf4j
@@ -82,6 +84,10 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Autowired
     private PermissionTicketRepository permissionTicketRepository;
 
+    @Autowired
+    @Qualifier("dataplaneUpgraderRepository")
+    private UpgraderRepository upgraderRepository;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         log.info("DataPlane provider loaded with id {}", dataPlaneDescription.id());
@@ -92,6 +98,11 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
         if (mongoClientWrapper != null) {
             mongoClientWrapper.releaseClient();
         }
+    }
+
+    @Override
+    public UpgraderRepository getUpgraderRepository() {
+        return upgraderRepository;
     }
 
     @Override
