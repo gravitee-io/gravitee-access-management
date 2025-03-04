@@ -58,7 +58,6 @@
     },
     "usersCollection" : {
       "type" : "string",
-      "default": "users",
       "title": "The collection used to run query",
       "description": "The collection which is containing all the users."
     },
