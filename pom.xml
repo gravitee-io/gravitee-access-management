@@ -102,7 +102,7 @@
         <commons-codec.version>1.15</commons-codec.version>
         <commons-lang.version>2.6</commons-lang.version>
         <swagger.version>2.2.25</swagger.version>
-        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
+        <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
         <wiremock.version>3.0.4</wiremock.version>
