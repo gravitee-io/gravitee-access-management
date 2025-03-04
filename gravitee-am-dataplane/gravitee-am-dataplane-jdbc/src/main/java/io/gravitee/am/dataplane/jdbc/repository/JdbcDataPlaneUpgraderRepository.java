@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.jdbc.gateway.api;
+package io.gravitee.am.dataplane.jdbc.repository;
 
 import io.gravitee.am.repository.jdbc.provider.common.AbstractJdbcUpgraderRepository;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
@@ -22,23 +22,21 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 
-import static io.gravitee.am.repository.upgrader.UpgraderTargets.GATEWAY_UPGRADER_TARGET;
+import static io.gravitee.am.repository.upgrader.UpgraderTargets.DATAPLANE_UPGRADER_TARGET;
 
 @Repository
-@Qualifier("gatewayUpgraderRepository")
-public class JdbcGatewayUpgraderRepository extends AbstractJdbcUpgraderRepository implements UpgraderRepository {
+@Qualifier("dataplaneUpgraderRepository")
+public class JdbcDataPlaneUpgraderRepository extends AbstractJdbcUpgraderRepository implements UpgraderRepository {
 
     @Autowired
     private DatabaseClient databaseClient;
-
     @Override
     protected String getTableName() {
-        return GATEWAY_UPGRADER_TARGET;
+        return DATAPLANE_UPGRADER_TARGET;
     }
 
     @Override
     protected DatabaseClient getDatabaseClient() {
         return databaseClient;
     }
-
 }
