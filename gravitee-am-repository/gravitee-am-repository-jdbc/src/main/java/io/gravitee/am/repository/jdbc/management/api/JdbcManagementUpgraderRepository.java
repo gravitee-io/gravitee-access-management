@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.repository.jdbc.management.api;
 
-import io.gravitee.am.repository.jdbc.common.AbstractJdbcUpgraderRepository;
+import io.gravitee.am.repository.jdbc.provider.common.AbstractJdbcUpgraderRepository;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
+
+import static io.gravitee.am.repository.upgrader.UpgraderTargets.MANAGEMENT_UPGRADER_TARGET;
 
 @Repository
 @Qualifier("managementUpgraderRepository")
@@ -31,7 +33,7 @@ public class JdbcManagementUpgraderRepository extends AbstractJdbcUpgraderReposi
 
     @Override
     protected String getTableName() {
-        return "upgraders";
+        return MANAGEMENT_UPGRADER_TARGET;
     }
 
     @Override

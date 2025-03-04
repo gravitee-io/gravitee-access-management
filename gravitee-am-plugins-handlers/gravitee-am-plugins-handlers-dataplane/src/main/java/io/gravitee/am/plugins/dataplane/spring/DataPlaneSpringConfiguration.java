@@ -15,7 +15,9 @@
  */
 package io.gravitee.am.plugins.dataplane.spring;
 
+import io.gravitee.am.dataplane.api.upgrader.DataPlaneUpgraderService;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -29,4 +31,5 @@ public class DataPlaneSpringConfiguration {
     public DataPlanePluginManager dataPlanePluginManager(PluginContextFactory pluginContextFactory) {
         return new DataPlanePluginManager(pluginContextFactory);
     }
+
 }

@@ -62,6 +62,11 @@ public class DataPlaneRegistryImpl extends AbstractService<DataPlaneRegistryImpl
     }
 
     @Override
+    public List<DataPlaneProvider> getAllProviders() {
+        return List.copyOf(dataPlanProviders.values());
+    }
+
+    @Override
     public DataPlaneProvider getProvider(Domain domain) {
         Objects.requireNonNull(domain, "Domain is required to provide DataPlane");
         final var dataPlaneId = extractDataPlaneId(domain);

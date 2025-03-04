@@ -40,5 +40,11 @@
             <groupId>io.gravitee.gateway</groupId>
             <artifactId>gravitee-gateway-api</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.service</groupId>
+            <artifactId>gravitee-am-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>
