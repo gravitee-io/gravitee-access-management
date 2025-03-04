@@ -34,6 +34,7 @@ import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.EnrolledFactorsConverter;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.X509Converter;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringDynamicUserGroupRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringDynamicUserRoleRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAddressesRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserAttributesRepository;
@@ -238,6 +239,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String REF_TYPE = "refType";
     private static final String EMAIL = "email";
     private static final String USER_ID = "user_id";
+    private static final String DYNAMIC_USER_GROUPS_TABLE = "dynamic_user_groups";
 
 
     private static final short flatMapMaxConcurrency = 1;
@@ -257,6 +259,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Autowired
     protected SpringDynamicUserRoleRepository dynamicRoleRepository;
+
+    @Autowired
+    protected SpringDynamicUserGroupRepository dynamicGroupRepository;
 
     @Autowired
     protected SpringUserAddressesRepository addressesRepository;
@@ -517,7 +522,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" FROM users WHERE reference_id = :refId AND reference_type = :refType AND ");
-        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME,  -1, -1, USERS);
+        ScimSearch search = this.databaseDialectHelper.prepareScimSearchQuery(queryBuilder, criteria, USER_COL_USERNAME, -1, -1, USERS);
 
         // execute query
         org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec executeSelect = getTemplate().getDatabaseClient().sql(search.getSelectQuery());
@@ -850,7 +855,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         return monoToSingle(action.as(trx::transactional))
                 .flatMap((i) -> {
-                    if(acceptUpsert() && i == 0){
+                    if (acceptUpsert() && i == 0) {
                         return this.create(item);
                     } else {
                         return Single.just(item);
@@ -911,6 +916,21 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         }
         if (updateActions.updateDynamicRole()) {
             actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), "dynamic_user_roles");
+        }
+        if (updateActions.updateDynamicGroup()) {
+            if (item.getDynamicGroups() != null && !item.getDynamicGroups().isEmpty()) {
+                actionFlow = actionFlow.then(Flux.fromIterable(item.getDynamicGroups()).concatMap(group -> {
+                    try {
+                        return getTemplate().getDatabaseClient().sql("INSERT INTO " + DYNAMIC_USER_GROUPS_TABLE + "(user_id, group_id) VALUES(:user, :group)")
+                                .bind("user", item.getId())
+                                .bind("group", group)
+                                .fetch().rowsUpdated();
+                    } catch (Exception e) {
+                        LOGGER.error("An unexpected error has occurred", e);
+                        return Mono.just(0);
+                    }
+                }).map(Number::longValue).reduce(Long::sum));
+            }
         }
 
         final List<String> entitlements = item.getEntitlements();
@@ -1000,6 +1020,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             Mono<Long> deleteDynamicRoles = getTemplate().delete(JdbcUser.DynamicRole.class).matching(criteria).all();
             result = result.then(deleteDynamicRoles);
         }
+        if (actions.updateDynamicGroup()) {
+            Mono<Long> deleteDynamicGroups = getTemplate().delete(JdbcUser.DynamicGroup.class).matching(criteria).all();
+            result = result.then(deleteDynamicGroups);
+        }
         if (actions.updateAddresses()) {
             Mono<Long> deleteAddresses = getTemplate().delete(JdbcUser.Address.class).matching(criteria).all();
             result = result.then(deleteAddresses);
@@ -1029,6 +1053,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user ->
                         dynamicRoleRepository.findByUserId(user.getId()).map(JdbcUser.DynamicRole::getRole).toList().map(roles -> {
                             user.setDynamicRoles(roles);
+                            return user;
+                        }))
+                .flatMap(user ->
+                        dynamicGroupRepository.findByUserId(user.getId()).map(JdbcUser.DynamicGroup::getGroup).toList().map(groups -> {
+                            user.setDynamicGroups(groups);
                             return user;
                         }))
                 .flatMap(user ->
