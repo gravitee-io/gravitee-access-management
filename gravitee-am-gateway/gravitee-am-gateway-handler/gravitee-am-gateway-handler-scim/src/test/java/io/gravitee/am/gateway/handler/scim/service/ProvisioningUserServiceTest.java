@@ -25,6 +25,7 @@ import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
@@ -169,6 +170,9 @@ public class ProvisioningUserServiceTest {
 
     @Mock
     private RevokeTokenGatewayService tokenService;
+
+    @Mock
+    private EmailService emailService;
 
     @Before
     public void setUp() {
@@ -971,4 +975,54 @@ public class ProvisioningUserServiceTest {
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertError(err -> err instanceof UserInvalidException);
     }
+
+    @Test
+    public void shouldCreateUser_with_preRegistration() {
+
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("preRegistration", true);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setAdditionalInformation(ai);
+        user.setPreRegistration(true);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        testObserver.assertValue(u -> ((GraviteeUser) u).getAdditionalInformation().get("preRegistration") != null);
+        assertFalse(newUserDefinition.getValue().isInternal());
+        assertTrue(newUserDefinition.getValue().isEnabled());
+        verify(emailService, times(1)).send(any(),any(),any());
+    }
+
+    @Test
+    public void shouldThrowExceptionOnCreateUser_with_invalidPreRegistration() {
+
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("lastPasswordReset", "abcd");
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertError(err -> err instanceof UserInvalidException);
+    }
+
+
 }

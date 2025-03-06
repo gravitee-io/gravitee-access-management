@@ -294,6 +294,9 @@ public class CommonConfiguration {
         final String registrationVerifySubject = environment.getProperty("user.registration.verify.email.subject", String.class, "${msg('email.registration_verify.subject')}");
         final int userRegistrationVerifyTimeValue = environment.getProperty("user.registration.verify.time.value", Integer.class, 7);
         final TimeUnit userRegistrationVerifyTimeUnit = environment.getProperty("user.registration.verify.time.unit", TimeUnit.class, TimeUnit.DAYS);
+        final String registrationConfirmationSubject = environment.getProperty("user.registration.confirmation.email.subject", String.class, "${msg('email.registration_confirmation.subject')}");
+        final int userRegistrationConfirmationTimeValue = environment.getProperty("user.registration.confirmation.time.value", Integer.class, 7);
+        final TimeUnit userRegistrationConfirmationTimeUnit = environment.getProperty("user.registration.confirmation.time.unit", TimeUnit.class, TimeUnit.DAYS);
 
         return new EmailServiceImpl(
                 enabled,
@@ -305,7 +308,9 @@ public class CommonConfiguration {
                 mfaChallengeExpireAfter,
                 mfaVerifyAttemptSubject,
                 registrationVerifySubject,
-                Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue))
+                Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue)),
+                registrationConfirmationSubject,
+                Math.toIntExact(userRegistrationConfirmationTimeUnit.toSeconds(userRegistrationConfirmationTimeValue))
         );
     }
 
