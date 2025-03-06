@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -39,6 +40,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPL
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "scope_settings_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =

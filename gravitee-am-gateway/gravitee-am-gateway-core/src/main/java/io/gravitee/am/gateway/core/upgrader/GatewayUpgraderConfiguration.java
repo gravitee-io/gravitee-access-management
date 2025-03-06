@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.core.upgrader;
 
+import io.gravitee.am.common.scope.GatewayRepositoryScope;
 import io.gravitee.am.dataplane.api.upgrader.DataPlaneUpgraderService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.upgrader.AmUpgraderService;
@@ -50,7 +51,7 @@ public class GatewayUpgraderConfiguration {
 
     @Bean
     public AmUpgraderService upgraderService(@Lazy @Qualifier("gatewayUpgraderRepository") UpgraderRepository upgraderRepository){
-        return new AmUpgraderService(false, upgraderRepository);
+        return new AmUpgraderService(false, upgraderRepository, GatewayRepositoryScope.class);
     }
 
     @Bean

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.spring;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.dataplane.api.upgrader.DataPlaneUpgraderService;
 import io.gravitee.am.management.service.impl.upgrades.system.SystemUpgraderService;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
@@ -57,7 +58,7 @@ public class ManagementUpgraderConfiguration {
 
     @Bean
     public AmUpgraderService amUpgraderService(@Lazy @Qualifier("managementUpgraderRepository") UpgraderRepository upgraderRepository){
-        return new AmUpgraderService(false, upgraderRepository);
+        return new AmUpgraderService(false, upgraderRepository, ManagementRepositoryScope.class);
     }
 
     @Bean
