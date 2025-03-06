@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.common;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.ReturnUrlMismatchException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -147,5 +148,23 @@ public class ReturnUrlValidationHandlerTest {
         Mockito.verify(ctx, Mockito.times(1)).fail(Mockito.argThat(th -> th instanceof ReturnUrlMismatchException));
     }
 
+    @Test
+    public void when_return_url_is_registered_mobile_link_should_pass(){
+        Domain domain = new Domain();
+        ReturnUrlValidationHandler handler = new ReturnUrlValidationHandler(domain);
+
+        RoutingContext ctx = Mockito.mock();
+        HttpServerRequest request = Mockito.mock();
+        Mockito.when(ctx.request()).thenReturn(request);
+        Mockito.when(request.getParam("return_url")).thenReturn("somedomain.pl:/");
+
+        Client client = new Client();
+        client.setRedirectUris(List.of("somedomain.pl:/"));
+        Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+
+        handler.handle(ctx);
+
+        Mockito.verify(ctx, Mockito.times(1)).next();
+    }
 
 }
