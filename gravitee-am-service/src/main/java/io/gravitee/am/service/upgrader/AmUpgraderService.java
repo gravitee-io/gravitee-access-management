@@ -25,6 +25,7 @@ import io.gravitee.node.api.upgrader.UpgraderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Map;
@@ -34,16 +35,14 @@ public class AmUpgraderService extends AbstractService<AmUpgraderService> implem
     private static final Logger LOGGER = LoggerFactory.getLogger(AmUpgraderService.class);
     private final boolean upgraderModeEnabled;
     private final UpgraderRepository upgraderRepository;
+    private final Class<? extends Annotation> qualifier;
 
     public AmUpgraderService(boolean upgraderModeEnabled,
-                             UpgraderRepository upgraderRepository) {
+                             UpgraderRepository upgraderRepository,
+                             Class<? extends Annotation> qualifier) {
         this.upgraderModeEnabled = upgraderModeEnabled;
         this.upgraderRepository = upgraderRepository;
-    }
-
-    public static AmUpgraderService create(Configuration configuration, UpgraderRepository upgraderRepository) {
-        Boolean upgraderModeEnabled = configuration.getProperty("upgrade.mode", Boolean.class, false);
-        return new AmUpgraderService(upgraderModeEnabled, upgraderRepository);
+        this.qualifier = qualifier;
     }
 
     protected String name() {
@@ -53,9 +52,11 @@ public class AmUpgraderService extends AbstractService<AmUpgraderService> implem
     protected void doStart() throws Exception {
         super.doStart();
         AtomicBoolean stopUpgrade = new AtomicBoolean(false);
-        Map<String, Upgrader> upgraderBeans = this.applicationContext.getBeansOfType(Upgrader.class);
-        upgraderBeans.values()
+        this.applicationContext.getBeansWithAnnotation(qualifier)
+                .values()
                 .stream()
+                .filter(bean -> bean instanceof Upgrader)
+                .map(Upgrader.class::cast)
                 .sorted(Comparator.comparing(Upgrader::getOrder))
                 .takeWhile((upgrader) -> !stopUpgrade.get())
                 .forEach((upgrader) -> {

@@ -17,6 +17,7 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
@@ -39,6 +40,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
  */
 @Component
 @Slf4j
+@ManagementRepositoryScope
 public class DomainPasswordPoliciesUpgrader extends SystemTaskUpgrader {
 
     private static final String TASK_ID = "domain_password_settings_migration";

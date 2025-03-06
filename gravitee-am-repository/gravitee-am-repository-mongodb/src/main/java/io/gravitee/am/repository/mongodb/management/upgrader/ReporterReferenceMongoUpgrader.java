@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.mongodb.management.upgrader;
 
 import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.management.internal.model.ReporterMongo;
 import io.gravitee.node.api.upgrader.Upgrader;
@@ -32,6 +33,7 @@ import static com.mongodb.client.model.Updates.set;
 @RequiredArgsConstructor
 @Slf4j
 @Component
+@ManagementRepositoryScope
 public class ReporterReferenceMongoUpgrader implements Upgrader {
     private final MongoDatabase mongo;
 

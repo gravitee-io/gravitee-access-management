@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.ChallengeSettings;
@@ -53,6 +54,7 @@ import static org.springframework.util.StringUtils.hasLength;
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
 
     private static final String TASK_ID = "application_factor_settings_migration";

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Completable;
@@ -27,6 +28,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
 
 @Slf4j
 @Component
+@ManagementRepositoryScope
 public class DomainDataPlaneUpgrader extends AsyncUpgrader{
 
     @Autowired
