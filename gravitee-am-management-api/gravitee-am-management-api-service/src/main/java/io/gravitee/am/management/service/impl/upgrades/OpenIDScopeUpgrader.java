@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.management.service.DomainService;
@@ -39,6 +40,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.OPEN
  */
 @Component
 @RequiredArgsConstructor
+@ManagementRepositoryScope
 public class OpenIDScopeUpgrader extends AsyncUpgrader {
 
     private final Logger logger = LoggerFactory.getLogger(OpenIDScopeUpgrader.class);

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.service.ApplicationService;
@@ -44,6 +45,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SCOP
  */
 @Component
 @RequiredArgsConstructor
+@ManagementRepositoryScope
 public class ScopeUpgrader extends AsyncUpgrader {
 
     /**

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.repository.management.api.CertificateRepository;
@@ -33,6 +34,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.SYST
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class SystemCertificateUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "system_certificates_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
