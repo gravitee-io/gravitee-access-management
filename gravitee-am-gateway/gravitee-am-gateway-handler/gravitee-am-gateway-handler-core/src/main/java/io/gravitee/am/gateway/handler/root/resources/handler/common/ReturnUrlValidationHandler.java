@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.common;
 
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.ReturnUrlMismatchException;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.Domain;
@@ -25,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import java.util.ArrayList;
@@ -45,19 +48,28 @@ public class ReturnUrlValidationHandler implements Handler<RoutingContext> {
         if (returnUrl == null) {
             context.next();
         } else {
-            if (!checkProxyRequest(returnUrl, context) && !checkRegisteredRedirectUris(returnUrl, context)) {
-                context.fail(new ReturnUrlMismatchException(String.format("The return_url [ %s ] MUST match the registered callback URL for this application OR this request", returnUrl)));
-            }
-            else if (userInfoPresent(returnUrl)) {
-                context.fail(new ReturnUrlMismatchException(String.format("The return_url [ %s ] MUST NOT contain userInfo part", returnUrl)));
-            }
-            else {
-                context.next();
-            }
+            checkReturnUrl(context, returnUrl);
         }
     }
 
-
+    private void checkReturnUrl(RoutingContext context, String returnUrl) {
+        if (!checkProxyRequest(returnUrl, context) && !checkRegisteredRedirectUris(returnUrl, context)) {
+            context.fail(new ReturnUrlMismatchException(String.format("The return_url [ %s ] MUST match the registered callback URL for this application OR this request", returnUrl)));
+        }
+        else {
+            try {
+                URI url = new URI(returnUrl);
+                if(url.getUserInfo() != null) {
+                    context.fail(new ReturnUrlMismatchException(String.format("The return_url [ %s ] MUST NOT contain userInfo part", returnUrl)));
+                } else {
+                    context.next();
+                }
+            } catch (URISyntaxException ex){
+                log.debug("Return URL syntax error", ex);
+                context.fail(new InvalidRequestException(String.format("The return_url [ %s ] syntax error", returnUrl)));
+            }
+        }
+    }
 
     private boolean checkProxyRequest(String requestedReturnUrl, RoutingContext context) {
         requestedReturnUrl = requestedReturnUrl.endsWith("/") ? requestedReturnUrl : requestedReturnUrl + "/";
@@ -74,13 +86,4 @@ public class ReturnUrlValidationHandler implements Handler<RoutingContext> {
                 .anyMatch(registeredClientUri -> redirectMatches(requestedReturnUrl, registeredClientUri, uriStrictMatch));
     }
 
-    private boolean userInfoPresent(String urlAddress) {
-        try {
-            URL url = new URL(urlAddress);
-            return url.getUserInfo() != null;
-        } catch (MalformedURLException ex){
-            log.debug("Return URL malformed", ex);
-            return true;
-        }
-    }
 }
