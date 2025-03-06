@@ -36,6 +36,7 @@ class RedirectUriValidatorTest {
 
     private final static String REGISTERED_URI_1 = "http://a.localhost";
     private final static String REGISTERED_URI_2 = "http://b.localhost";
+    private final static String REGISTERED_URI_2_MOBILE_LINK = "com.example.org:/";
     private final static String UNREGISTERED_URI = "http://example.com";
 
 
@@ -123,18 +124,49 @@ class RedirectUriValidatorTest {
     }
 
     @Nested
+    class ClientWithSingleMobileRedirect {
+        @Getter
+        private Client client;
+
+        @BeforeEach
+        public void setup() {
+            client = new Client();
+            client.setRedirectUris(List.of(REGISTERED_URI_2_MOBILE_LINK));
+        }
+        @Test
+        void noOperation_noRedirectGiven_ok() {
+            assertThatCode(()->validator.validate(client, null, strictUriChecker))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void operationOptionalRedirect_redirectMobileUriRegistered_ok_registrationConfirmation() {
+            assertThatCode(()->validator.validate(getClient(), REGISTERED_URI_2_MOBILE_LINK, TokenPurpose.REGISTRATION_CONFIRMATION, strictUriChecker))
+                    .doesNotThrowAnyException();
+        }
+
+
+    }
+
+    @Nested
     class ClientWithMultipleRedirects extends SharedCases {
         @Getter
         private Client client;
         @BeforeEach
         public void setup() {
             client = new Client();
-            client.setRedirectUris(List.of(REGISTERED_URI_1, REGISTERED_URI_2));
+            client.setRedirectUris(List.of(REGISTERED_URI_1, REGISTERED_URI_2, REGISTERED_URI_2_MOBILE_LINK));
         }
         @Test
         void noOperation_noRedirectGiven_fail() {
             assertThatThrownBy(()->validator.validate(client, null, strictUriChecker))
                     .isInstanceOf(InvalidRequestException.class);
+        }
+
+        @Test
+        void operationOptionalRedirect_redirectMobileUriRegistered_ok_registrationConfirmation() {
+            assertThatCode(()->validator.validate(getClient(), REGISTERED_URI_2_MOBILE_LINK, TokenPurpose.REGISTRATION_CONFIRMATION, strictUriChecker))
+                    .doesNotThrowAnyException();
         }
     }
 
