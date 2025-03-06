@@ -22,6 +22,8 @@ import io.gravitee.am.model.oidc.Client;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -58,24 +60,22 @@ public class RedirectUriValidator {
             throw new InvalidRequestException("Unable to find suitable redirect_uri, a redirect_uri must be supplied");
         }
 
-        if(redirectUriRequired && hasRequestedRedirectUri && userInfoPresent(requestedRedirectUri)){
-            throw new RedirectMismatchException(String.format("The redirect_uri [ %s ] MUST NOT contain userInfo part", requestedRedirectUri));
+        if(redirectUriRequired && hasRequestedRedirectUri){
+            try {
+                URI uri = new URI(requestedRedirectUri);
+                if(uri.getUserInfo() != null){
+                    throw new RedirectMismatchException(String.format("The redirect_uri [ %s ] MUST NOT contain userInfo part", requestedRedirectUri));
+                }
+            } catch (URISyntaxException ex){
+                log.debug("Redirect URI syntax error", ex);
+                throw new InvalidRequestException(String.format("The redirect_uri [ %s ] syntax error", requestedRedirectUri));
+            }
         }
 
         // if requested redirect_uri doesn't match registered client redirect_uris
         // throw redirect mismatch exception
         if (hasRequestedRedirectUri && hasRegisteredClientRedirectUris) {
             checkMethod.accept(requestedRedirectUri, registeredClientRedirectUris);
-        }
-    }
-
-    private boolean userInfoPresent(String requestedRedirect) {
-        try {
-            URL url = new URL(requestedRedirect);
-            return url.getUserInfo() != null;
-        } catch (MalformedURLException ex){
-            log.debug("Redirect URI malformed", ex);
-            return true;
         }
     }
 
