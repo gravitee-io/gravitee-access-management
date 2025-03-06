@@ -25,6 +25,7 @@
     },
     "usersTable" : {
       "type" : "string",
+      "default": "users",
       "title": "The table used to run query",
       "description": "The table used to run query to search for users."
     },
