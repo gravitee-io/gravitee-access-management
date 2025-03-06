@@ -16,6 +16,7 @@
 
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.SystemTask;
@@ -42,6 +43,7 @@ import static java.util.stream.Collectors.joining;
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
 
     private static final String TASK_ID = "application_identity_provider_migration";
