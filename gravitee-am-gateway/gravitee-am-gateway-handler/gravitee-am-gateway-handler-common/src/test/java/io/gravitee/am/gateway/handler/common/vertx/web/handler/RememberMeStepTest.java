@@ -17,7 +17,7 @@ package io.gravitee.am.gateway.handler.common.vertx.web.handler;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.AuthenticationFlowChain;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.RememberMeStep;
 import io.reactivex.rxjava3.core.Maybe;
@@ -54,7 +54,7 @@ public class RememberMeStepTest {
     private JWTService jwtService;
 
     @Mock
-    private UserService gatewayUserService;
+    private UserGatewayService userGatewayService;
 
     @Mock
     private RoutingContext routingContext;
@@ -69,7 +69,7 @@ public class RememberMeStepTest {
     @Before
     public void setUp() {
 
-        step = new RememberMeStep(redirectHandler, jwtService, gatewayUserService, DEFAULT_REMEMBER_ME_COOKIE_NAME);
+        step = new RememberMeStep(redirectHandler, jwtService, userGatewayService, DEFAULT_REMEMBER_ME_COOKIE_NAME);
         authenticationFlowChain = spy(new AuthenticationFlowChain(List.of(step)));
 
         when(routingContext.request()).thenReturn(httpServerRequest);
@@ -120,7 +120,7 @@ public class RememberMeStepTest {
         jwt.put(USER_ID_KEY, "12345");
         when(jwtService.decode(anyString(), any(JWTService.TokenType.class))).thenReturn(Single.just(jwt));
 
-        when(gatewayUserService.findById("12345")).thenReturn(Maybe.error(new IllegalStateException("User not found")));
+        when(userGatewayService.findById("12345")).thenReturn(Maybe.error(new IllegalStateException("User not found")));
 
         step.execute(routingContext, authenticationFlowChain);
 
@@ -139,7 +139,7 @@ public class RememberMeStepTest {
         jwt.put(USER_ID_KEY, "12345");
         when(jwtService.decode(anyString(), any(JWTService.TokenType.class))).thenReturn(Single.just(jwt));
 
-        when(gatewayUserService.findById("12345")).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
+        when(userGatewayService.findById("12345")).thenReturn(Maybe.just(new io.gravitee.am.model.User()));
 
         step.execute(routingContext, authenticationFlowChain);
 

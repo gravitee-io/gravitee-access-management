@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -44,11 +44,11 @@ import java.util.Set;
  */
 @Slf4j
 public abstract class AbstractUserAction {
-    protected UserService userService;
+    protected ProvisioningUserService userService;
     protected Domain domain;
     protected Client client;
 
-    protected AbstractUserAction(UserService userService, Domain domain, Client client) {
+    protected AbstractUserAction(ProvisioningUserService userService, Domain domain, Client client) {
         this.userService = userService;
         this.domain = domain;
         this.client = client;

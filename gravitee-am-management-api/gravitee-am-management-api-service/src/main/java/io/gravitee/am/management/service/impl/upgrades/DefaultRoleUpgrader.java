@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.node.api.upgrader.Upgrader;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@ManagementRepositoryScope
 public class DefaultRoleUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultRoleUpgrader.class);

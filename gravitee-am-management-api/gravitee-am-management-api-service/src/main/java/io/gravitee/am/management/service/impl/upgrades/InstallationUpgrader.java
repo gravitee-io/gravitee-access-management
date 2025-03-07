@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Installation;
 import io.gravitee.am.service.InstallationService;
 import io.gravitee.node.api.upgrader.Upgrader;
@@ -29,6 +30,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.INST
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class InstallationUpgrader implements Upgrader {
 
     private final Logger logger = LoggerFactory.getLogger(InstallationUpgrader.class);

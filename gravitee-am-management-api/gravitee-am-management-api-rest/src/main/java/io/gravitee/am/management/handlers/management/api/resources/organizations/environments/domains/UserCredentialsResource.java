@@ -16,12 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Credential;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -53,7 +52,7 @@ public class UserCredentialsResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private CredentialService credentialService;
+    private CredentialManagementService credentialService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -69,14 +68,14 @@ public class UserCredentialsResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapPublisher(__ -> credentialService.findByUserId(ReferenceType.DOMAIN, domain, user)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapPublisher(domain -> credentialService.findByUserId(domain, user)))
                         .toList()
                 .subscribe(response::resume, response::resume);
     }

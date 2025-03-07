@@ -30,7 +30,6 @@ import io.gravitee.am.service.ScopeApprovalService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import javassist.NotFoundException;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -70,12 +69,6 @@ public class UserConsentServiceTest {
 
     @InjectMocks
     private UserConsentService userConsentService = new UserConsentServiceImpl(-1);
-
-    @Before
-    public void setUp() {
-        when(domain.getId()).thenReturn("domain-id");
-
-    }
 
     @Test
     public void must_fail_check_consent() {

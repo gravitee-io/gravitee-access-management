@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -69,7 +70,7 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         mockGroup.setId("group-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(groupService).findById(mockGroup.getId());
+        doReturn(Single.error(new GroupNotFoundException(mockGroup.getId()))).when(domainGroupService).findById(mockDomain, mockGroup.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -93,8 +94,8 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         mockGroup.setId("group-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(mockGroup.getId());
-        doReturn(Maybe.empty()).when(userService).findById("member-1");
+        doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
+        doReturn(Maybe.empty()).when(userService).findById(mockDomain, "member-1");
 
         final Response response = target("domains")
                 .path(domainId)
@@ -122,8 +123,8 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         mockUser.setId("member-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(mockGroup.getId());
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -150,9 +151,9 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         mockUser.setId("member-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(mockGroup.getId());
-        doReturn(Single.just(mockGroup)).when(groupService).update(eq(mockDomain.getId()), eq(mockGroup.getId()), any(), any());
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).update(eq(mockDomain), eq(mockGroup.getId()), any(), any());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -197,7 +198,7 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         mockGroup.setId("group-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(groupService).findById(mockGroup.getId());
+        doReturn(Single.error(new GroupNotFoundException(mockGroup.getId()))).when(domainGroupService).findById(mockDomain, mockGroup.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -221,8 +222,8 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         mockGroup.setId("group-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(mockGroup.getId());
-        doReturn(Maybe.empty()).when(userService).findById("member-1");
+        doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
+        doReturn(Maybe.empty()).when(userService).findById(mockDomain, "member-1");
 
         final Response response = target("domains")
                 .path(domainId)
@@ -249,9 +250,9 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         mockUser.setId("member-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(mockGroup.getId());
-        doReturn(Single.just(mockGroup)).when(groupService).update(eq(mockDomain.getId()), eq(mockGroup.getId()), any(), any());
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).update(eq(mockDomain), eq(mockGroup.getId()), any(), any());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -279,9 +280,9 @@ public class GroupMemberResourceTest extends JerseySpringTest {
         mockUser.setId("member-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(mockGroup.getId());
-        doReturn(Single.just(mockGroup)).when(groupService).update(eq(mockDomain.getId()), eq(mockGroup.getId()), any(), any());
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).update(eq(mockDomain), eq(mockGroup.getId()), any(), any());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
 
         final Response response = target("domains")
                 .path(domainId)

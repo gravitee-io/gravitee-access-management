@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.oauth2.model.RefreshToken;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableSource;
@@ -26,7 +27,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface RefreshTokenRepository {
+public interface RefreshTokenRepository extends ExpiredDataSweeper {
 
     Maybe<RefreshToken> findByToken(String token);
 
@@ -42,7 +43,4 @@ public interface RefreshTokenRepository {
 
     CompletableSource deleteByDomainIdAndClientId(String domainId, String clientId);
 
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
 }

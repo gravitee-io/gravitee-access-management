@@ -51,8 +51,8 @@ public class UserFactorResourceTest extends JerseySpringTest {
         mockUser.setFactors(Collections.singletonList(enrolledFactor));
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockUser)).when(userService).findById(mockUser.getId());
-        doReturn(Single.just(mockUser)).when(userService).enrollFactors(any(), any(), any());
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, mockUser.getId());
+        doReturn(Single.just(mockUser)).when(userService).enrollFactors(any(), any(), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)

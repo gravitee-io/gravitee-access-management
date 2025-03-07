@@ -23,6 +23,7 @@ import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.ServiceResourceServiceProxy;
 import io.gravitee.am.management.service.exception.ResourcePluginNotFoundException;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.service.AuditService;
@@ -71,15 +72,15 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
     }
 
     @Override
-    public Single<ServiceResource> create(String domain, NewServiceResource res, User principal) {
+    public Single<ServiceResource> create(Domain domain, NewServiceResource res, User principal) {
         return serviceResourceService.create(domain, res, principal)
                 .flatMap(this::filterSensitiveData)
                 .doOnSuccess(serviceResource -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).resource(serviceResource)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).reference(Reference.domain(domain)).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
     }
 
     @Override
-    public Single<ServiceResource> update(String domain, String id, UpdateServiceResource updateServiceResource, User principal) {
+    public Single<ServiceResource> update(Domain domain, String id, UpdateServiceResource updateServiceResource, User principal) {
         return serviceResourceService.findById(id)
                 .switchIfEmpty(Single.error(new ServiceResourceNotFoundException(id)))
                 .flatMap(oldResource -> filterSensitiveData(oldResource).flatMap(safeOldResource ->
@@ -87,7 +88,7 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
                                 .flatMap(resourceToUpdate -> serviceResourceService.update(domain, id, resourceToUpdate, principal)
                                         .flatMap(this::filterSensitiveData)
                                         .doOnSuccess(serviceResource -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).oldValue(safeOldResource).resource(serviceResource)))
-                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).reference(Reference.domain(domain)).throwable(throwable)))))
+                                        .doOnError(throwable -> auditService.report(AuditBuilder.builder(ServiceResourceAuditBuilder.class).principal(principal).type(EventType.RESOURCE_UPDATED).reference(Reference.domain(domain.getId())).throwable(throwable)))))
                 );
     }
 

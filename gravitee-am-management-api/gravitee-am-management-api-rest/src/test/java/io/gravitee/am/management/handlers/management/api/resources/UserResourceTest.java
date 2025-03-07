@@ -53,7 +53,6 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.times;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -79,7 +78,7 @@ public class UserResourceTest extends JerseySpringTest {
         mockUser.putAdditionalInformation(someSensitiveProperty, "example of sensitive property value");
         doReturn(Maybe.empty()).when(identityProviderService).findById(any());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockUser)).when(userService).findById(userId);
+        doReturn(Maybe.just(mockUser)).when(userService).findById(mockDomain, userId);
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -131,7 +130,7 @@ public class UserResourceTest extends JerseySpringTest {
 
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(userService).lock(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
+        doReturn(Completable.complete()).when(userService).lock(any(), eq(userId), any());
 
         final Response response = target("domains").path(domainId).path("users").path(userId).path("lock").request().post(Entity.json(null));
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
@@ -155,7 +154,7 @@ public class UserResourceTest extends JerseySpringTest {
 
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(userService).unlock(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
+        doReturn(Completable.complete()).when(userService).unlock(any(), eq(userId), any());
 
         final Response response = target("domains").path(domainId).path("users").path(userId).path("unlock").request().post(Entity.json(null));
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
@@ -234,7 +233,7 @@ public class UserResourceTest extends JerseySpringTest {
 
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(userService).sendRegistrationConfirmation(eq(domainId), eq(userId), any());
+        doReturn(Completable.complete()).when(userService).sendRegistrationConfirmation(any(), eq(userId), any());
 
         final Response response = target("domains").path(domainId).path("users").path(userId).path("sendRegistrationConfirmation").request().post(Entity.json(null));
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
@@ -258,8 +257,8 @@ public class UserResourceTest extends JerseySpringTest {
 
         final String userId = "userId";
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(Mockito.mock(User.class))).when(userService).delete(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any());
-        doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(domainId, userId);
+        doReturn(Single.just(Mockito.mock(User.class))).when(userService).delete(any(), eq(userId), any());
+        doReturn(Completable.complete()).when(userActivityService).deleteByDomainAndUser(mockDomain, userId);
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().delete();
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
@@ -280,7 +279,7 @@ public class UserResourceTest extends JerseySpringTest {
         var usernameEntity = new UsernameEntity();
         usernameEntity.setUsername(username);
         doReturn(Maybe.just(domain)).when(domainService).findById(domainId);
-        doReturn(Single.just(userToUpdate)).when(userService).updateUsername(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), eq(usernameEntity.getUsername()), any());
+        doReturn(Single.just(userToUpdate)).when(userService).updateUsername(any(), eq(userId), eq(usernameEntity.getUsername()), any());
 
         final var response = target("domains").path(domainId).path("users").path(userId).path("username").request()
                 .property(SET_METHOD_WORKAROUND, true)
@@ -318,7 +317,7 @@ public class UserResourceTest extends JerseySpringTest {
         var statusEntity = new StatusEntity();
         statusEntity.setEnabled(false);
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockUser)).when(userService).updateStatus(eq(domainId), eq(userId), eq(statusEntity.isEnabled()), any());
+        doReturn(Single.just(mockUser)).when(userService).updateStatus(any(), eq(userId), eq(statusEntity.isEnabled()), any());
 
         final Response response = target("domains").path(domainId).path("users").path(userId).path("status").request().put(Entity.json(statusEntity));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -345,7 +344,7 @@ public class UserResourceTest extends JerseySpringTest {
         var statusEntity = new StatusEntity();
         statusEntity.setEnabled(false);
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockUser)).when(userService).updateStatus(eq(domainId), eq(userId), eq(statusEntity.isEnabled()), any());
+        doReturn(Single.just(mockUser)).when(userService).updateStatus(any(), eq(userId), eq(statusEntity.isEnabled()), any());
 
         final Response response = target("domains").path(domainId).path("users").path(userId).path("status").request().put(Entity.json(statusEntity));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -430,7 +429,7 @@ public class UserResourceTest extends JerseySpringTest {
         ));
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockUser)).when(userService).update(eq(ReferenceType.DOMAIN), eq(domainId), eq(userId), any(), any());
+        doReturn(Single.just(mockUser)).when(userService).update(any(), eq(userId), any(), any());
 
         final Response response = target("domains").path(domainId).path("users").path(userId).request().put(Entity.json(updateUser));
         assertEquals(HttpStatusCode.OK_200, response.getStatus());

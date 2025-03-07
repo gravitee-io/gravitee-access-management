@@ -98,7 +98,7 @@ public class UsersResourceTest extends JerseySpringTest {
         final Page<User> pagedUsers = new Page<>(users, 0, 2);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(pagedUsers)).when(userService).findAll(ReferenceType.DOMAIN, domainId, 0, 10);
+        doReturn(Single.just(pagedUsers)).when(userService).findAll(mockDomain, 0, 10);
 
         final Response response = target("domains")
                 .path(domainId)
@@ -133,7 +133,7 @@ public class UsersResourceTest extends JerseySpringTest {
         final Page<User> pagedUsers = new Page<>(users, 0, 2);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(pagedUsers)).when(userService).findAll(ReferenceType.DOMAIN, domainId, 0, 10);
+        doReturn(Single.just(pagedUsers)).when(userService).findAll(mockDomain, 0, 10);
 
         final Response response = target("domains")
                 .path(domainId)

@@ -19,14 +19,14 @@ package io.gravitee.am.gateway.handler.common.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity;
-import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
 import io.gravitee.risk.assessment.api.assessment.settings.AssessmentSettings;
@@ -73,9 +73,9 @@ public class RiskAssessmentServiceTest {
     @Mock
     private Vertx vertx;
     @Mock
-    private DeviceService deviceService;
+    private DeviceGatewayService deviceService;
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
     @Mock
     private EventBus eventBus;
 
@@ -149,12 +149,12 @@ public class RiskAssessmentServiceTest {
 
         //device
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), any());
+                .when(deviceService).findByDomainAndUser(any(), any());
         //geo
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -184,12 +184,12 @@ public class RiskAssessmentServiceTest {
 
         //device
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), any());
+                .when(deviceService).findByDomainAndUser(any(), any());
         //geo
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -219,12 +219,12 @@ public class RiskAssessmentServiceTest {
 
         //device
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), any());
+                .when(deviceService).findByDomainAndUser(any(), any());
         //geo
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         var testObserver = riskAssessmentService.computeRiskAssessment(authDetailsStub()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

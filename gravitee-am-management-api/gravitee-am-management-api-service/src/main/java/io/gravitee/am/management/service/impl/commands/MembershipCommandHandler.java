@@ -73,7 +73,6 @@ public class MembershipCommandHandler implements CommandHandler<MembershipComman
                 .map(User::getId).toSingle();
         Single<Role> roleObs = findRole(membershipPayload.role(), membershipPayload.organizationId(), assignableType);
 
-
         return Single.zip(roleObs, userObs,
                         (role, userId) -> {
                             Membership membership = new Membership();

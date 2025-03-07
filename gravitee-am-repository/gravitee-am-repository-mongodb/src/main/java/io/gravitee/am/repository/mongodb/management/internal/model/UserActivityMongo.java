@@ -25,7 +25,7 @@ import java.util.Date;
  * @author GraviteeSource Team
  */
 public class UserActivityMongo {
-
+    // TODO [DP] class to remove
     @BsonId
     private String id;
     private String userActivityKey;

@@ -106,7 +106,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"self-account-management-test\", \n\t\"description\": \"test self-account-management impl\"\n}"
+							"raw": "{\n\t\"name\": \"self-account-management-test\", \n\t\"description\": \"test self-account-management impl\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",

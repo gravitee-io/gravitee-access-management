@@ -15,17 +15,22 @@
  */
 package io.gravitee.am.gateway.handler.account.services.impl;
 
-import io.gravitee.am.business.UpdateUsernameRule;
+import io.gravitee.am.business.user.RemoveFactorRule;
+import io.gravitee.am.business.user.UpdateUsernameDomainRule;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
 import io.gravitee.am.gateway.handler.account.services.AccountService;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Credential;
@@ -39,16 +44,13 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
 import io.gravitee.am.reporter.api.audit.model.Audit;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.FactorService;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.ScopeApprovalService;
-import io.gravitee.am.service.UserService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
 import io.gravitee.am.service.exception.InvalidUserException;
@@ -66,6 +68,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
@@ -81,14 +84,13 @@ import java.util.Optional;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AccountServiceImpl implements AccountService {
+public class AccountServiceImpl implements AccountService, InitializingBean {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountServiceImpl.class);
 
     @Autowired
     private Domain domain;
 
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -98,7 +100,7 @@ public class AccountServiceImpl implements AccountService {
     private UserValidator userValidator;
 
     @Autowired
-    private UserService userService;
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Autowired
     private io.gravitee.am.gateway.handler.root.service.user.UserService gatewayUserService;
@@ -113,12 +115,13 @@ public class AccountServiceImpl implements AccountService {
     private AuditReporterManager auditReporterManager;
 
     @Autowired
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Autowired
     private ScopeApprovalService scopeApprovalService;
+
     @Autowired
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptGatewayService loginAttemptService;
 
     @Autowired
     private AuditService auditService;
@@ -129,6 +132,14 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     private SubjectManager subjectManager;
 
+    @Autowired
+    private RevokeTokenGatewayService revokeTokenGatewayService;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        this.userRepository = dataPlaneRegistry.getUserRepository(domain);
+    }
+
     @Override
     public Maybe<User> getBySub(JWT token) {
         return subjectManager.findUserBySub(token);
@@ -136,7 +147,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Maybe<User> getByUserId(String userId) {
-        return userService.findById(userId);
+        return userRepository.findById(userId);
     }
 
     @Override
@@ -186,11 +197,13 @@ public class AccountServiceImpl implements AccountService {
         if (newUsername == null || StringUtils.isBlank(newUsername.getUsername())) {
             return Single.error(new InvalidUserException("Username is required") );
         }
-        return new UpdateUsernameRule(userValidator,
-                userService,
+        return new UpdateUsernameDomainRule(userValidator,
+                userRepository::update,
+                userRepository::findByUsernameAndSource,
                 auditService,
                 credentialService,
-                loginAttemptService).updateUsername(
+                loginAttemptService::reset).updateUsername(
+                        domain,
                         newUsername.getUsername(),
                         principal,
                         (User u) -> identityProviderManager.getUserProvider(u.getSource()).switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(u.getSource()))),
@@ -236,13 +249,14 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Completable removeFactor(String userId, String factorId, io.gravitee.am.identityprovider.api.User principal) {
-        return userService.removeFactor(userId, factorId, principal);
+    public Completable removeFactor(User user, String factorId, io.gravitee.am.identityprovider.api.User principal) {
+        final var removeFactor = new RemoveFactorRule(userValidator, userRepository::update, auditService);
+        return removeFactor.execute(user, factorId, principal);
     }
 
     @Override
     public Single<List<Credential>> getWebAuthnCredentials(User user) {
-        return credentialService.findByUserId(ReferenceType.DOMAIN, user.getReferenceId(), user.getId())
+        return credentialService.findByUserId(domain, user.getId())
                 .map(credential -> {
                     removeSensitiveData(credential);
                     return credential;
@@ -252,7 +266,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<Credential> getWebAuthnCredential(String id) {
-        return credentialService.findById(id)
+        return credentialService.findById(domain, id)
                 .switchIfEmpty(Single.error(new CredentialNotFoundException(id)))
                 .map(credential -> {
                     removeSensitiveData(credential);
@@ -262,13 +276,13 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Completable removeWebAuthnCredential(String userId, String id, io.gravitee.am.identityprovider.api.User principal) {
-        return credentialService.findById(id)
+        return credentialService.findById(domain, id)
                 .flatMapCompletable(credential -> {
                     if (!userId.equals(credential.getUserId())) {
                         LOGGER.debug("Webauthn credential ID {} does not belong to the user ID {}, skip delete action", id, userId);
                         return Completable.complete();
                     }
-                    return credentialService.delete(id)
+                    return credentialService.delete(domain, id)
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).credential(credential)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_DELETED).reference(new Reference(credential.getReferenceType(), credential.getReferenceId())).credential(credential).throwable(throwable)));
                 });
@@ -276,7 +290,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<Credential> updateWebAuthnCredential(String userId, String id, String deviceName, io.gravitee.am.identityprovider.api.User principal) {
-        return credentialService.findById(id)
+        return credentialService.findById(domain, id)
                 .switchIfEmpty(Single.error(new CredentialNotFoundException(id)))
                 .flatMap(credential -> {
                     if (!userId.equals(credential.getUserId())) {
@@ -285,7 +299,7 @@ public class AccountServiceImpl implements AccountService {
                     }
                     credential.setDeviceName(deviceName);
                     credential.setUpdatedAt(new Date());
-                    return credentialService.update(credential)
+                    return credentialService.update(domain, credential)
                             .doOnSuccess(credential1 -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).oldValue(credential).credential(credential1)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(CredentialAuditBuilder.class).principal(principal).type(EventType.CREDENTIAL_UPDATED).reference(new Reference(credential.getReferenceType(), credential.getReferenceId())).throwable(throwable)));
                 });
@@ -293,18 +307,18 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public Single<List<ScopeApproval>> getConsentList(User user, Client client) {
-        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), user.getFullId(), client.getClientId()).toList();
+        return scopeApprovalService.findByDomainAndUserAndClient(domain, user.getFullId(), client.getClientId()).toList();
     }
 
     @Override
     public Single<ScopeApproval> getConsent(String id) {
-        return scopeApprovalService.findById(id)
+        return scopeApprovalService.findById(domain, id)
                 .switchIfEmpty(Single.error(new ScopeApprovalNotFoundException(id)));
     }
 
     @Override
     public Completable removeConsent(UserId userId, String consentId, io.gravitee.am.identityprovider.api.User principal) {
-        return scopeApprovalService.revokeByConsent(domain.getId(), userId, consentId, principal);
+        return scopeApprovalService.revokeByConsent(domain, userId, consentId, revokeTokenGatewayService::process, principal);
     }
 
     private io.gravitee.am.identityprovider.api.User convert(io.gravitee.am.model.User user) {

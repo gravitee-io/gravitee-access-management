@@ -19,11 +19,13 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.gateway.reactor.SecurityDomainManager;
 import io.gravitee.am.gateway.reactor.impl.DefaultReactor;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.common.event.EventManager;
@@ -74,6 +76,7 @@ public class SyncManager implements InitializingBean {
     private static final String SHARDING_TAGS_SYSTEM_PROPERTY = "tags";
     private static final String ENVIRONMENTS_SYSTEM_PROPERTY = "environments";
     private static final String ORGANIZATIONS_SYSTEM_PROPERTY = "organizations";
+    private static final String DATAPLANE_ID_PROPERTY = Scope.GATEWAY.getRepositoryPropertyKey()+".dataPlane.id";
     private static final String SEPARATOR = ",";
 
     @Autowired
@@ -110,6 +113,8 @@ public class SyncManager implements InitializingBean {
     private Optional<List<String>> organizations;
 
     private List<String> environmentIds;
+
+    private String dataPlaneId;
 
     private long lastRefreshAt = -1;
 
@@ -167,13 +172,13 @@ public class SyncManager implements InitializingBean {
 
                 final long from = (lastRefreshAt - lastDelay) - timeframeBeforeDelay;
                 final long to = nextLastRefreshAt + timeframeAfterDelay;
-                Single<List<Event>> findEvents = eventRepository.findByTimeFrame(from, to).toList();
+                Single<List<Event>> findEvents = eventRepository.findByTimeFrameAndDataPlaneId(from, to, dataPlaneId).toList();
                 if (this.eventsTimeOut > 0) {
                     findEvents = findEvents.timeout(this.eventsTimeOut, TimeUnit.MILLISECONDS);
                 }
                 List<Event> events = findEvents.blockingGet();
 
-                if (events != null && !events.isEmpty()) {
+                if (!events.isEmpty()) {
                     gatewayMetricProvider.updateSyncEvents(events.size());
 
                     // Extract only the latest events by type and id
@@ -272,7 +277,7 @@ public class SyncManager implements InitializingBean {
     }
 
     private boolean canHandle(Domain domain) {
-        return hasMatchingEnvironments(domain) && hasMatchingTags(domain);
+        return hasMatchingDataplane(domain) && hasMatchingEnvironments(domain) && hasMatchingTags(domain);
     }
 
     private boolean hasMatchingTags(Domain domain) {
@@ -301,6 +306,10 @@ public class SyncManager implements InitializingBean {
         return hasMatchingTags;
     }
 
+    private boolean hasMatchingDataplane(Domain domain) {
+        return dataPlaneId.equals(domain.getDataPlaneId());
+    }
+
     private boolean hasMatchingEnvironments(Domain domain) {
         if (environmentIds == null || environmentIds.isEmpty()) {
             // check if there is no environment because gravitee.yml is empty (OK)
@@ -318,13 +327,14 @@ public class SyncManager implements InitializingBean {
         environments = getSystemValues(ENVIRONMENTS_SYSTEM_PROPERTY);
         organizations = getSystemValues(ORGANIZATIONS_SYSTEM_PROPERTY);
         this.environmentIds = new ArrayList<>((Set<String>) node.metadata().get(Node.META_ENVIRONMENTS));
+        dataPlaneId =  environment.getProperty(DATAPLANE_ID_PROPERTY, String.class, DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
     }
 
     private Optional<List<String>> getSystemValues(String key) {
-        String systemPropertyEnvs = System.getProperty(key);
-        String envs = systemPropertyEnvs == null ? environment.getProperty(key) : systemPropertyEnvs;
-        if (envs != null && !envs.isEmpty()) {
-            return Optional.of(Arrays.asList(envs.split(SEPARATOR)));
+        String systemProperty = System.getProperty(key);
+        String values = systemProperty == null ? environment.getProperty(key) : systemProperty;
+        if (values != null && !values.isEmpty()) {
+            return Optional.of(Arrays.asList(values.split(SEPARATOR)));
         }
         return Optional.empty();
     }

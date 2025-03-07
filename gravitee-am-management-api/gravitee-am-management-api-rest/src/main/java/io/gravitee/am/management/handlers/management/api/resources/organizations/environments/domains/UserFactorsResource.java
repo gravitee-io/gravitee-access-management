@@ -17,7 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.model.EnrolledFactorEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.permissions.Permission;
@@ -60,7 +60,7 @@ public class UserFactorsResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private UserService userService;
+    private ManagementUserService userService;
 
     @Autowired
     private FactorService factorService;
@@ -79,14 +79,14 @@ public class UserFactorsResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> userService.findById(user))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> userService.findById(domain, user))
                         .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
                         .flatMapSingle(user1 -> {
                             if (user1.getFactors() == null) {

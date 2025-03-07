@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.*;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -52,7 +52,7 @@ import static org.mockito.Mockito.*;
 public class PatchUserEndpointHandlerTest extends RxWebTestBase {
 
     @Mock
-    private UserService userService;
+    private ProvisioningUserService userService;
 
     @Mock
     private ObjectMapper objectMapper;

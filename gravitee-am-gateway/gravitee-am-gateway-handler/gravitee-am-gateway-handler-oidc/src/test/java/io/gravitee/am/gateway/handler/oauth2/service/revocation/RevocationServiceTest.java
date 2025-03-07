@@ -15,10 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.revocation;
 
-import io.gravitee.am.common.jwt.JWT;
-import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.impl.RevocationTokenServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.impl.OAuthRevocationTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
@@ -28,7 +26,6 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.After;
 import org.junit.Test;
@@ -48,7 +45,7 @@ import static org.mockito.Mockito.*;
 public class RevocationServiceTest {
 
     @InjectMocks
-    private RevocationTokenService revocationTokenService = new RevocationTokenServiceImpl();
+    private OAuthRevocationTokenService revocationTokenService = new OAuthRevocationTokenServiceImpl();
 
     @Mock
     private TokenService tokenService;

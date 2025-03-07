@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser, updateUserStatus } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -103,6 +103,7 @@ describe('when user is enabled', () => {
   describe('tokens will be revoked', () => {
     it('when user is disabled by MAPI', async () => {
       await updateUserStatus(domain.id, accessToken, user.id, false);
+      await waitForDomainSync(); // wait sync as since 4.7, token revocations are managed asynchornously
       let response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refresh_token}`, {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + applicationBase64Token(client),
@@ -113,6 +114,7 @@ describe('when user is enabled', () => {
 
     it('and will remain revoked, when user is enabled back', async () => {
       await updateUserStatus(domain.id, accessToken, user.id, true);
+      await waitForDomainSync(); // wait sync as since 4.7, token revocations are managed asynchornously
       let response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refresh_token}`, {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + applicationBase64Token(client),

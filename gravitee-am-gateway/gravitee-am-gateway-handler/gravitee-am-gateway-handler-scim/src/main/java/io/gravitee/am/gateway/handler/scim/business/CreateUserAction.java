@@ -20,7 +20,7 @@ package io.gravitee.am.gateway.handler.scim.business;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
@@ -36,7 +36,7 @@ import java.util.Map;
 @Slf4j
 public class CreateUserAction extends AbstractUserAction {
 
-    public CreateUserAction(UserService userService, Domain domain, Client client) {
+    public CreateUserAction(ProvisioningUserService userService, Domain domain, Client client) {
         super(userService, domain, client);
     }
 

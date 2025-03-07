@@ -22,7 +22,7 @@ import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.gateway.api.RateLimitRepository;
-import io.gravitee.am.repository.management.api.search.RateLimitCriteria;
+import io.gravitee.am.repository.gateway.api.search.RateLimitCriteria;
 import io.gravitee.am.repository.mongodb.management.internal.model.RateLimitMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -32,7 +32,6 @@ import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +41,11 @@ import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
-
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_CLIENT;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_ID;
 /**
  * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
  * @author GraviteeSource Team

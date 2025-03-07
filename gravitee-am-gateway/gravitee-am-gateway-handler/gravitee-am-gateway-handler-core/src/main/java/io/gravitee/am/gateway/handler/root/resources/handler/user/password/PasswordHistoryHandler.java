@@ -22,7 +22,6 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.PasswordPolicy;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.common.http.HttpStatusCode;
@@ -59,7 +58,7 @@ public class PasswordHistoryHandler implements Handler<RoutingContext> {
                        final var user = userToken.getUser();
                        final var provider = identityProviderManager.getIdentityProvider(user.getSource());
                        return passwordHistoryService
-                               .passwordAlreadyUsed(ReferenceType.DOMAIN, domain.getId(), user.getId(), password, getPasswordPolicy(context, provider));
+                               .passwordAlreadyUsed(domain, user.getId(), password, getPasswordPolicy(context, provider));
 
                    })
                    .doOnError(throwable -> context.fail(HttpStatusCode.INTERNAL_SERVER_ERROR_500, throwable))

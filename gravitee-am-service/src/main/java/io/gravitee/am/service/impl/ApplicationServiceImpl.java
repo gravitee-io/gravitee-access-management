@@ -29,6 +29,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -57,7 +58,6 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
@@ -70,7 +70,6 @@ import io.gravitee.am.service.exception.InvalidTargetUrlException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
-import io.gravitee.am.service.model.TopApplication;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
@@ -100,6 +99,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
@@ -140,7 +140,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private AuditService auditService;
 
     @Autowired
-    private DomainReadService domainService;
+    private DomainReadService domainReadService;
 
     @Autowired
     private EventService eventService;
@@ -153,9 +153,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ScopeService scopeService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -281,14 +278,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> create(String domain, NewApplication newApplication, User principal) {
+    public Single<Application> create(Domain domain, NewApplication newApplication, User principal) {
         LOGGER.debug("Create a new application {} for domain {}", newApplication, domain);
         Application application = new Application();
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
         application.setDescription(newApplication.getDescription());
         application.setType(newApplication.getType());
-        application.setDomain(domain);
+        application.setDomain(domain.getId());
         application.setMetadata(newApplication.getMetadata());
 
         // apply default oauth 2.0 settings
@@ -331,14 +328,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> create(Application application) {
+    public Single<Application> create(Domain domain, Application application) {
         LOGGER.debug("Create a new application {} ", application);
 
         if (application.getDomain() == null || application.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on application"));
         }
 
-        return create0(application.getDomain(), application, null)
+        return create0(domain, application, null)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -390,7 +387,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> patch(String domain, String id, PatchApplication patchApplication, User principal) {
+    public Single<Application> patch(Domain domain, String id, PatchApplication patchApplication, User principal, BiFunction<Domain, Application, Completable> revokeTokenProcessor) {
         LOGGER.debug("Patch an application {} for domain {}", id, domain);
 
         return applicationRepository.findById(id)
@@ -413,7 +410,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return innerUpdate(existingApplication, toPatch, principal)
                             .flatMap(app -> {
                                 if (toPatch.isEnabled() != existingApplication.isEnabled() && !toPatch.isEnabled()) {
-                                    return tokenService.deleteByApplication(app).onErrorComplete().toSingleDefault(app);
+                                    return revokeTokenProcessor.apply(domain, app).onErrorComplete().toSingleDefault(app);
                                 } else {
                                     return Single.just(app);
                                 }
@@ -433,7 +430,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> renewClientSecret(String domain, String id, User principal) {
+    public Single<Application> renewClientSecret(Domain domain, String id, User principal) {
         LOGGER.debug("Renew client secret for application {} and domain {}", id, domain);
         return applicationRepository.findById(id)
                 .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
@@ -477,10 +474,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
-                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));
+                    return eventService.create(event, domain).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(updatedApplication)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -500,7 +497,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Completable delete(String id, User principal) {
+    public Completable delete(String id, User principal, Domain domain) {
         LOGGER.debug("Delete application {}", id);
         return applicationRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
@@ -508,7 +505,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     // create event for sync process
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.DELETE));
                     return applicationRepository.delete(id)
-                            .andThen(Completable.fromSingle(eventService.create(event)))
+                            .andThen(Completable.fromSingle(eventService.create(event, domain)))
                             // delete email templates
                             .andThen(emailTemplateService.findByClient(ReferenceType.DOMAIN, application.getDomain(), application.getId())
                                     .flatMapCompletable(email -> emailTemplateService.delete(email.getId()))
@@ -562,49 +559,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    @Override
-    public Single<Set<TopApplication>> findTopApplications() {
-        LOGGER.debug("Find top applications");
-        return applicationRepository.findAll(0, Integer.MAX_VALUE)
-                .flatMapObservable(pagedApplications -> Observable.fromIterable(pagedApplications.getData()))
-                .flatMapSingle(application -> tokenService.findTotalTokensByApplication(application)
-                        .map(totalToken -> {
-                            TopApplication topApplication = new TopApplication();
-                            topApplication.setApplication(application);
-                            topApplication.setAccessTokens(totalToken.getTotalAccessTokens());
-                            return topApplication;
-                        })
-                )
-                .toList()
-                .map(topApplications -> topApplications.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find top applications", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find top applications", ex));
-                });
-    }
-
-    @Override
-    public Single<Set<TopApplication>> findTopApplicationsByDomain(String domain) {
-        LOGGER.debug("Find top applications for domain: {}", domain);
-        return applicationRepository.findByDomain(domain, 0, Integer.MAX_VALUE)
-                .flatMapObservable(pagedApplications -> Observable.fromIterable(pagedApplications.getData()))
-                .flatMapSingle(application -> tokenService.findTotalTokensByApplication(application)
-                        .map(totalToken -> {
-                            TopApplication topApplication = new TopApplication();
-                            topApplication.setApplication(application);
-                            topApplication.setAccessTokens(totalToken.getTotalAccessTokens());
-                            return topApplication;
-                        })
-                )
-                .toList()
-                .map(topApplications -> topApplications.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find top applications for domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find top applications for domain %s", domain), ex));
-                });
-    }
-
-    private Single<Application> create0(String domain, Application application, User principal) {
+    private Single<Application> create0(Domain domain, Application application, User principal) {
         // created and updated date
         application.setCreatedAt(new Date());
         application.setUpdatedAt(application.getCreatedAt());
@@ -626,7 +581,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         // check uniqueness
-        return checkApplicationUniqueness(domain, application)
+        return checkApplicationUniqueness(domain.getId(), application)
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
                 .flatMap(this::validateApplicationAuthMethod)
@@ -665,7 +620,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));
+                    return eventService.create(event, domain).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(application1 -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(application1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(application.getDomain())).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
@@ -750,8 +705,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.just(application);
         }
         return Observable.fromIterable(application.getIdentityProviders())
-                .flatMapSingle(appId -> identityProviderService.findById(appId.getIdentity())
-                        .map(__ -> Optional.of(appId))
+                .flatMapSingle(appIdP -> identityProviderService.findById(appIdP.getIdentity())
+                        .map(__ -> Optional.of(appIdP))
                         .defaultIfEmpty(Optional.empty())
                         .filter(Optional::isPresent)
                         .map(Optional::get)
@@ -838,7 +793,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateRedirectUris(Application application, boolean updateTypeOnly) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     //check redirect_uri
@@ -982,7 +937,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validatePostLogoutRedirectUris(Application application) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     if (oAuthSettings.getPostLogoutRedirectUris() != null) {
@@ -1025,7 +980,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateRequestUris(Application application) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     if (oAuthSettings.getRequestUris() != null) {

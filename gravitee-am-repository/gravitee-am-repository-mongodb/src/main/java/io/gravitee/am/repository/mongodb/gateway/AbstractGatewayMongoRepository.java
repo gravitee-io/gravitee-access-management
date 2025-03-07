@@ -23,11 +23,8 @@ import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.concurrent.TimeUnit;
-
-import org.springframework.core.env.Environment;
 
 public abstract class AbstractGatewayMongoRepository extends AbstractMongoRepository {
 

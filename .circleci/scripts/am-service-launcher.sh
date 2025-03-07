@@ -27,3 +27,6 @@ if [ $retVal -ne 0 ]; then
   echo "STOP CI: AM Service doesn't start from ${SERVICE_HOME_DIR}"
   exit 1
 fi
+
+# wait 15 sec so the service can be fully started
+sleep 15

@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.common.policy.ExtensionPoint;
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.model.Policy;
 import io.gravitee.am.model.ReferenceType;
@@ -46,6 +47,7 @@ import static java.util.function.Function.identity;
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class PoliciesToFlowsUpgrader extends AsyncUpgrader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PoliciesToFlowsUpgrader.class);

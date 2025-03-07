@@ -19,8 +19,7 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.provider.Reporter;
 import io.gravitee.common.service.Service;
-
-import java.util.Optional;
+import io.reactivex.rxjava3.core.Maybe;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -28,9 +27,9 @@ import java.util.Optional;
  */
 public interface AuditReporterManager extends Service<AuditReporterManager> {
 
-    default Optional<Reporter> getReporter(ReferenceType referenceType, String referenceId) {
+    default Maybe<Reporter> getReporter(ReferenceType referenceType, String referenceId) {
         return getReporter(new Reference(referenceType, referenceId));
     }
 
-    Optional<Reporter> getReporter(Reference domain);
+    Maybe<Reporter> getReporter(Reference domain);
 }

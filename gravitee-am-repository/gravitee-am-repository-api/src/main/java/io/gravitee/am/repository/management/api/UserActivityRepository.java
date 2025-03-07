@@ -20,6 +20,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
@@ -27,7 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserActivityRepository extends CrudRepository<UserActivity, String> {
+public interface UserActivityRepository extends CrudRepository<UserActivity, String>, ExpiredDataSweeper {
 
     Flowable<UserActivity> findByReferenceAndTypeAndKeyAndLimit(ReferenceType referenceType, String referenceId, Type type, String key, int limit);
 
@@ -49,10 +50,6 @@ public interface UserActivityRepository extends CrudRepository<UserActivity, Str
 
     default Completable deleteByDomain(String domain) {
         return deleteByReference(ReferenceType.DOMAIN, domain);
-    }
-
-    default Completable purgeExpiredData() {
-        return Completable.complete();
     }
 
 }

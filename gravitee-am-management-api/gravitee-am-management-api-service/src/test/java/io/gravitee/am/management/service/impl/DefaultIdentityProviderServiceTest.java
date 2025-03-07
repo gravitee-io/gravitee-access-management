@@ -15,7 +15,19 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
@@ -31,18 +43,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.env.MockEnvironment;
-
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class DefaultIdentityProviderServiceTest {
@@ -67,11 +67,11 @@ public class DefaultIdentityProviderServiceTest {
         String domainId = "domain";
         ArgumentCaptor<NewIdentityProvider> newIdentityProviderArgumentCaptor = ArgumentCaptor.forClass(NewIdentityProvider.class);
 
-        when(identityProviderService.create(any(), eq(domainId), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean())).thenReturn(Single.just(new IdentityProvider()));
-        TestObserver<IdentityProvider> observer = cut.create(domainId).test();
+        when(identityProviderService.create(any(Domain.class), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean())).thenReturn(Single.just(new IdentityProvider()));
+        TestObserver<IdentityProvider> observer = cut.create(new Domain(domainId)).test();
         observer.assertComplete();
 
-        verify(identityProviderService).create(any(), eq(domainId), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean());
+        verify(identityProviderService).create(any(Domain.class), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean());
         NewIdentityProvider capturedIdp = newIdentityProviderArgumentCaptor.getValue();
         assertNotNull(capturedIdp);
         assertEquals("default-idp-domain", capturedIdp.getId());
@@ -84,12 +84,12 @@ public class DefaultIdentityProviderServiceTest {
         String domainId = "domain";
         environment.setProperty("repositories.management.type", "jdbc");
         ArgumentCaptor<NewIdentityProvider> newIdentityProviderArgumentCaptor = ArgumentCaptor.forClass(NewIdentityProvider.class);
-        when(identityProviderService.create(any(), eq(domainId), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean())).thenReturn(Single.just(new IdentityProvider()));
+        when(identityProviderService.create(any(Domain.class), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean())).thenReturn(Single.just(new IdentityProvider()));
 
-        TestObserver<IdentityProvider> observer = cut.create(domainId).test();
+        TestObserver<IdentityProvider> observer = cut.create(new Domain(domainId)).test();
         observer.assertComplete();
 
-        verify(identityProviderService).create(any(), eq(domainId), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean());
+        verify(identityProviderService).create(any(Domain.class), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean());
         NewIdentityProvider capturedIdp = newIdentityProviderArgumentCaptor.getValue();
         assertNotNull(capturedIdp);
         assertEquals("default-idp-domain", capturedIdp.getId());
@@ -103,12 +103,12 @@ public class DefaultIdentityProviderServiceTest {
         String domainId = "domaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomaindomain";
         environment.setProperty("repositories.management.type", "jdbc");
         ArgumentCaptor<NewIdentityProvider> newIdentityProviderArgumentCaptor = ArgumentCaptor.forClass(NewIdentityProvider.class);
-        when(identityProviderService.create(any(), eq(domainId), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean())).thenReturn(Single.just(new IdentityProvider()));
+        when(identityProviderService.create(any(Domain.class), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean())).thenReturn(Single.just(new IdentityProvider()));
 
-        TestObserver<IdentityProvider> observer = cut.create(domainId).test();
+        TestObserver<IdentityProvider> observer = cut.create(new Domain(domainId)).test();
         observer.assertComplete();
 
-        verify(identityProviderService).create(any(), eq(domainId), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean());
+        verify(identityProviderService).create(any(Domain.class), newIdentityProviderArgumentCaptor.capture(), isNull(), anyBoolean());
         NewIdentityProvider capturedIdp = newIdentityProviderArgumentCaptor.getValue();
         assertNotNull(capturedIdp);
         assertNotEquals("default-idp-domain", capturedIdp.getId());

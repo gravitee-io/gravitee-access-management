@@ -63,6 +63,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public static final String COL_ROLE_MAPPER = "role_mapper";
     public static final String COL_GROUP_MAPPER = "group_mapper";
     public static final String COL_PASSWORD_POLICY = "password_policy";
+    public static final String COL_DATA_PLANE_ID = "data_plane_id";
 
     private static final List<String> columns = List.of(
             COL_ID,
@@ -79,7 +80,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
             COL_MAPPERS,
             COL_ROLE_MAPPER,
             COL_GROUP_MAPPER,
-            COL_PASSWORD_POLICY
+            COL_PASSWORD_POLICY,
+            COL_DATA_PLANE_ID
     );
 
     private String insertStatement;
@@ -161,6 +163,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         insertSpec = addQuotedField(insertSpec, COL_ID, item.getId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TYPE, item.getType(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_NAME, item.getName(), String.class);
+        insertSpec = addQuotedField(insertSpec, COL_DATA_PLANE_ID, item.getDataPlaneId(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_SYSTEM, item.isSystem(), boolean.class);
         insertSpec = addQuotedField(insertSpec, COL_EXTERNAL, item.isExternal(), boolean.class);
         insertSpec = addQuotedField(insertSpec, COL_REFERENCE_ID, item.getReferenceId(), String.class);
@@ -189,6 +192,7 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
         update = addQuotedField(update, COL_ID, item.getId(), String.class);
         update = addQuotedField(update, COL_TYPE, item.getType(), String.class);
         update = addQuotedField(update, COL_NAME, item.getName(), String.class);
+        update = addQuotedField(update, COL_DATA_PLANE_ID, item.getDataPlaneId(), String.class);
         update = addQuotedField(update, COL_SYSTEM, item.isSystem(), boolean.class);
         update = addQuotedField(update, COL_EXTERNAL, item.isExternal(), boolean.class);
         update = addQuotedField(update, COL_REFERENCE_ID, item.getReferenceId(), String.class);

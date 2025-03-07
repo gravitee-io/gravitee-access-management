@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -53,7 +53,7 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                                    TokenService tokenService,
                                    TokenRequestResolver tokenRequestResolver,
                                    IdentityProviderManager identityProviderManager,
-                                   UserService userService,
+                                   UserGatewayService userService,
                                    RulesEngine rulesEngine,
                                    SubjectManager subjectManager) {
         super(extensionGrantProvider,

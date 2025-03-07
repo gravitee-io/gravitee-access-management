@@ -18,7 +18,7 @@ package io.gravitee.am.repository.gateway.api;
 import io.gravitee.am.model.RateLimit;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.gravitee.am.repository.management.api.search.RateLimitCriteria;
+import io.gravitee.am.repository.gateway.api.search.RateLimitCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 

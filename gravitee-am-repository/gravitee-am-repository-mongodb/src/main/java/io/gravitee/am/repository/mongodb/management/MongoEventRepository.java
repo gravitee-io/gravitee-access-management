@@ -20,8 +20,11 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.model.token.RevokeType;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.EventMongo;
 import io.reactivex.rxjava3.core.Completable;
@@ -45,6 +48,10 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lte;
+import static com.mongodb.client.model.Filters.or;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_UPDATED_AT;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -55,6 +62,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
 
     private static final Logger log = LoggerFactory.getLogger(MongoEventRepository.class);
     public static final String ACTION = "action";
+    public static final String DATA_PLANE_ID = "dataPlaneId";
     private MongoCollection<EventMongo> eventsCollection;
 
     @PostConstruct
@@ -62,6 +70,7 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         eventsCollection = mongoOperations.getCollection("events", EventMongo.class);
         super.init(eventsCollection);
         super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
+        super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1).append(DATA_PLANE_ID, 1), new IndexOptions().name("u1dp1")));
     }
 
     @Override
@@ -71,6 +80,17 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         if (to > from) {
             filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
         }
+        return Flowable.fromPublisher(withMaxTime(eventsCollection.find(and(filters)))).map(this::convert);
+    }
+
+    @Override
+    public Flowable<Event> findByTimeFrameAndDataPlaneId(long from, long to, String dataPlaneId) {
+        List<Bson> filters = new ArrayList<>();
+        filters.add(gte(FIELD_UPDATED_AT, new Date(from)));
+        if (to > from) {
+            filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
+        }
+        filters.add(or(eq(DATA_PLANE_ID, dataPlaneId), eq(DATA_PLANE_ID, null)));
         return Flowable.fromPublisher(withMaxTime(eventsCollection.find(and(filters)))).map(this::convert);
     }
 
@@ -108,6 +128,8 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         eventMongo.setPayload(convert(event.getPayload()));
         eventMongo.setCreatedAt(event.getCreatedAt());
         eventMongo.setUpdatedAt(event.getUpdatedAt());
+        eventMongo.setDataPlaneId(event.getDataPlaneId());
+        eventMongo.setEnvironmentId(event.getEnvironmentId());
         return eventMongo;
     }
 
@@ -127,6 +149,8 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
             log.info("Invalid event type '{}', the event will be ignored by synchronization process.", eventMongo.getType());
             event.setType(Type.UNKNOWN);
         }
+        event.setDataPlaneId(eventMongo.getDataPlaneId());
+        event.setEnvironmentId(eventMongo.getEnvironmentId());
 
         return event;
     }
@@ -136,9 +160,13 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
             return null;
         }
 
-        Payload content = new Payload(document.get("content", Map.class));
-        content.put(ACTION, Action.valueOf((String) content.get(ACTION)));
-        return content;
+        Map content = document.get("content", Map.class);
+        final var optRevokeToken = ofNullable(content.get(Payload.REVOKE_TOKEN_DEFINITION));
+        Payload payload = new Payload(content);
+        payload.put(ACTION, Action.valueOf((String) payload.get(ACTION)));
+        optRevokeToken.filter(obj -> obj instanceof Map)
+                .ifPresent(obj -> payload.put(Payload.REVOKE_TOKEN_DEFINITION, toRevokeToken((Map) obj)));
+        return payload;
     }
 
     private Document convert(Payload payload) {
@@ -151,5 +179,54 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         document.put("content", payload);
 
         return document;
+    }
+
+    private Document convert(RevokeToken revokeToken) {
+        if (revokeToken == null) {
+            return null;
+        }
+
+        Document document = new Document();
+        document.put("revokeType", revokeToken.getRevokeType().name());
+        document.put("domainId", revokeToken.getDomainId());
+        document.put("clientId", revokeToken.getClientId());
+        document.put("userId", convert(revokeToken.getUserId()));
+
+        return document;
+    }
+
+    private RevokeToken toRevokeToken(Map revokeToken) {
+        if (revokeToken == null) {
+            return null;
+        }
+
+        RevokeToken document = new RevokeToken();
+        document.setRevokeType(RevokeType.valueOf((String) revokeToken.get("revokeType")));
+        document.setDomainId((String) revokeToken.get("domainId"));
+        document.setClientId((String) revokeToken.get("clientId"));
+        document.setUserId(toUserId((Map) revokeToken.get("userId")));
+
+        return document;
+    }
+
+    private Document convert(UserId userId) {
+        if (userId == null) {
+            return null;
+        }
+
+        Document document = new Document();
+        document.put("id", userId.id());
+        document.put("externalId", userId.externalId());
+        document.put("source", userId.source());
+
+        return document;
+    }
+
+
+    private UserId toUserId(Map userId) {
+        if (userId == null) {
+            return null;
+        }
+        return new UserId((String) userId.get("id"), (String) userId.get("externalId"), (String) userId.get("source"));
     }
 }

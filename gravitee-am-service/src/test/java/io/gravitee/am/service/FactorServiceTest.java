@@ -72,9 +72,6 @@ public class FactorServiceTest {
     @Mock
     private AuditService auditService;
 
-    @Mock
-    private UserService userService;
-
     private final static String DOMAIN = "domain1";
 
     @Test

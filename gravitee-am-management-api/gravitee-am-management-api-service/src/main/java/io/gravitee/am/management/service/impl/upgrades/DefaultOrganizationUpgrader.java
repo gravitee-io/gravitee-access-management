@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.impl.upgrades.helpers.MembershipHelper;
@@ -54,6 +55,7 @@ import java.util.Optional;
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class DefaultOrganizationUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultOrganizationUpgrader.class);

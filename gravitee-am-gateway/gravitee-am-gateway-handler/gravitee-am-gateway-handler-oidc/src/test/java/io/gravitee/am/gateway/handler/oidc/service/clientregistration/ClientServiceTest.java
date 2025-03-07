@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientServiceImpl;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.oidc.Client;
@@ -41,7 +42,10 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -57,7 +61,7 @@ public class ClientServiceTest {
     @Mock
     private ApplicationService applicationService;
 
-    private final static String DOMAIN = "domain1";
+    private final static Domain DOMAIN = new Domain("domain1");
 
     @Test
     public void shouldFindById() {
@@ -91,7 +95,7 @@ public class ClientServiceTest {
 
     @Test
     public void create_failWithNoDomain() {
-        TestObserver testObserver = clientService.create(new Client()).test();
+        TestObserver testObserver = clientService.create(new Domain(), new Client()).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidClientMetadataException.class);
     }
@@ -99,11 +103,11 @@ public class ClientServiceTest {
     @Test
     public void create_implicit_invalidRedirectUri() {
         Client toCreate = new Client();
-        toCreate.setDomain(DOMAIN);
+        toCreate.setDomain(DOMAIN.getId());
         toCreate.setAuthorizedGrantTypes(Collections.singletonList("implicit"));
         toCreate.setResponseTypes(Collections.singletonList("token"));
-        when(applicationService.create(any())).thenReturn(Single.error(new InvalidRedirectUriException()));
-        TestObserver testObserver = clientService.create(toCreate).test();
+        when(applicationService.create(any(Domain.class), any(Application.class))).thenReturn(Single.error(new InvalidRedirectUriException()));
+        TestObserver testObserver = clientService.create(DOMAIN, toCreate).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -112,19 +116,19 @@ public class ClientServiceTest {
 
     @Test
     public void create_generateUuidAsClientId() {
-        when(applicationService.create(any(Application.class))).thenReturn(Single.just(new Application()));
+        when(applicationService.create(any(Domain.class), any(Application.class))).thenReturn(Single.just(new Application()));
 
         Client toCreate = new Client();
-        toCreate.setDomain(DOMAIN);
+        toCreate.setDomain(DOMAIN.getId());
         toCreate.setRedirectUris(Collections.singletonList("https://callback"));
-        TestObserver testObserver = clientService.create(toCreate).test();
+        TestObserver testObserver = clientService.create(DOMAIN, toCreate).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
         ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
-        verify(applicationService, times(1)).create(captor.capture());
+        verify(applicationService, times(1)).create(any(), captor.capture());
         Assert.assertNotNull("client_id must be generated", captor.getValue().getSettings().getOauth().getClientId());
         Assert.assertNotNull("client_secret must be generated", captor.getValue().getSettings().getOauth().getClientSecret());
     }
@@ -143,7 +147,7 @@ public class ClientServiceTest {
         Client toUpdate = new Client();
         toUpdate.setAuthorizedGrantTypes(Collections.singletonList("implicit"));
         toUpdate.setResponseTypes(Collections.singletonList("token"));
-        toUpdate.setDomain(DOMAIN);
+        toUpdate.setDomain(DOMAIN.getId());
         TestObserver testObserver = clientService.update(toUpdate).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -156,7 +160,7 @@ public class ClientServiceTest {
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
 
         Client toUpdate = new Client();
-        toUpdate.setDomain(DOMAIN);
+        toUpdate.setDomain(DOMAIN.getId());
         toUpdate.setRedirectUris(Collections.singletonList("https://callback"));
         TestObserver testObserver = clientService.update(toUpdate).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -172,7 +176,7 @@ public class ClientServiceTest {
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(new Application()));
 
         Client toUpdate = new Client();
-        toUpdate.setDomain(DOMAIN);
+        toUpdate.setDomain(DOMAIN.getId());
         toUpdate.setAuthorizedGrantTypes(Collections.singletonList("client_credentials"));
         toUpdate.setResponseTypes(Collections.emptyList());
         TestObserver testObserver = clientService.update(toUpdate).test();
@@ -186,39 +190,39 @@ public class ClientServiceTest {
 
     @Test
     public void shouldDelete() {
-        when(applicationService.delete("my-client", null)).thenReturn(Completable.complete());
+        when(applicationService.delete("my-client", null, DOMAIN)).thenReturn(Completable.complete());
         Form form = new Form();
         form.setId("form-id");
         Email email = new Email();
         email.setId("email-id");
 
-        TestObserver testObserver = clientService.delete("my-client").test();
+        TestObserver testObserver = clientService.delete("my-client", DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationService, times(1)).delete("my-client", null);
+        verify(applicationService, times(1)).delete("my-client", null, DOMAIN);
     }
 
     @Test
     public void shouldDelete_withoutRelatedData() {
-        when(applicationService.delete("my-client", null)).thenReturn(Completable.complete());
+        when(applicationService.delete("my-client",null, DOMAIN)).thenReturn(Completable.complete());
 
-        TestObserver testObserver = clientService.delete("my-client").test();
+        TestObserver testObserver = clientService.delete("my-client", DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationService, times(1)).delete("my-client", null);
+        verify(applicationService, times(1)).delete("my-client", null, DOMAIN);
     }
 
     @Test
     public void shouldDelete_technicalException() {
-        when(applicationService.delete("my-client", null)).thenReturn(Completable.error(TechnicalManagementException::new));
+        when(applicationService.delete("my-client",null, DOMAIN)).thenReturn(Completable.error(TechnicalManagementException::new));
 
-        TestObserver testObserver = clientService.delete("my-client").test();
+        TestObserver testObserver = clientService.delete("my-client", DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
@@ -227,21 +231,21 @@ public class ClientServiceTest {
 
     @Test
     public void shouldDelete_clientNotFound() {
-        when(applicationService.delete("my-client", null)).thenReturn(Completable.error(new ClientNotFoundException("my-client")));
+        when(applicationService.delete("my-client",null, DOMAIN)).thenReturn(Completable.error(new ClientNotFoundException("my-client")));
 
-        TestObserver testObserver = clientService.delete("my-client").test();
+        TestObserver testObserver = clientService.delete("my-client", DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(ClientNotFoundException.class);
         testObserver.assertNotComplete();
 
-        verify(applicationService, times(1)).delete("my-client", null);
+        verify(applicationService, times(1)).delete("my-client", null, DOMAIN);
     }
 
     @Test
     public void shouldRenewSecret() {
         Application client = new Application();
-        client.setDomain(DOMAIN);
+        client.setDomain(DOMAIN.getId());
 
         when(applicationService.renewClientSecret(DOMAIN, "my-client", null)).thenReturn(Single.just(new Application()));
 

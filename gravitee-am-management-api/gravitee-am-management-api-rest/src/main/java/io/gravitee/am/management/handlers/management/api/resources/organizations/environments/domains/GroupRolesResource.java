@@ -16,16 +16,14 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainGroupService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -65,7 +63,7 @@ public class GroupRolesResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private RoleService roleService;
@@ -86,15 +84,14 @@ public class GroupRolesResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("group") String group,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> groupService.findById(group))
-                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> domainGroupService.findById(domain, group))
                         .flatMapSingle(group1 -> {
                             if (group1.getRoles() == null || group1.getRoles().isEmpty()) {
                                 return Single.just(Collections.emptyList());
@@ -121,16 +118,16 @@ public class GroupRolesResource extends AbstractResource {
     public void assign(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("group") String group,
             @Valid @NotNull final List<String> roles,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(domain1 -> groupService.assignRoles(ReferenceType.DOMAIN, domain, group, roles, authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> domainGroupService.assignRoles(domain, group, roles, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

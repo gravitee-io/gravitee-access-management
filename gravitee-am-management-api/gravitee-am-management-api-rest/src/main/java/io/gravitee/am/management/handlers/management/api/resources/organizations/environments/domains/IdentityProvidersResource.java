@@ -131,19 +131,19 @@ public class IdentityProvidersResource extends AbstractResource {
     public void create(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @Parameter(name = "identity", required = true)
             @Valid @NotNull final NewIdentityProvider newIdentityProvider,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
                 .andThen(identityProviderManager.checkPluginDeployment(newIdentityProvider.getType()))
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))
                         .map(identityProvider -> Response.created(URI.create("/organizations/" + organizationId + "/environments/"
-                                                    + environmentId + "/domains/" + domain + "/identities/" + identityProvider.getId()))
+                                                    + environmentId + "/domains/" + domainId + "/identities/" + identityProvider.getId()))
                                             .entity(identityProvider)
                                             .build()
                         ))

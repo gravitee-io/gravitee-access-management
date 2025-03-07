@@ -211,6 +211,12 @@ export interface Domain {
    * @memberof Domain
    */
   corsSettings?: CorsSettings;
+    /**
+     *
+     * @type {string}
+     * @memberof Domain
+     */
+    dataPlaneId?: string;
   /**
    *
    * @type {boolean}
@@ -314,6 +320,7 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
       : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
     saml: !exists(json, 'saml') ? undefined : SAMLSettingsFromJSON(json['saml']),
     corsSettings: !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
+      'dataPlaneId': !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
     isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
       ? undefined
       : json['isDynamicClientRegistrationEnabled'],
@@ -367,6 +374,7 @@ export function DomainToJSON(value?: Domain | null): any {
     selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value.selfServiceAccountManagementSettings),
     saml: SAMLSettingsToJSON(value.saml),
     corsSettings: CorsSettingsToJSON(value.corsSettings),
+    dataPlaneId: value.dataPlaneId,
     isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
     isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
     redirectUriStrictMatching: value.redirectUriStrictMatching,

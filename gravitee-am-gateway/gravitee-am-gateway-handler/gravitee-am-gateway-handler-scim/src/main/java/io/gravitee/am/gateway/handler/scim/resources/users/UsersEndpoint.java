@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.scim.business.CreateUserAction;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.gravitee.common.http.HttpHeaders;
@@ -49,7 +49,7 @@ public class UsersEndpoint extends AbstractUserEndpoint {
     private static final int MAX_ITEMS_PER_PAGE = 100;
     private static final int DEFAULT_START_INDEX = 1;
 
-    public UsersEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
+    public UsersEndpoint(Domain domain, ProvisioningUserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
         super(domain, userService, objectMapper, subjectManager);
     }
 

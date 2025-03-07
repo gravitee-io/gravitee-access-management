@@ -117,7 +117,7 @@ public class EmailsResource extends AbstractResource {
                 .andThen(emailResourceValidator.validate(newEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> emailTemplateService.create(domain, newEmail, authenticatedUser))
+                        .flatMapSingle(existingDomain -> emailTemplateService.create(existingDomain, newEmail, authenticatedUser))
                         .map(email -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/emails/" + email.getId()))
                                 .entity(email)

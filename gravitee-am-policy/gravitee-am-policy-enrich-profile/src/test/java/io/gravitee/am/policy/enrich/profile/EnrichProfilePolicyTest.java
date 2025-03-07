@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.policy.enrich.profile;
 
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.context.EvaluableRequest;
 import io.gravitee.am.model.User;
 import io.gravitee.am.policy.enrich.profile.configuration.EnrichProfilePolicyConfiguration;
@@ -81,7 +81,7 @@ public class EnrichProfilePolicyTest {
     private EnrichProfilePolicyConfiguration configuration;
 
     @Mock
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Before
     public void init() {
@@ -99,7 +99,7 @@ public class EnrichProfilePolicyTest {
         TemplateEngine tplEngine = new SpelTemplateEngineFactory().templateEngine();
         tplEngine.getTemplateContext().setVariable("request", new EvaluableRequest(requestWrapper));
         when(executionContext.getTemplateEngine()).thenReturn(tplEngine);
-        when(executionContext.getComponent(UserService.class)).thenReturn(userService);
+        when(executionContext.getComponent(UserGatewayService.class)).thenReturn(userService);
     }
 
     @Test

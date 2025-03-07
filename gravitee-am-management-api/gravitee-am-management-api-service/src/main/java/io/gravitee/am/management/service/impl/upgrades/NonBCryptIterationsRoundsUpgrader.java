@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.upgrades;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
@@ -38,6 +39,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
 import static java.util.Optional.ofNullable;
 
 @Component
+@ManagementRepositoryScope
 public class NonBCryptIterationsRoundsUpgrader extends SystemTaskUpgrader {
     private static final Logger log = LoggerFactory.getLogger(NonBCryptIterationsRoundsUpgrader.class);
 

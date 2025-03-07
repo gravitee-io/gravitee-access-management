@@ -17,7 +17,6 @@ package io.gravitee.am.management.handlers.management.api.resources;
 
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
@@ -48,7 +47,7 @@ public class UserRoleResourceTest extends JerseySpringTest {
         mockUser.setId("user-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockUser)).when(userService).revokeRoles(eq(ReferenceType.DOMAIN), eq(domainId), eq(mockUser.getId()), eq(Collections.singletonList("role-1")), any());
+        doReturn(Single.just(mockUser)).when(userService).revokeRoles(any(), eq(mockUser.getId()), eq(Collections.singletonList("role-1")), any());
 
         final Response response = target("domains")
                 .path(domainId)

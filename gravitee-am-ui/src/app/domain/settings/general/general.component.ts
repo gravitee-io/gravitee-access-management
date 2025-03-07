@@ -41,6 +41,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   private envId: string;
   formChanged = false;
   domain: any = {};
+  dataPlanes: any[] = [];
   domainOIDCSettings: any = {};
   tags: Tag[];
   selectedTags: Tag[];
@@ -63,6 +64,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   ngOnInit() {
     this.envId = this.route.snapshot.params['envHrid'];
     this.domain = this.route.snapshot.data['domain'];
+    this.dataPlanes = this.route.snapshot.data['dataPlanes'];
     this.domainOIDCSettings = this.domain.oidc || {};
     this.logoutRedirectUris = map(this.domainOIDCSettings.postLogoutRedirectUris, function (item) {
       return { value: item };
@@ -73,8 +75,14 @@ export class DomainSettingsGeneralComponent implements OnInit {
     if (this.domain.tags === undefined) {
       this.domain.tags = [];
     }
-    this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
     this.initTags();
+    this.updateDataPlaneName();
+  }
+
+  private updateDataPlaneName() {
+    if (this.domain.dataPlaneId && this.dataPlanes) {
+      this.domain.dataPlaneName = this.dataPlanes.find((dp) => dp.id === this.domain.dataPlaneId)?.name;
+    }
   }
 
   initTags() {

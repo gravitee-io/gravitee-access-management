@@ -16,12 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
@@ -56,7 +56,7 @@ public class ApplicationResourcePolicyResource extends AbstractResource {
     private ApplicationService applicationService;
 
     @Autowired
-    private ResourceService resourceService;
+    private UMAResourceManagementService resourceService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -73,18 +73,18 @@ public class ApplicationResourcePolicyResource extends AbstractResource {
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("application") String application,
             @PathParam("resource") String resource,
             @PathParam("policy") String policy,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_RESOURCE, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
+        checkAnyPermission(organizationId, environmentId, domainId, application, Permission.APPLICATION_RESOURCE, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> applicationService.findById(application)
                         .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMap(application1 -> resourceService.findAccessPolicy(policy)))
+                        .flatMap(application1 -> resourceService.findAccessPolicy(domain, policy))))
                 .subscribe(response::resume, response::resume);
     }
 }

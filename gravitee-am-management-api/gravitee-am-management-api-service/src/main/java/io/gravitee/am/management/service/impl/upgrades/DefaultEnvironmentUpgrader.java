@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.node.api.upgrader.Upgrader;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@ManagementRepositoryScope
 public class DefaultEnvironmentUpgrader implements Upgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultEnvironmentUpgrader.class);

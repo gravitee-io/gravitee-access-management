@@ -185,7 +185,7 @@ public class CertificateResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(schema -> certificateService.update(domain, certificate, updateCertificate, authenticatedUser))
+                        .flatMapSingle(existingDomain -> certificateService.update(existingDomain, certificate, updateCertificate, authenticatedUser))
                         .map(certificate1 -> Response.ok(ModifiedCertificateEntity.of(certificate1)).build()))
                 .subscribe(response::resume, response::resume);
     }

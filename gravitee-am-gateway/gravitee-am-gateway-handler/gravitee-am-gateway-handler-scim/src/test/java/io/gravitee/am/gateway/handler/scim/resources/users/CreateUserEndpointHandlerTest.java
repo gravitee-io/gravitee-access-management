@@ -27,7 +27,7 @@ import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.User;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.scim.SCIMSettings;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
@@ -59,7 +59,7 @@ import static org.mockito.Mockito.*;
 public class CreateUserEndpointHandlerTest extends RxWebTestBase {
 
     @Mock
-    private UserService userService;
+    private ProvisioningUserService userService;
 
     @Mock
     private ObjectMapper objectMapper;

@@ -21,7 +21,6 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.common.http.MediaType;
@@ -48,9 +47,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
-import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -60,9 +57,6 @@ import java.util.stream.Collectors;
  * @author GraviteeSource Team
  */
 public class DomainResource extends AbstractDomainResource {
-
-    @Autowired
-    private EntrypointService entrypointService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -186,9 +180,7 @@ public class DomainResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN, Acl.READ)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain -> entrypointService.findAll(organizationId)
-                                .toList()
-                                .map(entrypoints -> filterEntrypoints(entrypoints, domain))))
+                        .flatMapSingle(domain -> domainService.listEntryPoint(domain, organizationId)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -328,26 +320,5 @@ public class DomainResource extends AbstractDomainResource {
                                     .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
                     .subscribe(response::resume, response::resume);
         }
-    }
-
-    /**
-     * Filter a list of entrypoints depending on domain tags.
-     * Given a domain with tags [ A, B ], then entrypoint must has either A or B tag defined.
-     * If no entrypoint has been retained, the default entrypoint is returned.
-     *
-     * @param domain the domain.
-     * @return a filtered list of entrypoints.
-     */
-    private List<Entrypoint> filterEntrypoints(List<Entrypoint> entrypoints, Domain domain) {
-
-        List<Entrypoint> filteredEntrypoints = entrypoints.stream().filter(entrypoint -> entrypoint.isDefaultEntrypoint()
-                || (entrypoint.getTags() != null && !entrypoint.getTags().isEmpty() && domain.getTags() != null && entrypoint.getTags().stream().anyMatch(tag -> domain.getTags().contains(tag)))).collect(Collectors.toList());
-
-        if (filteredEntrypoints.size() > 1) {
-            // Remove default entrypoint if another entrypoint has matched.
-            filteredEntrypoints.removeIf(Entrypoint::isDefaultEntrypoint);
-        }
-
-        return filteredEntrypoints;
     }
 }

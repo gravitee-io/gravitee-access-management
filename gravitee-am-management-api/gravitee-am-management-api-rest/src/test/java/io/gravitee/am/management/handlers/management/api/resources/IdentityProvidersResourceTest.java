@@ -15,6 +15,12 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources;
 
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doReturn;
+
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -30,13 +36,6 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -99,7 +98,7 @@ public class IdentityProvidersResourceTest extends JerseySpringTest {
         identityProvider.setDomainWhitelist(List.of());
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(identityProvider)).when(identityProviderService).create(eq(domainId), any(), any());
+        doReturn(Single.just(identityProvider)).when(identityProviderService).create(any(Domain.class), any(), any());
         doReturn(Completable.complete()).when(identityProviderManager).checkPluginDeployment(any());
 
         final Response response = target("domains")

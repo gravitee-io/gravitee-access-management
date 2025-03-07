@@ -22,7 +22,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
 public class UsersEndpointTest extends RxWebTestBase {
 
     @Mock
-    private UserService userService;
+    private ProvisioningUserService userService;
 
     @Mock
     private ObjectMapper objectMapper;

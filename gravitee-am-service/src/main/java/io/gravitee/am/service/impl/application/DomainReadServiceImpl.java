@@ -19,6 +19,7 @@ import io.gravitee.am.common.utils.PathUtils;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -33,6 +34,8 @@ import org.springframework.stereotype.Component;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Optional.ofNullable;
+
 @Slf4j
 @Component
 public class DomainReadServiceImpl implements DomainReadService {
@@ -40,8 +43,10 @@ public class DomainReadServiceImpl implements DomainReadService {
 
     private final String gatewayUrl;
     private final DomainRepository domainRepository;
+    private final DataPlaneRegistry dataPlaneRegistry;
 
-    public DomainReadServiceImpl(@Lazy DomainRepository domainRepository, @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
+    public DomainReadServiceImpl(@Lazy DomainRepository domainRepository, @Lazy DataPlaneRegistry dataPlaneRegistry, @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
+        this.dataPlaneRegistry = dataPlaneRegistry;
         this.domainRepository = domainRepository;
         this.gatewayUrl = gatewayUrl;
     }
@@ -70,7 +75,8 @@ public class DomainReadServiceImpl implements DomainReadService {
 
     @Override
     public String buildUrl(Domain domain, String path, MultiMap queryParams) {
-        String entryPoint = gatewayUrl;
+        final var dataPlaneDesc = dataPlaneRegistry.getDescription(domain);
+        String entryPoint = ofNullable(dataPlaneDesc.gatewayUrl()).orElse(gatewayUrl);
 
         if (entryPoint != null && entryPoint.endsWith("/")) {
             entryPoint = entryPoint.substring(0, entryPoint.length() - 1);

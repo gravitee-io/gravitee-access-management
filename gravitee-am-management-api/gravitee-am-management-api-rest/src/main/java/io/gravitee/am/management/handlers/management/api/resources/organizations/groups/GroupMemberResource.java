@@ -16,11 +16,11 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.groups;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.GroupService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.exception.MemberAlreadyExistsException;
 import io.gravitee.am.service.exception.MemberNotFoundException;
 import io.gravitee.am.service.model.UpdateGroup;
@@ -47,10 +47,10 @@ import java.util.List;
 public class GroupMemberResource extends AbstractResource {
 
     @Autowired
-    private GroupService groupService;
+    private OrganizationGroupService orgGroupService;
 
     @Autowired
-    private UserService userService;
+    private OrganizationUserService userService;
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -68,7 +68,7 @@ public class GroupMemberResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
-                .andThen(groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                .andThen(orgGroupService.findById(organizationId, group)
                         .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
                                 .flatMap(user -> {
                                     if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
@@ -83,7 +83,7 @@ public class GroupMemberResource extends AbstractResource {
                                     updateGroup.setDescription(group1.getDescription());
                                     updateGroup.setRoles(group1.getRoles());
                                     updateGroup.setMembers(groupMembers);
-                                    return groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
+                                    return orgGroupService.update(organizationId, group, updateGroup, authenticatedUser);
                                 })))
                 .subscribe(response::resume, response::resume);
     }
@@ -104,7 +104,7 @@ public class GroupMemberResource extends AbstractResource {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_GROUP, Acl.UPDATE)
-                .andThen(groupService.findById(ReferenceType.ORGANIZATION, organizationId, group)
+                .andThen(orgGroupService.findById(organizationId, group)
                         .flatMap(group1 -> userService.findById(ReferenceType.ORGANIZATION, organizationId, userId)
                                 .flatMap(user -> {
                                     if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {
@@ -119,7 +119,7 @@ public class GroupMemberResource extends AbstractResource {
                                     updateGroup.setDescription(group1.getDescription());
                                     updateGroup.setRoles(group1.getRoles());
                                     updateGroup.setMembers(groupMembers);
-                                    return groupService.update(ReferenceType.ORGANIZATION, organizationId, group, updateGroup, authenticatedUser);
+                                    return orgGroupService.update(organizationId, group, updateGroup, authenticatedUser);
                                 })))
                 .subscribe(response::resume, response::resume);
     }

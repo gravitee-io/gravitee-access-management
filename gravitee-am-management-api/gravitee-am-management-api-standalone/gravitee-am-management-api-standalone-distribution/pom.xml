@@ -221,14 +221,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.management</groupId>
-            <artifactId>gravitee-am-management-api-services-purge</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
             <groupId>io.gravitee.am.factor</groupId>
             <artifactId>gravitee-am-factor-otp</artifactId>
             <version>${project.version}</version>
@@ -432,6 +424,21 @@
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.dataplane</groupId>
+            <artifactId>gravitee-am-dataplane-mongodb</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.dataplane</groupId>
+            <artifactId>gravitee-am-dataplane-jdbc</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
 
         <dependency>
             <groupId>io.gravitee.am.resource.mock</groupId>
@@ -467,6 +474,18 @@
                         <configuration>
                             <outputDirectory>${basedir}/target/staging</outputDirectory>
                             <artifactItems>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.dataplane</groupId>
+                                    <artifactId>gravitee-am-dataplane-mongodb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.dataplane</groupId>
+                                    <artifactId>gravitee-am-dataplane-jdbc</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
                                 <!-- Identity providers -->
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>
@@ -611,13 +630,6 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.management</groupId>
                                     <artifactId>gravitee-am-management-api-services-sync</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.management</groupId>
-                                    <artifactId>gravitee-am-management-api-services-purge</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

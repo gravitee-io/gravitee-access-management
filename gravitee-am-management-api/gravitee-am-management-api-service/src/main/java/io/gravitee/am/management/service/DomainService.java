@@ -18,6 +18,7 @@ package io.gravitee.am.management.service;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.repository.management.api.search.DomainCriteria;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.model.NewDomain;
@@ -63,4 +64,16 @@ public interface DomainService extends DomainReadService {
     default Single<Domain> create(String organizationId, String environmentId, NewDomain domain) {
         return create(organizationId, environmentId, domain, null);
     }
+
+    /**
+     * Filter a list of entrypoints depending on domain tags.
+     * Given a domain with tags [ A, B ], then entrypoint must has either A or B tag defined.
+     * If no entrypoint has been retained, the default entrypoint is returned, in that case
+     * the entrypoint url may be overridden using the gateway.url linked to the Domain DataPlane
+     *
+     * @param domain the domain.
+     * @param organizationId the internal id of the organizatio owning the entrypoints
+     * @return a filtered list of entrypoints.
+     */
+    Single<List<Entrypoint>> listEntryPoint(Domain domain, String organizationId);
 }

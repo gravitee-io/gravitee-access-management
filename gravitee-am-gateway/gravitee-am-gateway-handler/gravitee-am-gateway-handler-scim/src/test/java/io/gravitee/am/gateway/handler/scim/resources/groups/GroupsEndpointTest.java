@@ -21,8 +21,8 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.scim.model.ListResponse;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
-import io.gravitee.am.gateway.handler.scim.service.GroupService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
 import org.junit.Test;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 public class GroupsEndpointTest extends RxWebTestBase {
 
     @Mock
-    private GroupService groupService;
+    private ScimGroupService groupService;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -51,7 +51,7 @@ public class GroupsEndpointTest extends RxWebTestBase {
     private ObjectWriter objectWriter;
 
     @Mock
-    private UserService userService;
+    private ProvisioningUserService userService;
 
     @Mock
     private SubjectManager subjectManager;

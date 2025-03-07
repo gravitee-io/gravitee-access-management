@@ -20,7 +20,7 @@ import com.github.dozermapper.core.Mapper;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.UserIdFields;
-import io.gravitee.am.repository.jdbc.DateHelper;
+import io.gravitee.am.repository.jdbc.provider.common.DateHelper;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter;
 import io.reactivex.rxjava3.core.Flowable;

@@ -28,9 +28,9 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
-import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
+import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
@@ -66,14 +66,17 @@ import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.or;
 import static io.gravitee.am.model.ReferenceType.DOMAIN;
-
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_CLIENT;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
 public class MongoUserRepository extends AbstractUserRepository<UserMongo> implements UserRepository {
-
+    // TODO [DP] class to remove
     private static final String FIELD_PRE_REGISTRATION = "preRegistration";
     private static final String TOTAL = "total";
     private static final String DOLLAR_COND = "$cond";

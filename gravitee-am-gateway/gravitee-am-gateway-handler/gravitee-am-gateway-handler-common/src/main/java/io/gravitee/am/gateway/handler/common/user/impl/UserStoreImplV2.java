@@ -30,7 +30,7 @@ import org.springframework.core.env.Environment;
 
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2.generateInternalSubFrom;
+import static io.gravitee.am.gateway.handler.common.user.impl.UserGatewayServiceImplV2.generateInternalSubFrom;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.service.OrganizationService;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+@ManagementRepositoryScope
 public class OrganizationReporterUpgrader extends AsyncUpgrader {
     private final OrganizationService organizationService;
     private final ReporterService reporterService;

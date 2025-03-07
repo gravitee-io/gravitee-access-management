@@ -56,6 +56,8 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     private PasswordEncoderOptions passwordEncoderOptions;
 
+    private boolean useSystemCluster;
+
     @Override
     public boolean userProvider() {
         return this.userProvider;
@@ -239,5 +241,13 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
 
     public void setPasswordEncoderOptions(PasswordEncoderOptions passwordEncoderOptions) {
         this.passwordEncoderOptions = passwordEncoderOptions;
+    }
+
+    public boolean isUseSystemCluster() {
+        return useSystemCluster;
+    }
+
+    public void setUseSystemCluster(boolean useSystemCluster) {
+        this.useSystemCluster = useSystemCluster;
     }
 }

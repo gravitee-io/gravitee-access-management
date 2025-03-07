@@ -70,7 +70,7 @@ public class BulkServiceTest {
     public Domain domain;
 
     @Mock
-    public UserService userService;
+    public ProvisioningUserService userService;
 
     public DummyAuthenticationContext authenticationContext;
 

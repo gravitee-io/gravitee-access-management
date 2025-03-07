@@ -122,7 +122,7 @@ public class ExtensionGrantResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_EXTENSION_GRANT, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> extensionGrantService.update(domain, extensionGrant, updateExtensionGrant, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> extensionGrantService.update(existingDomain, extensionGrant, updateExtensionGrant, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

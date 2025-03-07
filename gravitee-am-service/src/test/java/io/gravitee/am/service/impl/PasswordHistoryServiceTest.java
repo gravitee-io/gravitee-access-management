@@ -15,12 +15,14 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.dataplane.api.repository.PasswordHistoryRepository;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
-import io.gravitee.am.repository.management.api.PasswordHistoryRepository;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.exception.PasswordHistoryException;
@@ -48,20 +50,22 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.reactivex.rxjava3.core.Flowable.fromIterable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class PasswordHistoryServiceTest {
 
-    private static final String REFERENCE_ID = UUID.randomUUID().toString();
+    private static final Domain DOMAIN = new Domain(UUID.randomUUID().toString());
     @Mock
     private PasswordHistoryRepository repository;
+    @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
     @Mock
     private AuditService auditService;
     @Mock
@@ -79,8 +83,9 @@ class PasswordHistoryServiceTest {
         user = new User();
         user.setId(userId);
         user.setPassword(password);
-        user.setReferenceId(REFERENCE_ID);
-        user.setReferenceType(DOMAIN);
+        user.setReferenceId(DOMAIN.getId());
+        user.setReferenceType(ReferenceType.DOMAIN);
+        lenient().when(dataPlaneRegistry.getPasswordHistoryRepository(any())).thenReturn(repository);
     }
 
     @Test
@@ -88,15 +93,13 @@ class PasswordHistoryServiceTest {
     void addPasswordToHistory() {
         PasswordPolicy passwordSettings = getPasswordSettings(5);
 
-        given(repository.findUserHistory(DOMAIN, REFERENCE_ID, userId)).willReturn(fromIterable(List.of()));
+        given(repository.findUserHistory(DOMAIN.asReference(), userId)).willReturn(fromIterable(List.of()));
         given(repository.create(any(PasswordHistory.class))).willAnswer(a -> Single.just(a.getArgument(0)));
         final String encrypted_password = "encrypted password";
         given(passwordEncoder.encode(password)).willReturn(encrypted_password);
 
 
-        var testObserver = service
-                .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
-                .test();
+        var testObserver = service.addPasswordToHistory(DOMAIN, user, password , new DefaultUser(), passwordSettings).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -109,8 +112,8 @@ class PasswordHistoryServiceTest {
         verify(repository).create(passwordHistoryCaptor.capture());
         var captured = passwordHistoryCaptor.getValue();
         assertEquals(userId, captured.getUserId());
-        assertEquals(DOMAIN, captured.getReferenceType());
-        assertEquals(REFERENCE_ID, captured.getReferenceId());
+        assertEquals(ReferenceType.DOMAIN, captured.getReferenceType());
+        assertEquals(DOMAIN.getId(), captured.getReferenceId());
         assertEquals(encrypted_password, captured.getPassword());
 
         verify(auditService).report(isA(UserAuditBuilder.class));
@@ -121,12 +124,10 @@ class PasswordHistoryServiceTest {
     void rejectUsedPassword() {
         PasswordPolicy passwordSettings = getPasswordSettings(0);
 
-        given(repository.findUserHistory(DOMAIN, REFERENCE_ID, userId)).willReturn(fromIterable(List.of(new PasswordHistory())));
+        given(repository.findUserHistory(DOMAIN.asReference(), userId)).willReturn(fromIterable(List.of(new PasswordHistory())));
         given(passwordEncoder.matches(any(), any())).willReturn(true);
 
-        var testObserver = service
-                .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
-                .test();
+        var testObserver = service.addPasswordToHistory(DOMAIN, user, password , new DefaultUser(), passwordSettings).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(PasswordHistoryException.class);
     }
@@ -146,14 +147,12 @@ class PasswordHistoryServiceTest {
             passwordHistories.add(passwordHistory);
         }
 
-        given(repository.findUserHistory(DOMAIN, REFERENCE_ID, userId)).willReturn(fromIterable(passwordHistories));
+        given(repository.findUserHistory(DOMAIN.asReference(), userId)).willReturn(fromIterable(passwordHistories));
         given(repository.delete(any())).willReturn(Completable.complete());
         given(repository.create(any(PasswordHistory.class))).willReturn(Single.just(new PasswordHistory()));
         given(passwordEncoder.encode(password)).willReturn("encrypted password");
 
-        var testObserver = service
-                .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
-                .test();
+        var testObserver = service.addPasswordToHistory(DOMAIN, user, password , new DefaultUser(), passwordSettings).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -167,8 +166,8 @@ class PasswordHistoryServiceTest {
         verify(repository).create(passwordHistoryCaptor.capture());
         var captured = passwordHistoryCaptor.getValue();
         assertEquals(userId, captured.getUserId());
-        assertEquals(DOMAIN, captured.getReferenceType());
-        assertEquals(REFERENCE_ID, captured.getReferenceId());
+        assertEquals(ReferenceType.DOMAIN, captured.getReferenceType());
+        assertEquals(DOMAIN.getId(), captured.getReferenceId());
 
         verify(auditService).report(isA(UserAuditBuilder.class));
     }
@@ -176,9 +175,9 @@ class PasswordHistoryServiceTest {
     @Test
     @DisplayName("Should throw Technical Management Exception when repo encounters error")
     void findByReferenceError() {
-        given(repository.findByReference(any(), any())).willReturn(Flowable.error(IllegalArgumentException::new));
+        given(repository.findByReference(any())).willReturn(Flowable.error(IllegalArgumentException::new));
 
-        var testSubscriber = service.findByReference(ReferenceType.DOMAIN, REFERENCE_ID).test();
+        var testSubscriber = service.findByReference(DOMAIN).test();
         testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertError(TechnicalManagementException.class);
     }
@@ -189,9 +188,7 @@ class PasswordHistoryServiceTest {
         PasswordPolicy passwordSettings = new PasswordPolicy();
         passwordSettings.setPasswordHistoryEnabled(false);
 
-        var testObserver = service
-                .addPasswordToHistory(ReferenceType.DOMAIN, REFERENCE_ID, user, password , new DefaultUser(), passwordSettings)
-                .test();
+        var testObserver = service.addPasswordToHistory(DOMAIN, user, password , new DefaultUser(), passwordSettings).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -202,8 +199,8 @@ class PasswordHistoryServiceTest {
         PasswordPolicy passwordSettings = new PasswordPolicy();
         passwordSettings.setPasswordHistoryEnabled(true);
         passwordSettings.setOldPasswords((short) oldPasswords);
-        passwordSettings.setReferenceId(REFERENCE_ID);
-        passwordSettings.setReferenceType(DOMAIN);
+        passwordSettings.setReferenceId(DOMAIN.getId());
+        passwordSettings.setReferenceType(ReferenceType.DOMAIN);
         return passwordSettings;
     }
 
@@ -212,11 +209,11 @@ class PasswordHistoryServiceTest {
     void checkPasswordInHistory(boolean matches) {
         PasswordPolicy passwordSettings = getPasswordSettings(0);
 
-        given(repository.findUserHistory(DOMAIN, REFERENCE_ID, userId)).willReturn(fromIterable(List.of(new PasswordHistory())));
+        given(repository.findUserHistory(DOMAIN.asReference(), userId)).willReturn(fromIterable(List.of(new PasswordHistory())));
         given(passwordEncoder.matches(any(), any())).willReturn(matches);
 
-        var testObserver = service
-                .passwordAlreadyUsed(ReferenceType.DOMAIN, REFERENCE_ID, userId, password, passwordSettings).test();
+        var testObserver = service.passwordAlreadyUsed(DOMAIN, userId, password, passwordSettings).test();
+
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -226,8 +223,8 @@ class PasswordHistoryServiceTest {
     @ParameterizedTest
     @MethodSource
     void checkPasswordReturnsFalseWithNoSettings(PasswordPolicy passwordPolicy) {
-        var testObserver = service
-                .passwordAlreadyUsed(ReferenceType.DOMAIN, REFERENCE_ID, userId, password, passwordPolicy).test();
+        var testObserver = service.passwordAlreadyUsed(DOMAIN, userId, password, passwordPolicy).test();
+
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();

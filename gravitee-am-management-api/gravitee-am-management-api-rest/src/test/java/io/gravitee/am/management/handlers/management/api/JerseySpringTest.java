@@ -33,6 +33,7 @@ import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.management.service.CertificateServiceProxy;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DeviceIdentifierPluginService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.ExtensionGrantPluginService;
@@ -40,12 +41,17 @@ import io.gravitee.am.management.service.FactorPluginService;
 import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.PolicyPluginService;
 import io.gravitee.am.management.service.ReporterServiceProxy;
 import io.gravitee.am.management.service.ResourcePluginService;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.TagService;
+import io.gravitee.am.management.service.dataplane.CredentialManagementService;
+import io.gravitee.am.management.service.dataplane.DeviceManagementService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
@@ -54,9 +60,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.BotDetectionService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DeviceIdentifierService;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
@@ -64,9 +68,9 @@ import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
@@ -75,8 +79,6 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.TokenService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.UserEmail;
@@ -141,10 +143,10 @@ public abstract class JerseySpringTest {
     protected DomainService domainService;
 
     @Autowired
-    protected io.gravitee.am.management.service.UserService userService;
+    protected ManagementUserService userService;
 
     @Autowired
-    protected UserActivityService userActivityService;
+    protected UserActivityManagementService userActivityService;
 
     @Autowired
     protected ScopeService scopeService;
@@ -165,7 +167,7 @@ public abstract class JerseySpringTest {
     protected CertificatePluginService certificatePluginService;
 
     @Autowired
-    protected TokenService tokenService;
+    protected RevokeTokenManagementService tokenService;
 
     @Autowired
     protected ExtensionGrantPluginService extensionGrantPluginService;
@@ -210,7 +212,10 @@ public abstract class JerseySpringTest {
     protected TagService tagService;
 
     @Autowired
-    protected GroupService groupService;
+    protected DomainGroupService domainGroupService;
+
+    @Autowired
+    protected OrganizationGroupService organizationGroupService;
 
     @Autowired
     protected ApplicationService applicationService;
@@ -234,7 +239,7 @@ public abstract class JerseySpringTest {
     protected EntrypointService entrypointService;
 
     @Autowired
-    protected CredentialService credentialService;
+    protected CredentialManagementService credentialService;
 
     @Autowired
     protected FlowService flowService;
@@ -255,7 +260,7 @@ public abstract class JerseySpringTest {
     protected DeviceIdentifierService deviceIdentifierService;
 
     @Autowired
-    protected DeviceService deviceService;
+    protected DeviceManagementService deviceService;
 
     @Autowired
     protected AuthenticationDeviceNotifierPluginService authDeviceNotifierPluginService;
@@ -337,18 +342,18 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public io.gravitee.am.management.service.UserService userService() {
-            return mock(io.gravitee.am.management.service.UserService.class);
+        public ManagementUserService userService() {
+            return mock(ManagementUserService.class);
         }
 
         @Bean
-        public io.gravitee.am.management.service.UserService managementUserService() {
+        public ManagementUserService managementUserService() {
             return mock();
         }
 
         @Bean
-        public UserActivityService userActivityService() {
-            return mock(UserActivityService.class);
+        public UserActivityManagementService userActivityService() {
+            return mock(UserActivityManagementService.class);
         }
 
         @Bean
@@ -392,8 +397,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public TokenService tokenService() {
-            return mock(TokenService.class);
+        public RevokeTokenManagementService tokenService() {
+            return mock(RevokeTokenManagementService.class);
         }
 
         @Bean
@@ -480,8 +485,13 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public GroupService groupService() {
-            return mock(GroupService.class);
+        public DomainGroupService domainGroupService() {
+            return mock(DomainGroupService.class);
+        }
+
+        @Bean
+        public OrganizationGroupService organizationGroupService() {
+            return mock(OrganizationGroupService.class);
         }
 
         @Bean
@@ -515,8 +525,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public CredentialService credentialService() {
-            return mock(CredentialService.class);
+        public CredentialManagementService credentialService() {
+            return mock(CredentialManagementService.class);
         }
 
         @Bean
@@ -567,8 +577,8 @@ public abstract class JerseySpringTest {
         }
 
         @Bean
-        public DeviceService deviceService() {
-            return mock(DeviceService.class);
+        public DeviceManagementService deviceService() {
+            return mock(DeviceManagementService.class);
         }
 
         @Bean

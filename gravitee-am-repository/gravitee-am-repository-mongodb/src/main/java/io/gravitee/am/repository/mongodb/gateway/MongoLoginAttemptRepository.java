@@ -43,6 +43,9 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gte;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_CLIENT;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_DOMAIN;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)

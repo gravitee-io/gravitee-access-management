@@ -19,7 +19,7 @@ package io.gravitee.am.gateway.handler.manager.subject;
 
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class SubjectManagerV1 implements SubjectManager {
 
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Override
     public String generateSubFrom(UserId user) {

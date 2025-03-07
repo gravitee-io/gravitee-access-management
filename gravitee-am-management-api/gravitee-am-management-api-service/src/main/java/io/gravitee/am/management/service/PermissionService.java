@@ -26,8 +26,8 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.rxjava3.core.Flowable;
@@ -56,7 +56,7 @@ import static io.gravitee.am.repository.utils.RepositoryConstants.DEFAULT_MAX_CO
 public class PermissionService {
 
     private final MembershipService membershipService;
-    private final GroupService groupService;
+    private final OrganizationGroupService orgGroupService;
     private final RoleService roleService;
     private final EnvironmentService environmentService;
     private final DomainService domainService;
@@ -64,13 +64,13 @@ public class PermissionService {
     private final Map<String, Boolean> consistencyCache;
 
     public PermissionService(MembershipService membershipService,
-                             GroupService groupService,
+                             OrganizationGroupService organizationGroupService,
                              RoleService roleService,
                              EnvironmentService environmentService,
                              DomainService domainService,
                              ApplicationService applicationService) {
         this.membershipService = membershipService;
-        this.groupService = groupService;
+        this.orgGroupService = organizationGroupService;
         this.roleService = roleService;
         this.environmentService = environmentService;
         this.domainService = domainService;
@@ -193,7 +193,7 @@ public class PermissionService {
             return Single.error(new InvalidUserException("Specified user is invalid"));
         }
 
-        return groupService.findByMember(user.getId())
+        return orgGroupService.findByMember(user.getId())
                 .map(Group::getId)
                 .collect(Collectors.toList())
                 .flatMap(userGroupIds -> {

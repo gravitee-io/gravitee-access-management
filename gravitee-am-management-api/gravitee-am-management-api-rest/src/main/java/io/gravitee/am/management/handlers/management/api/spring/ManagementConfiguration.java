@@ -17,6 +17,8 @@ package io.gravitee.am.management.handlers.management.api.spring;
 
 import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapter;
 import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapterImpl;
+import io.gravitee.am.management.handlers.management.api.adapter.UMAResourceManagementAdapter;
+import io.gravitee.am.management.handlers.management.api.adapter.UMAResourceManagementAdapterImpl;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.form.FormManager;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.form.impl.FormManagerImpl;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
@@ -24,11 +26,12 @@ import io.gravitee.am.management.handlers.management.api.authentication.service.
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
 import io.gravitee.am.management.handlers.management.api.spring.security.SecurityConfiguration;
 import io.gravitee.am.management.handlers.management.api.spring.security.WebMvcConfiguration;
-import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
+import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.UserService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -58,13 +61,20 @@ public class ManagementConfiguration {
     }
 
     @Bean
-    ScopeApprovalAdapter scopeApprovalAdapter(DomainService domainService,
-ScopeApprovalService scopeApprovalService,
+    ScopeApprovalAdapter scopeApprovalAdapter(ScopeApprovalService scopeApprovalService,
+        RevokeTokenManagementService revokeTokenManagementService,
         ApplicationService applicationService,
         ScopeService scopeService,
-        UserService userService) {
-        return new ScopeApprovalAdapterImpl(domainService, scopeApprovalService, applicationService, scopeService, userService);
+        DataPlaneRegistry dataPlaneRegistry) {
+        return new ScopeApprovalAdapterImpl(scopeApprovalService, revokeTokenManagementService, applicationService, scopeService, dataPlaneRegistry);
     }
+
+    @Bean
+    UMAResourceManagementAdapter umaResourceManagementAdapter(UMAResourceManagementService umaResourceManagementService,
+                                                              DataPlaneRegistry dataPlaneRegistry) {
+        return new UMAResourceManagementAdapterImpl(umaResourceManagementService, dataPlaneRegistry);
+    }
+
     @Bean
     public UserBulkConfiguration bulkEndpointConfiguration(
             @Value("${user.bulk.maxRequestLength:1048576}") int bulkMaxRequestLength,

@@ -21,6 +21,8 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
@@ -59,7 +61,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -75,8 +77,6 @@ import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.Trans
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.ApplicationClientSecretService;
 import io.gravitee.common.http.MediaType;
@@ -128,7 +128,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private IntrospectionService introspectionService;
 
     @Autowired
-    private RevocationTokenService revocationTokenService;
+    private OAuthRevocationTokenService revocationTokenService;
 
     @Autowired
     private OpenIDDiscoveryService openIDDiscoveryService;
@@ -194,10 +194,10 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private ScopeManager scopeManager;
 
     @Autowired
-    private DeviceService deviceService;
+    private DeviceGatewayService deviceService;
 
     @Autowired
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -275,7 +275,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
-                .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper))
+                .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, domain))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(scopeManager))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))

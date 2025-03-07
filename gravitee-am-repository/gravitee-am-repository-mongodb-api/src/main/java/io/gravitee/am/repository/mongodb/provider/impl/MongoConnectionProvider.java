@@ -23,9 +23,9 @@ import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
+
+import java.net.URI;
 
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
@@ -48,21 +48,25 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private ClientWrapper<MongoClient> gatewayMongoClient;
 
     private boolean notUseMngSettingsForOauth2;
+    private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         final var useMngSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
-        final var notUseGatewaySettings = environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+        final var useGwSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", Boolean.class, false);
+        final var useMngSettingsForGateway = environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+        notUseGwSettingsForOauth2 = !useGwSettingsForOauth2;
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
-        notUseMngSettingsForGateway = !notUseGatewaySettings;
+        notUseMngSettingsForGateway = !useMngSettingsForGateway;
         // create the common client just after the bean Initialization to guaranty the uniqueness
-        commonMongoClient = new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getRepositoryPropertyKey()).getObject());
-        if (notUseMngSettingsForOauth2) {
-            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject());
-        }
+        commonMongoClient =
+                new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getRepositoryPropertyKey()).getObject(), getDatabaseName(MANAGEMENT));
         if (notUseMngSettingsForGateway) {
-            gatewayMongoClient = new MongoClientWrapper(new MongoFactory(environment, GATEWAY.getRepositoryPropertyKey()).getObject());
+            gatewayMongoClient = new MongoClientWrapper(new MongoFactory(environment, GATEWAY.getRepositoryPropertyKey()).getObject(), getDatabaseName(GATEWAY));
+        }
+        if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
+            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject(), getDatabaseName(OAUTH2));
         }
     }
 
@@ -74,7 +78,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public ClientWrapper getClientWrapper(String name) {
         if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
-            return oauthMongoClient;
+            return notUseGwSettingsForOauth2 ? oauthMongoClient : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
             return gatewayMongoClient;
         } else {
@@ -84,7 +88,37 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
 
     @Override
     public ClientWrapper<MongoClient> getClientFromConfiguration(MongoConnectionConfiguration configuration) {
-        return new MongoClientWrapper(MongoFactory.createClient(configuration));
+        return new MongoClientWrapper(MongoFactory.createClient(configuration), configuration.getDatabase());
+    }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapperFromPrefix(String prefix) {
+        if(GATEWAY.getRepositoryPropertyKey().equalsIgnoreCase(prefix)){
+            if (notUseMngSettingsForGateway) {
+                return gatewayMongoClient;
+            } else {
+                return commonMongoClient;
+            }
+        } else {
+            return new MongoClientWrapper(new MongoFactory(environment, prefix).getObject(), getDatabaseName(prefix));
+        }
+    }
+
+    private String getDatabaseName(Scope scope) {
+        boolean useManagementSettings = environment.getProperty(scope.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+        String propertyPrefix = useManagementSettings ? Scope.MANAGEMENT.getRepositoryPropertyKey() : scope.getRepositoryPropertyKey();
+        return getDatabaseName(propertyPrefix);
+    }
+
+    private String getDatabaseName(String prefix) {
+        String uri = environment.getProperty(prefix + ".mongodb.uri", "");
+        if (!uri.isEmpty()) {
+            final String path = URI.create(uri).getPath();
+            if (path != null && path.length() > 1) {
+                return path.substring(1);
+            }
+        }
+        return environment.getProperty(prefix + ".mongodb.dbname", "gravitee-am");
     }
 
     @Override

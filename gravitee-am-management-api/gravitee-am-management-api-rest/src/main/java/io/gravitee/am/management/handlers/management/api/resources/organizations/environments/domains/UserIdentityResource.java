@@ -17,7 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
@@ -43,7 +43,7 @@ public class UserIdentityResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private UserService userService;
+    private ManagementUserService userService;
 
     @DELETE
     @Operation(summary = "Unlink user identity",
@@ -56,16 +56,16 @@ public class UserIdentityResource extends AbstractResource {
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @PathParam("identity") String identity,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domain)))
-                        .flatMap(__ -> userService.unlinkIdentity(user, identity, authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Single.error(() -> new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> userService.unlinkIdentity(domain, user, identity, authenticatedUser)))
                 .subscribe(__ -> response.resume(Response.noContent().build()), response::resume);
     }
 }

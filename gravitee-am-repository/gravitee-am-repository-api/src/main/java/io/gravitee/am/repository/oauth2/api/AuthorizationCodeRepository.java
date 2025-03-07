@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.oauth2.api;
 
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -24,7 +25,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface AuthorizationCodeRepository {
+public interface AuthorizationCodeRepository extends ExpiredDataSweeper {
 
     /**
      * Store an authorization code.
@@ -49,7 +50,4 @@ public interface AuthorizationCodeRepository {
      */
     Maybe<AuthorizationCode> findByCode(String code);
 
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
 }

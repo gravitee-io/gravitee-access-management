@@ -18,9 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
+import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
@@ -46,7 +48,7 @@ public class GroupResourceTest extends JerseySpringTest {
         mockGroup.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(groupId);
+        doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, groupId);
 
         final Response response = target("domains").path(domainId).path("groups").path(groupId).request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
@@ -65,7 +67,7 @@ public class GroupResourceTest extends JerseySpringTest {
         final String groupId = "group-id";
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.empty()).when(groupService).findById(groupId);
+        doReturn(Single.error(new GroupNotFoundException(groupId))).when(domainGroupService).findById(mockDomain, groupId);
 
         final Response response = target("domains").path(domainId).path("groups").path(groupId).request().get();
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());

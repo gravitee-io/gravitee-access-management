@@ -21,6 +21,7 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.configuration.ConfigurationChecker;
+import io.gravitee.am.gateway.core.upgrader.GatewayUpgraderConfiguration;
 import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.node.GatewayNodeMetadataResolver;
@@ -30,6 +31,12 @@ import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration
 import io.gravitee.am.plugins.authdevice.notifier.spring.AuthenticationDeviceNotifierSpringConfiguration;
 import io.gravitee.am.plugins.botdetection.spring.BotDetectionSpringConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateSpringConfiguration;
+import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
+import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneProvider;
+import io.gravitee.am.plugins.dataplane.spring.DataPlaneSpringConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantSpringConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorSpringConfiguration;
@@ -64,6 +71,8 @@ import org.springframework.core.env.Environment;
 @Import({
         ReactorConfiguration.class,
         VertxServerConfiguration.class,
+        DataPlaneSpringConfiguration.class,
+        GatewayUpgraderConfiguration.class,
         ServiceConfiguration.class,
         IdentityProviderSpringConfiguration.class,
         CertificateSpringConfiguration.class,
@@ -144,5 +153,15 @@ public class StandaloneConfiguration {
     @Bean
     public PluginConfigurationValidatorsRegistry pluginConfigurationValidatorsRegistry(){
         return new PluginConfigurationValidatorsRegistry();
+    }
+
+    @Bean
+    public DataPlaneRegistry dataPlaneRegistry(SingleDataPlaneLoader loader, DataPlanePluginManager manager) {
+        return new DataPlaneRegistryImpl(loader, manager);
+    }
+
+    @Bean
+    public SingleDataPlaneProvider singleDataPlaneProvider(DataPlaneRegistry dataPlaneRegistry){
+        return new SingleDataPlaneProvider(dataPlaneRegistry);
     }
 }

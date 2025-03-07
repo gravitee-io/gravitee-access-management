@@ -58,7 +58,8 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         scopeApproval.setDomain(domainId);
 
 
-        doReturn(Single.just(List.of(scopeApproval))).when(scopeApprovalAdapter).getUserConsents(anyString(), anyString(), anyString());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(any());
+        doReturn(Single.just(List.of(scopeApproval))).when(scopeApprovalAdapter).getUserConsents(any(), anyString(), anyString());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -95,7 +96,8 @@ public class UserConsentsResourceTest extends JerseySpringTest {
         final User mockUser = new User();
         mockUser.setId("user-id-1");
 
-        doReturn(Completable.complete()).when(scopeApprovalAdapter).revokeUserConsents(any(), any(),any(), any());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(any());
+        doReturn(Completable.complete()).when(scopeApprovalAdapter).revokeUserConsents(any(), any(), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)

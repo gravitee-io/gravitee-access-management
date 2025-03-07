@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.management.service.DomainService;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Component;
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class DomainReporterUpgrader extends AsyncUpgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DomainReporterUpgrader.class);

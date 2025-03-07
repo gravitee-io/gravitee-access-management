@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.management.service.DomainService;
@@ -39,6 +40,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.OPEN
  */
 @Component
 @RequiredArgsConstructor
+@ManagementRepositoryScope
 public class OpenIDScopeUpgrader extends AsyncUpgrader {
 
     private final Logger logger = LoggerFactory.getLogger(OpenIDScopeUpgrader.class);
@@ -55,18 +57,18 @@ public class OpenIDScopeUpgrader extends AsyncUpgrader {
 
     private Single<Domain> createOrUpdateSystemScopes(Domain domain) {
         return Observable.fromArray(io.gravitee.am.common.oidc.Scope.values())
-                .flatMapSingle(scope -> createSystemScope(domain.getId(), scope))
+                .flatMapSingle(scope -> createSystemScope(domain, scope))
                 .lastOrError()
                 .map(scope -> domain);
     }
 
-    private Single<Scope> createSystemScope(String domain, io.gravitee.am.common.oidc.Scope systemScope) {
-        return scopeService.findByDomainAndKey(domain, systemScope.getKey())
+    private Single<Scope> createSystemScope(Domain domain, io.gravitee.am.common.oidc.Scope systemScope) {
+        return scopeService.findByDomainAndKey(domain.getId(), systemScope.getKey())
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
                 .flatMap(optScope -> {
                     if (optScope.isEmpty()) {
-                        logger.info("Create a new system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
+                        logger.info("Create a new system scope key[{}] for domain[{}]", systemScope.getKey(), domain.getId());
                         NewSystemScope scope = new NewSystemScope();
                         scope.setKey(systemScope.getKey());
                         scope.setClaims(systemScope.getClaims());
@@ -75,7 +77,7 @@ public class OpenIDScopeUpgrader extends AsyncUpgrader {
                         scope.setDiscovery(systemScope.isDiscovery());
                         return scopeService.create(domain, scope);
                     } else if (shouldUpdateSystemScope(optScope, systemScope)){
-                        logger.info("Update a system scope key[{}] for domain[{}]", systemScope.getKey(), domain);
+                        logger.info("Update a system scope key[{}] for domain[{}]", systemScope.getKey(), domain.getId());
                         final Scope existingScope = optScope.get();
                         UpdateSystemScope scope = new UpdateSystemScope();
                         scope.setName(existingScope.getName() != null ? existingScope.getName() : systemScope.getLabel());

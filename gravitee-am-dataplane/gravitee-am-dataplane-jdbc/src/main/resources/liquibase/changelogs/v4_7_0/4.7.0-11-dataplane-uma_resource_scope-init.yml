@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-11-uma_resource_scope
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: uma_resource_scopes
+      changes:
+        - createTable:
+            tableName: uma_resource_scopes
+            columns:
+              - column: {name: resource_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: scope, type: nvarchar(64), constraints: { nullable: false } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: resource_id
+            indexName: idx_uma_resource_scopes_resource
+            tableName: uma_resource_scopes
+            unique: false

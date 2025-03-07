@@ -47,6 +47,9 @@ import static java.util.Collections.emptySet;
  */
 public abstract class AbstractResource {
 
+    protected static final int MAX_USERS_SIZE_PER_PAGE = 30;
+    protected static final String MAX_USERS_SIZE_PER_PAGE_STRING = "30";
+
     @Context
     protected SecurityContext securityContext;
 

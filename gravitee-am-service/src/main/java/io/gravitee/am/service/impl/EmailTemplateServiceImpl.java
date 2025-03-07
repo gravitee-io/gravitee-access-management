@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -146,8 +147,8 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
     @Override
-    public Flowable<Email> copyFromClient(String domain, String clientSource, String clientTarget) {
-        return findByClient(ReferenceType.DOMAIN, domain, clientSource)
+    public Flowable<Email> copyFromClient(Domain domain, String clientSource, String clientTarget) {
+        return findByClient(ReferenceType.DOMAIN, domain.getId(), clientSource)
                 .flatMapSingle(source -> {
                     NewEmail email = new NewEmail();
                     email.setEnabled(source.isEnabled());
@@ -162,37 +163,27 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
     @Override
-    public Single<Email> create(ReferenceType referenceType, String referenceId, NewEmail newEmail, User principal) {
-        LOGGER.debug("Create a new email {} for {} {}", newEmail, referenceType, referenceId);
-        return create0(referenceType, referenceId, null, newEmail, principal);
+    public Single<Email> create(Domain domain, NewEmail newEmail, User principal) {
+        LOGGER.debug("Create a new email {} for {} {}", newEmail, ReferenceType.DOMAIN, domain.getId());
+        return create0(domain, null, newEmail, principal);
     }
 
     @Override
-    public Single<Email> create(String domain, NewEmail newEmail, User principal) {
-        return create(ReferenceType.DOMAIN, domain, newEmail, principal);
+    public Single<Email> create(Domain domain, String client, NewEmail newEmail, User principal) {
+        LOGGER.debug("Create a new email {} for {} {} and client {}", newEmail, ReferenceType.DOMAIN, domain.getId(), client);
+        return create0(domain, client, newEmail, principal);
     }
 
     @Override
-    public Single<Email> create(ReferenceType referenceType, String referenceId, String client, NewEmail newEmail, User principal) {
-        LOGGER.debug("Create a new email {} for {} {} and client {}", newEmail, referenceType, referenceId, client);
-        return create0(referenceType, referenceId, client, newEmail, principal);
+    public Single<Email> update(Domain domain, String id, UpdateEmail updateEmail, User principal) {
+        LOGGER.debug("Update an email {} for domain {}", id, domain.getId());
+        return update0(domain, id, updateEmail, principal);
     }
 
     @Override
-    public Single<Email> create(String domain, String client, NewEmail newEmail, User principal) {
-        return create(ReferenceType.DOMAIN, domain, client, newEmail, principal);
-    }
-
-    @Override
-    public Single<Email> update(String domain, String id, UpdateEmail updateEmail, User principal) {
-        LOGGER.debug("Update an email {} for domain {}", id, domain);
-        return update0(ReferenceType.DOMAIN, domain, id, updateEmail, principal);
-    }
-
-    @Override
-    public Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail, User principal) {
-        LOGGER.debug("Update an email {} for domain {} and client {}", id, domain, client);
-        return update0(ReferenceType.DOMAIN, domain, id, updateEmail, principal);
+    public Single<Email> update(Domain domain, String client, String id, UpdateEmail updateEmail, User principal) {
+        LOGGER.debug("Update an email {} for domain {} and client {}", id, domain.getId(), client);
+        return update0(domain, id, updateEmail, principal);
     }
 
     @Override
@@ -220,16 +211,16 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
     }
 
 
-    private Single<Email> create0(ReferenceType referenceType, String referenceId, String client, NewEmail newEmail, User principal) {
+    private Single<Email> create0(Domain domain, String client, NewEmail newEmail, User principal) {
         String emailId = RandomString.generate();
 
         // check if email is unique
-        return checkEmailUniqueness(referenceType, referenceId, client, newEmail.getTemplate().template())
+        return checkEmailUniqueness(ReferenceType.DOMAIN, domain.getId(), client, newEmail.getTemplate().template())
                 .flatMap(irrelevant -> {
                     Email email = new Email();
                     email.setId(emailId);
-                    email.setReferenceType(referenceType);
-                    email.setReferenceId(referenceId);
+                    email.setReferenceType(ReferenceType.DOMAIN);
+                    email.setReferenceId(domain.getId());
                     email.setClient(client);
                     email.setEnabled(newEmail.isEnabled());
                     email.setTemplate(newEmail.getTemplate().template());
@@ -245,7 +236,7 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                 .flatMap(email -> {
                     // create event for sync process
                     Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(email));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(email));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -256,11 +247,11 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a email", ex));
                 })
                 .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).email(email)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
     }
 
-    private Single<Email> update0(ReferenceType referenceType, String referenceId, String id, UpdateEmail updateEmail, User principal) {
-        return emailRepository.findById(referenceType, referenceId, id)
+    private Single<Email> update0(Domain domain, String id, UpdateEmail updateEmail, User principal) {
+        return emailRepository.findById(ReferenceType.DOMAIN, domain.getId(), id)
                 .switchIfEmpty(Single.error(new EmailNotFoundException(id)))
                 .flatMap(oldEmail -> {
                     Email emailToUpdate = new Email(oldEmail);
@@ -276,10 +267,10 @@ public class EmailTemplateServiceImpl implements EmailTemplateService {
                             .flatMap(email -> {
                                 // create event for sync process
                                 Event event = new Event(Type.EMAIL, new Payload(email.getId(), email.getReferenceType(), email.getReferenceId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(email));
+                                return eventService.create(event, domain).flatMap(__ -> Single.just(email));
                             })
                             .doOnSuccess(email -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).oldValue(oldEmail).email(email)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).reference(new Reference(referenceType, referenceId)).throwable(throwable)));
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(EmailTemplateAuditBuilder.class).principal(principal).type(EventType.EMAIL_TEMPLATE_UPDATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

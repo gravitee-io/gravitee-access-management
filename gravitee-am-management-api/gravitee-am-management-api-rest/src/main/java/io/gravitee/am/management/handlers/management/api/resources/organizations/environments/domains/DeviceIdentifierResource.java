@@ -114,7 +114,7 @@ public class DeviceIdentifierResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_DEVICE_IDENTIFIER, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> deviceIdentifierService.update(domain, deviceIdentifierId, updateBotDetection, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> deviceIdentifierService.update(existingDomain, deviceIdentifierId, updateBotDetection, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 

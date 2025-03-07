@@ -144,6 +144,7 @@ public class DynamicClientRegistrationServiceTest {
     private Environment environment;
 
     private static final String DOMAIN_ID = "domain";
+    private static final Domain DOMAIN = new Domain(DOMAIN_ID);
     private static final String BASE_PATH = "";
     private static final String ID_SOURCE = "123";
     private static final String ID_TARGET = "abc";
@@ -160,13 +161,13 @@ public class DynamicClientRegistrationServiceTest {
         when(openIDProviderMetadata.getIssuer()).thenReturn("https://issuer");
         when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just("jwt"));
 
-        when(clientService.create(any())).thenAnswer(i -> {
-            Client res = i.getArgument(0);
+        when(clientService.create(any(), any())).thenAnswer(i -> {
+            Client res = i.getArgument(1);
             res.setId(ID_TARGET);
             return Single.just(res);
         });
         when(clientService.update(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
-        when(clientService.delete(any())).thenReturn(Completable.complete());
+        when(clientService.delete(any(), any())).thenReturn(Completable.complete());
         when(clientService.renewClientSecret(any(), any())).thenAnswer(i -> {
             Client toRenew = new Client();
             toRenew.setClientSecret("secretRenewed");
@@ -224,7 +225,7 @@ public class DynamicClientRegistrationServiceTest {
                 client.getIdentityProviders() == null &&
                 client.getCertificate() == null
         );
-        verify(clientService, times(1)).create(any());
+        verify(clientService, times(1)).create(any(), any());
     }
 
     @Test
@@ -843,7 +844,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.delete(new Client()).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        verify(clientService, times(1)).delete(any());
+        verify(clientService, times(1)).delete(any(), any());
     }
 
     @Test
@@ -858,7 +859,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(client -> client.getClientSecret().equals("secretRenewed"));
-        verify(clientService, times(1)).renewClientSecret(anyString(), anyString());
+        verify(clientService, times(1)).renewClientSecret(any(), anyString());
         verify(clientService, times(1)).update(any());
     }
 
@@ -875,7 +876,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(throwable -> "No template found for software_id 123".equals(
                 throwable.getMessage()));
-        verify(clientService, times(0)).create(any());
+        verify(clientService, times(0)).create(any(), any());
     }
 
     @Test
@@ -901,7 +902,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(throwable -> "Client behind software_id is not a template".equals(
                 throwable.getMessage()));
-        verify(clientService, times(0)).create(any());
+        verify(clientService, times(0)).create(any(), any());
     }
 
     @Test
@@ -932,7 +933,7 @@ public class DynamicClientRegistrationServiceTest {
 
         when(flowService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
         when(formService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
-        when(emailTemplateService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Flowable.empty());
+        when(emailTemplateService.copyFromClient(any(Domain.class), eq(ID_SOURCE), eq(ID_TARGET))).thenReturn(Flowable.empty());
         when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
         when(clientService.findById("123")).thenReturn(Maybe.just(template));
 
@@ -956,7 +957,7 @@ public class DynamicClientRegistrationServiceTest {
                         client.getCookieSettings() != null &&
                         client.getRiskAssessment() != null
         );
-        verify(clientService, times(1)).create(argThat(duplicateClient -> duplicateClient.getClientSecrets().isEmpty() && duplicateClient.getSecretSettings().isEmpty()));
+        verify(clientService, times(1)).create(any(), argThat(duplicateClient -> duplicateClient.getClientSecrets().isEmpty() && duplicateClient.getSecretSettings().isEmpty()));
     }
 
     @Test
@@ -981,7 +982,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(client -> client.getAuthorizationSignedResponseAlg().equals(JWSAlgorithm.RS256.getName()));
-        verify(clientService, times(1)).create(any());
+        verify(clientService, times(1)).create(any(), any());
     }
 
     @Test
@@ -1375,7 +1376,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        verify(clientService).create(argThat(client -> client.getAccessTokenValiditySeconds() == FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY
+        verify(clientService).create(any(), argThat(client -> client.getAccessTokenValiditySeconds() == FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY
                 && client.getRefreshTokenValiditySeconds() == 1000
                 && client.getIdTokenValiditySeconds() == 1100));
 

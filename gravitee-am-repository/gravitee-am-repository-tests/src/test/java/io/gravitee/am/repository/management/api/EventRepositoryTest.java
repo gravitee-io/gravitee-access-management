@@ -18,8 +18,11 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.model.token.RevokeToken;
+import io.gravitee.am.model.token.RevokeType;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
@@ -28,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,8 +45,8 @@ public class EventRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void testFindByTimeFrame() {
-        final long from = 1571214259000l;
-        final long to =  1571214281000l;
+        final long from = 1571214259000L;
+        final long to = 1571214281000L;
         // create event
         Event event = new Event();
         event.setType(Type.DOMAIN);
@@ -75,13 +79,88 @@ public class EventRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByTimeFrameWithDataPlaneId() {
+        final long from = 1571214259000L;
+        final long to = 1571214281000L;
+        // create event for default DP
+        Event event = new Event();
+        event.setType(Type.DOMAIN);
+        event.setCreatedAt(new Date(from));
+        event.setUpdatedAt(event.getCreatedAt());
+        event.setDataPlaneId("default");
+        event.setEnvironmentId("envId");
+        Event expectedEvent = eventRepository.create(event).blockingGet();
+
+        // create event for default123 DP
+        Event event123 = new Event();
+        event123.setType(Type.DOMAIN);
+        event123.setCreatedAt(new Date(from));
+        event123.setUpdatedAt(event.getCreatedAt());
+        event123.setDataPlaneId("default123");
+        event123.setEnvironmentId("envId123");
+        eventRepository.create(event123).blockingGet();
+
+        // fetch events
+        TestSubscriber<Event> testSubscriber = eventRepository.findByTimeFrameAndDataPlaneId(from, to, "default").test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(evt -> evt.getId().equals(expectedEvent.getId())
+                && evt.getDataPlaneId().equals(expectedEvent.getDataPlaneId())
+                && evt.getEnvironmentId().equals(expectedEvent.getEnvironmentId()));
+    }
+
+    @Test
+    public void testFindByTimeFrameWithDataPlaneId_withNullDataPlaneId() {
+        final long from = 1571214259000L;
+        final long to = 1571214281000L;
+        // create event for default DP
+        Event event = new Event();
+        event.setType(Type.DOMAIN);
+        event.setCreatedAt(new Date(from));
+        event.setUpdatedAt(event.getCreatedAt());
+        event.setDataPlaneId("default");
+        eventRepository.create(event).blockingGet();
+
+        // create event for default123 DP
+        Event event123 = new Event();
+        event123.setType(Type.DOMAIN);
+        event123.setCreatedAt(new Date(from));
+        event123.setUpdatedAt(event.getCreatedAt());
+        event123.setDataPlaneId("default123");
+        eventRepository.create(event123).blockingGet();
+
+        // create event for default123 DP
+        Event eventNull = new Event();
+        eventNull.setType(Type.MEMBERSHIP);
+        eventNull.setCreatedAt(new Date(from));
+        eventNull.setUpdatedAt(event.getCreatedAt());
+        eventRepository.create(eventNull).blockingGet();
+
+        // fetch events
+        TestSubscriber<Event> testSubscriber = eventRepository.findByTimeFrameAndDataPlaneId(from, to, "default").test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(2);
+    }
+
+    @Test
     public void testFindById() {
         // create event
         Event event = new Event();
         event.setType(Type.DOMAIN);
         Payload payload = new Payload("pid", ReferenceType.ORGANIZATION, "oid", Action.BULK_CREATE);
+        final var revokeToken = new RevokeToken();
+        revokeToken.setUserId(new UserId(UUID.randomUUID().toString(), UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        revokeToken.setDomainId(UUID.randomUUID().toString());
+        revokeToken.setClientId(UUID.randomUUID().toString());
+        revokeToken.setRevokeType(RevokeType.BY_USER);
+        payload.put(Payload.REVOKE_TOKEN_DEFINITION, revokeToken);
         event.setPayload(new Payload(payload)); // duplicate the payload to avoid inner transformation that make test failing
-
         Event eventCreated = eventRepository.create(event).blockingGet();
 
         // fetch domain
@@ -98,6 +177,14 @@ public class EventRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(e -> e.getPayload().getAction().equals(payload.getAction()));
         testObserver.assertValue(e -> e.getPayload().getReferenceId().equals(payload.getReferenceId()));
         testObserver.assertValue(e -> e.getPayload().getReferenceType().equals(payload.getReferenceType()));
+        testObserver.assertValue(e -> e.getPayload().getRevokeToken() != null &&
+                e.getPayload().getRevokeToken().getRevokeType() == revokeToken.getRevokeType() &&
+                e.getPayload().getRevokeToken().getDomainId().equals(revokeToken.getDomainId()) &&
+                e.getPayload().getRevokeToken().getClientId().equals(revokeToken.getClientId()) &&
+                e.getPayload().getRevokeToken().getUserId() != null &&
+                e.getPayload().getRevokeToken().getUserId().id().equals(revokeToken.getUserId().id()) &&
+                e.getPayload().getRevokeToken().getUserId().externalId().equals(revokeToken.getUserId().externalId())
+                );
     }
 
     @Test

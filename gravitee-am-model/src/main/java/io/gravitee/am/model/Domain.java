@@ -181,7 +181,20 @@ public class Domain implements Resource {
      */
     private CorsSettings corsSettings;
 
+    /**
+     * ID of Data Plane
+     */
+    private String dataPlaneId;
+
     public Domain() {
+    }
+
+    /**
+     * For testing purpose only
+     * @param id
+     */
+    public Domain(String id) {
+        this.id = id;
     }
 
     public Domain(Domain other) {
@@ -212,6 +225,7 @@ public class Domain implements Resource {
         this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
         this.saml = other.saml;
         this.corsSettings = other.corsSettings;
+        this.dataPlaneId = other.dataPlaneId;
     }
 
     @Override
@@ -431,6 +445,14 @@ public class Domain implements Resource {
         this.corsSettings = corsSettings;
     }
 
+    public String getDataPlaneId() {
+        return dataPlaneId;
+    }
+
+    public void setDataPlaneId(String dataPlaneId) {
+        this.dataPlaneId = dataPlaneId;
+    }
+
     public boolean isDynamicClientRegistrationEnabled() {
         return this.getOidc()!=null &&
                 this.getOidc().getClientRegistrationSettings()!=null &&
@@ -505,4 +527,7 @@ public class Domain implements Resource {
         return id.hashCode();
     }
 
+    public final Reference asReference() {
+        return Reference.domain(this.getId());
+    }
 }

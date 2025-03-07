@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRule;
 import io.gravitee.am.gateway.handler.common.policy.Rule;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
@@ -36,6 +37,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -46,8 +48,6 @@ import io.gravitee.am.model.uma.PermissionRequest;
 import io.gravitee.am.model.uma.PermissionTicket;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.service.PermissionTicketService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
@@ -89,8 +89,8 @@ public class UMATokenGranter extends AbstractTokenGranter {
 
     private static final List<String> CLAIM_TOKEN_FORMAT_SUPPORTED = List.of(TokenType.ID_TOKEN);
     private UserAuthenticationManager userAuthenticationManager;
-    private PermissionTicketService permissionTicketService;
-    private ResourceService resourceService;
+    private UMAPermissionTicketService permissionTicketService;
+    private UMAResourceGatewayService resourceService;
     private JWTService jwtService;
     private Domain domain;
     private ExecutionContextFactory executionContextFactory;
@@ -102,8 +102,8 @@ public class UMATokenGranter extends AbstractTokenGranter {
 
     public UMATokenGranter(TokenService tokenService,
                            UserAuthenticationManager userAuthenticationManager,
-                           PermissionTicketService permissionTicketService,
-                           ResourceService resourceService,
+                           UMAPermissionTicketService permissionTicketService,
+                           UMAResourceGatewayService resourceService,
                            JWTService jwtService,
                            Domain domain,
                            ExecutionContextFactory executionContextFactory,

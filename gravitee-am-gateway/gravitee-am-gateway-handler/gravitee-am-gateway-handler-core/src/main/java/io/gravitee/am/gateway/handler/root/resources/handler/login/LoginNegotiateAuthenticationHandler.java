@@ -39,8 +39,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.NEGOTIATE_CONTINUE_TOKEN_
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static io.gravitee.common.http.HttpStatusCode.UNAUTHORIZED_401;
 
 /**

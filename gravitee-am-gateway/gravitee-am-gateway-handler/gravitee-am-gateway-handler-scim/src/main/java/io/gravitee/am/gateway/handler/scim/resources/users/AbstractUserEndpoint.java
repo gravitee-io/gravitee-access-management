@@ -25,7 +25,7 @@ import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.User;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Maybe;
@@ -47,12 +47,12 @@ import java.util.Set;
 public class AbstractUserEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractUserEndpoint.class);
-    protected UserService userService;
+    protected ProvisioningUserService userService;
     protected ObjectMapper objectMapper;
     private Domain domain;
     protected SubjectManager subjectManager;
 
-    public AbstractUserEndpoint(Domain domain, UserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
+    public AbstractUserEndpoint(Domain domain, ProvisioningUserService userService, ObjectMapper objectMapper, SubjectManager subjectManager) {
         this.domain = domain;
         this.userService = userService;
         this.objectMapper = objectMapper;

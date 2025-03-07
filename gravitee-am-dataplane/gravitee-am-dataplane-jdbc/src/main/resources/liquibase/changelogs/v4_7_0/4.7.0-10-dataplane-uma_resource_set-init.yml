@@ -1,0 +1,40 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-10-uma_resource_set
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: uma_resource_set
+      changes:
+        - createTable:
+            tableName: uma_resource_set
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: name, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: description, type: clob, constraints: { nullable: true } }
+              - column: {name: icon_uri, type: nvarchar(512), constraints: { nullable: true } }
+              - column: {name: type, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: user_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: client_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_uma_resources
+            columnNames: id
+            tableName: uma_resource_set
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_id
+            indexName:  idx_uma_resource_set_domain_client_user
+            tableName:  uma_resource_set
+            unique:  false

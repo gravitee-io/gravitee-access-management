@@ -24,4 +24,6 @@ public interface ClientWrapper <T> {
     T getClient();
 
     void releaseClient();
+
+    String getDatabaseName();
 }

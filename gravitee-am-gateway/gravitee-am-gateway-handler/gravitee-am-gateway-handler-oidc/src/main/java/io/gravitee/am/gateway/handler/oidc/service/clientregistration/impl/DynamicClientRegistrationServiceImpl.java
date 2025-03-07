@@ -161,12 +161,12 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
     @Override
     public Single<Client> delete(Client toDelete) {
-        return this.clientService.delete(toDelete.getId()).toSingleDefault(toDelete);
+        return this.clientService.delete(toDelete.getId(), domain).toSingleDefault(toDelete);
     }
 
     @Override
     public Single<Client> renewSecret(Client toRenew, String basePath) {
-        return clientService.renewClientSecret(domain.getId(), toRenew.getId())
+        return clientService.renewClientSecret(domain, toRenew.getId())
                 // after each modification we must update the registration token
                 .flatMap(clientWithRenewedSecret -> applyRegistrationAccessToken(basePath, clientWithRenewedSecret))
                 .flatMap(updatedClient -> {
@@ -194,7 +194,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::applyDefaultCertificateProvider)
                 .flatMap(this::applyAccessTokenValidity)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::create);
+                .flatMap(app -> clientService.create(domain, app));
     }
 
     private Single<Client> applyAccessTokenValidity(Client client) {
@@ -221,7 +221,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::sanitizeTemplate)
                 .map(request::patch)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::create)
+                .flatMap(app -> clientService.create(domain, app))
                 .flatMap(c -> copyFlows(request.getSoftwareId().get(), c))
                 .flatMap(c -> copyForms(request.getSoftwareId().get(), c))
                 .flatMap(c -> copyEmails(request.getSoftwareId().get(), c));
@@ -260,7 +260,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     private Single<Client> copyEmails(String sourceId, Client client) {
-        return emailTemplateService.copyFromClient(domain.getId(), sourceId, client.getId())
+        return emailTemplateService.copyFromClient(domain, sourceId, client.getId())
                 .toList()
                 .flatMap(irrelevant -> Single.just(client));
     }

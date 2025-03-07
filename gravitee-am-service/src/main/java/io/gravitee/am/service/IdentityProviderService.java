@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -48,6 +49,8 @@ public interface IdentityProviderService {
 
     Single<IdentityProvider> create(ReferenceType referenceType, String referenceId, NewIdentityProvider newIdentityProvider, User principal, boolean system);
 
+    Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system);
+
     Single<IdentityProvider> update(ReferenceType referenceType, String referenceId, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader);
 
     Completable delete(ReferenceType referenceType, String referenceId, String identityProviderId, User principal);
@@ -55,10 +58,6 @@ public interface IdentityProviderService {
     Flowable<IdentityProvider> findWithPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy);
 
     Single<IdentityProvider> updatePasswordPolicy(String domain, String id, AssignPasswordPolicy assignPasswordPolicy);
-
-    default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider) {
-        return create(domain, identityProvider, null);
-    }
 
     default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, boolean isUpgrader) {
         return update(domain, id, updateIdentityProvider, null, isUpgrader);
@@ -68,13 +67,15 @@ public interface IdentityProviderService {
         return delete(domain, identityProviderId, null);
     }
 
-    default Single<IdentityProvider> create(String domain, NewIdentityProvider identityProvider, User principal) {
-        return create(ReferenceType.DOMAIN, domain, identityProvider, principal, false);
+    default Single<IdentityProvider> create(Domain domain, NewIdentityProvider identityProvider, User principal) {
+        return create(domain, identityProvider, principal, false);
     }
 
     default Single<IdentityProvider> update(String domain, String id, UpdateIdentityProvider updateIdentityProvider, User principal, boolean isUpgrader) {
         return update(ReferenceType.DOMAIN, domain, id, updateIdentityProvider, principal, isUpgrader);
     }
+
+    Single<IdentityProvider> assignDataPlane(IdentityProvider identityProvider, String dataPlaneId);
 
     default Completable delete(String domain, String identityProviderId, User principal) {
         return delete(ReferenceType.DOMAIN, domain, identityProviderId, principal);

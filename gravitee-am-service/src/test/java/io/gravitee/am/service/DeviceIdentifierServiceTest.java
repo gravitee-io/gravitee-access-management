@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -66,7 +67,7 @@ public class DeviceIdentifierServiceTest {
     @Mock
     private AuditService auditService;
 
-    private final static String DOMAIN = "domain1";
+    private final static Domain DOMAIN = new Domain("domain1");
 
     @Test
     public void shouldFindById() {
@@ -100,8 +101,8 @@ public class DeviceIdentifierServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.just(new DeviceIdentifier()));
-        TestSubscriber<DeviceIdentifier> testSubscriber = deviceIdentifierService.findByDomain(DOMAIN).test();
+        when(deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, DOMAIN.getId())).thenReturn(Flowable.just(new DeviceIdentifier()));
+        TestSubscriber<DeviceIdentifier> testSubscriber = deviceIdentifierService.findByDomain(DOMAIN.getId()).test();
         testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
@@ -111,9 +112,9 @@ public class DeviceIdentifierServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
+        when(deviceIdentifierRepository.findByReference(ReferenceType.DOMAIN, DOMAIN.getId())).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestSubscriber testSubscriber = deviceIdentifierService.findByDomain(DOMAIN).test();
+        TestSubscriber testSubscriber = deviceIdentifierService.findByDomain(DOMAIN.getId()).test();
 
         testSubscriber.assertError(TechnicalManagementException.class);
         testSubscriber.assertNotComplete();
@@ -126,7 +127,7 @@ public class DeviceIdentifierServiceTest {
         deviceIdentifier.setReferenceType(ReferenceType.DOMAIN);
         deviceIdentifier.setReferenceId("id");
         when(deviceIdentifierRepository.create(any(DeviceIdentifier.class))).thenReturn(Single.just(deviceIdentifier));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.create(DOMAIN, newDeviceIdentifier).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -134,7 +135,7 @@ public class DeviceIdentifierServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(eventService).create(any());
+        verify(eventService).create(any(), any());
         verify(auditService).report(any(DeviceIdentifierAuditBuilder.class));
         verify(deviceIdentifierRepository).create(any(DeviceIdentifier.class));
     }
@@ -163,7 +164,7 @@ public class DeviceIdentifierServiceTest {
         deviceIdentifier.setReferenceId("id");
         when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.just(deviceIdentifier));
         when(deviceIdentifierRepository.update(any(DeviceIdentifier.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         TestObserver testObserver = deviceIdentifierService.update(DOMAIN, "device-identifier", updateDeviceIdentifier).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -194,7 +195,7 @@ public class DeviceIdentifierServiceTest {
     public void shouldDelete_notDeviceIdentifier() {
         when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = deviceIdentifierService.delete(DOMAIN, "device-identifier").test();
+        TestObserver testObserver = deviceIdentifierService.delete(DOMAIN.getId(), "device-identifier").test();
 
         testObserver.assertError(DeviceIdentifierNotFoundException.class);
         testObserver.assertNotComplete();
@@ -207,7 +208,7 @@ public class DeviceIdentifierServiceTest {
     public void shouldDelete_technicalException() {
         when(deviceIdentifierRepository.findById("device-identifier")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = deviceIdentifierService.delete(DOMAIN, "device-identifier").test();
+        TestObserver testObserver = deviceIdentifierService.delete(DOMAIN.getId(), "device-identifier").test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -223,7 +224,7 @@ public class DeviceIdentifierServiceTest {
         when(deviceIdentifierRepository.delete(detection.getId())).thenReturn(Completable.complete());
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
-        TestObserver testObserver = deviceIdentifierService.delete(DOMAIN, detection.getId()).test();
+        TestObserver testObserver = deviceIdentifierService.delete(DOMAIN.getId(), detection.getId()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();

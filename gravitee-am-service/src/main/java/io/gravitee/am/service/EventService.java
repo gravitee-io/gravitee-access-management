@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.reactivex.rxjava3.core.Single;
 
@@ -27,6 +28,8 @@ import java.util.List;
 public interface EventService {
 
     Single<Event> create(Event event);
+
+    Single<Event> create(Event event, Domain domain);
 
     Single<List<Event>> findByTimeFrame(long from, long to);
 }

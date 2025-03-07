@@ -65,7 +65,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(mockClient)).when(applicationService).findByDomainAndClientId(domainId, scopeApproval.getClientId());
         doReturn(Maybe.just(mockScope)).when(scopeService).findByDomainAndKey(domainId, scopeApproval.getScope());
-        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findById(scopeApproval.getId());
+        doReturn(Maybe.just(scopeApproval)).when(scopeApprovalService).findById(mockDomain, scopeApproval.getId());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -104,7 +104,7 @@ public class UserConsentResourceTest extends JerseySpringTest {
         mockUser.setId("user-id-1");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Completable.complete()).when(scopeApprovalService).revokeByConsent(eq(domainId), eq(mockUser.getFullId()), eq("consent1"), any());
+        doReturn(Completable.complete()).when(scopeApprovalService).revokeByConsent(any(), eq(mockUser.getFullId()), eq("consent1"), any(), any());
 
         final Response response = target("domains")
                 .path(domainId)

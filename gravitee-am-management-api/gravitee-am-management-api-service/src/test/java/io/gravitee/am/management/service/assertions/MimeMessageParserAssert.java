@@ -81,4 +81,10 @@ public class MimeMessageParserAssert extends AbstractAssert<MimeMessageParserAss
         Assertions.assertThat(actual.getHtmlContent()).isEqualToIgnoringWhitespace(html);
         return this;
     }
+
+    public MimeMessageParserAssert contentContains(String value) {
+        isNotNull();
+        Assertions.assertThat(actual.getHtmlContent()).contains(value);
+        return this;
+    }
 }

@@ -17,12 +17,16 @@ package io.gravitee.am.identityprovider.mongo;
 
 import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.impl.MongoConnectionProvider;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.util.StringUtils;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -37,10 +41,16 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     private ConnectionProvider commonConnectionProvider;
 
     @Autowired
+    private DataPlaneRegistry dataPlaneRegistry;
+
+    @Autowired
     private IdentityProvider identityProviderEntity;
 
     @Autowired
     protected MongoIdentityProviderConfiguration configuration;
+
+    @Autowired
+    protected Environment environment;
 
     protected ClientWrapper<MongoClient> clientWrapper;
 
@@ -50,7 +60,6 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     protected static final String QUOTE = "\"";
     protected static final String SAFE_QUOTE_REPLACEMENT = "\\\\\\\\\\\\" + QUOTE;
 
-
     /**
      * This provider is used to create MongoClient when the main backend is JDBC/R2DBC because in that case the commonConnectionProvider will provide R2DBC ConnectionPool.
      * This is useful if the user want to create a Mongo IDP when the main backend if a RDBMS.
@@ -59,13 +68,31 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
+        final var systemScope = Scope.fromName(environment.getProperty("repositories.system-cluster", String.class, Scope.MANAGEMENT.getName()));
+        if (!(systemScope == Scope.MANAGEMENT || systemScope == Scope.GATEWAY)) {
+            throw new IllegalStateException("Unable to initialize Mongo Identity Provider, repositories.system-cluster only accept 'management' or 'gateway'");
+        }
+
+        // If the scope is Gateway, we have to use the DataPlane client
+        if (StringUtils.hasText(this.identityProviderEntity.getDataPlaneId()) && systemScope == Scope.GATEWAY && configuration.isUseSystemCluster()) {
+            final var provider = this.dataPlaneRegistry.getProviderById(this.identityProviderEntity.getDataPlaneId());
+            // make sure the DataPlane plugin is a Mongo one
+            if (provider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
+                this.clientWrapper = provider.getClientWrapper();
+                this.mongoClient = this.clientWrapper.getClient();
+                return;
+            }
+        }
+
+        // the data plane client is not the one which has been configured if we land here.
+        // use the commonConnectionProvider for system idp, or create dedicated client
         if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-            this.clientWrapper = this.identityProviderEntity != null && this.identityProviderEntity.isSystem() ?
-                    this.commonConnectionProvider.getClientWrapper() :
-                    this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
+            this.clientWrapper = (this.identityProviderEntity != null && this.identityProviderEntity.isSystem()) || configuration.isUseSystemCluster() ?
+                    this.commonConnectionProvider.getClientWrapper() : this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
         } else {
             this.clientWrapper = mongoProvider.getClientFromConfiguration(this.configuration);
         }
+
         this.mongoClient = this.clientWrapper.getClient();
     }
 

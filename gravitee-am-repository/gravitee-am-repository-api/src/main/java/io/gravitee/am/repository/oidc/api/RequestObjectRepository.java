@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.repository.oidc.api;
 
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.oidc.model.RequestObject;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -24,7 +25,7 @@ import io.reactivex.rxjava3.core.Single;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface RequestObjectRepository {
+public interface RequestObjectRepository extends ExpiredDataSweeper {
 
     Maybe<RequestObject> findById(String id);
 
@@ -32,7 +33,4 @@ public interface RequestObjectRepository {
 
     Completable delete(String id);
 
-    default Completable purgeExpiredData() {
-        return Completable.complete();
-    }
 }

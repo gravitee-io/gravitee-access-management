@@ -19,21 +19,24 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.BaseJsonNode;
+import io.gravitee.am.common.scim.parser.SCIMFilterParser;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkOperationResult;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkRequest;
 import io.gravitee.am.management.handlers.management.api.bulk.BulkResponse;
 import io.gravitee.am.management.handlers.management.api.model.UserEntity;
-import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
+import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkCreateOrganizationUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkDeleteUser;
 import io.gravitee.am.management.handlers.management.api.schemas.BulkUpdateUser;
 import io.gravitee.am.management.handlers.management.api.spring.UserBulkConfiguration;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.OrganizationService;
 import io.gravitee.am.service.exception.TooManyOperationsException;
@@ -51,6 +54,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -66,6 +70,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.inject.Named;
 import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
@@ -77,7 +82,7 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 @Tag(name = "user")
-public class OrganizationUsersResource extends AbstractUsersResource {
+public class OrganizationUsersResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -90,8 +95,13 @@ public class OrganizationUsersResource extends AbstractUsersResource {
 
     @Autowired
     private OrganizationService organizationService;
+    
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    @Named("managementOrganizationUserService")
+    protected OrganizationUserService organizationUserService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -155,6 +165,34 @@ public class OrganizationUsersResource extends AbstractUsersResource {
                                 .entity(new UserEntity(user))
                                 .build()))
                 .subscribe(response::resume, response::resume);
+    }
+
+
+    protected Single<Page<User>> searchUsers(ReferenceType referenceType,
+                                             String referenceId,
+                                             String query,
+                                             String filter,
+                                             int page,
+                                             int size) {
+        return executeSearchUsers(organizationUserService, referenceType, referenceId, query, filter, page, size);
+    }
+
+    private Single<Page<User>> executeSearchUsers(OrganizationUserService service, ReferenceType referenceType, String referenceId, String query, String filter, int page, int size) {
+        if (query != null) {
+            return service.search(referenceType, referenceId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+        }
+        if (filter != null) {
+            return Single.defer(() -> {
+                FilterCriteria filterCriteria = FilterCriteria.convert(SCIMFilterParser.parse(filter));
+                return service.search(referenceType, referenceId, filterCriteria, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+            }).onErrorResumeNext(ex -> {
+                if (ex instanceof IllegalArgumentException) {
+                    return Single.error(new BadRequestException(ex.getMessage()));
+                }
+                return Single.error(ex);
+            });
+        }
+        return service.findAll(referenceType, referenceId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
     }
 
     @POST

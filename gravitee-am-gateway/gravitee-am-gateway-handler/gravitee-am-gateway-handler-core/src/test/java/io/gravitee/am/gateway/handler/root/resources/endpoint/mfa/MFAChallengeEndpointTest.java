@@ -21,6 +21,8 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -37,10 +39,8 @@ import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.CredentialService;
-import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.RateLimiterService;
-import io.gravitee.am.service.VerifyAttemptService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
@@ -48,7 +48,6 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.observers.TestObserver;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
@@ -57,16 +56,12 @@ import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
 import io.vertx.rxjava3.ext.web.sstore.LocalSessionStore;
-import io.vertx.rxjava3.ext.web.sstore.SessionStore;
-import io.vertx.rxjava3.ext.web.sstore.cookie.CookieSessionStore;
 import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
@@ -101,11 +96,11 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     @Mock
     private ApplicationContext applicationContext;
     @Mock
-    private DeviceService deviceService;
+    private DeviceGatewayService deviceService;
     @Mock
     private Domain domain;
     @Mock
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
     @Mock
     private RateLimiterService rateLimiterService;
     @Mock
@@ -146,7 +141,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         when(factor.is(FactorType.FIDO2)).thenReturn(true);
         when(factorManager.get("factorId")).thenReturn(factorProvider);
         when(factorManager.getFactor("factorId")).thenReturn(factor);
-        when(credentialService.update(any(), any(), any(), any())).thenReturn(Single.just(new Credential()));
+        when(credentialService.update(any(), any(), any())).thenReturn(Single.just(new Credential()));
         when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
         when(userService.upsertFactor(any(), any(), any())).thenReturn(Single.just(mock(User.class)));
 
