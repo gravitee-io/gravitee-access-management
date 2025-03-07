@@ -79,7 +79,9 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private final Integer mfaChallengeExpireAfter;
     private final String mfaVerifyAttemptSubject;
     private final String registrationVerifySubject;
-    private final int userRegistrationExpireAfter;
+    private final int userRegistrationVerifyExpiresAfter;
+    private final String registrationConfirmationSubject;
+    private final int userRegistrationConfirmationVerifyExpiresAfter;
     @Autowired
     private EmailManager emailManager;
 
@@ -116,7 +118,9 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             int mfaChallengeExpireAfter,
             String mfaVerifyAttemptSubject,
             String registrationVerifySubject,
-            int userRegistrationExpiresAfter) {
+            int userRegistrationVerifyExpiresAfter,
+            String registrationConfirmationSubject,
+            int userRegistrationConfirmationVerifyExpiresAfter) {
         this.enabled = enabled;
         this.resetPasswordSubject = resetPasswordSubject;
         this.resetPasswordExpireAfter = resetPasswordExpireAfter;
@@ -126,7 +130,9 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         this.mfaChallengeExpireAfter = mfaChallengeExpireAfter;
         this.mfaVerifyAttemptSubject = mfaVerifyAttemptSubject;
         this.registrationVerifySubject = registrationVerifySubject;
-        this.userRegistrationExpireAfter = userRegistrationExpiresAfter;
+        this.userRegistrationVerifyExpiresAfter = userRegistrationVerifyExpiresAfter;
+        this.registrationConfirmationSubject = registrationConfirmationSubject;
+        this.userRegistrationConfirmationVerifyExpiresAfter = userRegistrationConfirmationVerifyExpiresAfter;
     }
 
     @Override
@@ -339,37 +345,27 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     }
 
     private String getDefaultSubject(io.gravitee.am.model.Template template) {
-        switch (template) {
-            case RESET_PASSWORD:
-                return resetPasswordSubject;
-            case BLOCKED_ACCOUNT:
-                return blockedAccountSubject;
-            case MFA_CHALLENGE:
-                return mfaChallengeSubject;
-            case VERIFY_ATTEMPT:
-                return mfaVerifyAttemptSubject;
-            case REGISTRATION_VERIFY:
-                return registrationVerifySubject;
-            default:
-                throw new IllegalArgumentException(template.template() + " not found");
-        }
+        return switch (template) {
+            case RESET_PASSWORD -> resetPasswordSubject;
+            case BLOCKED_ACCOUNT -> blockedAccountSubject;
+            case MFA_CHALLENGE -> mfaChallengeSubject;
+            case VERIFY_ATTEMPT -> mfaVerifyAttemptSubject;
+            case REGISTRATION_VERIFY -> registrationVerifySubject;
+            case REGISTRATION_CONFIRMATION -> registrationConfirmationSubject;
+            default -> throw new IllegalArgumentException(template.template() + " not found");
+        };
     }
 
     private Integer getDefaultExpireAt(io.gravitee.am.model.Template template) {
-        switch (template) {
-            case RESET_PASSWORD:
-                return resetPasswordExpireAfter;
-            case BLOCKED_ACCOUNT:
-                return blockedAccountExpireAfter;
-            case MFA_CHALLENGE:
-                return mfaChallengeExpireAfter;
-            case VERIFY_ATTEMPT:
-                return 0;
-            case REGISTRATION_VERIFY:
-                return userRegistrationExpireAfter;
-            default:
-                throw new IllegalArgumentException(template.template() + " not found");
-        }
+        return switch (template) {
+            case RESET_PASSWORD -> resetPasswordExpireAfter;
+            case BLOCKED_ACCOUNT -> blockedAccountExpireAfter;
+            case MFA_CHALLENGE -> mfaChallengeExpireAfter;
+            case VERIFY_ATTEMPT -> 0;
+            case REGISTRATION_VERIFY -> userRegistrationVerifyExpiresAfter;
+            case REGISTRATION_CONFIRMATION -> userRegistrationConfirmationVerifyExpiresAfter;
+            default -> throw new IllegalArgumentException(template.template() + " not found");
+        };
     }
 
 }

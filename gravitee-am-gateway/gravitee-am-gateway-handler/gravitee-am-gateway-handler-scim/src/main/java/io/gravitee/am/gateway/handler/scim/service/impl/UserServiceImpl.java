@@ -23,6 +23,7 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.scim.filter.Filter;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
+import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
@@ -41,6 +42,7 @@ import io.gravitee.am.model.PasswordHistory;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.management.api.UserRepository;
@@ -154,6 +156,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private EmailService emailService;
 
     @Override
     public Single<ListResponse<User>> list(Filter filter, int startIndex, int size, String baseUrl) {
@@ -284,7 +289,12 @@ public class UserServiceImpl implements UserService {
                                         }
                                         return Single.error(ex);
                                     }))
-                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)));
+                            .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
+                            .doOnSuccess(user1 -> {
+                                if (user1.isPreRegistration()) {
+                                    emailService.send(Template.REGISTRATION_CONFIRMATION, user1, client);
+                                }
+                            });
                 }))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class)
                         .principal(principal)
@@ -407,7 +417,7 @@ public class UserServiceImpl implements UserService {
                 });
     }
 
-    private Single<io.gravitee.am.model.User> updateUser(io.gravitee.am.model.User userToUpdate, UpdateActions updateActions){
+    private Single<io.gravitee.am.model.User> updateUser(io.gravitee.am.model.User userToUpdate, UpdateActions updateActions) {
         Completable revokeTokens = userToUpdate.isDisabled() ? tokenService.deleteByUser(userToUpdate) : Completable.complete();
         return revokeTokens.andThen(userRepository.update(userToUpdate, updateActions));
     }
@@ -494,8 +504,7 @@ public class UserServiceImpl implements UserService {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         if (isNull(password)) {
             return false;
-        }
-        else if(!passwordService.isValid(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user)) {
+        } else if (!passwordService.isValid(password, passwordPolicyManager.getPolicy(client, provider).orElse(null), user)) {
             Throwable exception = new InvalidPasswordException("The provided password does not meet the password policy requirements.");
             auditService.report(AuditBuilder.builder(UserAuditBuilder.class).client(client).principal(principal).type(eventType).user(user).throwable(exception));
             return true;
