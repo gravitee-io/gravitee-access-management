@@ -27,10 +27,11 @@
         })();
     </script>
 
-    <script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:src="@{../assets/js/remember-device/fingerprintjs-v3.js}"></script>
+    <script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:src="@{../assets/js/fp/fp.min.js}"></script>
+    <script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:src="@{../assets/js/remember-device/fingerprintjs-v3-gravitee.js}"></script>
     <script th:if="${deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
         (function() {
-            loadFingerprintJsV3(fp => {
+            loadFingerprintJsV3Gravitee(fp => {
                 if (fp.visitorId) {
                     let inputDeviceId = document.createElement("input");
                     inputDeviceId.setAttribute("type", "hidden");
