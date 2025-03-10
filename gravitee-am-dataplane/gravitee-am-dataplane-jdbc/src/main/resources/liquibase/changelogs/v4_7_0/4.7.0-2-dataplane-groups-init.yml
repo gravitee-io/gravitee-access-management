@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: dp-init-2-groups
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -50,7 +50,7 @@ databaseChangeLog:
             tableName: groups
   - changeSet:
       id: dp-init-2-group_members
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -85,7 +85,7 @@ databaseChangeLog:
             tableName: group_members
   - changeSet:
       id: dp-init-2-group_roles
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:

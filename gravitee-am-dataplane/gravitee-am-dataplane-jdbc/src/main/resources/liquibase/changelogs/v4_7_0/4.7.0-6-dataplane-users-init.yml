@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: dp-init-6-users
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -390,7 +390,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-user_entitlements
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -419,7 +419,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-user_roles
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -448,7 +448,7 @@ databaseChangeLog:
             tableName: user_roles
   - changeSet:
       id: dp-init-6-user_addresses
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -495,7 +495,7 @@ databaseChangeLog:
             tableName: user_addresses
   - changeSet:
       id: dp-init-6-user_attributes
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -534,7 +534,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-dynamic_user_roles
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -564,7 +564,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-user_activities
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -645,7 +645,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-user_identities
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:

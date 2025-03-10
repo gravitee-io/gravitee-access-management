@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: dp-init-3-devices
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -74,7 +74,7 @@ databaseChangeLog:
             tableName: devices
   - changeSet:
       id: dp-init-3-devices-index
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:

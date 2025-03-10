@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: dp-init-5-scope_approvals
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -110,7 +110,7 @@ databaseChangeLog:
             tableName: scope_approvals
   - changeSet:
       id: dp-init-5-scope_approvals-ext-index
-      author: lgw
+      author: GraviteeSource Team
       onError: MARK_RAN
       preConditions:
         onFail: MARK_RAN
