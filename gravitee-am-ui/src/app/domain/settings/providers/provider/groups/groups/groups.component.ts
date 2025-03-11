@@ -96,7 +96,6 @@ export class ProviderGroupsComponent implements OnInit {
   add() {
     const inputData: InputData = {
       groups: Array.from(this.groups.values()),
-      organizationContext: this.organizationContext,
     };
     const dialogRef = this.dialog.open(CreateGroupMapperComponent, {
       data: inputData,
@@ -169,7 +168,6 @@ export class ProviderGroupsComponent implements OnInit {
 
 interface InputData {
   groups: GroupModel[];
-  organizationContext: boolean;
 }
 
 interface OutputData {
