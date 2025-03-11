@@ -112,6 +112,7 @@ export class OrganizationService {
       configuration: idp.configuration,
       mappers: idp.mappers,
       roleMapper: idp.roleMapper,
+      groupMapper: idp.groupMapper,
     });
   }
 
