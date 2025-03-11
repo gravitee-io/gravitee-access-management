@@ -73,6 +73,8 @@ public class EmailServiceTest {
             300,
             "Verify your MFA attempt",
             "Complete your registration",
+            Long.valueOf(DAYS.toSeconds(7)).intValue(),
+            "Verify your registration",
             Long.valueOf(DAYS.toSeconds(7)).intValue());
 
     @Mock
