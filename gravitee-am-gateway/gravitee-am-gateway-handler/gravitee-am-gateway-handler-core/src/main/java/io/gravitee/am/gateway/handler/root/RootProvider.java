@@ -133,6 +133,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
@@ -196,6 +197,9 @@ public class RootProvider extends AbstractProtocolProvider {
 
     @Autowired
     private Domain domain;
+
+    @Autowired
+    private DomainDataPlane domainDataPlane;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
@@ -494,7 +498,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domain, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService))
+                        domainDataPlane, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
@@ -520,23 +524,23 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(webAuthnAccessHandler)
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_WEBAUTHN_REGISTER))
-                .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domain, factorManager));
+                .handler(new WebAuthnRegisterEndpoint(thymeleafTemplateEngine, domainDataPlane, factorManager));
         rootRouter.post(PATH_WEBAUTHN_REGISTER)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterHandler(userService, factorManager, domain, webAuthn, credentialService))
+                .handler(new WebAuthnRegisterHandler(userService, factorManager, domainDataPlane, webAuthn, credentialService))
                 .handler(webAuthnRememberDeviceHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.POST_WEBAUTHN_REGISTER))
                 .handler(new WebAuthnRegisterPostEndpoint(domain));
         rootRouter.route(PATH_WEBAUTHN_REGISTER_CREDENTIALS)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnRegisterCredentialsEndpoint(domain, webAuthn));
+                .handler(new WebAuthnRegisterCredentialsEndpoint(domainDataPlane, webAuthn));
         rootRouter.route(PATH_WEBAUTHN_REGISTER_SUCCESS)
                 .handler(clientRequestParseHandler)
-                .handler(new WebAuthnRegisterSuccessEndpoint(thymeleafTemplateEngine, credentialService, domain));
+                .handler(new WebAuthnRegisterSuccessEndpoint(thymeleafTemplateEngine, credentialService, domainDataPlane));
         rootRouter.get(PATH_WEBAUTHN_LOGIN)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
@@ -551,7 +555,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnLoginHandler(userService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
+                .handler(new WebAuthnLoginHandler(userService, factorManager, domainDataPlane, webAuthn, credentialService, userAuthenticationManager))
                 .handler(userRememberMeHandler)
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
@@ -567,7 +571,7 @@ public class RootProvider extends AbstractProtocolProvider {
         rootRouter.post(PATH_WEBAUTHN_RESPONSE)
                 .handler(clientRequestParseHandler)
                 .handler(webAuthnAccessHandler)
-                .handler(new WebAuthnResponseHandler(userService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager))
+                .handler(new WebAuthnResponseHandler(userService, factorManager, domainDataPlane, webAuthn, credentialService, userAuthenticationManager))
                 .handler(deviceIdentifierHandler)
                 .handler(userActivityHandler)
                 .handler(new WebAuthnResponseEndpoint());
