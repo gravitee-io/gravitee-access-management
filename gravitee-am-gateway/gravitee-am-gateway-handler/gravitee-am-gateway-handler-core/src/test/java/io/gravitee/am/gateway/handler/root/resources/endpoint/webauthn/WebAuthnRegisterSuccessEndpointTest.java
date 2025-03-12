@@ -22,6 +22,7 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -62,7 +63,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
     private CredentialGatewayService credentialService;
 
     @Mock
-    private Domain domain;
+    private DomainDataPlane domainDataPlane;
 
     private WebAuthnRegisterSuccessEndpoint webAuthnRegisterSuccessEndpoint;
 
@@ -70,7 +71,7 @@ public class WebAuthnRegisterSuccessEndpointTest extends RxWebTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        webAuthnRegisterSuccessEndpoint = new WebAuthnRegisterSuccessEndpoint(templateEngine, credentialService, domain);
+        webAuthnRegisterSuccessEndpoint = new WebAuthnRegisterSuccessEndpoint(templateEngine, credentialService, domainDataPlane);
 
         router.route()
                 .handler(SessionHandler.create(LocalSessionStore.create(vertx)))

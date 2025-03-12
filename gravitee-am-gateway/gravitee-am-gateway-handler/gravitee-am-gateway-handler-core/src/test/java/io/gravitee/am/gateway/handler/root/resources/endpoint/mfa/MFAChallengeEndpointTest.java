@@ -41,6 +41,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
@@ -100,6 +101,8 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     @Mock
     private Domain domain;
     @Mock
+    private DomainDataPlane domainDataPlane;
+    @Mock
     private CredentialGatewayService credentialService;
     @Mock
     private RateLimiterService rateLimiterService;
@@ -122,7 +125,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
         localSessionStore = LocalSessionStore.create(vertx);
         mfaChallengeEndpoint =
                 new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext,
-                        domain, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService);
+                        domainDataPlane, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService);
 
         router.route("/mfa/challenge")
                 .handler(SessionHandler.create(localSessionStore))
@@ -130,6 +133,7 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
                 .handler(mfaChallengeEndpoint)
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         when(domain.getId()).thenReturn("id");
+        when(domainDataPlane.getDomain()).thenReturn(domain);
     }
 
     @Test

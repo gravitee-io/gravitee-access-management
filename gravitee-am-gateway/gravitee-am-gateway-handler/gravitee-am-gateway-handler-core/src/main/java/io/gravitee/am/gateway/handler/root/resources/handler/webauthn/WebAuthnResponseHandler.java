@@ -24,6 +24,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.DomainDataPlane;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
@@ -52,7 +53,7 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
 
     public WebAuthnResponseHandler(UserService userService,
                                    FactorManager factorManager,
-                                   Domain domain,
+                                   DomainDataPlane domainDataPlane,
                                    WebAuthn webAuthn,
                                    CredentialGatewayService credentialService,
                                    UserAuthenticationManager userAuthenticationManager) {
@@ -60,9 +61,9 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
         setFactorManager(factorManager);
         setCredentialService(credentialService);
         setUserAuthenticationManager(userAuthenticationManager);
-        setDomain(domain);
+        setDomainDataplane(domainDataPlane);
         this.webAuthn = webAuthn;
-        this.origin = getOrigin(domain.getWebAuthnSettings());
+        this.origin = domainDataPlane.getWebAuthnOrigin();
     }
 
     @Override

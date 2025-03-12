@@ -17,8 +17,8 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
@@ -42,11 +42,10 @@ import org.slf4j.LoggerFactory;
 public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterCredentialsEndpoint.class);
-    private final Domain domain;
     private final WebAuthn webAuthn;
 
-    public WebAuthnRegisterCredentialsEndpoint(Domain domain, WebAuthn webAuthn) {
-        this.domain = domain;
+    public WebAuthnRegisterCredentialsEndpoint(DomainDataPlane domainDataPlane, WebAuthn webAuthn) {
+        setDomainDataplane(domainDataPlane);
         this.webAuthn = webAuthn;
     }
 
@@ -97,7 +96,7 @@ public class WebAuthnRegisterCredentialsEndpoint extends WebAuthnHandler {
                                 entries.getJsonObject("user").put("id", user.getId());
 
                                 // force registration if option is enabled
-                                if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                                if (domainDataPlane.getDomain().getWebAuthnSettings() != null && domainDataPlane.getDomain().getWebAuthnSettings().isForceRegistration()) {
                                     entries.remove("excludeCredentials");
                                 }
 
