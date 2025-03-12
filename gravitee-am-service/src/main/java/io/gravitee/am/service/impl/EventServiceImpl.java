@@ -22,9 +22,7 @@ import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,13 +58,15 @@ public class EventServiceImpl implements EventService {
     public Single<Event> create(Event event) {
         if (event.getPayload().getReferenceType().equals(ReferenceType.DOMAIN) && event.getDataPlaneId() == null && event.getEnvironmentId() == null) {
             return domainRepository.findById(event.getPayload().getReferenceId())
-                    .flatMapSingle(domain -> {
+                    .map(domain -> {
                         event.setDataPlaneId(domain.getDataPlaneId());
                         event.setEnvironmentId(domain.getReferenceId());
-                        return eventCreation(event);
+                        return event;
                     })
-                    .switchIfEmpty(Maybe.error(new DomainNotFoundException(event.getPayload().getReferenceId())))
-                    .toSingle();
+                    .switchIfEmpty(Single.fromCallable(() -> {
+                        LOGGER.warn("Domain not found for referenceId: {}", event.getPayload().getReferenceId());
+                        return event;
+                    })).flatMap(this::eventCreation);
         } else {
             return eventCreation(event);
         }
