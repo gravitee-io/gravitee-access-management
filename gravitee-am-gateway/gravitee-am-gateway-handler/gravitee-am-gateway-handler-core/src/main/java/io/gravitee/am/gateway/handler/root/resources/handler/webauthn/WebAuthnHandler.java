@@ -32,13 +32,13 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Credential;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Completable;
@@ -80,7 +80,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private UserService userService;
     protected CredentialGatewayService credentialService;
     private UserAuthenticationManager userAuthenticationManager;
-    protected Domain domain;
+    protected DomainDataPlane domainDataPlane;
 
     protected WebAuthnHandler() {
     }
@@ -105,8 +105,8 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         this.userAuthenticationManager = userAuthenticationManager;
     }
 
-    public void setDomain(Domain domain) {
-        this.domain = domain;
+    public void setDomainDataplane(DomainDataPlane domainDataPlane) {
+        this.domainDataPlane = domainDataPlane;
     }
 
     protected static boolean isEmptyString(JsonObject json, String key) {
@@ -241,7 +241,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         if (canSaveUserAgent(context)) {
             authenticationContext.set(Claims.USER_AGENT, RequestUtils.userAgent(httpServerRequest));
         }
-        authenticationContext.set(Claims.DOMAIN, domain.getId());
+        authenticationContext.set(Claims.DOMAIN, domainDataPlane.getDomain().getId());
         authenticationContext.setAttribute(DEVICE_ID, context.request().getParam(DEVICE_ID));
         return authenticationContext;
     }
@@ -262,7 +262,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                                                                                                       AuthenticationContext authenticationContext,
                                                                                                       String username,
                                                                                                       String credentialId) {
-        return credentialService.findByCredentialId(domain, credentialId)
+        return credentialService.findByCredentialId(domainDataPlane.getDomain(), credentialId)
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
                 .flatMap(credential -> userAuthenticationManager.connectWithPasswordless(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
@@ -302,7 +302,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                                            String credentialId,
                                            String userId,
                                            boolean afterLogin) {
-        return credentialService.findByCredentialId(domain, credentialId)
+        return credentialService.findByCredentialId(domainDataPlane.getDomain(), credentialId)
                 // filter on userId to restrict the credential to the current user.
                 // if credentialToUpdate has null userid, we are in the registration phase
                 // we want to assign this credential to the user profile, so we accept it.
@@ -316,22 +316,16 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 .map(credential -> {
                     // update last checked date only after a passwordless login and only if the option is enabled
                     if(afterLogin){
-                        return authIntegrity(domain.getWebAuthnSettings())
+                        return authIntegrity(domainDataPlane.getDomain().getWebAuthnSettings())
                                 .updateLastCheckedDate(credential);
                     } else {
                         return credential;
                     }
                 })
-                .flatMapSingle(credential -> credentialService.update(domain, credentialId, credential))
+                .flatMapSingle(credential -> credentialService.update(domainDataPlane.getDomain(), credentialId, credential))
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
                 .doOnError(error -> logger.error("An error has occurred while updating user {} webauthn credential", userId, error));
     }
 
-    public static String getOrigin(WebAuthnSettings settings) {
-        return (settings!= null
-                && settings.getOrigin() != null) ?
-                settings.getOrigin() :
-                DEFAULT_ORIGIN;
-    }
 }

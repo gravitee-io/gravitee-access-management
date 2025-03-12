@@ -24,7 +24,7 @@ import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.dataplane.CredentialCommonService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
@@ -53,15 +53,15 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
 
     public WebAuthnRegisterHandler(UserService userService,
                                    FactorManager factorManager,
-                                   Domain domain,
+                                   DomainDataPlane domainDataplane,
                                    WebAuthn webAuthn,
                                    CredentialGatewayService credentialService) {
         setUserService(userService);
         setFactorManager(factorManager);
         setCredentialService(credentialService);
-        setDomain(domain);
+        setDomainDataplane(domainDataplane);
         this.webAuthn = webAuthn;
-        this.origin = getOrigin(domain.getWebAuthnSettings());
+        this.origin = domainDataplane.getWebAuthnOrigin();
     }
 
     @Override
@@ -124,7 +124,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                             entries.getJsonObject("user").put("id", user.getId());
 
                             // force registration if option is enabled
-                            if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                            if (domainDataPlane.getDomain().getWebAuthnSettings() != null && domainDataPlane.getDomain().getWebAuthnSettings().isForceRegistration()) {
                                 entries.remove("excludeCredentials");
                             }
 
