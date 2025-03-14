@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.6.0
+  version: 4.7.0
 servers:
 - url: /management
 security:
@@ -42,6 +42,7 @@ tags:
 - name: audit
 - name: bot detection
 - name: certificate
+- name: dataPlane
 - name: device identifiers
 - name: devices
 - name: dictionary
@@ -335,6 +336,36 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Environment"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/data-planes:
+    get:
+      tags:
+      - dataPlane
+      summary: List of data planes
+      description: "List all the data planes accessible to the current user. User\
+        \ must have DOMAIN[CREATE] permission on the specified environment or organization"
+      operationId: listDataPlanes
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List accessible data planes for current user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataPlane"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains:
@@ -11458,9 +11489,9 @@ components:
           type: array
           items:
             type: string
-        openDynamicClientRegistrationEnabled:
-          type: boolean
         dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
@@ -11560,6 +11591,11 @@ components:
         lastCheckedAt:
           type: string
           format: date-time
+    DataPlane:
+      type: object
+      properties:
+        delegate:
+          $ref: "#/components/schemas/Plugin"
     DeviceIdentifier:
       type: object
       properties:
@@ -11663,8 +11699,8 @@ components:
           $ref: "#/components/schemas/SAMLSettings"
         corsSettings:
           $ref: "#/components/schemas/CorsSettings"
-        openDynamicClientRegistrationEnabled:
-          type: boolean
+        dataPlaneId:
+          type: string
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
@@ -11672,6 +11708,8 @@ components:
         redirectUriWildcardAllowed:
           type: boolean
         dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
           type: boolean
         redirectUriStrictMatching:
           type: boolean
@@ -12235,6 +12273,8 @@ components:
           format: date-time
         passwordPolicy:
           type: string
+        dataPlaneId:
+          type: string
     InstallationEntity:
       type: object
       properties:
@@ -12531,12 +12571,15 @@ components:
           type: string
     NewDomain:
       required:
+      - dataPlaneId
       - name
       type: object
       properties:
         name:
           type: string
         description:
+          type: string
+        dataPlaneId:
           type: string
     NewEmail:
       required:
@@ -13697,6 +13740,8 @@ components:
           $ref: "#/components/schemas/PatchSAMLSettings"
         corsSettings:
           $ref: "#/components/schemas/CorsSettings"
+        dataPlaneId:
+          type: string
         requiredPermissions:
           uniqueItems: true
           type: array
@@ -14068,6 +14113,8 @@ components:
           type: boolean
         stepUpAuthenticationRule:
           type: string
+    Plugin:
+      type: object
     PreviewRequest:
       required:
       - template
@@ -14649,9 +14696,12 @@ components:
       required:
       - configuration
       - name
+      - type
       type: object
       properties:
         name:
+          type: string
+        type:
           type: string
         configuration:
           type: string
@@ -14659,9 +14709,12 @@ components:
       required:
       - configuration
       - name
+      - type
       type: object
       properties:
         name:
+          type: string
+        type:
           type: string
         configuration:
           type: string
@@ -14682,9 +14735,12 @@ components:
       required:
       - configuration
       - name
+      - type
       type: object
       properties:
         name:
+          type: string
+        type:
           type: string
         configuration:
           type: string
@@ -14731,9 +14787,12 @@ components:
       required:
       - configuration
       - name
+      - type
       type: object
       properties:
         name:
+          type: string
+        type:
           type: string
         configuration:
           type: string
@@ -14757,9 +14816,12 @@ components:
       required:
       - configuration
       - name
+      - type
       type: object
       properties:
         name:
+          type: string
+        type:
           type: string
         configuration:
           type: string
@@ -14804,9 +14866,12 @@ components:
       required:
       - configuration
       - name
+      - type
       type: object
       properties:
         name:
+          type: string
+        type:
           type: string
         configuration:
           type: string
@@ -14872,11 +14937,14 @@ components:
       required:
       - configuration
       - name
+      - type
       type: object
       properties:
         enabled:
           type: boolean
         name:
+          type: string
+        type:
           type: string
         configuration:
           type: string
@@ -14922,9 +14990,12 @@ components:
       required:
       - configuration
       - name
+      - type
       type: object
       properties:
         name:
+          type: string
+        type:
           type: string
         configuration:
           type: string
@@ -15234,6 +15305,8 @@ components:
           type: string
         phoneNumber:
           type: string
+        disabled:
+          type: boolean
     UserEntity:
       type: object
       properties:
@@ -15431,6 +15504,8 @@ components:
           type: string
         phoneNumber:
           type: string
+        disabled:
+          type: boolean
     UserId:
       type: object
       properties:
