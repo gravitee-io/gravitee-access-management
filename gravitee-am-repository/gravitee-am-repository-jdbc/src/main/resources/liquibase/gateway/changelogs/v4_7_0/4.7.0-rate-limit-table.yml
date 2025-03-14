@@ -1,0 +1,42 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-rate-limit-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: rate_limit
+      changes:
+        # Rate_Limit #
+        ############################
+        - createTable:
+            tableName: rate_limit
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: client, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: factor_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: token_left, type: integer, constraints: { nullable: false } }
+              - column: { name: allow_request, type: boolean, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_rate_limit
+            columnNames: id
+            tableName: rate_limit
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: client
+              - column:
+                  name: factor_id
+            indexName: idx_rate_limit_userid_client_factorid
+            tableName: rate_limit
+            unique: false

@@ -1,0 +1,110 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-scope-approvals-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: scope_approvals
+      changes:
+        ## scope approvals
+        ###################
+        - createTable:
+            tableName: scope_approvals
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: client_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: transaction_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: scope, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: status, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expires_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: user_external_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: user_source, type: nvarchar(64), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_scope_approvals
+            columnNames: id
+            tableName: scope_approvals
+
+        - createIndex:
+            columns:
+              - column:
+                  name: transaction_id
+            indexName: idx_scope_approvals_transaction_id
+            tableName: scope_approvals
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: user_id
+            indexName: idx_scope_approvals_domain_user
+            tableName: scope_approvals
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_id
+              - column:
+                  name: scope
+            indexName: idx_scope_approvals_domain_client_user_scope
+            tableName: scope_approvals
+            unique: true
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expires_at
+            indexName: idx_scope_approvals_expire
+            tableName: scope_approvals
+            unique: false
+        - createIndex:
+            indexName: idx_scope_approvals_user_ext_id
+            tableName: scope_approvals
+            columns:
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: user_id
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+            indexName: idx_scope_approvals_domain_user_id_extid
+            tableName: scope_approvals
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+              - column:
+                  name: scope
+            indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+            tableName: scope_approvals
+            unique: false

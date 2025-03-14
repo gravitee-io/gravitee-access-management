@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      - file: liquibase/oauth/changelogs/v4_7_0/4.7.0-access-tokens-table.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_7_0/4.7.0-authorization_codes-table.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_7_0/4.7.0-ciba-auth-requests-table.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_7_0/4.7.0-pushed-authorization-requests-table.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_7_0/4.7.0-refresh-tokens-table.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_7_0/4.7.0-request-objects-table.yml

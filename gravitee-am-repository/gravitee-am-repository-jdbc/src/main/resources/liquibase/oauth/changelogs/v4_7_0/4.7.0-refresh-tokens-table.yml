@@ -1,0 +1,81 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-refresh-tokens-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: refresh_tokens
+      changes:
+        ## refresh token
+        ###################
+        - createTable:
+            tableName: refresh_tokens
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: client, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: subject, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: token, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_refresh_tokens
+            columnNames: id
+            tableName: refresh_tokens
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_refresh_token_expire
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: token
+            indexName: idx_refresh_tokens_token
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: client
+            indexName: idx_refresh_tokens_client
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: subject
+            indexName: idx_refresh_tokens_subject
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client
+              - column:
+                  name: subject
+            indexName: idx_refresh_tokens_domain_client_subject
+            tableName: refresh_tokens
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: subject
+            indexName: idx_refresh_tokens_domain_subject
+            tableName: refresh_tokens
+            unique: false

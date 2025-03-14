@@ -102,7 +102,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         return new R2dbcTransactionManager(connectionFactory);
     }
 
-    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, RepositoriesEnvironment environment, String prefix) throws Exception {
+    protected final void initializeDatabaseSchema(R2DBCPoolWrapper poolWrapper, RepositoriesEnvironment environment, String prefix, String liquibaseFile) throws Exception {
         Boolean enabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
         if (enabled) {
             final String jdbcPort = poolWrapper.getJdbcPort();
@@ -119,17 +119,17 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
                     poolWrapper.getJdbcUsername(),
                     poolWrapper.getJdbcPassword())) {
                 LOGGER.debug("Running Liquibase on {}", jdbcUrl);
-                runLiquibase(connection);
+                runLiquibase(connection, liquibaseFile);
             }
         }
     }
 
-    protected final void runLiquibase(Connection connection) {
+    protected final void runLiquibase(Connection connection, String liquibaseFile) {
         System.setProperty("liquibase.databaseChangeLogTableName", "databasechangelog");
         System.setProperty("liquibase.databaseChangeLogLockTableName", "databasechangeloglock");
 
         try (ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader())) {
-            final Liquibase liquibase = new Liquibase("liquibase/master.yml", resourceAccessor, new JdbcConnection(connection));
+            final Liquibase liquibase = new Liquibase(liquibaseFile, resourceAccessor, new JdbcConnection(connection));
             liquibase.update((Contexts) null);
         } catch (Exception ex) {
             LOGGER.error("Failed to set up database: ", ex);
@@ -147,7 +147,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
 
     public static DatabaseDialectHelper instantiateDialectHelper(String name, R2dbcDialect dialect, String collation) {
         try {
-            Class converter = Class.forName("io.gravitee.am.repository.jdbc.common.dialect."+name);
+            Class converter = Class.forName("io.gravitee.am.repository.jdbc.common.dialect." + name);
             return (DatabaseDialectHelper) converter.getConstructor(R2dbcDialect.class, String.class).newInstance(dialect, collation);
         } catch (Exception e) {
             throw new RepositoryInitializationException("Unable to instantiate the DatabaseDialectHelper", e);

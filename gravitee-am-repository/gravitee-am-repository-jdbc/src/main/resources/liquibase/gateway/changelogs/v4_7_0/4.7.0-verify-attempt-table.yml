@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-verify-attempt-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: verify_attempt
+      changes:
+        # Verify_Attempt #
+        ############################
+        - createTable:
+            tableName: verify_attempt
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: user_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: client, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: factor_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: attempts, type: integer, constraints: { nullable: false } }
+              - column: { name: allow_request, type: boolean, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_verify_attempt
+            columnNames: id
+            tableName: verify_attempt
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: client
+              - column:
+                  name: factor_id
+            indexName: idx_verify_attempt_userid_client_factorid
+            tableName: verify_attempt
+            unique: false
+
