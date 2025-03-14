@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - include:
+      - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-auth-flow-ctx-table.yml
+  - include:
+      - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-login-attempts-table.yml
+  - include:
+      - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-rate-limit-table.yml
+  - include:
+      - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-scope-approvals-table.yml
+  - include:
+      - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-verify-attempt-table.yml
