@@ -24,7 +24,6 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
-import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.impl.EventServiceImpl;
 import io.reactivex.rxjava3.core.Flowable;
@@ -119,16 +118,19 @@ public class EventServiceTest {
         testObserver.assertValue(e -> e.getDataPlaneId().equals("default"));
         testObserver.assertComplete();
         testObserver.assertNoErrors();
+        verify(eventRepository, times(1)).create(any());
     }
 
     @Test
-    public void shouldThrowError_domainNotExist(){
+    public void shouldCreateWithoutDataPlane_domainNotExist(){
         Event event = new Event(Type.DOMAIN,new Payload("id", ReferenceType.DOMAIN, "domain-id", Action.UPDATE));
+        when(eventRepository.create(any(Event.class))).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(domainRepository.findById(anyString())).thenReturn(Maybe.empty());
         TestObserver<Event> testObserver = eventService.create(event).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
-        testObserver.assertNotComplete();
-        testObserver.assertError(DomainNotFoundException.class);
+        testObserver.assertComplete();
+        testObserver.assertValue(v->v.getDataPlaneId() == null && v.getEnvironmentId() == null);
+        verify(eventRepository, times(1)).create(any());
     }
 
     private Domain getDomain(){

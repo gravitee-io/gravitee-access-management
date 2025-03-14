@@ -301,7 +301,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                             .doOnSuccess(user1 -> auditService.report(AuditBuilder.builder(UserAuditBuilder.class).principal(principal).type(EventType.USER_CREATED).user(user1)))
                             .doOnSuccess(user1 -> {
                                 if (user1.isPreRegistration()) {
-                                    emailService.send(Template.REGISTRATION_CONFIRMATION, user1, client);
+                                    emailService.send(Template.REGISTRATION_CONFIRMATION, user1, null);
                                 }
                             });
                 }))
