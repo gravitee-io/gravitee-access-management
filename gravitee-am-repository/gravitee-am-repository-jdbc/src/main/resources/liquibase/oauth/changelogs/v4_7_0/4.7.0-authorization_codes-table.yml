@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.0-authorization_codes-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_codes
+      changes:
+        ## auhtorization codes
+        ###################
+        - createTable:
+            tableName: authorization_codes
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: transaction_id, type: nvarchar(128), constraints: { nullable: true } }
+              - column: { name: code, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: client_id, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: subject, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: redirect_uri, type: clob, constraints: { nullable: true } }
+              - column: { name: scopes, type: clob, constraints: { nullable: true } }
+              - column: { name: request_parameters, type: clob, constraints: { nullable: true } }
+              - column: { name: context_version, type: integer, constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_codes
+            columnNames: id
+            tableName: authorization_codes
+
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_authorization_codes_expire
+            tableName: authorization_codes
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: code
+            indexName: idx_authorization_codes_code
+            tableName: authorization_codes
+            unique: false
