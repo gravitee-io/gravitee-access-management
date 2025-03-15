@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -98,8 +99,13 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
     private void parseRedirectUriParameter(RoutingContext context, Client client, TokenPurpose operation) {
         String requestedRedirectUri = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
-
-        redirectUriValidator.validate(client, requestedRedirectUri, operation, this::checkMatchingRedirectUri);
+        String returnUrl = getOAuthParameter(context, ConstantKeys.RETURN_URL_KEY);
+        // process the URI validation if the redirect_uri is present or there is no return_url
+        // when return_url is present, that mean we are coming from the MFA Challenge policy
+        // and redirect_uri is not required. return_url validation is managed by another handler
+        if (!StringUtils.hasLength(returnUrl)) {
+            redirectUriValidator.validate(client, requestedRedirectUri, operation, this::checkMatchingRedirectUri);
+        }
     }
 
     private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {
