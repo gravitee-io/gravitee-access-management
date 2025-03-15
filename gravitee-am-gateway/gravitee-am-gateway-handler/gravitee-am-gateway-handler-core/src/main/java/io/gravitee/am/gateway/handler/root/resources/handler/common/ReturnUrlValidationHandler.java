@@ -19,8 +19,10 @@ import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.exception.oauth2.ReturnUrlMismatchException;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
@@ -58,8 +60,10 @@ public class ReturnUrlValidationHandler implements Handler<RoutingContext> {
         }
         else {
             try {
-                URI url = new URI(returnUrl);
-                if(url.getUserInfo() != null) {
+                // use UriBuilder to sanitize the uri so non urlEncoded character will be encoded
+                // to avoid URISyntaxException due to the space in the scope parameter value
+                URI uri = UriBuilder.fromURIString(returnUrl).build();
+                if(uri.getUserInfo() != null) {
                     context.fail(new ReturnUrlMismatchException(String.format("The return_url [ %s ] MUST NOT contain userInfo part", returnUrl)));
                 } else {
                     context.next();

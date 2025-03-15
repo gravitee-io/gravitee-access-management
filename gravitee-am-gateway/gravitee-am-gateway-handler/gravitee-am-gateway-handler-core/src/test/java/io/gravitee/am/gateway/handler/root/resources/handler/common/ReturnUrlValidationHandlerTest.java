@@ -20,6 +20,7 @@ import io.gravitee.am.common.exception.oauth2.ReturnUrlMismatchException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
+import io.vertx.rxjava3.core.net.HostAndPort;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -59,10 +60,10 @@ public class ReturnUrlValidationHandlerTest {
         RoutingContext ctx = Mockito.mock();
         HttpServerRequest request = Mockito.mock();
         Mockito.when(ctx.request()).thenReturn(request);
-        Mockito.when(request.getParam("return_url")).thenReturn("https://onet.pl");
+        Mockito.when(request.getParam("return_url")).thenReturn("net.appauthdemo:/oauth2redirect");
 
         Client client = new Client();
-        client.setRedirectUris(List.of("https://onet.pl"));
+        client.setRedirectUris(List.of("net.appauthdemo:/oauth2redirect"));
         Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
 
         handler.handle(ctx);
@@ -81,7 +82,7 @@ public class ReturnUrlValidationHandlerTest {
         Mockito.when(ctx.get(CONTEXT_PATH)).thenReturn("/goto");
         Mockito.when(request.scheme()).thenReturn("http");
         Mockito.when(request.host()).thenReturn("somedomain.com");
-        Mockito.when(request.getParam("return_url")).thenReturn("http://somedomain.com/goto");
+        Mockito.when(request.getParam("return_url")).thenReturn("http://somedomain.com/goto/webauthn/register?redirect_uri=net.openid.appauthdemo:/oauth2redirect&client_id=native&response_type=code&state=fYrNK1BqE17pcTwko0D8Cw&nonce=V_QQb04qLbFGzsViv5exUA&scope=openid email profile&code_challenge=6CEk6Ksn4QYCjDnx7KbWHHintBYJFjakVdQGf3HHHys&code_challenge_method=S256");
 
         Client client = new Client();
         Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);

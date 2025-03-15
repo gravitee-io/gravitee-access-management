@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.root.service;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.jwt.TokenPurpose;
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.oidc.Client;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,6 +29,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.function.BiConsumer;
+
+import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -53,7 +57,6 @@ public class RedirectUriValidator {
         if (redirectUriRequired && !hasRegisteredClientRedirectUris && !hasRequestedRedirectUri) {
             throw new InvalidRequestException("A redirect_uri must be supplied");
         }
-
         // if no requested redirect_uri and more than one registered client redirect_uris
         // throw invalid request exception
         if (redirectUriRequired && !hasRequestedRedirectUri && (registeredClientRedirectUris != null && registeredClientRedirectUris.size() > 1)) {
@@ -62,13 +65,16 @@ public class RedirectUriValidator {
 
         if(redirectUriRequired && hasRequestedRedirectUri){
             try {
-                URI uri = new URI(requestedRedirectUri);
+                // use UriBuilder to sanitize the uri so non urlEncoded character will be encoded
+                // to avoid URISyntaxException due to the space in the scope parameter value
+                URI uri = UriBuilder.fromURIString(requestedRedirectUri).build();
                 if(uri.getUserInfo() != null){
                     throw new RedirectMismatchException(String.format("The redirect_uri [ %s ] MUST NOT contain userInfo part", requestedRedirectUri));
                 }
             } catch (URISyntaxException ex){
-                log.debug("Redirect URI syntax error", ex);
-                throw new InvalidRequestException(String.format("The redirect_uri [ %s ] syntax error", requestedRedirectUri));
+                // the URI is invalid, only log the error to avoid regression
+                // URI white list will reject the value if necessary
+                log.warn("The redirect_uri [{}] has syntax error: {}", requestedRedirectUri, ex.getMessage());
             }
         }
 
