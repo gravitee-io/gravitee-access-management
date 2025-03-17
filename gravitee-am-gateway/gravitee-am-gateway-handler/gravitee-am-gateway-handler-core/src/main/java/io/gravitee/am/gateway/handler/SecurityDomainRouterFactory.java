@@ -42,6 +42,7 @@ import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.spring.HandlerConfiguration;
 import io.gravitee.am.gateway.handler.vertx.VertxSecurityDomainHandler;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.gateway.handler.manager.ComponentInitializer;
 import io.gravitee.common.component.LifecycleComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -141,16 +142,15 @@ public class SecurityDomainRouterFactory {
             //        as consequence Sync is not possible.
             //        we may have to rethink the way users are linked to the group to keep track of the groups into the user profile
             //        so the Group can be request only of the user profile has at least one group and group can be cached for a short living time
-//            components.add(InMemoryGroupManager.class);
+            // components.add(InMemoryGroupManager.class);
         }
 
-        components.forEach(componentClass -> {
-            LifecycleComponent lifecyclecomponent = applicationContext.getBean(componentClass);
-            try {
-                lifecyclecomponent.start();
-            } catch (Exception e) {
-                logger.error("An error occurs while starting component {}", componentClass.getSimpleName(), e);
-            }
-        });
+        ComponentInitializer.builder()
+                .components(components)
+                .applicationContext(applicationContext)
+                .build()
+                .initialize();
     }
+
+
 }
