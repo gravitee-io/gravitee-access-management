@@ -20,9 +20,12 @@ package io.gravitee.am.plugins.dataplane.core;
 import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.node.api.configuration.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Consumer;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -35,14 +38,28 @@ public class SingleDataPlaneLoader implements DataPlaneLoader {
     private static final String DATA_PLANE_GW_URL_KEY = DATA_PLANE_KEY + ".dataPlane.url";
     private static final String DATA_PLANE_TYPE_KEY = DATA_PLANE_KEY + ".type";
 
-    @Autowired
-    protected Configuration configuration;
+    public SingleDataPlaneLoader(Configuration configuration,
+                                 @Value("${gateway.url:http://localhost:8092}") String gatewayUrl) {
+        this.configuration = configuration;
+        this.gatewayUrl = gatewayUrl;
+    }
+
+    private final Configuration configuration;
+    private final String gatewayUrl;
 
     @Override
     public void load(Consumer<DataPlaneDescription> storage) {
         var dataPlaneId = configuration.getProperty(DATA_PLANE_ID_KEY, String.class, DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
-        var dataPlaneUrl = configuration.getProperty(DATA_PLANE_GW_URL_KEY, String.class);
         var dataPlaneType = configuration.getProperty(DATA_PLANE_TYPE_KEY, String.class, "mongodb");
-        storage.accept(new DataPlaneDescription(dataPlaneId, dataPlaneId, dataPlaneType, DATA_PLANE_KEY, dataPlaneUrl));
+        storage.accept(new DataPlaneDescription(dataPlaneId, dataPlaneId, dataPlaneType, DATA_PLANE_KEY, getGatewayUrl()));
+    }
+
+    private String getGatewayUrl() {
+        var dataPlaneUrl = configuration.getProperty(DATA_PLANE_GW_URL_KEY, String.class);
+        if (dataPlaneUrl == null) {
+            return gatewayUrl;
+        } else {
+            return dataPlaneUrl;
+        }
     }
 }
