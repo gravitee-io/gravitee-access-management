@@ -2,8 +2,8 @@ apiVersion: v1
 name: am
 # When the version is modified, make sure the artifacthub.io/changes list is updated
 # Also update CHANGELOG.md
-version: 4.3.0
-appVersion: 4.3.0
+version: 4.7.0
+appVersion: 4.7.0
 description: Official Gravitee.io Helm chart for Access Management
 home: https://gravitee.io
 sources:

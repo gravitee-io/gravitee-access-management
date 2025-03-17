@@ -616,6 +616,11 @@ api:
 
 gateway:
   enabled: true
+  ## upgrader can be enabled
+  ## this is missing by default to be sure that upgrades are managed on mAPI startup
+  ## * missing upgrader key or upgrader = false will not execute the upgrader job but will execute the upgrade on MAPI startup
+  ## * upgrader = true will execute the upgrader job and the upgrader will not be executed on MAPI startup
+  #upgrader: true
   name: gateway
   type: mongodb
 
