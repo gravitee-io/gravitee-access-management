@@ -76,4 +76,9 @@ public class DomainEventListenerImpl extends AbstractService implements DomainEv
                 .onErrorComplete()
                 .subscribe();
     }
+
+    @Override
+    public String getDomainId() {
+        return domain.getId();
+    }
 }
