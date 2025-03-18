@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.functions.Predicate;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.experimental.UtilityClass;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -76,17 +77,18 @@ public final class MongoUtils {
 
     public static void init(MongoCollection<?> collection) {
         Single.fromPublisher(collection.createIndex(new Document(FIELD_ID, 1), new IndexOptions()))
-                .subscribe(
+                .subscribeOn(Schedulers.io())
+                .blockingSubscribe(
                         ignore -> logger.debug("Index {} created", FIELD_ID),
-                        throwable -> logger.error("Error occurs during creation of index {}", FIELD_ID, throwable)
-                );
+                        throwable -> logger.error("An error has occurred during creation of indexes", throwable));
     }
 
     public static void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes, boolean ensure) {
         if (ensure) {
             var indexesModel = indexes.entrySet().stream().map(entry -> new IndexModel(entry.getKey(), entry.getValue().background(true))).toList();
             Completable.fromPublisher(collection.createIndexes(indexesModel))
-                    .subscribe(() -> logger.debug("{} indexes created", indexes.size()),
+                    .subscribeOn(Schedulers.io())
+                    .blockingSubscribe(() -> logger.debug("{} indexes created", indexes.size()),
                             throwable -> logger.error("An error has occurred during creation of indexes", throwable));
         }
     }
