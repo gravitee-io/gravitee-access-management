@@ -36,7 +36,7 @@
     </div>
     <h5 style="color: grey; margin: 5px 0 15px 0">Groups</h5>
     <mat-form-field>
-      <mat-select placeholder="Groups" name="groups" ngModel [multiple]="!data.organizationContext" required>
+      <mat-select placeholder="Groups" name="groups" ngModel [multiple]="true" required>
         <mat-option *ngFor="let group of data.groups" [value]="group.id">{{ group.name }}</mat-option>
       </mat-select>
     </mat-form-field>
