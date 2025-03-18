@@ -20,6 +20,8 @@ package io.gravitee.am.service.model;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.service.validators.passwordpolicy.CheckLength;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,6 +34,7 @@ import java.util.Date;
  */
 @Getter
 @Setter
+@CheckLength
 public abstract class AbstractPasswordPolicy {
 
     @NotBlank
@@ -39,11 +42,13 @@ public abstract class AbstractPasswordPolicy {
     /**
      * Password min length
      */
+    @Min(0)
     private Integer minLength = PasswordSettings.PASSWORD_MIN_LENGTH;
 
     /**
      * Password max length
      */
+    @Min(0)
     private Integer maxLength = PasswordSettings.PASSWORD_MAX_LENGTH;
 
     /**
