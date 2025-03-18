@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: dp-init-1-webauthn_credentials
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -74,6 +74,16 @@ databaseChangeLog:
                   type: VARCHAR(255)
             tableName: webauthn_credentials
 
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-user
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_userid
+              tableName: webauthn_credentials
+      changes:
         - createIndex:
             columns:
               - column:
@@ -85,6 +95,16 @@ databaseChangeLog:
             indexName: idx_webauthn_credentials_ref_userid
             tableName: webauthn_credentials
 
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-credential
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_credential
+              tableName: webauthn_credentials
+      changes:
         - createIndex:
             columns:
               - column:
@@ -96,6 +116,16 @@ databaseChangeLog:
             indexName: idx_webauthn_credentials_ref_credential
             tableName: webauthn_credentials
 
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-username
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_username
+              tableName: webauthn_credentials
+      changes:
         - createIndex:
             columns:
               - column:
@@ -107,6 +137,16 @@ databaseChangeLog:
             indexName: idx_webauthn_credentials_ref_username
             tableName: webauthn_credentials
 
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-aaguid
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_aaguid
+              tableName: webauthn_credentials
+      changes:
         - createIndex:
             columns:
               - column:
@@ -118,6 +158,16 @@ databaseChangeLog:
             indexName: idx_webauthn_credentials_ref_aaguid
             tableName: webauthn_credentials
 
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref
+              tableName: webauthn_credentials
+      changes:
         - createIndex:
             columns:
               - column:
@@ -127,6 +177,16 @@ databaseChangeLog:
             indexName: idx_webauthn_credentials_ref
             tableName: webauthn_credentials
 
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-username-createAt
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_username_createdAt
+              tableName: webauthn_credentials
+      changes:
         - createIndex:
             columns:
               - column:

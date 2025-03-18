@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: dp-init-2-groups
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -40,6 +40,17 @@ databaseChangeLog:
                   name: updated_at
                   type: TIMESTAMP(6)
             tableName: groups
+
+  - changeSet:
+      id: dp-init-2-groups-idx_groups_ref
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_groups_ref
+              tableName: groups
+      changes:
         - createIndex:
             columns:
               - column:
@@ -48,9 +59,10 @@ databaseChangeLog:
                   name: reference_type
             indexName: idx_groups_ref
             tableName: groups
+
   - changeSet:
       id: dp-init-2-group_members
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -70,6 +82,17 @@ databaseChangeLog:
                   name: member
                   type: VARCHAR(64)
             tableName: group_members
+
+  - changeSet:
+      id: dp-init-2-groups_member-idx_group_members_group
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_group_members_group
+              tableName: group_members
+      changes:
         - createIndex:
             columns:
               - column:
@@ -77,15 +100,26 @@ databaseChangeLog:
             indexName: idx_group_members_group
             tableName: group_members
 
+  - changeSet:
+      id: dp-init-2-groups_member-idx_group_members_member
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_group_members_member
+              tableName: group_members
+      changes:
         - createIndex:
             columns:
               - column:
                   name: member
             indexName: idx_group_members_member
             tableName: group_members
+
   - changeSet:
       id: dp-init-2-group_roles
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -105,6 +139,17 @@ databaseChangeLog:
                   name: role
                   type: VARCHAR(64)
             tableName: group_roles
+
+  - changeSet:
+      id: dp-init-2-group_roles-idx_group_roles_group
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_group_roles_group
+              tableName: group_roles
+      changes:
         - createIndex:
             columns:
               - column:

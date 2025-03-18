@@ -27,6 +27,17 @@ databaseChangeLog:
             columnNames: id
             tableName: uma_resource_set
 
+  - changeSet:
+      id: dp-init-10-uma_resource_set-idx_uma_resource_set_domain_client_user
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_uma_resource_set_domain_client_user
+              tableName: uma_resource_set
+      changes:
         - createIndex:
             columns:
               - column:
