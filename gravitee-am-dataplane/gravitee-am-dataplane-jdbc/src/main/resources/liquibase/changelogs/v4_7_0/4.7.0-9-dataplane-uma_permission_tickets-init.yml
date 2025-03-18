@@ -32,6 +32,17 @@ databaseChangeLog:
             dbms: mysql
             sql: ALTER TABLE uma_permission_ticket MODIFY permission_request JSON;
 
+  - changeSet:
+      id: dp-init-9-uma_permission_ticket-idx_uma_permission_ticket_expire
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_uma_permission_ticket_expire
+              tableName: uma_permission_ticket
+      changes:
         - createIndex:
             columns:
               - column:

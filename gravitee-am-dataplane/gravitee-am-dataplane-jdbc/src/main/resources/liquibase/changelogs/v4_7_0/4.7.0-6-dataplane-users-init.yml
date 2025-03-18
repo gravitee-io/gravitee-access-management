@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: dp-init-6-users
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -138,6 +138,12 @@ databaseChangeLog:
                   name: force_reset_password
                   type: BOOLEAN
             tableName: users
+
+        - addUniqueConstraint:
+            columnNames: username, source
+            constraintName: users_username_source_unique
+            tableName: users
+
         - sql:
             dbms: postgresql
             sql: ALTER TABLE users ALTER additional_information TYPE JSONB USING additional_information::jsonb
@@ -162,28 +168,6 @@ databaseChangeLog:
             dbms: mysql
             sql: ALTER TABLE users MODIFY factors JSON;
 
-        - sql:
-            dbms: postgresql
-            sql: CREATE INDEX idx_users_additional_info_email ON users USING BTREE (reference_id, reference_type, ((additional_information->>'email')))
-        - sql:
-            dbms: postgresql
-            sql: CREATE INDEX idx_users_additional_info_family_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'family_name')))
-        - sql:
-            dbms: postgresql
-            sql: CREATE INDEX idx_users_additional_info_given_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'given_name')))
-        - sql:
-            dbms: postgresql
-            sql: CREATE INDEX idx_users_additional_info_middle_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'middle_name')))
-        - sql:
-            dbms: postgresql
-            sql: CREATE INDEX idx_users_additional_info_locale ON users USING BTREE (reference_id, reference_type, ((additional_information->>'locale')))
-        - sql:
-            dbms: postgresql
-            sql: CREATE INDEX idx_users_additional_info_zoneinfo ON users USING BTREE (reference_id, reference_type, ((additional_information->>'zoneinfo')))
-
-        - sql:
-            dbms: postgresql
-            sql: "CREATE INDEX idx_users_reference_upper_username_source ON users USING btree(reference_id, reference_type, UPPER(username), source);"
         - sql:
             dbms: mysql
             sql: ALTER TABLE users MODIFY additional_information JSON;
@@ -233,25 +217,6 @@ databaseChangeLog:
             sql: ALTER TABLE users ADD additional_information_zoneinfo VARCHAR(256) AS (JSON_VALUE(additional_information, "$.zoneinfo"));
 
         - sql:
-            dbms: mysql, mariadb
-            sql: CREATE INDEX idx_users_additional_information_email ON users(reference_id, reference_type, additional_information_email);
-        - sql:
-            dbms: mysql, mariadb
-            sql: CREATE INDEX idx_users_additional_information_family_name ON users(reference_id, reference_type, additional_information_family_name);
-        - sql:
-            dbms: mysql, mariadb
-            sql: CREATE INDEX idx_users_additional_information_given_name ON users(reference_id, reference_type, additional_information_given_name);
-        - sql:
-            dbms: mysql, mariadb
-            sql: CREATE INDEX idx_users_additional_information_middle_name ON users(reference_id, reference_type, additional_information_middle_name);
-        - sql:
-            dbms: mysql, mariadb
-            sql: CREATE INDEX idx_users_additional_information_locale ON users(reference_id, reference_type, additional_information_locale);
-        - sql:
-            dbms: mysql, mariadb
-            sql: CREATE INDEX idx_users_additional_information_zoneinfo ON users(reference_id, reference_type, additional_information_zoneinfo);
-
-        - sql:
             dbms: mssql
             sql: ALTER TABLE users ADD additional_information_email AS JSON_VALUE(additional_information, '$.email');
         - sql:
@@ -273,6 +238,88 @@ databaseChangeLog:
             dbms: mssql
             sql: ALTER TABLE users ADD additional_information_zoneinfo AS JSON_VALUE(additional_information, '$.zoneinfo');
 
+
+  - changeSet:
+      id: dp-init-6-users-indexes-psql
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: postgresql
+        not:
+          - indexExists:
+              indexName: idx_users_additional_info_email
+              tableName: users
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_email ON users USING BTREE (reference_id, reference_type, ((additional_information->>'email')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_family_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'family_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_given_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'given_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_middle_name ON users USING BTREE (reference_id, reference_type, ((additional_information->>'middle_name')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_locale ON users USING BTREE (reference_id, reference_type, ((additional_information->>'locale')))
+        - sql:
+            dbms: postgresql
+            sql: CREATE INDEX idx_users_additional_info_zoneinfo ON users USING BTREE (reference_id, reference_type, ((additional_information->>'zoneinfo')))
+
+        - sql:
+            dbms: postgresql
+            sql: "CREATE INDEX idx_users_reference_upper_username_source ON users USING btree(reference_id, reference_type, UPPER(username), source);"
+
+  - changeSet:
+      id: dp-init-6-users-indexes-mysql-mariadb
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: mysql, mariadb
+        not:
+          - indexExists:
+              indexName: idx_users_additional_information_email
+              tableName: users
+      changes:
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_email ON users(reference_id, reference_type, additional_information_email);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_family_name ON users(reference_id, reference_type, additional_information_family_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_given_name ON users(reference_id, reference_type, additional_information_given_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_middle_name ON users(reference_id, reference_type, additional_information_middle_name);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_locale ON users(reference_id, reference_type, additional_information_locale);
+        - sql:
+            dbms: mysql, mariadb
+            sql: CREATE INDEX idx_users_additional_information_zoneinfo ON users(reference_id, reference_type, additional_information_zoneinfo);
+
+  - changeSet:
+      id: dp-init-6-users-indexes-mssql
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        dbms:
+          type: mssql
+        not:
+          - indexExists:
+              indexName: idx_users_additional_information_email
+              tableName: users
+      changes:
         - sql:
             dbms: mssql
             sql: CREATE INDEX idx_users_additional_information_email ON users(reference_id, reference_type, additional_information_email);
@@ -291,10 +338,18 @@ databaseChangeLog:
         - sql:
             dbms: mssql
             sql: CREATE INDEX idx_users_additional_information_zoneinfo ON users(reference_id, reference_type, additional_information_zoneinfo);
-        - addUniqueConstraint:
-            columnNames: username, source
-            constraintName: users_username_source_unique
-            tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -303,6 +358,18 @@ databaseChangeLog:
                   name: reference_type
             indexName: idx_users_reference
             tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference_email
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference_email
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -313,6 +380,18 @@ databaseChangeLog:
                   name: email
             indexName: idx_users_reference_email
             tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference_username
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference_username
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -323,6 +402,18 @@ databaseChangeLog:
                   name: username
             indexName: idx_users_reference_username
             tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference_displayname
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference_displayname
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -333,6 +424,18 @@ databaseChangeLog:
                   name: display_name
             indexName: idx_users_reference_displayname
             tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference_firstname
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference_firstname
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -343,6 +446,18 @@ databaseChangeLog:
                   name: first_name
             indexName: idx_users_reference_firstname
             tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference_lastname
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference_lastname
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -353,6 +468,18 @@ databaseChangeLog:
                   name: last_name
             indexName: idx_users_reference_lastname
             tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference_username_source
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference_username_source
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -365,6 +492,18 @@ databaseChangeLog:
                   name: source
             indexName: idx_users_reference_username_source
             tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference_external
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference_external
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -375,6 +514,18 @@ databaseChangeLog:
                   name: external_id
             indexName: idx_users_reference_external
             tableName: users
+
+  - changeSet:
+      id: dp-init-6-users-idx_users_reference_externalid_source
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_users_reference_externalid_source
+              tableName: users
+      changes:
         - createIndex:
             columns:
               - column:
@@ -390,7 +541,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-user_entitlements
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -410,6 +561,18 @@ databaseChangeLog:
                   name: entitlement
                   type: VARCHAR(64)
             tableName: user_entitlements
+
+  - changeSet:
+      id: dp-init-6-user_entitlements-idx_user_entitlements_user
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_user_entitlements_user
+              tableName: user_entitlements
+      changes:
         - createIndex:
             columns:
               - column:
@@ -419,7 +582,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-user_roles
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -440,15 +603,27 @@ databaseChangeLog:
                   type: VARCHAR(64)
             tableName: user_roles
 
+  - changeSet:
+      id: dp-init-6-user_roles-idx_user_roles_user
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_user_roles_user
+              tableName: user_roles
+      changes:
         - createIndex:
             columns:
               - column:
                   name: user_id
             indexName: idx_user_roles_user
             tableName: user_roles
+
   - changeSet:
       id: dp-init-6-user_addresses
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -487,15 +662,28 @@ databaseChangeLog:
                   name: primary
                   type: BOOLEAN
             tableName: user_addresses
+
+  - changeSet:
+      id: dp-init-6-user_addresses-idx_user_addresses_user
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_user_addresses_user
+              tableName: user_addresses
+      changes:
         - createIndex:
             columns:
               - column:
                   name: user_id
             indexName: idx_user_addresses_user
             tableName: user_addresses
+
   - changeSet:
       id: dp-init-6-user_attributes
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -525,6 +713,17 @@ databaseChangeLog:
                   type: BOOLEAN
             tableName: user_attributes
 
+  - changeSet:
+      id: dp-init-6-user_attributes-idx_user_attributes_user
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_user_attributes_user
+              tableName: user_attributes
+      changes:
         - createIndex:
             columns:
               - column:
@@ -534,7 +733,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-dynamic_user_roles
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -555,6 +754,17 @@ databaseChangeLog:
                   type: VARCHAR(64)
             tableName: dynamic_user_roles
 
+  - changeSet:
+      id: dp-init-6-dynamic_user_roles-idx_dynamic_user_roles
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_dynamic_user_roles
+              tableName: dynamic_user_roles
+      changes:
         - createIndex:
             columns:
               - column:
@@ -564,7 +774,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-user_activities
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -620,6 +830,17 @@ databaseChangeLog:
                   type: TIMESTAMP(6)
             tableName: user_activities
 
+  - changeSet:
+      id: dp-init-6-user_activities-idx_user_activities_reference_type_identifier
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_user_activities_reference_type_identifier
+              tableName: user_activities
+      changes:
         - createIndex:
             columns:
               - column:
@@ -629,6 +850,17 @@ databaseChangeLog:
             indexName: idx_user_activities_reference_type_identifier
             tableName: user_activities
 
+  - changeSet:
+      id: dp-init-6-user_activities-idx_user_activities_reference_type_identifier_type_key
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_user_activities_reference_type_identifier_type_key
+              tableName: user_activities
+      changes:
         - createIndex:
             columns:
               - column:
@@ -645,7 +877,7 @@ databaseChangeLog:
 
   - changeSet:
       id: dp-init-6-user_identities
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -689,6 +921,17 @@ databaseChangeLog:
             dbms: mysql
             sql: ALTER TABLE user_identities MODIFY additional_information JSON;
 
+  - changeSet:
+      id: dp-init-6-user_identities-idx_user_identities_user
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_user_identities_user
+              tableName: user_identities
+      changes:
         - createIndex:
             columns:
               - column:
@@ -696,6 +939,17 @@ databaseChangeLog:
             indexName: idx_user_identities_user
             tableName: user_identities
 
+  - changeSet:
+      id: dp-init-6-user_identities-idx_user_identities_username_provider
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_user_identities_username_provider
+              tableName: user_identities
+      changes:
         - createIndex:
             columns:
               - column:
