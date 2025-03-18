@@ -1,7 +1,7 @@
 databaseChangeLog:
   - changeSet:
       id: dp-init-5-scope_approvals
-      author: lgw
+      author: GraviteeSource Team
       preConditions:
         onFail: MARK_RAN
         not:
@@ -52,6 +52,16 @@ databaseChangeLog:
                   type: VARCHAR(64)
             tableName: scope_approvals
 
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_transaction_id
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_transaction_id
+              tableName: scope_approvals
+      changes:
         - createIndex:
             columns:
               - column:
@@ -59,6 +69,16 @@ databaseChangeLog:
             indexName: idx_scope_approvals_transaction_id
             tableName: scope_approvals
 
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_domain_user
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_domain_user
+              tableName: scope_approvals
+      changes:
         - createIndex:
             columns:
               - column:
@@ -68,6 +88,16 @@ databaseChangeLog:
             indexName: idx_scope_approvals_domain_user
             tableName: scope_approvals
 
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_expire
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_expire
+              tableName: scope_approvals
+      changes:
         - createIndex:
             columns:
               - column:
@@ -75,6 +105,16 @@ databaseChangeLog:
             indexName: idx_scope_approvals_expire
             tableName: scope_approvals
 
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_domain_client_user_scope
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_domain_client_user_scope
+              tableName: scope_approvals
+      changes:
         - createIndex:
             columns:
               - column:
@@ -88,6 +128,17 @@ databaseChangeLog:
             indexName: idx_scope_approvals_domain_client_user_scope
             tableName: scope_approvals
             unique: true
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_user_ext_id
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_user_ext_id
+              tableName: scope_approvals
+      changes:
         - createIndex:
             columns:
               - column:
@@ -96,6 +147,17 @@ databaseChangeLog:
                   name: user_external_id
             indexName: idx_scope_approvals_user_ext_id
             tableName: scope_approvals
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_domain_user_id_extid
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_domain_user_id_extid
+              tableName: scope_approvals
+      changes:
         - createIndex:
             columns:
               - column:
@@ -108,9 +170,10 @@ databaseChangeLog:
                   name: user_external_id
             indexName: idx_scope_approvals_domain_user_id_extid
             tableName: scope_approvals
+
   - changeSet:
       id: dp-init-5-scope_approvals-ext-index
-      author: lgw
+      author: GraviteeSource Team
       onError: MARK_RAN
       preConditions:
         onFail: MARK_RAN
