@@ -28,6 +28,16 @@ databaseChangeLog:
             columnNames: id
             tableName: uma_access_policies
 
+  - changeSet:
+      id: dp-init-8-uma_access_policies-indexes-domain
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_uma_access_policies_doman
+              tableName: uma_access_policies
+      changes:
         - createIndex:
             columns:
               - column:
@@ -36,6 +46,16 @@ databaseChangeLog:
             tableName:  uma_access_policies
             unique:  false
 
+  - changeSet:
+      id: dp-init-8-uma_access_policies-indexes-resource
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_uma_access_policies_resource
+              tableName: uma_access_policies
+      changes:
         - createIndex:
             columns:
               - column:
@@ -44,6 +64,16 @@ databaseChangeLog:
             tableName:  uma_access_policies
             unique:  false
 
+  - changeSet:
+      id: dp-init-8-uma_access_policies-indexes-domain-resource
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_uma_access_policies_domain_resource
+              tableName: uma_access_policies
+      changes:
         - createIndex:
             columns:
               - column:
@@ -54,6 +84,16 @@ databaseChangeLog:
             tableName:  uma_access_policies
             unique:  false
 
+  - changeSet:
+      id: dp-init-8-uma_access_policies-indexes-updateAt
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_uma_access_policies_updated_at
+              tableName: uma_access_policies
+      changes:
         - createIndex:
             columns:
               - column:
