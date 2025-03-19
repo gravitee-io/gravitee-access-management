@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.handlers.management.api.authentication.provider.security;
 
+import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.management.handlers.management.api.authentication.manager.idp.IdentityProviderManager;
@@ -22,6 +23,7 @@ import io.gravitee.am.management.handlers.management.api.authentication.web.WebA
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.OrganizationService;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +59,8 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
 
     @Value("${http.blockingGet.timeoutMillis:120000}")
     private long blockingGetTimeoutMillis = 120000;
+
+    private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     private IdentityProviderManager identityProviderManager;
 
@@ -105,7 +109,8 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
         io.gravitee.am.identityprovider.api.Authentication provAuthentication = new EndUserAuthentication(
                 authentication.getName(),
                 authentication.getCredentials(), context);
-
+        int userNotFoundException = 0;
+        int userException = 0;
         while (iter.hasNext() && user == null) {
             String provider = iter.next();
 
@@ -130,12 +135,20 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
                 details.put(SOURCE, provider);
                 lastException = null;
             } catch (Exception ex) {
+                userException++;
+                if (ex instanceof UsernameNotFoundException) {
+                    userNotFoundException ++;
+                }
                 logger.info("Unable to authenticate user {} with provider {}", authentication.getName(), provider, ex);
                 lastException = new BadCredentialsException(ex.getMessage(), ex);
             }
         }
 
         if (lastException != null) {
+            if (userException == userNotFoundException) {
+                //Didn't find user in any IDP (Mongo or JDBC), so no password encoding has been proceeded.
+                doFakePasswordEncoding(authentication.getCredentials().toString());
+            }
             throw lastException;
         }
 
@@ -144,8 +157,16 @@ public class ManagementAuthenticationProvider implements AuthenticationProvider 
             authenticationToken.setDetails(details);
             return authenticationToken;
         }
-
+        if (userException == userNotFoundException) {
+            //Didn't find user in any IDP (Mongo or JDBC), so no password encoding has been proceeded.
+            doFakePasswordEncoding(authentication.getCredentials().toString());
+        }
         throw new BadCredentialsException("No user found for providers " + StringUtils.collectionToDelimitedString(identities, ","));
+    }
+
+    private void doFakePasswordEncoding(String password){
+        //PEN-21 Encoding password takes a while. To ensure execution time the same for not existing user, introduced fake password checking.
+        bCryptPasswordEncoder.matches(password, "$2a$10$hdjt9YGrSudbIljTqAtcW.KOxNJscq00Nxv088wPy6GDKXCJe0aCm");
     }
 
     @Override
