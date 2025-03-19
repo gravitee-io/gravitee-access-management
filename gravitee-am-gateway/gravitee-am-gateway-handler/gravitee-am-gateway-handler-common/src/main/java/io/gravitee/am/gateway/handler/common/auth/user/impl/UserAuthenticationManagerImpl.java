@@ -44,6 +44,7 @@ import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Completable;
@@ -101,6 +102,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
 
+    private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+
     @Override
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
         logger.debug("Trying to authenticate [{}]", authentication);
@@ -127,6 +130,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                                 return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
                             } else if (lastException instanceof UsernameNotFoundException) {
                                 // if an IdP return UsernameNotFoundException, convert it as BadCredentials in order to avoid helping attackers
+                                //PEN-21 Encoding password takes a while. To ensure execution time the same for not existing user, introduced fake password checking.
+                                bCryptPasswordEncoder.matches(authentication.getCredentials().toString(), "$2a$10$hdjt9YGrSudbIljTqAtcW.KOxNJscq00Nxv088wPy6GDKXCJe0aCm");
                                 return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
                             } else if (lastException instanceof AccountStatusException) {
                                 return Single.error(lastException);
