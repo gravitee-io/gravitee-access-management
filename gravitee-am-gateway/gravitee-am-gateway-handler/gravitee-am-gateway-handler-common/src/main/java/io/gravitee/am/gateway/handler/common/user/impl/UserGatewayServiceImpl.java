@@ -26,6 +26,7 @@ import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.factor.FactorStatus;
@@ -97,23 +98,28 @@ public class UserGatewayServiceImpl implements UserGatewayService, InitializingB
     }
 
     @Override
-    public Maybe<User> findByDomainAndExternalIdAndSource(String domain, String externalId, String source) {
-        return userRepository.findByExternalIdAndSource(Reference.domain(domain), externalId, source);
+    public Maybe<User> findByExternalIdAndSource(String externalId, String source) {
+        return userRepository.findByExternalIdAndSource(domain.asReference(), externalId, source);
     }
 
     @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source) {
-        return userRepository.findByUsernameAndSource(Reference.domain(domain), username, source);
+    public Maybe<User> findByUsernameAndSource(String username, String source) {
+        return userRepository.findByUsernameAndSource(domain.asReference(), username, source);
     }
 
     @Override
-    public Maybe<User> findByDomainAndUsernameAndSource(String domain, String username, String source, boolean includeLinkedIdentities) {
-        return userRepository.findByUsernameAndSource(Reference.domain(domain), username, source, includeLinkedIdentities);
+    public Maybe<User> findByUsernameAndSource(String username, String source, boolean includeLinkedIdentities) {
+        return userRepository.findByUsernameAndSource(domain.asReference(), username, source, includeLinkedIdentities);
     }
 
     @Override
-    public Single<List<User>> findByDomainAndCriteria(String domain, FilterCriteria criteria) {
-        return userRepository.search(Reference.domain(domain), criteria).toList();
+    public Single<List<User>> findByCriteria(FilterCriteria criteria) {
+        return userRepository.search(domain.asReference(), criteria).toList();
+    }
+
+    @Override
+    public Single<Page<User>> findByCriteria(FilterCriteria criteria, int page, int size) {
+        return getUserRepository().search(domain.asReference(), criteria, page, size);
     }
 
     @Override

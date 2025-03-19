@@ -29,6 +29,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuthenticationFlowContextService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
@@ -69,6 +70,8 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
     @Mock
     private Domain domain;
     @Mock
+    private DomainDataPlane domainDataPlane;
+    @Mock
     private UserService userService;
     @Mock
     private FactorManager factorManager;
@@ -98,12 +101,13 @@ public class WebAuthnLoginHandlerTest extends RxWebTestBase {
         when(webAuthn.rxAuthenticate(any(Credentials.class))).thenReturn(Single.just(io.vertx.rxjava3.ext.auth.User.fromName("username")));
 
         webAuthnLoginHandler =
-                new WebAuthnLoginHandler(userService, factorManager, domain, webAuthn, credentialService, userAuthenticationManager);
+                new WebAuthnLoginHandler(userService, factorManager, domainDataPlane, webAuthn, credentialService, userAuthenticationManager);
 
         router.route(HttpMethod.POST, "/webauthn/login")
                 .handler(SessionHandler.create(LocalSessionStore.create(vertx)))
                 .handler(BodyHandler.create())
                 .failureHandler(new LoginFailureHandler(authenticationFlowContextService, domain, identityProviderManager));
+        when(domainDataPlane.getDomain()).thenReturn(domain);
     }
 
     @Test

@@ -25,6 +25,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.safe.UserProperties;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.rxjava3.core.MultiMap;
@@ -47,12 +48,11 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterEndpoint.class);
     private static final String SKIP_WEBAUTHN_PARAM_KEY = "skipWebAuthN";
-    private final Domain domain;
 
     public WebAuthnRegisterEndpoint(TemplateEngine templateEngine,
-                                    Domain domain, FactorManager factorManager) {
+                                    DomainDataPlane domainDataPlane, FactorManager factorManager) {
         super(templateEngine);
-        this.domain = domain;
+        setDomainDataplane(domainDataPlane);
         setFactorManager(factorManager);
     }
 
@@ -106,12 +106,12 @@ public class WebAuthnRegisterEndpoint extends WebAuthnHandler {
             params.put(Parameters.CLIENT_ID, client.getClientId());
             routingContext.put(ConstantKeys.PARAM_CONTEXT_KEY, params);
 
-            if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().getAuthenticatorAttachment() != null) {
-                routingContext.put(ConstantKeys.PARAM_AUTHENTICATOR_ATTACHMENT_KEY, domain.getWebAuthnSettings().getAuthenticatorAttachment().getValue());
+            if (domainDataPlane.getDomain().getWebAuthnSettings() != null && domainDataPlane.getDomain().getWebAuthnSettings().getAuthenticatorAttachment() != null) {
+                routingContext.put(ConstantKeys.PARAM_AUTHENTICATOR_ATTACHMENT_KEY, domainDataPlane.getDomain().getWebAuthnSettings().getAuthenticatorAttachment().getValue());
             }
 
             // render the webauthn register page
-            this.renderPage(routingContext, generateData(routingContext, domain, client), client, logger, "Unable to render WebAuthn register page");
+            this.renderPage(routingContext, generateData(routingContext, domainDataPlane.getDomain(), client), client, logger, "Unable to render WebAuthn register page");
         } catch (Exception ex) {
             logger.error("An error has occurred while rendering WebAuthn register page", ex);
             routingContext.fail(503);

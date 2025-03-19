@@ -51,6 +51,7 @@ import io.gravitee.am.model.safe.EnrolledFactorProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -117,7 +118,6 @@ import static io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils.ge
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
-import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler.getOrigin;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
 import static io.gravitee.am.model.factor.FactorStatus.PENDING_ACTIVATION;
 import static java.lang.Boolean.TRUE;
@@ -139,7 +139,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final UserService userService;
     private final ApplicationContext applicationContext;
     private final DeviceGatewayService deviceService;
-    private final Domain domain;
+    private final DomainDataPlane domainDataPlane;
     private final CredentialGatewayService credentialService;
     private final RateLimiterService rateLimiterService;
     private final VerifyAttemptService verifyAttemptService;
@@ -151,7 +151,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 TemplateEngine engine,
                                 DeviceGatewayService deviceService,
                                 ApplicationContext applicationContext,
-                                Domain domain,
+                                DomainDataPlane domainDataPlane,
                                 CredentialGatewayService credentialService,
                                 RateLimiterService rateLimiterService,
                                 VerifyAttemptService verifyAttemptService,
@@ -162,7 +162,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         this.factorManager = factorManager;
         this.userService = userService;
         this.deviceService = deviceService;
-        this.domain = domain;
+        this.domainDataPlane = domainDataPlane;
         this.credentialService = credentialService;
         this.rateLimiterService = rateLimiterService;
         this.verifyAttemptService = verifyAttemptService;
@@ -240,7 +240,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                     return;
                 }
 
-                Map<String, Object> templateData = generateData(routingContext, domain, client);
+                Map<String, Object> templateData = generateData(routingContext, domainDataPlane.getDomain(), client);
                 if (resChallenge.result() != null) {
                     templateData.put(ENROLLED_FACTOR_KEY, new EnrolledFactorProperties(resChallenge.result()));
                 }
@@ -290,10 +290,10 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         if (factor.is(FIDO2)) {
             factorCtx.registerData(ConstantKeys.PASSWORDLESS_CHALLENGE_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_KEY));
             factorCtx.registerData(ConstantKeys.PASSWORDLESS_CHALLENGE_USERNAME_KEY, routingContext.session().get(PASSWORDLESS_CHALLENGE_USERNAME_KEY));
-            factorCtx.registerData(ConstantKeys.PASSWORDLESS_ORIGIN, getOrigin(domain.getWebAuthnSettings()));
+            factorCtx.registerData(ConstantKeys.PASSWORDLESS_ORIGIN, domainDataPlane.getWebAuthnOrigin());
         }
 
-        verifyAttemptService.checkVerifyAttempt(endUser, factorId, client, domain)
+        verifyAttemptService.checkVerifyAttempt(endUser, factorId, client, domainDataPlane.getDomain())
                 .map(Optional::of)
                 .switchIfEmpty(Maybe.just(Optional.empty()))
                 .subscribe(verifyAttempt -> verify(factorProvider, factorCtx, verifyAttempt,
@@ -308,7 +308,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                         .client(client)
                                         .user(endUser));
 
-                                if (verifyAttemptService.shouldSendEmail(client, domain)) {
+                                if (verifyAttemptService.shouldSendEmail(client, domainDataPlane.getDomain())) {
                                     emailService.send(Template.VERIFY_ATTEMPT, endUser, client);
                                 }
                                 updateAuditLog(routingContext, MFA_MAX_ATTEMPT_REACHED, endUser, client, factor, factorCtx, error);
@@ -446,7 +446,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                             logger.debug("Challenge failed for user {}", factorContext.getUser().getId());
                             final EnrolledFactor enrolledFactor = (EnrolledFactor) factorContext.getData().get(FactorContext.KEY_ENROLLED_FACTOR);
                             verifyAttemptService.incrementAttempt(factorContext.getUser().getId(), enrolledFactor.getFactorId(),
-                                    factorContext.getClient(), domain, verifyAttempt).subscribe(
+                                    factorContext.getClient(), domainDataPlane.getDomain(), verifyAttempt).subscribe(
                                     () -> handler.handle(Future.failedFuture(error)),
                                     verificationFailedError -> {
                                         logger.error("Could not updated verification failed status", verificationFailedError);
@@ -694,14 +694,14 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
             routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
             doRedirect(routingContext.response(), redirectUrl);
         } else {
-            this.deviceService.deviceExists(domain, client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
+            this.deviceService.deviceExists(domainDataPlane.getDomain(), client.getClientId(), userId, rememberDeviceId, deviceId).flatMapMaybe(isEmpty -> {
                 if (Boolean.FALSE.equals(isEmpty)) {
                     routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
                     return Maybe.empty();
                 }
                 var deviceType = routingContext.session().<String>get(DEVICE_TYPE);
                 return this.deviceService.create(
-                                domain,
+                                domainDataPlane.getDomain(),
                                 client.getClientId(),
                                 userId,
                                 rememberDeviceId,
@@ -725,7 +725,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         credential.setUserAgent(RequestUtils.userAgent(request));
         credential.setIpAddress(RequestUtils.remoteAddress(request));
 
-        credentialService.update(domain, credentialId, credential)
+        credentialService.update(domainDataPlane.getDomain(), credentialId, credential)
                 .subscribe(
                         updatedCredential -> handler.handle(Future.succeededFuture(updatedCredential)),
                         error -> handler.handle(Future.failedFuture(error))
@@ -800,7 +800,7 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                 .type(type)
                 .channel(channel)
                 .client(client)
-                .reference(Reference.domain(domain.getId()))
+                .reference(Reference.domain(domainDataPlane.getDomain().getId()))
                 .ipAddress(routingContext)
                 .userAgent(routingContext)
                 .throwable(cause, channel);

@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
+import io.gravitee.am.gateway.handler.common.service.mfa.DomainEventListener;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
@@ -112,8 +113,19 @@ public class EventManagerImpl implements EventManager {
     }
 
     @Override
-    public <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> events, String domain) {
-        this.listenersMap.remove(new ComparableEventType(events, domain));
+    public <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> eventType, String domainId) {
+        if (eventType.equals(DomainEvent.class)) {
+            getEventListeners(DomainEvent.class, null)
+                    .removeIf(wrapper -> {
+                        if (wrapper.eventListener() instanceof DomainEventListener del) {
+                            return domainId.equals(del.getDomainId());
+                        } else {
+                            return false;
+                        }
+                    });
+        } else {
+            this.listenersMap.remove(new ComparableEventType(eventType, domainId));
+        }
     }
 
     @Override

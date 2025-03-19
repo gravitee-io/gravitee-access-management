@@ -269,10 +269,18 @@ user:
       pattern: ^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;|=,]{1,100}$
 
   registration:
-    email:
-      #subject: New user registration
-    token:
-      #expire-after: 86400 # the end of validity of the token in seconds for registration email (default 86400 = a day)
+    verify: #just verification via email
+      email:
+        #subject: New user registration
+      time:
+        #unit: DAYS
+        #value: 3
+    confirmation: #password set via link received in email
+      email:
+        #subject: New user registration
+      time:
+        #unit: DAYS
+        #value: 3
   resetPassword:
     email:
       #subject: Please reset your password

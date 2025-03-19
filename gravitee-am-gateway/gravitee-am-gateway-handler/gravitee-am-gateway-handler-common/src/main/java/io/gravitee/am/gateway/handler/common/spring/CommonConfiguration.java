@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.spring;
 
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.GatewayAuditReporterManager;
@@ -102,6 +103,7 @@ import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.impl.user.UserEnhancer;
@@ -294,6 +296,9 @@ public class CommonConfiguration {
         final String registrationVerifySubject = environment.getProperty("user.registration.verify.email.subject", String.class, "${msg('email.registration_verify.subject')}");
         final int userRegistrationVerifyTimeValue = environment.getProperty("user.registration.verify.time.value", Integer.class, 7);
         final TimeUnit userRegistrationVerifyTimeUnit = environment.getProperty("user.registration.verify.time.unit", TimeUnit.class, TimeUnit.DAYS);
+        final String registrationConfirmationSubject = environment.getProperty("user.registration.confirmation.email.subject", String.class, "${msg('email.registration_confirmation.subject')}");
+        final int userRegistrationConfirmationTimeValue = environment.getProperty("user.registration.confirmation.time.value", Integer.class, 24);
+        final TimeUnit userRegistrationConfirmationTimeUnit = environment.getProperty("user.registration.confirmation.time.unit", TimeUnit.class, TimeUnit.HOURS);
 
         return new EmailServiceImpl(
                 enabled,
@@ -305,7 +310,9 @@ public class CommonConfiguration {
                 mfaChallengeExpireAfter,
                 mfaVerifyAttemptSubject,
                 registrationVerifySubject,
-                Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue))
+                Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue)),
+                registrationConfirmationSubject,
+                Math.toIntExact(userRegistrationConfirmationTimeUnit.toSeconds(userRegistrationConfirmationTimeValue))
         );
     }
 
@@ -381,6 +388,12 @@ public class CommonConfiguration {
     @Bean
     public UMAResourceGatewayService umaResourceGatewayService(Domain domain, DataPlaneRegistry dataPlaneRegistry, ScopeService scopeService) {
         return new UMAResourceGatewayServiceImpl(domain, dataPlaneRegistry, scopeService);
+    }
+
+    @Bean
+    public DomainDataPlane domainDataPlane(Domain domain, DataPlaneRegistry dataPlaneRegistry){
+        DataPlaneDescription description = dataPlaneRegistry.getDescription(domain);
+        return new DomainDataPlane(domain, description);
     }
 
     @Bean

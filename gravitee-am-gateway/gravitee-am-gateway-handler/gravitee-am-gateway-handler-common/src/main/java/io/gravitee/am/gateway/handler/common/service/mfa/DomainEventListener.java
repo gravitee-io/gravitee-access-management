@@ -23,5 +23,6 @@ import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.Service;
 
 public interface DomainEventListener extends EventListener<DomainEvent, Domain>, Service {
+    String getDomainId();
 
 }

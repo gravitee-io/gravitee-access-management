@@ -55,6 +55,7 @@ import static java.util.stream.Collectors.toList;
 public class UserMapper {
 
     public static final String LAST_PASSWORD_RESET_KEY = "lastPasswordReset";
+    public static final String PRE_REGISTRATION_KEY = "preRegistration";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserMapper.class);
 
@@ -218,6 +219,17 @@ public class UserMapper {
                 } else {
                     LOGGER.error("lastPasswordReset must be in ISO 8601 format");
                     throw new UserInvalidException("Unable to parse lastPasswordReset. lastPasswordReset must be in ISO 8601 format.");
+                }
+            }
+            var preRegistration = graviteeUser.getAdditionalInformation().get(PRE_REGISTRATION_KEY);
+            if (preRegistration != null) {
+                if (preRegistration instanceof Boolean) {
+                    user.setPreRegistration((Boolean) preRegistration);
+                    user.setPassword(null);//user will receive email to set password.
+                    graviteeUser.getAdditionalInformation().remove(PRE_REGISTRATION_KEY);
+                } else {
+                    LOGGER.error("preRegistration must be boolean");
+                    throw new UserInvalidException("Unable to parse preRegistration. lastPasswordReset must be boolean.");
                 }
             }
             additionalInformation.putAll(graviteeUser.getAdditionalInformation());
