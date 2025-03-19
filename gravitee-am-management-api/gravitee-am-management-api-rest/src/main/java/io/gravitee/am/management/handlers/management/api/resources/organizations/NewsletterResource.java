@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.EmailValue;
+import io.gravitee.am.management.handlers.management.api.model.UserEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.NewsletterService;
 import io.gravitee.am.model.Organization;
@@ -70,7 +71,7 @@ public class NewsletterResource extends AbstractResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Updated user",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = User.class))),
+                            schema = @Schema(implementation = UserEntity.class))),
             @ApiResponse(responseCode = "400", description = "Invalid user profile"),
             @ApiResponse(responseCode = "404", description = "User not found"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
@@ -85,7 +86,7 @@ public class NewsletterResource extends AbstractResource {
                 .flatMap(user -> {
                     user.setEmail(emailValue.getEmail());
                     user.setNewsletter(true);
-                    return userService.update(user);
+                    return userService.update(user).map(UserEntity::new);
                 })
                 .doOnSuccess(endUser -> {
                     Map<String, Object> object = new HashMap<>();
