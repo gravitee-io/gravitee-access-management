@@ -622,7 +622,7 @@ public class UserAuthenticationManagerTest {
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
             public Object getCredentials() {
-                return null;
+                return "pass";
             }
 
             @Override
