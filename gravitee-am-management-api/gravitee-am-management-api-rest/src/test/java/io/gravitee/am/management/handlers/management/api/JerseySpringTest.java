@@ -18,6 +18,7 @@ package io.gravitee.am.management.handlers.management.api;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.adapter.ScopeApprovalAdapter;
@@ -42,6 +43,7 @@ import io.gravitee.am.management.service.IdentityProviderManager;
 import io.gravitee.am.management.service.IdentityProviderPluginService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.management.service.ManagementUserService;
+import io.gravitee.am.management.service.NewsletterService;
 import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.PermissionService;
 import io.gravitee.am.management.service.PolicyPluginService;
@@ -53,6 +55,7 @@ import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.DeviceManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.service.ApplicationService;
@@ -117,6 +120,7 @@ import javax.inject.Named;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -138,6 +142,9 @@ public abstract class JerseySpringTest {
     @Autowired
     @Named("managementOrganizationUserService")
     protected OrganizationUserService organizationUserService;
+
+    @Autowired
+    protected io.gravitee.am.service.OrganizationUserService commonOrganizationUserService;
 
     @Autowired
     protected DomainService domainService;
@@ -292,6 +299,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected ScopeApprovalAdapter scopeApprovalAdapter;
 
+    @Autowired
+    protected NewsletterService newsletterService;
+
     @BeforeEach
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
@@ -339,6 +349,11 @@ public abstract class JerseySpringTest {
         @Bean("managementOrganizationUserService")
         public OrganizationUserService organizationUserService() {
             return mock(OrganizationUserService.class);
+        }
+
+        @Bean
+        public io.gravitee.am.service.OrganizationUserService commonOrganizationUserService() {
+            return mock(io.gravitee.am.service.OrganizationUserService.class);
         }
 
         @Bean
@@ -636,6 +651,10 @@ public abstract class JerseySpringTest {
             return new UserBulkConfiguration(1048576,1000);
         }
 
+        @Bean
+        public NewsletterService newsletterService() {
+            return mock(NewsletterService.class);
+        }
     }
 
     private JerseyTest _jerseyTest;
@@ -680,7 +699,8 @@ public abstract class JerseySpringTest {
             requestContext.setSecurityContext(new SecurityContext() {
                 @Override
                 public Principal getUserPrincipal() {
-                    User endUser = new DefaultUser(USER_NAME);
+                    DefaultUser endUser = new DefaultUser(USER_NAME);
+                    endUser.setAdditionalInformation(Map.of(Claims.ORGANIZATION, Organization.DEFAULT));
                     return new UsernamePasswordAuthenticationToken(endUser, null);
                 }
 
