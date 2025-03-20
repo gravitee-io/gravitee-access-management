@@ -50,6 +50,10 @@ public final class SecureRandomString {
         return encoder.encodeToString(buffer);
     }
 
+    public static String generateWithPrefix(String prefix) {
+        return prefix + generate();
+    }
+
     public static String randomAlphaNumeric(int length) {
         if (length <= 0) {
             throw new IllegalArgumentException("Requested random string length " + length + " is less than or equals to 0.");
