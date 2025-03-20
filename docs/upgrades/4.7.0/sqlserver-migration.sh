@@ -34,7 +34,7 @@ SCHEMA="$(dirname $0)/sqlserver.schema"
 
 
 # List of tables to migrate (can also read from a file, see below for alternative)
-TABLES=("uma_resource_set" "uma_resource_scopes" "webauthn_credentials" "groups" "group_members" "group_roles" "devices" "password_histories" "users" "user_entitlements" "user_roles" "user_addresses" "user_attributes" "dynamic_user_roles" "dynamic_user_groups" "user_activities" "login_attempts" "user_identities" "uma_access_policies" "uma_permission_ticket")
+TABLES=("uma_resource_set" "uma_resource_scopes" "webauthn_credentials" "groups" "group_members" "group_roles" "devices" "password_histories" "users" "user_entitlements" "user_roles" "user_addresses" "user_attributes" "dynamic_user_roles" "dynamic_user_groups" "user_activities" "user_identities" "uma_access_policies" "uma_permission_ticket")
 
 # Export passwords to avoid being prompted
 export SQLCMDPASSWORD=$SOURCE_DB_PASSWORD
