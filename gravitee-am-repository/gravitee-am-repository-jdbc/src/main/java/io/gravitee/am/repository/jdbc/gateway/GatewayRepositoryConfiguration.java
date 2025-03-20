@@ -42,7 +42,7 @@ import static io.gravitee.am.repository.Scope.MANAGEMENT;
 @EnableR2dbcRepositories
 public class GatewayRepositoryConfiguration extends AbstractRepositoryConfiguration {
 
-    public static final String LIQUIBASE_FILE = "liquibase/gateway/gateway-master.yml";
+    public static final String LIQUIBASE_FILE = "liquibase/gateway-master.yml";
 
     @Autowired
     public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
