@@ -45,7 +45,7 @@ import java.util.Optional;
 @EnableR2dbcRepositories
 public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfiguration {
 
-    public static final String LIQUIBASE_FILE = "liquibase/oauth/oauth-master.yml";
+    public static final String LIQUIBASE_FILE = "liquibase/oauth-master.yml";
 
     @Autowired
     public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
