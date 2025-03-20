@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
@@ -184,6 +185,8 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
 
     private static JWT prepareState(String identityProviderId, RoutingContext context) {
         final JWT stateJwt = new JWT();
+        stateJwt.setJti(SecureRandomString.generateWithPrefix("_")); // prefix added to conform SAML protocol requirements
+
         final String protocol = context.session().get(PROTOCOL_KEY);
         if (StringUtils.hasLength(protocol)) {
             // SAML flow, need to keep these session attributes
@@ -193,7 +196,7 @@ public class LoginSocialAuthenticationHandler implements Handler<RoutingContext>
             stateJwt.put(PROTOCOL_KEY, protocol);
             stateJwt.put(RETURN_URL_KEY, context.session().get(RETURN_URL_KEY));
             if (PROTOCOL_VALUE_SAML_POST.equals(protocol)) {
-              stateJwt.put(TRANSACTION_ID_KEY, context.session().get(TRANSACTION_ID_KEY));
+                stateJwt.put(TRANSACTION_ID_KEY, context.session().get(TRANSACTION_ID_KEY));
             }
         }
         stateJwt.put(CLAIM_PROVIDER_ID, identityProviderId);
