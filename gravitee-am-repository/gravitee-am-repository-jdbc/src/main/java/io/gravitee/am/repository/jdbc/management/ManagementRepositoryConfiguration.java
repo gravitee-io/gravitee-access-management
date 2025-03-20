@@ -45,7 +45,7 @@ import java.util.Optional;
 @EnableR2dbcRepositories
 public class ManagementRepositoryConfiguration extends AbstractRepositoryConfiguration {
 
-    public static final String LIQUIBASE_FILE = "liquibase/management/management-master.yml";
+    public static final String LIQUIBASE_FILE = "liquibase/management-master.yml";
 
     @Autowired
     public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
