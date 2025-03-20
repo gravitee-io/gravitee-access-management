@@ -197,7 +197,7 @@
         <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
 
         <!-- R2DBC -->
-        <r2dbc-postgresql.version>1.0.2.RELEASE</r2dbc-postgresql.version>
+        <r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
         <r2dbc-mariadb.version>1.1.3</r2dbc-mariadb.version>
         <!--
         DO NOT use the 1.0.2.RELEASE as this version seems to be buggy
