@@ -31,6 +31,3 @@ CREATE TABLE  dynamic_user_roles ( user_id nvarchar(64) NOT NULL, role   nvarcha
 CREATE TABLE  user_activities ( id nvarchar(64) NOT NULL, reference_id nvarchar(255) NOT NULL, reference_type nvarchar(64) NOT NULL, user_activity_type nvarchar(64) NOT NULL, user_activity_key nvarchar(255) NOT NULL, latitude float NULL, longitude float NULL, user_agent varchar(MAX) NULL, login_attempts int NULL, created_at datetime2 NULL, expire_at datetime2 NULL,  );
 ALTER TABLE  user_activities ADD  CONSTRAINT pk_user_activities PRIMARY KEY (id);
 CREATE TABLE  user_identities ( user_id nvarchar(64) NOT NULL, identity_id nvarchar(64) NOT NULL, provider_id nvarchar(64) NOT NULL, linked_at datetime2 NOT NULL, additional_information varchar(MAX) NULL, username nvarchar(320) NULL,  );
-
-CREATE TABLE login_attempts ( id nvarchar(64) NOT NULL, domain nvarchar(255) NOT NULL, client nvarchar(64) NULL, identity_provider nvarchar(64) NULL, username nvarchar(320) NULL, attempts int NULL, expire_at datetime2 NULL, created_at datetime2 NULL, updated_at datetime2 NULL);
-ALTER TABLE login_attempts ADD CONSTRAINT pk_login_attempts PRIMARY KEY (id);
