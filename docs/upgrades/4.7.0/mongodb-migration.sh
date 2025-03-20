@@ -30,7 +30,7 @@ TEMP_DUMP_PATH="/tmp/mongo_dump"
 
 
 # List of collections to migrate
-COLLECTIONS=("uma_access_policies" "webauthn_credentials" "devices" "groups" "login_attempts" "password_histories" "uma_permission_ticket" "uma_resource_set" "user_activities" "users")
+COLLECTIONS=("uma_access_policies" "webauthn_credentials" "devices" "groups" "password_histories" "uma_permission_ticket" "uma_resource_set" "user_activities" "users")
 
 # Function to dump and restore a collection
 migrate_collection() {
