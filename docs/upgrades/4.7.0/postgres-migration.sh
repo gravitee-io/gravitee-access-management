@@ -35,10 +35,10 @@ TABLES=("uma_resource_set" "uma_resource_scopes" "webauthn_credentials" "groups"
 # Export passwords to avoid being prompted
 export PGPASSWORD=$SOURCE_DB_PASSWORD
 
-# Create a backup of the schema and data for each table
+# Create a backup of the data for each table
 for TABLE in "${TABLES[@]}"; do
   echo "Starting backup of table: $TABLE from the source database..."
-  pg_dump -h $SOURCE_DB_HOST -p $SOURCE_DB_PORT -U $SOURCE_DB_USER -F c -t $TABLE --inserts --on-conflict-do-nothing -b -v -f /tmp/${TABLE}_backup.dump $SOURCE_DB_NAME
+  pg_dump -h $SOURCE_DB_HOST -p $SOURCE_DB_PORT -U $SOURCE_DB_USER -F c -t $TABLE --inserts --on-conflict-do-nothing --data-only -b -v -f /tmp/${TABLE}_backup.dump $SOURCE_DB_NAME
 
   # Check if the backup was successful
   if [[ $? -ne 0 ]]; then
@@ -53,17 +53,17 @@ echo "Checking if destination database exists..."
 PGPASSWORD=$DEST_DB_PASSWORD psql -h $DEST_DB_HOST -p $DEST_DB_PORT -U $DEST_DB_USER -d postgres -c "SELECT 1 FROM pg_database WHERE datname = '$DEST_DB_NAME'" | grep -q 1
 
 if [[ $? -ne 0 ]]; then
-  echo "Destination database doesn't exist. Creating destination database..."
-  PGPASSWORD=$DEST_DB_PASSWORD psql -h $DEST_DB_HOST -p $DEST_DB_PORT -U $DEST_DB_USER -d postgres -c "CREATE DATABASE $DEST_DB_NAME"
+  echo "Destination database doesn't exist. Exiting..."
+  exit 1
 else
-  echo "Destination database already exists."
+  echo "Destination database exists."
 fi
 
 # Restore the backup for each table to the destination database
 for TABLE in "${TABLES[@]}"; do
   echo "Restoring table: $TABLE to the destination database..."
   export PGPASSWORD=$DEST_DB_PASSWORD
-  pg_restore -h $DEST_DB_HOST -p $DEST_DB_PORT -U $DEST_DB_USER -d $DEST_DB_NAME -v /tmp/${TABLE}_backup.dump
+  pg_restore -h $DEST_DB_HOST -p $DEST_DB_PORT -U $DEST_DB_USER -d $DEST_DB_NAME -v --data-only /tmp/${TABLE}_backup.dump
 
   # Check if the restore was successful
   if [[ $? -ne 0 ]]; then

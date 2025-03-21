@@ -31,19 +31,13 @@ DEST_DB_PASSWORD="destination_password"
 
 # List of tables to migrate (can also read from a file, see below for alternative)
 TABLES=("uma_resource_set" "uma_resource_scopes" "webauthn_credentials" "groups" "group_members" "group_roles" "devices" "password_histories" "users" "user_entitlements" "user_roles" "user_addresses" "user_attributes" "dynamic_user_roles" "dynamic_user_groups" "user_activities" "user_identities" "uma_access_policies" "uma_permission_ticket")
-# Export passwords to avoid being prompted
-export MYSQL_PWD=$SOURCE_DB_PASSWORD
-
-# Create the destination database if it doesn't exist
-echo "Checking if destination database exists..."
-mysql -h $DEST_DB_HOST -P $DEST_DB_PORT -u $DEST_DB_USER -e "CREATE DATABASE IF NOT EXISTS $DEST_DB_NAME;"
 
 # Migrate data for each table
 for TABLE in "${TABLES[@]}"; do
   echo "Starting backup of table: $TABLE from the source database..."
 
-  # Export schema and data for the table from the source database using mysqldump
-  mysqldump -h $SOURCE_DB_HOST -P $SOURCE_DB_PORT -u $SOURCE_DB_USER --no-tablespaces --single-transaction --quick --lock-tables=false $SOURCE_DB_NAME $TABLE > /tmp/${TABLE}_backup.sql
+  # Export data for the table from the source database using mysqldump
+  mysqldump -h $SOURCE_DB_HOST -P $SOURCE_DB_PORT -u $SOURCE_DB_USER -p$SOURCE_DB_PASSWORD --protocol=tcp --no-tablespaces --single-transaction --quick --no-create-info --lock-tables=false $SOURCE_DB_NAME $TABLE > /tmp/${TABLE}_backup.sql
 
   # Check if the export was successful
   if [[ $? -ne 0 ]]; then
@@ -52,9 +46,9 @@ for TABLE in "${TABLES[@]}"; do
   fi
   echo "Backup of table $TABLE completed successfully."
 
-  # Import schema and data into the destination database
+  # Import data into the destination database
   echo "Restoring table: $TABLE into the destination database..."
-  mysql -h $DEST_DB_HOST -P $DEST_DB_PORT -u $DEST_DB_USER $DEST_DB_NAME < /tmp/${TABLE}_backup.sql
+  mysql -h $DEST_DB_HOST -P $DEST_DB_PORT -u $DEST_DB_USER -p$DEST_DB_PASSWORD --protocol=tcp  $DEST_DB_NAME < /tmp/${TABLE}_backup.sql
 
   # Check if the import was successful
   if [[ $? -ne 0 ]]; then

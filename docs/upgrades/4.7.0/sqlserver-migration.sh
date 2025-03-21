@@ -17,50 +17,27 @@
 
 
 # Configuration
-SOURCE_DB_SERVER="source_server"
+SOURCE_DB_HOST="source_host"
+SOURCE_DB_PORT="1433"
 SOURCE_DB_NAME="source_db"
 SOURCE_DB_USER="source_user"
 SOURCE_DB_PASSWORD="source_password"
 
-DEST_DB_SERVER="destination_server"
+DEST_DB_HOST="destination_host"
+DEST_DB_PORT="1433"
 DEST_DB_NAME="destination_db"
 DEST_DB_USER="destination_user"
 DEST_DB_PASSWORD="destination_password"
 
-# SQLCMD and BCP paths
-SQLCMD_PATH="/opt/mssql-tools/bin/sqlcmd"
-BCP_PATH="/opt/mssql-tools/bin/bcp"
-SCHEMA="$(dirname $0)/sqlserver.schema"
-
-
 # List of tables to migrate (can also read from a file, see below for alternative)
 TABLES=("uma_resource_set" "uma_resource_scopes" "webauthn_credentials" "groups" "group_members" "group_roles" "devices" "password_histories" "users" "user_entitlements" "user_roles" "user_addresses" "user_attributes" "dynamic_user_roles" "dynamic_user_groups" "user_activities" "user_identities" "uma_access_policies" "uma_permission_ticket")
-
-# Export passwords to avoid being prompted
-export SQLCMDPASSWORD=$SOURCE_DB_PASSWORD
-export BCP_PASSWORD=$SOURCE_DB_PASSWORD
-
-# Create the destination database if it doesn't exist
-echo "Checking if destination database exists..."
-$SQLCMD_PATH -S $DEST_DB_SERVER -U $DEST_DB_USER -P $DEST_DB_PASSWORD -d master -Q "IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = '$DEST_DB_NAME') CREATE DATABASE $DEST_DB_NAME"
-
-# Create the table schema in the destination database (this assumes the schema is identical)
-echo "Creating schema for tables in the destination database..."
-$SQLCMD_PATH -S $DEST_DB_SERVER -U $DEST_DB_USER -P $DEST_DB_PASSWORD -d $DEST_DB_NAME -i $SCHEMA
-
-  # Check if the schema creation was successful
-if [[ $? -ne 0 ]]; then
-  echo "Error during schema creation. Exiting..."
-  exit 1
-fi
-echo "Schema creation completed successfully."
 
 # Migrate data for each table
 for TABLE in "${TABLES[@]}"; do
   echo "Starting backup of table: $TABLE from the source database..."
 
   # Export data from the source table using bcp
-  $BCP_PATH "$SOURCE_DB_NAME.dbo.$TABLE" out /tmp/${TABLE}_data.dat -S $SOURCE_DB_SERVER -U $SOURCE_DB_USER -P $SOURCE_DB_PASSWORD -c -t"," -r"\n"
+  bcp "$SOURCE_DB_NAME.dbo.$TABLE" out /tmp/${TABLE}_data.dat -S "$SOURCE_DB_HOST,$SOURCE_DB_PORT" -U $SOURCE_DB_USER -P $SOURCE_DB_PASSWORD -c -t"," -r"\n"
 
   # Check if the export was successful
   if [[ $? -ne 0 ]]; then
@@ -72,7 +49,7 @@ for TABLE in "${TABLES[@]}"; do
 
   # Import data into the destination table using bcp
   echo "Importing data into table: $TABLE in the destination database..."
-  $BCP_PATH "$DEST_DB_NAME.dbo.$TABLE" in /tmp/${TABLE}_data.dat -S $DEST_DB_SERVER -U $DEST_DB_USER -P $DEST_DB_PASSWORD -c -t"," -r"\n"
+  bcp "$DEST_DB_NAME.dbo.$TABLE" in /tmp/${TABLE}_data.dat -S "$DEST_DB_HOST,$DEST_DB_PORT" -U $DEST_DB_USER -P $DEST_DB_PASSWORD -c -t"," -r"\n"
 
   # Check if the import was successful
   if [[ $? -ne 0 ]]; then
