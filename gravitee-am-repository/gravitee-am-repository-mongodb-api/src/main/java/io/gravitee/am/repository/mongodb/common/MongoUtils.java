@@ -77,10 +77,10 @@ public final class MongoUtils {
 
     public static void init(MongoCollection<?> collection) {
         Single.fromPublisher(collection.createIndex(new Document(FIELD_ID, 1), new IndexOptions()))
-                .subscribeOn(Schedulers.io())
-                .blockingSubscribe(
+                .subscribe(
                         ignore -> logger.debug("Index {} created", FIELD_ID),
-                        throwable -> logger.error("An error has occurred during creation of indexes", throwable));
+                        throwable -> logger.error("Error occurs during creation of index {}", FIELD_ID, throwable)
+                );
     }
 
     public static void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes, boolean ensure) {
