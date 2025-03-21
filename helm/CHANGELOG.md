@@ -2,6 +2,10 @@
 
 This file documents all notable changes to [Gravitee.io Access Management 4.x](https://github.com/gravitee-io/gravitee-access-management/tree/master/helm/) Helm Chart. The release numbering uses [semantic versioning](http://semver.org).
 
+### 4.7.0
+
+- We introduced the concept of data planes, thanks to which you can deploy domains in a specific data center. It's configurable with a new section – dataPlanes. More info [link](https://documentation.gravitee.io/am) 
+
 ### 4.5.0
 
 - Database configuration has evolved to use the new gravitee.yaml organization with the repositories section

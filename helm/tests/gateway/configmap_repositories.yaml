@@ -1,8 +1,8 @@
-suite: Test Gateway configmap section user
+suite: Test Gateway configmap section repositories
 templates:
   - "gateway/gateway-configmap.yaml"
 tests:
-  - it: Test repositories config block
+  - it: Test jdbc repositories config block
     template: gateway/gateway-configmap.yaml
     set:
       management:
@@ -26,42 +26,42 @@ tests:
               management:
                 type: jdbc
                 jdbc:
+                  acquireRetry: 1
+                  database: graviteeam
                   driver: mysql
                   host: localhost
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
                   port: 3306
-                  database: graviteeam
-                  acquireRetry: 1
-                initialSize: 1
-                maxAcquireTime: 3000
-                maxCreateConnectionTime: 5000
-                maxIdleTime: 30000
-                maxLifeTime: -1
-                maxSize: 50
               oauth2:
                 type: jdbc
                 jdbc:
+                  acquireRetry: 1
+                  database: graviteeam
                   driver: mysql
                   host: localhost
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
                   port: 3306
-                  database: graviteeam
-                  acquireRetry: 1
-                initialSize: 1
-                maxAcquireTime: 3000
-                maxCreateConnectionTime: 5000
-                maxIdleTime: 30000
-                maxLifeTime: -1
-                maxSize: 50
               gateway:
                 type: jdbc
                 jdbc:
+                  acquireRetry: 1
+                  database: graviteeam
                   driver: mysql
                   host: localhost
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
                   port: 3306
-                  database: graviteeam
-                  acquireRetry: 1
-                initialSize: 1
-                maxAcquireTime: 3000
-                maxCreateConnectionTime: 5000
-                maxIdleTime: 30000
-                maxLifeTime: -1
-                maxSize: 50
