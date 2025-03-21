@@ -39,6 +39,7 @@ import org.junit.Test;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static java.time.temporal.ChronoUnit.HOURS;
@@ -193,4 +194,66 @@ public class PasswordPoliciesResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
     }
+
+    @Test
+    public void shouldNotCreate_maxLengthSmallerThanMinLength() throws JsonProcessingException {
+
+        var newPasswordPolicy = new NewPasswordPolicy();
+        newPasswordPolicy.setName("name");
+        newPasswordPolicy.setExcludePasswordsInDictionary(true);
+        newPasswordPolicy.setMaxLength(10);
+        newPasswordPolicy.setMinLength(12);
+
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID)
+                .path("password-policies")
+                .request().post(Entity.json(newPasswordPolicy));
+
+        var result = objectMapper.readValue(response.readEntity(String.class), Map.class);
+
+        assertTrue(((String)result.get("message")).contains("maxLength must be greater or equal than minLength"));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotCreate_maxLengthNegative() throws JsonProcessingException {
+
+        var newPasswordPolicy = new NewPasswordPolicy();
+        newPasswordPolicy.setName("name");
+        newPasswordPolicy.setExcludePasswordsInDictionary(true);
+        newPasswordPolicy.setMaxLength(-1);
+
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID)
+                .path("password-policies")
+                .request().post(Entity.json(newPasswordPolicy));
+
+        var result = objectMapper.readValue(response.readEntity(String.class), Map.class);
+
+        assertTrue(((String)result.get("message")).contains("must be greater than or equal to 0"));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldNotCreate_minLengthNegative() throws JsonProcessingException {
+
+        var newPasswordPolicy = new NewPasswordPolicy();
+        newPasswordPolicy.setName("name");
+        newPasswordPolicy.setExcludePasswordsInDictionary(true);
+        newPasswordPolicy.setMinLength(-1);
+
+
+        final Response response = target("domains")
+                .path(DOMAIN_ID)
+                .path("password-policies")
+                .request().post(Entity.json(newPasswordPolicy));
+
+        var result = objectMapper.readValue(response.readEntity(String.class), Map.class);
+        System.err.println(result);
+        assertTrue(((String)result.get("message")).contains("must be greater than or equal to 0"));
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
 }
