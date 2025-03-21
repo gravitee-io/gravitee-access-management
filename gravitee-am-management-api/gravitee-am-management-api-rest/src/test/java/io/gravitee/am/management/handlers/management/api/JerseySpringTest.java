@@ -17,13 +17,17 @@ package io.gravitee.am.management.handlers.management.api;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.authentication.view.TemplateResolver;
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
 import io.gravitee.am.management.handlers.management.api.preview.PreviewService;
+import io.gravitee.am.management.service.NewsletterService;
+import io.gravitee.am.management.service.OrganizationUserService;
 import io.gravitee.am.management.service.*;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
+import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
@@ -55,6 +59,7 @@ import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
+import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.resource.EmailTemplateValidator;
 import io.gravitee.am.service.validators.flow.FlowValidator;
 import io.gravitee.am.service.validators.user.UserValidator;
@@ -65,6 +70,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -89,6 +95,7 @@ import jakarta.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -109,6 +116,9 @@ public abstract class JerseySpringTest {
     @Autowired
     @Named("managementOrganizationUserService")
     protected OrganizationUserService organizationUserService;
+
+    @Autowired
+    protected io.gravitee.am.service.OrganizationUserService commonOrganizationUserService;
 
     @Autowired
     protected DomainService domainService;
@@ -251,6 +261,9 @@ public abstract class JerseySpringTest {
     @Autowired
     protected HttpServletRequest httpServletRequest;
 
+    @Autowired
+    protected NewsletterService newsletterService;
+
     @Before
     public void init() {
         when(permissionService.hasPermission(any(User.class), any(PermissionAcls.class))).thenReturn(Single.just(true));
@@ -283,6 +296,11 @@ public abstract class JerseySpringTest {
         @Bean
         public io.gravitee.am.management.service.UserService userService() {
             return mock(io.gravitee.am.management.service.UserService.class);
+        }
+
+        @Bean
+        public io.gravitee.am.service.OrganizationUserService commonOrganizationUserService() {
+            return mock(io.gravitee.am.service.OrganizationUserService.class);
         }
 
         @Bean
@@ -545,6 +563,15 @@ public abstract class JerseySpringTest {
             return mock(HttpServletRequest.class);
         }
 
+        @Bean
+        public PasswordHistoryService passwordHistoryService() {
+            return mock();
+        }
+
+        @Bean
+        public NewsletterService newsletterService() {
+            return mock(NewsletterService.class);
+        }
     }
 
     private JerseyTest _jerseyTest;
@@ -589,7 +616,8 @@ public abstract class JerseySpringTest {
             requestContext.setSecurityContext(new SecurityContext() {
                 @Override
                 public Principal getUserPrincipal() {
-                    User endUser = new DefaultUser(USER_NAME);
+                    DefaultUser endUser = new DefaultUser(USER_NAME);
+                    endUser.setAdditionalInformation(Map.of(Claims.organization, Organization.DEFAULT));
                     return new UsernamePasswordAuthenticationToken(endUser, null);
                 }
 
