@@ -23,6 +23,7 @@ import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
+import io.gravitee.common.http.HttpHeaders;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.RequiredArgsConstructor;
@@ -77,7 +78,15 @@ public class ReturnUrlValidationHandler implements Handler<RoutingContext> {
 
     private boolean checkProxyRequest(String requestedReturnUrl, RoutingContext context) {
         requestedReturnUrl = requestedReturnUrl.endsWith("/") ? requestedReturnUrl : requestedReturnUrl + "/";
-        return requestedReturnUrl.startsWith(resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/"));
+        String resolvedUrl = resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/");
+        if (log.isDebugEnabled()) {
+            log.debug("CheckProxyRequest - return_url '{}' should start with '{}'", requestedReturnUrl, resolvedUrl);
+            String scheme = context.request().getHeader(HttpHeaders.X_FORWARDED_PROTO);
+            String host = context.request().getHeader(HttpHeaders.X_FORWARDED_HOST);
+            String forwardedPath = context.request().getHeader(HttpHeaders.X_FORWARDED_PREFIX);
+            log.debug("CheckProxyRequest - X-Forward-Proto={} / X-Forward-Host={} / X-Forward-Prefix={}", scheme, host, forwardedPath);
+        }
+        return requestedReturnUrl.startsWith(resolvedUrl);
     }
 
     private boolean checkRegisteredRedirectUris(String requestedReturnUrl, RoutingContext context) {
