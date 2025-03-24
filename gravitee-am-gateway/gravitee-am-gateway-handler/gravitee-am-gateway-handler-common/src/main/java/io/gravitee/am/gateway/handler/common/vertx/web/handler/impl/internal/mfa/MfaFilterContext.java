@@ -103,8 +103,9 @@ public class MfaFilterContext {
         return session;
     }
 
-    public Object getLoginAttempt() {
-        return session.get(LOGIN_ATTEMPT_KEY);
+    public int getLoginAttempt() {
+        Number sessionValue = session.get(LOGIN_ATTEMPT_KEY);
+        return isNull(sessionValue) ? 0 : sessionValue.intValue();
     }
 
     public boolean isUserSelectedEnrollFactor() {
@@ -113,8 +114,7 @@ public class MfaFilterContext {
 
     public Map<String, Object> getEvaluableContext() {
         final Map<String, Object> data = getEvaluableAttributes(routingContext);
-        final Object loginAttempt = this.getLoginAttempt();
-        data.put(LOGIN_ATTEMPT_KEY, isNull(loginAttempt) ? 0 : loginAttempt);
+        data.put(LOGIN_ATTEMPT_KEY, getLoginAttempt());
         return Map.of(
                 "request", new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate())),
                 "context", new EvaluableExecutionContext(data)
