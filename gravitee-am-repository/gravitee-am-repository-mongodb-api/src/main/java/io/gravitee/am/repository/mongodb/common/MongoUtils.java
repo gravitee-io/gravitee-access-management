@@ -28,7 +28,6 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.functions.Predicate;
-import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.experimental.UtilityClass;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -87,8 +86,7 @@ public final class MongoUtils {
         if (ensure) {
             var indexesModel = indexes.entrySet().stream().map(entry -> new IndexModel(entry.getKey(), entry.getValue().background(true))).toList();
             Completable.fromPublisher(collection.createIndexes(indexesModel))
-                    .subscribeOn(Schedulers.io())
-                    .blockingSubscribe(() -> logger.debug("{} indexes created", indexes.size()),
+                    .subscribe(() -> logger.debug("{} indexes created", indexes.size()),
                             throwable -> logger.error("An error has occurred during creation of indexes", throwable));
         }
     }
