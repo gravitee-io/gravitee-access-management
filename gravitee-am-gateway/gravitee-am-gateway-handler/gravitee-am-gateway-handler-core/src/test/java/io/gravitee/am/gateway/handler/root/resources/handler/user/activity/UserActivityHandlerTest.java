@@ -131,6 +131,15 @@ public class UserActivityHandlerTest {
         verify(userActivityService, times(1)).save(anyString(), anyString(), eq(Type.LOGIN), any());
     }
 
+    @Test
+    public void must_save_user_activity_with_login_attempt_long_value_and_do_next() {
+        routingContext.session().put(LOGIN_ATTEMPT_KEY, 30L);
+        userActivityHandler.handle(routingContext);
+
+        assertTrue(routingContext.verifyNext(1));
+        verify(userActivityService, times(1)).save(any(), anyString(), eq(Type.LOGIN), any());
+    }
+
 
     @Test
     public void must_save_user_activity_with_all_and_do_next() {
