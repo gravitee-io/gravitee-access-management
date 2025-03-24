@@ -78,7 +78,10 @@ public class UserActivityHandler implements Handler<RoutingContext> {
 
     private void addLoginAttempt(RoutingContext context, HashMap<String, Object> data) {
         if (context.session() != null) {
-            data.put(LOGIN_ATTEMPT_KEY, context.session().get(LOGIN_ATTEMPT_KEY));
+            Number sessionValue = context.session().get(LOGIN_ATTEMPT_KEY);
+            if(sessionValue != null) {
+                data.put(LOGIN_ATTEMPT_KEY, sessionValue.intValue());
+            }
         }
     }
 
