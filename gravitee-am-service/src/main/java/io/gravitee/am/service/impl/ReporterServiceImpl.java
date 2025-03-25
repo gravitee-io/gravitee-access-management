@@ -421,8 +421,8 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     private String addOptionsToURI(RepositoriesEnvironment environment, String mongoUri) {
-        Integer connectTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.connectTimeout", Integer.class, 1000);
-        Integer socketTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.socketTimeout", Integer.class, 1000);
+        Integer connectTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.connectTimeout", Integer.class, 5000);
+        Integer socketTimeout = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.socketTimeout", Integer.class, 5000);
         Integer maxConnectionIdleTime = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.maxConnectionIdleTime", Integer.class);
         Integer heartbeatFrequency = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.heartbeatFrequency", Integer.class);
         Boolean sslEnabled = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.sslEnabled", Boolean.class);

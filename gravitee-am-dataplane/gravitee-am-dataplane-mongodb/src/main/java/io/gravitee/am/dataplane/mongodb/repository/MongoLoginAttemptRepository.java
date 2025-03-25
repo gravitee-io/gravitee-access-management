@@ -73,7 +73,7 @@ public class MongoLoginAttemptRepository extends AbstractDataPlaneMongoRepositor
         // expire after index
         indexes.put(new Document(FIELD_EXPIRE_AT, 1), new IndexOptions().name("e1").expireAfter(0L, TimeUnit.SECONDS));
 
-        MongoUtils.createIndex(loginAttemptsCollection, indexes, getEnsureIndexOnStart());
+        super.createIndex(loginAttemptsCollection, indexes);
     }
 
     @Override
