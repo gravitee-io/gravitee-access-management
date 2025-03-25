@@ -17,15 +17,16 @@
 package io.gravitee.am.repository.mongodb.common;
 
 
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.functions.Predicate;
 import lombok.experimental.UtilityClass;
@@ -39,6 +40,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,19 +78,31 @@ public final class MongoUtils {
     public static final UserIdFields DEFAULT_USER_FIELDS = new UserIdFields(FIELD_USER_ID, FIELD_USER_SOURCE, FIELD_USER_EXTERNAL_ID);
 
     public static void init(MongoCollection<?> collection) {
-        Single.fromPublisher(collection.createIndex(new Document(FIELD_ID, 1), new IndexOptions()))
+        Completable.fromPublisher(collection.createIndex(new Document(FIELD_ID, 1), new IndexOptions()))
                 .subscribe(
-                        ignore -> logger.debug("Index {} created", FIELD_ID),
-                        throwable -> logger.error("Error occurs during creation of index {}", FIELD_ID, throwable)
+                        () -> logger.debug("Index {} of collection {} created", FIELD_ID, collection.getNamespace().getCollectionName()),
+                        throwable -> logger.error("Error occurred during creation of id index of {}", collection.getNamespace().getCollectionName(), throwable)
                 );
     }
 
     public static void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes, boolean ensure) {
         if (ensure) {
-            var indexesModel = indexes.entrySet().stream().map(entry -> new IndexModel(entry.getKey(), entry.getValue().background(true))).toList();
+            var indexesModel = indexes.entrySet()
+                    .stream()
+                    .map(entry -> new IndexModel(entry.getKey(), entry.getValue().background(true)))
+                    .toList();
             Completable.fromPublisher(collection.createIndexes(indexesModel))
-                    .subscribe(() -> logger.debug("{} indexes created", indexes.size()),
-                            throwable -> logger.error("An error has occurred during creation of indexes", throwable));
+                    .retryWhen(th -> th
+                            .zipWith(Flowable.range(1, 3), (error, attempt) -> attempt) // 3 attempts
+                            .flatMap(attempt -> {
+                                logger.debug("Retrying index creation for {}, attempt={}/3", collection.getNamespace().getCollectionName(), attempt);
+                                return Flowable.timer(attempt, TimeUnit.SECONDS); // delayed backoff
+                            }))
+                    .subscribe(
+                            () -> logger.debug("{} indexes created", collection.getNamespace().getCollectionName()),
+                            throwable -> logger.error("Error occurred during indexes creation for {}", collection.getNamespace().getCollectionName(), throwable)
+                    );
+
         }
     }
 
