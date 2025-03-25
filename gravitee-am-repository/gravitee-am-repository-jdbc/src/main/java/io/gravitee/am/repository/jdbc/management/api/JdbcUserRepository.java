@@ -1011,9 +1011,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             }
         }
 
-        // TODO manage updateActions
-        final List<UserIdentity> identities = item.getIdentities();
-        if (identities != null && !identities.isEmpty()) {
+        if (updateActions.updateIdentities()) {
+            final List<UserIdentity> identities = item.getIdentities();
+            if (identities != null && !identities.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(identity -> {
                 DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertIdentitiesStatement).bind(FK_USER_ID, item.getId());
                 insert = identity.getUserId() != null ? insert.bind(USER_COL_IDENTITY_ID, identity.getUserId()) : insert.bindNull(USER_COL_IDENTITY_ID, String.class);
@@ -1024,6 +1024,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 return insert.fetch().rowsUpdated();
             }).reduce(Long::sum));
         }
+    }
 
         return actionFlow;
     }
