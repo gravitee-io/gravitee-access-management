@@ -179,7 +179,7 @@ public interface UserRepository extends CrudRepository<User, String> {
         }
 
         public boolean updateRequire() {
-            return (addresses || attributes || entitlements || role || dynamicRole || identities);
+            return (addresses || attributes || entitlements || role || dynamicRole || dynamicGroup || identities);
         }
 
         public static UpdateActions updateAll() {
@@ -190,6 +190,7 @@ public interface UserRepository extends CrudRepository<User, String> {
             return new UserRepository.UpdateActions()
                     .updateRole(false)
                     .updateDynamicRole(false)
+                    .updateDynamicGroup(false)
                     .updateEntitlements(false)
                     .updateAttributes(false)
                     .updateAddresses(false)

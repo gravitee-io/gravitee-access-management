@@ -360,4 +360,28 @@ public class JdbcUser {
             this.additionalInformation = additionalInformation;
         }
     }
+
+    @Table("dynamic_user_groups")
+    public static class DynamicGroup {
+        @Column("user_id")
+        private String userId;
+        @Column("group_id") //group keyword is reserved in SQL grammar.
+        private String group;
+
+        public String getUserId() {
+            return userId;
+        }
+
+        public void setUserId(String userId) {
+            this.userId = userId;
+        }
+
+        public String getGroup() {
+            return group;
+        }
+
+        public void setGroup(String group) {
+            this.group = group;
+        }
+    }
 }
