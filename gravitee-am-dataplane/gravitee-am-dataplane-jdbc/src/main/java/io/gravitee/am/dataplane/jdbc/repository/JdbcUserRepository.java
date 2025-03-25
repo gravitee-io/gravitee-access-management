@@ -18,6 +18,7 @@ package io.gravitee.am.dataplane.jdbc.repository;
 import io.gravitee.am.common.analytics.Field;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.jdbc.repository.spring.SpringDynamicUserGroupRepository;
 import io.gravitee.am.dataplane.jdbc.repository.spring.SpringDynamicUserRoleRepository;
 import io.gravitee.am.dataplane.jdbc.repository.spring.SpringUserAddressesRepository;
 import io.gravitee.am.dataplane.jdbc.repository.spring.SpringUserAttributesRepository;
@@ -239,6 +240,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String REF_TYPE = "refType";
     private static final String EMAIL = "email";
     private static final String USER_ID = "user_id";
+    private static final String DYNAMIC_USER_GROUPS_TABLE = "dynamic_user_groups";
 
     private static final UserIdFields USER_ID_FIELDS = new UserIdFields(USER_COL_ID, USER_COL_SOURCE, USER_COL_EXTERNAL_ID);
 
@@ -256,6 +258,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Autowired
     protected SpringDynamicUserRoleRepository dynamicRoleRepository;
+
+    @Autowired
+    protected SpringDynamicUserGroupRepository dynamicGroupRepository;
 
     @Autowired
     protected SpringUserAddressesRepository addressesRepository;
@@ -958,6 +963,21 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         if (updateActions.updateDynamicRole()) {
             actionFlow = addJdbcRoles(actionFlow, item, item.getDynamicRoles(), "dynamic_user_roles");
         }
+        if (updateActions.updateDynamicGroup()) {
+            if (item.getDynamicGroups() != null && !item.getDynamicGroups().isEmpty()) {
+                actionFlow = actionFlow.then(Flux.fromIterable(item.getDynamicGroups()).concatMap(group -> {
+                    try {
+                        return getTemplate().getDatabaseClient().sql("INSERT INTO " + DYNAMIC_USER_GROUPS_TABLE + "(user_id, group_id) VALUES(:user, :group)")
+                                .bind("user", item.getId())
+                                .bind("group", group)
+                                .fetch().rowsUpdated();
+                    } catch (Exception e) {
+                        LOGGER.error("An unexpected error has occurred", e);
+                        return Mono.just(0);
+                    }
+                }).map(Number::longValue).reduce(Long::sum));
+            }
+        }
 
         final List<String> entitlements = item.getEntitlements();
         if (entitlements != null && !entitlements.isEmpty() && updateActions.updateEntitlements()) {
@@ -989,20 +1009,20 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             }
         }
 
-        // TODO manage updateActions
-        final List<UserIdentity> identities = item.getIdentities();
-        if (identities != null && !identities.isEmpty()) {
-            actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(identity -> {
-                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertIdentitiesStatement).bind(FK_USER_ID, item.getId());
-                insert = identity.getUserId() != null ? insert.bind(USER_COL_IDENTITY_ID, identity.getUserId()) : insert.bindNull(USER_COL_IDENTITY_ID, String.class);
-                insert = identity.getUsername() != null ? insert.bind(USER_COL_USERNAME, identity.getUsername()) : insert.bindNull(USER_COL_USERNAME, String.class);
-                insert = identity.getProviderId() != null ? insert.bind(USER_COL_PROVIDER_ID, identity.getProviderId()) : insert.bindNull(USER_COL_PROVIDER_ID, String.class);
-                insert = addQuotedField(insert, USER_COL_LINKED_AT, dateConverter.convertTo(identity.getLinkedAt(), null), LocalDateTime.class);
-                insert = identity.getAdditionalInformation() != null ? databaseDialectHelper.addJsonField(insert, USER_COL_ADDITIONAL_INFORMATION, identity.getAdditionalInformation()) : insert.bindNull(USER_COL_ADDITIONAL_INFORMATION, String.class);
-                return insert.fetch().rowsUpdated();
-            }).reduce(Long::sum));
+        if (updateActions.updateIdentities()) {
+            final List<UserIdentity> identities = item.getIdentities();
+            if (identities != null && !identities.isEmpty()) {
+                actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(identity -> {
+                    DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertIdentitiesStatement).bind(FK_USER_ID, item.getId());
+                    insert = identity.getUserId() != null ? insert.bind(USER_COL_IDENTITY_ID, identity.getUserId()) : insert.bindNull(USER_COL_IDENTITY_ID, String.class);
+                    insert = identity.getUsername() != null ? insert.bind(USER_COL_USERNAME, identity.getUsername()) : insert.bindNull(USER_COL_USERNAME, String.class);
+                    insert = identity.getProviderId() != null ? insert.bind(USER_COL_PROVIDER_ID, identity.getProviderId()) : insert.bindNull(USER_COL_PROVIDER_ID, String.class);
+                    insert = addQuotedField(insert, USER_COL_LINKED_AT, dateConverter.convertTo(identity.getLinkedAt(), null), LocalDateTime.class);
+                    insert = identity.getAdditionalInformation() != null ? databaseDialectHelper.addJsonField(insert, USER_COL_ADDITIONAL_INFORMATION, identity.getAdditionalInformation()) : insert.bindNull(USER_COL_ADDITIONAL_INFORMATION, String.class);
+                    return insert.fetch().rowsUpdated();
+                }).reduce(Long::sum));
+            }
         }
-
         return actionFlow;
     }
 
@@ -1046,6 +1066,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             Mono<Long> deleteDynamicRoles = getTemplate().delete(JdbcUser.DynamicRole.class).matching(criteria).all();
             result = result.then(deleteDynamicRoles);
         }
+        if (actions.updateDynamicGroup()) {
+            Mono<Long> deleteDynamicGroups = getTemplate().delete(JdbcUser.DynamicGroup.class).matching(criteria).all();
+            result = result.then(deleteDynamicGroups);
+        }
         if (actions.updateAddresses()) {
             Mono<Long> deleteAddresses = getTemplate().delete(JdbcUser.Address.class).matching(criteria).all();
             result = result.then(deleteAddresses);
@@ -1075,6 +1099,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .flatMap(user ->
                         dynamicRoleRepository.findByUserId(user.getId()).map(JdbcUser.DynamicRole::getRole).toList().map(roles -> {
                             user.setDynamicRoles(roles);
+                            return user;
+                        }))
+                .flatMap(user ->
+                        dynamicGroupRepository.findByUserId(user.getId()).map(JdbcUser.DynamicGroup::getGroup).toList().map(groups -> {
+                            user.setDynamicGroups(groups);
                             return user;
                         }))
                 .flatMap(user ->
