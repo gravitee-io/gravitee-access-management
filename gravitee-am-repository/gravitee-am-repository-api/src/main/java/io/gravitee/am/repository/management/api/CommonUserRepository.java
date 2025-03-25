@@ -144,7 +144,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
         }
 
         public boolean updateRequire() {
-            return (addresses || attributes || entitlements || role || dynamicRole || identities);
+            return (addresses || attributes || entitlements || role || dynamicRole || dynamicGroup || identities);
         }
 
         public static UpdateActions updateAll() {
