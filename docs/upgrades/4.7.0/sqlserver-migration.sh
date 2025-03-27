@@ -37,7 +37,7 @@ for TABLE in "${TABLES[@]}"; do
   echo "Starting backup of table: $TABLE from the source database..."
 
   # Export data from the source table using bcp
-  bcp "$SOURCE_DB_NAME.dbo.$TABLE" out /tmp/${TABLE}_data.dat -S "$SOURCE_DB_HOST,$SOURCE_DB_PORT" -U $SOURCE_DB_USER -P $SOURCE_DB_PASSWORD -c -t"," -r"\n"
+  bcp "$SOURCE_DB_NAME.dbo.$TABLE" out /tmp/${TABLE}_data.dat -S "$SOURCE_DB_HOST,$SOURCE_DB_PORT" -U $SOURCE_DB_USER -P $SOURCE_DB_PASSWORD -q -c -t "\t" -r "\n"
 
   # Check if the export was successful
   if [[ $? -ne 0 ]]; then
@@ -49,7 +49,7 @@ for TABLE in "${TABLES[@]}"; do
 
   # Import data into the destination table using bcp
   echo "Importing data into table: $TABLE in the destination database..."
-  bcp "$DEST_DB_NAME.dbo.$TABLE" in /tmp/${TABLE}_data.dat -S "$DEST_DB_HOST,$DEST_DB_PORT" -U $DEST_DB_USER -P $DEST_DB_PASSWORD -c -t"," -r"\n"
+  bcp "$DEST_DB_NAME.dbo.$TABLE" in /tmp/${TABLE}_data.dat -S "$DEST_DB_HOST,$DEST_DB_PORT" -U $DEST_DB_USER -P $DEST_DB_PASSWORD -q -c -t "\t" -r "\n"
 
   # Check if the import was successful
   if [[ $? -ne 0 ]]; then
@@ -64,3 +64,4 @@ for TABLE in "${TABLES[@]}"; do
 done
 
 echo "SQL Server table migration completed successfully."
+
