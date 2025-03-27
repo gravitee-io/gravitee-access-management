@@ -20,6 +20,16 @@ import { ApplicationService } from '../../../../../services/application.service'
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { AuthService } from '../../../../../services/auth.service';
 
+interface ApplicationSaml2SettingsPayload {
+  entityId?: string;
+  attributeConsumeServiceUrl?: string;
+  singleLogoutServiceUrl?: string;
+  wantResponseSigned?: boolean;
+  wantAssertionsSigned?: boolean;
+  certificate?: string;
+  responseBinding?: string;
+}
+
 @Component({
   selector: 'app-application-saml2',
   templateUrl: './saml2.component.html',
@@ -29,7 +39,7 @@ export class ApplicationSaml2Component implements OnInit {
   @ViewChild('samlSettingsForm', { static: true }) form: any;
   private domainId: string;
   application: any;
-  applicationSamlSettings: any;
+  applicationSamlSettings: ApplicationSaml2SettingsPayload;
   formChanged: boolean;
   editMode: boolean;
   certificates: any[] = [];
@@ -71,7 +81,7 @@ export class ApplicationSaml2Component implements OnInit {
     });
   }
 
-  responseBindingChanged(value) {
+  responseBindingChanged(value: string) {
     this.applicationSamlSettings.responseBinding = value;
     this.formChanged = true;
   }
