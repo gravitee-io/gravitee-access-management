@@ -109,7 +109,7 @@ public class JWTServiceImpl implements JWTService {
     public Single<JWT> decode(String jwt, TokenType tokenType) {
         return Single.create(emitter -> {
             try {
-                String json = new String(Base64.getDecoder().decode(jwt.split("\\.")[1]), "UTF-8");
+                String json = new String(Base64.getUrlDecoder().decode(jwt.split("\\.")[1]), "UTF-8");
                 emitter.onSuccess(objectMapper.readValue(json, JWT.class));
             } catch (Exception ex) {
                 logger.debug("Failed to decode {} JWT", tokenType, ex);
