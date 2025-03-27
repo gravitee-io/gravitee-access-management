@@ -178,6 +178,7 @@
         <gravitee-am-resource-twilio.version>1.2.0</gravitee-am-resource-twilio.version>
         <gravitee-am-policy-mfa-challenge.version>2.0.0</gravitee-am-policy-mfa-challenge.version>
         <gravitee-am-policy-account-linking.version>2.0.0</gravitee-am-policy-account-linking.version>
+        <gravitee-am-certificate-aws.version>2.0.0</gravitee-am-certificate-aws.version>
 
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
