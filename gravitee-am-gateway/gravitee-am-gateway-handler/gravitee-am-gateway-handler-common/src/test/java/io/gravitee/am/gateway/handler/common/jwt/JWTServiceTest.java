@@ -19,6 +19,7 @@ import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.certificate.api.Key;
 import io.gravitee.am.common.jwt.Claims;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
@@ -32,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.crypto.KeyGenerator;
@@ -53,6 +55,9 @@ public class JWTServiceTest {
 
     @Mock
     private CertificateManager certificateManager;
+
+    @Spy
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Before
     public void setUp() {
@@ -196,4 +201,13 @@ public class JWTServiceTest {
                 .assertComplete()
                 .assertValue(o -> o.equals(expectedResult));
     }
+
+    @Test
+    public void jwt_should_be_decoded_with_base_64_url () {
+        final String jwtWithUnderscore = "eyJraWQiOiJkZWZhdWx0IiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYifQ.eyJnaXMiOiJkZWZhdWx0LWlkcC0xYzZmMjY3Zi1kOGJhLTQwYTAtYWYyNi03ZmQ4YmE3MGEwYjE6NzhjYmU2YzUtNThlNC00MDUyLThiZTYtYzU1OGU0MzA1MmRiIiwic3ViIjoiMzE2NjdkOWMtMjYxYi0zODQ0LTk3NDAtYzFiMWZkODY4ZTVkIiwiYXVkIjoidGVzdCIsImRpc3BsYXlOYW1lIjoiQm_Dq2dlbiBNYWxlciIsImRvbWFpbiI6IjFjNmYyNjdmLWQ4YmEtNDBhMC1hZjI2LTdmZDhiYTcwYTBiMSIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA5Mi90ZXN0L29pZGMiLCJleHAiOjE3NDMwODQ0NjUsImlhdCI6MTc0MzA3NzI2NSwianRpIjoiZDg5MU5LSkdiTGhTb3ZhT0tSM1ZYQndUNzZQRmMtUmRYcmFpa3Fpa2xiWSJ9.fZzgodapXlCQPaqB2kQ-C_1aQAwZJdQL1g5j8gAfH2TTQABhUwWBpaRzag9-rytONnE97d631g5qlZfgF2bkBx8kaTpiqKJlHxG2-4LREWDs5iVao4AtGb1JoUR4G50p_vRqqviRO9Vby0E6l8XHE3faxpF-k5_BPcNKwpzJdmkkvAYInAXLAy2Av9vHCALm7FYwhmUtvy2TaRSMwu0umL6RtnGyueVsGKL5HxpvYRe02RMa6vAEsmbJMtZ602O1ThQmcbARUvPf564YslUXADxat5SOp7AqLHfYqUPNaeZjvlGVZDFndmkFTHyVbuf-syNmu69TNMRWw6jd7EREkQ";
+        jwtService.decode(jwtWithUnderscore, JWTService.TokenType.ACCESS_TOKEN)
+                .test()
+                .assertValue(jwt -> jwt.get("displayName").equals("Boëgen Maler"));
+    }
+
 }
