@@ -51,6 +51,7 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -229,7 +230,7 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
-    public void create_applyDefaultIdentiyProvider() {
+    public void create_applyDefaultIdentityProvider() {
         IdentityProvider identityProvider = Mockito.mock(IdentityProvider.class);
         when(identityProvider.getId()).thenReturn("identity-provider-id-123");
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(identityProvider));
@@ -814,6 +815,71 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(client -> client.getJwksUri().equals("something") && client.getRedirectUris().size() == 1);
+        verify(clientService, times(1)).update(any());
+    }
+
+    @Test
+    public void patch_non_hashed_secret_should_be_provided_in_response() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setJwksUri(Optional.of("something"));
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+
+        final var app = new Client();
+
+        final var bcryptSecretSettings = new ApplicationSecretSettings();
+        bcryptSecretSettings.setAlgorithm(SecretHashAlgorithm.BCRYPT.name());
+        bcryptSecretSettings.setId(UUID.randomUUID().toString());
+        final var noneSecretSettings = new ApplicationSecretSettings();
+        noneSecretSettings.setAlgorithm(SecretHashAlgorithm.NONE.name());
+        noneSecretSettings.setId(UUID.randomUUID().toString());
+        app.setSecretSettings(List.of(noneSecretSettings, bcryptSecretSettings));
+
+        final var noneClientSecret = new ClientSecret();
+        noneClientSecret.setSettingsId(noneSecretSettings.getId());
+        noneClientSecret.setSecret(UUID.randomUUID().toString());
+        final var bcryptClientSecret = new ClientSecret();
+        bcryptClientSecret.setSettingsId(bcryptSecretSettings.getId());
+        bcryptClientSecret.setSecret(UUID.randomUUID().toString());
+
+        app.setClientSecrets(List.of(bcryptClientSecret, noneClientSecret));
+
+        TestObserver<Client> testObserver = dcrService.patch(app, request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> noneClientSecret.getSecret().equals(client.getClientSecret()));
+        verify(clientService, times(1)).update(any());
+    }
+
+    @Test
+    public void patch_secret_should_not_be_provided_in_response_if_hashed() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setJwksUri(Optional.of("something"));
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+
+        final var app = new Client();
+
+        final var bcryptSecretSettings = new ApplicationSecretSettings();
+        bcryptSecretSettings.setAlgorithm(SecretHashAlgorithm.BCRYPT.name());
+        bcryptSecretSettings.setId(UUID.randomUUID().toString());
+        final var noneSecretSettings = new ApplicationSecretSettings();
+        noneSecretSettings.setAlgorithm(SecretHashAlgorithm.NONE.name());
+        noneSecretSettings.setId(UUID.randomUUID().toString());
+        app.setSecretSettings(List.of(noneSecretSettings, bcryptSecretSettings));
+
+        final var bcryptClientSecret = new ClientSecret();
+        bcryptClientSecret.setSettingsId(bcryptSecretSettings.getId());
+        bcryptClientSecret.setSecret(UUID.randomUUID().toString());
+
+        app.setClientSecrets(List.of(bcryptClientSecret));
+
+        TestObserver<Client> testObserver = dcrService.patch(app, request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> client.getClientSecret() == null);
         verify(clientService, times(1)).update(any());
     }
 
