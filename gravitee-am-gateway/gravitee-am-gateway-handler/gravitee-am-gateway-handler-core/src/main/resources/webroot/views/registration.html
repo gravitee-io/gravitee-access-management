@@ -66,7 +66,7 @@
                 <span th:if="${passwordSettings.includeNumbers}" id="includeNumbers" class="invalid" th:text="#{password.include.numbers}" />
                 <span th:if="${passwordSettings.includeSpecialCharacters}" id="includeSpecialChar" class="invalid" th:text="#{password.include.special.characters}" />
                 <span th:if="${passwordSettings.lettersInMixedCase}" id="mixedCase" class="invalid" th:text="#{password.letters.mixed.cases}" />
-                <span th:if="${passwordSettings.maxConsecutiveLetters != null}" id="maxConsecutiveLetters" class="valid" ><span th:text="#{password.max.consecutive.letters.before}" /> <span th:text="${passwordSettings.maxConsecutiveLetters}"/> <span th:text="#{password.max.consecutive.letters.after}" /></span>
+                <span th:if="${passwordSettings.maxConsecutiveLetters != null && passwordSettings.maxConsecutiveLetters > 0}" id="maxConsecutiveLetters" class="valid" ><span th:text="#{password.max.consecutive.letters.before}" /> <span th:text="${passwordSettings.maxConsecutiveLetters}"/> <span th:text="#{password.max.consecutive.letters.after}" /></span>
                 <span th:if="${passwordSettings.excludeUserProfileInfoInPassword}" id="excludeUserProfileInfoInPassword" class="invalid" th:text="#{password.exclude.user.info}"/>
                 <span th:if="${passwordSettings.excludePasswordsInDictionary}" id="excludePasswordsInDictionary" class="black" th:text="#{password.exclude.common.passwords}"/>
             </div>
