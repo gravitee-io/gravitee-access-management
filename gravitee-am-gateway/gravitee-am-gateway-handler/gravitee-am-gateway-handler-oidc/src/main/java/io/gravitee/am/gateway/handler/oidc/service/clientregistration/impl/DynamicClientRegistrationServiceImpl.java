@@ -27,6 +27,7 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientSelfSignedAuthProvider;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientService;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
@@ -37,6 +38,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CertificateService;
@@ -47,6 +49,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
 import io.reactivex.rxjava3.core.*;
@@ -67,9 +70,11 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 import static io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils.*;
+import static java.util.Optional.ofNullable;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -139,7 +144,27 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         return this.validateClientPatchRequest(request)
                 .map(req -> req.patch(toPatch))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::update);
+                .flatMap(clientService::update)
+                .map(this::assignSecret);
+    }
+
+    private Client assignSecret(Client app) {
+        // with client secret rotation, should we return the first secret of the list or maybe the oldest one ?
+        final var noneSettingsId = ofNullable(app.getSecretSettings())
+                .stream()
+                .flatMap(List::stream)
+                .filter(s -> SecretHashAlgorithm.NONE.name().equals(s.getAlgorithm()))
+                .map(ApplicationSecretSettings::getId)
+                .collect(Collectors.toSet());
+
+        if (!noneSettingsId.isEmpty()) {
+            app.getClientSecrets()
+                    .stream()
+                    .filter(s -> noneSettingsId.contains(s.getSettingsId()))
+                    .findFirst()
+                    .ifPresent(rawSecret -> app.setClientSecret(rawSecret.getSecret()));
+        }
+        return app;
     }
 
     @Override
@@ -147,7 +172,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         return this.validateClientRegistrationRequest(request)
                 .map(req -> req.patch(toUpdate))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::update);
+                .flatMap(clientService::update)
+                .map(this::assignSecret);
     }
 
     @Override
