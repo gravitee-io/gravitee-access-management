@@ -32,7 +32,7 @@
                 placeholder="Identity providers"
                 multiple
                 name="identities"
-                [(ngModel)]="settings.identityProviders"
+                [(ngModel)]="selectedIdentityProviders"
                 [disabled]="readonly"
               >
                 <mat-option *ngFor="let identityProvider of identityProviders" [value]="identityProvider.id">{{
@@ -54,7 +54,7 @@
                 placeholder="Social providers"
                 multiple
                 name="socialIdentities"
-                [(ngModel)]="settings.socialIdentities"
+                [(ngModel)]="selectedSocialIdentities"
                 [disabled]="readonly"
               >
                 <mat-option *ngFor="let socialIdentityProvider of socialIdentities" [value]="socialIdentityProvider.id">{{
