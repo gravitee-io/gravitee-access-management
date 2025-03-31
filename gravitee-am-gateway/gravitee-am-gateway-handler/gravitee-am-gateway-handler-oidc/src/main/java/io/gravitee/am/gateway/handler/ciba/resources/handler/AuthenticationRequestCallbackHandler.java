@@ -41,14 +41,16 @@ public class AuthenticationRequestCallbackHandler implements Handler<RoutingCont
     public void handle(RoutingContext context) {
         final ADCallbackContext adCallbackContext = new ADCallbackContext(context.request().headers(), context.request().params());
         authRequestService.validateUserResponse(adCallbackContext)
-                .doOnComplete(() -> context.response().setStatusCode(HttpStatusCode.OK_200).end())
-                .doOnError(error -> {
-                    LOGGER.warn("Authentication Request validation can't be processed", error);
-                    if (error instanceof OAuth2Exception) {
-                        context.fail(HttpStatusCode.BAD_REQUEST_400, error);
-                    } else {
-                        context.fail(HttpStatusCode.INTERNAL_SERVER_ERROR_500);
+                .subscribe(
+                    () -> context.response().setStatusCode(HttpStatusCode.OK_200).end(),
+                    error -> {
+                        LOGGER.warn("Authentication Request validation can't be processed", error);
+                        if (error instanceof OAuth2Exception) {
+                            context.fail(HttpStatusCode.BAD_REQUEST_400, error);
+                        } else {
+                            context.fail(HttpStatusCode.INTERNAL_SERVER_ERROR_500);
+                        }
                     }
-                }).subscribe();
+                );
     }
 }
