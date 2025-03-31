@@ -29,6 +29,7 @@ object GatewayCalls {
       .get(GATEWAY_BASE_URL + s"/${domain}/oauth/authorize?client_id=${APP_NAME}&response_type=code&redirect_uri=https%3A%2F%2Fcallback-${APP_NAME}")
       .check(status.is(302))
       .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
+      .check(header(Location).saveAs("postAuthorize"))
   }
 
   def renderLoginForm(domain: String = DOMAIN_NAME) = {
@@ -64,6 +65,49 @@ object GatewayCalls {
         head(1)
       }
       ).saveAs("code"))
+  }
+
+  def renderMfaEnrollForm(domain: String = DOMAIN_NAME) = {
+    http("Get Mfa Enroll Form")
+            .get(GATEWAY_BASE_URL + s"/${domain}/mfa/enroll?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
+            .check(status.is(200))
+            // should use getCookieValue instead but our cookie doesn't have domain value that seems to be problematic for gatling
+            // so extract the value from the form
+            .check(css("input[name='X-XSRF-TOKEN']", "value").find.saveAs("XSRF-TOKEN"))
+  }
+
+  def submitMfaEnrollForm(domain: String = DOMAIN_NAME) = {
+    http("Post Mfa Enroll Form")
+            .post(GATEWAY_BASE_URL + s"/${domain}/mfa/enroll?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
+            .formParam("X-XSRF-TOKEN", "${XSRF-TOKEN}")
+            .formParam("factorId", "${factorId}")
+            .formParam("user_mfa_enrollment", "true")
+            .formParam("phone", "+33615492508")
+            .formParam("client_id", APP_NAME)
+            .check(status.is(302))
+            .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
+            .check(header(Location).saveAs("postMfaEnroll"))
+  }
+
+  def renderMfaChallengeForm(domain: String = DOMAIN_NAME) = {
+    http("Get Mfa Challenge Form")
+            .get(GATEWAY_BASE_URL + s"/${domain}/mfa/challenge?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
+            .check(status.is(200))
+            // should use getCookieValue instead but our cookie doesn't have domain value that seems to be problematic for gatling
+            // so extract the value from the form
+            .check(css("input[name='X-XSRF-TOKEN']", "value").find.saveAs("XSRF-TOKEN"))
+  }
+
+  def submitMfaChallengeForm(domain: String = DOMAIN_NAME) = {
+    http("Post Mfa Challenge Form")
+            .post(GATEWAY_BASE_URL + s"/${domain}/mfa/challenge?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
+            .formParam("X-XSRF-TOKEN", "${XSRF-TOKEN}")
+            .formParam("code", "123456")
+            .formParam("factorId", "${factorId}")
+            .formParam("client_id", APP_NAME)
+            .check(status.is(302))
+            .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
+            .check(header(Location).saveAs("postLoginRedirect"))
   }
 
   def requestAccessToken(domain: String = DOMAIN_NAME) = {
