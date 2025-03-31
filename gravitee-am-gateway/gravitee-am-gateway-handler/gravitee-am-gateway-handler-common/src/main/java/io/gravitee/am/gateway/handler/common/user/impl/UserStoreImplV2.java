@@ -23,9 +23,11 @@ import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.gateway.handler.common.user.UserValueMapper;
 import io.gravitee.am.model.User;
 import io.gravitee.node.api.cache.Cache;
+import io.gravitee.node.api.cache.CacheException;
 import io.gravitee.node.api.cache.CacheManager;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 
 import java.util.concurrent.TimeUnit;
@@ -36,6 +38,7 @@ import static io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2.
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class UserStoreImplV2 implements UserStore {
     private final Cache<String, User> idCache;
     private final Cache<String, User> gisCache;
@@ -54,32 +57,72 @@ public class UserStoreImplV2 implements UserStore {
     public Maybe<User> add(User user) {
         return idCache.rxPut(user.getId(), user, ttl, TimeUnit.SECONDS)
                 .concatWith(gisCache.rxPut(generateInternalSubFrom(user.getSource(), user.getExternalId()), user, ttl, TimeUnit.SECONDS))
-                .lastElement();
+                .lastElement()
+                .onErrorResumeNext(exc -> {
+                    if (exc instanceof CacheException) {
+                        log.debug("Unable to add user with id {}, return empty result", user.getId(), exc);
+                        return Maybe.just(user);
+                    }
+                    return Maybe.error(exc);
+                });
     }
 
     @Override
     public Completable remove(String userId) {
-        return idCache.rxEvict(userId).flatMap(user -> gisCache.rxEvict(generateInternalSubFrom(user.getSource(), user.getExternalId()))).ignoreElement();
+        return idCache.rxEvict(userId).flatMap(user -> gisCache.rxEvict(generateInternalSubFrom(user.getSource(), user.getExternalId())))
+                .onErrorResumeNext(exc -> {
+                    if (exc instanceof CacheException) {
+                        log.debug("Unable to evict userId {}, return empty result", userId, exc);
+                        return Maybe.empty();
+                    }
+                    return Maybe.error(exc);
+                }).ignoreElement();
     }
 
     @Override
     public Maybe<User> get(String userId) {
-        return idCache.rxGet(userId);
+        return idCache.rxGet(userId).onErrorResumeNext(exc -> {
+            if (exc instanceof CacheException) {
+                log.debug("Unable to get userId {}, return empty result", userId, exc);
+                return Maybe.empty();
+            }
+            return Maybe.error(exc);
+        });
     }
 
     @Override
     public Completable removeByInternalSub(String gis) {
-        return gisCache.rxEvict(gis).flatMap(user -> idCache.rxEvict(user.getId())).ignoreElement();
+        return gisCache.rxEvict(gis).flatMap(user -> idCache.rxEvict(user.getId())).onErrorResumeNext(exc -> {
+            if (exc instanceof CacheException) {
+                log.debug("Unable to evict by gis {}, return empty result", gis, exc);
+                return Maybe.empty();
+            }
+            return Maybe.error(exc);
+        }).ignoreElement();
     }
 
     @Override
     public Maybe<User> getByInternalSub(String gis) {
-        return gisCache.rxGet(gis);
+        return gisCache.rxGet(gis).onErrorResumeNext(exc -> {
+            if (exc instanceof CacheException) {
+                log.debug("Unable to get user by gis {}, return empty result", gis, exc);
+                return Maybe.empty();
+            }
+            return Maybe.error(exc);
+        });
     }
 
     @Override
     public Completable clear() {
-        return gisCache.rxClear().andThen(idCache.rxClear());
+        return gisCache.rxClear()
+                .andThen(idCache.rxClear())
+                .onErrorResumeNext(exc -> {
+                    if (exc instanceof CacheException) {
+                        log.debug("Unable to clear cache entries", exc);
+                        return Completable.complete();
+                    }
+                    return Completable.error(exc);
+                });
     }
 
 }
