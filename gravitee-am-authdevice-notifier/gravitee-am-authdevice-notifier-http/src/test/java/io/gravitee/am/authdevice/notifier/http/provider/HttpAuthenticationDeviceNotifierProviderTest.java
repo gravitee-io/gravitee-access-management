@@ -20,8 +20,10 @@ package io.gravitee.am.authdevice.notifier.http.provider;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import io.gravitee.am.authdevice.notifier.api.exception.DeviceNotificationException;
+import io.gravitee.am.authdevice.notifier.api.model.ADCallbackContext;
 import io.gravitee.am.authdevice.notifier.api.model.ADNotificationRequest;
 import io.gravitee.am.authdevice.notifier.http.HttpAuthenticationDeviceNotifierConfiguration;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -30,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mockito;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -39,6 +42,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.CALLBACK_VALIDATE;
+import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.STATE;
+import static io.gravitee.am.authdevice.notifier.http.provider.HttpAuthenticationDeviceNotifierProvider.TRANSACTION_ID;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -176,4 +182,35 @@ public class HttpAuthenticationDeviceNotifierProviderTest {
         observer.assertError(DeviceNotificationException.class);
         observer.assertError(err -> err.getMessage().equals("Device notification fails"));
     }
+
+    @Test
+    public void should_return_empty_when_callback_validate_is_missing(){
+        var callback = Mockito.mock(ADCallbackContext.class);
+        Mockito.when(callback.getParam(STATE)).thenReturn("state");
+        Mockito.when(callback.getParam(TRANSACTION_ID)).thenReturn("state");
+        Mockito.when(callback.getParam(CALLBACK_VALIDATE)).thenReturn(null);
+        new HttpAuthenticationDeviceNotifierProvider(webClient, config).extractUserResponse(callback)
+                .test().assertValue(Optional::isEmpty);
+    }
+
+    @Test
+    public void should_return_empty_when_tid_is_missing(){
+        var callback = Mockito.mock(ADCallbackContext.class);
+        Mockito.when(callback.getParam(STATE)).thenReturn("state");
+        Mockito.when(callback.getParam(TRANSACTION_ID)).thenReturn(null);
+        Mockito.when(callback.getParam(CALLBACK_VALIDATE)).thenReturn("true");
+        new HttpAuthenticationDeviceNotifierProvider(webClient, config).extractUserResponse(callback)
+                .test().assertValue(Optional::isEmpty);
+    }
+
+    @Test
+    public void should_return_empty_ex_when_state_is_missing(){
+        var callback = Mockito.mock(ADCallbackContext.class);
+        Mockito.when(callback.getParam(STATE)).thenReturn(null);
+        Mockito.when(callback.getParam(TRANSACTION_ID)).thenReturn("state");
+        Mockito.when(callback.getParam(CALLBACK_VALIDATE)).thenReturn("true");
+        new HttpAuthenticationDeviceNotifierProvider(webClient, config).extractUserResponse(callback)
+                .test().assertValue(Optional::isEmpty);
+    }
+
 }
