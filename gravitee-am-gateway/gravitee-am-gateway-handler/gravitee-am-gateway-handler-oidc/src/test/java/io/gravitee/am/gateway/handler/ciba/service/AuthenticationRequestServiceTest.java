@@ -232,7 +232,7 @@ public class AuthenticationRequestServiceTest {
         final TestObserver<Void> observer = this.service.validateUserResponse(context).test();
 
         observer.awaitDone(10, TimeUnit.SECONDS);
-        observer.assertError(NoSuchElementException.class);
+        observer.assertError(InvalidRequestException.class);
 
         verify(clientService, never()).findByClientId(any());
         verify(requestRepository, never()).updateStatus(any(), any());
