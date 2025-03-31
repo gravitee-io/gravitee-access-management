@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -90,7 +91,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
         }
 
         // implicit flow, we need to retrieve hash url from the browser to get access_token, id_token, ...
-        engine.render(new HashMap<>(), "login_callback")
+        engine.render(new HashMap<>(Map.of(ConstantKeys.CSP_SCRIPT_INLINE_NONCE, context.get(ConstantKeys.CSP_SCRIPT_INLINE_NONCE))), "login_callback")
                 .subscribe(
                         buffer -> {
                             context.response().putHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_HTML);
