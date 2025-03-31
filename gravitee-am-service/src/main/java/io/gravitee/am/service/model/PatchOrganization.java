@@ -19,8 +19,9 @@ import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.utils.SetterUtils;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -43,6 +44,14 @@ public class PatchOrganization {
     }
 
     public void setIdentities(List<String> identities) {
-        this.identities = Optional.ofNullable(identities);
+        if (identities == null) {
+            this.identities = Optional.empty();
+        } else {
+            List<String> filteredIdentities = identities.stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+            this.identities = filteredIdentities.isEmpty() ? Optional.empty() : Optional.of(filteredIdentities);
+        }
     }
 }
