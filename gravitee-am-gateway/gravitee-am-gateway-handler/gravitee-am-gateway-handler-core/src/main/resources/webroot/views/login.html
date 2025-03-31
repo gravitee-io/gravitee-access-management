@@ -131,8 +131,7 @@
             input.attr("type") === "password" ? input.attr("type", "text") : input.attr("type", "password");
         });
 
-        $("#username").on("keyup", toggleSubmit);
-        $("#password").on("keyup", toggleSubmit);
+        $("#username, #password").on("input keyup change", toggleSubmit);
 
         function toggleSubmit() {
             const submitBtn = $("#submitBtn");
