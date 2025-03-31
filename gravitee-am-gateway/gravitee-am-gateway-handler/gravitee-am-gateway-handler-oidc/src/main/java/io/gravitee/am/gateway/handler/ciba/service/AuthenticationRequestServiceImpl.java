@@ -39,6 +39,7 @@ import io.gravitee.am.repository.oidc.api.CibaAuthRequestRepository;
 import io.gravitee.am.repository.oidc.model.CibaAuthRequest;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -167,9 +168,10 @@ public class AuthenticationRequestServiceImpl implements AuthenticationRequestSe
         return Flowable.fromIterable(this.notifierManager.getAuthDeviceNotifierProviders())
                 .flatMapSingle(provider -> provider.extractUserResponse(context))
                 .filter(Optional::isPresent)
-                .firstOrError()
+                .firstElement()
+                .switchIfEmpty(Maybe.error(InvalidRequestException::new))
                 .map(Optional::get)
-                .flatMap(userResponse -> {
+                .flatMapSingle(userResponse -> {
                     final String status = userResponse.isValidated() ? AuthenticationRequestStatus.SUCCESS.name() : AuthenticationRequestStatus.REJECTED.name();
                     return this.jwtService.decode(userResponse.getState(), STATE)
                             .flatMap(jwtState -> verifyState(userResponse, jwtState.getAud())
