@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
+import io.gravitee.am.common.oidc.ApplicationType;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.ClientServiceImpl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Email;
@@ -38,6 +39,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
@@ -108,6 +110,28 @@ public class ClientServiceTest {
 
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidRedirectUriException.class);
+    }
+
+    @Test
+    public void create_spa_based_on_params() {
+        Client toCreate = new Client();
+        toCreate.setDomain(DOMAIN);
+        toCreate.setAuthorizedGrantTypes(Collections.singletonList("implicit"));
+        toCreate.setResponseTypes(List.of("token", "id_token"));
+        toCreate.setRedirectUris(Collections.singletonList("https://callback"));
+
+        when(applicationService.create(any(Application.class))).thenAnswer(a -> Single.just(a.getArguments()[0]));
+
+        TestObserver testObserver = clientService.create(toCreate).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+
+        ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+        verify(applicationService, times(1)).create(captor.capture());
+        Assert.assertNotNull("client_id must be generated", captor.getValue().getSettings().getOauth().getClientId());
+        Assert.assertNotNull("client_secret must be generated", captor.getValue().getSettings().getOauth().getClientSecret());
+        Assert.assertEquals("application_type must be browser", ApplicationType.BROWSER, captor.getValue().getSettings().getOauth().getApplicationType());
+        Assert.assertEquals("application_type must be browser", io.gravitee.am.model.application.ApplicationType.BROWSER, captor.getValue().getType());
     }
 
     @Test

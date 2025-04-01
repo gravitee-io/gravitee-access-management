@@ -20,5 +20,19 @@ package io.gravitee.am.model.application;
  * @author GraviteeSource Team
  */
 public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER
+    WEB(io.gravitee.am.common.oidc.ApplicationType.WEB),
+    NATIVE(io.gravitee.am.common.oidc.ApplicationType.NATIVE),
+    BROWSER(io.gravitee.am.common.oidc.ApplicationType.BROWSER),
+    SERVICE(io.gravitee.am.common.oidc.ApplicationType.SERVICE),
+    RESOURCE_SERVER(io.gravitee.am.common.oidc.ApplicationType.WEB);
+
+    private String oidcValue;
+
+    ApplicationType(String oidcValue) {
+        this.oidcValue = oidcValue;
+    }
+
+    public String asOidcType() {
+        return this.oidcValue;
+    }
 }

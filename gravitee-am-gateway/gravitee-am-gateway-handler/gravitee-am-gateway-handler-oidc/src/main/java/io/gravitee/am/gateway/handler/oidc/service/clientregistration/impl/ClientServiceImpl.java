@@ -158,8 +158,15 @@ public class ClientServiceImpl implements ClientService {
         application.setUpdatedAt(client.getUpdatedAt());
         // set application name
         application.setName(client.getClientName());
+
         // set application type
-        application.setType(getType(client));
+        final var applicationType = getType(client);
+        application.setType(applicationType);
+        // make sure the application type is defined with the same value as
+        // the one set into the application as getType can compute a value
+        // different from the default one.
+        client.setApplicationType(applicationType.asOidcType());
+
         // set application settings
         application.setSettings(getSettings(client));
         // preserve client secret hash
