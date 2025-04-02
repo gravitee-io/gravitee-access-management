@@ -46,32 +46,32 @@ import static com.fasterxml.jackson.core.JsonToken.VALUE_EMBEDDED_OBJECT;
  */
 public abstract class AuditBuilder<T> {
 
-    private String id;
-    private String transactionalId;
-    private Instant timestamp;
-    private ReferenceType referenceType;
-    private String referenceId;
-    private String accessPointId;
-    private String accessPointAlternativeId;
-    private String accessPointName;
-    private String type;
-    private Throwable throwable;
-    private String actorId;
-    private String actorType;
-    private String actorAlternativeId;
-    private String actorDisplayName;
-    private ReferenceType actorReferenceType;
-    private String actorReferenceId;
-    private String targetId;
-    private String targetType;
-    private String targetAlternativeId;
-    private String targetDisplayName;
-    private ReferenceType targetReferenceType;
-    private String targetReferenceId;
-    private String ipAddress;
-    private String userAgent;
-    private Object oldValue;
-    private Object newValue;
+    protected String id;
+    protected String transactionalId;
+    protected Instant timestamp;
+    protected ReferenceType referenceType;
+    protected String referenceId;
+    protected String accessPointId;
+    protected String accessPointAlternativeId;
+    protected String accessPointName;
+    protected String type;
+    protected Throwable throwable;
+    protected String actorId;
+    protected String actorType;
+    protected String actorAlternativeId;
+    protected String actorDisplayName;
+    protected ReferenceType actorReferenceType;
+    protected String actorReferenceId;
+    protected String targetId;
+    protected String targetType;
+    protected String targetAlternativeId;
+    protected String targetDisplayName;
+    protected ReferenceType targetReferenceType;
+    protected String targetReferenceId;
+    protected String ipAddress;
+    protected String userAgent;
+    protected Object oldValue;
+    protected Object newValue;
 
     public static <T> T builder(Class<T> clazz) {
         try {
