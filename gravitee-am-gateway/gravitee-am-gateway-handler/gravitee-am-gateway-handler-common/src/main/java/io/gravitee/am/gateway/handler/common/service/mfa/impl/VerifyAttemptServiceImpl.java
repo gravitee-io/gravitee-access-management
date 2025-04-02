@@ -24,7 +24,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.repository.gateway.api.VerifyAttemptRepository;
 import io.gravitee.am.repository.gateway.api.search.VerifyAttemptCriteria;
-import io.gravitee.am.service.EmailService;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -41,9 +40,6 @@ import java.util.Optional;
  */
 @Slf4j
 public class VerifyAttemptServiceImpl implements VerifyAttemptService {
-
-    @Autowired
-    EmailService emailService;
 
     @Lazy
     @Autowired

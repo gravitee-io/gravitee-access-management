@@ -38,6 +38,8 @@ import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
+import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
+import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -68,7 +70,7 @@ import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailServiceImpl implements EmailService, InitializingBean {
+public class EmailServiceImpl implements EmailService {
 
     private final boolean enabled;
     private final String resetPasswordSubject;
@@ -133,11 +135,6 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         this.userRegistrationVerifyExpiresAfter = userRegistrationVerifyExpiresAfter;
         this.registrationConfirmationSubject = registrationConfirmationSubject;
         this.userRegistrationConfirmationVerifyExpiresAfter = userRegistrationConfirmationVerifyExpiresAfter;
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        this.emailService.setDictionaryProvider(this.graviteeMessageResolver.getDynamicDictionaryProvider());
     }
 
     @Override
@@ -332,12 +329,20 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         var result = new StringWriter(1024);
 
         var dataModel = new HashMap<>(params);
-        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDictionaryProvider().getDictionaryFor(preferredLanguage)));
+        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(getDictionaryProvider().getDictionaryFor(preferredLanguage)));
 
         var env = plainTextTemplate.createProcessingEnvironment(dataModel, result);
         env.process();
 
         return result.toString();
+    }
+
+    public DictionaryProvider getDictionaryProvider() {
+        if (graviteeMessageResolver.getDynamicDictionaryProvider() != null) {
+            return new CompositeDictionaryProvider(graviteeMessageResolver.getDynamicDictionaryProvider(), emailService.getDefaultDictionaryProvider());
+        } else {
+            return emailService.getDefaultDictionaryProvider();
+        }
     }
 
     private String getTemplateName(io.gravitee.am.model.Template template, Client client) {
