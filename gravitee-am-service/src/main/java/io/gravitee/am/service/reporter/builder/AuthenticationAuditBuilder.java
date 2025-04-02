@@ -15,13 +15,17 @@
  */
 package io.gravitee.am.service.reporter.builder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -71,4 +75,14 @@ public class AuthenticationAuditBuilder extends AuditBuilder<AuthenticationAudit
 
         return displayName;
     }
+
+    @Override
+    public Audit build(ObjectMapper mapper) {
+        if (throwable instanceof BadCredentialsException) {
+            // removes username from audit log
+            throwable(new BadCredentialsException(throwable.getMessage()));
+        }
+        return super.build(mapper);
+    }
+
 }

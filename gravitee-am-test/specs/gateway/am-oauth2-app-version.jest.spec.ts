@@ -156,7 +156,7 @@ describe('OAuth2 - App version', () => {
           Authorization: 'Basic ' + applicationBase64Token(application1),
         }).expect(400, {
           error: 'invalid_grant',
-          error_description: 'The credentials you entered are invalid',
+          error_description: 'The credentials entered are invalid',
         });
       });
 
