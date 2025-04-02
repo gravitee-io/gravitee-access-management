@@ -22,13 +22,13 @@ import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
+import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.vertx.rxjava3.core.MultiMap;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -46,12 +46,18 @@ import static freemarker.template.Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENT
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyInt;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+
 public class EmailServiceImplTest {
 
     @Mock
@@ -75,6 +81,9 @@ public class EmailServiceImplTest {
 
     @Mock
     private DomainReadService domainService;
+
+    @Mock
+    private GraviteeMessageResolver graviteeMessageResolver;
 
     @InjectMocks
     private EmailService emailServiceSpy;
@@ -125,7 +134,7 @@ public class EmailServiceImplTest {
         var templateLoader = Mockito.mock(TemplateLoader.class);
         when(domain.getId()).thenReturn("id");
         final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
-        when(this.emailService.getDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
         when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
 
         when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
@@ -173,7 +182,7 @@ public class EmailServiceImplTest {
         var templateLoader = Mockito.mock(TemplateLoader.class);
 
         final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
-        when(this.emailService.getDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
         when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
 
         when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
