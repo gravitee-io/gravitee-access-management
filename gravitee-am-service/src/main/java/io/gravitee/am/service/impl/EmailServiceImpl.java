@@ -62,20 +62,6 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     }
 
     @Override
-    public DictionaryProvider getDictionaryProvider() {
-        if (this.dictionaryProvider != null) {
-            return this.dictionaryProvider;
-        } else {
-            return this.getDefaultDictionaryProvider();
-        }
-    }
-
-    @Override
-    public void setDictionaryProvider(DictionaryProvider provider) {
-        this.dictionaryProvider = new CompositeDictionaryProvider(provider, this.getDefaultDictionaryProvider());
-    }
-
-    @Override
     public DictionaryProvider getDefaultDictionaryProvider() {
         return this.defaultDictionaryProvider;
     }
