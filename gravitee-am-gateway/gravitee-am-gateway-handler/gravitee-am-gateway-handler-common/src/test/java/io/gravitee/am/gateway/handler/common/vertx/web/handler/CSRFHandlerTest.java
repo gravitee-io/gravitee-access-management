@@ -150,6 +150,48 @@ public class CSRFHandlerTest extends RxWebTestBase {
                 HttpStatusCode.OK_200, "OK", null);
     }
 
+    @Test
+    public void shouldAddErrorParams_CSRFToken_if_expired() throws Exception {
+        io.vertx.ext.web.Session mockSession = mock(io.vertx.ext.web.Session.class);
+        Session session = Session.newInstance(mockSession);
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.setSession(session);
+            routingContext.next();
+        });
+
+        AtomicReference<String> csrfToken = new AtomicReference<>();
+        testRequest(
+                HttpMethod.GET,
+                "/login",
+                req -> {},
+                resp -> {
+                    var optCsrfCookie = resp.cookies().stream().filter(cookie -> cookie.startsWith(CSRF_COOKIE)).findFirst();
+                    assertTrue(optCsrfCookie.isPresent());
+                    csrfToken.set(optCsrfCookie.get());
+                },
+                HttpStatusCode.OK_200, "OK", null);
+
+        Thread.sleep(CSRF_TIMEOUT);
+
+        router.route().order(-1).handler(routingContext -> {
+            when(session.id()).thenReturn("sid");
+            when(session.get(CSRF_HEADER)).thenReturn("sid/" + extractCookieValue(csrfToken.get()));
+            routingContext.setSession(session);
+            CookieImpl cookie = new CookieImpl(CSRF_COOKIE, extractCookieValue(csrfToken.get()));
+            cookie.setPath("/");
+            routingContext.addCookie(Cookie.newInstance(cookie));
+            routingContext.next();
+        });
+        testRequest(
+                HttpMethod.POST,
+                "/login",
+                req -> {},
+                resp -> {
+                    assertTrue(resp.headers().get("Location").contains("error=session_expired"));
+                },
+                HttpStatusCode.MOVED_TEMPORARILY_302, "Found", null);
+    }
+
     private String extractCookieValue(String cookie) {
         return cookie.substring(CSRF_COOKIE.length() + 1).split(";")[0];
     }
