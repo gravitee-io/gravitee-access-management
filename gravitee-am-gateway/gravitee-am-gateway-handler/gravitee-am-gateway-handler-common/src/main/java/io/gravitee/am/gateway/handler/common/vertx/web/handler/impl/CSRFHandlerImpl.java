@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.common.vertx.web.handler.ErrorParamsUpdater;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.Cookie;
@@ -37,6 +38,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_HASH;
 
 /**
  * Override default Vert.x CSRFHandler to enhance routing context with CSRF values to fill in the right value for the form fields.
@@ -168,8 +171,11 @@ public class CSRFHandlerImpl implements CSRFHandler {
 
         final HttpServerRequest httpServerRequest = new HttpServerRequest(ctx.request());
         final MultiMap queryParams = RequestUtils.getCleanedQueryParams(httpServerRequest);
-        queryParams.set("error", "session_expired");
-        queryParams.set("error_description", "Your session expired, please try again.");
+
+        String hash = ErrorParamsUpdater.addErrorParams(queryParams, "session_expired", "Your session expired, please try again.");
+        if (ctx.session() != null) {
+            ctx.session().put(ERROR_HASH, hash);
+        }
 
         final String uri = UriBuilderRequest.resolveProxyRequest(httpServerRequest, ctx.request().path(), queryParams, true);
 
