@@ -127,12 +127,12 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         Throwable lastException = userAuthentication.lastException();
                         if (lastException != null) {
                             if (lastException instanceof BadCredentialsException) {
-                                return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
+                                return Single.error(new BadCredentialsException("The credentials entered are invalid", lastException));
                             } else if (lastException instanceof UsernameNotFoundException) {
                                 // if an IdP return UsernameNotFoundException, convert it as BadCredentials in order to avoid helping attackers
                                 //PEN-21 Encoding password takes a while. To ensure execution time the same for not existing user, introduced fake password checking.
                                 bCryptPasswordEncoder.matches(authentication.getCredentials().toString(), "$2a$10$hdjt9YGrSudbIljTqAtcW.KOxNJscq00Nxv088wPy6GDKXCJe0aCm");
-                                return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
+                                return Single.error(new BadCredentialsException("The credentials entered are invalid", lastException));
                             } else if (lastException instanceof AccountStatusException) {
                                 return Single.error(lastException);
                             } else if (lastException instanceof NegotiateContinueException) {
@@ -143,7 +143,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             }
                         } else {
                             // if an IdP return null user, throw BadCredentials in order to avoid helping attackers
-                            return Single.error(new BadCredentialsException("The credentials you entered are invalid"));
+                            return Single.error(new BadCredentialsException("The credentials entered are invalid"));
                         }
                     } else {
                         // complete user connection
