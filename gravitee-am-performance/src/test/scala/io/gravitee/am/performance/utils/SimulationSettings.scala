@@ -68,6 +68,7 @@ object SimulationSettings {
   val CONDITION = System.getProperty("condition", "")
   val INTROSPECT_ENABLED = System.getProperty("introspect", "false")
   val INTROSPECTIONS = Integer.getInteger("number_of_introspections", 10)
+  val FACTOR_ID = System.getProperty("factorId", "unknown")
 
 
   // ========================================
@@ -103,6 +104,7 @@ object SimulationSettings {
           "lastname" -> s"last${index}",
           "password" -> "Gr@v1t33B3nchUs3rs!",
           "index" -> index,
+          "factorId" -> FACTOR_ID,
           "continueUserCreation" -> (index < MAX_USER_INDEX))
   }
 

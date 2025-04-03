@@ -115,4 +115,30 @@ object ManagementAPICalls {
           |"preRegistration":false}""".stripMargin)).asJson
       .check(status.is(201))
   }
+
+  def createMockResource() = {
+    http("Create Mock resource ")
+            .post(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/resources")
+            .header("Authorization", "Bearer ${auth-token}")
+            .body(StringBody(s"""{"type":"mock-mfa-am-resource","configuration":"{\\"code\\" : \\"123456\\"}","name":"Mock Resource MFA"}""")).asJson
+            .check(status.is(201))
+            .check(jsonPath("$.id").saveAs("mockResourceMFAId"))
+  }
+
+  def createMFAWithMockResource() = {
+    http("Create SMS Factor ")
+            .post(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/factors")
+            .header("Authorization", "Bearer ${auth-token}")
+            .body(StringBody("""{"type":"sms-am-factor","factorType":"SMS","configuration":"{\"countryCodes\":\"fr\",\"graviteeResource\":\"${mockResourceMFAId}\",\"returnDigits\":6,\"expiresAfter\":300}","name":"SMS"}""")).asJson
+            .check(status.is(201))
+            .check(jsonPath("$.id").saveAs("smsMFAId"))
+  }
+
+  def enableMfaOnApp(appName: String) = {
+    http("Add MFA to " + appName + " Application")
+            .patch(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/applications/${"+appName+"Id}")
+            .header("Authorization", "Bearer ${auth-token}")
+            .body(StringBody("""{"factors":["${smsMFAId}"],"settings":{"riskAssessment":{"enabled":false,"deviceAssessment":{"enabled":false,"thresholds":{}},"ipReputationAssessment":{"enabled":false,"thresholds":{}},"geoVelocityAssessment":{"enabled":false,"thresholds":{}}},"mfa":{"factor":{"defaultFactorId":"${smsMFAId}","applicationFactors":[{"id":"${smsMFAId}"}]},"stepUpAuthenticationRule":"","stepUpAuthentication":{},"adaptiveAuthenticationRule":"","rememberDevice":{},"enrollment":{"forceEnrollment":true,"skipTimeSeconds":null},"enroll":{"active":true,"enrollmentRule":"","enrollmentSkipActive":false,"enrollmentSkipRule":"","forceEnrollment":true,"skipTimeSeconds":null,"type":"REQUIRED"},"challenge":{"active":true,"challengeRule":"","type":"REQUIRED"}}}}""")).asJson
+            .check(status.is(200))
+  }
 }
