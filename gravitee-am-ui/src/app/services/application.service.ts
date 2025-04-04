@@ -15,7 +15,7 @@
  */
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { AppConfig } from '../../config/app.config';
@@ -55,8 +55,21 @@ export class ApplicationService {
     return this.http.delete<any>(this.appsURL + domainId + '/applications/' + id);
   }
 
-  renewClientSecret(domainId, id): Observable<any> {
-    return this.http.post<any>(this.appsURL + domainId + '/applications/' + id + '/secret/_renew', {});
+  renewClientSecret(domainId, id, secretId?): Observable<any> {
+    // return this.http.post<any>(this.appsURL + domainId + '/applications/' + id + '/secret/' + secretId + '/_renew', {});
+    const mockResponse = {
+      secret: 'mocked-secret',
+      createdAt: new Date().toISOString(),
+    };
+    return of(mockResponse);
+  }
+
+  createClientSecret(domainId, id, description): Observable<any> {
+    const mockResponse = {
+      secret: 'mocked-secret',
+      createdAt: new Date().toISOString(),
+    };
+    return of(mockResponse);
   }
 
   updateType(domainId, id, type): Observable<any> {
