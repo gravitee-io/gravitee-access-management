@@ -288,7 +288,7 @@ import {
   CreateClaimComponent,
 } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
-import { ApplicationCertificatesComponent } from './domain/applications/application/advanced/certificates/certificates.component';
+import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import {
   ApplicationMembershipsComponent,
@@ -434,7 +434,6 @@ import { HelpTipsThemeComponent } from './domain/settings/theme/help-tips/help-t
 import { EmailTemplateFactoryService } from './services/email.template.factory.service';
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
 import { LicenseGuard } from './guards/license-guard.service';
-import { ApplicationClientSecretDialogModule } from './domain/applications/client-secret/application-client-secret-dialog.module';
 import { MfaChallengeComponent } from './domain/applications/application/advanced/factors/mfa-challenge/mfa-challenge.component';
 import { InfoBannerComponent } from './domain/applications/application/advanced/factors/info-banner/info-banner.component';
 import { ExpressionInfoDialogComponent } from './domain/applications/application/advanced/factors/expression-info-dialog/expression-info-dialog.component';
@@ -451,6 +450,7 @@ import { IdentitiesOrganizationResolver } from './resolvers/identities-organizat
 import { PasswordPolicyStatusComponent } from './domain/settings/password-policy/pass-policy-status/password-policy-status.component';
 import { DataPlaneService } from './services/data-plane.service';
 import { DataPlanesResolver } from './resolvers/data-planes.resolver';
+import { SecretsCertificatesModule } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.module';
 
 @NgModule({
   declarations: [
@@ -628,7 +628,7 @@ import { DataPlanesResolver } from './resolvers/data-planes.resolver';
     AddScopeComponent,
     ApplicationTokensComponent,
     ApplicationGrantFlowsComponent,
-    ApplicationCertificatesComponent,
+    ApplicationSecretsCertificatesComponent,
     ApplicationMetadataComponent,
     ApplicationMembershipsComponent,
     ApplicationFactorsComponent,
@@ -765,9 +765,9 @@ import { DataPlanesResolver } from './resolvers/data-planes.resolver';
     CodemirrorModule,
     ClipboardModule,
     HighchartsChartModule,
-    ApplicationClientSecretDialogModule,
     AccountTokenDialogModule,
     NgOptimizedImage,
+    SecretsCertificatesModule,
   ],
   providers: [
     DomainService,

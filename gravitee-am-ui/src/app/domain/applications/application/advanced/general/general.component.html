@@ -49,33 +49,6 @@
               <mat-icon>content_copy</mat-icon>
             </button>
           </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always" *hasPermission="['application_openid_read']">
-            <mat-label>Client ID</mat-label>
-            <input matInput type="text" name="clientId" [value]="application.settings?.oauth?.clientId" disabled />
-            <mat-hint>The application's client ID (OAuth 2.0)</mat-hint>
-            <button
-              mat-icon-button
-              matSuffix
-              matTooltip="Copy to clipboard"
-              ngxClipboard
-              [cbContent]="application.settings?.oauth?.clientId"
-              (cbOnSuccess)="valueCopied('Client ID copied to the clipboard')"
-              (click)="$event.preventDefault()"
-            >
-              <mat-icon>content_copy</mat-icon>
-            </button>
-          </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always" *hasPermission="['application_openid_read']">
-            <mat-label>Client Secret</mat-label>
-            <input
-              matInput
-              type="password"
-              name="clientSecret"
-              disabled
-              matTooltip="Client Secret can't be copied once created. If you've lost it, you need to Renew the client secret"
-            />
-            <mat-hint>The application's client secret (OAuth 2.0)</mat-hint>
-          </mat-form-field>
           <mat-form-field appearance="outline" floatLabel="always">
             <mat-label>Description</mat-label>
             <textarea
@@ -306,7 +279,7 @@
           </button>
         </div>
       </form>
-      <div class="application-settings-delete-zone" fxLayout="column" *ngIf="deleteMode || renewSecretMode">
+      <div class="application-settings-delete-zone" fxLayout="column" *ngIf="deleteMode">
         <mat-list>
           <mat-list-item *ngIf="editMode" lines="3">
             <h3 matListItemTitle>Change application type</h3>
@@ -326,18 +299,7 @@
               </mat-form-field>
             </span>
           </mat-list-item>
-          <mat-divider *ngIf="editMode"></mat-divider>
-          <mat-list-item *ngIf="renewSecretMode" lines="3">
-            <h3 matListItemTitle>Renew secret</h3>
-            <p matListItemLine>
-              All applications using this OAuth 2.0 client secret will need to be updated to be able to request for tokens and access
-              protected resources.
-            </p>
-            <span matListItemMeta class="action">
-              <button mat-stroked-button color="warn" (click)="renewClientSecret($event)">RENEW</button>
-            </span>
-          </mat-list-item>
-          <mat-divider *ngIf="renewSecretMode && deleteMode"></mat-divider>
+          <mat-divider></mat-divider>
           <mat-list-item *ngIf="deleteMode" lines="3">
             <h3 matListItemTitle>Delete application</h3>
             <p matListItemLine>Application will be deleted, it will no longer be use for authentication and request for tokens.</p>
