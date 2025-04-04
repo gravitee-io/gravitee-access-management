@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
-import { SnackbarService } from '../../../services/snackbar.service';
+import { SnackbarService } from '../../../../../../services/snackbar.service';
 
-export interface ApplicationClientSecretCopyDialogData {
+export interface CopyClientSecretCopyDialogData {
   secret: string;
-  renew?: boolean;
+  renew: boolean;
 }
 
 @Component({
-  selector: 'application-client-secret-copy-dialog',
-  templateUrl: './application-client-secret-copy-dialog.component.html',
-  styleUrls: ['./application-client-secret-dialog.component.scss'],
+  selector: 'app-copy-client-secret',
+  templateUrl: './copy-client-secret.component.html',
+  styleUrl: '../secrets-certificates.component.scss',
 })
-export class ApplicationClientSecretCopyDialogComponent {
+export class CopyClientSecretComponent {
   notCopied = true;
   clientSecret: string;
   renew: boolean;
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) dialogData: ApplicationClientSecretCopyDialogData,
-    public dialogRef: MatDialogRef<ApplicationClientSecretCopyDialogData, void>,
+    @Inject(MAT_DIALOG_DATA) dialogData: CopyClientSecretCopyDialogData,
+    public dialogRef: MatDialogRef<CopyClientSecretCopyDialogData, void>,
     private snackbarService: SnackbarService,
   ) {
     this.clientSecret = dialogData.secret;

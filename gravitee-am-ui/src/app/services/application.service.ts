@@ -55,8 +55,22 @@ export class ApplicationService {
     return this.http.delete<any>(this.appsURL + domainId + '/applications/' + id);
   }
 
-  renewClientSecret(domainId, id): Observable<any> {
-    return this.http.post<any>(this.appsURL + domainId + '/applications/' + id + '/secret/_renew', {});
+  renewClientSecret(domainId, id, secretId): Observable<any> {
+    return this.http.post<any>(this.appsURL + domainId + '/applications/' + id + '/secrets/' + secretId + '/_renew', {});
+  }
+
+  deleteClientSecret(domainId, id, secretId): Observable<any> {
+    return this.http.delete<any>(this.appsURL + domainId + '/applications/' + id + '/secrets/' + secretId, {});
+  }
+
+  createClientSecret(domainId, id, description): Observable<any> {
+    return this.http.post<any>(this.appsURL + domainId + '/applications/' + id + '/secrets', {
+      name: description,
+    });
+  }
+
+  getClientSecrets(domainId, id): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + id + '/secrets');
   }
 
   updateType(domainId, id, type): Observable<any> {
