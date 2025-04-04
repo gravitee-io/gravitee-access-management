@@ -66,17 +66,9 @@ public class UserServiceImpl extends AbstractUserService implements UserService 
     @Autowired
     protected TokenService tokenService;
 
-    @Autowired
-    private UserEnhancer userEnhancer;
-
     @Override
     protected UserRepository getUserRepository() {
         return this.userRepository;
-    }
-
-    @Override
-    protected UserEnhancer getUserEnhancer() {
-        return userEnhancer;
     }
 
     @Override
