@@ -83,7 +83,7 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     protected GroupService groupService;
 
     protected abstract T getUserRepository();
-    protected abstract UserEnhancer getUserEnhancer();
+
     @Override
     public Flowable<User> findByIdIn(List<String> ids) {
         String userIds = String.join(",", ids);
@@ -312,10 +312,4 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
                             String.format("An error occurs while trying to delete user: %s", userId), ex));
                 });
     }
-
-    @Override
-    public Single<User> enhance(User user) {
-        return getUserEnhancer().enhance(user);
-    }
-
 }
