@@ -17,19 +17,12 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
-import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
-import { Subject } from 'rxjs';
 import { map, remove } from 'lodash';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { AuthService } from '../../../../../services/auth.service';
-import {
-  ApplicationClientSecretCopyDialogComponent,
-  ApplicationClientSecretCopyDialogData,
-} from '../../../client-secret/application-client-secret-copy-dialog.component';
-import { ApplicationClientSecretRenewDialogComponent } from '../../../client-secret/application-client-secret-renew-dialog.component';
 
 @Component({
   selector: 'application-general',
@@ -53,7 +46,6 @@ export class ApplicationGeneralComponent implements OnInit {
   formChanged = false;
   editMode: boolean;
   deleteMode: boolean;
-  renewSecretMode: boolean;
   applicationType: string;
   applicationTypes: any[] = [
     {
@@ -110,7 +102,6 @@ export class ApplicationGeneralComponent implements OnInit {
     });
     this.editMode = this.authService.hasPermissions(['application_settings_update']);
     this.deleteMode = this.authService.hasPermissions(['application_settings_delete']);
-    this.renewSecretMode = this.authService.hasPermissions(['application_openid_update']);
     if (!this.domain.uma || !this.domain.uma.enabled) {
       remove(this.applicationTypes, { type: 'RESOURCE_SERVER' });
     }
@@ -146,57 +137,6 @@ export class ApplicationGeneralComponent implements OnInit {
         tap(() => {
           this.snackbarService.open('Application deleted');
           this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.hrid, 'applications']);
-        }),
-      )
-      .subscribe();
-  }
-
-  renewClientSecret(event) {
-    event.preventDefault();
-    this.matDialog
-      .open<ApplicationClientSecretRenewDialogComponent, void, string>(ApplicationClientSecretRenewDialogComponent, {
-        width: GIO_DIALOG_WIDTH.MEDIUM,
-        disableClose: true,
-        role: 'alertdialog',
-        id: 'applicationClientSecretRenewDialog',
-      })
-      .afterClosed()
-      .pipe(
-        switchMap((action: any) => {
-          if (action === 'proceed') {
-            return this.applicationService.renewClientSecret(this.domainId, this.application.id).pipe(
-              tap((data) => {
-                this.application = data;
-                this.snackbarService.open('Client secret updated');
-              }),
-              switchMap(() =>
-                this.matDialog
-                  .open<ApplicationClientSecretCopyDialogComponent, ApplicationClientSecretCopyDialogData, void>(
-                    ApplicationClientSecretCopyDialogComponent,
-                    {
-                      width: GIO_DIALOG_WIDTH.MEDIUM,
-                      disableClose: true,
-                      data: {
-                        secret: this.application.settings.oauth.clientSecret,
-                        renew: true,
-                      },
-                      role: 'alertdialog',
-                      id: 'applicationClientSecretCopyDialog',
-                    },
-                  )
-                  .afterClosed()
-                  .pipe(
-                    tap(() => {
-                      // reset client secret as it should be available only into the
-                      // copy modal
-                      this.application.settings.oauth.clientSecret = null;
-                    }),
-                  ),
-              ),
-            );
-          } else {
-            return new Subject();
-          }
         }),
       )
       .subscribe();

@@ -13,15 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import { Component } from '@angular/core';
+import { FormControl, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
-  selector: 'application-client-secret-renew-dialog',
-  templateUrl: './application-client-secret-renew-dialog.component.html',
-  styleUrls: ['./application-client-secret-dialog.component.scss'],
+  selector: 'app-new-client-secret',
+  templateUrl: './new-client-secret.component.html',
+  styleUrl: '../secrets-certificates.component.scss',
 })
-export class ApplicationClientSecretRenewDialogComponent {
-  constructor(public dialogRef: MatDialogRef<void, string>) {}
+export class NewClientSecretComponent {
+  descriptionControl = new FormControl('', [Validators.required, this.noWhitespaceValidator]);
+  constructor(public dialogRef: MatDialogRef<NewClientSecretComponent>) {}
+
+  closeDialog() {
+    if (this.descriptionControl.invalid) {
+      this.descriptionControl.markAsTouched();
+      return;
+    }
+    this.dialogRef.close(this.descriptionControl.value);
+  }
+  public noWhitespaceValidator(control: FormControl) {
+    return (control.value || '').trim().length ? null : { whitespace: true };
+  }
 }
