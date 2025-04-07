@@ -35,12 +35,14 @@ global.fetch = fetch;
 
 let accessToken;
 let domain;
+let domain2;
 
 let user;
 let role;
 let group;
 
 beforeAll(async () => {
+<<<<<<< HEAD
   const adminTokenResponse = await requestAdminAccessToken();
   accessToken = adminTokenResponse.body.access_token;
   expect(accessToken).toBeDefined();
@@ -54,6 +56,11 @@ beforeAll(async () => {
   expect(domainStarted.id).toEqual(createdDomain.id);
 
   domain = domainStarted;
+=======
+  accessToken = await requestAdminAccessToken();
+  domain = await setupDomainForTest(uniqueName('domain-groups'), {accessToken}).then((it) => it.domain);
+  domain2 = await setupDomainForTest(uniqueName('domain-groups2'), { accessToken }).then((it) => it.domain);
+>>>>>>> 2e79857ba (fix: assign to group users from domain)
 });
 
 describe('before creating groups', () => {
@@ -113,6 +120,20 @@ describe('when groups are created', () => {
     group = updatedGroup;
   });
 
+    it('must add only members from domain', async() => {
+        const user2 = await buildCreateAndTestUser(domain2.id, accessToken, 1);
+        const updatedGroup = await updateGroup(domain.id, accessToken, group.id, {
+            ...group,
+            members: [user.id, user2.id],
+        });
+        expect(updatedGroup).toBeDefined();
+        expect(updatedGroup.id).toEqual(group.id);
+        expect(updatedGroup.description).toEqual('another description');
+        expect(updatedGroup.members.length).toEqual(1);
+        expect(updatedGroup.members).not.toContain(user2.id);
+        group = updatedGroup;
+    });
+
   it('must list all groups', async () => {
     const groupPage = await getAllGroups(domain.id, accessToken);
 
@@ -166,5 +187,8 @@ describe('when groups are created', () => {
 afterAll(async () => {
   if (domain && domain.id) {
     await deleteDomain(domain.id, accessToken);
+  }
+  if(domain2 && domain2.id) {
+      await deleteDomain(domain2.id, accessToken);
   }
 });

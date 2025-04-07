@@ -178,8 +178,12 @@ public class GroupServiceImpl implements GroupService {
                         final int startOffset = page * size;
                         final int endOffset = (page + 1) * size;
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), startOffset), Math.min(sortedMembers.size(), endOffset));
+<<<<<<< HEAD:gravitee-am-service/src/main/java/io/gravitee/am/service/impl/GroupServiceImpl.java
                         CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
                         return service.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
+=======
+                        return dataPlaneRegistry.getUserRepository(domain).findByIdIn(Reference.domain(domain.getId()), pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
+>>>>>>> 2e79857ba (fix: assign to group users from domain):gravitee-am-management-api/gravitee-am-management-api-service/src/main/java/io/gravitee/am/management/service/impl/DomainGroupServiceImpl.java
                     }
                 });
     }
@@ -348,8 +352,12 @@ public class GroupServiceImpl implements GroupService {
     private Single<Group> setMembers(Group group) {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
+<<<<<<< HEAD:gravitee-am-service/src/main/java/io/gravitee/am/service/impl/GroupServiceImpl.java
             CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
             return service.findByIdIn(userMembers)
+=======
+            return dataPlaneRegistry.getUserRepository(domain).findByIdIn(Reference.domain(domain.getId()), userMembers)
+>>>>>>> 2e79857ba (fix: assign to group users from domain):gravitee-am-management-api/gravitee-am-management-api-service/src/main/java/io/gravitee/am/management/service/impl/DomainGroupServiceImpl.java
                     .map(User::getId)
                     .toList()
                     .map(userIds -> {
