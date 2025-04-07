@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
@@ -416,12 +417,20 @@ public class GroupServiceTest {
         when(group.getMembers()).thenReturn(Arrays.asList("userid"));
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
+<<<<<<< HEAD:gravitee-am-service/src/test/java/io/gravitee/am/service/GroupServiceTest.java
         when(userService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
+=======
+        when(userRepository.findByIdIn(eq(Reference.domain(DOMAIN)), any())).thenReturn(Flowable.just(new User()));
+>>>>>>> 2e79857ba (fix: assign to group users from domain):gravitee-am-management-api/gravitee-am-management-api-service/src/test/java/io/gravitee/am/management/service/DomainGroupServiceTest.java
 
         final TestObserver<Page<User>> observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 0).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
+<<<<<<< HEAD:gravitee-am-service/src/test/java/io/gravitee/am/service/GroupServiceTest.java
         verify(userService).findByIdIn(any());
+=======
+        verify(userRepository).findByIdIn(eq(Reference.domain(DOMAIN)), any());
+>>>>>>> 2e79857ba (fix: assign to group users from domain):gravitee-am-management-api/gravitee-am-management-api-service/src/test/java/io/gravitee/am/management/service/DomainGroupServiceTest.java
         verify(organizationUserService, never()).findByIdIn(any());
     }
 
@@ -433,7 +442,11 @@ public class GroupServiceTest {
         when(group.getMembers()).thenReturn(userIds);
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
+<<<<<<< HEAD:gravitee-am-service/src/test/java/io/gravitee/am/service/GroupServiceTest.java
         when(userService.findByIdIn(any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
+=======
+        when(userRepository.findByIdIn(eq(Reference.domain(DOMAIN)), any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
+>>>>>>> 2e79857ba (fix: assign to group users from domain):gravitee-am-management-api/gravitee-am-management-api-service/src/test/java/io/gravitee/am/management/service/DomainGroupServiceTest.java
             final var user = new User();
             user.setId(userId);
             return user;
@@ -454,8 +467,13 @@ public class GroupServiceTest {
         observer.assertValue(page -> page.getTotalCount() == userIds.size());
         observer.assertValue(page -> page.getCurrentPage() == 2);
 
+<<<<<<< HEAD:gravitee-am-service/src/test/java/io/gravitee/am/service/GroupServiceTest.java
         verify(userService, times(2)).findByIdIn(argThat(memberIds -> memberIds.size() == 25));
         verify(userService, times(1)).findByIdIn(argThat(memberIds -> memberIds.size() == 2));
+=======
+        verify(userRepository, times(2)).findByIdIn(eq(Reference.domain(DOMAIN)), argThat(memberIds -> memberIds.size() == 25));
+        verify(userRepository, times(1)).findByIdIn(eq(Reference.domain(DOMAIN)), argThat(memberIds -> memberIds.size() == 2));
+>>>>>>> 2e79857ba (fix: assign to group users from domain):gravitee-am-management-api/gravitee-am-management-api-service/src/test/java/io/gravitee/am/management/service/DomainGroupServiceTest.java
         verify(organizationUserService, never()).findByIdIn(any());
     }
 

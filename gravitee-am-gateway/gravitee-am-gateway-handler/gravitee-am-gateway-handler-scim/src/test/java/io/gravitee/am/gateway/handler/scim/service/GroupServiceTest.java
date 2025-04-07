@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.scim.model.Operation;
 import io.gravitee.am.gateway.handler.scim.model.PatchOp;
 import io.gravitee.am.gateway.handler.scim.service.impl.GroupServiceImpl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
@@ -123,14 +124,14 @@ public class GroupServiceTest {
 
         when(domain.getId()).thenReturn(domainId);
         when(groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), newGroup.getDisplayName())).thenReturn(Maybe.empty());
-        when(userRepository.findByIdIn(any())).thenReturn(Flowable.just(user));
+        when(userRepository.findByIdIn(eq(Reference.domain(domain.getId())), any())).thenReturn(Flowable.just(user));
         when(groupRepository.create(any())).thenReturn(Single.just(createdGroup));
 
         TestObserver<Group> testObserver = groupService.create(newGroup, "https://mydomain/scim/Groups", null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my-group".equals(g.getDisplayName()));
-        verify(userRepository, times(1)).findByIdIn(any());
+        verify(userRepository, times(1)).findByIdIn(eq(Reference.domain(domain.getId())), any());
     }
 
     @Test
