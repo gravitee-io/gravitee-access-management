@@ -640,12 +640,12 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     }
 
     @Override
-    public Flowable<User> findByIdIn(List<String> ids) {
+    public Flowable<User> findByIdIn(Reference reference, List<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {
             return Flowable.empty();
         }
-        return userRepository.findByIdIn(ids)
+        return userRepository.findByIdIn(reference.type().name(), reference.id(), ids)
                 .map(this::toEntity)
                 .concatMap(user -> completeUser(user).toFlowable())
                 .onErrorResumeNext(err -> Flowable.fromMaybe(mapException(err)));

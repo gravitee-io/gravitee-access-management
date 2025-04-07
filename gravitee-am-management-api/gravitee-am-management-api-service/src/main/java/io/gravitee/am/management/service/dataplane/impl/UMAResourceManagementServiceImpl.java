@@ -20,6 +20,7 @@ package io.gravitee.am.management.service.dataplane.impl;
 import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
@@ -133,7 +134,7 @@ public class UMAResourceManagementServiceImpl implements UMAResourceManagementSe
 
         List<String> userIds = resources.stream().filter(resource -> resource.getUserId() != null).map(Resource::getUserId).distinct().collect(Collectors.toList());
         List<String> appIds = resources.stream().filter(resource -> resource.getClientId() != null).map(Resource::getClientId).distinct().collect(Collectors.toList());
-        return Single.zip(dataPlaneRegistry.getUserRepository(domain).findByIdIn(userIds).toMap(User::getId, this::filter),
+        return Single.zip(dataPlaneRegistry.getUserRepository(domain).findByIdIn(Reference.domain(domain.getId()), userIds).toMap(User::getId, this::filter),
                 applicationService.findByIdIn(appIds).toMap(Application::getId, this::filter), (users, apps) -> {
                     Map<String, Map<String, Object>> metadata = new HashMap<>();
                     metadata.put("users", (Map) users);

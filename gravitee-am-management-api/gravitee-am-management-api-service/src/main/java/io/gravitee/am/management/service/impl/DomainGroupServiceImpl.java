@@ -132,7 +132,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
                         final int startOffset = page * size;
                         final int endOffset = (page + 1) * size;
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), startOffset), Math.min(sortedMembers.size(), endOffset));
-                        return dataPlaneRegistry.getUserRepository(domain).findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
+                        return dataPlaneRegistry.getUserRepository(domain).findByIdIn(Reference.domain(domain.getId()), pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
                     }
                 });
     }
@@ -279,7 +279,7 @@ public class DomainGroupServiceImpl implements DomainGroupService {
     private Single<Group> setMembers(Domain domain, Group group) {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
-            return dataPlaneRegistry.getUserRepository(domain).findByIdIn(userMembers)
+            return dataPlaneRegistry.getUserRepository(domain).findByIdIn(Reference.domain(domain.getId()), userMembers)
                     .map(User::getId)
                     .toList()
                     .map(userIds -> {
