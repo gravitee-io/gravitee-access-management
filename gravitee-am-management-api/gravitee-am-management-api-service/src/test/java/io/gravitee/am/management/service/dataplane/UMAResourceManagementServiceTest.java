@@ -222,7 +222,7 @@ public class UMAResourceManagementServiceTest {
         resource.setUserId(USER_ID);
         List<Resource> resources = Collections.singletonList(resource);
 
-        when(userRepository.findByIdIn(anyList())).thenReturn(Flowable.just(new User()));
+        when(userRepository.findByIdIn(any(), anyList())).thenReturn(Flowable.just(new User()));
         when(applicationService.findByIdIn(anyList())).thenReturn(Flowable.just(new Application()));
         TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(DOMAIN, resources).test();
         testObserver.assertComplete().assertNoErrors();

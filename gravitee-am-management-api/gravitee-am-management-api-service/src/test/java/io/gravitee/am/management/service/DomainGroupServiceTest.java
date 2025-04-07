@@ -20,6 +20,7 @@ import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.management.service.impl.DomainGroupServiceImpl;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
@@ -424,12 +425,12 @@ public class DomainGroupServiceTest {
         when(group.getMembers()).thenReturn(Arrays.asList("userid"));
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
-        when(userRepository.findByIdIn(any())).thenReturn(Flowable.just(new User()));
+        when(userRepository.findByIdIn(eq(Reference.domain(DOMAIN)), any())).thenReturn(Flowable.just(new User()));
 
         final TestObserver<Page<User>> observer = domainGroupService.findMembers(DOMAIN_ENTITY, "group-id", 0, 0).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
-        verify(userRepository).findByIdIn(any());
+        verify(userRepository).findByIdIn(eq(Reference.domain(DOMAIN)), any());
         verify(organizationUserService, never()).findByIdIn(any());
     }
 
@@ -440,7 +441,7 @@ public class DomainGroupServiceTest {
         when(group.getMembers()).thenReturn(userIds);
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
-        when(userRepository.findByIdIn(any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
+        when(userRepository.findByIdIn(eq(Reference.domain(DOMAIN)), any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
             final var user = new User();
             user.setId(userId);
             return user;
@@ -461,8 +462,8 @@ public class DomainGroupServiceTest {
         observer.assertValue(page -> page.getTotalCount() == userIds.size());
         observer.assertValue(page -> page.getCurrentPage() == 2);
 
-        verify(userRepository, times(2)).findByIdIn(argThat(memberIds -> memberIds.size() == 25));
-        verify(userRepository, times(1)).findByIdIn(argThat(memberIds -> memberIds.size() == 2));
+        verify(userRepository, times(2)).findByIdIn(eq(Reference.domain(DOMAIN)), argThat(memberIds -> memberIds.size() == 25));
+        verify(userRepository, times(1)).findByIdIn(eq(Reference.domain(DOMAIN)), argThat(memberIds -> memberIds.size() == 2));
         verify(organizationUserService, never()).findByIdIn(any());
     }
 }
