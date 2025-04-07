@@ -29,6 +29,13 @@ LABEL maintainer="contact@graviteesource.com"
 
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
 
+# Upgrade libc6
+USER root
+RUN apt-get update && \
+    apt-get upgrade -y libc6 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN groupmod --new-name graviteeio ubuntu && \
  adduser --disabled-password --no-create-home -uid 1001 graviteeio --ingroup graviteeio
 
