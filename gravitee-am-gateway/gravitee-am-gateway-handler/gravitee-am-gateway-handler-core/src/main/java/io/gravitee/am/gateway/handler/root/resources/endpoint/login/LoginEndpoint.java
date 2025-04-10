@@ -113,7 +113,7 @@ public class LoginEndpoint extends AbstractEndpoint implements Handler<RoutingCo
         addUserActivityConsentTemplateVariables(routingContext);
 
         // put request in context
-        EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate(), true));
+        EvaluableRequest evaluableRequest = new EvaluableRequest(new VertxHttpServerRequest(routingContext.request().getDelegate(), false));
         routingContext.put(REQUEST_CONTEXT_KEY, evaluableRequest);
 
         // put error in context
