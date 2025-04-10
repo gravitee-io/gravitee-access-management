@@ -270,7 +270,7 @@ public class GroupServiceImpl implements GroupService {
         Set<Member> members = group.getMembers() != null ? new HashSet<>(group.getMembers()) : null;
         if (members != null && !members.isEmpty()) {
             List<String> memberIds = group.getMembers().stream().map(Member::getValue).collect(Collectors.toList());
-            return userRepository.findByIdIn(memberIds)
+            return userRepository.findByIdIn(ReferenceType.DOMAIN, domain.getId(), memberIds)
                     .map(user -> {
                         String display = computeDisplayName(user);
                         String usersBaseUrl = baseUrl.substring(0, baseUrl.lastIndexOf("/Groups")).concat("/Users");

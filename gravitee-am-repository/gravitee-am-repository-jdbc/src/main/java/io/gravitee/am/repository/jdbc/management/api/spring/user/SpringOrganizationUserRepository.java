@@ -45,8 +45,8 @@ public interface SpringOrganizationUserRepository extends RxJava3CrudRepository<
     @Query("select * from organization_users u where u.reference_type = :refType and u.reference_id = :refId and UPPER(u.username) = UPPER(:name) and u.source = :src")
     Maybe<JdbcOrganizationUser> findByUsernameAndSource(@Param("refType")String refType, @Param("refId") String refId, @Param("name") String username, @Param("src") String source);
 
-    @Query("select * from organization_users u where u.id in (:ids)")
-    Flowable<JdbcOrganizationUser> findByIdIn(@Param("ids") List<String> ids);
+    @Query("select * from organization_users u where u.reference_type = :refType and u.reference_id = :refId and u.id in (:ids)")
+    Flowable<JdbcOrganizationUser> findByIdIn(@Param("refType")String refType, @Param("refId") String refId, @Param("ids") List<String> ids);
 
     @Query("select * from organization_users u where u.reference_type = :refType and u.reference_id = :refId")
     Flowable<JdbcOrganizationUser> findByReference(@Param("refType")String refType, @Param("refId") String refId);

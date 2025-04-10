@@ -50,7 +50,6 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -228,8 +227,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     }
 
     @Override
-    public Flowable<User> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(withMaxTime(usersCollection.find(in(FIELD_ID, ids)))).map(this::convert);
+    public Flowable<User> findByIdIn(ReferenceType referenceType, String referenceId, List<String> ids) {
+        return Flowable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), in(FIELD_ID, ids))))).map(this::convert);
     }
 
     @Override
