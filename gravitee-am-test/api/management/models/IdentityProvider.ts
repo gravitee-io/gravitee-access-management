@@ -122,6 +122,12 @@ export interface IdentityProvider {
    * @memberof IdentityProvider
    */
   passwordPolicy?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof IdentityProvider
+   */
+  dataPlaneId?: string;
 }
 
 /**
@@ -160,6 +166,7 @@ export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: bo
     createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
     updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
     passwordPolicy: !exists(json, 'passwordPolicy') ? undefined : json['passwordPolicy'],
+    dataPlaneId: !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
   };
 }
 
@@ -186,5 +193,6 @@ export function IdentityProviderToJSON(value?: IdentityProvider | null): any {
     createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
     updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
     passwordPolicy: value.passwordPolicy,
+    dataPlaneId: value.dataPlaneId,
   };
 }

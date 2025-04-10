@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Form;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
@@ -41,6 +42,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -60,6 +64,9 @@ public class ClientServiceTest {
 
     @Mock
     private ApplicationService applicationService;
+
+    @Mock
+    private ApplicationSecretService applicationSecretService;
 
     private final static Domain DOMAIN = new Domain("domain1");
 
@@ -247,22 +254,22 @@ public class ClientServiceTest {
         Application client = new Application();
         client.setDomain(DOMAIN.getId());
 
-        when(applicationService.renewClientSecret(DOMAIN, "my-client", null)).thenReturn(Single.just(new Application()));
+        when(applicationSecretService.renew(eq(DOMAIN), any(Application.class), anyString(), isNull())).thenReturn(Single.just(client));
 
-        TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
+        TestObserver<Client> testObserver = clientService.renewClientSecret(DOMAIN, client.toClient(), "id").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationService, times(1)).renewClientSecret(DOMAIN, "my-client", null);
+        verify(applicationSecretService, times(1)).renew(eq(DOMAIN), any(Application.class), eq("id"), isNull());
     }
 
     @Test
     public void shouldRenewSecret_clientNotFound() {
-        when(applicationService.renewClientSecret(DOMAIN, "my-client", null)).thenReturn(Single.error(new ClientNotFoundException("my-client")));
+        when(applicationSecretService.renew(eq(DOMAIN), any(Application.class), eq("id"), isNull())).thenReturn(Single.error(new ClientNotFoundException("my-client")));
 
-        TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
+        TestObserver<Client> testObserver = clientService.renewClientSecret(DOMAIN, new Client(), "id").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(ClientNotFoundException.class);
@@ -273,9 +280,9 @@ public class ClientServiceTest {
 
     @Test
     public void shouldRenewSecret_technicalException() {
-        when(applicationService.renewClientSecret(DOMAIN, "my-client", null)).thenReturn(Single.error(TechnicalManagementException::new));
+        when(applicationSecretService.renew(eq(DOMAIN), any(Application.class), eq("id"), isNull())).thenReturn(Single.error(TechnicalManagementException::new));
 
-        TestObserver testObserver = clientService.renewClientSecret(DOMAIN, "my-client").test();
+        TestObserver<Client> testObserver = clientService.renewClientSecret(DOMAIN, new Client(), "id").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);

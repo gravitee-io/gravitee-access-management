@@ -32,6 +32,7 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
@@ -65,6 +66,9 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     private ApplicationService applicationService;
+
+    @Autowired
+    private ApplicationSecretService applicationSecretService;
 
     @Override
     public Maybe<Client> findById(String id) {
@@ -139,10 +143,9 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Single<Client> renewClientSecret(Domain domain, String id, User principal) {
-        LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
-        return applicationService.renewClientSecret(domain, id, principal)
-                .map(Application::toClient);
+    public Single<Client> renewClientSecret(Domain domain, Client client, String clientSecretId, User principal) {
+        LOGGER.debug("Renew client secret for client {} in domain {}", client.getId(), domain);
+        return applicationSecretService.renew(domain, convert(client), clientSecretId, principal).map(Application::toClient);
     }
 
     private Application convert(Client client) {

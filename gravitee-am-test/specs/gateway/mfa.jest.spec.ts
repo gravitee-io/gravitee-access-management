@@ -776,17 +776,17 @@ const verifyFactorOnEmailEnrollment = async (challenge, factor) => {
   await clearEmails();
 
   const successfulVerification = await performPost(
-      challengeResponse.action,
-      '',
-      {
-        factorId: factor.id,
-        code: verificationCode,
-        'X-XSRF-TOKEN': challengeResponse.token,
-      },
-      {
-        Cookie: challengeResponse.headers['set-cookie'],
-        'Content-type': 'application/x-www-form-urlencoded',
-      },
+    challengeResponse.action,
+    '',
+    {
+      factorId: factor.id,
+      code: verificationCode,
+      'X-XSRF-TOKEN': challengeResponse.token,
+    },
+    {
+      Cookie: challengeResponse.headers['set-cookie'],
+      'Content-type': 'application/x-www-form-urlencoded',
+    },
   ).expect(302);
 
   expect(successfulVerification.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);

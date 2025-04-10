@@ -123,6 +123,7 @@ models/NewApplication.ts
 models/NewAuthenticationDeviceNotifier.ts
 models/NewBotDetection.ts
 models/NewCertificate.ts
+models/NewClientSecret.ts
 models/NewDeviceIdentifier.ts
 models/NewDictionary.ts
 models/NewDomain.ts

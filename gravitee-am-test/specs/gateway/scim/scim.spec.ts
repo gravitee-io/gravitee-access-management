@@ -13,27 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import {afterAll, beforeAll, describe, expect, jest} from '@jest/globals';
-import {requestAdminAccessToken} from '@management-commands/token-management-commands';
-import {Domain} from '@management-models/Domain';
-import {Application} from '@management-models/Application';
-import {
-  createDomain,
-  deleteDomain,
-  patchDomain,
-  startDomain,
-  waitForDomainSync
-} from '@management-commands/domain-management-commands';
-import {createApplication, updateApplication} from '@management-commands/application-management-commands';
-import {
-  extractXsrfToken,
-  getWellKnownOpenIdConfiguration,
-  performFormPost,
-  performPost
-} from '@gateway-commands/oauth-oidc-commands';
-import {applicationBase64Token} from '@gateway-commands/utils';
-import {clearEmails, getLastEmail} from '@utils-commands/email-commands';
-import {getUser} from '@management-commands/user-management-commands';
+import { afterAll, beforeAll, describe, expect, jest } from '@jest/globals';
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { Domain } from '@management-models/Domain';
+import { Application } from '@management-models/Application';
+import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createApplication, updateApplication } from '@management-commands/application-management-commands';
+import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { applicationBase64Token } from '@gateway-commands/utils';
+import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
+import { getUser } from '@management-commands/user-management-commands';
 
 let mngAccessToken: string;
 let scimAccessToken: string;
@@ -103,12 +92,8 @@ afterAll(async function () {
 });
 describe('SCIM with preRegistration', () => {
   it('should create SCIM user with preRegistration', async () => {
-
     const request = {
-      schemas: [
-        'urn:ietf:params:scim:schemas:extension:custom:2.0:User',
-        'urn:ietf:params:scim:schemas:core:2.0:User'
-      ],
+      schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
       externalId: '70198412321242223922423',
       userName: 'barbara',
       password: null,
@@ -118,7 +103,7 @@ describe('SCIM with preRegistration', () => {
         givenName: 'Barbara',
         middleName: 'Jane',
         honorificPrefix: 'Ms.',
-        honorificSuffix: 'III'
+        honorificSuffix: 'III',
       },
       displayName: 'Babs Jensen',
       nickName: 'Babs',
@@ -126,8 +111,8 @@ describe('SCIM with preRegistration', () => {
         {
           value: 'user@user.com',
           type: 'work',
-          primary: true
-        }
+          primary: true,
+        },
       ],
       userType: 'Employee',
       title: 'Tour Guide',
@@ -136,10 +121,9 @@ describe('SCIM with preRegistration', () => {
       timezone: 'America/Los_Angeles',
       active: true,
       'urn:ietf:params:scim:schemas:extension:custom:2.0:User': {
-        preRegistration: true
-      }
+        preRegistration: true,
+      },
     };
-
 
     const response = await performPost(scimEndpoint, '/Users', JSON.stringify(request), {
       'Content-type': 'application/json',
@@ -153,7 +137,6 @@ describe('SCIM with preRegistration', () => {
     expect(createdUser.enabled).toBeFalsy();
     expect(createdUser.registrationUserUri).not.toBeDefined();
     expect(createdUser.registrationAccessToken).not.toBeDefined();
-
   });
 
   it('must received an email', async () => {
@@ -167,20 +150,20 @@ describe('SCIM with preRegistration', () => {
     const resetPwdToken = url.searchParams.get('token');
     const baseUrlConfirmRegister = confirmationLink.substring(0, confirmationLink.indexOf('?'));
 
-    const {headers, token: xsrfToken} = await extractXsrfToken(baseUrlConfirmRegister, '?token=' + resetPwdToken);
+    const { headers, token: xsrfToken } = await extractXsrfToken(baseUrlConfirmRegister, '?token=' + resetPwdToken);
 
     const postConfirmRegistration = await performFormPost(
-        baseUrlConfirmRegister,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrfToken,
-          token: resetPwdToken,
-          password: '#CoMpL3X-P@SsW0Rd',
-        },
-        {
-          Cookie: headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
+      baseUrlConfirmRegister,
+      '',
+      {
+        'X-XSRF-TOKEN': xsrfToken,
+        token: resetPwdToken,
+        password: '#CoMpL3X-P@SsW0Rd',
+      },
+      {
+        Cookie: headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+      },
     ).expect(302);
 
     expect(postConfirmRegistration.headers['location']).toBeDefined();
@@ -194,5 +177,4 @@ describe('SCIM with preRegistration', () => {
     // They have to provide a password first.
     expect(user.enabled).toBeTruthy();
   });
-
 });

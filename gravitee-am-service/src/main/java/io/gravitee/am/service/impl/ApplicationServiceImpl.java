@@ -24,7 +24,6 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
@@ -37,7 +36,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
@@ -105,7 +103,6 @@ import java.util.stream.Collectors;
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.ofNullable;
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.hasText;
@@ -170,7 +167,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private ApplicationSecretConfig applicationSecretConfig;
 
     @Autowired
-    private ApplicationClientSecretService clientSecretService;
+    private SecretService clientSecretService;
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
@@ -299,18 +296,18 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // apply default SAML 2.0 settings
         if (ApplicationType.SERVICE != application.getType() && !ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
-                try {
-                    final String url = newApplication.getRedirectUris().get(0);
-                    ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
-                    samlSettings.setEntityId(UriBuilder.fromHttpUrl(url).buildRootUrl());
-                    samlSettings.setAttributeConsumeServiceUrl(url);
-                    applicationSettings.setSaml(samlSettings);
-                } catch (Exception ex) {
-                    // silent exception
-                    // redirect_uri can use custom URI (especially for mobile deep links)
-                    LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
-                }
+            try {
+                final String url = newApplication.getRedirectUris().get(0);
+                ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
+                samlSettings.setEntityId(UriBuilder.fromHttpUrl(url).buildRootUrl());
+                samlSettings.setAttributeConsumeServiceUrl(url);
+                applicationSettings.setSaml(samlSettings);
+            } catch (Exception ex) {
+                // silent exception
+                // redirect_uri can use custom URI (especially for mobile deep links)
+                LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
             }
+        }
 
         application.setSettings(applicationSettings);
 
@@ -430,73 +427,6 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> renewClientSecret(Domain domain, String id, User principal) {
-        LOGGER.debug("Renew client secret for application {} and domain {}", id, domain);
-        return applicationRepository.findById(id)
-                .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
-                .flatMap(application -> {
-                    // check application
-                    if (application.getSettings() == null) {
-                        return Single.error(new IllegalStateException("Application settings is undefined"));
-                    }
-                    if (application.getSettings().getOauth() == null) {
-                        return Single.error(new IllegalStateException("Application OAuth 2.0 settings is undefined"));
-                    }
-
-                    // Replace the SecretSettings into the App config if the settings are different
-                    // from the last time a secret has been generated for this app.
-                    // NOTE: remember to append the settings instead of replacing them when we will manage multiple secret.
-                    var secretSettings = this.applicationSecretConfig.toSecretSettings();
-                    if (!SecretHashAlgorithm.NONE.name().equals(secretSettings.getAlgorithm()) && CLIENT_SECRET_JWT.equals(application.getSettings().getOauth().getTokenEndpointAuthMethod()) ) {
-                        // client exist with client_secret_jwt authentication method,
-                        // we force the None algorithm to allow secret renewal
-                        secretSettings = ApplicationSecretConfig.buildNoneSecretSettings();
-                    }
-
-                    if (!doesAppReferenceSecretSettings(application, secretSettings)) {
-                        application.setSecretSettings(List.of(secretSettings));
-                    }
-
-                    // here the client_secret has been generated, we can generate the HashValue here
-                    // as we do not want to store the clear text value for the client Secret
-                    // we keep the value and force the value into OAuth setting to null
-                    // in order to restore it after the creation
-                    final var rawSecret = SecureRandomString.generate();
-                    var clientSecret = this.clientSecretService.generateClientSecret(rawSecret, secretSettings);
-                    application.setSecrets(List.of(clientSecret));
-                    application.getSettings().getOauth().setClientSecret(null);
-                    application.setUpdatedAt(new Date());
-                    return applicationRepository.update(application).map(app -> {
-                        app.getSettings().getOauth().setClientSecret(rawSecret);
-                        return app;
-                    });
-                })
-                // create event for sync process
-                .flatMap(application1 -> {
-                    Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
-                    return eventService.create(event, domain).flatMap(domain1 -> Single.just(application1));
-                })
-                .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(updatedApplication)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).reference(Reference.domain(domain.getId())).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to renew client secret for application {} and domain {}", id, domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to renew client secret for application %s and domain %s", id, domain), ex));
-                });
-    }
-
-    private static boolean doesAppReferenceSecretSettings(Application application, ApplicationSecretSettings secretSettings) {
-        return ofNullable(application.getSecretSettings())
-                .map(settings -> settings
-                        .stream()
-                        .anyMatch(conf -> conf.getId() != null && conf.getId().equals(secretSettings.getId()))
-                ).orElse(false);
-    }
-
-    @Override
     public Completable delete(String id, User principal, Domain domain) {
         LOGGER.debug("Delete application {}", id);
         return applicationRepository.findById(id)
@@ -576,7 +506,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (rawSecret != null) {
             // PUBLIC client doesn't need to have secret, so we have to test it before generated the hash
             applicationSettings.getOauth().setClientSecret(null);
-            var clientSecret = this.clientSecretService.generateClientSecret(rawSecret, secretSettings);
+            var clientSecret = this.clientSecretService.generateClientSecret("Default", rawSecret, secretSettings);
             application.setSecrets(List.of(clientSecret));
         }
 
@@ -598,7 +528,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 })
                 // create the owner
                 .flatMap(application1 -> {
-                    if (principal == null || principal.getAdditionalInformation() == null || !hasText((String)principal.getAdditionalInformation().get(Claims.ORGANIZATION))) {
+                    if (principal == null || principal.getAdditionalInformation() == null || !hasText((String) principal.getAdditionalInformation().get(Claims.ORGANIZATION))) {
                         // There is no principal or we can not find the organization the user is attached to. Can't assign role.
                         return Single.just(application1);
                     }
@@ -677,9 +607,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                                     // legacy way to retrieve default certificate before we introduce the system flag
                                     // keep it for backward compatibility in case of issue with the SystemCertificateUpgrader
                                     certificates
-                                        .stream()
-                                        .filter(certificate -> "Default".equals(certificate.getName()))
-                                        .findFirst()
+                                            .stream()
+                                            .filter(certificate -> "Default".equals(certificate.getName()))
+                                            .findFirst()
                             )
                             .orElse(certificates.get(0));
 

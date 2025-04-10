@@ -19,9 +19,8 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
-import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -41,9 +40,9 @@ import static org.springframework.util.CollectionUtils.isEmpty;
  */
 public class ClientPostAuthProvider implements ClientAuthProvider {
 
-    private final ApplicationClientSecretService appSecretService;
+    private final SecretService appSecretService;
 
-    public ClientPostAuthProvider(ApplicationClientSecretService appSecretService) {
+    public ClientPostAuthProvider(SecretService appSecretService) {
         this.appSecretService = appSecretService;
     }
 
@@ -70,16 +69,12 @@ public class ClientPostAuthProvider implements ClientAuthProvider {
         }
 
         if (!isEmpty(client.getClientSecrets())) {
-            // take the first one as for now, we do not manage multiple secrets
-            ClientSecret hashedSecret = client.getClientSecrets().get(0);
-            var pwdEncoder = client.getSecretSettings()
-                    .stream().filter(settings -> settings.getId().equals(hashedSecret.getSettingsId()))
-                    .findFirst()
-                    .map(appSecretService::getOrCreatePasswordEncoder)
-                    .orElseGet(appSecretService::getOrCreateNoOpPasswordEncoder);
 
-            if (!pwdEncoder.matches(clientSecret, hashedSecret.getSecret())) {
-                handler.handle(Future.failedFuture(new InvalidClientException(ClientAuthHandler.GENERIC_ERROR_MESSAGE)));
+            boolean authenticated = appSecretService.secretMatches(client, clientSecret);
+
+            if (!authenticated) {
+                handler.handle(Future.failedFuture(new InvalidClientException(
+                        ClientAuthHandler.GENERIC_ERROR_MESSAGE)));
                 return;
             }
 

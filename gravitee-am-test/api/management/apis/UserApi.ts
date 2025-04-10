@@ -142,15 +142,15 @@ export interface Delete10Request {
   environmentId: string;
   domain: string;
   user: string;
-  identity: string;
+  factor: string;
 }
 
-export interface Delete7Request {
+export interface Delete11Request {
   organizationId: string;
   environmentId: string;
   domain: string;
   user: string;
-  clientId?: string;
+  identity: string;
 }
 
 export interface Delete8Request {
@@ -158,7 +158,7 @@ export interface Delete8Request {
   environmentId: string;
   domain: string;
   user: string;
-  device: string;
+  clientId?: string;
 }
 
 export interface Delete9Request {
@@ -166,7 +166,7 @@ export interface Delete9Request {
   environmentId: string;
   domain: string;
   user: string;
-  factor: string;
+  device: string;
 }
 
 export interface DeleteOrganizationUserRequest {
@@ -845,7 +845,7 @@ export class UserApi extends runtime.BaseAPI {
 
   /**
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-   * Unlink user identity
+   * Revoke user factor
    */
   async delete10Raw(
     requestParameters: Delete10Request,
@@ -873,10 +873,82 @@ export class UserApi extends runtime.BaseAPI {
       throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete10.');
     }
 
+    if (requestParameters.factor === null || requestParameters.factor === undefined) {
+      throw new runtime.RequiredError('factor', 'Required parameter requestParameters.factor was null or undefined when calling delete10.');
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/factors/{factor}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
+          .replace(`{${'factor'}}`, encodeURIComponent(String(requestParameters.factor))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke user factor
+   */
+  async delete10(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete10Raw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Unlink user identity
+   */
+  async delete11Raw(
+    requestParameters: Delete11Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete11.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling delete11.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete11.');
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete11.');
+    }
+
     if (requestParameters.identity === null || requestParameters.identity === undefined) {
       throw new runtime.RequiredError(
         'identity',
-        'Required parameter requestParameters.identity was null or undefined when calling delete10.',
+        'Required parameter requestParameters.identity was null or undefined when calling delete11.',
       );
     }
 
@@ -914,38 +986,38 @@ export class UserApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
    * Unlink user identity
    */
-  async delete10(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete10Raw(requestParameters, initOverrides);
+  async delete11(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete11Raw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
    * Revoke user consents
    */
-  async delete7Raw(
-    requestParameters: Delete7Request,
+  async delete8Raw(
+    requestParameters: Delete8Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete7.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete8.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete7.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling delete8.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete7.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete8.');
     }
 
     if (requestParameters.user === null || requestParameters.user === undefined) {
-      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete7.');
+      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete8.');
     }
 
     const queryParameters: any = {};
@@ -985,42 +1057,42 @@ export class UserApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
    * Revoke user consents
    */
-  async delete7(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete7Raw(requestParameters, initOverrides);
+  async delete8(requestParameters: Delete8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete8Raw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
    * Delete a device
    */
-  async delete8Raw(
-    requestParameters: Delete8Request,
+  async delete9Raw(
+    requestParameters: Delete9Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete8.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete9.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete8.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling delete9.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete8.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete9.');
     }
 
     if (requestParameters.user === null || requestParameters.user === undefined) {
-      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete8.');
+      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete9.');
     }
 
     if (requestParameters.device === null || requestParameters.device === undefined) {
-      throw new runtime.RequiredError('device', 'Required parameter requestParameters.device was null or undefined when calling delete8.');
+      throw new runtime.RequiredError('device', 'Required parameter requestParameters.device was null or undefined when calling delete9.');
     }
 
     const queryParameters: any = {};
@@ -1056,78 +1128,6 @@ export class UserApi extends runtime.BaseAPI {
   /**
    * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
    * Delete a device
-   */
-  async delete8(requestParameters: Delete8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete8Raw(requestParameters, initOverrides);
-  }
-
-  /**
-   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-   * Revoke user factor
-   */
-  async delete9Raw(
-    requestParameters: Delete9Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete9.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete9.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete9.');
-    }
-
-    if (requestParameters.user === null || requestParameters.user === undefined) {
-      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete9.');
-    }
-
-    if (requestParameters.factor === null || requestParameters.factor === undefined) {
-      throw new runtime.RequiredError('factor', 'Required parameter requestParameters.factor was null or undefined when calling delete9.');
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/factors/{factor}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
-          .replace(`{${'factor'}}`, encodeURIComponent(String(requestParameters.factor))),
-        method: 'DELETE',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-   * Revoke user factor
    */
   async delete9(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.delete9Raw(requestParameters, initOverrides);
@@ -3088,7 +3088,7 @@ export class UserApi extends runtime.BaseAPI {
   async subscribeNewsletterRaw(
     requestParameters: SubscribeNewsletterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<User>> {
+  ): Promise<runtime.ApiResponse<UserEntity>> {
     if (requestParameters.emailValue === null || requestParameters.emailValue === undefined) {
       throw new runtime.RequiredError(
         'emailValue',
@@ -3121,7 +3121,7 @@ export class UserApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserEntityFromJSON(jsonValue));
   }
 
   /**
@@ -3130,7 +3130,7 @@ export class UserApi extends runtime.BaseAPI {
   async subscribeNewsletter(
     requestParameters: SubscribeNewsletterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<User> {
+  ): Promise<UserEntity> {
     const response = await this.subscribeNewsletterRaw(requestParameters, initOverrides);
     return await response.value();
   }

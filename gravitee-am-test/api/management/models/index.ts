@@ -112,6 +112,7 @@ export * from './NewApplication';
 export * from './NewAuthenticationDeviceNotifier';
 export * from './NewBotDetection';
 export * from './NewCertificate';
+export * from './NewClientSecret';
 export * from './NewDeviceIdentifier';
 export * from './NewDictionary';
 export * from './NewDomain';

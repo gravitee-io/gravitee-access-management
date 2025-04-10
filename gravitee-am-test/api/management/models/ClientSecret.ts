@@ -52,6 +52,12 @@ export interface ClientSecret {
   name?: string;
   /**
    *
+   * @type {string}
+   * @memberof ClientSecret
+   */
+  secret?: string;
+  /**
+   *
    * @type {Date}
    * @memberof ClientSecret
    */
@@ -70,6 +76,7 @@ export function ClientSecretFromJSONTyped(json: any, ignoreDiscriminator: boolea
     id: !exists(json, 'id') ? undefined : json['id'],
     settingsId: !exists(json, 'settingsId') ? undefined : json['settingsId'],
     name: !exists(json, 'name') ? undefined : json['name'],
+    secret: !exists(json, 'secret') ? undefined : json['secret'],
     createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
   };
 }
@@ -85,6 +92,7 @@ export function ClientSecretToJSON(value?: ClientSecret | null): any {
     id: value.id,
     settingsId: value.settingsId,
     name: value.name,
+    secret: value.secret,
     createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
   };
 }

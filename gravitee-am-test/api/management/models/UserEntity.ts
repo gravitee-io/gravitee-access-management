@@ -391,6 +391,12 @@ export interface UserEntity {
   sourceId?: string;
   /**
    *
+   * @type {string}
+   * @memberof UserEntity
+   */
+  locale?: string;
+  /**
+   *
    * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
@@ -406,43 +412,7 @@ export interface UserEntity {
    * @type {string}
    * @memberof UserEntity
    */
-  locale?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserEntity
-   */
   middleName?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  lastIdentityInformation?: { [key: string]: any };
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
-   * @type {string}
-   * @memberof UserEntity
-   */
-  birthdate?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UserEntity
-   */
-  phoneNumber?: string;
-  /**
-   *
-   * @type {UserId}
-   * @memberof UserEntity
-   */
-  fullId?: UserId;
   /**
    *
    * @type {boolean}
@@ -461,6 +431,42 @@ export interface UserEntity {
    * @memberof UserEntity
    */
   website?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserEntity
+   */
+  birthdate?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserEntity
+   */
+  phoneNumber?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UserEntity
+   */
+  disabled?: boolean;
+  /**
+   *
+   * @type {UserId}
+   * @memberof UserEntity
+   */
+  fullId?: UserId;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  identitiesAsMap?: { [key: string]: any };
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  lastIdentityInformation?: { [key: string]: any };
 }
 
 /**
@@ -542,18 +548,19 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     serviceAccount: !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
     applicationEntity: !exists(json, 'applicationEntity') ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
     sourceId: !exists(json, 'sourceId') ? undefined : json['sourceId'],
+    locale: !exists(json, 'locale') ? undefined : json['locale'],
     address: !exists(json, 'address') ? undefined : json['address'],
     zoneInfo: !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
-    locale: !exists(json, 'locale') ? undefined : json['locale'],
     middleName: !exists(json, 'middleName') ? undefined : json['middleName'],
-    lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
-    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
-    birthdate: !exists(json, 'birthdate') ? undefined : json['birthdate'],
-    phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
-    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
     inactive: !exists(json, 'inactive') ? undefined : json['inactive'],
     profile: !exists(json, 'profile') ? undefined : json['profile'],
     website: !exists(json, 'website') ? undefined : json['website'],
+    birthdate: !exists(json, 'birthdate') ? undefined : json['birthdate'],
+    phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
+    disabled: !exists(json, 'disabled') ? undefined : json['disabled'],
+    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
+    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
+    lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
   };
 }
 
@@ -623,17 +630,18 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
     serviceAccount: value.serviceAccount,
     applicationEntity: ApplicationEntityToJSON(value.applicationEntity),
     sourceId: value.sourceId,
+    locale: value.locale,
     address: value.address,
     zoneInfo: value.zoneInfo,
-    locale: value.locale,
     middleName: value.middleName,
-    lastIdentityInformation: value.lastIdentityInformation,
-    identitiesAsMap: value.identitiesAsMap,
-    birthdate: value.birthdate,
-    phoneNumber: value.phoneNumber,
-    fullId: UserIdToJSON(value.fullId),
     inactive: value.inactive,
     profile: value.profile,
     website: value.website,
+    birthdate: value.birthdate,
+    phoneNumber: value.phoneNumber,
+    disabled: value.disabled,
+    fullId: UserIdToJSON(value.fullId),
+    identitiesAsMap: value.identitiesAsMap,
+    lastIdentityInformation: value.lastIdentityInformation,
   };
 }

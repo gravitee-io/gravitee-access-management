@@ -39,14 +39,14 @@ import {
   UpdateAuthenticationDeviceNotifierToJSON,
 } from '../models';
 
-export interface Create3Request {
+export interface Create4Request {
   organizationId: string;
   environmentId: string;
   domain: string;
   newAuthenticationDeviceNotifier: NewAuthenticationDeviceNotifier;
 }
 
-export interface Delete3Request {
+export interface Delete4Request {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -94,32 +94,32 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
    * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization
    * Create an Authentication Device Notifier
    */
-  async create3Raw(
-    requestParameters: Create3Request,
+  async create4Raw(
+    requestParameters: Create4Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create3.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling create4.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling create3.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling create4.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create3.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create4.');
     }
 
     if (requestParameters.newAuthenticationDeviceNotifier === null || requestParameters.newAuthenticationDeviceNotifier === undefined) {
       throw new runtime.RequiredError(
         'newAuthenticationDeviceNotifier',
-        'Required parameter requestParameters.newAuthenticationDeviceNotifier was null or undefined when calling create3.',
+        'Required parameter requestParameters.newAuthenticationDeviceNotifier was null or undefined when calling create4.',
       );
     }
 
@@ -158,40 +158,40 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
    * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization
    * Create an Authentication Device Notifier
    */
-  async create3(requestParameters: Create3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.create3Raw(requestParameters, initOverrides);
+  async create4(requestParameters: Create4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.create4Raw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization
    * Delete an Authentication Device Notifier
    */
-  async delete3Raw(
-    requestParameters: Delete3Request,
+  async delete4Raw(
+    requestParameters: Delete4Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete3.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete4.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete3.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling delete4.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete3.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete4.');
     }
 
     if (requestParameters.authDeviceNotifier === null || requestParameters.authDeviceNotifier === undefined) {
       throw new runtime.RequiredError(
         'authDeviceNotifier',
-        'Required parameter requestParameters.authDeviceNotifier was null or undefined when calling delete3.',
+        'Required parameter requestParameters.authDeviceNotifier was null or undefined when calling delete4.',
       );
     }
 
@@ -228,8 +228,8 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
    * User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization
    * Delete an Authentication Device Notifier
    */
-  async delete3(requestParameters: Delete3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete3Raw(requestParameters, initOverrides);
+  async delete4(requestParameters: Delete4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete4Raw(requestParameters, initOverrides);
   }
 
   /**
