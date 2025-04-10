@@ -179,7 +179,7 @@ public class GroupServiceImpl implements GroupService {
                         final int endOffset = (page + 1) * size;
                         List<String> pagedMemberIds = sortedMembers.subList(Math.min(sortedMembers.size(), startOffset), Math.min(sortedMembers.size(), endOffset));
                         CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
-                        return service.findByIdIn(pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
+                        return service.findByIdIn(referenceType, referenceId, pagedMemberIds).toList().map(users -> new Page<>(users, page, sortedMembers.size()));
                     }
                 });
     }
@@ -349,7 +349,7 @@ public class GroupServiceImpl implements GroupService {
         List<String> userMembers = group.getMembers() != null ? group.getMembers().stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()) : null;
         if (userMembers != null && !userMembers.isEmpty()) {
             CommonUserService service = (group.getReferenceType() == ReferenceType.ORGANIZATION ? organizationUserService : userService);
-            return service.findByIdIn(userMembers)
+            return service.findByIdIn(group.getReferenceType(), group.getReferenceId(), userMembers)
                     .map(User::getId)
                     .toList()
                     .map(userIds -> {

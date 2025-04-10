@@ -40,7 +40,7 @@ public interface ResourceService {
     Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resourceIds);
     Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resourceId);
     Maybe<Resource> findByDomainAndClientResource(String domain, String client, String resourceId);
-    Single<Map<String, Map<String, Object>>> getMetadata(List<Resource> resources);
+    Single<Map<String, Map<String, Object>>> getMetadata(String domain, List<Resource> resources);
     Single<Resource> create(NewResource newResource, String domain, String client, String userId);
     Single<Resource> update(NewResource newResource, String domain, String client, String userId, String resourceId);
     Single<Resource> update(Resource resource);

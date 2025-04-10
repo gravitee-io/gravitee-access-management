@@ -51,7 +51,7 @@ public interface UserRepository extends CommonUserRepository {
 
     Maybe<User> findByExternalIdAndSource(ReferenceType referenceType, String referenceId, String externalId, String source);
 
-    Flowable<User> findByIdIn(List<String> ids);
+    Flowable<User> findByIdIn(ReferenceType referenceType, String referenceId, List<String> ids);
 
     Maybe<User> findById(ReferenceType referenceType, String referenceId, String userId);
 

@@ -82,7 +82,7 @@ public class MembersResource extends AbstractResource {
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
                         .flatMap(domain1 -> membershipService.findByReference(domain1.getId(), ReferenceType.DOMAIN).toList())
-                        .flatMap(memberships -> membershipService.getMetadata(memberships)
+                        .flatMap(memberships -> membershipService.getMetadata(ReferenceType.DOMAIN, domain, memberships)
                                 .map(metadata -> new MembershipListItem(memberships, metadata))))
                 .subscribe(response::resume, response::resume);
     }
