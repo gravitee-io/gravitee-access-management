@@ -223,6 +223,8 @@ domains:
 #    algorithm: None
 #    properties:
 #      rounds: 10
+# Define max number of secrets for application.
+#  secretsMax: 10
 
 # JWT used to generate signed token for management security mechanism (Bearer Token) and to verify emails
 jwt:

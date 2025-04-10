@@ -1496,7 +1496,8 @@
 													"var body = JSON.parse(responseBody);",
 													"pm.environment.set('client3', body.id);",
 													"pm.environment.set('clientId3', body.settings.oauth.clientId);",
-													"pm.environment.set('clientSecret3', body.settings.oauth.clientSecret);"
+													"pm.environment.set('clientSecret3', body.settings.oauth.clientSecret);",
+													"pm.environment.set('clientSecretId3', body.secrets[0].id);"
 												],
 												"type": "text/javascript"
 											}
@@ -1673,7 +1674,7 @@
 													"});",
 													"",
 													"var body = JSON.parse(responseBody);",
-													"pm.environment.set('clientSecretNew3', body.settings.oauth.clientSecret);",
+													"pm.environment.set('clientSecretNew3', body.secret);",
 													"",
 													"// wait for sync process",
 													"setTimeout(function(){}, 10000);"
@@ -1696,7 +1697,7 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client3}}/secret/_renew",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client3}}/secrets/{{clientSecretId3}}/_renew",
 											"host": [
 												"{{management_url}}"
 											],
@@ -1710,7 +1711,8 @@
 												"{{domain}}",
 												"applications",
 												"{{client3}}",
-												"secret",
+												"secrets",
+                                                "{{clientSecretId3}}",
 												"_renew"
 											]
 										}

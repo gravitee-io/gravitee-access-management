@@ -166,6 +166,12 @@ export interface NewUser {
   forceResetPassword?: boolean;
   /**
    *
+   * @type {Date}
+   * @memberof NewUser
+   */
+  lastPasswordReset?: Date;
+  /**
+   *
    * @type {string}
    * @memberof NewUser
    */
@@ -203,6 +209,7 @@ export function NewUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): N
     createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
     updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
     forceResetPassword: !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
+    lastPasswordReset: !exists(json, 'lastPasswordReset') ? undefined : new Date(json['lastPasswordReset']),
     email: !exists(json, 'email') ? undefined : json['email'],
   };
 }
@@ -237,6 +244,7 @@ export function NewUserToJSON(value?: NewUser | null): any {
     createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
     updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
     forceResetPassword: value.forceResetPassword,
+    lastPasswordReset: value.lastPasswordReset === undefined ? undefined : value.lastPasswordReset.toISOString(),
     email: value.email,
   };
 }

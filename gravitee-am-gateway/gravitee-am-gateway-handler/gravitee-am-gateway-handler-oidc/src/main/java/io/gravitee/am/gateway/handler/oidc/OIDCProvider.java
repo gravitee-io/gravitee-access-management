@@ -49,7 +49,7 @@ import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.gateway.handler.uma.UMAProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -127,7 +127,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
     private Environment environment;
 
     @Autowired
-    private ApplicationClientSecretService applicationClientSecretService;
+    private SecretService secretService;
 
     @Autowired
     private AuditService auditService;
@@ -252,33 +252,33 @@ public class OIDCProvider extends AbstractProtocolProvider {
         DynamicClientAccessTokenHandler dynamicClientAccessTokenHandler = new DynamicClientAccessTokenHandler();
         DynamicClientAccessEndpoint dynamicClientAccessEndpoint = new DynamicClientAccessEndpoint(dcrService, clientSyncService);
         oidcRouter
-                .route(HttpMethod.GET, "/register/:"+CLIENT_ID)
+                .route(HttpMethod.GET, "/register/:" + CLIENT_ID)
                 .handler(dynamicClientAccessHandler)
                 .handler(dynamicClientAccessAuthHandler)
                 .handler(dynamicClientAccessTokenHandler)
                 .handler(dynamicClientAccessEndpoint::read);
         oidcRouter
-                .route(HttpMethod.PATCH, "/register/:"+CLIENT_ID)
+                .route(HttpMethod.PATCH, "/register/:" + CLIENT_ID)
                 .consumes(MediaType.APPLICATION_JSON)
                 .handler(dynamicClientAccessHandler)
                 .handler(dynamicClientAccessAuthHandler)
                 .handler(dynamicClientAccessTokenHandler)
                 .handler(dynamicClientAccessEndpoint::patch);
         oidcRouter
-                .route(HttpMethod.PUT, "/register/:"+CLIENT_ID)
+                .route(HttpMethod.PUT, "/register/:" + CLIENT_ID)
                 .consumes(MediaType.APPLICATION_JSON)
                 .handler(dynamicClientAccessHandler)
                 .handler(dynamicClientAccessAuthHandler)
                 .handler(dynamicClientAccessTokenHandler)
                 .handler(dynamicClientAccessEndpoint::update);
         oidcRouter
-                .route(HttpMethod.DELETE, "/register/:"+CLIENT_ID)
+                .route(HttpMethod.DELETE, "/register/:" + CLIENT_ID)
                 .handler(dynamicClientAccessHandler)
                 .handler(dynamicClientAccessAuthHandler)
                 .handler(dynamicClientAccessTokenHandler)
                 .handler(dynamicClientAccessEndpoint::delete);
         oidcRouter
-                .route(HttpMethod.POST, "/register/:"+CLIENT_ID+"/renew_secret")
+                .route(HttpMethod.POST, "/register/:" + CLIENT_ID + "/renew_secret")
                 .handler(dynamicClientAccessHandler)
                 .handler(dynamicClientAccessAuthHandler)
                 .handler(dynamicClientAccessTokenHandler)
@@ -286,7 +286,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, certificateHeader, auditService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
 
         // Request object registration
         oidcRouter

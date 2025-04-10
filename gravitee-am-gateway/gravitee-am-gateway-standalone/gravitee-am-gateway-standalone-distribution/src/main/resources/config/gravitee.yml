@@ -561,4 +561,6 @@ liquibase:
 #    algorithm: None
 #    properties:
 #      rounds: 10
+#  Define max number of secrets for application:
+#  secretsMax: 10
 

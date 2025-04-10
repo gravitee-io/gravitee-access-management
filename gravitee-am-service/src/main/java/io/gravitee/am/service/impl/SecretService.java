@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PBKDF2PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
@@ -44,11 +45,11 @@ import static java.util.Objects.isNull;
  * @author GraviteeSource Team
  */
 @Component
-public class ApplicationClientSecretService {
+public class SecretService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private Map<String, PasswordEncoder> encoders = new ConcurrentHashMap<>();
+    private final Map<String, PasswordEncoder> encoders = new ConcurrentHashMap<>();
 
     public PasswordEncoder getOrCreateNoOpPasswordEncoder() {
         return getOrCreatePasswordEncoder(null);
@@ -88,13 +89,26 @@ public class ApplicationClientSecretService {
         return pwdEncoder;
     }
 
-    public ClientSecret generateClientSecret(String rawSecret, ApplicationSecretSettings settings) {
+    public ClientSecret generateClientSecret(String name, String rawSecret, ApplicationSecretSettings settings) {
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setId(UUID.randomUUID().toString());
         clientSecret.setSecret(this.getOrCreatePasswordEncoder(settings).encode(rawSecret));
         clientSecret.setCreatedAt(new Date());
         clientSecret.setSettingsId(settings.getId());
-        clientSecret.setName(clientSecret.getId());
+        clientSecret.setName(name);
         return clientSecret;
+    }
+
+    public boolean secretMatches(Client client, String clientSecret){
+        return client.getClientSecrets().stream().anyMatch(hashedSecret -> {
+            var pwdEncoder = client.getSecretSettings()
+                    .stream()
+                    .filter(settings -> settings.getId().equals(hashedSecret.getSettingsId()))
+                    .findFirst()
+                    .map(this::getOrCreatePasswordEncoder)
+                    .orElseGet(this::getOrCreateNoOpPasswordEncoder);
+
+            return pwdEncoder.matches(clientSecret, hashedSecret.getSecret());
+        });
     }
 }

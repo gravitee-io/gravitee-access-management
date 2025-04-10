@@ -74,7 +74,7 @@ public class ApplicationSecretConfig {
         }
     }
 
-    public static final ApplicationSecretSettings buildNoneSecretSettings() {
+    public static ApplicationSecretSettings buildNoneSecretSettings() {
         try {
             SecretHashAlgorithm noneAlg = SecretHashAlgorithm.NONE;
             Map<String, Object> noProperties = Map.of();

@@ -211,24 +211,24 @@ export interface Domain {
    * @memberof Domain
    */
   corsSettings?: CorsSettings;
-    /**
-     *
-     * @type {string}
-     * @memberof Domain
-     */
-    dataPlaneId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof Domain
+   */
+  dataPlaneId?: string;
   /**
    *
    * @type {boolean}
    * @memberof Domain
    */
-  isDynamicClientRegistrationEnabled?: boolean;
+  dynamicClientRegistrationEnabled?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof Domain
    */
-  isOpenDynamicClientRegistrationEnabled?: boolean;
+  openDynamicClientRegistrationEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -240,25 +240,25 @@ export interface Domain {
    * @type {boolean}
    * @memberof Domain
    */
-  dynamicClientRegistrationTemplateEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
   redirectUriLocalhostAllowed?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof Domain
    */
-  redirectUriUnsecuredHttpSchemeAllowed?: boolean;
+  redirectUriWildcardAllowed?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof Domain
    */
-  redirectUriWildcardAllowed?: boolean;
+  dynamicClientRegistrationTemplateEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriUnsecuredHttpSchemeAllowed?: boolean;
 }
 
 /**
@@ -320,22 +320,22 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
       : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
     saml: !exists(json, 'saml') ? undefined : SAMLSettingsFromJSON(json['saml']),
     corsSettings: !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
-      'dataPlaneId': !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
-    isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
+    dataPlaneId: !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
+    dynamicClientRegistrationEnabled: !exists(json, 'dynamicClientRegistrationEnabled')
       ? undefined
-      : json['isDynamicClientRegistrationEnabled'],
-    isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
+      : json['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: !exists(json, 'openDynamicClientRegistrationEnabled')
       ? undefined
-      : json['isOpenDynamicClientRegistrationEnabled'],
+      : json['openDynamicClientRegistrationEnabled'],
     redirectUriStrictMatching: !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
+    redirectUriLocalhostAllowed: !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
+    redirectUriWildcardAllowed: !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
     dynamicClientRegistrationTemplateEnabled: !exists(json, 'dynamicClientRegistrationTemplateEnabled')
       ? undefined
       : json['dynamicClientRegistrationTemplateEnabled'],
-    redirectUriLocalhostAllowed: !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
     redirectUriUnsecuredHttpSchemeAllowed: !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed')
       ? undefined
       : json['redirectUriUnsecuredHttpSchemeAllowed'],
-    redirectUriWildcardAllowed: !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
   };
 }
 
@@ -375,12 +375,12 @@ export function DomainToJSON(value?: Domain | null): any {
     saml: SAMLSettingsToJSON(value.saml),
     corsSettings: CorsSettingsToJSON(value.corsSettings),
     dataPlaneId: value.dataPlaneId,
-    isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
-    isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
+    dynamicClientRegistrationEnabled: value.dynamicClientRegistrationEnabled,
+    openDynamicClientRegistrationEnabled: value.openDynamicClientRegistrationEnabled,
     redirectUriStrictMatching: value.redirectUriStrictMatching,
-    dynamicClientRegistrationTemplateEnabled: value.dynamicClientRegistrationTemplateEnabled,
     redirectUriLocalhostAllowed: value.redirectUriLocalhostAllowed,
-    redirectUriUnsecuredHttpSchemeAllowed: value.redirectUriUnsecuredHttpSchemeAllowed,
     redirectUriWildcardAllowed: value.redirectUriWildcardAllowed,
+    dynamicClientRegistrationTemplateEnabled: value.dynamicClientRegistrationTemplateEnabled,
+    redirectUriUnsecuredHttpSchemeAllowed: value.redirectUriUnsecuredHttpSchemeAllowed,
   };
 }

@@ -27,7 +27,7 @@
 /* eslint-disable */
 
 import * as runtime from '../runtime';
-import { EmailValue, EmailValueFromJSON, EmailValueToJSON, User, UserFromJSON, UserToJSON } from '../models';
+import { EmailValue, EmailValueFromJSON, EmailValueToJSON, UserEntity, UserEntityFromJSON, UserEntityToJSON } from '../models';
 
 export interface SubscribeNewsletterRequest {
   emailValue: EmailValue;
@@ -80,7 +80,7 @@ export class NewsletterApi extends runtime.BaseAPI {
   async subscribeNewsletterRaw(
     requestParameters: SubscribeNewsletterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<User>> {
+  ): Promise<runtime.ApiResponse<UserEntity>> {
     if (requestParameters.emailValue === null || requestParameters.emailValue === undefined) {
       throw new runtime.RequiredError(
         'emailValue',
@@ -113,7 +113,7 @@ export class NewsletterApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserEntityFromJSON(jsonValue));
   }
 
   /**
@@ -122,7 +122,7 @@ export class NewsletterApi extends runtime.BaseAPI {
   async subscribeNewsletter(
     requestParameters: SubscribeNewsletterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<User> {
+  ): Promise<UserEntity> {
     const response = await this.subscribeNewsletterRaw(requestParameters, initOverrides);
     return await response.value();
   }

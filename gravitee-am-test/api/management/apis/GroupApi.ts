@@ -70,7 +70,7 @@ export interface AssignRolesRequest {
   requestBody: Array<string>;
 }
 
-export interface Create8Request {
+export interface Create9Request {
   organizationId: string;
   newGroup: NewGroup;
 }
@@ -414,21 +414,21 @@ export class GroupApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization
    * Create a platform group
    */
-  async create8Raw(
-    requestParameters: Create8Request,
+  async create9Raw(
+    requestParameters: Create9Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create8.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling create9.',
       );
     }
 
     if (requestParameters.newGroup === null || requestParameters.newGroup === undefined) {
       throw new runtime.RequiredError(
         'newGroup',
-        'Required parameter requestParameters.newGroup was null or undefined when calling create8.',
+        'Required parameter requestParameters.newGroup was null or undefined when calling create9.',
       );
     }
 
@@ -467,8 +467,8 @@ export class GroupApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization
    * Create a platform group
    */
-  async create8(requestParameters: Create8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.create8Raw(requestParameters, initOverrides);
+  async create9(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.create9Raw(requestParameters, initOverrides);
   }
 
   /**

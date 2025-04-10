@@ -16,11 +16,11 @@
 package io.gravitee.am.gateway.handler.oidc.resources.endpoint;
 
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
-import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKSetDeserializer;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationRequest;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationResponse;
 import io.gravitee.am.gateway.handler.oidc.service.clientregistration.DynamicClientRegistrationService;
+import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKSetDeserializer;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.HttpStatusCode;
@@ -79,18 +79,18 @@ public class DynamicClientRegistrationEndpoint implements Handler<RoutingContext
     }
 
     protected Single<DynamicClientRegistrationRequest> extractRequest(RoutingContext context) {
-        try{
-            if(context.getBodyAsJson()==null) {
+        try {
+            if (context.getBodyAsJson() == null) {
                 throw new InvalidClientMetadataException("no content");
             }
             return Single.just(context.getBodyAsJson().mapTo(DynamicClientRegistrationRequest.class));
-        }catch (Exception ex) {
-            if(ex instanceof DecodeException) {
+        } catch (Exception ex) {
+            if (ex instanceof DecodeException) {
                 return Single.error(new InvalidClientMetadataException(ex.getMessage()));
             }
             //Jackson mapper Replace Customs exception by an IllegalArgumentException
-            if(ex instanceof IllegalArgumentException && ex.getMessage().startsWith(JWKSetDeserializer.PARSE_ERROR_MESSAGE)) {
-                String sanitizedMessage = ex.getMessage().substring(0,ex.getMessage().indexOf(" (through reference chain:"));
+            if (ex instanceof IllegalArgumentException && ex.getMessage().startsWith(JWKSetDeserializer.PARSE_ERROR_MESSAGE)) {
+                String sanitizedMessage = ex.getMessage().substring(0, ex.getMessage().indexOf(" (through reference chain:"));
                 return Single.error(new InvalidClientMetadataException(sanitizedMessage));
             }
             return Single.error(ex);

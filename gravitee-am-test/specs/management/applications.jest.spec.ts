@@ -36,6 +36,7 @@ global.fetch = fetch;
 let accessToken: string;
 let domain: Domain;
 let application;
+let secret;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
@@ -64,6 +65,7 @@ describe('when creating applications', () => {
       expect(createdApp.description).toEqual(app.description);
       expect(createdApp.type).toEqual(app.type);
       application = createdApp;
+      secret = createdApp.secrets[0];
     });
   }
 });
@@ -93,10 +95,9 @@ describe('after creating applications', () => {
   });
 
   it('must renew application secrets', async () => {
-    const renewedSecretApp = await renewApplicationSecrets(domain.id, accessToken, application.id);
-    expect(renewedSecretApp.settings.oauth.clientId).toEqual(application.settings.oauth.clientId);
-    expect(renewedSecretApp.settings.oauth.clientSecret).not.toEqual(application.settings.oauth.clientSecret);
-    application = renewedSecretApp;
+    const renewedSecret = await renewApplicationSecrets(domain.id, accessToken, application.id, secret.id);
+    expect(renewedSecret.secret).not.toEqual(secret.secret);
+    secret = renewedSecret;
   });
 
   it('must find all Applications', async () => {

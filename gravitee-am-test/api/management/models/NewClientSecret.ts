@@ -29,31 +29,31 @@ import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
- * @interface DataPlane
+ * @interface NewClientSecret
  */
-export interface DataPlane {
+export interface NewClientSecret {
   /**
    *
-   * @type {any}
-   * @memberof DataPlane
+   * @type {string}
+   * @memberof NewClientSecret
    */
-  delegate?: any;
+  name: string;
 }
 
-export function DataPlaneFromJSON(json: any): DataPlane {
-  return DataPlaneFromJSONTyped(json, false);
+export function NewClientSecretFromJSON(json: any): NewClientSecret {
+  return NewClientSecretFromJSONTyped(json, false);
 }
 
-export function DataPlaneFromJSONTyped(json: any, ignoreDiscriminator: boolean): DataPlane {
+export function NewClientSecretFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewClientSecret {
   if (json === undefined || json === null) {
     return json;
   }
   return {
-    delegate: !exists(json, 'delegate') ? undefined : json['delegate'],
+    name: json['name'],
   };
 }
 
-export function DataPlaneToJSON(value?: DataPlane | null): any {
+export function NewClientSecretToJSON(value?: NewClientSecret | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -61,6 +61,6 @@ export function DataPlaneToJSON(value?: DataPlane | null): any {
     return null;
   }
   return {
-    delegate: value.delegate,
+    name: value.name,
   };
 }

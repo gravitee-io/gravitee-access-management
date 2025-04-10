@@ -378,6 +378,12 @@ export interface User {
   serviceAccount?: boolean;
   /**
    *
+   * @type {string}
+   * @memberof User
+   */
+  locale?: string;
+  /**
+   *
    * @type {{ [key: string]: any; }}
    * @memberof User
    */
@@ -393,43 +399,7 @@ export interface User {
    * @type {string}
    * @memberof User
    */
-  locale?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
   middleName?: string;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  lastIdentityInformation?: { [key: string]: any };
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  birthdate?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  phoneNumber?: string;
-  /**
-   *
-   * @type {UserId}
-   * @memberof User
-   */
-  fullId?: UserId;
   /**
    *
    * @type {boolean}
@@ -448,6 +418,42 @@ export interface User {
    * @memberof User
    */
   website?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  birthdate?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  phoneNumber?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  disabled?: boolean;
+  /**
+   *
+   * @type {UserId}
+   * @memberof User
+   */
+  fullId?: UserId;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  identitiesAsMap?: { [key: string]: any };
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  lastIdentityInformation?: { [key: string]: any };
 }
 
 /**
@@ -527,18 +533,19 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
     forceResetPassword: !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
     serviceAccount: !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
+    locale: !exists(json, 'locale') ? undefined : json['locale'],
     address: !exists(json, 'address') ? undefined : json['address'],
     zoneInfo: !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
-    locale: !exists(json, 'locale') ? undefined : json['locale'],
     middleName: !exists(json, 'middleName') ? undefined : json['middleName'],
-    lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
-    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
-    birthdate: !exists(json, 'birthdate') ? undefined : json['birthdate'],
-    phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
-    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
     inactive: !exists(json, 'inactive') ? undefined : json['inactive'],
     profile: !exists(json, 'profile') ? undefined : json['profile'],
     website: !exists(json, 'website') ? undefined : json['website'],
+    birthdate: !exists(json, 'birthdate') ? undefined : json['birthdate'],
+    phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
+    disabled: !exists(json, 'disabled') ? undefined : json['disabled'],
+    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
+    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
+    lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
   };
 }
 
@@ -606,17 +613,18 @@ export function UserToJSON(value?: User | null): any {
     updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
     forceResetPassword: value.forceResetPassword,
     serviceAccount: value.serviceAccount,
+    locale: value.locale,
     address: value.address,
     zoneInfo: value.zoneInfo,
-    locale: value.locale,
     middleName: value.middleName,
-    lastIdentityInformation: value.lastIdentityInformation,
-    identitiesAsMap: value.identitiesAsMap,
-    birthdate: value.birthdate,
-    phoneNumber: value.phoneNumber,
-    fullId: UserIdToJSON(value.fullId),
     inactive: value.inactive,
     profile: value.profile,
     website: value.website,
+    birthdate: value.birthdate,
+    phoneNumber: value.phoneNumber,
+    disabled: value.disabled,
+    fullId: UserIdToJSON(value.fullId),
+    identitiesAsMap: value.identitiesAsMap,
+    lastIdentityInformation: value.lastIdentityInformation,
   };
 }

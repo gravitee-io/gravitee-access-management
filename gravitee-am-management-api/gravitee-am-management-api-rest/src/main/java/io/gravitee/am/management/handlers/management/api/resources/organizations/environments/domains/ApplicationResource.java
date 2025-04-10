@@ -17,14 +17,15 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchApplication;
@@ -45,7 +46,6 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -228,34 +228,9 @@ public class ApplicationResource extends AbstractResource {
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
-    @POST
-    @Path("secret/_renew")
-    @Operation(
-            operationId = "renewClientSecret",
-            summary = "Renew application secret",
-            description = "User must have APPLICATION_OPENID[UPDATE] permission on the specified application " +
-                    "or APPLICATION_OPENID[UPDATE] permission on the specified domain " +
-                    "or APPLICATION_OPENID[UPDATE] permission on the specified environment " +
-                    "or APPLICATION_OPENID[UPDATE] permission on the specified organization")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Application secret successfully updated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Application.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
-    public void renewClientSecret(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("application") String application,
-            @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
-
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_OPENID, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(exitingDomain -> applicationService.renewClientSecret(exitingDomain, application, authenticatedUser)))
-                .subscribe(response::resume, response::resume);
+    @Path("secrets")
+    public ApplicationSecretsResource getApplicationResource(){
+        return resourceContext.getResource(ApplicationSecretsResource.class);
     }
 
     @Path("emails")
@@ -363,7 +338,7 @@ public class ApplicationResource extends AbstractResource {
             }
         }
 
-        filteredApplication.setSecrets(application.getSecrets());
+        filteredApplication.setSecrets(application.getSecrets().stream().map(ClientSecret::safeSecret).toList());
         filteredApplication.setSecretSettings(application.getSecretSettings());
 
         return filteredApplication;
