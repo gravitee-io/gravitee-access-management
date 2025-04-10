@@ -21,7 +21,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.model.NewUser;
 import io.gravitee.am.service.model.UpdateUser;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -35,7 +34,7 @@ import java.util.List;
  */
 public interface CommonUserService {
 
-    Flowable<User> findByIdIn(List<String> ids);
+    Flowable<User> findByIdIn(ReferenceType referenceType, String referenceId, List<String> ids);
 
     Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
 

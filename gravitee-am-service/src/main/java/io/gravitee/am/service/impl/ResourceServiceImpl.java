@@ -16,6 +16,7 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.uma.Resource;
@@ -125,14 +126,14 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public Single<Map<String, Map<String, Object>>> getMetadata(List<Resource> resources) {
+    public Single<Map<String, Map<String, Object>>> getMetadata(String domainId, List<Resource> resources) {
         if (resources == null || resources.isEmpty()) {
             return Single.just(Collections.emptyMap());
         }
 
         List<String> userIds = resources.stream().filter(resource -> resource.getUserId() != null).map(Resource::getUserId).distinct().collect(Collectors.toList());
         List<String> appIds = resources.stream().filter(resource -> resource.getClientId() != null).map(Resource::getClientId).distinct().collect(Collectors.toList());
-        return Single.zip(userService.findByIdIn(userIds).toMap(User::getId, this::filter),
+        return Single.zip(userService.findByIdIn(ReferenceType.DOMAIN, domainId, userIds).toMap(User::getId, this::filter),
                 applicationService.findByIdIn(appIds).toMap(Application::getId, this::filter), (users, apps) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
             metadata.put("users", (Map) users);
