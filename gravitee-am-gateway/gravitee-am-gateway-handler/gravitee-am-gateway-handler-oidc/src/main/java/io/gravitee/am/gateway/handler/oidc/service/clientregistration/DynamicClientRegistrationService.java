@@ -32,5 +32,5 @@ public interface DynamicClientRegistrationService {
 
     Single<Client> delete(Client toDelete);
 
-    Single<Client> renewSecret(Client toRenew, String basePath);
+    Single<Client> renewSecret(Client toRenew, String clientSecretId, String basePath);
 }

@@ -30,7 +30,6 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.model.PatchApplication;
 import io.gravitee.am.service.model.PatchApplicationSettings;
 import io.gravitee.common.http.HttpStatusCode;
@@ -313,57 +312,6 @@ public class ApplicationResourceTest extends JerseySpringTest {
 
         final Response response = put(target("domains").path("domain-id").path("applications").path("application-id"), patchApplication);
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    @Test
-    public void shouldRenewClientSecret() {
-        final String domainId = "domain-id";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        final String clientId = "client-id";
-        final Application mockClient = new Application();
-        mockClient.setId(clientId);
-        mockClient.setName("client-name");
-        mockClient.setDomain(domainId);
-
-        doReturn(Single.just(Permission.allPermissionAcls(ReferenceType.APPLICATION))).when(permissionService).findAllPermissions(any(User.class), eq(ReferenceType.APPLICATION), anyString());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(mockClient)).when(applicationService).renewClientSecret(any(Domain.class), eq(clientId), any());
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("applications")
-                .path(clientId)
-                .path("secret/_renew")
-                .request()
-                .post(null);
-        assertEquals(HttpStatusCode.OK_200, response.getStatus());
-    }
-
-    @Test
-    public void shouldRenewClientSecret_appNotFound() {
-        final String domainId = "domain-id";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        final String clientId = "client-id";
-        final Application mockClient = new Application();
-        mockClient.setId(clientId);
-        mockClient.setName("client-name");
-        mockClient.setDomain(domainId);
-
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.error(new ApplicationNotFoundException(clientId))).when(applicationService).renewClientSecret(any(Domain.class), eq(clientId), any());
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("applications")
-                .path(clientId)
-                .path("secret/_renew")
-                .request()
-                .post(null);
-        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 
     private Application buildApplicationMock() {

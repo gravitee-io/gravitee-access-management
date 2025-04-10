@@ -78,7 +78,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -91,7 +91,6 @@ import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 /**
@@ -207,7 +206,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private GraviteeMessageResolver messageResolver;
 
     @Autowired
-    private ApplicationClientSecretService applicationClientSecretService;
+    private SecretService secretService;
 
     @Autowired
     private AuditService auditService;
@@ -237,7 +236,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, certificateHeader, auditService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
 
         // static handler
         staticHandler(oauth2Router);

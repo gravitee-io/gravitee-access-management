@@ -38,14 +38,14 @@ public interface ClientService {
 
     Single<Client> create(Domain domain, Client client);
 
-    Single<Client> renewClientSecret(Domain domain, String id, User principal);
+    Single<Client> renewClientSecret(Domain domain, Client client, String clientSecretId, User principal);
 
     Completable delete(String clientId, User principal, Domain domain);
 
     Single<Client> update(Client client);
 
-    default Single<Client> renewClientSecret(Domain domain, String id) {
-        return renewClientSecret(domain, id, null);
+    default Single<Client> renewClientSecret(Domain domain, Client client, String clientSecretId) {
+        return renewClientSecret(domain, client, clientSecretId, null);
     }
 
     default Completable delete(String clientId, Domain domain) {

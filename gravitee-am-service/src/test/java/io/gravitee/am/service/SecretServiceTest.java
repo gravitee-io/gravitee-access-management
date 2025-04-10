@@ -19,7 +19,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator;
@@ -35,22 +35,22 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author GraviteeSource Team
  */
 @DisplayNameGeneration(DisplayNameGenerator.ReplaceUnderscores.class)
-class ApplicationClientSecretServiceTest {
+class SecretServiceTest {
 
-    private ApplicationClientSecretService cut = new ApplicationClientSecretService();
+    private final SecretService cut = new SecretService();
 
     @Test
     void should_generate_secret_none_algo() {
-        var secret = cut.generateClientSecret("toto", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()));
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()));
         assertThat(secret)
                 .isNotNull()
-                .hasFieldOrPropertyWithValue("secret", "toto")
+                .hasFieldOrPropertyWithValue("secret", "africa")
                 .hasFieldOrPropertyWithValue("settingsId", "settingsIdValue");
     }
 
     @Test
     void should_generate_secret_bcrypt_algo() {
-        var secret = cut.generateClientSecret("toto", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.BCRYPT.name(), Map.of(BCRYPT_ROUNDS.getKey(), BCRYPT_ROUNDS.getValue())));
+        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.BCRYPT.name(), Map.of(BCRYPT_ROUNDS.getKey(), BCRYPT_ROUNDS.getValue())));
         assertThat(secret)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("settingsId", "settingsIdValue");

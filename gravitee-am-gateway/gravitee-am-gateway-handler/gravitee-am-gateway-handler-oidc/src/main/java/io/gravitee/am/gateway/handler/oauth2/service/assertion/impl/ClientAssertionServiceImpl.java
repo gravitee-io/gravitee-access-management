@@ -36,7 +36,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.functions.Function;
@@ -80,7 +80,7 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
     private Domain domain;
 
     @Autowired
-    private ApplicationClientSecretService appSecretService;
+    private SecretService appSecretService;
 
     @Override
     public Maybe<Client> assertClient(String assertionType, String assertion, String basePath) {
@@ -213,19 +213,18 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
                             if (client.getTokenEndpointAuthMethod() == null ||
                                     ClientAuthenticationMethod.CLIENT_SECRET_JWT.equalsIgnoreCase(client.getTokenEndpointAuthMethod())) {
 
-                                JWSVerifier verifier = getJwsVerifier(client);
-
-                                if (signedJWT.verify(verifier)) {
+                                if (verifyJws(client, signedJWT)) {
                                     return Maybe.just(client);
+                                } else {
+                                    return Maybe.error(new InvalidClientException("Invalid client: JWT signature verification failed"));
                                 }
                             } else {
                                 return Maybe.error(new InvalidClientException("Invalid client: missing or unsupported authentication method"));
                             }
                         } catch (JOSEException josee) {
                             log.error("Error validating signature: {}", josee.getMessage(), josee);
+                            return Maybe.error(new InvalidClientException("Error validating client JWT signature", josee));
                         }
-
-                        return Maybe.error(unableToValidateClientException());
                     });
         } catch (ClassCastException | ParseException ex) {
             log.error(ex.getMessage(), ex);
@@ -235,19 +234,23 @@ public class ClientAssertionServiceImpl implements ClientAssertionService {
         }
     }
 
-    private static JWSVerifier getJwsVerifier(Client client) throws JOSEException {
-        JWSVerifier verifier;
+    private static boolean verifyJws(Client client, SignedJWT signedJWT) throws JOSEException {
         if (!isEmpty(client.getClientSecrets())) {
-            // take the first one as for now, we do not manage multiple secrets
-            // no need to decode the secret as for client_scret_jwt, client can't
-            // generate secret using a hash algorithm
-            ClientSecret notHashedSecret = client.getClientSecrets().get(0);
-            verifier = new MACVerifier(notHashedSecret.getSecret());
+            for (ClientSecret clientSecret : client.getClientSecrets()) {
+                // No need to decode the secret, as for client_secret_jwt
+                // the client can't generate a secret using a hash algorithm.
+                JWSVerifier verifier = new MACVerifier(clientSecret.getSecret());
+                if (signedJWT.verify(verifier)) {
+                    return true;
+                }
+            }
+            // If none of the secrets verify the JWT, return false.
+            return false;
         } else {
-            // Prior to 4.2, client secret where not hashed and directly stored into the clientSecret attribute
-            verifier = new MACVerifier(client.getClientSecret());
+            // Prior to 4.2, the client secret was not hashed and directly stored in the clientSecret attribute.
+            JWSVerifier verifier = new MACVerifier(client.getClientSecret());
+            return signedJWT.verify(verifier);
         }
-        return verifier;
     }
 
     private Maybe<JWKSet> getClientJwkSet(Client client) {

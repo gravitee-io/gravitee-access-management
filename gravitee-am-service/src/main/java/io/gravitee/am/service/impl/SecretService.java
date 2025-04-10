@@ -44,11 +44,11 @@ import static java.util.Objects.isNull;
  * @author GraviteeSource Team
  */
 @Component
-public class ApplicationClientSecretService {
+public class SecretService {
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    private Map<String, PasswordEncoder> encoders = new ConcurrentHashMap<>();
+    private final Map<String, PasswordEncoder> encoders = new ConcurrentHashMap<>();
 
     public PasswordEncoder getOrCreateNoOpPasswordEncoder() {
         return getOrCreatePasswordEncoder(null);
@@ -88,13 +88,13 @@ public class ApplicationClientSecretService {
         return pwdEncoder;
     }
 
-    public ClientSecret generateClientSecret(String rawSecret, ApplicationSecretSettings settings) {
+    public ClientSecret generateClientSecret(String name, String rawSecret, ApplicationSecretSettings settings) {
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setId(UUID.randomUUID().toString());
         clientSecret.setSecret(this.getOrCreatePasswordEncoder(settings).encode(rawSecret));
         clientSecret.setCreatedAt(new Date());
         clientSecret.setSettingsId(settings.getId());
-        clientSecret.setName(clientSecret.getId());
+        clientSecret.setName(name);
         return clientSecret;
     }
 }

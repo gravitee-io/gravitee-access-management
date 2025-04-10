@@ -21,7 +21,7 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -51,7 +51,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @RunWith(MockitoJUnitRunner.class)
 public class ClientPostAuthProviderTest {
 
-    private ClientPostAuthProvider authProvider = new ClientPostAuthProvider(new ApplicationClientSecretService());
+    private ClientPostAuthProvider authProvider = new ClientPostAuthProvider(new SecretService());
 
     @Before
     public void init() {
