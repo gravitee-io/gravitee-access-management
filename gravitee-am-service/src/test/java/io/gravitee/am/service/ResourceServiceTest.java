@@ -494,14 +494,14 @@ public class ResourceServiceTest {
 
     @Test
     public void getMetadata_noResources_null() {
-        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(null).test();
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(DOMAIN_ID, null).test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(map -> map.isEmpty());
     }
 
     @Test
     public void getMetadata_noResources_empty() {
-        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(Collections.emptyList()).test();
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(DOMAIN_ID, Collections.emptyList()).test();
         testObserver.assertComplete().assertNoErrors();
         testObserver.assertValue(map -> map.isEmpty());
     }
@@ -514,9 +514,9 @@ public class ResourceServiceTest {
         resource.setUserId(USER_ID);
         List<Resource> resources = Collections.singletonList(resource);
 
-        when(userService.findByIdIn(anyList())).thenReturn(Flowable.just(new User()));
+        when(userService.findByIdIn(any(), any(), anyList())).thenReturn(Flowable.just(new User()));
         when(applicationService.findByIdIn(anyList())).thenReturn(Flowable.just(new Application()));
-        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(resources).test();
+        TestObserver<Map<String, Map<String, Object>>> testObserver = service.getMetadata(DOMAIN_ID, resources).test();
         testObserver.assertComplete().assertNoErrors();
     }
 }

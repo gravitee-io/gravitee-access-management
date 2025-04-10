@@ -55,8 +55,8 @@ public interface SpringUserRepository extends RxJava3CrudRepository<JdbcUser, St
     @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and UPPER(u.username) = UPPER(:name)")
     Maybe<JdbcUser> findByUsername(@Param("refType")String refType, @Param("refId") String refId, @Param("name") String username);
 
-    @Query("select * from users u where u.id in (:ids)")
-    Flowable<JdbcUser> findByIdIn(@Param("ids") List<String> ids);
+    @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId and u.id in (:ids)")
+    Flowable<JdbcUser> findByIdIn(@Param("refType")String refType, @Param("refId") String refId, @Param("ids") List<String> ids);
 
     @Query("select * from users u where u.reference_type = :refType and u.reference_id = :refId")
     Flowable<JdbcUser> findByReference(@Param("refType")String refType, @Param("refId") String refId);

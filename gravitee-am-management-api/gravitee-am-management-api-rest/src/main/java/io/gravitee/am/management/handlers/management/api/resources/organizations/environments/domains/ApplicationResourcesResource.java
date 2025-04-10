@@ -107,7 +107,7 @@ public class ApplicationResourcesResource extends AbstractResource {
                                             return resourceEntity;
                                         }))
                                 .toList()
-                                .zipWith(resourceService.getMetadata((List<Resource>) pagedResources.getData()), (v1, v2) ->
+                                .zipWith(resourceService.getMetadata(domain, (List<Resource>) pagedResources.getData()), (v1, v2) ->
                                         new Page<>(Collections.singletonList(new ResourceListItem(v1, v2)), page, pagedResources.getTotalCount())))
                 )
                 .subscribe(response::resume, response::resume);

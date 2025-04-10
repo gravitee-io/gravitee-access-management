@@ -286,7 +286,7 @@ public class UserRepositoryTest extends AbstractManagementTest {
         User userCreated = userRepository.create(user).blockingGet();
 
         // fetch user
-        TestSubscriber<User> testObserver = userRepository.findByIdIn(Arrays.asList(userCreated.getId())).test();
+        TestSubscriber<User> testObserver = userRepository.findByIdIn(ReferenceType.DOMAIN, userCreated.getReferenceId(), Arrays.asList(userCreated.getId())).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();

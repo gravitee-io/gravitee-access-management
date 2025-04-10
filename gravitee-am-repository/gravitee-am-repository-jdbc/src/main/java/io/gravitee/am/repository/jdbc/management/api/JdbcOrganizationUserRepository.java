@@ -359,12 +359,12 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     }
 
     @Override
-    public Flowable<User> findByIdIn(List<String> ids) {
+    public Flowable<User> findByIdIn(ReferenceType referenceType, String referenceId, List<String> ids) {
         LOGGER.debug("findByIdIn({})", ids);
         if (ids == null || ids.isEmpty()) {
             return Flowable.empty();
         }
-        return userRepository.findByIdIn(ids)
+        return userRepository.findByIdIn(referenceType.name(), referenceId, ids)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toFlowable(), concurrentFlatmap);
     }
