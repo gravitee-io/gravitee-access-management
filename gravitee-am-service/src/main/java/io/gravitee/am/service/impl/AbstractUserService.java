@@ -85,10 +85,10 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
     protected abstract T getUserRepository();
 
     @Override
-    public Flowable<User> findByIdIn(List<String> ids) {
+    public Flowable<User> findByIdIn(ReferenceType referenceType, String referenceId, List<String> ids) {
         String userIds = String.join(",", ids);
         LOGGER.debug("Find users by ids: {}", userIds);
-        return getUserRepository().findByIdIn(ids)
+        return getUserRepository().findByIdIn(referenceType, referenceId, ids)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find users by ids {}", userIds, ex);
                     return Flowable.error(new TechnicalManagementException(String.format("An error occurs while trying to find users by ids %s", userIds), ex));

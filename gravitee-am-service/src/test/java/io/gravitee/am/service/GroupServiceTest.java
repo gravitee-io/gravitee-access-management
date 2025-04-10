@@ -416,13 +416,13 @@ public class GroupServiceTest {
         when(group.getMembers()).thenReturn(Arrays.asList("userid"));
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
-        when(userService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
+        when(userService.findByIdIn(any(), any(), any())).thenReturn(Flowable.just(new User()));
 
         final TestObserver<Page<User>> observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 0).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
-        verify(userService).findByIdIn(any());
-        verify(organizationUserService, never()).findByIdIn(any());
+        verify(userService).findByIdIn(any(), any(), any());
+        verify(organizationUserService, never()).findByIdIn(any(), any(), any());
     }
 
     @Test
@@ -433,7 +433,7 @@ public class GroupServiceTest {
         when(group.getMembers()).thenReturn(userIds);
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
-        when(userService.findByIdIn(any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
+        when(userService.findByIdIn(any(), any(), any())).thenReturn(Flowable.fromIterable(userIds.stream().map(userId -> {
             final var user = new User();
             user.setId(userId);
             return user;
@@ -454,9 +454,9 @@ public class GroupServiceTest {
         observer.assertValue(page -> page.getTotalCount() == userIds.size());
         observer.assertValue(page -> page.getCurrentPage() == 2);
 
-        verify(userService, times(2)).findByIdIn(argThat(memberIds -> memberIds.size() == 25));
-        verify(userService, times(1)).findByIdIn(argThat(memberIds -> memberIds.size() == 2));
-        verify(organizationUserService, never()).findByIdIn(any());
+        verify(userService, times(2)).findByIdIn(any(), any(), argThat(memberIds -> memberIds.size() == 25));
+        verify(userService, times(1)).findByIdIn(any(), any(), argThat(memberIds -> memberIds.size() == 2));
+        verify(organizationUserService, never()).findByIdIn(any(), any(), any());
     }
 
     @Test
@@ -466,12 +466,12 @@ public class GroupServiceTest {
         when(group.getMembers()).thenReturn(Arrays.asList("userid"));
 
         when(groupRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("group-id"))).thenReturn(Maybe.just(group));
-        when(organizationUserService.findByIdIn(any())).thenReturn(Flowable.just(new User()));
+        when(organizationUserService.findByIdIn(any(), any(), any())).thenReturn(Flowable.just(new User()));
 
         final TestObserver<Page<User>> observer = groupService.findMembers(ReferenceType.DOMAIN, DOMAIN, "group-id", 0, 0).test();
         observer.awaitDone(10, TimeUnit.SECONDS);
 
-        verify(organizationUserService).findByIdIn(any());
-        verify(userService, never()).findByIdIn(any());
+        verify(organizationUserService).findByIdIn(any(), any(), any());
+        verify(userService, never()).findByIdIn(any(), any(), any());
     }
 }

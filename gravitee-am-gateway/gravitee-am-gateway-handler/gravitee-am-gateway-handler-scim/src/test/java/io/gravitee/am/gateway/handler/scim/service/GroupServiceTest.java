@@ -123,14 +123,14 @@ public class GroupServiceTest {
 
         when(domain.getId()).thenReturn(domainId);
         when(groupRepository.findByName(ReferenceType.DOMAIN, domain.getId(), newGroup.getDisplayName())).thenReturn(Maybe.empty());
-        when(userRepository.findByIdIn(any())).thenReturn(Flowable.just(user));
+        when(userRepository.findByIdIn(any(), any(), any())).thenReturn(Flowable.just(user));
         when(groupRepository.create(any())).thenReturn(Single.just(createdGroup));
 
         TestObserver<Group> testObserver = groupService.create(newGroup, "https://mydomain/scim/Groups", null).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(g -> "my-group".equals(g.getDisplayName()));
-        verify(userRepository, times(1)).findByIdIn(any());
+        verify(userRepository, times(1)).findByIdIn(any(), any(), any());
     }
 
     @Test

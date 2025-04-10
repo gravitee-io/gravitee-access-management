@@ -15,7 +15,7 @@
  */
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
-import { afterAll, beforeAll, expect } from '@jest/globals';
+import {afterAll, beforeAll, expect, jest} from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createDomain, deleteDomain,setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
@@ -36,14 +36,18 @@ global.fetch = fetch;
 
 let accessToken;
 let domain;
+let domain2;
 
 let user;
 let role;
 let group;
 
+jest.setTimeout(200000);
+
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken()
-  domain = await setupDomainForTest(uniqueName('domain-groups'), {accessToken}).then(it=>it.domain)
+  domain = await setupDomainForTest(uniqueName('domain-groups'), {accessToken}).then(it=>it.domain);
+  domain2 = await setupDomainForTest(uniqueName('domain-groups2'), {accessToken}).then(it=>it.domain);
 });
 
 describe('before creating groups', () => {
@@ -103,6 +107,20 @@ describe('when groups are created', () => {
     group = updatedGroup;
   });
 
+  it('must add only members from domain', async() => {
+    const user2 = await buildCreateAndTestUser(domain2.id, accessToken, 2);
+    const updatedGroup = await updateGroup(domain.id, accessToken, group.id, {
+      ...group,
+      members: [user.id, user2.id],
+    });
+    expect(updatedGroup).toBeDefined();
+    expect(updatedGroup.id).toEqual(group.id);
+    expect(updatedGroup.description).toEqual('another description');
+    expect(updatedGroup.members.length).toEqual(1);
+    expect(updatedGroup.members).not.toContain(user2.id);
+    group = updatedGroup;
+  });
+
   it('must list all groups', async () => {
     const groupPage = await getAllGroups(domain.id, accessToken);
 
@@ -156,5 +174,8 @@ describe('when groups are created', () => {
 afterAll(async () => {
   if (domain && domain.id) {
     await deleteDomain(domain.id, accessToken);
+  }
+  if (domain2 && domain2.id) {
+    await deleteDomain(domain2.id, accessToken);
   }
 });
