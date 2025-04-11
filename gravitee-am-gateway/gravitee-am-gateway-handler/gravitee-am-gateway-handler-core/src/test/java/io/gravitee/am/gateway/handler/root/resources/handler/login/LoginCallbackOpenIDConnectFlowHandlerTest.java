@@ -64,4 +64,38 @@ public class LoginCallbackOpenIDConnectFlowHandlerTest extends RxWebTestBase {
 
         verify(engine, never()).render(any(Map.class), any());
     }
+
+    @Test
+    public void shouldContinue_authorizationSaml() throws Exception {
+        router
+                .post("/login/callback")
+                .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(rc -> rc.end());
+
+        testRequest(
+                HttpMethod.POST, "/login/callback?relayState=value",
+                null,
+                null,
+                200, "OK", null);
+
+        verify(engine, never()).render(any(Map.class), any());
+    }
+
+    @Test
+    public void shouldContinue_authorizationCas() throws Exception {
+        router
+                .post("/login/callback")
+                .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(rc -> rc.end());
+
+        testRequest(
+                HttpMethod.POST, "/login/callback?ticket=12345",
+                null,
+                null,
+                200, "OK", null);
+
+        verify(engine, never()).render(any(Map.class), any());
+    }
+
+
 }
