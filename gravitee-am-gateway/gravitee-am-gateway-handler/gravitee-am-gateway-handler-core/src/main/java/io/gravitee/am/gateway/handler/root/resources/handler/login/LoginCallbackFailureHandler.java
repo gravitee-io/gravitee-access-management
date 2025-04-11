@@ -103,6 +103,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                     || throwable instanceof AbstractManagementException
                     || throwable instanceof AuthenticationException
                     || throwable instanceof PolicyChainException) {
+                logger.debug(throwable.getMessage(), throwable);
                 redirect(routingContext, throwable);
             } else {
                 logger.error(throwable.getMessage(), throwable);
