@@ -77,6 +77,13 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
                 context.next();
                 return;
             }
+
+            // if CAS callback is used, continue
+            if (request.getParam(Parameters.TICKET) != null) {
+                context.next();
+                return;
+            }
+
             // else check OpenID Connect flow validity
             final String hashValue = request.getParam(HASH_VALUE_PARAMETER);
             if (hashValue == null) {
