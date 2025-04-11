@@ -258,7 +258,7 @@ data:
           password: {{ .Values.jdbc.password }}
           {{- end }}
           {{- if .Values.jdbc.pool }}
-          {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
+          {{ toYaml .Values.jdbc.pool | nindent 10 | trim -}}
           {{- end }}
           {{- if .Values.jdbc.sslEnabled }}
           sslEnabled: {{ .Values.jdbc.sslEnabled }}
@@ -325,7 +325,7 @@ data:
           password: {{ .Values.jdbc.password }}
           {{- end }}
           {{- if .Values.jdbc.pool }}
-          {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
+          {{ toYaml .Values.jdbc.pool | nindent 10 | trim -}}
           {{- end }}
           {{- if .Values.jdbc.sslEnabled }}
           sslEnabled: {{ .Values.jdbc.sslEnabled }}
@@ -392,7 +392,7 @@ data:
           password: {{ .Values.jdbc.password }}
           {{- end }}
           {{- if .Values.jdbc.pool }}
-          {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
+          {{ toYaml .Values.jdbc.pool | nindent 10 | trim -}}
           {{- end }}
           {{- if .Values.jdbc.sslEnabled }}
           sslEnabled: {{ .Values.jdbc.sslEnabled }}

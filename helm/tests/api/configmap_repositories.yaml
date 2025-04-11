@@ -28,12 +28,12 @@ tests:
                   port: 3306
                   database: graviteeam
                   acquireRetry: 1
-                initialSize: 1
-                maxAcquireTime: 3000
-                maxCreateConnectionTime: 5000
-                maxIdleTime: 30000
-                maxLifeTime: -1
-                maxSize: 50
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
               oauth2:
                 type: jdbc
                 jdbc:
@@ -42,12 +42,12 @@ tests:
                   port: 3306
                   database: graviteeam
                   acquireRetry: 1
-                initialSize: 1
-                maxAcquireTime: 3000
-                maxCreateConnectionTime: 5000
-                maxIdleTime: 30000
-                maxLifeTime: -1
-                maxSize: 50
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
               gateway:
                 type: jdbc
                 jdbc:
@@ -56,12 +56,12 @@ tests:
                   port: 3306
                   database: graviteeam
                   acquireRetry: 1
-                initialSize: 1
-                maxAcquireTime: 3000
-                maxCreateConnectionTime: 5000
-                maxIdleTime: 30000
-                maxLifeTime: -1
-                maxSize: 50
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
             gateway:
               url: https://am.example.com/auth
 
