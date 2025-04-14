@@ -50,4 +50,12 @@ public class TokenClaim {
     public void setClaimValue(String claimValue) {
         this.claimValue = claimValue;
     }
+
+    public static TokenClaim of(TokenTypeHint tokenTypeHint, String claimName, String claimValue) {
+        TokenClaim tokenClaim = new TokenClaim();
+        tokenClaim.setTokenType(tokenTypeHint);
+        tokenClaim.setClaimName(claimName);
+        tokenClaim.setClaimValue(claimValue);
+        return tokenClaim;
+    }
 }
