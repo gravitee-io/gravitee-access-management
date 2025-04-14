@@ -33,6 +33,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -77,6 +78,8 @@ import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
+import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -171,6 +174,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationClientSecretService clientSecretService;
+
+    @Autowired
+    private ApplicationTokenCustomClaimsValidator customClaimsValidator;
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
@@ -401,6 +407,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                     if (!hasClientSecret(existingApplication)
                             && toPatch.getSettings() != null && toPatch.getSettings().getOauth() != null) {
                         toPatch.getSettings().getOauth().setClientSecret(null);
+                    }
+
+                    ValidationResult claimValidation = customClaimsValidator.validate(toPatch);
+                    if(claimValidation.isInvalid()) {
+                        return Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()));
                     }
 
                     final AccountSettings accountSettings = toPatch.getSettings().getAccount();

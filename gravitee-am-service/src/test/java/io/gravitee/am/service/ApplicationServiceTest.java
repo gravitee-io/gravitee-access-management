@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
@@ -32,6 +33,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -63,12 +65,15 @@ import io.gravitee.am.service.model.PatchMFASettings;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
+import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -176,6 +181,9 @@ public class ApplicationServiceTest {
 
     @Mock
     private User principal;
+
+    @Spy
+    private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
 
     private final static Domain DOMAIN = new Domain("domain1");
 
@@ -919,6 +927,35 @@ public class ApplicationServiceTest {
         verify(applicationRepository, times(1)).findById(anyString());
         verify(identityProviderService, times(2)).findById(anyString());
         verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidatePatch_custom_claim_gis() {
+        PatchApplication patchClient = new PatchApplication();
+        patchClient.setIdentityProviders(getApplicationIdentityProviders());
+        PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
+        PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
+        patchApplicationOAuthSettings.setResponseTypes(Optional.of(List.of("token")));
+        patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("implicit")));
+        patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
+        patchClient.setSettings(Optional.of(patchApplicationSettings));
+
+        Application toPatch = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setTokenCustomClaims(List.of(TokenClaim.of(TokenTypeHint.ACCESS_TOKEN,"gis", "value")));
+        settings.setOauth(oAuthSettings);
+        toPatch.setSettings(settings);
+
+        IdentityProvider idp1 = new IdentityProvider();
+        idp1.setId("idp1");
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidParameterException);
     }
 
     private Optional<Set<PatchApplicationIdentityProvider>> getApplicationIdentityProviders() {
