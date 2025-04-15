@@ -81,8 +81,8 @@ parameters:
     description: "Do we have to release a RC"
   graviteeio_version:
     type: string
-    default: "cicd"
-    description: "Release version number to use to publish the Docker nightly images ?"
+    default: "x.y.z"
+    description: "Release version number to use to publish the Docker and RPM nightly images"
   run-container-test:
     type: boolean
     default: false
@@ -290,10 +290,26 @@ commands:
         type: string
         default: ""
         description: "The Gravitee.io release version number of Gravitee.io AM, for which to build and publish all zip bundles"
+      dry_run:
+        type: boolean
+        default: true
+        description: Run in dry run mode? (publish to nightly repo)
     steps:
       - keeper/env-export:
           secret-url: keeper://8CG6HxY5gYsl-85eJKuIoA/field/password
           var-name: GIO_PACKAGECLOUD_TOKEN
+      - keeper/env-export:
+          secret-url: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key
+          var-name: GPG_KEY_PUBLIC
+      - keeper/env-export:
+          secret-url: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key
+          var-name: GPG_KEY_PRIVATE
+      - keeper/env-export:
+          secret-url: keeper://riW92t8X4tk4ZmQc8-FZ4Q/field/login
+          var-name: GPG_KEY_NAME
+      - keeper/env-export:
+          secret-url: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/passphrase
+          var-name: GPG_KEY_PASSPHRASE
       - run:
           environment:
             GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
@@ -302,12 +318,43 @@ commands:
             export MAJOR_VERSION_NUMBER=$(echo ${GRAVITEEIO_VERSION} | awk -F '.' '{print $1}')
             export GIT_GRAVITEE_PACKAGES_REPO=$(mktemp -d -t "git_gravitee_packages_repo-XXXXXXXXXX")
             
-            git clone git@github.com:gravitee-io/packages.git ${GIT_GRAVITEE_PACKAGES_REPO}
+            git clone \
+              --depth 1 \
+              --branch master \
+              --single-branch \
+              --no-tag \
+              git@github.com:gravitee-io/packages.git \
+              ${GIT_GRAVITEE_PACKAGES_REPO}
             
             cd ${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x
-            ./build.sh -v << parameters.graviteeio_version >>
+            ./build.sh -v "${GRAVITEEIO_VERSION}"
             
-            docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
+            echo "change RPM file owner from root to graviteeio"
+            docker run --rm \
+                -v "${PWD}:/rpms" \
+                --workdir /rpms \
+                --entrypoint /bin/sh \
+                graviteeio/fpm:rpm \
+                -c 'chown 1001:1001 *.rpm'
+
+            echo "Sign RPMs with GPG key"
+            docker run --rm \
+                -v "${PWD}:/rpms" \
+                -e "GPG_KEY_NAME" \
+                -e "GPG_KEY_PUBLIC" \
+                -e "GPG_KEY_PRIVATE" \
+                -e "GPG_KEY_PASSPHRASE" \
+                graviteeio/rpmsign
+            
+            # we use inlined cicleci parmeter dry-run to get it in text - from env var it will be interpreted as 0 or 1.
+            publishLocation="$( [ "<< parameters.dry_run >>" == "false" ] && echo "rpms" || echo "nightly" )"
+            
+            echo "RPMs will be published in https://packagecloud.io/graviteeio/${publishLocation}"
+            docker run --rm \
+              -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" \
+              -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} \
+              digitalocean/packagecloud \
+                push --yes --skip-errors --verbose "graviteeio/${publishLocation}/el/7" /packages/*.rpm
 
   cmd-helm-tests:
     description: execute the unit tests of the helm chart
@@ -1486,6 +1533,7 @@ jobs:
       - checkout
       - publish_rpms:
           graviteeio_version: << parameters.graviteeio_version >>
+          dry_run:  << parameters.dry_run >>
 
   release_notes_am:
     executor:
@@ -2094,6 +2142,7 @@ workflows:
       - publish_am_rpms:
           context: cicd-orchestrator
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run:  << pipeline.parameters.dry_run >>
 
   publish_docker_images:
     when:
