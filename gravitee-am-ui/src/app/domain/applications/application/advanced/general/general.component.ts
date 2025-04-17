@@ -145,7 +145,7 @@ export class ApplicationGeneralComponent implements OnInit {
         switchMap(() => this.applicationService.delete(this.domainId, this.application.id)),
         tap(() => {
           this.snackbarService.open('Application deleted');
-          this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.hrid, 'applications']);
+          this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.id, 'applications']);
         }),
       )
       .subscribe();
@@ -214,14 +214,7 @@ export class ApplicationGeneralComponent implements OnInit {
         }),
         switchMap(() => this.router.navigateByUrl('/dummy', { skipLocationChange: true })),
         switchMap(() =>
-          this.router.navigate([
-            '/environments',
-            this.domain.referenceId,
-            'domains',
-            this.domain.hrid,
-            'applications',
-            this.application.id,
-          ]),
+          this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.id, 'applications', this.application.id]),
         ),
       )
       .subscribe();
