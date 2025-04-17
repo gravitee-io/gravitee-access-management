@@ -57,7 +57,7 @@ export class DomainCreationComponent implements OnInit {
       (data) => {
         this.createDomainBtn.nativeElement.loading = false;
         this.snackbarService.open('Domain ' + data.name + ' created');
-        this.router.navigate(['..', data.hrid], { relativeTo: this.route });
+        this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
       (error: unknown) => {
         this.createDomainBtn.nativeElement.loading = false;

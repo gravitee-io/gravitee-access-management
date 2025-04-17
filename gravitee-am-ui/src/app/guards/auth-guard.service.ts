@@ -46,16 +46,16 @@ export class AuthGuard {
     if ((requiredPerms[0].startsWith('domain') || requiredPerms[0].startsWith('application')) && requiredPerms[0] !== 'domain_create') {
       // check if the authenticated user can navigate to the next route (domain settings or application settings)
       const environmentId = route.paramMap.get('envHrid');
-      const domainHrid = route.paramMap.get('domainId');
+      const domainId = route.paramMap.get('domainId');
       const appId = route.paramMap.get('appId');
 
       if (environmentId && !this.authService.environmentPermissionsLoaded()) {
         combineSources.push(this.environmentService.permissions(environmentId));
       }
 
-      if (domainHrid && !this.authService.domainPermissionsLoaded()) {
+      if (domainId && !this.authService.domainPermissionsLoaded()) {
         combineSources.push(
-          this.domainService.get(domainHrid).pipe(
+          this.domainService.getById(domainId).pipe(
             mergeMap((domain) =>
               this.domainService.permissions(domain.id).pipe(
                 mergeMap((__) => {
