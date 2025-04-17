@@ -22,11 +22,11 @@ import { map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
 import { ApplicationService } from '../../../services/application.service';
-import {
-  ApplicationClientSecretCopyDialogComponent,
-  ApplicationClientSecretCopyDialogData,
-} from '../client-secret/application-client-secret-copy-dialog.component';
 import { SnackbarService } from '../../../services/snackbar.service';
+import {
+  CopyClientSecretComponent,
+  CopyClientSecretCopyDialogData,
+} from '../application/advanced/secrets-certificates/copy-client-secret/copy-client-secret.component';
 
 @Component({
   selector: 'app-creation',
@@ -64,19 +64,16 @@ export class ApplicationCreationComponent implements OnInit {
       .pipe(
         switchMap((data) =>
           this.matDialog
-            .open<ApplicationClientSecretCopyDialogComponent, ApplicationClientSecretCopyDialogData, void>(
-              ApplicationClientSecretCopyDialogComponent,
-              {
-                width: GIO_DIALOG_WIDTH.MEDIUM,
-                disableClose: true,
-                data: {
-                  secret: data.settings.oauth.clientSecret,
-                  renew: false,
-                },
-                role: 'alertdialog',
-                id: 'applicationClientSecretCopyDialog',
+            .open<CopyClientSecretComponent, CopyClientSecretCopyDialogData, void>(CopyClientSecretComponent, {
+              width: GIO_DIALOG_WIDTH.MEDIUM,
+              disableClose: true,
+              data: {
+                secret: data.settings.oauth.clientSecret,
+                renew: false,
               },
-            )
+              role: 'alertdialog',
+              id: 'applicationClientSecretCopyDialog',
+            })
             .afterClosed()
             .pipe(
               tap(() => {
