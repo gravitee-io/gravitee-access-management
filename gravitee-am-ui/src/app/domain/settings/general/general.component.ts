@@ -188,8 +188,8 @@ export class DomainSettingsGeneralComponent implements OnInit {
       this.formChanged = false;
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
       // if hrid has changed, reload the page
-      if (response.hrid !== this.domain.hrid) {
-        this.router.navigate(['/environments', this.envId, 'domains', response.hrid, 'settings', 'general']);
+      if (response.id !== this.domain.id) {
+        this.router.navigate(['/environments', this.envId, 'domains', response.id, 'settings', 'general']);
       } else {
         this.domain = response;
       }

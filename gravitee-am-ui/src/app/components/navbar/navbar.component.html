@@ -58,7 +58,7 @@
           <h3 matSubheader>Domains</h3>
 
           <a
-            [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.hrid]"
+            [routerLink]="['/environments', currentEnvironment.hrids[0], 'domains', domain.id]"
             *ngFor="let domain of domains"
             mat-list-item
             class="domains_list__item"
