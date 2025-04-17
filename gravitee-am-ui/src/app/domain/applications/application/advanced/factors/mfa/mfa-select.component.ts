@@ -93,9 +93,9 @@ export class MfaSelectComponent implements OnChanges {
   }
 
   private getDomainMfaSettingsLink(): string {
-    const domainName = this.route.snapshot.data['domain']?.hrid;
+    const domainId = this.route.snapshot.data['domain']?.id;
     const environment = this.route.snapshot.data['domain']?.referenceId;
-    return `/environments/${environment}/domains/${domainName}/settings/factors`.toLowerCase();
+    return `/environments/${environment}/domains/${domainId}/settings/factors`.toLowerCase();
   }
 
   getFactorIconType(type: any): string {

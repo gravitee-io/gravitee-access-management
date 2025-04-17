@@ -51,7 +51,7 @@ export class EnvironmentComponent implements OnInit {
     // redirect user to the first domain, if any.
     this.domainService.list().subscribe((response) => {
       if (response.data?.length > 0) {
-        this.router.navigate(['/environments', this.envHrid, 'domains', response.data[0].hrid]);
+        this.router.navigate(['/environments', this.envHrid, 'domains', response.data[0].id]);
       } else {
         this.isLoading = false;
         this.readonly = !this.authService.hasPermissions(['domain_create']);

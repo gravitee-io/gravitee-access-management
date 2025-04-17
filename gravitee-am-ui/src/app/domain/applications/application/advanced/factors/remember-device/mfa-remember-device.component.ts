@@ -40,7 +40,7 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   skipRememberDevice: boolean;
   selectedDeviceIdentifier: any;
 
-  domainName: string;
+  domainId: string;
   environment: string;
 
   constructor(
@@ -59,12 +59,12 @@ export class MfaRememberDeviceComponent implements OnInit, OnChanges {
       expirationTime: this.timeConverterService.getTime(time, 'seconds'),
       expirationUnit: this.timeConverterService.getUnitTime(time, 'seconds'),
     };
-    this.domainName = this.route.snapshot.data['domain']?.hrid;
+    this.domainId = this.route.snapshot.data['domain']?.id;
     this.environment = this.route.snapshot.data['domain']?.referenceId;
   }
 
   getDeviceIdentifierLink(): string {
-    return `/environments/${this.environment}/domains/${this.domainName}/settings/device-identifier`;
+    return `/environments/${this.environment}/domains/${this.domainId}/settings/device-identifier`;
   }
 
   ngOnChanges(changes: SimpleChanges): void {
