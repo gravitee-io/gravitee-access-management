@@ -75,6 +75,7 @@ import org.springframework.core.env.Environment;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -169,11 +170,6 @@ public class DynamicClientRegistrationServiceTest {
         });
         when(clientService.update(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
         when(clientService.delete(any(), any())).thenReturn(Completable.complete());
-        when(clientService.renewClientSecret(any(), any())).thenAnswer(i -> {
-            Client toRenew = new Client();
-            toRenew.setClientSecret("secretRenewed");
-            return Single.just(toRenew);
-        });
 
         when(domain.useFapiBrazilProfile()).thenReturn(false);
         when(environment.getProperty(OPENID_DCR_ACCESS_TOKEN_VALIDITY, Integer.class, Client.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS)).thenReturn(Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
@@ -921,11 +917,25 @@ public class DynamicClientRegistrationServiceTest {
         toRenew.setClientId("client_id");
         toRenew.setClientSecret("oldSecret");
 
-        TestObserver<Client> testObserver = dcrService.renewSecret(toRenew, BASE_PATH).test();
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setSecret("oldSecret");
+        clientSecret.setId("secret-id");
+        List<ClientSecret> clientSecrets = new ArrayList<>();
+        clientSecrets.add(clientSecret);
+        toRenew.setClientSecrets(clientSecrets);
+
+        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
+            ClientSecret clientSecret1 = new ClientSecret();
+            clientSecret1.setSecret("renewedSecret");
+            clientSecret1.setId("secret-id");
+            return Single.just(clientSecret1);
+        });
+
+        TestObserver<Client> testObserver = dcrService.renewSecret(toRenew,"secret-id", BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> client.getClientSecret().equals("secretRenewed"));
-        verify(clientService, times(1)).renewClientSecret(any(), anyString());
+        testObserver.assertValue(client -> client.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("secretRenewed")));
+        verify(clientService, times(1)).renewClientSecret(any(), any(), anyString());
         verify(clientService, times(1)).update(any());
     }
 

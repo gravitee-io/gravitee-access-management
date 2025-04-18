@@ -20,7 +20,7 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.authentication.crypto.password.SHAPasswordEncoder;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.impl.headers.HeadersMultiMap;
@@ -52,7 +52,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 @RunWith(MockitoJUnitRunner.class)
 public class ClientBasicAuthProviderTest {
 
-    private ClientBasicAuthProvider authProvider = new ClientBasicAuthProvider(new ApplicationClientSecretService());
+    private ClientBasicAuthProvider authProvider = new ClientBasicAuthProvider(new SecretService());
 
     @Before
     public void init() {

@@ -57,7 +57,7 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
         router.route(HttpMethod.PATCH, "/register/:client_id").handler(endpoint::patch);
         router.route(HttpMethod.PUT, "/register/:client_id").handler(endpoint::update);
         router.route(HttpMethod.DELETE, "/register/:client_id").handler(endpoint::delete);
-        router.route(HttpMethod.POST, "/register/:client_id/renew_secret").handler(endpoint::renewClientSecret);
+        router.route(HttpMethod.POST, "/register/:client_id/renew_secret/:client_secret_id").handler(endpoint::renewClientSecret);
         router.route().failureHandler(new ExceptionHandler());
 
         Client client = new Client();
@@ -101,11 +101,11 @@ public class DynamicClientAccessEndpointTest extends RxWebTestBase {
 
     @Test
     public void renewClientSecret() throws Exception{
-        when(dcrService.renewSecret(any(), any())).thenReturn(Single.just(new Client()));
+        when(dcrService.renewSecret(any(), any(), any())).thenReturn(Single.just(new Client()));
         when(clientSyncService.addDynamicClientRegistred(any())).thenReturn(new Client());
 
         testRequest(
-                HttpMethod.POST, "/register/my-test-client_id/renew_secret",
+                HttpMethod.POST, "/register/my-test-client_id/renew_secret/my-secret_id",
                 HttpStatusCode.OK_200, "OK");
     }
 

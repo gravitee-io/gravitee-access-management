@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
 
 import java.util.Date;
@@ -195,6 +196,9 @@ public class DynamicClientRegistrationResponse {
 
     @JsonProperty("updated_at")
     private Date updatedAt;
+
+    @JsonProperty("client_secrets")
+    private List<ClientSecret> clientSecrets;
 
     /*******************************************************************************
      * Metadata in same order than the openid JARM specification
@@ -701,6 +705,7 @@ public class DynamicClientRegistrationResponse {
         response.setEnabled(client.isEnabled());
         response.setCreatedAt(client.getCreatedAt());
         response.setUpdatedAt(client.getUpdatedAt());
+        response.setClientSecrets(client.getClientSecrets());
         response.setAuthorizationSignedResponseAlg(client.getAuthorizationSignedResponseAlg());
         response.setAuthorizationEncryptedResponseAlg(client.getAuthorizationEncryptedResponseAlg());
         response.setAuthorizationEncryptedResponseEnc(client.getAuthorizationEncryptedResponseEnc());
@@ -717,5 +722,13 @@ public class DynamicClientRegistrationResponse {
         }
         final String scope = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope).collect(joining(SCOPE_DELIMITER));
         return scope.trim().isEmpty() ? null : scope;
+    }
+
+    public List<ClientSecret> getClientSecrets() {
+        return clientSecrets;
+    }
+
+    public void setClientSecrets(List<ClientSecret> clientSecrets) {
+        this.clientSecrets = clientSecrets;
     }
 }

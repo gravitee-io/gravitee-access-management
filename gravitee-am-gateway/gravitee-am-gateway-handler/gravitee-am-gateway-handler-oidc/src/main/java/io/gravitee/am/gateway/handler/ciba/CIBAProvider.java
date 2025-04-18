@@ -37,7 +37,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
@@ -104,7 +104,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
     private ScopeManager scopeManager;
 
     @Autowired
-    private ApplicationClientSecretService applicationClientSecretService;
+    private SecretService secretService;
 
     @Autowired
     private AuditService auditService;
@@ -130,7 +130,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
         final Router cibaRouter = Router.router(vertx);
 
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, certificateHeader, auditService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
 
         cibaRouter.route(HttpMethod.OPTIONS, AUTHENTICATION_ENDPOINT)
                 .handler(corsHandler);

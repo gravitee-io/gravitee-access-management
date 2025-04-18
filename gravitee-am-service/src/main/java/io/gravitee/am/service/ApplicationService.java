@@ -69,8 +69,6 @@ public interface ApplicationService {
 
     Single<Application> patch(Domain domain, String id, PatchApplication patchApplication, User principal, BiFunction<Domain, Application, Completable> revokeTokenProcessor);
 
-    Single<Application> renewClientSecret(Domain domain, String id, User principal);
-
     Completable delete(String id, User principal, Domain domain);
 
     Single<Long> count();
@@ -89,10 +87,6 @@ public interface ApplicationService {
 
     default Single<Application> create(Domain domain, NewApplication newApplication) {
         return create(domain, newApplication, null);
-    }
-
-    default Single<Application> renewClientSecret(Domain domain, String id) {
-        return renewClientSecret(domain, id, null);
     }
 
     default Completable delete(String id, Domain domain) {

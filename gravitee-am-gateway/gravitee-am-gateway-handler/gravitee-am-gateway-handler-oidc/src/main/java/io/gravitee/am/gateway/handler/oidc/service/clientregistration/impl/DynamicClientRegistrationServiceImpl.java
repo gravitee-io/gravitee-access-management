@@ -190,18 +190,21 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     @Override
-    public Single<Client> renewSecret(Client toRenew, String basePath) {
-        return clientService.renewClientSecret(domain, toRenew.getId())
+    public Single<Client> renewSecret(Client toRenew, String clientSecretId, String basePath) {
+        return clientService.renewClientSecret(domain, toRenew, clientSecretId)
                 // after each modification we must update the registration token
-                .flatMap(clientWithRenewedSecret -> applyRegistrationAccessToken(basePath, clientWithRenewedSecret))
+                .flatMap(renewed -> applyRegistrationAccessToken(basePath, renewed))
                 .flatMap(updatedClient -> {
                     // force the client secret to null to prevent persistence
                     final var rawSecret = updatedClient.getClientSecret();
+                    final var clientSecrets = updatedClient.getClientSecrets();
                     updatedClient.setClientSecret(null);
+                    updatedClient.setClientSecrets(null);
                     return clientService.update(updatedClient)
                             .map(app -> {
                                 // restore the client secret to make it accessible in the DRC output
                                 app.setClientSecret(rawSecret);
+                                app.setClientSecrets(clientSecrets);
                                 return app;
                             });
                 });

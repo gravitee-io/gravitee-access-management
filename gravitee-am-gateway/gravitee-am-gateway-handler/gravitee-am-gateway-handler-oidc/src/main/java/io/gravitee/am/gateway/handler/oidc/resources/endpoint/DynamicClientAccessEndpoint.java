@@ -60,6 +60,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         LOGGER.debug("Dynamic client registration GET endpoint");
 
         this.getClient(context)
+                .map(this::removeSensitiveData)
                 .map(DynamicClientRegistrationResponse::fromClient)
                 .map(response -> {
                     //The Authorization Server need not include the registration access_token or client_uri unless they have been updated.
@@ -90,6 +91,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 .flatMapSingle(client -> this.extractRequest(context)
                         .flatMap(request -> dcrService.patch(client, request, UriBuilderRequest.resolveProxyRequest(context)))
                         .map(clientSyncService::addDynamicClientRegistred)
+                        .map(this::removeSensitiveData)
                 )
                 .subscribe(
                         client -> context.response()
@@ -114,6 +116,7 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
                 .flatMapSingle(client -> this.extractRequest(context)
                         .flatMap(request -> dcrService.update(client, request, UriBuilderRequest.resolveProxyRequest(context)))
                         .map(clientSyncService::addDynamicClientRegistred)
+                        .map(this::removeSensitiveData)
                 )
                 .subscribe(
                         client -> context.response()
@@ -148,10 +151,19 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      */
     public void renewClientSecret(RoutingContext context) {
         LOGGER.debug("Dynamic client registration RENEW SECRET endpoint");
-
+        var clientSecretId = context.request().getParam("client_secret_id");
         this.getClient(context)
                 .flatMapSingle(Single::just)
-                .flatMapSingle(toRenew -> dcrService.renewSecret(toRenew, UriBuilderRequest.resolveProxyRequest(context)))
+                .flatMapSingle(toRenew -> dcrService.renewSecret(toRenew, clientSecretId, UriBuilderRequest.resolveProxyRequest(context)))
+                .map(client -> {
+                    client.getClientSecrets().forEach(cs -> {
+                        //Remove secrets form ClientSecrets for not rotated objects.
+                        if (!cs.getId().equals(clientSecretId)) {
+                            cs.setSecret(null);
+                        }
+                    });
+                    return client;
+                })
                 .map(clientSyncService::addDynamicClientRegistred)
                 .subscribe(
                         client -> context.response()
@@ -170,5 +182,10 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
         return this.clientSyncService.findByClientId(clientId)
                 .switchIfEmpty(Maybe.error(() -> new ResourceNotFoundException("client not found")))
                 .map(Client::clone);
+    }
+
+    private Client removeSensitiveData(Client client){
+        client.getClientSecrets().forEach(clientSecret -> clientSecret.setSecret(null));
+        return client;
     }
 }

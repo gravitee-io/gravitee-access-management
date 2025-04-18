@@ -39,7 +39,6 @@ import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
-import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
@@ -52,7 +51,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.InvalidTargetUrlException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
@@ -171,10 +170,7 @@ public class ApplicationServiceTest {
     private ApplicationSecretConfig applicationSecretConfig = new ApplicationSecretConfig("BCrypt", mock(ConfigurableEnvironment.class));
 
     @Spy
-    private ApplicationClientSecretService applicationClientSecretService = new ApplicationClientSecretService();
-
-    @Mock
-    private ClientSecret clientSecret;
+    private SecretService secretService = new SecretService();
 
     @Mock
     private BiFunction<Domain, Application, Completable> revokeToken;
@@ -1733,95 +1729,6 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(anyString());
         verify(applicationRepository, times(1)).update(any(Application.class));
-    }
-
-    @Test
-    public void shouldRenewSecret() {
-        Application client = emptyAppWithDomain();
-        ApplicationSettings applicationSettings = new ApplicationSettings();
-        ApplicationOAuthSettings applicationOAuthSettings = new ApplicationOAuthSettings();
-        applicationSettings.setOauth(applicationOAuthSettings);
-        client.setSettings(applicationSettings);
-
-        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(client));
-
-        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(applicationRepository, times(1)).findById(anyString());
-        verify(applicationRepository, times(1)).update(any(Application.class));
-        verify(applicationRepository, times(1)).update(argThat(app ->
-                app.getSettings() != null &&
-                    app.getSecrets() != null &&
-                    !app.getSecrets().isEmpty())
-        );
-    }
-
-    /**
-     * Since we introduce the client secret hashing, the renew secret action for an existing application
-     * using client_secret_jwt as auth method will generate a None hashed secret as we need it to validate
-     * the jwt signature. (for this Test Class default algo for client secret hash is BCrypt)
-     */
-    @Test
-    public void shouldRenewSecret_withNone_If_client_secret_jwt_method() {
-        Application client = emptyAppWithDomain();
-        ApplicationSettings applicationSettings = new ApplicationSettings();
-        ApplicationOAuthSettings applicationOAuthSettings = new ApplicationOAuthSettings();
-        applicationOAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
-        applicationSettings.setOauth(applicationOAuthSettings);
-        client.setSecretSettings(List.of(ApplicationSecretConfig.buildNoneSecretSettings()));// None
-        client.setSettings(applicationSettings);
-
-        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(client));
-
-        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(applicationRepository, times(1)).findById(anyString());
-        verify(applicationRepository, times(1)).update(any(Application.class));
-        verify(applicationRepository, times(1)).update(argThat(app ->
-                app.getSettings() != null &&
-                    app.getSecretSettings() != null &&
-                    app.getSecretSettings().get(0).getAlgorithm().equalsIgnoreCase("none") &&
-                    app.getSecrets() != null &&
-                    !app.getSecrets().isEmpty())
-        );
-    }
-
-    @Test
-    public void shouldRenewSecret_clientNotFound() {
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
-
-        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertError(ApplicationNotFoundException.class);
-        testObserver.assertNotComplete();
-
-        verify(applicationRepository, never()).update(any());
-    }
-
-    @Test
-    public void shouldRenewSecret_technicalException() {
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
-
-        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-
-        verify(applicationRepository, never()).update(any());
     }
 
     @Test

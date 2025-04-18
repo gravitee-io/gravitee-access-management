@@ -80,7 +80,6 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     @JsonIgnore
     private List<ApplicationSecretSettings> secretSettings;
 
-    @JsonIgnore
     private List<ClientSecret> clientSecrets;
 
     private List<String> redirectUris;
