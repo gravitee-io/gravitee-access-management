@@ -1,6 +1,0 @@
-{
-"prConcurrentLimit": 3,
-    "rebaseWhen": "conflicted",
-    "dependencyDashboard": true,
-    "commitMessageTopic": "{{depName}}"
-}

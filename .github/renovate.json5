@@ -1,0 +1,68 @@
+{
+  "extends": ["github>gravitee-io/renovate-config","config:js-app"],
+  "circleci": {
+    "fileMatch": [
+      "(^|/).circleci/config.yml$",
+      "(^|/).circleci/workflows.yml$",
+    ]
+  },
+  "packageRules": [
+    {
+      // Group all angular related packages updates together
+      "packagePatterns": [
+        "^@angular/*",
+        "^@angular-builders/*",
+        "^@angular-devkit/*",
+        "^@angular-ru/*",
+        "^@angular-builders/*",
+        "^@angular-devkit/*",
+        "^@angular/cli$",
+        "^@angular/cdk$",
+        "^@angular/cdk-experimental$",
+        "^@angular/fire$",
+        "^@angular/flex-layout$",
+        "^@angular/material",
+        "ng-packagr"
+      ],
+      "groupName": "angular",
+      "enabled": false
+    },
+    {
+      // Group all eslint related packages updates together
+      "packagePatterns": ["^@typescript-eslint/*", "^eslint*", "^@angular-eslint/*"],
+      "groupName": "eslint"
+    },
+    {
+      // Group all Jest related packages updates together
+      "packagePatterns": ["@types/jest", "^jest*", "ts-jest", "jest-preset-angular"],
+      "groupName": "jest"
+    },
+    {
+      // Group all Storybook packages updates together
+      "packagePatterns": ["^@storybook/*"],
+      "groupName": "storybook"
+    },
+    {
+      "packageNames": ["typescript", "rxjs", "tslib"],
+      "separateMinorPatch": true
+    },
+    {
+      // Disable major upgrades for TypeScript, RxJS and tslib as they are linked to the Angular version
+      "packageNames": ["typescript", "rxjs", "tslib"],
+      "updateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      // Disable minor upgrades for TypeScript it is linked to the Angular version
+      "packageNames": ["typescript"],
+      "updateTypes": ["minor"],
+      "enabled": false
+    },
+    {
+      // Update Gravitee NPM packages
+      "matchPackageNames": ["^@gravitee/*"],
+      "groupName": "@gravitee/ui",
+      "automerge": false
+    }
+  ]
+}
