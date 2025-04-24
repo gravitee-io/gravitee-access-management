@@ -420,7 +420,7 @@
         <dependency>
             <groupId>com.graviteesource.secretprovider</groupId>
             <artifactId>gravitee-secret-provider-aws</artifactId>
-            <version>1.0.0</version>
+            <version>${gravitee-secretprovider-aws.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
@@ -796,7 +796,7 @@
                                 <artifactItem>
                                     <groupId>com.graviteesource.secretprovider</groupId>
                                     <artifactId>gravitee-secret-provider-aws</artifactId>
-                                    <version>1.0.0</version>
+                                    <version>${gravitee-secretprovider-aws.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 
