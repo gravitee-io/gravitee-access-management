@@ -29,11 +29,6 @@
         </file>
     </files>
     <fileSets>
-        <!-- Then include reporter configuration schemas -->
-        <fileSet>
-            <directory>src/main/resources/schemas</directory>
-            <outputDirectory>schemas</outputDirectory>
-        </fileSet>
         <!-- Create the empty lib directory in case of no libraries is required -->
         <!-- As there is no maven-assembly-plugin's method do to that, we hack it ourself -->
         <fileSet>
