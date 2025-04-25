@@ -59,7 +59,7 @@ executors:
         enum: [ "small", "medium", "large", "xlarge" ]
         default: "medium"
     docker:
-      - image: cimg/node:18.16
+      - image: cimg/node:18.16.1
     resource_class: << parameters.class >>
 
 parameters:
