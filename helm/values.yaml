@@ -138,7 +138,7 @@ mongodb-replicaset:
   replicaSetName: rs0
   image:
     repository: bitnami/mongodb
-    tag: 5.0.9-debian-10-r20
+    tag: 5.0.24-debian-11-r20
   auth:
     enabled: false
   resources:
