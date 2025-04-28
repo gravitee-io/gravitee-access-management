@@ -161,6 +161,11 @@ data:
         {{- end }}
       {{- end }}
 
+    {{- if .Values.reporters }}
+    reporters:
+{{ toYaml .Values.reporters | indent 6 }}
+    {{- end }}
+
     jwt:
       secret: {{ .Values.gateway.jwt.secret }}
       kid: {{ .Values.gateway.jwt.kid | default "default-gravitee-AM-key" }}
