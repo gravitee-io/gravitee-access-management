@@ -16,14 +16,22 @@
 package io.gravitee.am.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.AuditReporterService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -33,6 +41,8 @@ import java.util.concurrent.Executors;
  */
 @Component
 public class AuditServiceImpl implements AuditService, InitializingBean, DisposableBean {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuditServiceImpl.class);
+    private static final String AUDIT_TO_EXCLUDE_KEY = "reporters.audits.excluded_audit_types[%d]";
 
     @Autowired
     private AuditReporterService auditReporterService;
@@ -40,16 +50,35 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private Environment environment;
+
+    private Set<String> auditsToExclude = Collections.synchronizedSet(new HashSet<>());
+
     private ExecutorService executorService;
 
     @Override
     public void report(AuditBuilder<?> auditBuilder) {
-        executorService.execute(() -> auditReporterService.report(auditBuilder.build(objectMapper)));
+        executorService.execute(() -> {
+            final var audit = auditBuilder.build(objectMapper);
+            if (!auditsToExclude.contains(audit.getType())) {
+                auditReporterService.report(audit);
+            }
+        });
     }
 
     @Override
     public void afterPropertiesSet() {
         executorService = Executors.newCachedThreadPool();
+        int i = 0;
+        do {
+            final var auditType = environment.getProperty(AUDIT_TO_EXCLUDE_KEY.formatted(i), String.class);
+            if (auditType != null) {
+                LOGGER.debug("Audit type '{}' will be excluded", auditType);
+                auditsToExclude.add(auditType);
+            }
+        }
+        while(environment.containsProperty(AUDIT_TO_EXCLUDE_KEY.formatted(++i)));
     }
 
     @Override
@@ -59,4 +88,7 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
         }
     }
 
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
 }

@@ -87,6 +87,12 @@ data:
       url: https://{{index .Values.gateway.ingress.hosts 0 }}{{ .Values.gateway.ingress.path }}
     {{- end }}
 
+
+    {{- if .Values.reporters }}
+    reporters:
+{{ toYaml .Values.reporters | indent 6 }}
+    {{- end }}
+
     services:
       core:
         http:
