@@ -212,6 +212,13 @@ oauth2:
 
 # Configuration of additional reporters
 #reporters:
+#  # settings about audit common to all reporters
+#  audits:
+#    # List of audit types to exclude from audit generation
+#    excluded_audit_types:
+#    - CLIENT_AUTHENTICATION
+#    - TOKEN_CREATED
+#    - TOKEN_REVOKED
 #  file:
 #    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/audit-logs/
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV

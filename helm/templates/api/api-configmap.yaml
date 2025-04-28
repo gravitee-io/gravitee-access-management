@@ -212,6 +212,12 @@ data:
         {{- end }}
       {{- end }}
 
+
+    {{- if .Values.reporters }}
+    reporters:
+{{ toYaml .Values.reporters | indent 6 }}
+    {{- end }}
+
     services:
       core:
         http:
