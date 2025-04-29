@@ -122,7 +122,11 @@ public class MembersResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(organization)).when(organizationService).findById(organization.getId());
         doReturn(Flowable.just(Arrays.asList(membership))).when(membershipService).findByReference(organization.getId(), ReferenceType.ORGANIZATION);
+<<<<<<< HEAD
         doReturn(Single.just(new HashMap<>())).when(membershipService).getMetadata(anyList());
+=======
+        doReturn(Single.just(new HashMap<>())).when(membershipService).getMetadata(any(), any());
+>>>>>>> 8aeb81e72 (fix: AM-5001 membership collects org users)
 
         final Response response = target("organizations")
                 .path(organization.getId())
