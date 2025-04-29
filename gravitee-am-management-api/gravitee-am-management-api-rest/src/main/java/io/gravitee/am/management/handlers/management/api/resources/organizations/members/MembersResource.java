@@ -81,7 +81,11 @@ public class MembersResource extends AbstractResource {
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_MEMBER, Acl.LIST)
                 .andThen(organizationService.findById(organizationId)
                         .flatMap(organization -> membershipService.findByReference(organization.getId(), ReferenceType.ORGANIZATION).toList())
+<<<<<<< HEAD
                         .flatMap(memberships -> membershipService.getMetadata(memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
+=======
+                        .flatMap(memberships -> membershipService.getMetadata(organizationId, memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
+>>>>>>> 8aeb81e72 (fix: AM-5001 membership collects org users)
                 .subscribe(response::resume, response::resume);
     }
 

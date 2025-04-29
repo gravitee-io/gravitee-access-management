@@ -47,7 +47,11 @@ public interface MembershipService {
 
     Single<Membership> setPlatformAdmin(String userId);
 
+<<<<<<< HEAD
     Single<Map<String, Map<String, Object>>> getMetadata(List<Membership> memberships);
+=======
+    Single<Map<String, Map<String, Object>>> getMetadata(String organizationId, List<Membership> memberships);
+>>>>>>> 8aeb81e72 (fix: AM-5001 membership collects org users)
 
     Completable delete(String membershipId, User principal);
 
