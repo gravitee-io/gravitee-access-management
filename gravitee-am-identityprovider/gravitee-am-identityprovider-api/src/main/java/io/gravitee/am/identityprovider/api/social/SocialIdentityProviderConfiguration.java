@@ -49,7 +49,9 @@ public interface SocialIdentityProviderConfiguration extends IdentityProviderCon
         return getProviderResponseType().value();
     }
 
-    ProviderResponseType getProviderResponseType();
+    default ProviderResponseType getProviderResponseType() {
+        return ProviderResponseType.CODE;
+    }
 
     default ProviderResponseMode getResponseMode() {
         if (getResponseType().equals(ResponseType.TOKEN)) {
