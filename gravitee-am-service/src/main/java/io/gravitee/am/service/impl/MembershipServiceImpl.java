@@ -191,7 +191,7 @@ public class MembershipServiceImpl implements MembershipService {
 
 
     @Override
-    public Single<Map<String, Map<String, Object>>> getMetadata(ReferenceType referenceType, String referenceId, List<Membership> memberships) {
+    public Single<Map<String, Map<String, Object>>> getMetadata(String organizationId, List<Membership> memberships) {
         if (memberships == null || memberships.isEmpty()) {
             return Single.just(Collections.emptyMap());
         }
@@ -200,7 +200,7 @@ public class MembershipServiceImpl implements MembershipService {
         List<String> groupIds = memberships.stream().filter(membership -> MemberType.GROUP.equals(membership.getMemberType())).map(Membership::getMemberId).distinct().collect(Collectors.toList());
         List<String> roleIds = memberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList());
 
-        return Single.zip(orgUserService.findByIdIn(referenceType, referenceId, userIds).toMap(io.gravitee.am.model.User::getId, this::convert),
+        return Single.zip(orgUserService.findByIdIn(ReferenceType.ORGANIZATION, organizationId, userIds).toMap(io.gravitee.am.model.User::getId, this::convert),
                 groupService.findByIdIn(groupIds).toMap(Group::getId, g -> this.convert(g)),
                 roleService.findByIdIn(roleIds), (users, groups, roles) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
