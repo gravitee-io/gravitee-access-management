@@ -97,7 +97,7 @@ public class ApplicationMembersResource extends AbstractResource {
                         .flatMap(__ -> applicationService.findById(application))
                         .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
                         .flatMap(application1 -> membershipService.findByReference(application1.getId(), ReferenceType.APPLICATION).toList())
-                        .flatMap(memberships -> membershipService.getMetadata(ReferenceType.DOMAIN, domain, memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
+                        .flatMap(memberships -> membershipService.getMetadata(organizationId, memberships).map(metadata -> new MembershipListItem(memberships, metadata))))
                 .subscribe(response::resume, response::resume);
     }
 
