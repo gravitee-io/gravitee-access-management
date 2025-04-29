@@ -120,7 +120,7 @@ public class MembersResourceTest extends JerseySpringTest {
 
         doReturn(Single.just(organization)).when(organizationService).findById(organization.getId());
         doReturn(Flowable.just(Arrays.asList(membership))).when(membershipService).findByReference(organization.getId(), ReferenceType.ORGANIZATION);
-        doReturn(Single.just(new HashMap<>())).when(membershipService).getMetadata(any(), any(), anyList());
+        doReturn(Single.just(new HashMap<>())).when(membershipService).getMetadata(any(), any());
 
         final Response response = target("organizations")
                 .path(organization.getId())
