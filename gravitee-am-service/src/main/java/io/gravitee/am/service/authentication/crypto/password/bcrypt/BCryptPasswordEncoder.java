@@ -16,29 +16,16 @@
 package io.gravitee.am.service.authentication.crypto.password.bcrypt;
 
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import io.gravitee.am.service.exception.InvalidPasswordException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
 import java.util.regex.Pattern;
 
-/**
- * Implementation of PasswordEncoder that uses the BCrypt strong hashing function. Clients
- * can optionally supply a "strength" (a.k.a. log rounds in BCrypt) and a SecureRandom
- * instance. The larger the strength parameter the more work will have to be done
- * (exponentially) to hash the passwords. The default value is 10.
- *
- * @author Dave Syer
- *
- */
 public class BCryptPasswordEncoder implements PasswordEncoder {
-    private Pattern BCRYPT_PATTERN = Pattern
-            .compile("\\A\\$2a?\\$\\d\\d\\$[./0-9A-Za-z]{53}");
-    private final Logger logger = LoggerFactory.getLogger(BCryptPasswordEncoder.class);
 
-    private final int strength;
-
-    private final SecureRandom random;
+    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder springEncoder;
 
     public BCryptPasswordEncoder() {
         this(-1);
@@ -57,40 +44,18 @@ public class BCryptPasswordEncoder implements PasswordEncoder {
      *
      */
     public BCryptPasswordEncoder(int strength, SecureRandom random) {
-        if (strength != -1 && (strength < BCrypt.MIN_LOG_ROUNDS || strength > BCrypt.MAX_LOG_ROUNDS)) {
-            throw new IllegalArgumentException("Bad strength");
-        }
-        this.strength = strength;
-        this.random = random;
+        this.springEncoder = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder(strength, random);
     }
 
     public String encode(CharSequence rawPassword) {
-        String salt;
-        if (strength > 0) {
-            if (random != null) {
-                salt = BCrypt.gensalt(strength, random);
-            }
-            else {
-                salt = BCrypt.gensalt(strength);
-            }
+        try {
+            return springEncoder.encode(rawPassword);
+        } catch (IllegalArgumentException e) {
+            throw InvalidPasswordException.of("Invalid password", "bcrypt_illegal_argument");
         }
-        else {
-            salt = BCrypt.gensalt();
-        }
-        return BCrypt.hashpw(rawPassword.toString(), salt);
     }
 
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
-        if (encodedPassword == null || encodedPassword.length() == 0) {
-            logger.warn("Empty encoded password");
-            return false;
-        }
-
-        if (!BCRYPT_PATTERN.matcher(encodedPassword).matches()) {
-            logger.warn("Encoded password does not look like BCrypt");
-            return false;
-        }
-
-        return BCrypt.checkpw(rawPassword.toString(), encodedPassword);
+        return springEncoder.matches(rawPassword, encodedPassword);
     }
 }
