@@ -26,6 +26,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SAMLSettings;
+import io.gravitee.am.model.SecretSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -45,6 +46,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettings
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SAMLSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SelfServiceAccountManagementSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.WebAuthnSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingNotifierMongo;
@@ -215,6 +217,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setMaster(domainMongo.isMaster());
         domain.setCorsSettings(domainMongo.getCorsSettings());
         domain.setDataPlaneId(domainMongo.getDataPlaneId());
+        domain.setSecretSettings(convert(domainMongo.getSecretSettings()));
 
         return domain;
     }
@@ -253,6 +256,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setMaster(domain.isMaster());
         domainMongo.setCorsSettings(domain.getCorsSettings());
         domainMongo.setDataPlaneId(domain.getDataPlaneId());
+        domainMongo.setSecretSettings(convert(domain.getSecretSettings()));
         return domainMongo;
     }
 
@@ -522,5 +526,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     private static SAMLSettingsMongo convert(SAMLSettings saml) {
         return SAMLSettingsMongo.convert(saml);
+    }
+
+    private static SecretSettings convert(SecretSettingsMongo secretSettingsMongo){
+        return secretSettingsMongo != null ? secretSettingsMongo.toModel() : null;
+    }
+
+    private static SecretSettingsMongo convert(SecretSettings secretSettings){
+        return SecretSettingsMongo.fromModel(secretSettings);
     }
 }

@@ -201,7 +201,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             } else {
                 rawClientSecret = SecureRandomString.generate();
             }
-            clientSecretToRenew = Optional.of(secretService.generateClientSecret("Default", rawClientSecret, noneSettings));
+            clientSecretToRenew = Optional.of(secretService.generateClientSecret(domain.getSecretSettings(), "Default", rawClientSecret, noneSettings));
             client.setClientSecrets(List.of(clientSecretToRenew.get()));
         }
         String clientSecretId = clientSecretToRenew.get().getId();

@@ -314,6 +314,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 mongoSecret.setName(secret.getName());
                 mongoSecret.setSettingsId(secret.getSettingsId());
                 mongoSecret.setCreatedAt(secret.getCreatedAt());
+                mongoSecret.setExpiresAt(secret.getExpiresAt());
                 return mongoSecret;
             }).collect(Collectors.toList());
         }
@@ -330,6 +331,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 secret.setName(mongoSecret.getName());
                 secret.setSettingsId(mongoSecret.getSettingsId());
                 secret.setCreatedAt(mongoSecret.getCreatedAt());
+                secret.setExpiresAt(mongoSecret.getExpiresAt());
                 return secret;
             }).collect(Collectors.toList());
         }

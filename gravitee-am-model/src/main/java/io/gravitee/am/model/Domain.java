@@ -186,6 +186,12 @@ public class Domain implements Resource {
      */
     private String dataPlaneId;
 
+    /**
+     * Client secret settings
+     */
+
+    private SecretSettings secretSettings;
+
     public Domain() {
     }
 
@@ -226,6 +232,7 @@ public class Domain implements Resource {
         this.saml = other.saml;
         this.corsSettings = other.corsSettings;
         this.dataPlaneId = other.dataPlaneId;
+        this.secretSettings = other.secretSettings;
     }
 
     @Override
@@ -453,45 +460,53 @@ public class Domain implements Resource {
         this.dataPlaneId = dataPlaneId;
     }
 
+    public SecretSettings getSecretSettings() {
+        return secretSettings;
+    }
+
+    public void setSecretSettings(SecretSettings secretSettings) {
+        this.secretSettings = secretSettings;
+    }
+
     public boolean isDynamicClientRegistrationEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled();
     }
 
     public boolean isOpenDynamicClientRegistrationEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled() &&
                 this.getOidc().getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled();
     }
 
     public boolean isDynamicClientRegistrationTemplateEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isClientTemplateEnabled();
     }
 
     public boolean isRedirectUriLocalhostAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isAllowLocalhostRedirectUri();
     }
 
     public boolean isRedirectUriUnsecuredHttpSchemeAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isAllowHttpSchemeRedirectUri();
     }
 
     public boolean isRedirectUriWildcardAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isAllowWildCardRedirectUri();
     }
 
     public boolean isRedirectUriStrictMatching() {
-        return this.getOidc()!=null && this.getOidc().isRedirectUriStrictMatching();
+        return this.getOidc() != null && this.getOidc().isRedirectUriStrictMatching();
     }
 
     public boolean usePlainFapiProfile() {

@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.model.SecretSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
@@ -70,11 +70,11 @@ public class SecretService {
             var algorithm = SecretHashAlgorithm.valueOf(settings.getAlgorithm());
             switch (algorithm) {
                 case BCRYPT:
-                    pwdEncoder = new BCryptPasswordEncoder((int)settings.getProperties().get(BCRYPT_ROUNDS.getKey()));
+                    pwdEncoder = new BCryptPasswordEncoder((int) settings.getProperties().get(BCRYPT_ROUNDS.getKey()));
                     break;
                 case PBKDF2:
-                    pwdEncoder = new PBKDF2PasswordEncoder((int)settings.getProperties().get(PBKDF2_SALT.getKey()),
-                            (int)settings.getProperties().get(PBKDF2_ROUNDS.getKey()),
+                    pwdEncoder = new PBKDF2PasswordEncoder((int) settings.getProperties().get(PBKDF2_SALT.getKey()),
+                            (int) settings.getProperties().get(PBKDF2_ROUNDS.getKey()),
                             (String) settings.getProperties().get(PBKDF2_KEY_ALG.getKey()));
                     break;
                 case SHA_512, SHA_256:
@@ -89,18 +89,32 @@ public class SecretService {
         return pwdEncoder;
     }
 
-    public ClientSecret generateClientSecret(String name, String rawSecret, ApplicationSecretSettings settings) {
+    public ClientSecret generateClientSecret(SecretSettings domainSecretSettings, String name, String rawSecret, ApplicationSecretSettings settings) {
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setId(UUID.randomUUID().toString());
         clientSecret.setSecret(this.getOrCreatePasswordEncoder(settings).encode(rawSecret));
         clientSecret.setCreatedAt(new Date());
         clientSecret.setSettingsId(settings.getId());
         clientSecret.setName(name);
+        clientSecret.setExpiresAt(domainSecretSettings != null ? determinateExpireDate(domainSecretSettings) : null);
         return clientSecret;
     }
 
-    public boolean secretMatches(Client client, String clientSecret){
+    public Date determinateExpireDate(SecretSettings domainSecretSettings) {
+        if (domainSecretSettings != null && Boolean.TRUE.equals(domainSecretSettings.getEnabled())) {
+            //Add handling of application settings
+            if (domainSecretSettings.getExpiryTimeSeconds() != null && domainSecretSettings.getExpiryTimeSeconds() > 0) {
+                return new Date(System.currentTimeMillis() + domainSecretSettings.getExpiryTimeSeconds() * 1000);
+            }
+        }
+        return null;
+    }
+
+    public boolean validateSecret(Client client, String clientSecret) {
         return client.getClientSecrets().stream().anyMatch(hashedSecret -> {
+            if (hashedSecret.getExpiresAt()!= null && hashedSecret.getExpiresAt().before(new Date())) {
+                return false;
+            }
             var pwdEncoder = client.getSecretSettings()
                     .stream()
                     .filter(settings -> settings.getId().equals(hashedSecret.getSettingsId()))

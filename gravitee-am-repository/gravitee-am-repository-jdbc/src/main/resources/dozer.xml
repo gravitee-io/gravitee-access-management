@@ -62,6 +62,10 @@
             <a>corsSettings</a>
             <b>corsSettings</b>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.SecretSettingsConverter">
+            <a>secretSettings</a>
+            <b>secretSettings</b>
+        </field>
     </mapping>
 
     <mapping map-null="false">

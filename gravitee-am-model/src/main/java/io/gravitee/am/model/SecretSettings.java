@@ -13,26 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.management.internal.model;
+package io.gravitee.am.model;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Date;
-
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Getter
 @Setter
-public class ClientSecretMongo {
-
-    private String id;
-    private String settingsId;
-    private String name;
-    private String secret;
-    private Date createdAt;
-    private Date expiresAt;
-
+public class SecretSettings {
+    private Boolean enabled;
+    private Long expiryTimeSeconds;
 }

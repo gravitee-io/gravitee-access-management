@@ -12656,7 +12656,7 @@
 											"    pm.expect(body).to.have.property('error_description');",
 											"    ",
 											"    pm.expect(body.error).to.eql('invalid_client');",
-											"    pm.expect(body.error_description).to.eql('Client authentication failed due to unknown or invalid client');",
+											"    pm.expect(body.error_description).to.eql('Client authentication failed due to unknown, invalid or expired client');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -14819,7 +14819,7 @@
 											"    pm.response.to.be.header('Content-Type', 'application/json');",
 											"    var body = pm.response.json();",
 											"    pm.expect(body.error).to.eql('invalid_client');",
-											"    pm.expect(body.error_description).to.eql('Client authentication failed due to unknown or invalid client');",
+											"    pm.expect(body.error_description).to.eql('Client authentication failed due to unknown, invalid or expired client');",
 											"});"
 										],
 										"type": "text/javascript"

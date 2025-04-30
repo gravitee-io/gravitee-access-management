@@ -165,13 +165,14 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   }
 
   mapClientSecret(clientSecret: any): ClientSecret {
-    if (clientSecret.expiryDate) {
-      const expiresInDays = this.calculateExpiresIn(clientSecret.expiryDate);
+    if (clientSecret.expiresAt) {
+      const expiresInDays = this.calculateExpiresIn(clientSecret.expiresAt);
       return {
         ...clientSecret,
         expiresInDays,
-        status: expiresInDays > 0 ? 'Running' : 'Expired',
-        expiresIn: expiresInDays > 0 ? `${expiresInDays} day${expiresInDays > 1 ? 's' : ''}` : 'Expired',
+        status: clientSecret.expiresAt > Date.now() ? 'Running' : 'Expired',
+        expiresIn:
+          clientSecret.expiresAt > Date.now() ? `${expiresInDays} day${expiresInDays > 1 || expiresInDays == 0 ? 's' : ''}` : 'Expired',
       } as ClientSecret;
     } else {
       return {

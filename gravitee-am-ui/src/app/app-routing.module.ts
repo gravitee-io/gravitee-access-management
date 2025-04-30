@@ -246,6 +246,7 @@ import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver.service';
 import { ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
 import { DataPlanesResolver } from './resolvers/data-planes.resolver';
+import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secrets.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1733,6 +1734,21 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'WebAuthn',
+                            section: 'Security',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_settings_read'],
+                          },
+                        },
+                      },
+                      {
+                        path: 'secrets',
+                        component: DomainSettingsSecretsComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Client Secrets',
                             section: 'Security',
                             level: 'level2',
                           },
