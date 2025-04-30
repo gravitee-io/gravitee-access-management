@@ -128,13 +128,6 @@
         <jdbc-mysql.version>8.0.33</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
 
-        <!--
-        we have to redefine the property here
-        due to the spring-security-crypto dep into
-        the gravitee-am-service module
-        -->
-        <spring-security.version>6.4.2</spring-security.version>
-
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>3.0.0</gravitee-policy-callout-http.version>
         <gravitee-policy-groovy.version>2.5.2</gravitee-policy-groovy.version>
