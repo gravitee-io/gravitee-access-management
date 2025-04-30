@@ -19,15 +19,14 @@ import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.mongodb.management.internal.model.ReporterMongo;
 import io.gravitee.node.api.upgrader.Upgrader;
-import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.Flowable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
-import java.util.List;
-
+import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
-import static com.mongodb.client.model.Updates.set;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -38,16 +37,21 @@ public class ReporterReferenceMongoUpgrader implements Upgrader {
     @Override
     public boolean upgrade() {
         var reportersCollection = mongo.getCollection("reporters", ReporterMongo.class);
-        return Single.fromPublisher(reportersCollection.updateMany(exists("domain"),
-                        List.of(
-                                set("referenceType", ReferenceType.DOMAIN),
-                                set("referenceId", "$domain"))
-                ))
-                .map(res -> true)
+        return Flowable.fromPublisher(reportersCollection.find(exists("domain")))
+                .filter(r -> StringUtils.hasLength(r.getDomain()))
+                .flatMap(reporter -> {
+                    reporter.setReferenceType(ReferenceType.DOMAIN);
+                    reporter.setReferenceId(reporter.getDomain());
+                    return reportersCollection.replaceOne(eq("_id", reporter.getId()), reporter);
+                })
+                .map(r -> r.getModifiedCount() > 0)
+                .switchIfEmpty(Flowable.just(true))
+                .reduce(Boolean.TRUE, (acc, opResult) -> acc && opResult)
                 .onErrorReturn(ex -> {
                     log.error("Error migrating reporters from domainId to reference", ex);
                     return false;
-                }).blockingGet();
+                })
+                .blockingGet();
     }
 
     @Override
