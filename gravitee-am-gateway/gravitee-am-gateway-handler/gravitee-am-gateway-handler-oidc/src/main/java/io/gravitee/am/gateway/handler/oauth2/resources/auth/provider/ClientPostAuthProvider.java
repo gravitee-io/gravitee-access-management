@@ -69,8 +69,7 @@ public class ClientPostAuthProvider implements ClientAuthProvider {
         }
 
         if (!isEmpty(client.getClientSecrets())) {
-
-            boolean authenticated = appSecretService.secretMatches(client, clientSecret);
+            boolean authenticated = appSecretService.validateSecret(client, clientSecret);
 
             if (!authenticated) {
                 handler.handle(Future.failedFuture(new InvalidClientException(

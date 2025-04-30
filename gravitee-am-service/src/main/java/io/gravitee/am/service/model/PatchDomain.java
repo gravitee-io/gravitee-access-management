@@ -17,6 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.SecretSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
@@ -66,6 +67,7 @@ public class PatchDomain {
     private Optional<PatchSAMLSettings> saml;
     private Optional<CorsSettings> corsSettings;
     private Optional<String> dataPlaneId;
+    private Optional<SecretSettings> secretSettings;
 
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -88,6 +90,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
         SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
         SetterUtils.safeSet(toPatch::setDataPlaneId, this.getDataPlaneId());
+        SetterUtils.safeSet(toPatch::setSecretSettings, this.getSecretSettings());
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {
@@ -139,7 +142,8 @@ public class PatchDomain {
                 || passwordSettings != null && passwordSettings.isPresent()
                 || selfServiceAccountManagementSettings != null && selfServiceAccountManagementSettings.isPresent()
                 || tags != null && tags.isPresent()
-                || master != null && master.isPresent()) {
+                || master != null && master.isPresent()
+                || secretSettings != null && secretSettings.isPresent()) {
 
             requiredPermissions.add(Permission.DOMAIN_SETTINGS);
         }

@@ -42,7 +42,7 @@ import java.util.List;
  */
 public interface ClientAuthHandler {
 
-    String GENERIC_ERROR_MESSAGE = "Client authentication failed due to unknown or invalid client";
+    String GENERIC_ERROR_MESSAGE = "Client authentication failed due to unknown, invalid or expired client";
 
     static Handler<RoutingContext> create(ClientSyncService clientSyncService, ClientAssertionService clientAssertionService, JWKService jwkService, Domain domain, SecretService appSecretService, String certHeader, AuditService auditService) {
         List<ClientAuthProvider> clientAuthProviders = new ArrayList<>();

@@ -451,6 +451,7 @@ import { PasswordPolicyStatusComponent } from './domain/settings/password-policy
 import { DataPlaneService } from './services/data-plane.service';
 import { DataPlanesResolver } from './resolvers/data-planes.resolver';
 import { SecretsCertificatesModule } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.module';
+import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secrets.component';
 
 @NgModule({
   declarations: [
@@ -705,6 +706,7 @@ import { SecretsCertificatesModule } from './domain/applications/application/adv
     MfaChallengeComponent,
     FactorsSelectDialogComponent,
     PasswordPoliciesComponent,
+    DomainSettingsSecretsComponent,
   ],
   imports: [
     BrowserModule,

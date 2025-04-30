@@ -90,6 +90,8 @@ public class DomainMongo extends Auditable {
 
     private String dataPlaneId;
 
+    private SecretSettingsMongo secretSettings;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

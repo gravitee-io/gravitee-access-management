@@ -35,12 +35,10 @@ public class ClientSecret {
     private String secret;
     @Schema(type = "java.lang.Long")
     private Date createdAt;
+    @Schema(type = "java.lang.Long")
+    private Date expiresAt;
 
     public ClientSecret() {
-    }
-
-    public ClientSecret(String secret){
-        this.secret = secret;
     }
 
     public ClientSecret(ClientSecret other) {
@@ -49,6 +47,7 @@ public class ClientSecret {
         this.name = other.name;
         this.secret = other.secret;
         this.createdAt = other.createdAt;
+        this.expiresAt = other.expiresAt;
     }
 
     public ClientSecret safeSecret() {

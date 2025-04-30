@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.utils;
 
+import io.gravitee.am.model.SecretSettings;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.slf4j.Logger;

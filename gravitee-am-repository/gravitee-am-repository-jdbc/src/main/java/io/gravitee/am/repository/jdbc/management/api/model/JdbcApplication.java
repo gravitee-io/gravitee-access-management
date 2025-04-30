@@ -216,6 +216,8 @@ public class JdbcApplication {
         private String secret;
         @Column("created_at")
         private LocalDateTime createdAt;
+        @Column("expires_at")
+        private LocalDateTime expiresAt;
 
         public String getApplicationId() {
             return applicationId;
@@ -263,6 +265,14 @@ public class JdbcApplication {
 
         public void setCreatedAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
+        }
+
+        public LocalDateTime getExpiresAt() {
+            return expiresAt;
+        }
+
+        public void setExpiresAt(LocalDateTime expiresAt) {
+            this.expiresAt = expiresAt;
         }
     }
 

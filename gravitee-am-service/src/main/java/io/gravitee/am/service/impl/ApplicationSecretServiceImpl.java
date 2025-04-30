@@ -88,7 +88,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
             application.getSecretSettings().add(secretSettings);
         }
 
-        ClientSecret clientSecret = this.secretService.generateClientSecret(newSecretName, rawSecret, secretSettings);
+        ClientSecret clientSecret = this.secretService.generateClientSecret(domain.getSecretSettings(), newSecretName, rawSecret, secretSettings);
         application.getSecrets().add(clientSecret);
         return applicationService.update(application)
                 .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_CREATED).application(updatedApplication)))
@@ -132,7 +132,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
         var clientSecret = clientSecretOptional.get();
 
         final ApplicationSecretSettings secretSettings = generateSecretSettings(application);
-        // Adding the SecretSettings into the App config if the settings are different then others.
+        // Adding the SecretSettings into the App config if the settings are different than others.
         if (!doesAppReferenceSecretSettings(application, secretSettings)) {
             application.getSecretSettings().add(secretSettings);
         }
@@ -140,6 +140,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
         final var rawSecret = SecureRandomString.generate();
 
         clientSecret.setSecret(secretService.getOrCreatePasswordEncoder(secretSettings).encode(rawSecret));
+        clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretSettings()));
         clientSecret.setSettingsId(secretSettings.getId());
 
         return applicationService.update(application)

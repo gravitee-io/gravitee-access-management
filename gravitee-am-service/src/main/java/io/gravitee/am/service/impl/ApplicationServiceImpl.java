@@ -32,7 +32,6 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
@@ -407,7 +406,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
 
                     ValidationResult claimValidation = customClaimsValidator.validate(toPatch);
-                    if(claimValidation.isInvalid()) {
+                    if (claimValidation.isInvalid()) {
                         return Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()));
                     }
 
@@ -517,7 +516,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (rawSecret != null) {
             // PUBLIC client doesn't need to have secret, so we have to test it before generated the hash
             applicationSettings.getOauth().setClientSecret(null);
-            var clientSecret = this.clientSecretService.generateClientSecret("Default", rawSecret, secretSettings);
+            var clientSecret = this.clientSecretService.generateClientSecret(domain.getSecretSettings(), "Default", rawSecret, secretSettings);
             application.setSecrets(List.of(clientSecret));
         }
 
@@ -689,6 +688,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         return Single.just(app);
     }
+
     /**
      * <pre>
      * This function will return an error if :

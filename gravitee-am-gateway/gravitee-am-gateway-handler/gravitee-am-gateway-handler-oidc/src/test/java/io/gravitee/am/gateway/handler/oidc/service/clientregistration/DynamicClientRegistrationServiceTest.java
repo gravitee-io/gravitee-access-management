@@ -974,7 +974,7 @@ public class DynamicClientRegistrationServiceTest {
             return Single.just(c);
         });
 
-        when(secretService.generateClientSecret(any(), any(), any())).thenAnswer(i -> {
+        when(secretService.generateClientSecret(any(), any(), any(), any())).thenAnswer(i -> {
             ClientSecret clientSecret = new ClientSecret();
             clientSecret.setSecret(i.getArgument(1));
             clientSecret.setName(i.getArgument(0));
@@ -1002,7 +1002,7 @@ public class DynamicClientRegistrationServiceTest {
             return Single.just(c);
         });
 
-        when(secretService.generateClientSecret(any(), any(), any())).thenAnswer(i -> {
+        when(secretService.generateClientSecret(any(), any(), any(), any())).thenAnswer(i -> {
             ClientSecret clientSecret = new ClientSecret();
             clientSecret.setSecret(i.getArgument(1));
             clientSecret.setName(i.getArgument(0));
@@ -1031,7 +1031,7 @@ public class DynamicClientRegistrationServiceTest {
             return Single.just(c);
         });
 
-        when(secretService.generateClientSecret(any(), any(), any())).thenAnswer(i -> {
+        when(secretService.generateClientSecret(any(), any(), any(), any())).thenAnswer(i -> {
             ClientSecret clientSecret = new ClientSecret();
             clientSecret.setSecret(i.getArgument(1));
             clientSecret.setName(i.getArgument(0));
@@ -1073,7 +1073,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
         verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
         verify(clientService, times(1)).update(any());
-        verify(secretService, never()).generateClientSecret(any(), any(), any());
+        verify(secretService, never()).generateClientSecret(any(), any(), any(), any());
     }
 
     @Test

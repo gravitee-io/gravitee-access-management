@@ -23,7 +23,6 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
-import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication.Identity;
@@ -32,6 +31,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringAp
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationIdentityRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.application.SpringApplicationScopeRepository;
+import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -400,9 +400,9 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         if (secrets != null && !secrets.isEmpty()) {
             actionFlow = actionFlow.then(Flux.fromIterable(secrets).concatMap(secret -> {
                 String INSERT_STMT = "INSERT INTO application_client_secrets" +
-                        "(id, application_id, name, created_at, settings_id, secret) " +
-                        "VALUES (:id, :application_id, :name, :created_at, :settings_id, :secret)";
-                final DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
+                        "(id, application_id, name, created_at, settings_id, secret, expires_at) " +
+                        "VALUES (:id, :application_id, :name, :created_at, :settings_id, :secret, :expires_at)";
+                DatabaseClient.GenericExecuteSpec sql = getTemplate().getDatabaseClient()
                         .sql(INSERT_STMT)
                         .bind("id", secret.getId())
                         .bind("application_id", app.getId())
@@ -410,6 +410,7 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .bind(COL_CREATED_AT, dateConverter.convertTo(secret.getCreatedAt(), null))
                         .bind("settings_id", secret.getSettingsId())
                         .bind("secret", secret.getSecret());
+                sql = secret.getExpiresAt() == null ? sql.bindNull("expires_at", LocalDateTime.class) : sql.bind("expires_at", dateConverter.convertTo(secret.getExpiresAt(), null));
                 return sql.fetch().rowsUpdated();
             }).reduce(Long::sum));
         }
