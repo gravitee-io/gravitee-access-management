@@ -138,12 +138,6 @@
         <testcontainer-lower-version-mysql>mysql-tc~8.0</testcontainer-lower-version-mysql>
         <testcontainer-lower-version-maria>mariadb-tc~10.3</testcontainer-lower-version-maria>
         <testcontainer-lower-version-mssql>mssql-tc~2019-latest</testcontainer-lower-version-mssql>
-        <!--
-        we have to redefine the property here
-        due to the spring-security-crypto dep into
-        the gravitee-am-service module
-        -->
-        <spring-security.version>6.4.2</spring-security.version>
 
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>3.0.1</gravitee-policy-callout-http.version>
