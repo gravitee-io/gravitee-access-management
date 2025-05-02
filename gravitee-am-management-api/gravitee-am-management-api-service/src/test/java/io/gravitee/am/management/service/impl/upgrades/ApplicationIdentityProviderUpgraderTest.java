@@ -80,7 +80,7 @@ public class ApplicationIdentityProviderUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(1)).findById(any());
-        verify(applicationService, never()).findAll();
+        verify(applicationService, never()).fetchAll();
         verify(identityProviderRepository, never()).findAll();
     }
 
@@ -138,7 +138,7 @@ public class ApplicationIdentityProviderUpgraderTest {
         appOtherDomain.setIdentityProviders(getApplicationIdentityProviders(idp4.getId()));
 
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(
                 appNoIdentities,
                 appWithIdentityNoWhitelist,
                 appWithIdentityWithWhitelist,
@@ -156,7 +156,7 @@ public class ApplicationIdentityProviderUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(1)).findById(anyString());
-        verify(applicationService).findAll();
+        verify(applicationService).fetchAll();
 
         verify(applicationService, atMost(1)).update(
                 argThat(app -> app.getIdentityProviders().stream().anyMatch(appIdp ->
@@ -191,7 +191,7 @@ public class ApplicationIdentityProviderUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(3)).findById(anyString());
-        verify(applicationService, never()).findAll();
+        verify(applicationService, never()).fetchAll();
 
         verify(systemTaskRepository, never()).updateIf(argThat(t -> t.getStatus().equalsIgnoreCase(SystemTaskStatus.SUCCESS.name())), anyString());
     }

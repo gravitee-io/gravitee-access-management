@@ -29,32 +29,32 @@ import java.util.Objects;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateResendNotificationCondition implements ResendNotificationCondition {
+public class ExpireThresholdsResendNotificationCondition implements ResendNotificationCondition {
 
-    private List<Integer> certificateExpiryThresholds;
+    private final List<Integer> expiryThresholds;
 
-    public CertificateResendNotificationCondition(List<Integer> certificateExpiryThresholds) {
-        if (Objects.isNull(certificateExpiryThresholds) || certificateExpiryThresholds.isEmpty()) {
-            throw new IllegalArgumentException("certificateExpiryThresholds requires at least one entry");
+    public ExpireThresholdsResendNotificationCondition(List<Integer> expiryThresholds) {
+        if (Objects.isNull(expiryThresholds) || expiryThresholds.isEmpty()) {
+            throw new IllegalArgumentException("expiryThresholds requires at least one entry");
         }
-        this.certificateExpiryThresholds = certificateExpiryThresholds;
+        this.expiryThresholds = expiryThresholds;
     }
 
     @Override
     public Boolean apply(NotificationDefinition definition, NotificationAcknowledge notificationAcknowledge) {
         return notificationAcknowledge.getUpdatedAt() != null &&
                 // test if one threshold has expired
-                hasExpiredInterval(NotificationDefinitionUtils.getCertificateExpirationDate(definition),
+                hasExpiredInterval(NotificationDefinitionUtils.getExpirationDate(definition).orElseThrow(),
                         notificationAcknowledge.getUpdatedAt());
     }
 
     private boolean hasExpiredInterval(Date expirationDate, Date lastUpdate) {
         final long remainingDays = lastUpdate.toInstant().isBefore(expirationDate.toInstant()) ? ChronoUnit.DAYS.between(lastUpdate.toInstant(), expirationDate.toInstant()) : 0;
-        final int currentIndex = this.certificateExpiryThresholds.size() - (int)this.certificateExpiryThresholds.stream().filter(t -> t < remainingDays).count();
+        final int currentIndex = this.expiryThresholds.size() - (int)this.expiryThresholds.stream().filter(t -> t < remainingDays).count();
 
-        return currentIndex < this.certificateExpiryThresholds.size() &&
+        return currentIndex < this.expiryThresholds.size() &&
                 ChronoUnit.DAYS.between(lastUpdate.toInstant(), Instant.now()) != 0 &&
-                Instant.now().plus(this.certificateExpiryThresholds.get(currentIndex), ChronoUnit.DAYS).isAfter(expirationDate.toInstant()) &&
+                Instant.now().plus(this.expiryThresholds.get(currentIndex), ChronoUnit.DAYS).isAfter(expirationDate.toInstant()) &&
                 Instant.now().isBefore(expirationDate.toInstant());
     }
 
