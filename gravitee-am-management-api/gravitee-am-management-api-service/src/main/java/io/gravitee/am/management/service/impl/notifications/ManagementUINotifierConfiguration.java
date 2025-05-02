@@ -22,6 +22,7 @@ package io.gravitee.am.management.service.impl.notifications;
 public class ManagementUINotifierConfiguration {
 
     public static final String CERTIFICATE_EXPIRY_TPL = "certificate_expiration";
+    public static final String CLIENT_SECRET_EXPIRY_TPL = "client_secret_expiration";
 
     private String template;
 
@@ -31,5 +32,17 @@ public class ManagementUINotifierConfiguration {
 
     public void setTemplate(String template) {
         this.template = template;
+    }
+
+    public static ManagementUINotifierConfiguration certificateExpiration() {
+        ManagementUINotifierConfiguration cfg = new ManagementUINotifierConfiguration();
+        cfg.setTemplate(CERTIFICATE_EXPIRY_TPL);
+        return cfg;
+    }
+
+    public static ManagementUINotifierConfiguration clientSecretExpiration() {
+        ManagementUINotifierConfiguration cfg = new ManagementUINotifierConfiguration();
+        cfg.setTemplate(CLIENT_SECRET_EXPIRY_TPL);
+        return cfg;
     }
 }

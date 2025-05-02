@@ -29,7 +29,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -77,7 +76,7 @@ public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
     }
 
     private Single<Boolean> migrateApplicationIdentityProviders(SystemTask task) {
-        return applicationRepository.findAll().flatMapPublisher(Flowable::fromIterable)
+        return applicationRepository.fetchAll().flatMapPublisher(Flowable::fromIterable)
                 .filter(application -> application.getIdentityProviders() != null && !application.getIdentityProviders().isEmpty())
                 .flatMapSingle(this::addRuleInApplicationIdentityProvider)
                 .ignoreElements()

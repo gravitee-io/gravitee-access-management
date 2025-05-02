@@ -32,16 +32,16 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateNotificationConditionTest {
+public class ExpireThresholdsNotificationConditionTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldRejectEmptyList(){
-        new CertificateNotificationCondition(Collections.emptyList());
+        new ExpireThresholdsNotificationCondition(Collections.emptyList());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldRejectNullArg(){
-        new CertificateNotificationCondition(null);
+        new ExpireThresholdsNotificationCondition(null);
     }
 
     @Test
@@ -50,7 +50,7 @@ public class CertificateNotificationConditionTest {
         final Certificate certificate = new Certificate();
         certificate.setExpiresAt(new Date(Instant.now().plus(10, ChronoUnit.DAYS).minus(1, ChronoUnit.MINUTES).toEpochMilli()));
         def.setData(Map.of(NotificationDefinitionUtils.NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate)));
-        Assert.assertTrue(new CertificateNotificationCondition(List.of(10,2)).test(def));
+        Assert.assertTrue(new ExpireThresholdsNotificationCondition(List.of(10,2)).test(def));
     }
 
     @Test
@@ -59,6 +59,6 @@ public class CertificateNotificationConditionTest {
         final Certificate certificate = new Certificate();
         certificate.setExpiresAt(new Date(Instant.now().plus(11, ChronoUnit.DAYS).toEpochMilli()));
         def.setData(Map.of(NotificationDefinitionUtils.NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate)));
-        Assert.assertFalse(new CertificateNotificationCondition(List.of(10,2)).test(def));
+        Assert.assertFalse(new ExpireThresholdsNotificationCondition(List.of(10,2)).test(def));
     }
 }

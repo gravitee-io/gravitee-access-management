@@ -33,16 +33,16 @@ import java.util.Map;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateResendNotificationConditionTest {
+public class ExpireThresholdsResendNotificationConditionTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldRejectEmptyList(){
-        new CertificateResendNotificationCondition(Collections.emptyList());
+        new ExpireThresholdsResendNotificationCondition(Collections.emptyList());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldRejectNullArg(){
-        new CertificateResendNotificationCondition(null);
+        new ExpireThresholdsResendNotificationCondition(null);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class CertificateResendNotificationConditionTest {
         final NotificationAcknowledge notificationAcknowledge = new NotificationAcknowledge();
         notificationAcknowledge.setUpdatedAt(new Date(now.minus(12, ChronoUnit.DAYS).toEpochMilli()));
 
-        Assert.assertFalse(new CertificateResendNotificationCondition(List.of(25,10,2)).apply(def, notificationAcknowledge));
+        Assert.assertFalse(new ExpireThresholdsResendNotificationCondition(List.of(25,10,2)).apply(def, notificationAcknowledge));
     }
 
     @Test
@@ -70,7 +70,7 @@ public class CertificateResendNotificationConditionTest {
         final NotificationAcknowledge notificationAcknowledge = new NotificationAcknowledge();
         notificationAcknowledge.setUpdatedAt(new Date(now.minus(8, ChronoUnit.DAYS).minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
-        final CertificateResendNotificationCondition resendCondition = new CertificateResendNotificationCondition(List.of(25, 10, 2));
+        final ExpireThresholdsResendNotificationCondition resendCondition = new ExpireThresholdsResendNotificationCondition(List.of(25, 10, 2));
         Assert.assertTrue(resendCondition.apply(def, notificationAcknowledge));
     }
 
@@ -85,7 +85,7 @@ public class CertificateResendNotificationConditionTest {
         final NotificationAcknowledge notificationAcknowledge = new NotificationAcknowledge();
         notificationAcknowledge.setUpdatedAt(new Date(now.minus(6, ChronoUnit.DAYS).minus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
-        final CertificateResendNotificationCondition resendCondition = new CertificateResendNotificationCondition(List.of(25, 10, 2));
+        final ExpireThresholdsResendNotificationCondition resendCondition = new ExpireThresholdsResendNotificationCondition(List.of(25, 10, 2));
         Assert.assertFalse(resendCondition.apply(def, notificationAcknowledge));
     }
 
@@ -100,7 +100,7 @@ public class CertificateResendNotificationConditionTest {
         final NotificationAcknowledge notificationAcknowledge = new NotificationAcknowledge();
         notificationAcknowledge.setUpdatedAt(new Date(now.minus(2, ChronoUnit.DAYS).plus(1, ChronoUnit.MINUTES).toEpochMilli()));
 
-        final CertificateResendNotificationCondition resendCondition = new CertificateResendNotificationCondition(List.of(25, 10, 2));
+        final ExpireThresholdsResendNotificationCondition resendCondition = new ExpireThresholdsResendNotificationCondition(List.of(25, 10, 2));
         Assert.assertFalse(resendCondition.apply(def, notificationAcknowledge));
     }
 }

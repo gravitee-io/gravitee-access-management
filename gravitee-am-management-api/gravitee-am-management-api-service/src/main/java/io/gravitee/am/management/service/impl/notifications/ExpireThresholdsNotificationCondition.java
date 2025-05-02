@@ -20,34 +20,30 @@ import io.gravitee.node.api.notifier.NotificationDefinition;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.getCertificateExpirationDate;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.getExpirationDate;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CertificateNotificationCondition implements NotificationCondition {
+public class ExpireThresholdsNotificationCondition implements NotificationCondition {
 
-    private List<Integer> certificateExpiryThresholds;
+    private final List<Integer> expiryThresholds;
 
-    public CertificateNotificationCondition(List<Integer> certificateExpiryThresholds) {
-        if (Objects.isNull(certificateExpiryThresholds) || certificateExpiryThresholds.isEmpty()) {
-            throw new IllegalArgumentException("certificateExpiryThresholds requires at least one entry");
+    public ExpireThresholdsNotificationCondition(List<Integer> expiryThresholds) {
+        if (Objects.isNull(expiryThresholds) || expiryThresholds.isEmpty()) {
+            throw new IllegalArgumentException("expiryThresholds requires at least one entry");
         }
-        this.certificateExpiryThresholds = certificateExpiryThresholds;
+        this.expiryThresholds = expiryThresholds;
     }
 
     @Override
     public boolean test(NotificationDefinition def) {
-        final Date certificateExpirationDate = getCertificateExpirationDate(def);
-        if (certificateExpirationDate != null) {
-            // for the first condition we only check the highest expiry value
-            return certificateExpirationDate.getTime() < Instant.now().plus(certificateExpiryThresholds.get(0), ChronoUnit.DAYS).toEpochMilli();
-        }
-        return false;
+        return getExpirationDate(def)
+                .map(expDate ->  expDate.getTime() < Instant.now().plus(expiryThresholds.get(0), ChronoUnit.DAYS).toEpochMilli())
+                .orElse(false);
     }
 }

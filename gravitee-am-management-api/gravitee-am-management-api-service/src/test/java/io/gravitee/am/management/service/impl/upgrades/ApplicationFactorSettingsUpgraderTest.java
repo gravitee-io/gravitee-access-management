@@ -86,7 +86,7 @@ import static org.mockito.Mockito.when;
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(1)).findById(any());
-        verify(applicationService, never()).findAll();
+        verify(applicationService, never()).fetchAll();
     }
 
     @Test
@@ -97,7 +97,7 @@ import static org.mockito.Mockito.when;
         final var emptyFactorsApp = new Application();
         emptyFactorsApp.setFactors(Set.of());
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(nullFactorsApp, emptyFactorsApp)));
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(nullFactorsApp, emptyFactorsApp)));
 
         upgrader.upgrade();
 
@@ -114,7 +114,7 @@ import static org.mockito.Mockito.when;
         Set<String> factorIds = Set.of(FACTOR_ID_OTP, FACTOR_ID_RECOVERY_CODE);
         app.setFactors(factorIds);
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(app)));
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(app)));
         when(applicationService.update(any())).thenReturn(Single.just(app));
 
         upgrader.upgrade();
@@ -153,7 +153,7 @@ import static org.mockito.Mockito.when;
         settings.setMfa(mfaSettings);
         app.setSettings(settings);
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(app)));
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(app)));
         when(applicationService.update(any())).thenReturn(Single.just(app));
 
         upgrader.upgrade();
@@ -192,7 +192,7 @@ import static org.mockito.Mockito.when;
         settings.setMfa(mfaSettings);
         app.setSettings(settings);
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(app)));
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(app)));
         when(applicationService.update(any())).thenReturn(Single.just(app));
 
         upgrader.upgrade();
@@ -231,7 +231,7 @@ import static org.mockito.Mockito.when;
         settings.setMfa(mfaSettings);
         app.setSettings(settings);
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(app)));
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(app)));
         when(applicationService.update(any())).thenReturn(Single.just(app));
 
         upgrader.upgrade();
@@ -273,7 +273,7 @@ import static org.mockito.Mockito.when;
         settings.setRiskAssessment(riskAssessment);
         app.setSettings(settings);
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(app)));
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(app)));
         when(applicationService.update(any())).thenReturn(Single.just(app));
 
         upgrader.upgrade();
@@ -314,7 +314,7 @@ import static org.mockito.Mockito.when;
         settings.setMfa(mfaSettings);
         app.setSettings(settings);
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(app)));
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(app)));
         when(applicationService.update(any())).thenReturn(Single.just(app));
 
         upgrader.upgrade();
