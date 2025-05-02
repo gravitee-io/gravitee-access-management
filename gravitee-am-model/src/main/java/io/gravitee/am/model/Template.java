@@ -44,6 +44,7 @@ public enum Template {
     IDENTIFIER_FIRST_LOGIN("identifier_first_login", "/login/identifier"),
     ERROR("error", "/error"),
     CERTIFICATE_EXPIRATION("certificate_expiration", null),
+    CLIENT_SECRET_EXPIRATION("client_secret_expiration", null),
     VERIFY_ATTEMPT("verify_attempt",null);
 
 

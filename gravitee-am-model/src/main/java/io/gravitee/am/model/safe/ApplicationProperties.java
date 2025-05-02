@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.model.safe;
 
-import io.gravitee.am.model.Certificate;
-import io.reactivex.rxjava3.core.Completable;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface DomainNotifierService {
+import java.util.Date;
 
-    void registerCertificateExpiration(Certificate certificate);
-
-    void unregisterCertificateExpiration(String domainId, String certificateId);
-
-    Completable deleteCertificateExpirationAcknowledgement(String certificateId);
+@RequiredArgsConstructor
+@Getter
+public class ApplicationProperties {
+    private final String name;
 }

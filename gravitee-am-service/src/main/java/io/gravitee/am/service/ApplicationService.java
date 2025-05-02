@@ -39,6 +39,8 @@ import java.util.function.BiFunction;
  */
 public interface ApplicationService {
 
+    Flowable<Application> findAll();
+
     Single<Page<Application>> findAll(int page, int size);
 
     Single<Page<Application>> findByDomain(String domain, int page, int size);
@@ -75,7 +77,7 @@ public interface ApplicationService {
 
     Single<Long> countByDomain(String domainId);
 
-    default Single<Set<Application>> findAll() {
+    default Single<Set<Application>> fetchAll() {
         return findAll(0, Integer.MAX_VALUE)
                 .map(pagedApplications -> (pagedApplications.getData() == null) ? Collections.emptySet() : new HashSet<>(pagedApplications.getData()));
     }

@@ -87,7 +87,7 @@ public class ApplicationFactorSettingsUpgrader extends SystemTaskUpgrader {
     }
 
     private Single<Boolean> migrateFactorSettings(SystemTask task) {
-        return applicationService.findAll()
+        return applicationService.fetchAll()
                 .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(app -> {
                     logger.debug("Process application '{}'", app.getId());
