@@ -58,7 +58,7 @@
 					<tr>
 						<td>
 							<h1 style="font-weight: 800; font-size: 24px; line-height: 32px; color: #25213A;">
-								Hi ${user.firstName} ${user.lastName}
+                                <#if user.firstName??>Hi ${user.firstName} ${user.lastName!""}<#else>Hi</#if>
 							</h1>
 						</td>
 					</tr>
