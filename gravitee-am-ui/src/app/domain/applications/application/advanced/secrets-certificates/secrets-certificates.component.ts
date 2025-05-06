@@ -46,7 +46,7 @@ export interface ClientSecret {
   styleUrls: ['./secrets-certificates.component.scss'],
 })
 export class ApplicationSecretsCertificatesComponent implements OnInit {
-  private domainId: string;
+  domain: any;
   formChanged = false;
   application: any;
   certificates: any[] = [];
@@ -54,6 +54,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   selectedCertificate: string;
   clientSecrets: ClientSecret[] = [];
   clientId: any;
+  secretSettings: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -65,7 +66,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.domainId = this.route.snapshot.parent.data['domain'].id;
+    this.domain = this.route.snapshot.parent.data['domain'];
     this.application = structuredClone(this.route.snapshot.data['application']);
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.application.certificate) {
@@ -73,11 +74,12 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
       this.publicKeys(this.application.certificate);
     }
     this.clientSecrets = this.application.secrets.map((cs) => this.mapClientSecret(cs));
+    this.secretSettings = this.application.settings.secretExpirationSettings;
   }
 
   patch(): void {
     const data = { certificate: this.selectedCertificate ? this.selectedCertificate : null };
-    this.applicationService.patch(this.domainId, this.application.id, data).subscribe((data) => {
+    this.applicationService.patch(this.domain.id, this.application.id, data).subscribe((data) => {
       this.application = data;
       this.route.snapshot.data['application'] = this.application;
       this.certificatePublicKeys = [];
@@ -99,7 +101,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
   }
 
   private publicKeys(certificateId) {
-    this.certificateService.publicKeys(this.domainId, certificateId).subscribe((response) => {
+    this.certificateService.publicKeys(this.domain.id, certificateId).subscribe((response) => {
       this.certificatePublicKeys = response;
     });
   }
@@ -118,7 +120,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
       .pipe(
         filter((description) => !!description),
         switchMap((description) =>
-          this.applicationService.createClientSecret(this.domainId, this.application.id, description).pipe(
+          this.applicationService.createClientSecret(this.domain.id, this.application.id, description).pipe(
             tap(() => {
               this.snackbarService.open(`Client secret created - ${description}`);
             }),
@@ -144,7 +146,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
             .afterClosed()
             .pipe(
               switchMap(() =>
-                this.applicationService.getClientSecrets(this.domainId, this.application.id).pipe(
+                this.applicationService.getClientSecrets(this.domain.id, this.application.id).pipe(
                   catchError(() => {
                     this.snackbarService.open('Failed to fetch client secrets');
                     return EMPTY;
@@ -208,9 +210,9 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
       .afterClosed()
       .pipe(
         filter((result) => result === 'delete'),
-        switchMap(() => this.applicationService.deleteClientSecret(this.domainId, this.application.id, row.id)),
+        switchMap(() => this.applicationService.deleteClientSecret(this.domain.id, this.application.id, row.id)),
         switchMap(() =>
-          this.applicationService.getClientSecrets(this.domainId, this.application.id).pipe(
+          this.applicationService.getClientSecrets(this.domain.id, this.application.id).pipe(
             catchError(() => {
               this.snackbarService.open('Failed to fetch client secrets');
               return EMPTY;
@@ -240,7 +242,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
       .pipe(
         filter((result) => result === 'renew'),
         switchMap(() =>
-          this.applicationService.renewClientSecret(this.domainId, this.application.id, row.id).pipe(
+          this.applicationService.renewClientSecret(this.domain.id, this.application.id, row.id).pipe(
             tap(() => {
               this.snackbarService.open(`Client secret renewed - ${row.description}`);
             }),
@@ -278,10 +280,38 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
         role: 'alertdialog',
         id: 'clientSecretSettingsDialog',
         autoFocus: false,
+        data: {
+          domainSettingsUrl: this.getDomainSettingsUrl(),
+          domainSettings: this.domain.secretExpirationSettings,
+          secretSettings: this.secretSettings,
+        },
       })
       .afterClosed()
-      .subscribe((values) => {
-        console.log(values);
-      });
+      .pipe(
+        filter((result) => result !== undefined),
+        switchMap((result) => {
+          const toPatch = {
+            settings: {
+              secretExpirationSettings: result,
+            },
+          };
+          return this.applicationService.patch(this.domain.id, this.application.id, toPatch).pipe(
+            tap(() => {
+              this.snackbarService.open('Secret settings updated');
+            }),
+            catchError(() => {
+              this.snackbarService.open('Failed to renew client secret');
+              return EMPTY;
+            }),
+          );
+        }),
+      )
+      .subscribe();
+  }
+
+  getDomainSettingsUrl() {
+    const domainId = this.route.snapshot.data['domain']?.id;
+    const environment = this.route.snapshot.data['domain']?.referenceId;
+    return `/environments/${environment}/domains/${domainId}/settings/secrets`.toLowerCase();
   }
 }

@@ -17,7 +17,7 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.SecretSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.model.account.AccountSettings;
@@ -67,7 +67,7 @@ public class PatchDomain {
     private Optional<PatchSAMLSettings> saml;
     private Optional<CorsSettings> corsSettings;
     private Optional<String> dataPlaneId;
-    private Optional<SecretSettings> secretSettings;
+    private Optional<SecretExpirationSettings> secretSettings;
 
     public Domain patch(Domain _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -90,7 +90,7 @@ public class PatchDomain {
         SetterUtils.safeSet(toPatch::setMaster, this.getMaster(), boolean.class);
         SetterUtils.safeSet(toPatch::setCorsSettings, this.getCorsSettings());
         SetterUtils.safeSet(toPatch::setDataPlaneId, this.getDataPlaneId());
-        SetterUtils.safeSet(toPatch::setSecretSettings, this.getSecretSettings());
+        SetterUtils.safeSet(toPatch::setSecretExpirationSettings, this.getSecretSettings());
 
         if (this.getOidc() != null) {
             if (this.getOidc().isPresent()) {

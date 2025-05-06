@@ -201,7 +201,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
             } else {
                 rawClientSecret = SecureRandomString.generate();
             }
-            clientSecretToRenew = Optional.of(secretService.generateClientSecret(domain.getSecretSettings(), "Default", rawClientSecret, noneSettings));
+            clientSecretToRenew = Optional.of(secretService.generateClientSecret("Default", rawClientSecret, noneSettings, domain.getSecretExpirationSettings(), client.getSecretExpirationSettings()));
             client.setClientSecrets(List.of(clientSecretToRenew.get()));
         }
         String clientSecretId = clientSecretToRenew.get().getId();
@@ -261,16 +261,18 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
 
 
     private Client mapClientSecret(Client client) {
-        // Copying client secret from list to raw text to be it returned.
-        // We return the first secret with no encryption.
-        // TODO in AM-4906: filter to not return expired client secrets.
+        // Copying client secret from the list to a raw text to be it returned.
+        // We return the first secret with no encryption that is not expired.
         if (client.getClientSecret() == null && client.getClientSecrets() != null) {
             var clientSecrets = client.getClientSecrets();
             for (var clientSecret : clientSecrets) {
                 Optional<ApplicationSecretSettings> first = client.getSecretSettings().stream().filter(settings -> settings.getId().equals(clientSecret.getSettingsId())).findFirst();
                 if (first.isPresent() && first.get().getAlgorithm().equalsIgnoreCase("none")) {
-                    client.setClientSecret(clientSecret.getSecret());
-                    break;
+                    Date expiresAt = clientSecret.getExpiresAt();
+                    if (expiresAt == null || expiresAt.after(new Date())) {
+                        client.setClientSecret(clientSecret.getSecret());
+                        break;
+                    }
                 }
             }
         }

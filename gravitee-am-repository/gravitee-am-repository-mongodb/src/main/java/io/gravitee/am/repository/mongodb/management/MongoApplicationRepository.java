@@ -24,6 +24,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
@@ -60,6 +61,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.TokenClaimMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
@@ -124,14 +126,14 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         super.init(applicationsCollection);
 
         final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put( new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
-        indexes.put( new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
-        indexes.put( new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), new IndexOptions().name("d1soc1"));
-        indexes.put( new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
-        indexes.put( new Document(FIELD_IDENTITIES, 1), new IndexOptions().name("i1"));
-        indexes.put( new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
-        indexes.put( new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
-        indexes.put( new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
+        indexes.put(new Document(FIELD_UPDATED_AT, -1), new IndexOptions().name("u_1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_CLIENT_ID, 1), new IndexOptions().name("d1soc1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_NAME, 1), new IndexOptions().name("d1n1"));
+        indexes.put(new Document(FIELD_IDENTITIES, 1), new IndexOptions().name("i1"));
+        indexes.put(new Document(FIELD_APPLICATION_IDENTITY_PROVIDERS + "." + FIELD_IDENTITY, 1), new IndexOptions().name("aidp1"));
+        indexes.put(new Document(FIELD_CERTIFICATE, 1), new IndexOptions().name("c1"));
+        indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_GRANT_TYPES, 1), new IndexOptions().name("d1sog1"));
 
         super.createIndex(applicationsCollection, indexes);
     }
@@ -145,9 +147,9 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     public Single<Page<Application>> findAll(int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments()).first(0l);
         Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find())
-                .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
-                .skip(size * page)
-                .limit(size))
+                        .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
+                        .skip(size * page)
+                        .limit(size))
                 .map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
         return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
     }
@@ -381,6 +383,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setMfa(convert(other.getMfa()));
         applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
+        applicationSettingsMongo.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
         return applicationSettingsMongo;
     }
 
@@ -399,6 +402,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setMfa(convert(other.getMfa()));
         applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
+        applicationSettings.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
         return applicationSettings;
     }
 
@@ -928,5 +932,13 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         identityProviderSettings.setSelectionRule(idpSettingsMongo.getSelectionRule());
         identityProviderSettings.setPriority(idpSettingsMongo.getPriority());
         return identityProviderSettings;
+    }
+
+    private static SecretExpirationSettings convert(SecretSettingsMongo secretSettingsMongo) {
+        return secretSettingsMongo != null ? secretSettingsMongo.toModel() : null;
+    }
+
+    private static SecretSettingsMongo convert(SecretExpirationSettings secretExpirationSettings) {
+        return SecretSettingsMongo.fromModel(secretExpirationSettings);
     }
 }

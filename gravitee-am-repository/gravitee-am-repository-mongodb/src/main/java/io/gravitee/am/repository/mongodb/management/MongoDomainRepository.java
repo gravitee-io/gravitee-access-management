@@ -26,7 +26,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SAMLSettings;
-import io.gravitee.am.model.SecretSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -217,7 +217,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setMaster(domainMongo.isMaster());
         domain.setCorsSettings(domainMongo.getCorsSettings());
         domain.setDataPlaneId(domainMongo.getDataPlaneId());
-        domain.setSecretSettings(convert(domainMongo.getSecretSettings()));
+        domain.setSecretExpirationSettings(convert(domainMongo.getSecretSettings()));
 
         return domain;
     }
@@ -256,7 +256,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setMaster(domain.isMaster());
         domainMongo.setCorsSettings(domain.getCorsSettings());
         domainMongo.setDataPlaneId(domain.getDataPlaneId());
-        domainMongo.setSecretSettings(convert(domain.getSecretSettings()));
+        domainMongo.setSecretSettings(convert(domain.getSecretExpirationSettings()));
         return domainMongo;
     }
 
@@ -528,11 +528,11 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         return SAMLSettingsMongo.convert(saml);
     }
 
-    private static SecretSettings convert(SecretSettingsMongo secretSettingsMongo){
+    private static SecretExpirationSettings convert(SecretSettingsMongo secretSettingsMongo){
         return secretSettingsMongo != null ? secretSettingsMongo.toModel() : null;
     }
 
-    private static SecretSettingsMongo convert(SecretSettings secretSettings){
-        return SecretSettingsMongo.fromModel(secretSettings);
+    private static SecretSettingsMongo convert(SecretExpirationSettings secretExpirationSettings){
+        return SecretSettingsMongo.fromModel(secretExpirationSettings);
     }
 }

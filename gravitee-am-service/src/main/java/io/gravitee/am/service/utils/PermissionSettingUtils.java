@@ -111,6 +111,7 @@ public class PermissionSettingUtils {
         setApplicationSettingsPermission(settings, requiredPermissions);
         setOpenIDPermission(settings, requiredPermissions);
         setSamlPermission(settings, requiredPermissions);
+        setSecretExpirationSettings(settings, requiredPermissions);
 
         return requiredPermissions;
     }
@@ -147,6 +148,13 @@ public class PermissionSettingUtils {
         var saml = settings.getSaml();
         if (saml != null && saml.isPresent()) {
             requiredPermissions.add(Permission.APPLICATION_SAML);
+        }
+    }
+
+    private static void setSecretExpirationSettings(PatchApplicationSettings settings, Set<Permission> requiredPermissions) {
+        var expiration = settings.getSecretExpirationSettings();
+        if(expiration != null && expiration.isPresent()) {
+            requiredPermissions.add(Permission.APPLICATION_SETTINGS);
         }
     }
 }

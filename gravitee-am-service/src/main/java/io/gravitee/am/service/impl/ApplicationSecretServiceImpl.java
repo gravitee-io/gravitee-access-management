@@ -21,6 +21,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.service.ApplicationSecretService;
@@ -87,8 +88,13 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
         if (!doesAppReferenceSecretSettings(application, secretSettings)) {
             application.getSecretSettings().add(secretSettings);
         }
-
-        ClientSecret clientSecret = this.secretService.generateClientSecret(domain.getSecretSettings(), newSecretName, rawSecret, secretSettings);
+        SecretExpirationSettings applicationSecretExpirationSettings;
+        if (application.getSettings() == null) {
+            applicationSecretExpirationSettings = null;
+        } else {
+            applicationSecretExpirationSettings = application.getSettings().getSecretExpirationSettings();
+        }
+        ClientSecret clientSecret = this.secretService.generateClientSecret(newSecretName, rawSecret, secretSettings, domain.getSecretExpirationSettings(), applicationSecretExpirationSettings);
         application.getSecrets().add(clientSecret);
         return applicationService.update(application)
                 .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_CREATED).application(updatedApplication)))
@@ -140,7 +146,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
         final var rawSecret = SecureRandomString.generate();
 
         clientSecret.setSecret(secretService.getOrCreatePasswordEncoder(secretSettings).encode(rawSecret));
-        clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretSettings()));
+        clientSecret.setExpiresAt(secretService.determinateExpireDate(domain.getSecretExpirationSettings(), application.getSettings().getSecretExpirationSettings()));
         clientSecret.setSettingsId(secretSettings.getId());
 
         return applicationService.update(application)

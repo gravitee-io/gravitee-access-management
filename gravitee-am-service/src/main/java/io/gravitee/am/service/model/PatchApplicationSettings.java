@@ -16,6 +16,7 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.CookieSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -25,7 +26,9 @@ import io.gravitee.am.service.utils.SetterUtils;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Optional;
 import java.util.Set;
@@ -37,6 +40,8 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class PatchApplicationSettings {
 
     private Optional<AccountSettings> account;
@@ -48,78 +53,7 @@ public class PatchApplicationSettings {
     private Optional<PatchMFASettings> mfa;
     private Optional<CookieSettings> cookieSettings;
     private Optional<RiskAssessmentSettings> riskAssessment;
-
-    public Optional<AccountSettings> getAccount() {
-        return account;
-    }
-
-    public void setAccount(Optional<AccountSettings> account) {
-        this.account = account;
-    }
-
-    public Optional<LoginSettings> getLogin() {
-        return login;
-    }
-
-    public void setLogin(Optional<LoginSettings> login) {
-        this.login = login;
-    }
-
-    public Optional<PatchApplicationOAuthSettings> getOauth() {
-        return oauth;
-    }
-
-    public void setOauth(Optional<PatchApplicationOAuthSettings> oauth) {
-        this.oauth = oauth;
-    }
-
-    public Optional<PatchApplicationSAMLSettings> getSaml() {
-        return saml;
-    }
-
-    public void setSaml(Optional<PatchApplicationSAMLSettings> saml) {
-        this.saml = saml;
-    }
-
-    public Optional<PatchApplicationAdvancedSettings> getAdvanced() {
-        return advanced;
-    }
-
-    public void setAdvanced(Optional<PatchApplicationAdvancedSettings> advanced) {
-        this.advanced = advanced;
-    }
-
-    public Optional<PatchPasswordSettings> getPasswordSettings() {
-        return passwordSettings;
-    }
-
-    public void setPasswordSettings(Optional<PatchPasswordSettings> passwordSettings) {
-        this.passwordSettings = passwordSettings;
-    }
-
-    public Optional<CookieSettings> getCookieSettings() {
-        return cookieSettings;
-    }
-
-    public void setCookieSettings(Optional<CookieSettings> cookieSettings) {
-        this.cookieSettings = cookieSettings;
-    }
-
-    public Optional<PatchMFASettings> getMfa() {
-        return mfa;
-    }
-
-    public void setMfa(Optional<PatchMFASettings> mfa) {
-        this.mfa = mfa;
-    }
-
-    public Optional<RiskAssessmentSettings> getRiskAssessment() {
-        return riskAssessment;
-    }
-
-    public void setRiskAssessment(Optional<RiskAssessmentSettings> riskAssessment) {
-        this.riskAssessment = riskAssessment;
-    }
+    private Optional<SecretExpirationSettings> secretExpirationSettings;
 
     public ApplicationSettings patch(ApplicationSettings _toPatch) {
         // create new object for audit purpose (patch json result)
@@ -130,6 +64,7 @@ public class PatchApplicationSettings {
         SetterUtils.safeSet(toPatch::setLogin, this.getLogin());
         SetterUtils.safeSet(toPatch::setCookieSettings, this.getCookieSettings());
         SetterUtils.safeSet(toPatch::setRiskAssessment, this.getRiskAssessment());
+        SetterUtils.safeSet(toPatch::setSecretExpirationSettings, this.getSecretExpirationSettings());
         if (this.getOauth() != null && this.getOauth().isPresent()) {
             toPatch.setOauth(this.getOauth().get().patch(toPatch.getOauth()));
         }

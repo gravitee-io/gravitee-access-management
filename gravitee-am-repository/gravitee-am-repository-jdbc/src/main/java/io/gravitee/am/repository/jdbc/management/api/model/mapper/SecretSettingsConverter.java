@@ -16,21 +16,21 @@
 package io.gravitee.am.repository.jdbc.management.api.model.mapper;
 
 import com.github.dozermapper.core.DozerConverter;
-import io.gravitee.am.model.SecretSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.repository.jdbc.provider.common.JSONMapper;
 
-public class SecretSettingsConverter extends DozerConverter<SecretSettings, String> {
+public class SecretSettingsConverter extends DozerConverter<SecretExpirationSettings, String> {
     public SecretSettingsConverter() {
-        super(SecretSettings.class, String.class);
+        super(SecretExpirationSettings.class, String.class);
     }
 
     @Override
-    public String convertTo(SecretSettings bean, String s) {
+    public String convertTo(SecretExpirationSettings bean, String s) {
         return JSONMapper.toJson(bean);
     }
 
     @Override
-    public SecretSettings convertFrom(String s, SecretSettings bean) {
-        return JSONMapper.toBean(s, SecretSettings.class);
+    public SecretExpirationSettings convertFrom(String s, SecretExpirationSettings bean) {
+        return JSONMapper.toBean(s, SecretExpirationSettings.class);
     }
 }

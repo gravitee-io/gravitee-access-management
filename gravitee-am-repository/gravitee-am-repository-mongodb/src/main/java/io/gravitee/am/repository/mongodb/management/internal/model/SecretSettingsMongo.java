@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import io.gravitee.am.model.SecretSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,20 +25,20 @@ public class SecretSettingsMongo {
     private boolean enabled;
     private Long expiryTimeSeconds;
 
-    public SecretSettings toModel() {
-        SecretSettings secretSettings = new SecretSettings();
-        secretSettings.setEnabled(this.enabled);
-        secretSettings.setExpiryTimeSeconds(this.expiryTimeSeconds);
-        return secretSettings;
+    public SecretExpirationSettings toModel() {
+        SecretExpirationSettings secretExpirationSettings = new SecretExpirationSettings();
+        secretExpirationSettings.setEnabled(this.enabled);
+        secretExpirationSettings.setExpiryTimeSeconds(this.expiryTimeSeconds);
+        return secretExpirationSettings;
     }
 
-    public static SecretSettingsMongo fromModel(SecretSettings secretSettings) {
-        if (secretSettings == null) {
+    public static SecretSettingsMongo fromModel(SecretExpirationSettings secretExpirationSettings) {
+        if (secretExpirationSettings == null) {
             return null;
         }
         SecretSettingsMongo secretSettingsMongo = new SecretSettingsMongo();
-        secretSettingsMongo.setEnabled(secretSettings.getEnabled());
-        secretSettingsMongo.setExpiryTimeSeconds(secretSettings.getExpiryTimeSeconds());
+        secretSettingsMongo.setEnabled(secretExpirationSettings.getEnabled());
+        secretSettingsMongo.setExpiryTimeSeconds(secretExpirationSettings.getExpiryTimeSeconds());
         return secretSettingsMongo;
     }
 }
