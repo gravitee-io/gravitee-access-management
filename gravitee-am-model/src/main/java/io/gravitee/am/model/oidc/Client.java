@@ -27,6 +27,7 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.PasswordSettingsAware;
 import io.gravitee.am.model.Resource;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -278,6 +279,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     // ----------- Refresh token Settings -----------
     private boolean disableRefreshTokenRotation;
 
+    private SecretExpirationSettings secretExpirationSettings;
+
     public Client() {
     }
 
@@ -367,6 +370,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.wantAssertionsSigned = other.wantAssertionsSigned;
         this.responseBinding = other.responseBinding;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
+        this.secretExpirationSettings = other.secretExpirationSettings;
     }
 
     public String getId() {
@@ -1137,6 +1141,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.clientSecrets = clientSecrets;
     }
 
+    public SecretExpirationSettings getSecretExpirationSettings() {
+        return secretExpirationSettings;
+    }
+
+    public void setSecretExpirationSettings(SecretExpirationSettings secretExpirationSettings) {
+        this.secretExpirationSettings = secretExpirationSettings;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -1168,6 +1180,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         Optional.ofNullable(this.passwordSettings).ifPresent(ps -> clone.setPasswordSettings(new PasswordSettings(ps)));
         clone.setSecretSettings(this.getSecretSettings() != null ? new ArrayList<>(this.getSecretSettings()) : new ArrayList<>());
         clone.setClientSecrets(this.getClientSecrets() != null ? this.getClientSecrets().stream().map(ClientSecret::new).collect(Collectors.toList()) : new ArrayList<>());
+        clone.setSecretExpirationSettings(this.getSecretExpirationSettings() != null ? new SecretExpirationSettings(this.getSecretExpirationSettings()) : null);
         return clone;
     }
 

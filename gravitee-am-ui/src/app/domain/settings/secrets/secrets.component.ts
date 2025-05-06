@@ -30,7 +30,6 @@ export class DomainSettingsSecretsComponent implements OnInit {
   domainId: string;
   domain: any = {};
   formChanged = false;
-  defaultExpiryTime = false;
   secretSettings: any;
   humanTime: any;
 
@@ -43,8 +42,7 @@ export class DomainSettingsSecretsComponent implements OnInit {
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
-    this.secretSettings = this.domain.secretSettings ? this.domain.secretSettings : { enabled: false };
-    this.defaultExpiryTime = !!this.secretSettings.expiryTimeSeconds;
+    this.secretSettings = this.domain.secretExpirationSettings ? this.domain.secretExpirationSettings : { enabled: false };
     const time = this.secretSettings?.expiryTimeSeconds ? this.secretSettings.expiryTimeSeconds : 7776000;
     this.humanTime = {
       expirationTime: this.timeConverterService.getTime(time, 'seconds'),
@@ -59,7 +57,7 @@ export class DomainSettingsSecretsComponent implements OnInit {
   save(): void {
     const toPatch = {
       enabled: this.secretSettings.enabled,
-      expiryTimeSeconds: this.defaultExpiryTime ? this.humanTimeToSeconds() : 0,
+      expiryTimeSeconds: this.humanTimeToSeconds(),
     };
     this.domainService.patch(this.domain.id, { secretSettings: toPatch }).subscribe(() => {
       this.snackbarService.open('Secrets configuration updated');

@@ -18,6 +18,7 @@ package io.gravitee.am.model.application;
 import io.gravitee.am.model.CookieSettings;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
@@ -83,6 +84,11 @@ public class ApplicationSettings {
      */
     private RiskAssessmentSettings riskAssessment;
 
+    /**
+     * Client Secret expiration settings
+     */
+    private SecretExpirationSettings secretExpirationSettings;
+
 
     public ApplicationAdvancedSettings getAdvanced() {
         return advanced != null ? advanced : new ApplicationAdvancedSettings();
@@ -98,6 +104,7 @@ public class ApplicationSettings {
         this.mfa = other.mfa != null ? new MFASettings(other.mfa) : null;
         this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
         this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
+        this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
     }
 
     public void copyTo(Client client) {
@@ -110,6 +117,7 @@ public class ApplicationSettings {
         client.setCookieSettings(this.getCookieSettings());
         client.setRiskAssessment(this.getRiskAssessment());
         Optional.ofNullable(this.saml).ifPresent(s -> s.copyTo(client));
+        client.setSecretExpirationSettings(this.secretExpirationSettings);
     }
 
     private RiskAssessmentSettings getRiskAssessment(RiskAssessmentSettings settings) {

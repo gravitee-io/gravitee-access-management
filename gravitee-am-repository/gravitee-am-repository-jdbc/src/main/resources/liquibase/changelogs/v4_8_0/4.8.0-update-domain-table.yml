@@ -7,7 +7,7 @@ databaseChangeLog:
         not:
           - columnExists:
               tableName: domains
-              columnName: secret_settings
+              columnName: secret_expiration_settings
       changes:
         #############################
         # domains #
@@ -15,4 +15,4 @@ databaseChangeLog:
         - addColumn:
             tableName: domains
             columns:
-              - column: { name: secret_settings, type: clob, constraints: { nullable: true } }
+              - column: { name: secret_expiration_settings, type: clob, constraints: { nullable: true } }

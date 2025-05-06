@@ -20,7 +20,15 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class SecretSettings {
+public class SecretExpirationSettings {
     private Boolean enabled;
     private Long expiryTimeSeconds;
+
+    public SecretExpirationSettings() {
+    }
+
+    public SecretExpirationSettings(SecretExpirationSettings other) {
+        this.enabled = other.enabled;
+        this.expiryTimeSeconds = other.expiryTimeSeconds;
+    }
 }

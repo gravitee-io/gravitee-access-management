@@ -190,7 +190,7 @@ public class Domain implements Resource {
      * Client secret settings
      */
 
-    private SecretSettings secretSettings;
+    private SecretExpirationSettings secretExpirationSettings;
 
     public Domain() {
     }
@@ -232,7 +232,7 @@ public class Domain implements Resource {
         this.saml = other.saml;
         this.corsSettings = other.corsSettings;
         this.dataPlaneId = other.dataPlaneId;
-        this.secretSettings = other.secretSettings;
+        this.secretExpirationSettings = other.secretExpirationSettings;
     }
 
     @Override
@@ -460,12 +460,12 @@ public class Domain implements Resource {
         this.dataPlaneId = dataPlaneId;
     }
 
-    public SecretSettings getSecretSettings() {
-        return secretSettings;
+    public SecretExpirationSettings getSecretExpirationSettings() {
+        return secretExpirationSettings;
     }
 
-    public void setSecretSettings(SecretSettings secretSettings) {
-        this.secretSettings = secretSettings;
+    public void setSecretExpirationSettings(SecretExpirationSettings secretExpirationSettings) {
+        this.secretExpirationSettings = secretExpirationSettings;
     }
 
     public boolean isDynamicClientRegistrationEnabled() {

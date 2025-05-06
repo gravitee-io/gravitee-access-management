@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.model.SecretSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.oidc.Client;
@@ -89,30 +89,34 @@ public class SecretService {
         return pwdEncoder;
     }
 
-    public ClientSecret generateClientSecret(SecretSettings domainSecretSettings, String name, String rawSecret, ApplicationSecretSettings settings) {
+    public ClientSecret generateClientSecret(String name, String rawSecret, ApplicationSecretSettings settings, SecretExpirationSettings domainExpirationSettings, SecretExpirationSettings applicationExpirationSettings) {
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setId(UUID.randomUUID().toString());
         clientSecret.setSecret(this.getOrCreatePasswordEncoder(settings).encode(rawSecret));
         clientSecret.setCreatedAt(new Date());
         clientSecret.setSettingsId(settings.getId());
         clientSecret.setName(name);
-        clientSecret.setExpiresAt(domainSecretSettings != null ? determinateExpireDate(domainSecretSettings) : null);
+        clientSecret.setExpiresAt(domainExpirationSettings != null ? determinateExpireDate(domainExpirationSettings, applicationExpirationSettings) : null);
         return clientSecret;
     }
 
-    public Date determinateExpireDate(SecretSettings domainSecretSettings) {
-        if (domainSecretSettings != null && Boolean.TRUE.equals(domainSecretSettings.getEnabled())) {
-            //Add handling of application settings
-            if (domainSecretSettings.getExpiryTimeSeconds() != null && domainSecretSettings.getExpiryTimeSeconds() > 0) {
-                return new Date(System.currentTimeMillis() + domainSecretSettings.getExpiryTimeSeconds() * 1000);
+    public Date determinateExpireDate(SecretExpirationSettings domainSecretExpirationSettings, SecretExpirationSettings applicationSecretExpirationSettings) {
+        if (applicationSecretExpirationSettings != null && Boolean.TRUE.equals(applicationSecretExpirationSettings.getEnabled()) && applicationSecretExpirationSettings.getExpiryTimeSeconds() != null) {
+            if (applicationSecretExpirationSettings.getExpiryTimeSeconds() > 0) {
+                return new Date(System.currentTimeMillis() + applicationSecretExpirationSettings.getExpiryTimeSeconds() * 1000);
+            } else {
+                return null;
             }
+        }
+        if (domainSecretExpirationSettings != null && Boolean.TRUE.equals(domainSecretExpirationSettings.getEnabled()) && domainSecretExpirationSettings.getExpiryTimeSeconds() != null && domainSecretExpirationSettings.getExpiryTimeSeconds() > 0) {
+            return new Date(System.currentTimeMillis() + domainSecretExpirationSettings.getExpiryTimeSeconds() * 1000);
         }
         return null;
     }
 
     public boolean validateSecret(Client client, String clientSecret) {
         return client.getClientSecrets().stream().anyMatch(hashedSecret -> {
-            if (hashedSecret.getExpiresAt()!= null && hashedSecret.getExpiresAt().before(new Date())) {
+            if (hashedSecret.getExpiresAt() != null && hashedSecret.getExpiresAt().before(new Date())) {
                 return false;
             }
             var pwdEncoder = client.getSecretSettings()

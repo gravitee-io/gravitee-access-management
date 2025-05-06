@@ -516,7 +516,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (rawSecret != null) {
             // PUBLIC client doesn't need to have secret, so we have to test it before generated the hash
             applicationSettings.getOauth().setClientSecret(null);
-            var clientSecret = this.clientSecretService.generateClientSecret(domain.getSecretSettings(), "Default", rawSecret, secretSettings);
+            var clientSecret = this.clientSecretService.generateClientSecret("Default", rawSecret, secretSettings, domain.getSecretExpirationSettings(), applicationSettings.getSecretExpirationSettings());
             application.setSecrets(List.of(clientSecret));
         }
 
