@@ -75,7 +75,7 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
         List<ClientSecret> secrets = application.getSecrets();
         String newSecretName = newClientSecret.getName().trim();
         if (secrets.stream().map(ClientSecret::getName).anyMatch(n -> n.equals(newSecretName))) {
-            return Single.error(() -> new ClientSecretInvalidException(String.format("Secret with description %s already exist", newClientSecret)));
+            return Single.error(() -> new ClientSecretInvalidException(String.format("Secret with description %s already exist", newClientSecret.getName().trim())));
         }
         if (secrets.size() == secretsMax) {
             return Single.error(() -> new TooManyClientSecretsException(secretsMax));
