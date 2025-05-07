@@ -121,7 +121,6 @@ public class ApplicationSecretResource extends AbstractResource {
                 .ignoreElement()
                 .subscribe(
                         () -> response.resume(Response.noContent().build()),
-                        error -> response.resume(Response.serverError().entity(error.getMessage()).build())
-                );
+                        response::resume);
     }
 }
