@@ -18,7 +18,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { EMPTY } from 'rxjs';
+import { EMPTY, Observable } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
@@ -126,8 +126,14 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
               secret: secretResponse.secret,
               renew: false,
             })),
-            catchError(() => {
-              this.snackbarService.open('Failed to create client secret');
+            catchError((e: unknown): Observable<never> => {
+              if (typeof e === 'object' && e !== null) {
+                const httpStatus = (e as any).error.http_status;
+                const message = (e as any).error.message || 'An error occurred';
+                this.snackbarService.open(httpStatus < 500 ? message : 'Failed to create client secret');
+              } else {
+                this.snackbarService.open('Unknown error occurred');
+              }
               return EMPTY;
             }),
           ),
