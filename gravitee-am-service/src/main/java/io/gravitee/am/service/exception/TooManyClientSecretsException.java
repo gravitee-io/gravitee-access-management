@@ -21,7 +21,7 @@ public class TooManyClientSecretsException extends AbstractManagementException{
 
     @Override
     public int getHttpStatusCode() {
-        return HttpStatusCode.CONFLICT_409;
+        return HttpStatusCode.BAD_REQUEST_400;
     }
 
     public TooManyClientSecretsException(int limit) {
