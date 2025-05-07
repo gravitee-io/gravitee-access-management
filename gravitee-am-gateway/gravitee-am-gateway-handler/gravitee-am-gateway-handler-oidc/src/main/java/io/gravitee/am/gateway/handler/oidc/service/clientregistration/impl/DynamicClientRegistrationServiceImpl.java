@@ -212,14 +212,10 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(updatedClient -> {
                     // force the client secret to null to prevent persistence
                     var rawSecret = updatedClient.getClientSecrets().stream().filter(cs -> cs.getId().equals(clientSecretId)).findFirst().orElse(new ClientSecret());
-                    var secrets = updatedClient.getClientSecrets();
-                    updatedClient.setClientSecret(null);
-                    updatedClient.setClientSecrets(null);
                     return clientService.update(updatedClient)
                             .map(app -> {
                                 // restore the client secret to make it accessible in the DRC output
                                 app.setClientSecret(rawSecret.getSecret());
-                                app.setClientSecrets(secrets);
                                 return app;
                             });
                 });
