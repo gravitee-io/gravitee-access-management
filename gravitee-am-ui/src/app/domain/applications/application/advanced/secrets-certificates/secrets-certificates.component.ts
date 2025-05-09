@@ -33,8 +33,6 @@ import { DeleteClientSecretComponent, DeleteClientSecretData } from './delete-cl
 export interface ClientSecret {
   id: string;
   name: string;
-  expiresIn: string;
-  expiresInDays: number;
   status: string;
   createdAt: string;
   expiryDate: string;
@@ -174,33 +172,16 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
 
   mapClientSecret(clientSecret: any): ClientSecret {
     if (clientSecret.expiresAt) {
-      const expiresInDays = this.calculateExpiresIn(clientSecret.expiresAt);
       return {
         ...clientSecret,
-        expiresInDays,
         status: clientSecret.expiresAt > Date.now() ? 'Running' : 'Expired',
-        expiresIn:
-          clientSecret.expiresAt > Date.now() ? `${expiresInDays} day${expiresInDays > 1 || expiresInDays == 0 ? 's' : ''}` : 'Expired',
       } as ClientSecret;
     } else {
       return {
         ...clientSecret,
-        expiresIn: 'N/A',
         status: 'Running',
       } as ClientSecret;
     }
-  }
-
-  calculateExpiresIn(expiryDate: string | Date): number {
-    const now = new Date();
-    const expiry = new Date(expiryDate);
-
-    const diffMs = expiry.getTime() - now.getTime();
-
-    if (diffMs <= 0) {
-      return 0;
-    }
-    return Math.floor(diffMs / (1000 * 60 * 60 * 24));
   }
 
   deleteSecret(row: ClientSecret, event: Event): void {
