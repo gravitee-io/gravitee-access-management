@@ -62,6 +62,12 @@ export interface ClientSecret {
    * @memberof ClientSecret
    */
   createdAt?: Date;
+  /**
+   *
+   * @type {Date}
+   * @memberof ClientSecret
+   */
+  expiresAt?: Date;
 }
 
 export function ClientSecretFromJSON(json: any): ClientSecret {
@@ -78,6 +84,7 @@ export function ClientSecretFromJSONTyped(json: any, ignoreDiscriminator: boolea
     name: !exists(json, 'name') ? undefined : json['name'],
     secret: !exists(json, 'secret') ? undefined : json['secret'],
     createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    expiresAt: !exists(json, 'expiresAt') ? undefined : new Date(json['expiresAt']),
   };
 }
 
@@ -94,5 +101,6 @@ export function ClientSecretToJSON(value?: ClientSecret | null): any {
     name: value.name,
     secret: value.secret,
     createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    expiresAt: value.expiresAt === undefined ? undefined : value.expiresAt.toISOString(),
   };
 }

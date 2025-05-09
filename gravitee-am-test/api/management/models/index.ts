@@ -187,6 +187,7 @@ export * from './Scope';
 export * from './ScopeApprovalEntity';
 export * from './ScopeEntity';
 export * from './ScopePage';
+export * from './SecretExpirationSettings';
 export * from './SecurityProfileSettings';
 export * from './SelfServiceAccountManagementSettings';
 export * from './ServiceResource';
