@@ -60,6 +60,12 @@ import {
   RiskAssessmentSettingsFromJSONTyped,
   RiskAssessmentSettingsToJSON,
 } from './RiskAssessmentSettings';
+import {
+  SecretExpirationSettings,
+  SecretExpirationSettingsFromJSON,
+  SecretExpirationSettingsFromJSONTyped,
+  SecretExpirationSettingsToJSON,
+} from './SecretExpirationSettings';
 
 /**
  *
@@ -121,6 +127,12 @@ export interface PatchApplicationSettings {
    * @memberof PatchApplicationSettings
    */
   riskAssessment?: RiskAssessmentSettings;
+  /**
+   *
+   * @type {SecretExpirationSettings}
+   * @memberof PatchApplicationSettings
+   */
+  secretExpirationSettings?: SecretExpirationSettings;
   /**
    *
    * @type {Set<string>}
@@ -216,6 +228,9 @@ export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscrimin
     mfa: !exists(json, 'mfa') ? undefined : PatchMFASettingsFromJSON(json['mfa']),
     cookieSettings: !exists(json, 'cookieSettings') ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
     riskAssessment: !exists(json, 'riskAssessment') ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
+    secretExpirationSettings: !exists(json, 'secretExpirationSettings')
+      ? undefined
+      : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
     requiredPermissions: !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
   };
 }
@@ -237,6 +252,7 @@ export function PatchApplicationSettingsToJSON(value?: PatchApplicationSettings 
     mfa: PatchMFASettingsToJSON(value.mfa),
     cookieSettings: CookieSettingsToJSON(value.cookieSettings),
     riskAssessment: RiskAssessmentSettingsToJSON(value.riskAssessment),
+    secretExpirationSettings: SecretExpirationSettingsToJSON(value.secretExpirationSettings),
     requiredPermissions: value.requiredPermissions,
   };
 }

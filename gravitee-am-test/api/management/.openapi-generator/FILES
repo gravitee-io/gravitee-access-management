@@ -198,6 +198,7 @@ models/Scope.ts
 models/ScopeApprovalEntity.ts
 models/ScopeEntity.ts
 models/ScopePage.ts
+models/SecretExpirationSettings.ts
 models/SecurityProfileSettings.ts
 models/SelfServiceAccountManagementSettings.ts
 models/ServiceResource.ts

@@ -29,45 +29,38 @@ import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
- * @interface UpdateBotDetection
+ * @interface SecretExpirationSettings
  */
-export interface UpdateBotDetection {
+export interface SecretExpirationSettings {
   /**
    *
-   * @type {string}
-   * @memberof UpdateBotDetection
+   * @type {boolean}
+   * @memberof SecretExpirationSettings
    */
-  name: string;
+  enabled?: boolean;
   /**
    *
-   * @type {string}
-   * @memberof UpdateBotDetection
+   * @type {number}
+   * @memberof SecretExpirationSettings
    */
-  type: string;
-  /**
-   *
-   * @type {string}
-   * @memberof UpdateBotDetection
-   */
-  configuration: string;
+  expiryTimeSeconds?: number;
 }
 
-export function UpdateBotDetectionFromJSON(json: any): UpdateBotDetection {
-  return UpdateBotDetectionFromJSONTyped(json, false);
+export function SecretExpirationSettingsFromJSON(json: any): SecretExpirationSettings {
+  return SecretExpirationSettingsFromJSONTyped(json, false);
 }
 
-export function UpdateBotDetectionFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateBotDetection {
+export function SecretExpirationSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): SecretExpirationSettings {
   if (json === undefined || json === null) {
     return json;
   }
   return {
-    name: json['name'],
-    type: json['type'],
-    configuration: json['configuration'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    expiryTimeSeconds: !exists(json, 'expiryTimeSeconds') ? undefined : json['expiryTimeSeconds'],
   };
 }
 
-export function UpdateBotDetectionToJSON(value?: UpdateBotDetection | null): any {
+export function SecretExpirationSettingsToJSON(value?: SecretExpirationSettings | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -75,8 +68,7 @@ export function UpdateBotDetectionToJSON(value?: UpdateBotDetection | null): any
     return null;
   }
   return {
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
+    enabled: value.enabled,
+    expiryTimeSeconds: value.expiryTimeSeconds,
   };
 }

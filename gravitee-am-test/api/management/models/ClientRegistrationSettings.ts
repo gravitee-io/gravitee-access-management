@@ -67,25 +67,25 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
+  isOpenDynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ClientRegistrationSettings
+   */
   allowedScopesEnabled?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  dynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof ClientRegistrationSettings
-   */
-  openDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof ClientRegistrationSettings
-   */
   clientTemplateEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ClientRegistrationSettings
+   */
+  isDynamicClientRegistrationEnabled?: boolean;
 }
 
 export function ClientRegistrationSettingsFromJSON(json: any): ClientRegistrationSettings {
@@ -102,14 +102,14 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
     allowWildCardRedirectUri: !exists(json, 'allowWildCardRedirectUri') ? undefined : json['allowWildCardRedirectUri'],
     defaultScopes: !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
     allowedScopes: !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
+      isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
+      ? undefined
+      : json['isOpenDynamicClientRegistrationEnabled'],
     allowedScopesEnabled: !exists(json, 'allowedScopesEnabled') ? undefined : json['allowedScopesEnabled'],
-    dynamicClientRegistrationEnabled: !exists(json, 'dynamicClientRegistrationEnabled')
-      ? undefined
-      : json['dynamicClientRegistrationEnabled'],
-    openDynamicClientRegistrationEnabled: !exists(json, 'openDynamicClientRegistrationEnabled')
-      ? undefined
-      : json['openDynamicClientRegistrationEnabled'],
     clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
+      isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
+      ? undefined
+      : json['isDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -126,9 +126,9 @@ export function ClientRegistrationSettingsToJSON(value?: ClientRegistrationSetti
     allowWildCardRedirectUri: value.allowWildCardRedirectUri,
     defaultScopes: value.defaultScopes,
     allowedScopes: value.allowedScopes,
+      isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
     allowedScopesEnabled: value.allowedScopesEnabled,
-    dynamicClientRegistrationEnabled: value.dynamicClientRegistrationEnabled,
-    openDynamicClientRegistrationEnabled: value.openDynamicClientRegistrationEnabled,
     clientTemplateEnabled: value.clientTemplateEnabled,
+      isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
   };
 }
