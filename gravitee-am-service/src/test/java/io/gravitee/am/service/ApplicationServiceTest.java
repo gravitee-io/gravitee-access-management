@@ -65,14 +65,12 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
-import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -353,9 +351,9 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldFindAll() {
+    public void shouldFetchAll() {
         when(applicationRepository.findAll(0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page(Collections.singleton(new Application()), 0, 1)));
-        TestObserver<Set<Application>> testObserver = applicationService.findAll().test();
+        TestObserver<Set<Application>> testObserver = applicationService.fetchAll().test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -364,18 +362,18 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldFindAll_technicalException() {
+    public void shouldFetchAll_technicalException() {
         when(applicationRepository.findAll(0, Integer.MAX_VALUE)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        applicationService.findAll().subscribe(testObserver);
+        applicationService.fetchAll().subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
     }
 
     @Test
-    public void shouldFindAllPagination() {
+    public void shouldFetchAllPagination() {
         Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
         when(applicationRepository.findAll(1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Application>> testObserver = applicationService.findAll(1, 1).test();
@@ -387,7 +385,7 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldFindAllPagination_technicalException() {
+    public void shouldFetchAllPagination_technicalException() {
         when(applicationRepository.findAll(1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();

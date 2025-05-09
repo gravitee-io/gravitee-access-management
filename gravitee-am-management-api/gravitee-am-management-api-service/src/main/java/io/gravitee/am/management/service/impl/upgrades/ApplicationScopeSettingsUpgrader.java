@@ -26,7 +26,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -83,7 +82,7 @@ public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
     }
 
     private Single<Boolean> migrateScopeSettings(SystemTask task) {
-        return applicationService.findAll()
+        return applicationService.fetchAll()
                 .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(app -> {
                     logger.debug("Process application '{}'", app.getId());

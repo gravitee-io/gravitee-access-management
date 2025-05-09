@@ -1,0 +1,107 @@
+suite: Test Management Api configmap section services
+templates:
+  - "api/api-configmap.yaml"
+tests:
+  - it: Test services notifier - clientSecret
+    template: api/api-configmap.yaml
+    set:
+      api:
+        services:
+          notifier:
+            client-secret:
+              enabled: true
+              cronExpression: '0 0 0 0 0'
+              expiryThresholds: 20,10,15
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            [ ]{2}notifier:
+            [ ]{2}  client-secret:
+            [ ]{2}    cronExpression: 0 0 0 0 0
+            [ ]{2}    enabled: true
+            [ ]{2}    expiryEmailSubject: Client secret will expire soon
+            [ ]{2}    expiryThresholds: 20,10,15
+            [ ]{2}  enabled: true
+            [ ]{2}  tryAvoidDuplicateNotification: true
+            [ ]{2}certificate:
+            [ ]{2}  enabled: true
+            [ ]{2}  cronExpression: 0 0 5 \* \* \*
+            [ ]{2}  expiryThresholds: 20,15,10,5,1
+            [ ]{2}  expiryEmailSubject: "Certificate will expire soon"
+
+  - it: Test services notifier - override certificate
+    template: api/api-configmap.yaml
+    set:
+      api:
+        services:
+          notifier:
+            client-secret:
+              enabled: true
+              cronExpression: '0 0 0 0 0'
+              expiryThresholds: 20,10,15
+          certificate:
+            enabled: true
+            cronExpression: '0 0 0 0 0'
+            expiryThresholds: 20,10,15
+
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            [ ]{2}notifier:
+            [ ]{2}  client-secret:
+            [ ]{2}    cronExpression: 0 0 0 0 0
+            [ ]{2}    enabled: true
+            [ ]{2}    expiryEmailSubject: Client secret will expire soon
+            [ ]{2}    expiryThresholds: 20,10,15
+            [ ]{2}  enabled: true
+            [ ]{2}  tryAvoidDuplicateNotification: true
+            [ ]{2}certificate:
+            [ ]{2}  enabled: true
+            [ ]{2}  cronExpression: 0 0 0 0 0
+            [ ]{2}  expiryThresholds: 20,10,15
+            [ ]{2}  expiryEmailSubject: "Certificate will expire soon"
+
+  - it: Test services notifier - empty clientSecret
+    template: api/api-configmap.yaml
+    set:
+      api:
+        services:
+          certificate:
+            enabled: true
+            cronExpression: '0 0 0 0 0'
+            expiryThresholds: 20,10,15
+
+
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            [ ]{2}notifier:
+            [ ]{2}  client-secret:
+            [ ]{2}    cronExpression: 0 0 5 \* \* \*
+            [ ]{2}    enabled: true
+            [ ]{2}    expiryEmailSubject: Client secret will expire soon
+            [ ]{2}    expiryThresholds: 20,15,10,5,1
+            [ ]{2}  enabled: true
+            [ ]{2}  tryAvoidDuplicateNotification: true
+            [ ]{2}certificate:
+            [ ]{2}  enabled: true
+            [ ]{2}  cronExpression: 0 0 0 0 0
+            [ ]{2}  expiryThresholds: 20,10,15
+            [ ]{2}  expiryEmailSubject: "Certificate will expire soon"

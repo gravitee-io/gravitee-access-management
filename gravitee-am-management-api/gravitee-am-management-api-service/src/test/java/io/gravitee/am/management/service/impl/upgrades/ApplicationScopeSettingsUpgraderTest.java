@@ -72,7 +72,7 @@ public class ApplicationScopeSettingsUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(1)).findById(any());
-        verify(applicationService, never()).findAll();
+        verify(applicationService, never()).fetchAll();
     }
 
     @Test
@@ -109,7 +109,7 @@ public class ApplicationScopeSettingsUpgraderTest {
         settingsWithScopes.setOauth(oauthWithOptions);
         appScopesWithOptions.setSettings(settingsWithScopesWithOptions);
 
-        when(applicationService.findAll()).thenReturn(Single.just(Set.of(appNoSettings, appNoOauthSetings, appNoScopes, appScopes, appScopesWithOptions)));
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(appNoSettings, appNoOauthSetings, appNoScopes, appScopes, appScopesWithOptions)));
         when(applicationService.update(any())).thenReturn(Single.just(new Application()));
         when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
             SystemTask sysTask = args.getArgument(0);
@@ -120,7 +120,7 @@ public class ApplicationScopeSettingsUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(1)).findById(anyString());
-        verify(applicationService).findAll();
+        verify(applicationService).fetchAll();
 
         verify(applicationService, atMost(2)).update(argThat(app -> {
             return app.getSettings() == null || app.getSettings().getOauth() == null;
@@ -174,7 +174,7 @@ public class ApplicationScopeSettingsUpgraderTest {
         upgrader.upgrade();
 
         verify(systemTaskRepository, times(3)).findById(anyString());
-        verify(applicationService, never()).findAll();
+        verify(applicationService, never()).fetchAll();
 
         verify(systemTaskRepository, never()).updateIf(argThat( t -> t.getStatus().equalsIgnoreCase(SystemTaskStatus.SUCCESS.name())), anyString());
     }

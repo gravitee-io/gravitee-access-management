@@ -175,6 +175,12 @@ public class ApplicationServiceImpl implements ApplicationService {
     private ApplicationTokenCustomClaimsValidator customClaimsValidator;
 
     @Override
+    public Flowable<Application> findAll() {
+        LOGGER.debug("Find applications");
+        return applicationRepository.findAll();
+    }
+
+    @Override
     public Single<Page<Application>> findAll(int page, int size) {
         LOGGER.debug("Find applications");
         return applicationRepository.findAll(page, size)
