@@ -273,8 +273,21 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
             })
             .afterClosed(),
         ),
+        switchMap(() =>
+          this.applicationService.getClientSecrets(this.domain.id, this.application.id).pipe(
+            catchError(() => {
+              this.snackbarService.open('Failed to fetch client secrets');
+              return EMPTY;
+            }),
+          ),
+        ),
       )
-      .subscribe();
+      .subscribe({
+        next: (secrets) => {
+          this.clientSecrets = secrets.map((s) => this.mapClientSecret(s));
+        },
+        error: () => this.snackbarService.open(`Cannot renew ${row.name}.`),
+      });
   }
 
   openSettings(event: any) {
