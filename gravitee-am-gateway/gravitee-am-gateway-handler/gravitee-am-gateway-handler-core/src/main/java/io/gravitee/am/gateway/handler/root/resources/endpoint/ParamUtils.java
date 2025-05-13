@@ -19,7 +19,13 @@ import com.nimbusds.jwt.JWT;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
+<<<<<<< HEAD
 import io.gravitee.am.common.web.URLParametersUtils;
+=======
+import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
+import io.gravitee.am.identityprovider.common.oauth2.utils.URLEncodedUtils;
+import io.gravitee.am.service.utils.WildcardUtils;
+>>>>>>> e99126d11 (fix: manage specific encoding action for username parameter)
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.service.utils.WildcardUtils;
 import io.vertx.core.json.Json;
