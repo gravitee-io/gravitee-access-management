@@ -16,8 +16,6 @@
 package io.gravitee.am.gateway.handler.common.vertx.web.handler.impl;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.common.web.UriBuilder;
-import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
@@ -29,7 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.gravitee.am.common.oauth2.Parameters.CLIENT_ID;
+import static io.gravitee.am.common.oauth2.Parameters.USERNAME;
 import static io.gravitee.am.common.oidc.Parameters.LOGIN_HINT;
+import static io.gravitee.am.gateway.handler.common.utils.UsernameHelper.escapeUsernameParam;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 
 /**
@@ -52,20 +52,8 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
             final HttpServerRequest request = context.request();
             final MultiMap queryParams = RequestUtils.getCleanedQueryParams(request);
 
-            if (queryParams.contains(LOGIN_HINT)) {
-                // this conditional block has been added specifically for https://github.com/gravitee-io/issues/issues/7889
-                // we need to encode email address that contains a '+' to avoid
-                // white space in username when landing to the login form.
-                // And we have to this because, the UriBuilderRequest.resolveProxyRequest decode & encode parameter to avoid
-                // double encoding during the redirect...
-                // we restrict to the login_hint to avoid side effect
-                final String login_hint = queryParams.get(LOGIN_HINT);
-                if (!UriBuilder.decodeURIComponent(login_hint).equals(login_hint)
-                        && login_hint.contains("@")
-                        && login_hint.contains("+")) {
-                    queryParams.set(LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ? UriBuilder.encodeURIComponent(login_hint) : login_hint);
-                }
-            }
+            escapeUsernameParam(queryParams, LOGIN_HINT);
+            escapeUsernameParam(queryParams, USERNAME);
 
             if (context.get(ConstantKeys.TOKEN_CONTEXT_KEY) != null) {
                 queryParams.add(ConstantKeys.TOKEN_CONTEXT_KEY, (String) context.get(ConstantKeys.TOKEN_CONTEXT_KEY));
@@ -90,4 +78,5 @@ public class RedirectHandlerImpl implements Handler<RoutingContext> {
                     .end();
         }
     }
+
 }
