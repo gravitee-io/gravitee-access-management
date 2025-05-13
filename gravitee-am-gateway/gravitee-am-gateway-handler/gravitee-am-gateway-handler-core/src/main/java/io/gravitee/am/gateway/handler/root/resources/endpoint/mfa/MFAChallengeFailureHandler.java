@@ -18,9 +18,8 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
-import io.gravitee.am.gateway.handler.common.utils.StaticEnvironmentProvider;
+import io.gravitee.am.gateway.handler.common.utils.UsernameHelper;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.AbstractErrorHandler;
@@ -77,11 +76,8 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
         queryParams.set(ConstantKeys.ERROR_CODE_PARAM_KEY, ERROR_CODE_VALUE);
         queryParams.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 
-        if (context.request().getParam(Parameters.LOGIN_HINT) != null) {
-            // encode login_hint parameter (to not replace '+' sign by a space ' ')
-            queryParams.set(Parameters.LOGIN_HINT, StaticEnvironmentProvider.sanitizeParametersEncoding() ?
-                    UriBuilder.encodeURIComponent(context.request().getParam(Parameters.LOGIN_HINT)) : context.request().getParam(Parameters.LOGIN_HINT));
-        }
+        UsernameHelper.escapeUsernameParam(queryParams, Parameters.LOGIN_HINT);
+        UsernameHelper.escapeUsernameParam(queryParams, io.gravitee.am.common.oauth2.Parameters.USERNAME);
 
         return queryParams;
     }
