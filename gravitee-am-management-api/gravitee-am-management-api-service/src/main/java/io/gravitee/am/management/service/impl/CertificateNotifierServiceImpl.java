@@ -15,41 +15,27 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import io.gravitee.am.management.service.CertificateNotifierService;
 import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.EmailService;
-import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
 import io.gravitee.am.management.service.impl.notifications.ExpireThresholdsNotificationCondition;
 import io.gravitee.am.management.service.impl.notifications.ExpireThresholdsResendNotificationCondition;
-import io.gravitee.am.management.service.impl.notifications.ManagementUINotifierConfiguration;
-import io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils;
-import io.gravitee.am.management.service.impl.notifications.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.definition.NotificationDefinitionFactory;
+import io.gravitee.am.management.service.impl.notifications.definition.CertificateNotifierSubject;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Template;
-import io.gravitee.am.model.User;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.node.api.notifier.NotificationDefinition;
 import io.gravitee.node.api.notifier.NotifierService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.util.Map;
-
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_LOG_NOTIFIER;
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
+import java.util.List;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -58,16 +44,6 @@ import static io.gravitee.am.management.service.impl.notifications.NotificationD
 @Component
 public class CertificateNotifierServiceImpl implements CertificateNotifierService {
     private static final Logger LOGGER = LoggerFactory.getLogger(CertificateNotifierServiceImpl.class);
-    public static final String RESOURCE_TYPE_CERTIFICATE = "certificate";
-
-    @Value("${notifiers.email.enabled:false}")
-    private boolean emailNotifierEnabled;
-
-    @Value("${notifiers.ui.enabled:true}")
-    private boolean uiNotifierEnabled;
-
-    @Value("${notifiers.log.enabled:true}")
-    private boolean isLogNotifierEnabled;
 
     @Autowired
     private NotifierService notifierService;
@@ -76,20 +52,14 @@ public class CertificateNotifierServiceImpl implements CertificateNotifierServic
     private DomainService domainService;
 
     @Autowired
-    private EmailNotifierConfiguration emailConfiguration;
-
-    @Autowired
-    private EmailService emailService;
-
-    @Autowired
-    private ObjectMapper mapper;
-
-    @Autowired
     private DomainOwnersProvider domainOwnersProvider;
 
     @Autowired
     @Qualifier("certificateNotifierSettings")
     private NotifierSettings certificateNotifierSettings;
+
+    @Autowired
+    private List<NotificationDefinitionFactory<CertificateNotifierSubject>> notificationDefinitionFactories;
 
 
     @Override
@@ -97,13 +67,10 @@ public class CertificateNotifierServiceImpl implements CertificateNotifierServic
         if (certificateNotifierSettings.enabled()) {
             findDomain(certificate.getDomain())
                     .flatMapPublisher(domain ->
-                            domainOwnersProvider.retrieveDomainOwners(domain)
-                                    .flatMap(user -> {
-                                        final Flowable<NotificationDefinition> emailNotificationDef = buildEmailNotificationDefinition(certificate, domain, user).toFlowable();
-                                        final Flowable<NotificationDefinition> uiNotificationDef = buildUINotificationDefinition(certificate, domain, user).toFlowable();
-                                        final Flowable<NotificationDefinition> logNotificationDef = buildLogNotificationDefinition(certificate, domain).toFlowable();
-                                        return Flowable.mergeArray(emailNotificationDef, uiNotificationDef, logNotificationDef);
-                                    }))
+                                    domainOwnersProvider.retrieveDomainOwners(domain)
+                                            .map(user -> new CertificateNotifierSubject(certificate, domain, user))
+                                            .flatMap(subject -> Flowable.fromIterable(notificationDefinitionFactories)
+                                                    .flatMapMaybe(factory -> factory.buildNotificationDefinition(subject))))
                     .subscribe(definition ->
                         notifierService.register(definition,
                             new ExpireThresholdsNotificationCondition(certificateNotifierSettings.expiryThresholds()),
@@ -112,10 +79,15 @@ public class CertificateNotifierServiceImpl implements CertificateNotifierServic
         }
     }
 
+    private Single<Domain> findDomain(String domainId) {
+        return domainService.findById(domainId)
+                .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)));
+    }
+
     @Override
     public void unregisterCertificateExpiration(String domainId, String certificateId) {
         if (certificateNotifierSettings.enabled()) {
-            this.notifierService.unregisterAll(certificateId, RESOURCE_TYPE_CERTIFICATE);
+            this.notifierService.unregisterAll(certificateId, CertificateNotifierSubject.RESOURCE_TYPE);
         }
     }
 
@@ -123,101 +95,10 @@ public class CertificateNotifierServiceImpl implements CertificateNotifierServic
     public Completable deleteCertificateExpirationAcknowledgement(String certificateId) {
         if (certificateNotifierSettings.enabled()) {
             LOGGER.debug("Remove All NotificationAcknowledge for the certificate {}", certificateId);
-            return this.notifierService.deleteAcknowledge(certificateId, RESOURCE_TYPE_CERTIFICATE);
+            return this.notifierService.deleteAcknowledge(certificateId, CertificateNotifierSubject.RESOURCE_TYPE);
         } else {
             return Completable.complete();
         }
     }
 
-
-
-
-    private Single<Domain> findDomain(String domainId) {
-        return domainService.findById(domainId)
-                .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)));
-    }
-
-
-
-    private Maybe<NotificationDefinition> buildEmailNotificationDefinition(Certificate certificate, Domain domain, User user) {
-        if (emailNotifierEnabled && !Strings.isNullOrEmpty(user.getEmail())) {
-            Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
-                    .withDomain(domain)
-                    .withUser(user)
-                    .withCertificate(certificate)
-                    .build();
-
-            return emailService.getFinalEmail(domain, null, Template.CERTIFICATE_EXPIRATION, user, data)
-                    .map(email -> {
-                        EmailNotifierConfiguration notifierConfig = new EmailNotifierConfiguration(this.emailConfiguration);
-                        notifierConfig.setSubject(email.getSubject());
-                        notifierConfig.setBody(email.getContent());
-                        notifierConfig.setTo(user.getEmail());
-
-                        final NotificationDefinition definition = new NotificationDefinition();
-                        definition.setType(TYPE_EMAIL_NOTIFIER);
-                        definition.setConfiguration(mapper.writeValueAsString(notifierConfig));
-                        definition.setResourceId(certificate.getId());
-                        definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
-                        definition.setAudienceId(user.getId());
-                        definition.setCron(certificateNotifierSettings.cronExpression());
-                        definition.setData(data);
-
-                        return definition;
-                    });
-        } else {
-            LOGGER.debug("Ignore email notification for certificate {}, email is disabled or email address is missing", certificate.getId());
-        }
-        return Maybe.empty();
-    }
-
-    private Maybe<NotificationDefinition> buildUINotificationDefinition(Certificate certificate, Domain domain, User user) {
-        if (uiNotifierEnabled) {
-            try {
-                Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
-                        .withDomain(domain)
-                        .withUser(user)
-                        .withCertificate(certificate)
-                        .build();
-
-                final NotificationDefinition definition = new NotificationDefinition();
-                definition.setType(TYPE_UI_NOTIFIER);
-                definition.setConfiguration(mapper.writeValueAsString(ManagementUINotifierConfiguration.certificateExpiration()));
-                definition.setResourceId(certificate.getId());
-                definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
-                definition.setAudienceId(user.getId());
-                definition.setCron(certificateNotifierSettings.cronExpression());
-                definition.setData(data);
-
-                return Maybe.just(definition);
-            } catch (IOException e) {
-                LOGGER.warn("Unable to generate ui configuration for certificate expiration", e);
-            }
-        } else {
-            LOGGER.debug("Ignore email notification for certificate {}, email is disabled or email address is missing", certificate.getId());
-        }
-        return Maybe.empty();
-    }
-
-    private Maybe<NotificationDefinition> buildLogNotificationDefinition(Certificate certificate, Domain domain) {
-        if (isLogNotifierEnabled) {
-            final Map<String, Object> data = new NotificationDefinitionUtils.ParametersBuilder()
-                    .withDomain(domain)
-                    .withCertificate(certificate)
-                    .build();
-
-            final NotificationDefinition definition = new NotificationDefinition();
-            definition.setType(TYPE_LOG_NOTIFIER);
-            definition.setResourceId(certificate.getId());
-            definition.setResourceType(RESOURCE_TYPE_CERTIFICATE);
-            definition.setCron(certificateNotifierSettings.cronExpression());
-            definition.setData(data);
-
-            return Maybe.just(definition);
-        } else {
-            LOGGER.debug("Ignoring log notification for certificate {}, log notification is disabled.", certificate.getId());
-        }
-
-        return Maybe.empty();
-    }
 }

@@ -26,7 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserNotificationService extends Notifier {
+public interface UserNotificationService {
 
     Flowable<UserNotification> listAllNotifications(User user, UserNotificationStatus status);
 

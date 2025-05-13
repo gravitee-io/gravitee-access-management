@@ -13,14 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.notifications;
+package io.gravitee.am.management.service.impl.notifications.notifiers;
 
-import java.util.List;
+import io.gravitee.am.model.Template;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-public record NotifierSettings(
-        boolean enabled,
-        String cronExpression,
-        List<Integer> expiryThresholds,
-        String emailSubject) {
+/**
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+@RequiredArgsConstructor
+@Getter
+public class UINotifierConfiguration {
+    private final String template;
+
+
+    public static UINotifierConfiguration of(Template template){
+        return new UINotifierConfiguration(template.template());
+    }
 
 }

@@ -15,10 +15,9 @@
  */
 package io.gravitee.am.management.service.impl.notifications;
 
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettingsResolver;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.springframework.core.env.Environment;
 import org.springframework.mock.env.MockEnvironment;
 
 import java.util.List;
@@ -41,7 +40,7 @@ public class NotifierSettingsResolverTest {
         assertFalse(certificateNotifierSettings.enabled());
         assertEquals("* * * * *", certificateNotifierSettings.cronExpression());
         assertEquals(List.of(20, 15), certificateNotifierSettings.expiryThresholds());
-        assertEquals("Subject", certificateNotifierSettings.emailSubject());
+        assertEquals("Subject", certificateNotifierSettings.subject());
     }
 
     @Test
@@ -63,7 +62,7 @@ public class NotifierSettingsResolverTest {
         assertTrue(certificateNotifierSettings.enabled());
         assertEquals("30 * * * *", certificateNotifierSettings.cronExpression());
         assertEquals(List.of(25, 20, 15), certificateNotifierSettings.expiryThresholds());
-        assertEquals("Subject2", certificateNotifierSettings.emailSubject());
+        assertEquals("Subject2", certificateNotifierSettings.subject());
     }
 
 
@@ -81,7 +80,7 @@ public class NotifierSettingsResolverTest {
         assertFalse(clientSecretSettings.enabled());
         assertEquals("* * * * *", clientSecretSettings.cronExpression());
         assertEquals(List.of(20, 15), clientSecretSettings.expiryThresholds());
-        assertEquals("Subject", clientSecretSettings.emailSubject());
+        assertEquals("Subject", clientSecretSettings.subject());
     }
 
     @Test
@@ -103,7 +102,7 @@ public class NotifierSettingsResolverTest {
         assertTrue(settings.enabled());
         assertEquals("30 * * * *", settings.cronExpression());
         assertEquals(List.of(25, 20, 15), settings.expiryThresholds());
-        assertEquals("Subject2", settings.emailSubject());
+        assertEquals("Subject2", settings.subject());
     }
 
     

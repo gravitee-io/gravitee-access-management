@@ -15,21 +15,20 @@
  */
 package io.gravitee.am.management.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.email.Email;
 import io.gravitee.am.management.service.impl.CertificateNotifierServiceImpl;
 import io.gravitee.am.management.service.impl.DomainOwnersProvider;
-import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
-import io.gravitee.am.management.service.impl.notifications.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.definition.CertificateNotifierSubject;
+import io.gravitee.am.management.service.impl.notifications.definition.NotificationDefinitionFactory;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
+import io.gravitee.node.api.notifier.NotificationDefinition;
 import io.gravitee.node.api.notifier.NotifierService;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,15 +36,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_EMAIL_NOTIFIER;
-import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
-import static io.gravitee.am.management.service.impl.notifications.NotifierSettingsResolver.DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.argThat;
@@ -75,26 +70,26 @@ public class CertificateNotifierServiceImplTest {
     private DomainService domainService;
 
     @Mock
-    private EmailNotifierConfiguration emailConfiguration;
-
-    @Mock
-    private EmailService emailService;
-
-    @Mock
-    private ObjectMapper mapper;
-
-    @Mock
     private DomainOwnersProvider domainOwnersProvider;
 
     @Spy
-    private NotifierSettings notifierSettings = new NotifierSettings(true, "* * * * *", List.of(20,15,10), "subject");
+    private NotifierSettings notifierSettings = new NotifierSettings(true, Template.CERTIFICATE_EXPIRATION, "* * * * *", List.of(20,15,10), "subject");
+
+    @Spy
+    private List<NotificationDefinitionFactory<CertificateNotifierSubject>> notificationDefinitionFactories = List.of(mockDef());
+
+
+    private static NotificationDefinitionFactory<CertificateNotifierSubject> mockDef(){
+        NotificationDefinition notificationDefinition = new NotificationDefinition();
+        notificationDefinition.setResourceId("certificateId");
+        return object -> Maybe.just(notificationDefinition);
+    }
 
     private Certificate certificate;
     private Domain domain;
 
     @Before
     public void prepareTest() throws Exception {
-        ReflectionTestUtils.setField(cut, "emailNotifierEnabled", true);
 
         domain = new Domain();
         domain.setId(DOMAIN_ID);
@@ -108,18 +103,12 @@ public class CertificateNotifierServiceImplTest {
 
     }
 
-    @After
-    public void cleanUp() {
-        ReflectionTestUtils.setField(cut, "uiNotifierEnabled", false);
-    }
 
     @Test
     public void shouldNotifyUser_EmailOnly() throws Exception {
         final User user = new User();
         user.setEmail("user@acme.fr");
         when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.just(user));
-
-        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new Email()));
 
         cut.registerCertificateExpiration(certificate);
 
@@ -130,20 +119,16 @@ public class CertificateNotifierServiceImplTest {
 
     @Test
     public void shouldNotifyUser_EmailAndUI() throws Exception {
-        ReflectionTestUtils.setField(cut, "uiNotifierEnabled", true);
 
         final User user = new User();
         user.setEmail("user@acme.fr");
         when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.just(user));
 
-        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new Email()));
-
         cut.registerCertificateExpiration(certificate);
 
         Thread.sleep(1000); // wait subscription execution
 
-        verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_UI_NOTIFIER)), any(), any());
-        verify(notifierService).register(argThat(def -> def.getType().equals(TYPE_EMAIL_NOTIFIER)), any(), any());
+        verify(notifierService).register(argThat(def -> def.getResourceId().equals("certificateId")), any(), any());
     }
 
     @Test
@@ -159,8 +144,6 @@ public class CertificateNotifierServiceImplTest {
         singleUser.setEmail("single@acme.fr");
 
         when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.fromIterable(tenUsers).mergeWith(Flowable.just(singleUser)));
-
-        when(emailService.getFinalEmail(any(), any(), any(), any(), any())).thenReturn(Maybe.just(new Email()));
 
         cut.registerCertificateExpiration(certificate);
 
@@ -186,8 +169,6 @@ public class CertificateNotifierServiceImplTest {
         user.setEmail("user@acme.fr");
         when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.just(user));
 
-        ReflectionTestUtils.setField(cut, "isLogNotifierEnabled", true);
-        ReflectionTestUtils.setField(cut, "emailNotifierEnabled", false);
 
 
         cut.registerCertificateExpiration(certificate);
