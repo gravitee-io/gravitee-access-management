@@ -15,17 +15,16 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.common.email.Email;
 import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.EmailService;
-import io.gravitee.am.management.service.impl.notifications.EmailNotifierConfiguration;
-import io.gravitee.am.management.service.impl.notifications.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.definition.ClientSecretNotifierSubject;
+import io.gravitee.am.management.service.impl.notifications.definition.NotificationDefinitionFactory;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.node.api.notifier.NotificationDefinition;
 import io.gravitee.node.api.notifier.NotifierService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -37,8 +36,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Date;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -50,7 +49,7 @@ import static org.mockito.Mockito.times;
 public class ClientSecretNotifierServiceImplTest {
 
     @Spy
-    private NotifierSettings certificateNotifierSettings = new NotifierSettings(true, "* * * *", List.of(20, 15), "");
+    private NotifierSettings certificateNotifierSettings = new NotifierSettings(true, Template.CLIENT_SECRET_EXPIRATION, "* * * *", List.of(20, 15), "");
 
     @Mock
     private NotifierService notifierService;
@@ -59,16 +58,10 @@ public class ClientSecretNotifierServiceImplTest {
     private DomainService domainService;
 
     @Mock
-    private ObjectMapper mapper;
-
-    @Mock
     private DomainOwnersProvider domainOwnersProvider;
 
     @Spy
-    private EmailNotifierConfiguration emailConfiguration = new EmailNotifierConfiguration();
-
-    @Mock
-    private EmailService emailService;
+    private List<NotificationDefinitionFactory<ClientSecretNotifierSubject>> notificationDefinitionFactories = List.of(mockDef());
 
     @InjectMocks
     private ClientSecretNotifierServiceImpl service;
@@ -77,9 +70,12 @@ public class ClientSecretNotifierServiceImplTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
-        service.uiNotifierEnabled = true;
-        service.isLogNotifierEnabled = true;
-        service.emailNotifierEnabled = true;
+    }
+
+    private static NotificationDefinitionFactory<ClientSecretNotifierSubject> mockDef(){
+        NotificationDefinition notificationDefinition = new NotificationDefinition();
+        notificationDefinition.setResourceId("clientSecretId");
+        return object -> Maybe.just(notificationDefinition);
     }
 
     @Test
@@ -93,6 +89,7 @@ public class ClientSecretNotifierServiceImplTest {
 
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setId("clientSecretId");
+        clientSecret.setExpiresAt(new Date());
 
         User user = new User();
         user.setId("userId");
@@ -100,14 +97,12 @@ public class ClientSecretNotifierServiceImplTest {
 
         Mockito.when(domainService.findById("domainId")).thenReturn(Maybe.just(domain));
         Mockito.when(domainOwnersProvider.retrieveDomainOwners(eq(domain))).thenReturn(Flowable.just(user));
-        Mockito.when(emailService.getFinalEmail(eq(domain), isNull(), eq(Template.CLIENT_SECRET_EXPIRATION), eq(user), any()))
-                        .thenReturn(Maybe.just(new Email()));
 
         service.registerClientSecretExpiration(application,clientSecret)
                 .test()
                 .assertComplete();
 
-        Mockito.verify(notifierService, times(3)).register(argThat(def -> def.getResourceId().equals("clientSecretId")), any(), any());
+        Mockito.verify(notifierService, times(1)).register(argThat(def -> def.getResourceId().equals("clientSecretId")), any(), any());
 
     }
 

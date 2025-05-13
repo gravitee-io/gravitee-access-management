@@ -152,15 +152,15 @@ services:
     enabled: true
     tryAvoidDuplicateNotification: false
 
-    ## Rules about certificate expiry notifications. Require the platform notifier service.
+    ### Rules about certificate expiry notifications. Require the platform notifier service.
     #certificate:
       #enabled: true
       ## frequency on which the notifier mechanism will test
       ## if new notifications need to be send
       ## default: 0 0 5 * * * (every day at 5am)
-      #cronExpression: 0 * * * * *
+      #cronExpression: 0 0 5 * * *
       ## send notification if certificate is going to expire in less than 20 days, then 15 days before...
-      #expiryThresholds: 400,15,10,5,1
+      #expiryThresholds: 20,15,10,5,1
       ## Subject of the email send by the email notifier
       #expiryEmailSubject: Certificate will expire soon
 
@@ -170,7 +170,7 @@ services:
       # frequency on which the notifier mechanism will test
       # if new notifications need to be send
       # default: 0 0 5 * * * (every day at 5am)
-      cronExpression: 30 * * * * *
+      cronExpression: 0 0 5 * * *
       # send notification if client secret is going to expire in less than 20 days, then 15 days before...
       expiryThresholds: 20,15,10,5,1
       expiryEmailSubject: Client secret will expire soon
@@ -180,6 +180,9 @@ license:
     enabled: true
 
 notifiers:
+  kafka:
+    enabled: false
+
   email:
     enabled: false
     host: smtp.my.domain

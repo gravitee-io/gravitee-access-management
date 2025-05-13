@@ -21,7 +21,7 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.CertificateServiceProxy;
-import io.gravitee.am.management.service.impl.notifications.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;

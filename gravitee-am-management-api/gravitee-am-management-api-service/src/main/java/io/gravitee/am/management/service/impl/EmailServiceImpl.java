@@ -82,6 +82,7 @@ public class EmailServiceImpl implements EmailService {
     private final String registrationVerifySubject;
     private final Integer registrationVerifyExpireAfter;
     private final String certificateExpirySubject;
+    private final String clientSecretExpirySubject;
 
     private final EmailManager emailManager;
 
@@ -120,6 +121,7 @@ public class EmailServiceImpl implements EmailService {
         this.registrationSubject = registrationSubject();
         this.registrationExpireAfter = registrationExpireAfter();
         this.registrationVerifySubject = registrationVerifySubject();
+        this.clientSecretExpirySubject = clientSecretExpirySubject();
         this.registrationVerifyExpireAfter = registrationVerifyExpireAfter();
         this.certificateExpirySubject = certificateExpirySubject();
         this.i18nDictionaryService = i18nDictionaryService;
@@ -302,6 +304,8 @@ public class EmailServiceImpl implements EmailService {
                 return registrationVerifySubject;
             case CERTIFICATE_EXPIRATION:
                 return certificateExpirySubject;
+            case CLIENT_SECRET_EXPIRATION:
+                return clientSecretExpirySubject;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }
@@ -314,6 +318,7 @@ public class EmailServiceImpl implements EmailService {
             case REGISTRATION_VERIFY:
                 return registrationVerifyExpireAfter;
             case CERTIFICATE_EXPIRATION:
+            case CLIENT_SECRET_EXPIRATION:
                 return -1;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
@@ -341,7 +346,16 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private String certificateExpirySubject() {
-        return environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon");
+        String emailSubject = environment.getProperty("services.notifier.certificate.expiryEmailSubject");
+        if(emailSubject == null) {
+            return environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon");
+        } else {
+            return null;
+        }
+    }
+
+    private String clientSecretExpirySubject() {
+        return environment.getProperty("services.notifier.client-secret.expiryEmailSubject", "Client secret will expire soon");
     }
 
 }

@@ -13,14 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.notifications;
+package io.gravitee.am.management.service.impl.notifications.notifiers;
 
-import java.util.List;
+import org.junit.Test;
+import org.mockito.Mockito;
 
-public record NotifierSettings(
-        boolean enabled,
-        String cronExpression,
-        List<Integer> expiryThresholds,
-        String emailSubject) {
+import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+public class LoggerNotifierTest {
+
+    @Test
+    public void logger_notifier_test(){
+        LoggerNotifier notifier = new LoggerNotifier();
+        Map<String, Object> map = Mockito.spy(Map.of("msg", "test"));
+        notifier.send(Mockito.mock(), map);
+
+        Mockito.verify(map, Mockito.times(1)).get(Mockito.eq("msg"));
+    }
 }

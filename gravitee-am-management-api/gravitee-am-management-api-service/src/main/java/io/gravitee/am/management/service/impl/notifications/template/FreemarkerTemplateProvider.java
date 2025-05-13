@@ -13,50 +13,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.notifications;
+package io.gravitee.am.management.service.impl.notifications.template;
 
 import freemarker.cache.FileTemplateLoader;
 import freemarker.core.TemplateClassResolver;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import freemarker.template.TemplateException;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import lombok.SneakyThrows;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-@Component
-public class ManagementUITemplateProvider implements InitializingBean {
-
-    public static final String TEMPLATE_EXT = ".yml";
-
-    @Value("${notifiers.ui.templates.path:${gravitee.home}/templates/notifications/management}")
-    private String templatesPath;
-
+public class FreemarkerTemplateProvider implements TemplateProvider{
+    private final String templatesPath;
+    private final String extension;
     private final Configuration config = new Configuration(Configuration.VERSION_2_3_28);
 
-    @Override
-    public void afterPropertiesSet() throws IOException {
+    public FreemarkerTemplateProvider(String templatesPath, String extension) {
+        this.templatesPath = templatesPath;
+        this.extension = extension;
+        initSource();
+    }
+
+    @SneakyThrows
+    private void initSource() {
         config.setNewBuiltinClassResolver(TemplateClassResolver.SAFER_RESOLVER);
         config.setTemplateLoader(new FileTemplateLoader(new File(URLDecoder.decode(templatesPath, StandardCharsets.UTF_8))));
     }
 
-    public String getNotificationContent(String name, Map<String, Object> parameters) throws IOException, TemplateException {
-        String templateName = name + TEMPLATE_EXT;
+    @Override
+    @SneakyThrows
+    public String getNotificationContent(String name, Map<String, Object> parameters) {
+        String templateName = name + extension;
         final Template template = config.getTemplate(templateName);
         StringWriter result = new StringWriter();
         template.process(parameters, result);
         return result.toString();
     }
 
+    @Override
+    @SneakyThrows
+    public String getNotificationTemplate(String name) {
+        String templateName = name + extension;
+        final Template template = config.getTemplate(templateName);
+        StringWriter writer = new StringWriter();
+        template.dump(writer);
+        return writer.toString();
+    }
 }

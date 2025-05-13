@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl.notifications;
+package io.gravitee.am.management.service.impl.notifications.notifiers;
 
+import io.gravitee.am.model.Template;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,16 +31,13 @@ import static java.util.Optional.ofNullable;
 @Configuration
 public class NotifierSettingsResolver {
 
-    public static final String DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS = "20,15,10,5,1";
-
-
     @Bean
     @Qualifier("certificateNotifierSettings")
     public NotifierSettings certificateNotifierSettings(Environment environment) {
         final String mainPrefix = "services.notifier.certificate.";
         final String fallbackPrefix = "services.certificate.";
 
-        return getNotifierSettings(environment, mainPrefix, fallbackPrefix);
+        return getNotifierSettings(environment, mainPrefix, fallbackPrefix, Template.CERTIFICATE_EXPIRATION);
     }
 
     @Bean
@@ -48,10 +46,10 @@ public class NotifierSettingsResolver {
         final String mainPrefix = "services.notifier.client-secret.";
         final String fallbackPrefix = "services.client-secret.";
 
-        return getNotifierSettings(environment, mainPrefix, fallbackPrefix);
+        return getNotifierSettings(environment, mainPrefix, fallbackPrefix, Template.CLIENT_SECRET_EXPIRATION);
     }
 
-    private NotifierSettings getNotifierSettings(Environment environment, String mainPrefix, String fallbackPrefix) {
+    private NotifierSettings getNotifierSettings(Environment environment, String mainPrefix, String fallbackPrefix, Template template) {
         Boolean enabled = ofNullable(environment.getProperty(mainPrefix + "enabled", Boolean.class))
                 .orElseGet(() -> environment.getProperty(fallbackPrefix + "enabled", Boolean.class, true));
 
@@ -64,7 +62,7 @@ public class NotifierSettingsResolver {
         String emailSubject = ofNullable(environment.getProperty(mainPrefix + "expiryEmailSubject", String.class))
                 .orElseGet(() -> environment.getProperty(fallbackPrefix + "expiryEmailSubject", String.class, "Expiration notification"));
 
-        return new NotifierSettings(enabled, cron, parseThresholds(thresholds), emailSubject);
+        return new NotifierSettings(enabled, template, cron, parseThresholds(thresholds), emailSubject);
     }
 
 

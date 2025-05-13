@@ -296,6 +296,7 @@ public class PreviewBuilder {
             case COMPLETE_PROFILE:
             case WEBAUTHN_REGISTER:
             case CERTIFICATE_EXPIRATION:
+            case CLIENT_SECRET_EXPIRATION:
             default:
                 break;
         }

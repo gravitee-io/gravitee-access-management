@@ -16,11 +16,12 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.gravitee.am.management.service.impl.notifications.NotifierSettings;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
@@ -57,7 +58,7 @@ class CertificateServiceProxyImplTest {
     ApplicationService appService = mock();
     CertificatePluginService certPluginService = mock();
 
-    NotifierSettings settings = new NotifierSettings(true, "* * * * *", List.of(30), "subject");
+    NotifierSettings settings = new NotifierSettings(true, Template.CERTIFICATE_EXPIRATION, "* * * * *", List.of(30), "subject");
 
     @Test
     void shouldFindCertsWithUsages() {

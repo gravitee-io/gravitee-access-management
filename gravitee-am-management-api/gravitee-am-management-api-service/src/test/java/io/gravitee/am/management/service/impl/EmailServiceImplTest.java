@@ -136,7 +136,9 @@ public class EmailServiceImplTest {
         when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
         when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
         when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
+        when(environment.getProperty("services.notifier.certificate.expiryEmailSubject")).thenReturn(null);
         when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
+        when(environment.getProperty("services.notifier.client-secret.expiryEmailSubject", "Client secret will expire soon")).thenReturn("Client secret will expire soon");
 
         when(dataPlaneRegistry.getDescription(any()))
                 .thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", "http://localhost:1234/unittest"));
@@ -207,7 +209,8 @@ public class EmailServiceImplTest {
         when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
         when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
         when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
-        when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
+        when(environment.getProperty("services.notifier.certificate.expiryEmailSubject")).thenReturn("Certificate will expire soon");
+        when(environment.getProperty("services.notifier.client-secret.expiryEmailSubject", "Client secret will expire soon")).thenReturn("Client secret will expire soon");
 
         var cut = new EmailServiceImpl(
                 emailManager,
