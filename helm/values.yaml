@@ -828,8 +828,6 @@ gateway:
   #   request:
   #     transaction:
   #       header: X-Gravitee-Transaction-Id
-  #     request:
-  #       header: X-Gravitee-Request-Id
   # sharding_tags:
   replicaCount: 1
   image:
