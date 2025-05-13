@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.vertx.core.http;
 
+import io.gravitee.am.gateway.handler.common.utils.UsernameHelper;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
 import io.gravitee.common.util.LinkedMultiValueMap;
@@ -131,7 +132,7 @@ public class VertxHttpServerRequest implements Request {
 
             for(Map.Entry<String, String> param : httpServerRequest.params()) {
                 try {
-                    if (decoded) {
+                    if (decoded && !UsernameHelper.isEmailWithAlias(param.getKey(), param.getValue())) {
                         String paramKey = URLDecoder.decode(param.getKey(), StandardCharsets.UTF_8.name());
                         List<String> paramValues = parameters.getAll(param.getKey()).stream().map(v -> {
                             try {
