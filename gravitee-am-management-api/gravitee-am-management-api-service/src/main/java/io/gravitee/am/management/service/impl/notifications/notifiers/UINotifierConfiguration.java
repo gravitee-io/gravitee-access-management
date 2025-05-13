@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.management.service.impl.notifications.notifiers;
 
-import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.notification.UserNotification;
-import io.gravitee.am.model.notification.UserNotificationStatus;
-import io.gravitee.notifier.api.Notifier;
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
+import io.gravitee.am.model.Template;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.checkerframework.checker.units.qual.A;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface UserNotificationService {
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class UINotifierConfiguration {
+    private String template;
 
-    Flowable<UserNotification> listAllNotifications(User user, UserNotificationStatus status);
+    public static UINotifierConfiguration of(Template template){
+        return new UINotifierConfiguration(template.template());
+    }
 
-    Completable markAsRead(User user, String notificationId);
 }

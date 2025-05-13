@@ -49,7 +49,7 @@ public class ExpireThresholdsNotificationConditionTest {
         NotificationDefinition def = new NotificationDefinition();
         final Certificate certificate = new Certificate();
         certificate.setExpiresAt(new Date(Instant.now().plus(10, ChronoUnit.DAYS).minus(1, ChronoUnit.MINUTES).toEpochMilli()));
-        def.setData(Map.of(NotificationDefinitionUtils.NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate)));
+        def.setData(Map.of("certificate", new CertificateProperties(certificate)));
         Assert.assertTrue(new ExpireThresholdsNotificationCondition(List.of(10,2)).test(def));
     }
 
@@ -58,7 +58,7 @@ public class ExpireThresholdsNotificationConditionTest {
         NotificationDefinition def = new NotificationDefinition();
         final Certificate certificate = new Certificate();
         certificate.setExpiresAt(new Date(Instant.now().plus(11, ChronoUnit.DAYS).toEpochMilli()));
-        def.setData(Map.of(NotificationDefinitionUtils.NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate)));
+        def.setData(Map.of("certificate", new CertificateProperties(certificate)));
         Assert.assertFalse(new ExpireThresholdsNotificationCondition(List.of(10,2)).test(def));
     }
 }

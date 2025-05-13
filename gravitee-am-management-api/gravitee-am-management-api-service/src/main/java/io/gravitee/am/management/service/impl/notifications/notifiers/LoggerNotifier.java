@@ -13,43 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service.impl;
+package io.gravitee.am.management.service.impl.notifications.notifiers;
 
-import io.gravitee.am.model.safe.CertificateProperties;
-import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.notifier.api.Notification;
 import io.gravitee.notifier.api.Notifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-/**
- * @author Ashraful Hasan (ashraful.hasan at graviteesource.com)
- * @author GraviteeSource Team
- */
+
 @Component
-public class LogNotificationService implements Notifier {
-    public static final String CERTIFICATE = "certificate";
-    public static final String DOMAIN = "domain";
+public class LoggerNotifier implements Notifier {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    public static final String NOTIFIER_DATA_MSG = "msg";
 
     @Override
     public CompletableFuture<Void> send(Notification notification, Map<String, Object> map) {
-        final CertificateProperties certificate = (CertificateProperties) map.get(CERTIFICATE);
-        final String domainName = ((DomainProperties) map.get(DOMAIN)).getName();
-        final Date expiredDate = certificate.getExpiresAt();
-        final Instant now = Instant.now();
-
-        if (now.isAfter(expiredDate.toInstant())) {
-            logger.warn("Certificate '{}' of domain '{}' expired on '{}'.", certificate.getName(), domainName, expiredDate);
-        } else {
-            logger.warn("Certificate '{}' of domain '{}' is expiring on '{}'.", certificate.getName(), domainName, expiredDate);
-        }
+        final String message = ((String) map.get(NOTIFIER_DATA_MSG));
+        logger.warn(message);
 
         return CompletableFuture.completedFuture(null);
     }
