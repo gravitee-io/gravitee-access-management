@@ -96,24 +96,26 @@ export class DomainSettingsFlowsComponent implements OnInit {
     this.policies = this.route.snapshot.data['policies'] || [];
     const factors = this.route.snapshot.data['factors'] || [];
     const filteredFactors = factors.filter((f) => f.factorType && f.factorType.toUpperCase() !== 'RECOVERY_CODE');
-    this.policies.forEach((policy) => {
-      const policySchema = JSON.parse(policy.schema);
-      if (policySchema.properties) {
-        for (const key in policySchema.properties) {
-          if ('graviteeFactor' === policySchema.properties[key].widget) {
-            policySchema.properties[key]['x-schema-form'] = { type: 'select' };
-            policySchema.properties[key].enum = [''];
-            policySchema.properties[key]['x-schema-form'].titleMap = { '': 'None' };
-            if (filteredFactors.length > 0) {
-              policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map((f) => f.id));
-              filteredFactors.forEach((obj) => {
-                policySchema.properties[key]['x-schema-form'].titleMap[obj.id] = obj.name;
-              });
+    this.policies
+      .filter((policy) => policy.schema != undefined)
+      .forEach((policy) => {
+        const policySchema = JSON.parse(policy.schema);
+        if (policySchema.properties) {
+          for (const key in policySchema.properties) {
+            if ('graviteeFactor' === policySchema.properties[key].widget) {
+              policySchema.properties[key]['x-schema-form'] = { type: 'select' };
+              policySchema.properties[key].enum = [''];
+              policySchema.properties[key]['x-schema-form'].titleMap = { '': 'None' };
+              if (filteredFactors.length > 0) {
+                policySchema.properties[key].enum = policySchema.properties[key].enum.concat(filteredFactors.map((f) => f.id));
+                filteredFactors.forEach((obj) => {
+                  policySchema.properties[key]['x-schema-form'].titleMap[obj.id] = obj.name;
+                });
+              }
             }
           }
+          policy.schema = JSON.stringify(policySchema);
         }
-        policy.schema = JSON.stringify(policySchema);
-      }
-    });
+      });
   }
 }

@@ -18,34 +18,34 @@
   $accent: map.get($theme, accent);
 
   .gv-sidenav {
-    background-color: mat.get-color-from-palette($primary, 'default');
+    background-color: mat.m2-get-color-from-palette($primary, 'default');
   }
 
   .mat-step-header .mat-step-icon-selected,
   .mat-step-header .mat-step-icon-state-edit,
   .mat-step-header .mat-step-icon-state-done {
-    background-color: mat.get-color-from-palette($primary, 'default');
+    background-color: mat.m2-get-color-from-palette($primary, 'default');
   }
 
   material-add-reference-widget {
     .mat-mdc-raised-button.mat-accent {
-      background-color: mat.get-color-from-palette($primary, 'default');
+      background-color: mat.m2-get-color-from-palette($primary, 'default');
     }
   }
 
   a {
-    color: mat.get-color-from-palette($primary, 'default');
+    color: mat.m2-get-color-from-palette($primary, 'default');
 
     &.active,
     &:hover {
-      color: mat.get-color-from-palette($accent, 'default');
+      color: mat.m2-get-color-from-palette($accent, 'default');
     }
 
     &.gv-accent-link {
-      color: mat.get-color-from-palette($accent, 'default');
+      color: mat.m2-get-color-from-palette($accent, 'default');
 
       &:hover {
-        color: mat.get-color-from-palette($accent, 'default');
+        color: mat.m2-get-color-from-palette($accent, 'default');
       }
     }
   }
@@ -56,11 +56,11 @@
   }
 
   .gv-accent-color {
-    color: mat.get-color-from-palette($accent, 'default');
+    color: mat.m2-get-color-from-palette($accent, 'default');
   }
 
   .not-found-content-description {
-    border-top: 8px solid mat.get-color-from-palette($primary, 'default');
+    border-top: 8px solid mat.m2-get-color-from-palette($primary, 'default');
   }
 
   .gv-splash-screen {

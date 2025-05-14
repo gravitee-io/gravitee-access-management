@@ -21,7 +21,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { APP_INITIALIZER, CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -709,14 +709,14 @@ import { DomainStoreService } from './stores/domain.store';
     PasswordPoliciesComponent,
     DomainSettingsSecretsComponent,
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  bootstrap: [AppComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule,
     AppRoutingModule,
-
     MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -750,7 +750,6 @@ import { DomainStoreService } from './stores/domain.store';
     MatStepperModule,
     MatBadgeModule,
     MaterialDesignFrameworkModule,
-
     GioMatConfigModule,
     GioMenuModule,
     GioTopBarModule,
@@ -761,7 +760,6 @@ import { DomainStoreService } from './stores/domain.store';
     GioSafePipeModule,
     GioSaveBarModule,
     GioLicenseExpirationNotificationModule,
-
     DragDropModule,
     FlexLayoutModule,
     NgxDatatableModule,
@@ -912,9 +910,8 @@ import { DomainStoreService } from './stores/domain.store';
       multi: true,
       deps: [AuthService, EnvironmentService],
     },
+    provideHttpClient(withInterceptorsFromDi()),
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  bootstrap: [AppComponent],
 })
 export class AppModule {}
 
