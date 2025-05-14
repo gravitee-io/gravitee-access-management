@@ -138,7 +138,7 @@ describe('Multiple secrets', () => {
         Authorization: `Bearer ${accessToken}`,
       },
     );
-    expect(res.error.text).toContain('already exists');
+    expect(res.error.text).toContain('Secret with description test 0 already exists');
   });
   it('Remove secret', async () => {
     const clientSecrets = await listClientSecrets(domain.id, accessToken, application.id);
