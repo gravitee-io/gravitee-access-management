@@ -16,6 +16,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { duration } from 'moment/moment';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -29,9 +30,8 @@ import { TimeConverterService } from '../../../services/time-converter.service';
 export class DomainSettingsSecretsComponent implements OnInit {
   domainId: string;
   domain: any = {};
-  formChanged = false;
   secretSettings: any;
-  humanTime: any;
+  form: FormGroup;
 
   constructor(
     private domainService: DomainService,
@@ -44,38 +44,43 @@ export class DomainSettingsSecretsComponent implements OnInit {
     this.domain = this.route.snapshot.data['domain'];
     this.secretSettings = this.domain.secretExpirationSettings ? this.domain.secretExpirationSettings : { enabled: false };
     const time = this.secretSettings?.expiryTimeSeconds ? this.secretSettings.expiryTimeSeconds : 7776000;
-    this.humanTime = {
-      expirationTime: this.timeConverterService.getTime(time, 'seconds'),
-      expirationUnit: this.timeConverterService.getUnitTime(time, 'seconds'),
-    };
-  }
+    const expirationTime = this.timeConverterService.getTime(time, 'seconds');
+    const expirationUnit = this.timeConverterService.getUnitTime(time, 'seconds');
+    this.form = new FormGroup({
+      enabled: new FormControl(this.secretSettings.enabled),
+      expirationTime: new FormControl(expirationTime),
+      expirationUnit: new FormControl(expirationUnit),
+    });
 
-  updateFormState(): void {
-    this.formChanged = true;
+    this.form.get('enabled')?.valueChanges.subscribe((enabled) => {
+      if (enabled) {
+        this.form.get('expirationTime')?.setValidators([Validators.required, Validators.min(1)]);
+        this.form.get('expirationUnit')?.setValidators([Validators.required]);
+      } else {
+        this.form.get('expirationTime')?.clearValidators();
+        this.form.get('expirationUnit')?.clearValidators();
+      }
+
+      this.form.get('expirationTime')?.updateValueAndValidity();
+      this.form.get('expirationUnit')?.updateValueAndValidity();
+    });
+
+    this.form.valueChanges.subscribe(() => {
+      this.form.markAsDirty();
+    });
+
+    this.form.get('enabled')?.updateValueAndValidity();
   }
 
   save(): void {
+    if (this.form.invalid) return;
     const toPatch = {
-      enabled: this.secretSettings.enabled,
-      expiryTimeSeconds: this.humanTimeToSeconds(),
+      enabled: this.form.value.enabled,
+      expiryTimeSeconds: duration(this.form.value.expirationTime, this.form.value.expirationUnit).asSeconds(),
     };
     this.domainService.patch(this.domain.id, { secretSettings: toPatch }).subscribe(() => {
       this.snackbarService.open('Secrets configuration updated');
+      this.form.markAsPristine();
     });
-    this.formChanged = false;
-  }
-
-  onUnitChange($event: any): void {
-    this.humanTime.expirationUnit = $event.value;
-    this.formChanged = true;
-  }
-
-  onTimeChange($event: any): void {
-    this.humanTime.expirationTime = Math.abs($event.target.value);
-    this.formChanged = true;
-  }
-
-  private humanTimeToSeconds(): number {
-    return duration(this.humanTime.expirationTime, this.humanTime.expirationUnit).asSeconds();
   }
 }
