@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import { AppConfig } from '../../config/app.config';
 
@@ -31,9 +32,9 @@ describe('AuditService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [AuditService, OrganizationService],
-      imports: [HttpClientTestingModule],
       teardown: { destroyAfterEach: false },
+      imports: [],
+      providers: [AuditService, OrganizationService, provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()],
     });
 
     httpTestingController = TestBed.get(HttpTestingController);
