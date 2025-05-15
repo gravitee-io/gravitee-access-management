@@ -62,19 +62,19 @@ export class ClientSecretsSettingsComponent {
   }
 
   closeDialog(save: boolean): void {
-    if (
-      this.humanTime.expirationUnit !== 'none' &&
-      (this.humanTime.expirationTime === null || this.humanTime.expirationTime === undefined || this.humanTime.expirationTime <= 0)
-    ) {
-      this.snackbarService.open('Please enter a valid expiry time duration');
-    } else {
-      if (save) {
+    if (save) {
+      if (
+        this.humanTime.expirationUnit !== 'none' &&
+        (this.humanTime.expirationTime === null || this.humanTime.expirationTime === undefined || this.humanTime.expirationTime <= 0)
+      ) {
+        this.snackbarService.open('Please enter a valid expiry time duration');
+      } else {
         this.secretSettings.expiryTimeSeconds = this.humanTimeToSeconds();
         this.secretSettings.enabled = !this.domainRules;
         this.dialogRef.close(this.secretSettings);
-      } else {
-        this.dialogRef.close();
       }
+    } else {
+      this.dialogRef.close();
     }
   }
 
