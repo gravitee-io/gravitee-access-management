@@ -51,7 +51,7 @@ public class ExpireThresholdsResendNotificationConditionTest {
         final Certificate certificate = new Certificate();
         final Instant now = Instant.now();
         certificate.setExpiresAt(new Date(now.plus(13, ChronoUnit.DAYS).toEpochMilli()));
-        def.setData(Map.of(NotificationDefinitionUtils.NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate)));
+        def.setData(Map.of("certificate", new CertificateProperties(certificate)));
 
         final NotificationAcknowledge notificationAcknowledge = new NotificationAcknowledge();
         notificationAcknowledge.setUpdatedAt(new Date(now.minus(12, ChronoUnit.DAYS).toEpochMilli()));
@@ -65,7 +65,7 @@ public class ExpireThresholdsResendNotificationConditionTest {
         final Certificate certificate = new Certificate();
         final Instant now = Instant.now();
         certificate.setExpiresAt(new Date(now.plus(2, ChronoUnit.DAYS).toEpochMilli()));
-        def.setData(Map.of(NotificationDefinitionUtils.NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate)));
+        def.setData(Map.of("certificate", new CertificateProperties(certificate)));
 
         final NotificationAcknowledge notificationAcknowledge = new NotificationAcknowledge();
         notificationAcknowledge.setUpdatedAt(new Date(now.minus(8, ChronoUnit.DAYS).minus(1, ChronoUnit.MINUTES).toEpochMilli()));
@@ -80,7 +80,7 @@ public class ExpireThresholdsResendNotificationConditionTest {
         final Certificate certificate = new Certificate();
         final Instant now = Instant.now();
         certificate.setExpiresAt(new Date(now.plus(4, ChronoUnit.DAYS).toEpochMilli()));
-        def.setData(Map.of(NotificationDefinitionUtils.NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate)));
+        def.setData(Map.of("certificate", new CertificateProperties(certificate)));
 
         final NotificationAcknowledge notificationAcknowledge = new NotificationAcknowledge();
         notificationAcknowledge.setUpdatedAt(new Date(now.minus(6, ChronoUnit.DAYS).minus(1, ChronoUnit.MINUTES).toEpochMilli()));
@@ -95,7 +95,7 @@ public class ExpireThresholdsResendNotificationConditionTest {
         final Certificate certificate = new Certificate();
         final Instant now = Instant.now();
         certificate.setExpiresAt(new Date(now.plus(1, ChronoUnit.DAYS).toEpochMilli()));
-        def.setData(Map.of(NotificationDefinitionUtils.NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate)));
+        def.setData(Map.of("certificate", new CertificateProperties(certificate)));
 
         final NotificationAcknowledge notificationAcknowledge = new NotificationAcknowledge();
         notificationAcknowledge.setUpdatedAt(new Date(now.minus(2, ChronoUnit.DAYS).plus(1, ChronoUnit.MINUTES).toEpochMilli()));

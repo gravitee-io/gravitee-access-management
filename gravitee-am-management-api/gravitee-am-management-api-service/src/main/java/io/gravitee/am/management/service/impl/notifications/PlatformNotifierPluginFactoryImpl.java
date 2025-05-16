@@ -15,14 +15,17 @@
  */
 package io.gravitee.am.management.service.impl.notifications;
 
-import io.gravitee.am.management.service.UserNotificationService;
-import io.gravitee.am.management.service.impl.LogNotificationService;
+import io.gravitee.am.management.service.impl.notifications.notifiers.LoggerNotifier;
+import io.gravitee.am.management.service.impl.notifications.notifiers.UINotifier;
 import io.gravitee.node.api.notifier.NotificationDefinition;
 import io.gravitee.node.notifier.plugin.impl.NotifierPluginFactoryImpl;
 import io.gravitee.notifier.api.Notifier;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Optional;
+
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_LOGGER_NOTIFIER;
+import static io.gravitee.am.management.service.impl.notifications.NotificationDefinitionUtils.TYPE_UI_NOTIFIER;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -31,21 +34,22 @@ import java.util.Optional;
 public class PlatformNotifierPluginFactoryImpl extends NotifierPluginFactoryImpl {
 
     @Autowired
-    private UserNotificationService userNotificationService;
+    private UINotifier uiNotifier;
 
     @Autowired
-    private LogNotificationService logNotificationService;
+    private LoggerNotifier loggerNotifier;
 
     @Override
     public Optional<Notifier> create(NotificationDefinition notification) {
-        if (notification.getType().equals(NotificationDefinitionUtils.TYPE_UI_NOTIFIER)) {
-            return Optional.of(this.userNotificationService);
+        if (notification.getType().equals(TYPE_UI_NOTIFIER)) {
+            return Optional.of(this.uiNotifier);
         }
 
-        if (notification.getType().equals(NotificationDefinitionUtils.TYPE_LOG_NOTIFIER)) {
-            return Optional.of(logNotificationService);
+        if (notification.getType().equals(TYPE_LOGGER_NOTIFIER)) {
+            return Optional.of(this.loggerNotifier);
         }
 
         return super.create(notification);
     }
+
 }
