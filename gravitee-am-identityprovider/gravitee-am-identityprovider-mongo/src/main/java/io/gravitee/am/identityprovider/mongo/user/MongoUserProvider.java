@@ -89,8 +89,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
     @Override
     public Maybe<User> findByEmail(String email) {
-        String rawQuery = this.configuration.getFindUserByEmailQuery().replace("?", email);
-        String jsonQuery = convertToJsonString(rawQuery);
+        String rawQuery = this.configuration.getFindUserByEmailQuery();
+        String jsonQuery = convertToJsonString(rawQuery).replace("?", email);
         BsonDocument query = BsonDocument.parse(jsonQuery);
         return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert);
     }
