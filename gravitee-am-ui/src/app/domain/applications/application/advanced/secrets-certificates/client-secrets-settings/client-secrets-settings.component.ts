@@ -45,7 +45,7 @@ export class ClientSecretsSettingsComponent {
     this.secretSettings = this.data.secretSettings ? this.data.secretSettings : { enabled: false };
     this.domainRules = !this.secretSettings?.enabled;
     this.domainSettings = this.data.domainSettings;
-    if (!this.secretSettings.enabled && this.domainSettings.enabled && this.domainSettings?.expiryTimeSeconds) {
+    if (!this.secretSettings.enabled && this.domainSettings?.enabled && this.domainSettings?.expiryTimeSeconds) {
       this.secretSettings.expiryTimeSeconds = this.domainSettings.expiryTimeSeconds;
     }
 
@@ -55,7 +55,7 @@ export class ClientSecretsSettingsComponent {
       expirationUnit: time > 0 ? this.timeConverterService.getUnitTime(time, 'seconds') : 'none',
     };
 
-    if (!this.secretSettings.enabled && !this.domainSettings.enabled) {
+    if (!this.secretSettings.enabled && !this.domainSettings?.enabled) {
       this.humanTime.expirationUnit = 'none';
       this.humanTime.expirationTime = 0;
     }
