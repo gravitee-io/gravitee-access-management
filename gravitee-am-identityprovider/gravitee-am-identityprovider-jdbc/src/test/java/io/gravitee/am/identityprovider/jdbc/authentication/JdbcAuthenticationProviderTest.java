@@ -134,6 +134,17 @@ public abstract class JdbcAuthenticationProviderTest {
     }
 
     @Test
+    public void shouldLoadUserByUsername_getResourceOwner_username_with_space() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername("b o b").test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "b o b".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldLoadUserByUsername_authentication_multipleMatch_validPassword() {
         connectUser("common@acme.com", "user02");
         connectUser("common@acme.com", "user03");
