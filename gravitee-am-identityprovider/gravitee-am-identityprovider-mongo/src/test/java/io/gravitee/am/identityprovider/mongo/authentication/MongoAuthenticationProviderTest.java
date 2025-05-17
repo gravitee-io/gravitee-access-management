@@ -267,6 +267,17 @@ public class MongoAuthenticationProviderTest {
     }
 
     @Test
+    public void shouldLoadUserByUsername_getResourceOwner_username_with_spaces() {
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername("b o b").test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "b o b".equals(u.getUsername()));
+    }
+
+    @Test
     public void shouldLoadUserByUsername_authentication_multifield_email() {
         configuration.setFindUserByMultipleFieldsQuery("{ $or : [{username: ?}, {email: ?}]}");
         TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {

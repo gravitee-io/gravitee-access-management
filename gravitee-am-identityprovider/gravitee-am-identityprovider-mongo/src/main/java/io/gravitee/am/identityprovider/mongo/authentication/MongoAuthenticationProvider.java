@@ -134,10 +134,14 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     private Flowable<Document> findUserByMultipleField(String value) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getUsersCollection());
         String findQuery = this.configuration.getFindUserByMultipleFieldsQuery() != null ? this.configuration.getFindUserByMultipleFieldsQuery() : this.configuration.getFindUserByUsernameQuery();
-        String jsonQuery = convertToJsonString(findQuery)
-                .replace("?", value);
-        BsonDocument query = BsonDocument.parse(jsonQuery);
+        BsonDocument query = buildBsonQuery(findQuery, value);
         return Flowable.fromPublisher(usersCol.find(query));
+    }
+
+    private BsonDocument buildBsonQuery(String findQuery, String value) {
+        String jsonQuery = convertToJsonString(findQuery).replace("?", value);
+        BsonDocument query = BsonDocument.parse(jsonQuery);
+        return query;
     }
 
     public Maybe<User> loadUserByUsername(String username) {
@@ -149,9 +153,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     private Maybe<Document> findUserByUsername(String encodedUsername) {
         MongoCollection<Document> usersCol = this.mongoClient.getDatabase(this.configuration.getDatabase())
             .getCollection(this.configuration.getUsersCollection());
-        String rawQuery = this.configuration.getFindUserByUsernameQuery().replace("?", encodedUsername);
-        String jsonQuery = convertToJsonString(rawQuery);
-        BsonDocument query = BsonDocument.parse(jsonQuery);
+        BsonDocument query = buildBsonQuery(this.configuration.getFindUserByUsernameQuery(), encodedUsername);
         return Observable.fromPublisher(usersCol.find(query).first()).firstElement();
     }
 
