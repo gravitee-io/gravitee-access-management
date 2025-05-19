@@ -122,6 +122,7 @@ describe('SCIM with preRegistration', () => {
       active: true,
       'urn:ietf:params:scim:schemas:extension:custom:2.0:User': {
         preRegistration: true,
+        forceResetPassword: true,
       },
     };
 
@@ -176,5 +177,10 @@ describe('SCIM with preRegistration', () => {
     // Pre registered user are not enabled.
     // They have to provide a password first.
     expect(user.enabled).toBeTruthy();
+  });
+
+  it('must contain forceResetPassword', async () => {
+    let user = await getUser(domain.id, mngAccessToken, createdUser.id);
+    expect(user.forceResetPassword).toBeTruthy();
   });
 });
