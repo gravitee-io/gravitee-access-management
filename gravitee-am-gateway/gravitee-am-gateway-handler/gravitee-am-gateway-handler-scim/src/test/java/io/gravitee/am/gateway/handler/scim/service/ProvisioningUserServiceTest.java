@@ -1024,5 +1024,52 @@ public class ProvisioningUserServiceTest {
         testObserver.assertError(err -> err instanceof UserInvalidException);
     }
 
+    @Test
+    public void shouldCreateUser_with_forceResetPassword() {
+
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("forceResetPassword", true);
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        when(userRepository.findByUsernameAndSource(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(identityProviderManager.getIdentityProvider(anyString())).thenReturn(new IdentityProvider());
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.empty());
+
+        ArgumentCaptor<io.gravitee.am.model.User> newUserDefinition = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(DOMAIN_ID);
+        user.setAdditionalInformation(ai);
+        user.setForceResetPassword(true);
+        when(userRepository.create(newUserDefinition.capture())).thenReturn(Single.just(user));
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+
+        testObserver.assertValue(u -> ((GraviteeUser) u).getAdditionalInformation().get("forceResetPassword") != null);
+        assertFalse(newUserDefinition.getValue().isInternal());
+        assertTrue(newUserDefinition.getValue().isEnabled());
+    }
+
+    @Test
+    public void shouldThrowExceptionOnCreateUser_with_invalidForceResetPassword() {
+
+        GraviteeUser newUser = mock(GraviteeUser.class);
+        when(newUser.getSource()).thenReturn("unknown-idp");
+        when(newUser.getUserName()).thenReturn("username");
+        when(newUser.getPassword()).thenReturn(null);
+        Map<String, Object> ai = new HashMap<>();
+        ai.put("forceResetPassword", "abcd");
+        when(newUser.getAdditionalInformation()).thenReturn(ai);
+
+        TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
+        testObserver.assertError(err -> err instanceof UserInvalidException);
+    }
+
 
 }
