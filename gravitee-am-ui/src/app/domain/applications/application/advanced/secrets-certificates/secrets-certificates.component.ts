@@ -296,7 +296,8 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
             },
           };
           return this.applicationService.patch(this.domain.id, this.application.id, toPatch).pipe(
-            tap(() => {
+            tap((application) => {
+              this.secretSettings = application.settings.secretExpirationSettings;
               this.snackbarService.open('Secret settings updated');
             }),
             catchError(() => {
