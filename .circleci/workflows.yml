@@ -7,7 +7,7 @@ orbs:
   aws-cli: circleci/aws-cli@5.1.2
   aws-s3: circleci/aws-s3@4.1.0
   helm: circleci/helm@2.0.1
-  aquasec: gravitee-io/aquasec@1.0.4
+  aquasec: gravitee-io/aquasec@1.0.5
 
 executors:
   ubuntu:
@@ -1695,31 +1695,26 @@ jobs:
       - setup_remote_docker
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
           scanner_url: https://82fb8f75da.cloud.aquasec.com
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
           scanner_url: https://82fb8f75da.cloud.aquasec.com
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
           scanner_url: https://82fb8f75da.cloud.aquasec.com
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-noble
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-noble
           scanner_url: https://82fb8f75da.cloud.aquasec.com
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
           scanner_url: https://82fb8f75da.cloud.aquasec.com
@@ -2184,7 +2179,6 @@ workflows:
           requires:
             - publish-images-azure-registry
           built_docker_image_file: /tmp/built-docker-images.txt
-          debug: true
           filters:
             branches:
               only:
