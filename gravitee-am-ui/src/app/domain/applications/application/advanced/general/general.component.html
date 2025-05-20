@@ -68,7 +68,11 @@
             <h5>Redirect URIs</h5>
             <small
               >List of allowed URLs where the user will be redirected after successfully login to your application. It prevents some
-              vulnerabilities like being redirected to unsafe websites.</small
+              vulnerabilities like being redirected to unsafe websites.<br />{{
+                elRedirectUriEnabled()
+                  ? 'Supports expression language and dynamic parameters'
+                  : 'Expression language and dynamic parameters are turned off'
+              }}</small
             >
             <mat-divider></mat-divider>
           </div>

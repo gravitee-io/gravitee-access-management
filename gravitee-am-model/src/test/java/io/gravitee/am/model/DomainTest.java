@@ -135,4 +135,13 @@ public class DomainTest {
         boolean isEnabled = domain.isRedirectUriStrictMatching();
         assertFalse("By default strict matching settings should be disabled",isEnabled);
     }
+
+    @Test
+    public void isRedirectUriExpressionLanguageEnabledMatching() {
+        Domain domain = new Domain();
+        domain.setOidc(OIDCSettings.defaultSettings());
+
+        boolean isEnabled = domain.isRedirectUriExpressionLanguageEnabled();
+        assertFalse("By default EL param evaluation should be disabled",isEnabled);
+    }
 }

@@ -100,6 +100,11 @@ export class ClientRegistrationSettingsComponent implements OnInit {
     this.formChanged = true;
   }
 
+  enableExpressionLanguageRedirectUri(event) {
+    this.domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage = event.checked;
+    this.formChanged = true;
+  }
+
   patch() {
     this.domainService.patchOpenidDCRSettings(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;

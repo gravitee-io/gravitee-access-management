@@ -95,6 +95,16 @@
             </mat-slide-toggle>
             <mat-hint>Enable redirect_uris/post_logout_redirect_uri strict matching when calling OpenID Connect flow.</mat-hint>
           </div>
+          <div class="domain-client-registration-settings-state" fxLayout="column">
+            <mat-slide-toggle
+              (change)="enableExpressionLanguageRedirectUri($event)"
+              [checked]="this.domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage"
+              [disabled]="readonly"
+            >
+              Enable/Disable EL and dynamic parameters for redirect URIs
+            </mat-slide-toggle>
+            <mat-hint>Allow clients to use expression language and dynamic parameters with redirect_uris</mat-hint>
+          </div>
         </div>
         <div *ngIf="!readonly">
           <button mat-raised-button color="primary" [disabled]="(!domainForm.valid || domainForm.pristine) && !formChanged" type="submit">

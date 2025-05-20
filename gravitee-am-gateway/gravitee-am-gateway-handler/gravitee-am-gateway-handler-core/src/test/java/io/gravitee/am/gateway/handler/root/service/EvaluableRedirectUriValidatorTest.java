@@ -30,9 +30,9 @@ import java.util.function.BiConsumer;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-class RedirectUriValidatorTest {
+class EvaluableRedirectUriValidatorTest {
 
-    private final RedirectUriValidator validator = new RedirectUriValidator();
+    private final RedirectUriValidator validator = new RedirectUriValidator(strictUriChecker);
 
     private final static String REGISTERED_URI_1 = "http://a.localhost";
     private final static String REGISTERED_URI_2 = "http://b.localhost";
@@ -40,7 +40,7 @@ class RedirectUriValidatorTest {
     private final static String UNREGISTERED_URI = "http://example.com";
 
 
-    private final BiConsumer<String, List<String>> strictUriChecker = (uri, registeredUris) -> {
+    private final static RedirectUriValidator.CheckMethod strictUriChecker = (uri, registeredUris) -> {
         if (!registeredUris.contains(uri)) {
             throw new ExceptionFromUriChecker();
         }
@@ -56,49 +56,49 @@ class RedirectUriValidatorTest {
 
         @Test
         void noOperation_redirectUriNotRegistered_shouldFail() {
-            assertThatThrownBy(()->validator.validate(getClient(), UNREGISTERED_URI, strictUriChecker))
+            assertThatThrownBy(()->validator.validate(getClient(), UNREGISTERED_URI))
                     .isInstanceOf(ExceptionFromUriChecker.class);
         }
 
         @Test
         void operationOptionalRedirect_redirectUriNotRegistered_shouldFail() {
-            assertThatThrownBy(()->validator.validate(getClient(), UNREGISTERED_URI, TokenPurpose.RESET_PASSWORD, strictUriChecker))
+            assertThatThrownBy(()->validator.validate(getClient().getRedirectUris(), UNREGISTERED_URI, TokenPurpose.RESET_PASSWORD))
                     .isInstanceOf(ExceptionFromUriChecker.class);
         }
 
         @Test
         void operationOptionalRedirect_redirectUriRegistered_ok_resetPassword() {
-            assertThatCode(()->validator.validate(getClient(), REGISTERED_URI_1, TokenPurpose.RESET_PASSWORD, strictUriChecker))
+            assertThatCode(()->validator.validate(getClient().getRedirectUris(), REGISTERED_URI_1, TokenPurpose.RESET_PASSWORD))
                     .doesNotThrowAnyException();
         }
 
         @Test
         void operationOptionalRedirect_noRedirectGiven_ok_resetPassword() {
-            assertThatCode(()->validator.validate(getClient(), null, TokenPurpose.RESET_PASSWORD, strictUriChecker))
+            assertThatCode(()->validator.validate(getClient().getRedirectUris(), null, TokenPurpose.RESET_PASSWORD))
                     .doesNotThrowAnyException();
         }
 
         @Test
         void operationOptionalRedirect_redirectUriRegistered_ok_registrationConfirmation() {
-            assertThatCode(()->validator.validate(getClient(), REGISTERED_URI_1, TokenPurpose.REGISTRATION_CONFIRMATION, strictUriChecker))
+            assertThatCode(()->validator.validate(getClient().getRedirectUris(), REGISTERED_URI_1, TokenPurpose.REGISTRATION_CONFIRMATION))
                     .doesNotThrowAnyException();
         }
 
         @Test
         void operationOptionalRedirect_noRedirectGiven_ok_registrationConfirmation() {
-            assertThatCode(()->validator.validate(getClient(), null, TokenPurpose.REGISTRATION_CONFIRMATION, strictUriChecker))
+            assertThatCode(()->validator.validate(getClient().getRedirectUris(), null, TokenPurpose.REGISTRATION_CONFIRMATION))
                     .doesNotThrowAnyException();
         }
 
         @Test
         void operationRequiredRedirect_redirectUriNotRegistered_shouldFail() {
-            assertThatThrownBy(()->validator.validate(getClient(), UNREGISTERED_URI, TokenPurpose.UNSPECIFIED, strictUriChecker))
+            assertThatThrownBy(()->validator.validate(getClient().getRedirectUris(), UNREGISTERED_URI, TokenPurpose.UNSPECIFIED))
                     .isInstanceOf(ExceptionFromUriChecker.class);
         }
 
         @Test
         void operationRequiredRedirect_redirectUriWithUserInfo_shouldFail() {
-            assertThatThrownBy(()->validator.validate(getClient(), "http://user@google.com", TokenPurpose.UNSPECIFIED,strictUriChecker))
+            assertThatThrownBy(()->validator.validate(getClient().getRedirectUris(), "http://user@google.com", TokenPurpose.UNSPECIFIED))
                     .isInstanceOf(RedirectMismatchException.class);
         }
 
@@ -116,7 +116,7 @@ class RedirectUriValidatorTest {
         }
         @Test
         void noOperation_noRedirectGiven_ok() {
-            assertThatCode(()->validator.validate(client, null, strictUriChecker))
+            assertThatCode(()->validator.validate(client, null))
                     .doesNotThrowAnyException();
         }
 
@@ -135,13 +135,13 @@ class RedirectUriValidatorTest {
         }
         @Test
         void noOperation_noRedirectGiven_ok() {
-            assertThatCode(()->validator.validate(client, null, strictUriChecker))
+            assertThatCode(()->validator.validate(client, null))
                     .doesNotThrowAnyException();
         }
 
         @Test
         void operationOptionalRedirect_redirectMobileUriRegistered_ok_registrationConfirmation() {
-            assertThatCode(()->validator.validate(getClient(), REGISTERED_URI_2_MOBILE_LINK, TokenPurpose.REGISTRATION_CONFIRMATION, strictUriChecker))
+            assertThatCode(()->validator.validate(getClient().getRedirectUris(), REGISTERED_URI_2_MOBILE_LINK, TokenPurpose.REGISTRATION_CONFIRMATION))
                     .doesNotThrowAnyException();
         }
 
@@ -159,13 +159,13 @@ class RedirectUriValidatorTest {
         }
         @Test
         void noOperation_noRedirectGiven_fail() {
-            assertThatThrownBy(()->validator.validate(client, null, strictUriChecker))
+            assertThatThrownBy(()->validator.validate(client, null))
                     .isInstanceOf(InvalidRequestException.class);
         }
 
         @Test
         void operationOptionalRedirect_redirectMobileUriRegistered_ok_registrationConfirmation() {
-            assertThatCode(()->validator.validate(getClient(), REGISTERED_URI_2_MOBILE_LINK, TokenPurpose.REGISTRATION_CONFIRMATION, strictUriChecker))
+            assertThatCode(()->validator.validate(getClient().getRedirectUris(), REGISTERED_URI_2_MOBILE_LINK, TokenPurpose.REGISTRATION_CONFIRMATION))
                     .doesNotThrowAnyException();
         }
     }

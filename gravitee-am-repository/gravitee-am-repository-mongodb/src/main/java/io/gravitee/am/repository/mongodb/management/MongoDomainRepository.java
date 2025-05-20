@@ -301,7 +301,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedScopesEnabled(dcrMongo.isAllowedScopesEnabled());
         result.setAllowedScopes(dcrMongo.getAllowedScopes());
         result.setClientTemplateEnabled(dcrMongo.isClientTemplateEnabled());
-
+        result.setAllowRedirectUriParamsExpressionLanguage(dcrMongo.isAllowRedirectUriParamsExpressionLanguage());
         return result;
     }
 
@@ -387,7 +387,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedScopesEnabled(dcr.isAllowedScopesEnabled());
         result.setAllowedScopes(dcr.getAllowedScopes());
         result.setClientTemplateEnabled(dcr.isClientTemplateEnabled());
-
+        result.setAllowRedirectUriParamsExpressionLanguage(dcr.isAllowRedirectUriParamsExpressionLanguage());
         return result;
     }
 

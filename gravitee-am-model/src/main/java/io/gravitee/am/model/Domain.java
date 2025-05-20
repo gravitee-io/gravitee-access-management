@@ -527,6 +527,12 @@ public class Domain implements Resource {
                 this.getOidc().getCibaSettings().isEnabled();
     }
 
+    public boolean isRedirectUriExpressionLanguageEnabled() {
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
+                this.getOidc().getClientRegistrationSettings().isAllowRedirectUriParamsExpressionLanguage();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
