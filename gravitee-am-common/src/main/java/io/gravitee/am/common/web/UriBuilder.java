@@ -52,9 +52,9 @@ public class UriBuilder {
 
     private static final String PATH_REGEX = "([^?#]*)";
 
-    private static final String QUERY_REGEX = "([^#]*)";
+    private static final String QUERY_REGEX = "(?<query>(\\{#|[^#])*)";
 
-    private static final String LAST_REGEX = "(.*)";
+    private static final String LAST_REGEX = "(?<fragment>.*)";
 
     // Regex patterns that matches URIs. See RFC 3986, appendix B
     private static final Pattern URI_PATTERN = Pattern.compile(
@@ -95,8 +95,8 @@ public class UriBuilder {
             String host = matcher.group(6);
             String port = matcher.group(8);
             String path = matcher.group(9);
-            String query = matcher.group(11);
-            String fragment = matcher.group(13);
+            String query = matcher.group("query");
+            String fragment = matcher.group("fragment");
             builder.scheme(scheme);
             builder.host(host);
             if (port != null && !port.isEmpty()) {
@@ -129,8 +129,8 @@ public class UriBuilder {
                 builder.port(Integer.parseInt(port));
             }
             builder.path(matcher.group(8));
-            builder.query(matcher.group(10));
-            builder.fragment(matcher.group(12));
+            builder.query(matcher.group("query"));
+            builder.fragment(matcher.group("fragment"));
             return builder;
         } else {
             throw new IllegalArgumentException("[" + httpUrl + "] is not a valid HTTP URL");
@@ -280,7 +280,7 @@ public class UriBuilder {
         if (this.path != null) {
             sb.append(this.path);
         }
-        if (this.query != null) {
+        if (this.query != null && !this.query.isEmpty()) {
             sb.append("?").append(this.query);
         }
         if (this.fragment != null) {

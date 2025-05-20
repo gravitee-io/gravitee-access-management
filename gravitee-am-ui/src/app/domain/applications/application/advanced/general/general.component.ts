@@ -260,4 +260,8 @@ export class ApplicationGeneralComponent implements OnInit {
   displaySection(): boolean {
     return this.application.type !== 'service';
   }
+
+  elRedirectUriEnabled(): boolean {
+    return this.domain?.oidc?.clientRegistrationSettings?.allowRedirectUriParamsExpressionLanguage;
+  }
 }

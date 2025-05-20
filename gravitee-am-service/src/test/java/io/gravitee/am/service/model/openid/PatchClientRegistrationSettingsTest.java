@@ -42,6 +42,7 @@ public class PatchClientRegistrationSettingsTest {
         assertFalse("should be disabled by default", result.isAllowLocalhostRedirectUri());
         assertFalse("should be disabled by default", result.isAllowLocalhostRedirectUri());
         assertFalse("should be disabled by default", result.isAllowWildCardRedirectUri());
+        assertFalse("should be disabled by default", result.isAllowRedirectUriParamsExpressionLanguage());
     }
 
     @Test
@@ -60,5 +61,6 @@ public class PatchClientRegistrationSettingsTest {
         assertFalse("should be disabled by default", result.isDynamicClientRegistrationEnabled());
         assertFalse("should be disabled by default", result.isOpenDynamicClientRegistrationEnabled());
         assertTrue("should be disabled by default", result.isAllowLocalhostRedirectUri());
+        assertFalse("should be disabled by default", result.isAllowRedirectUriParamsExpressionLanguage());
     }
 }

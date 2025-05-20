@@ -44,6 +44,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
 import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
@@ -243,6 +244,9 @@ public class RootProvider extends AbstractProtocolProvider {
     @Autowired
     @Qualifier("managementUserService")
     private UserService userService;
+
+    @Autowired
+    private ExecutionContextFactory executionContextFactory;
 
     @Autowired
     private PolicyChainHandler policyChainHandler;

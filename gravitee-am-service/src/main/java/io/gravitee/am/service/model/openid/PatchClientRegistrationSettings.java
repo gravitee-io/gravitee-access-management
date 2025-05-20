@@ -74,6 +74,8 @@ public class PatchClientRegistrationSettings {
      */
     private Optional<Boolean> isClientTemplateEnabled;
 
+    private Optional<Boolean> allowRedirectUriParamsExpressionLanguage;
+
     public Optional<Boolean> getAllowLocalhostRedirectUri() {
         return allowLocalhostRedirectUri;
     }
@@ -146,6 +148,14 @@ public class PatchClientRegistrationSettings {
         this.isClientTemplateEnabled = clientTemplateEnabled;
     }
 
+    public Optional<Boolean> getAllowRedirectUriParamsExpressionLanguage() {
+        return allowRedirectUriParamsExpressionLanguage;
+    }
+
+    public void setAllowRedirectUriParamsExpressionLanguage(Optional<Boolean> allowRedirectUriParamsExpressionLanguage) {
+        this.allowRedirectUriParamsExpressionLanguage = allowRedirectUriParamsExpressionLanguage;
+    }
+
     public ClientRegistrationSettings patch(ClientRegistrationSettings toPatch) {
         ClientRegistrationSettings result=toPatch!=null?toPatch: ClientRegistrationSettings.defaultSettings();
 
@@ -158,7 +168,7 @@ public class PatchClientRegistrationSettings {
         SetterUtils.safeSet(result::setAllowedScopesEnabled, this.isAllowedScopesEnabled(), boolean.class);
         SetterUtils.safeSet(result::setAllowedScopes, this.getAllowedScopes());
         SetterUtils.safeSet(result::setClientTemplateEnabled, this.isClientTemplateEnabled(), boolean.class);
-
+        SetterUtils.safeSet(result::setAllowRedirectUriParamsExpressionLanguage, this.getAllowRedirectUriParamsExpressionLanguage(), boolean.class);
         return result;
     }
 }

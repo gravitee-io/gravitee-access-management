@@ -32,6 +32,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentEndpoint;
@@ -116,6 +117,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
     @Autowired
     private Flow flow;
+
+    @Autowired
+    private ExecutionContextFactory executionContextFactory;
 
     @Autowired
     private UserConsentService userConsentService;
@@ -255,7 +259,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
         xssHandler(oauth2Router);
 
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
-        RedirectUriValidationHandler redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
+        Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
         ReturnUrlValidationHandler returnUrlValidationHandler = new ReturnUrlValidationHandler(domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
 
@@ -276,7 +280,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(returnUrlValidationHandler)
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, domain))
                 .handler(authenticationFlowHandler.create())
-                .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationRequestMFAPromptHandler())
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
@@ -289,7 +293,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
-                .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)
@@ -301,7 +305,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
-                .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)

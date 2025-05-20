@@ -59,7 +59,7 @@ export class ApplicationOverviewComponent implements OnInit {
       this.clientId = applicationOAuthSettings.clientId;
       this.redirectUri =
         applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined
-          ? applicationOAuthSettings.redirectUris[0]
+          ? this.cleanELParameters(applicationOAuthSettings.redirectUris[0])
           : 'Not defined';
       this.encodedRedirectUri = encodeURIComponent(this.redirectUri);
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
@@ -72,6 +72,18 @@ export class ApplicationOverviewComponent implements OnInit {
     if (this.forcePKCE) {
       this.codeVerifier = this.generateCodeVerifier();
       this.generateCodeChallenge(this.codeVerifier).then((data) => (this.codeChallenge = data));
+    }
+  }
+
+  cleanELParameters(redirectUri: string): string {
+    try {
+      let encoded = redirectUri.replace(/[^={}?&]*=\{#[^={}?&]*}/g, '');
+      if (encoded.endsWith('?')) {
+        encoded = encoded.slice(0, -1);
+      }
+      return encoded;
+    } catch (e) {
+      return redirectUri;
     }
   }
 

@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.root.resources.handler.common;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.oidc.ClientRegistrationSettings;
+import io.gravitee.am.model.oidc.OIDCSettings;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Test;
@@ -124,6 +126,31 @@ public class RedirectUriValidationHandlerTest {
         Mockito.when(request.getParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI)).thenReturn(null);
 
         Client client = new Client();
+        Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+
+        handler.handle(ctx);
+
+        Mockito.verify(ctx, Mockito.times(1)).next();
+    }
+
+    @Test
+    public void when_el_processing_and_strict_matching_is_enabled_validate_only_not_el_params(){
+        Domain domain = new Domain();
+        ClientRegistrationSettings clientRegistrationSettings = ClientRegistrationSettings.defaultSettings();
+        clientRegistrationSettings.setAllowRedirectUriParamsExpressionLanguage(true);
+        OIDCSettings oidcSettings = OIDCSettings.defaultSettings();
+        oidcSettings.setRedirectUriStrictMatching(true);
+        oidcSettings.setClientRegistrationSettings(clientRegistrationSettings);
+        domain.setOidc(oidcSettings);
+        final var handler = new RedirectUriValidationHandler(domain);
+        RoutingContext ctx = Mockito.mock();
+        HttpServerRequest request = Mockito.mock();
+        Mockito.when(ctx.request()).thenReturn(request);
+        Mockito.when(request.getParam(ConstantKeys.RETURN_URL_KEY)).thenReturn(null);
+        Mockito.when(request.getParam(io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI)).thenReturn("http://127.0.0.1/?test=1");
+
+        Client client = new Client();
+        client.setRedirectUris(List.of("http://127.0.0.1/?param1={#context.attributes['test']}&test=1"));
         Mockito.when(ctx.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
 
         handler.handle(ctx);
