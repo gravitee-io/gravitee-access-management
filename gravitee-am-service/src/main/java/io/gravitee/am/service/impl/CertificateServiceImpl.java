@@ -319,7 +319,7 @@ public class CertificateServiceImpl implements CertificateService {
                             if (!oldFileInformation.equals(fileInformation)) {
                                 JsonNode file = objectMapper.readTree(certificateConfiguration.get(key).asText());
                                 byte[] data = Base64.getDecoder().decode(file.get(CONTENT).asText());
-                                certificateToUpdate.setMetadata(Collections.singletonMap(CertificateMetadata.FILE, data));
+                                certificateToUpdate.setMetadata(Maps.newHashMap(Map.of(CertificateMetadata.FILE, data)));
 
                                 // update configuration to set the file path
                                 ((ObjectNode) certificateConfiguration).put(key, file.get(NAME).asText());

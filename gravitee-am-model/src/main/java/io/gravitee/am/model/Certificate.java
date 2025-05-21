@@ -18,6 +18,7 @@ package io.gravitee.am.model;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -58,7 +59,7 @@ public class Certificate {
         this.type = other.type;
         this.configuration = other.configuration;
         this.domain = other.domain;
-        this.metadata = other.metadata;
+        this.metadata = other.metadata != null ? new HashMap<>(other.metadata) : null;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.expiresAt = other.expiresAt;
@@ -145,4 +146,14 @@ public class Certificate {
         this.system = system;
     }
 
+    /**
+     * Clone the certificate instance but reset the MetaData map with an empty & immutable map.
+     * It is used as for example during audit generation
+     * @return
+     */
+    public Certificate asSafeCertificate() {
+        var cert = new Certificate(this);
+        cert.setMetadata(Map.of());
+        return cert;
+    }
 }
