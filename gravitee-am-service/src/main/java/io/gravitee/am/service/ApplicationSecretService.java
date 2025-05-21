@@ -22,6 +22,7 @@ import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.service.model.NewClientSecret;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 public interface ApplicationSecretService {
@@ -33,4 +34,6 @@ public interface ApplicationSecretService {
     Completable delete(Domain domain, Application application, String id, User principal);
 
     Single<ClientSecret> create(Domain domain, Application application, NewClientSecret clientSecret, User principal);
+
+    Maybe<ClientSecret> findById(String applicationId, String id);
 }

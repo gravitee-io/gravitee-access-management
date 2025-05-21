@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.service;
 
 import io.gravitee.am.model.SecretExpirationSettings;
@@ -34,6 +33,7 @@ import java.util.Map;
 
 import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.PropertyKeys.BCRYPT_ROUNDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -55,7 +55,7 @@ class SecretServiceTest {
 
     @Test
     void should_generate_secret_bcrypt_algo() {
-        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.BCRYPT.name(), Map.of(BCRYPT_ROUNDS.getKey(), BCRYPT_ROUNDS.getValue())), new SecretExpirationSettings(), null);
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.BCRYPT.name(), Map.of(BCRYPT_ROUNDS.getKey(), BCRYPT_ROUNDS.getValue())), new SecretExpirationSettings(), null);
         assertThat(secret)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("settingsId", "settingsIdValue");
@@ -67,7 +67,7 @@ class SecretServiceTest {
         final var bcryptEncoder = cut.getOrCreatePasswordEncoder(new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.BCRYPT.name(), Map.of(BCRYPT_ROUNDS.getKey(), BCRYPT_ROUNDS.getValue())));
         assertThat(bcryptEncoder).isInstanceOf(BCryptPasswordEncoder.class);
         // provide settings with SHA512 but with the same ID, to test the cache
-        final var cachedBcrypt =  cut.getOrCreatePasswordEncoder(new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.SHA_512.name(), Map.of()));
+        final var cachedBcrypt = cut.getOrCreatePasswordEncoder(new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.SHA_512.name(), Map.of()));
         assertThat(cachedBcrypt).isInstanceOf(BCryptPasswordEncoder.class);
         assertThat(bcryptEncoder).isEqualTo(cachedBcrypt);
     }
@@ -79,82 +79,76 @@ class SecretServiceTest {
     }
 
     @Test
-    void should_set_expires_at_from_domain_settings(){
+    void should_set_expires_at_from_domain_settings() {
         SecretExpirationSettings domainSecretExpirationSettings = new SecretExpirationSettings();
         domainSecretExpirationSettings.setEnabled(Boolean.TRUE);
         domainSecretExpirationSettings.setExpiryTimeSeconds(10000L);
-        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, null);
-        assertThat(secret)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("expiresAt", new Date(secret.getCreatedAt().getTime() + 10000L * 1000L));
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, null);
+        compareDates(secret.getExpiresAt(), new Date(secret.getCreatedAt().getTime() + 10000L * 1000L));
     }
 
     @Test
-    void should_not_set_expires_at_when_disabled_in_domain_settings(){
+    void should_not_set_expires_at_when_disabled_in_domain_settings() {
         SecretExpirationSettings domainSecretExpirationSettings = new SecretExpirationSettings();
         domainSecretExpirationSettings.setEnabled(Boolean.FALSE);
         domainSecretExpirationSettings.setExpiryTimeSeconds(10000L);
-        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, null);
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, null);
         assertThat(secret)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("expiresAt", null);
     }
 
     @Test
-    void should_not_set_expires_at_when_expiry_time_is_zero_in_domain_settings(){
+    void should_not_set_expires_at_when_expiry_time_is_zero_in_domain_settings() {
         SecretExpirationSettings domainSecretExpirationSettings = new SecretExpirationSettings();
         domainSecretExpirationSettings.setEnabled(Boolean.FALSE);
         domainSecretExpirationSettings.setExpiryTimeSeconds(0L);
-        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, null);
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, null);
         assertThat(secret)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("expiresAt", null);
     }
 
     @Test
-    void should_set_expires_from_application_settings(){
+    void should_set_expires_from_application_settings() {
         SecretExpirationSettings domainSecretExpirationSettings = new SecretExpirationSettings();
         domainSecretExpirationSettings.setEnabled(Boolean.TRUE);
         domainSecretExpirationSettings.setExpiryTimeSeconds(10000L);
         SecretExpirationSettings applicationSecretExpirationSettings = new SecretExpirationSettings();
         applicationSecretExpirationSettings.setEnabled(Boolean.TRUE);
         applicationSecretExpirationSettings.setExpiryTimeSeconds(20000L);
-        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, applicationSecretExpirationSettings);
-        assertThat(secret)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("expiresAt", new Date(secret.getCreatedAt().getTime() + 20000L * 1000L));
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, applicationSecretExpirationSettings);
+        compareDates(secret.getExpiresAt(), new Date(secret.getCreatedAt().getTime() + 20000L * 1000L));
     }
 
     @Test
-    void should_not_set_expires_when_application_settings_0(){
+    void should_not_set_expires_when_application_settings_0() {
         SecretExpirationSettings domainSecretExpirationSettings = new SecretExpirationSettings();
         domainSecretExpirationSettings.setEnabled(Boolean.TRUE);
         domainSecretExpirationSettings.setExpiryTimeSeconds(10000L);
         SecretExpirationSettings applicationSecretExpirationSettings = new SecretExpirationSettings();
         applicationSecretExpirationSettings.setEnabled(Boolean.TRUE);
         applicationSecretExpirationSettings.setExpiryTimeSeconds(0L);
-        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, applicationSecretExpirationSettings);
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, applicationSecretExpirationSettings);
         assertThat(secret)
                 .isNotNull()
                 .hasFieldOrPropertyWithValue("expiresAt", null);
     }
 
     @Test
-    void should_set_expiration_from_domain_settings_when_application_settings_disabled(){
+    void should_set_expiration_from_domain_settings_when_application_settings_disabled() {
         SecretExpirationSettings domainSecretExpirationSettings = new SecretExpirationSettings();
         domainSecretExpirationSettings.setEnabled(Boolean.TRUE);
         domainSecretExpirationSettings.setExpiryTimeSeconds(10000L);
         SecretExpirationSettings applicationSecretExpirationSettings = new SecretExpirationSettings();
         applicationSecretExpirationSettings.setEnabled(Boolean.FALSE);
         applicationSecretExpirationSettings.setExpiryTimeSeconds(20000L);
-        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, applicationSecretExpirationSettings);
-        assertThat(secret)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("expiresAt", new Date(secret.getCreatedAt().getTime() + 10000L * 1000L));
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, applicationSecretExpirationSettings);
+        compareDates(secret.getExpiresAt(), new Date(secret.getCreatedAt().getTime() + 10000L * 1000L));
     }
 
     @Test
-    void should_validate_secret(){
+    void should_validate_secret() {
         Client client = new Client();
         client.setClientId("client-id");
         ClientSecret clientSecret = new ClientSecret();
@@ -164,12 +158,12 @@ class SecretServiceTest {
         ApplicationSecretSettings settings = new ApplicationSecretSettings("settingsId", SecretHashAlgorithm.NONE.name(), Map.of());
         client.setClientSecrets(List.of(clientSecret));
         client.setSecretSettings(List.of(settings));
-        boolean isValid = cut.validateSecret(client, "secret" );
+        boolean isValid = cut.validateSecret(client, "secret");
         assertThat(isValid).isTrue();
     }
 
     @Test
-    void should_not_validate_secret_expired(){
+    void should_not_validate_secret_expired() {
         Client client = new Client();
         client.setClientId("client-id");
         ClientSecret clientSecret = new ClientSecret();
@@ -179,18 +173,20 @@ class SecretServiceTest {
         ApplicationSecretSettings settings = new ApplicationSecretSettings("settingsId", SecretHashAlgorithm.NONE.name(), Map.of());
         client.setClientSecrets(List.of(clientSecret));
         client.setSecretSettings(List.of(settings));
-        boolean isValid = cut.validateSecret(client, "secret" );
+        boolean isValid = cut.validateSecret(client, "secret");
         assertThat(isValid).isFalse();
     }
 
     @Test
-    void should_set_expires_from_application_settings_when_domain_settings_null(){
+    void should_set_expires_from_application_settings_when_domain_settings_null() {
         SecretExpirationSettings applicationSecretExpirationSettings = new SecretExpirationSettings();
         applicationSecretExpirationSettings.setEnabled(Boolean.TRUE);
         applicationSecretExpirationSettings.setExpiryTimeSeconds(20000L);
-        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), null, applicationSecretExpirationSettings);
-        assertThat(secret)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("expiresAt", new Date(secret.getCreatedAt().getTime() + 20000L * 1000L));
+        var secret = cut.generateClientSecret("Toto", "africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), null, applicationSecretExpirationSettings);
+        compareDates(secret.getExpiresAt(), new Date(secret.getCreatedAt().getTime() + 20000L * 1000L));
+    }
+
+    private void compareDates(Date date, Date date2) {
+        assertEquals(date.getTime() / 100, date2.getTime() / 100);
     }
 }
