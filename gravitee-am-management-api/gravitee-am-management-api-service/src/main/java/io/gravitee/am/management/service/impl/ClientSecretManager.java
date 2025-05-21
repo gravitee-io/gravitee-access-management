@@ -15,11 +15,11 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import io.gravitee.am.common.event.ApplicationEvent;
+import io.gravitee.am.common.event.ApplicationSecretEvent;
 import io.gravitee.am.management.service.ClientSecretNotifierService;
 import io.gravitee.am.model.Application;
-import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -33,11 +33,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ClientSecretManager extends AbstractService<ClientSecretManager> implements EventListener<ApplicationEvent, Payload> {
+public class ClientSecretManager extends AbstractService<ClientSecretManager> implements EventListener<ApplicationSecretEvent, Payload> {
     private static final Logger logger = LoggerFactory.getLogger(ClientSecretManager.class);
 
     @Autowired
     private ApplicationService applicationService;
+
+    @Autowired
+    private ApplicationSecretService applicationSecretService;
 
     @Autowired
     private EventManager eventManager;
@@ -50,7 +53,7 @@ public class ClientSecretManager extends AbstractService<ClientSecretManager> im
         super.doStart();
 
         logger.info("Register event listener for application events for the management API");
-        eventManager.subscribeForEvents(this, ApplicationEvent.class);
+        eventManager.subscribeForEvents(this, ApplicationSecretEvent.class);
 
         applicationService.findAll()
                 .doOnNext(application -> logger.info("Initializing client secrets notifications for applicationId={}", application.getId()))
@@ -59,29 +62,38 @@ public class ClientSecretManager extends AbstractService<ClientSecretManager> im
     }
 
     @Override
-    public void onEvent(Event<ApplicationEvent, Payload> event) {
+    public void onEvent(Event<ApplicationSecretEvent, Payload> event) {
         handle(event).subscribe();
     }
 
-    Completable handle(Event<ApplicationEvent, Payload> event){
+    Completable handle(Event<ApplicationSecretEvent, Payload> event) {
+
         return switch (event.type()) {
-            case DEPLOY, UPDATE -> createAllClientSecretNotifications(event.content().getId());
-            case UNDEPLOY -> removeAllClientSecretNotifications(event.content().getId());
+            case CREATE -> createClientSecretNotifications(event.content());
+            case RENEW -> renewClientSecretNotifications(event.content());
+            case DELETE -> removeClientSecretNotifications(event.content().getId());
         };
     }
 
-    private Completable createAllClientSecretNotifications(String applicationId) {
-        return applicationService.findById(applicationId)
-                .flatMapCompletable(this::initClientSecretNotifications)
-                .doOnError(error -> logger.error("Unable to init client secrets for applicationId={}", applicationId, error));
+    private Completable createClientSecretNotifications(Payload payload) {
+        return applicationService.findById(payload.getReferenceId())
+                .flatMapCompletable(application ->
+                        applicationSecretService.findById(payload.getReferenceId(), payload.getId())
+                                .flatMapCompletable(secret -> clientSecretNotifierService.registerClientSecretExpiration(application, secret)));
     }
 
+    private Completable renewClientSecretNotifications(Payload payload) {
+        return applicationService.findById(payload.getReferenceId()).flatMapCompletable(application ->
+                applicationSecretService.findById(payload.getReferenceId(), payload.getId()).flatMapCompletable(clientSecret ->
+                        clientSecretNotifierService.unregisterClientSecretExpiration(payload.getId())
+                                .andThen(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement(payload.getId()))
+                                .andThen(clientSecretNotifierService.registerClientSecretExpiration(application, clientSecret))));
+    }
 
-    private Completable removeAllClientSecretNotifications(String applicationId) {
-        return applicationService.findById(applicationId)
-                .flattenAsFlowable(Application::getSecrets).map(ClientSecret::getId)
-                .flatMapCompletable(clientSecretId -> clientSecretNotifierService.unregisterClientSecretExpiration(clientSecretId)
-                        .andThen(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement(clientSecretId)));
+    private Completable removeClientSecretNotifications(String clientSecretId) {
+        return clientSecretNotifierService.unregisterClientSecretExpiration(clientSecretId)
+                .andThen(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement(clientSecretId));
+
     }
 
     private Completable initClientSecretNotifications(Application application) {
