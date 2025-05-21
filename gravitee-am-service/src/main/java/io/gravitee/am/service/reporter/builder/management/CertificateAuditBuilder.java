@@ -40,4 +40,12 @@ public class CertificateAuditBuilder extends ManagementAuditBuilder<CertificateA
         }
         return this;
     }
+
+    @Override
+    protected Object removeSensitiveData(Object value) {
+        if (value instanceof Certificate certificate) {
+            return certificate.asSafeCertificate();
+        }
+        return super.removeSensitiveData(value);
+    }
 }
