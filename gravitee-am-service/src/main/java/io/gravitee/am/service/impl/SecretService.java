@@ -96,7 +96,7 @@ public class SecretService {
         clientSecret.setCreatedAt(new Date());
         clientSecret.setSettingsId(settings.getId());
         clientSecret.setName(name);
-        clientSecret.setExpiresAt(domainExpirationSettings != null ? determinateExpireDate(domainExpirationSettings, applicationExpirationSettings) : null);
+        clientSecret.setExpiresAt(determinateExpireDate(domainExpirationSettings, applicationExpirationSettings));
         return clientSecret;
     }
 

@@ -182,4 +182,15 @@ class SecretServiceTest {
         boolean isValid = cut.validateSecret(client, "secret" );
         assertThat(isValid).isFalse();
     }
+
+    @Test
+    void should_set_expires_from_application_settings_when_domain_settings_null(){
+        SecretExpirationSettings applicationSecretExpirationSettings = new SecretExpirationSettings();
+        applicationSecretExpirationSettings.setEnabled(Boolean.TRUE);
+        applicationSecretExpirationSettings.setExpiryTimeSeconds(20000L);
+        var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), null, applicationSecretExpirationSettings);
+        assertThat(secret)
+                .isNotNull()
+                .hasFieldOrPropertyWithValue("expiresAt", new Date(secret.getCreatedAt().getTime() + 20000L * 1000L));
+    }
 }
