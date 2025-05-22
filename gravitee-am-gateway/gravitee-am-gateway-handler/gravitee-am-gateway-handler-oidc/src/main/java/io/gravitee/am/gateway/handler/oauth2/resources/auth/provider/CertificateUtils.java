@@ -62,10 +62,10 @@ public class CertificateUtils {
         if (certHeaderValue != null) {
             try {
                 certHeaderValue = certHeaderValue
-                        .replaceAll("\\+","%2F")
-                        .replaceAll("//","%2B")
-                        .replaceAll("=","%3D")
-                        .replaceAll("\t", "\n");
+                        .replace("+", "%2B")
+                        .replace("/", "%2F")
+                        .replace("=", "%3D")
+                        .replace("\t", "\n");
 
                 certHeaderValue = URLDecoder.decode(certHeaderValue, Charset.defaultCharset());
                 CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
