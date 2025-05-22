@@ -464,6 +464,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                             .andThen(membershipService.findByReference(application.getId(), ReferenceType.APPLICATION)
                                     .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
                             )
+                            // trigger events to delete client secrets notifiers
+                            .andThen(Flowable.fromIterable(application.getSecrets())
+                                    .flatMapCompletable(applicationSecret -> Completable.fromSingle(
+                                            eventService.create(new Event(Type.APPLICATION_SECRET, new Payload(applicationSecret.getId(), ReferenceType.APPLICATION, id, Action.DELETE))))
+                                    )
+                            )
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).application(application)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).application(application).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
                 })
@@ -598,6 +604,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     /**
      * Set default domain certificate for the application
+     *
      * @param application the application to create
      * @return the application with the certificate
      */
@@ -716,7 +723,7 @@ public class ApplicationServiceImpl implements ApplicationService {
      * The redirect_uris do not respect domain conditions (localhost, scheme and wildcard)
      * </pre>
      *
-     * @param application application to check
+     * @param application    application to check
      * @param updateTypeOnly does the method call comes from the application type update ? (if true, redirect_uri validation is skipped)
      * @return a client only if every condition are respected.
      */

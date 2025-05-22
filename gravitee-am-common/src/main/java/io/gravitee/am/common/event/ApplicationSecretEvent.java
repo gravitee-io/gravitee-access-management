@@ -15,38 +15,18 @@
  */
 package io.gravitee.am.common.event;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum Type {
+public enum ApplicationSecretEvent {
 
-    DOMAIN,
-    APPLICATION,
-    APPLICATION_SECRET,
-    IDENTITY_PROVIDER,
-    CERTIFICATE,
-    EXTENSION_GRANT,
-    SCOPE,
-    ROLE,
-    FORM,
-    EMAIL,
-    REPORTER,
-    POLICY,
-    USER,
-    MEMBERSHIP,
-    GROUP,
-    FACTOR,
-    RESOURCE,
-    FLOW,
-    ALERT_TRIGGER,
-    ALERT_NOTIFIER,
-    BOT_DETECTION,
-    AUTH_DEVICE_NOTIFIER,
-    DEVICE_IDENTIFIER,
-    I18N_DICTIONARY,
-    THEME,
-    PASSWORD_POLICY,
-    UNKNOWN, // used during unmarshalling to avoid Exception which will block the sync process
-    REVOKE_TOKEN
+    CREATE,
+    RENEW,
+    DELETE;
+
+    public static ApplicationSecretEvent actionOf(Action action) {
+        return switch (action) {
+            case CREATE -> ApplicationSecretEvent.CREATE;
+            case UPDATE -> ApplicationSecretEvent.RENEW;
+            case DELETE -> ApplicationSecretEvent.DELETE;
+            default -> null;
+        };
+    }
 }

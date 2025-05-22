@@ -29,6 +29,7 @@ public abstract class Event {
         return switch (type) {
             case DOMAIN -> DomainEvent.actionOf(action);
             case APPLICATION -> ApplicationEvent.actionOf(action);
+            case APPLICATION_SECRET -> ApplicationSecretEvent.actionOf(action);
             case CERTIFICATE -> CertificateEvent.actionOf(action);
             case EXTENSION_GRANT -> ExtensionGrantEvent.actionOf(action);
             case IDENTITY_PROVIDER -> IdentityProviderEvent.actionOf(action);

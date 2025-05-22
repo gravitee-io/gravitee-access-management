@@ -23,6 +23,7 @@ import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.service.exception.ClientSecretDeleteException;
 import io.gravitee.am.service.exception.ClientSecretNotFoundException;
 import io.gravitee.am.service.exception.TooManyClientSecretsException;
@@ -67,6 +68,9 @@ class ApplicationSecretServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private EventService eventService;
+
     @Spy
     private SecretService secretService = new SecretService();
 
@@ -85,6 +89,7 @@ class ApplicationSecretServiceTest {
         Application client = applicationWithSecret(1);
 
         when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         NewClientSecret newClientSecret = new NewClientSecret();
         newClientSecret.setName("new-secret");
@@ -107,6 +112,7 @@ class ApplicationSecretServiceTest {
         Application client = applicationWithSecret(1);
 
         when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         NewClientSecret newClientSecret = new NewClientSecret();
         newClientSecret.setName("new-secret");
@@ -146,6 +152,7 @@ class ApplicationSecretServiceTest {
         Application client = applicationWithSecret(1);
 
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(client));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<Application> testObserver = applicationSecretService.renew(DOMAIN, client, "secret-id0", new DefaultUser()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -162,6 +169,7 @@ class ApplicationSecretServiceTest {
         Application client = applicationWithSecret(1);
 
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(client));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<Application> testObserver = applicationSecretService.renew(DOMAIN, client, "secret-id0", new DefaultUser()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -210,6 +218,7 @@ class ApplicationSecretServiceTest {
         client.setSettings(applicationSettings);
 
         when(applicationService.update(any(Application.class))).thenReturn(Single.just(client));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<Application> testObserver = applicationSecretService.renew(DOMAIN, client, "secret-id0", new DefaultUser()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -232,6 +241,7 @@ class ApplicationSecretServiceTest {
         Application client = applicationWithSecret(2);
 
         when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<Void> testObserver = applicationSecretService.delete(DOMAIN, client, "secret-id1", new DefaultUser()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -260,6 +270,7 @@ class ApplicationSecretServiceTest {
         Application client = applicationWithSecret(2);
 
         when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
         TestObserver<Void> testObserver = applicationSecretService.delete(DOMAIN, client, "secret-id1", new DefaultUser()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

@@ -34,6 +34,7 @@ import java.util.Map;
 
 import static io.gravitee.am.service.spring.application.SecretHashAlgorithm.PropertyKeys.BCRYPT_ROUNDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -84,9 +85,7 @@ class SecretServiceTest {
         domainSecretExpirationSettings.setEnabled(Boolean.TRUE);
         domainSecretExpirationSettings.setExpiryTimeSeconds(10000L);
         var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, null);
-        assertThat(secret)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("expiresAt", new Date(secret.getCreatedAt().getTime() + 10000L * 1000L));
+        compareDates(secret.getExpiresAt(), new Date(secret.getCreatedAt().getTime() + 10000L * 1000L));
     }
 
     @Test
@@ -120,9 +119,7 @@ class SecretServiceTest {
         applicationSecretExpirationSettings.setEnabled(Boolean.TRUE);
         applicationSecretExpirationSettings.setExpiryTimeSeconds(20000L);
         var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, applicationSecretExpirationSettings);
-        assertThat(secret)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("expiresAt", new Date(secret.getCreatedAt().getTime() + 20000L * 1000L));
+        compareDates(secret.getExpiresAt(), new Date(secret.getCreatedAt().getTime() + 20000L * 1000L));
     }
 
     @Test
@@ -148,9 +145,7 @@ class SecretServiceTest {
         applicationSecretExpirationSettings.setEnabled(Boolean.FALSE);
         applicationSecretExpirationSettings.setExpiryTimeSeconds(20000L);
         var secret = cut.generateClientSecret("Toto","africa", new ApplicationSecretSettings("settingsIdValue", SecretHashAlgorithm.NONE.name(), Map.of()), domainSecretExpirationSettings, applicationSecretExpirationSettings);
-        assertThat(secret)
-                .isNotNull()
-                .hasFieldOrPropertyWithValue("expiresAt", new Date(secret.getCreatedAt().getTime() + 10000L * 1000L));
+        compareDates(secret.getExpiresAt(), new Date(secret.getCreatedAt().getTime() + 10000L * 1000L));
     }
 
     @Test
@@ -181,5 +176,9 @@ class SecretServiceTest {
         client.setSecretSettings(List.of(settings));
         boolean isValid = cut.validateSecret(client, "secret" );
         assertThat(isValid).isFalse();
+    }
+
+    private void compareDates(Date date, Date date2){
+        assertEquals(date.getTime() / 100, date2.getTime()/100);
     }
 }

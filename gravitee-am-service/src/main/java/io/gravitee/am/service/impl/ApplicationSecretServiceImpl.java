@@ -16,17 +16,23 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ClientSecretDeleteException;
 import io.gravitee.am.service.exception.ClientSecretInvalidException;
@@ -40,6 +46,7 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,6 +77,9 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
 
     @Autowired
     private SecretService secretService;
+
+    @Autowired
+    private EventService eventService;
 
     @Override
     public Single<ClientSecret> create(Domain domain, Application application, NewClientSecret newClientSecret, User principal) {
@@ -106,7 +116,10 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
                     log.error("An error occurs while trying to create client secret for application {} and domain {}", application.getId(), domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to renew client secret for application %s and domain %s", application.getId(), domain), ex));
-                }).map(__ -> {
+                }).flatMap(application1 -> {
+                    Event event = new Event(Type.APPLICATION_SECRET, new Payload(clientSecret.getId(), ReferenceType.APPLICATION, application1.getId(), Action.CREATE));
+                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));})
+                .map(__ -> {
                     //Replace secret with raw secret to be able to copy by user.
                     clientSecret.setSecret(rawSecret);
                     return clientSecret;
@@ -159,7 +172,10 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
                     log.error("An error occurs while trying to renew client secret for application {} and domain {}", application.getId(), domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to renew client secret for application %s and domain %s", application.getId(), domain), ex));
-                }).map(app -> {
+                }).flatMap(application1 -> {
+                    Event event = new Event(Type.APPLICATION_SECRET, new Payload(clientSecret.getId(), ReferenceType.APPLICATION, application1.getId(), Action.UPDATE));
+                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));})
+                .map(app -> {
                     //Replace secret with raw secret to be able to copy by user.
                     var secret = app.getSecrets().stream().filter(s -> s.getId().equals(id)).findFirst().orElse(new ClientSecret());
                     secret.setSecret(rawSecret);
@@ -199,7 +215,21 @@ public class ApplicationSecretServiceImpl implements ApplicationSecretService {
                     log.error("An error occurs while trying to delete client secret for application {} and domain {}", application.getId(), domain, ex);
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete client secret for application %s and domain %s", application.getId(), domain), ex));
-                }).ignoreElement();
+                }).flatMap(application1 -> {
+                    Event event = new Event(Type.APPLICATION_SECRET, new Payload(id, ReferenceType.APPLICATION, application1.getId(), Action.DELETE));
+                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));})
+                .ignoreElement();
+    }
+
+    @Override
+    public Maybe<ClientSecret> findById(String applicationId, String id) {
+        return applicationService.findById(applicationId)
+                .flatMap(application -> application.getSecrets().stream()
+                        .filter(secret -> secret.getId().equals(id))
+                        .findFirst()
+                        .map(ClientSecret::safeSecret)
+                        .map(Maybe::just)
+                        .orElseGet(Maybe::empty));
     }
 
     private static boolean doesAppReferenceSecretSettings(Application application, ApplicationSecretSettings secretSettings) {
