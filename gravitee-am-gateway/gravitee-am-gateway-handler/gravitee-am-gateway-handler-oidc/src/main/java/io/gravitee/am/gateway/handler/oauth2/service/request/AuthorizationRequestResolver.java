@@ -15,17 +15,29 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
+import io.gravitee.am.service.utils.EvaluableRedirectUri;
+import io.gravitee.gateway.api.ExecutionContext;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class AuthorizationRequestResolver extends AbstractRequestResolver<AuthorizationRequest> {
+
+    public AuthorizationRequestResolver(ScopeManager scopeManager) {
+        this.setScopeManager(scopeManager);
+    }
 
     public Single<AuthorizationRequest> resolve(AuthorizationRequest authorizationRequest, Client client, User endUser) {
         return resolveAuthorizedScopes(authorizationRequest, client, endUser)
@@ -51,5 +63,24 @@ public class AuthorizationRequestResolver extends AbstractRequestResolver<Author
             authorizationRequest.setRedirectUri(registeredClientRedirectUris.iterator().next());
         }
         return Single.just(authorizationRequest);
+    }
+
+    public Single<AuthorizationRequest> evaluateELQueryParams(AuthorizationRequest authorizationRequest,
+                                                              Client client,
+                                                              ExecutionContext executionContext) {
+        return matchWithEvaluableRedirectUri(client, authorizationRequest.getRedirectUri())
+                .flatMap(uri -> uri.evaluate(executionContext))
+                .map(redirectUri -> {
+                    authorizationRequest.setRedirectUri(redirectUri);
+                    return authorizationRequest;
+                }).defaultIfEmpty(authorizationRequest);
+    }
+
+    private Maybe<EvaluableRedirectUri> matchWithEvaluableRedirectUri(Client client, String redirectUri) {
+        return Flowable.fromIterable(client.getRedirectUris())
+                .map(EvaluableRedirectUri::new)
+                .filter(EvaluableRedirectUri::containsEL)
+                .filter(uri -> uri.matchRootUrl(redirectUri))
+                .firstElement();
     }
 }

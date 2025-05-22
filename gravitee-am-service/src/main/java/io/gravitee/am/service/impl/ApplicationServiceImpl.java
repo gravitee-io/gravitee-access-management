@@ -74,6 +74,7 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.am.service.utils.GrantTypeUtils;
+import io.gravitee.am.service.utils.EvaluableRedirectUri;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
@@ -96,6 +97,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -753,7 +755,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                             return Single.error(new InvalidRedirectUriException());
                         }
                     }
-
                     //check redirect_uri content
                     if (!CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
                         for (String redirectUri : oAuthSettings.getRedirectUris()) {
@@ -785,6 +786,16 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 }
                             } catch (IllegalArgumentException | URISyntaxException ex) {
                                 return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + IS_MALFORMED));
+                            }
+                        }
+                        if(domain.isRedirectUriExpressionLanguageEnabled()){
+                            List<String> urisWithEL = oAuthSettings.getRedirectUris().stream()
+                                    .filter(uri -> new EvaluableRedirectUri(uri).containsEL())
+                                    .toList();
+                            Map<String, Long> counts = urisWithEL.stream()
+                                    .collect(Collectors.groupingBy(s -> new EvaluableRedirectUri(s).getRootUrl(), Collectors.counting()));
+                            if(counts.values().stream().anyMatch(size -> size > 1)) {
+                                return Single.error(new InvalidRedirectUriException("There can be only a single redirect_uri with EL per domain"));
                             }
                         }
                     } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {

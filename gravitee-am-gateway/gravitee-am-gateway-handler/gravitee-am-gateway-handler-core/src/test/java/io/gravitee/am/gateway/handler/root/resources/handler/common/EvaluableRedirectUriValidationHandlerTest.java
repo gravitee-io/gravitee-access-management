@@ -28,7 +28,7 @@ import java.util.List;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.any;
 
-public class RedirectUriValidationHandlerTest {
+public class EvaluableRedirectUriValidationHandlerTest {
 
     @Test
     public void when_return_url_is_not_present_validate_redirect_uri(){

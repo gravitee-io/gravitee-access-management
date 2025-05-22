@@ -15,16 +15,26 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
+import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.http.NoOpResponse;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.context.SimpleExecutionContext;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -33,30 +43,29 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class AuthorizationRequestResolveHandler implements Handler<RoutingContext> {
 
+    private final Domain domain;
+    private final ExecutionContextFactory executionContextFactory;
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
     private final AuthorizationRequestResolver authorizationRequestResolver;
 
-    public AuthorizationRequestResolveHandler(ScopeManager scopeManager) {
-        this.authorizationRequestResolver = new AuthorizationRequestResolver();
-        this.authorizationRequestResolver.setScopeManager(scopeManager);
+    public AuthorizationRequestResolveHandler(Domain domain,
+                                              ScopeManager scopeManager,
+                                              ExecutionContextFactory executionContextFactory) {
+        this.domain = domain;
+        this.executionContextFactory = executionContextFactory;
+        this.authorizationRequestResolver = new AuthorizationRequestResolver(scopeManager);
     }
 
     @Override
     public void handle(RoutingContext routingContext) {
-        // get client
-        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
-
-        // get user
-        final io.gravitee.am.model.User endUser = routingContext.user() != null ?
-                ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null;
-
         // create authorization request
         final AuthorizationRequest authorizationRequest = resolveInitialAuthorizeRequest(routingContext);
 
         // compute authorization request
-        computeAuthorizationRequest(authorizationRequest, client, endUser, h -> {
+        computeAuthorizationRequest(authorizationRequest, routingContext, h -> {
             if (h.failed()) {
                 routingContext.fail(h.cause());
                 return;
@@ -68,8 +77,25 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
         });
     }
 
-    private void computeAuthorizationRequest(AuthorizationRequest authorizationRequest, Client client, User endUser, Handler<AsyncResult> handler) {
+    private void computeAuthorizationRequest(AuthorizationRequest authorizationRequest,
+                                             RoutingContext routingContext,
+                                             Handler<AsyncResult> handler) {
+        // get client
+        final Client client = routingContext.get(CLIENT_CONTEXT_KEY);
+
+        // get user
+        final io.gravitee.am.model.User endUser = routingContext.user() != null ?
+                ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser() : null;
+
         authorizationRequestResolver.resolve(authorizationRequest, client, endUser)
+                .flatMap(req -> {
+                    if(domain.isRedirectUriExpressionLanguageEnabled()){
+                        ExecutionContext executionContext = prepareExecutionContext(client, routingContext);
+                        return authorizationRequestResolver.evaluateELQueryParams(req, client, executionContext);
+                    } else {
+                        return Single.just(req);
+                    }
+                })
                 .subscribe(
                         __ -> handler.handle(Future.succeededFuture()),
                         error -> handler.handle(Future.failedFuture(error)));
@@ -83,5 +109,20 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
         }
         // if none, we have the required request parameters to re-create the authorize request
         return authorizationRequestFactory.create(routingContext);
+    }
+
+    private ExecutionContext prepareExecutionContext(Client client, RoutingContext routingContext) {
+        try {
+            io.vertx.core.http.HttpServerRequest request = routingContext.request().getDelegate();
+            Request serverRequest = new VertxHttpServerRequest(request);
+            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(serverRequest, new NoOpResponse());
+            ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
+            executionContext.getAttributes().put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+
+            return executionContext;
+        } catch (Exception ex) {
+            log.error("Execution context creation failed", ex);
+            return new SimpleExecutionContext(null, null);
+        }
     }
 }

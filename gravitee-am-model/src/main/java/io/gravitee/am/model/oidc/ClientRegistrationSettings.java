@@ -49,6 +49,11 @@ public class ClientRegistrationSettings {
     private boolean isOpenDynamicClientRegistrationEnabled;
 
     /**
+     * Allow expression language on redirect uri params
+     */
+    private boolean allowRedirectUriParamsExpressionLanguage;
+
+    /**
      * Define some default scopes to add on each client registration request
      */
     private List<String> defaultScopes;
@@ -143,5 +148,13 @@ public class ClientRegistrationSettings {
 
     public void setClientTemplateEnabled(boolean clientTemplateEnabled) {
         isClientTemplateEnabled = clientTemplateEnabled;
+    }
+
+    public boolean isAllowRedirectUriParamsExpressionLanguage() {
+        return allowRedirectUriParamsExpressionLanguage;
+    }
+
+    public void setAllowRedirectUriParamsExpressionLanguage(boolean allowRedirectUriParamsExpressionLanguage) {
+        this.allowRedirectUriParamsExpressionLanguage = allowRedirectUriParamsExpressionLanguage;
     }
 }

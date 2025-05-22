@@ -24,6 +24,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.*;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
@@ -110,6 +111,10 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
     @Mock
     private ScopeManager scopeManager;
 
+
+    @Mock
+    private ExecutionContextFactory executionContextFactory;
+
     @Mock
     private Environment environment;
 
@@ -159,7 +164,7 @@ public class AuthorizationEndpointTest extends RxWebTestBase {
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(new RedirectUriValidationHandler(domain))
                 .handler(new ReturnUrlValidationHandler(domain))
-                .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
                 .handler(ctx -> {
                     authorizationEndpointHandler.handle(ctx);
                     finalRoutingContext = ctx;

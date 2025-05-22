@@ -64,4 +64,8 @@ export class ApplicationCreationStep2Component implements OnInit {
   displayRedirectUri(): boolean {
     return this.application.type !== 'SERVICE';
   }
+
+  elRedirectUriEnabled(): boolean {
+    return this.domain?.oidc?.clientRegistrationSettings?.allowRedirectUriParamsExpressionLanguage
+  }
 }

@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.gateway.handler.root.service.user.model.UserToken;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.utils.EvaluableRedirectUri;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
@@ -52,27 +53,22 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
 public class RedirectUriValidationHandler implements Handler<RoutingContext> {
 
     private final Domain domain;
-    private final RedirectUriValidator redirectUriValidator;
     private final Function<String, Maybe<JWT>> tokenVerifier;
 
     public RedirectUriValidationHandler(Domain domain) {
         this.domain = domain;
-        this.redirectUriValidator = new RedirectUriValidator();
         this.tokenVerifier = t -> Maybe.empty();
     }
 
     public RedirectUriValidationHandler(Domain domain, UserService userService) {
         this.domain = domain;
-        this.redirectUriValidator = new RedirectUriValidator();
-        this.tokenVerifier = t -> userService.verifyToken(t)
-                .map(UserToken::getToken);
+        this.tokenVerifier = t -> userService.verifyToken(t).map(UserToken::getToken);
     }
 
     @Override
     public void handle(RoutingContext context) {
-        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
         getOperation(context)
-                .doOnSuccess(op -> parseRedirectUriParameter(context, client, op))
+                .doOnSuccess(op -> parseRedirectUriParameter(context, op))
                 .subscribe(x -> context.next(), context::fail);
     }
 
@@ -97,14 +93,33 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
         return tokenVerifier.apply(token);
     }
 
-    private void parseRedirectUriParameter(RoutingContext context, Client client, TokenPurpose operation) {
+    private List<String> getRegisteredRedirectUris(RoutingContext context){
+        final Client client = context.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        return client.getRedirectUris();
+    }
+
+    private List<String> getFilteredRegisteredRedirectUris(RoutingContext routingContext) {
+        final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
+        List<String> redirectUris = client.getRedirectUris()    ;
+        if(redirectUris == null || redirectUris.isEmpty()){
+            return List.of();
+        }
+        return redirectUris.stream()
+                .map(uri -> new EvaluableRedirectUri(uri).removeELQueryParams())
+                .toList();
+    }
+
+    private void parseRedirectUriParameter(RoutingContext context, TokenPurpose operation) {
         String requestedRedirectUri = getOAuthParameter(context, io.gravitee.am.common.oauth2.Parameters.REDIRECT_URI);
         String returnUrl = getOAuthParameter(context, ConstantKeys.RETURN_URL_KEY);
         // process the URI validation if the redirect_uri is present or there is no return_url
         // when return_url is present, that mean we are coming from the MFA Challenge policy
         // and redirect_uri is not required. return_url validation is managed by another handler
         if (!StringUtils.hasLength(returnUrl)) {
-            redirectUriValidator.validate(client, requestedRedirectUri, operation, this::checkMatchingRedirectUri);
+            List<String> registeredRedirectUris = domain.isRedirectUriExpressionLanguageEnabled() ?
+                    getFilteredRegisteredRedirectUris(context) : getRegisteredRedirectUris(context);
+            RedirectUriValidator validator = new RedirectUriValidator(this::checkMatchingRedirectUri);
+            validator.validate(registeredRedirectUris, requestedRedirectUri, operation);
         }
     }
 
@@ -115,4 +130,5 @@ public class RedirectUriValidationHandler implements Handler<RoutingContext> {
             throw new RedirectMismatchException(String.format("The redirect_uri [ %s ] MUST match the registered callback URL for this application", requestedRedirect));
         }
     }
+
 }

@@ -61,7 +61,7 @@ export class ApplicationOverviewComponent implements OnInit {
         applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined
           ? applicationOAuthSettings.redirectUris[0]
           : 'Not defined';
-      this.encodedRedirectUri = encodeURIComponent(this.redirectUri);
+      this.encodedRedirectUri = encodeURIComponent(this.cleanELParameters(this.redirectUri));
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
       this.forcePKCE = applicationOAuthSettings.forcePKCE;
     } else {
@@ -72,6 +72,25 @@ export class ApplicationOverviewComponent implements OnInit {
     if (this.forcePKCE) {
       this.codeVerifier = this.generateCodeVerifier();
       this.generateCodeChallenge(this.codeVerifier).then((data) => (this.codeChallenge = data));
+    }
+  }
+
+
+  cleanELParameters(redirectUri: string): string {
+    try {
+      const url = new URL(redirectUri);
+      const cleanParams = new URLSearchParams();
+      url.searchParams.forEach((value, key) => {
+        if (!/^\{\$.*\}$/.test(value)) {
+          cleanParams.append(key, value);
+        }
+      });
+
+      url.search = cleanParams.toString();
+
+      return url.toString();
+    } catch (e) {
+      return redirectUri;
     }
   }
 

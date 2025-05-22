@@ -26,6 +26,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
@@ -40,7 +41,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorizationRequestResolverTest {
 
-    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
+    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver(Mockito.mock());
 
     @Mock
     private ScopeManager scopeManager;

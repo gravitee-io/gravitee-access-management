@@ -21,6 +21,7 @@ import io.gravitee.am.common.jwt.TokenPurpose;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.oidc.Client;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.MalformedURLException;
@@ -29,6 +30,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.getOAuthParameter;
 
@@ -38,17 +40,22 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
  */
 
 @Slf4j
+@RequiredArgsConstructor
 public class RedirectUriValidator {
+    private final CheckMethod checkMethod;
 
-    public void validate(Client client, String requestedRedirectUri, BiConsumer<String, List<String>> checkMethod) {
-        validate(client, requestedRedirectUri, null, checkMethod);
+    public interface CheckMethod {
+        void check(String redirectUri, List<String> registeredUris);
     }
 
-    public void validate(Client client, String requestedRedirectUri, TokenPurpose operation, BiConsumer<String, List<String>> checkMethod) {
+    public void validate(Client client, String requestedRedirectUri) {
+        validate(client.getRedirectUris(), requestedRedirectUri, null);
+    }
+
+    public void validate(List<String> registeredClientRedirectUris, String requestedRedirectUri, TokenPurpose operation) {
 
         final boolean redirectUriRequired = requiresRedirectUri(operation);
 
-        final List<String> registeredClientRedirectUris = client.getRedirectUris();
         final boolean hasRegisteredClientRedirectUris = registeredClientRedirectUris != null && !registeredClientRedirectUris.isEmpty();
         final boolean hasRequestedRedirectUri = requestedRedirectUri != null && !requestedRedirectUri.isEmpty();
 
@@ -81,7 +88,7 @@ public class RedirectUriValidator {
         // if requested redirect_uri doesn't match registered client redirect_uris
         // throw redirect mismatch exception
         if (hasRequestedRedirectUri && hasRegisteredClientRedirectUris) {
-            checkMethod.accept(requestedRedirectUri, registeredClientRedirectUris);
+            checkMethod.check(requestedRedirectUri, registeredClientRedirectUris);
         }
     }
 

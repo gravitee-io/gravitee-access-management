@@ -280,7 +280,7 @@ public class UriBuilder {
         if (this.path != null) {
             sb.append(this.path);
         }
-        if (this.query != null) {
+        if (this.query != null && !this.query.isEmpty()) {
             sb.append("?").append(this.query);
         }
         if (this.fragment != null) {
