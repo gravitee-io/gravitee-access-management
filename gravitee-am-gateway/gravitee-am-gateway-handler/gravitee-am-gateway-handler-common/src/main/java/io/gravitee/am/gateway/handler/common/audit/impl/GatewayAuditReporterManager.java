@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.common.audit.impl;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.common.utils.GraviteeContextHolder;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.model.Domain;
@@ -75,6 +76,9 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
 
     @Autowired
     private EnvironmentService environmentService;
+
+    @Autowired
+    private GraviteeContextHolder contextHolder;
 
     private final ConcurrentMap<String, io.gravitee.am.reporter.api.provider.Reporter> reporterPlugins = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, Reporter> reporters = new ConcurrentHashMap<>();
@@ -231,8 +235,8 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
             return;
         }
-        if (reporter.getReference().type() == ReferenceType.ORGANIZATION && !reporter.isInherited()) {
-            logger.info("Reporter {} [{}] is linked to the organization {} but is not inherited, won't be started", reporter.getId(), reporter.getType(), organizationId);
+        if (reporter.getReference().type() == ReferenceType.ORGANIZATION ) {
+            logger.info("Reporter {} [{}] is linked to the organization {}, won't be started by the Domain", reporter.getId(), reporter.getType(), organizationId);
             return;
         }
         logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
@@ -240,9 +244,10 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         io.gravitee.am.reporter.api.provider.Reporter reporterProvider = reporterPluginManager.create(providerConfiguration);
 
         if (reporterProvider != null) {
+            contextHolder.registerContext(context);
             try {
                 logger.info("Starting reporter: {}", reporter.getName());
-                io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporterProvider, Reference.domain(domain.getId()));
+                io.gravitee.am.reporter.api.provider.Reporter eventBusReporter = new EventBusReporterWrapper(vertx, reporterProvider, Reference.domain(domain.getId()), contextHolder);
                 eventBusReporter.start();
                 reporters.put(reporter.getId(), reporter);
                 reporterPlugins.put(reporter.getId(), eventBusReporter);

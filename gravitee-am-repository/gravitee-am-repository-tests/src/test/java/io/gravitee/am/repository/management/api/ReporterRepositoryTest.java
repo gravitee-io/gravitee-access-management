@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -114,6 +115,31 @@ public class ReporterRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoErrors();
         testObserver.assertValue( p -> p.size() == loop);
         testObserver.assertValue( p -> p.stream().map(Reporter::getId).distinct().count() == loop);
+    }
+
+    @Test
+    public void shouldFindByReferenceType() {
+        final int loop = 10;
+        final Reference domain = Reference.domain("fixedDomainId");
+        for (int i =0; i < loop; ++i) {
+            Reporter reporter = buildReporter();
+            if (i % 2 == 0) reporter.setReference(domain);
+            repository.create(reporter).blockingGet();
+        }
+
+        final Reference org = Reference.organization("fixedorgId");
+        for (int i =0; i < loop; ++i) {
+            Reporter reporter = buildReporter();
+            if (i % 2 == 0) reporter.setReference(org);
+            repository.create(reporter).blockingGet();
+        }
+
+        TestObserver<List<Reporter>> testObserver = repository.findByReferenceType(ReferenceType.ORGANIZATION).toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
+        testObserver.assertValue( p -> p.size() == loop/2);
+        testObserver.assertValue( p -> p.stream().map(Reporter::getId).distinct().count() == loop/2);
+        testObserver.assertValue( p -> p.stream().map(Reporter::getReference).map(Reference::type).distinct().findFirst().get().equals(ReferenceType.ORGANIZATION));
     }
 
     @Test

@@ -373,7 +373,7 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                     }
                 } else {
                     // initialize NoOpReporter in order to allow to reload this reporter with valid implementation if it is enabled through the UI
-                    auditReporters.put(reporter, new EventBusReporterWrapper<>(vertx, new NoOpReporter(), reporter.getReference()));
+                    auditReporters.put(reporter, new EventBusReporterWrapper<>(vertx, new NoOpReporter(), reporter.getReference(), null));
                     reporters.put(reporter.getId(), reporter);
                 }
             }
@@ -381,11 +381,11 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
 
         private Reporter<?, ?> createWrapper(AuditReporter auditReporter, io.gravitee.am.model.Reporter reporterConfig) {
             if (additionalReferences.isEmpty()) {
-                return new EventBusReporterWrapper<>(vertx, auditReporter, reporterConfig.getReference());
+                return new EventBusReporterWrapper<>(vertx, auditReporter, reporterConfig.getReference(), null);
             }
             var allReferences = new ArrayList<>(additionalReferences);
             allReferences.add(0, reporterConfig.getReference());
-            return new EventBusReporterWrapper<>(vertx, auditReporter, allReferences);
+            return new EventBusReporterWrapper<>(vertx, auditReporter, allReferences, null);
 
         }
     }

@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.junit.management;
 
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.junit.MemoryRepository;
 import io.gravitee.am.repository.management.api.ReporterRepository;
@@ -32,6 +33,11 @@ public class MemoryReporterRepository extends MemoryRepository<Reporter,String> 
     @Override
     public Flowable<Reporter> findByReference(Reference reference) {
         return findMany(x->x.getReference().equals(reference));
+    }
+
+    @Override
+    public Flowable<Reporter> findByReferenceType(ReferenceType type) {
+        return findMany(x->x.getReference().type().equals(type));
     }
 
     @Override

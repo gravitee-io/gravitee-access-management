@@ -69,6 +69,11 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert);
     }
 
+    @Override
+    public Flowable<Reporter> findByReferenceType(ReferenceType referenceType) {
+        return Flowable.fromPublisher(reportersCollection.find(eq(FIELD_REFERENCE_TYPE, referenceType))).map(this::convert);
+    }
+
     private static Bson referenceMatches(Reference reference) {
         var query = and(eq(FIELD_REFERENCE_TYPE, reference.type()), eq(FIELD_REFERENCE_ID, reference.id()));
         // for backwards compatibility

@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcReporter;
@@ -121,6 +122,13 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     public Flowable<Reporter> findByReference(Reference reference) {
         LOGGER.debug("findByReference({})", reference);
         return reporterRepository.findByReferenceTypeAndReferenceId(reference.type(), reference.id())
+                .map(this::toEntity);
+    }
+
+    @Override
+    public Flowable<Reporter> findByReferenceType(ReferenceType refType) {
+        LOGGER.debug("findByReferenceType({})", refType);
+        return reporterRepository.findByReferenceType(refType)
                 .map(this::toEntity);
     }
 
