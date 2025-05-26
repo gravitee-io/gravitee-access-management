@@ -52,7 +52,7 @@ describe('when creating certificates', () => {
       expect(createdCertificate.id).toBeDefined();
       expect(createdCertificate.name).toEqual(builtCertificate.name);
       expect(createdCertificate.configuration).toEqual(
-        '{"jks":"server.jks","storepass":"********","alias":"mytestkey","keypass":"********"}',
+        '{"jks":"********","storepass":"********","alias":"mytestkey","keypass":"********"}',
       );
       expect(createdCertificate.type).toEqual(builtCertificate.type);
       expect(createdCertificate.domain).toEqual(domain.id);
