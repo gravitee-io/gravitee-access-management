@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { DomainService } from '../../../../../services/domain.service';
-import { DialogService } from '../../../../../services/dialog.service';
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { AuthService } from '../../../../../services/auth.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 @Component({
   selector: 'app-openid-client-registration-settings',
@@ -36,15 +37,14 @@ export class ClientRegistrationSettingsComponent implements OnInit {
 
   constructor(
     private domainService: DomainService,
-    private dialogService: DialogService,
     private snackbarService: SnackbarService,
-    private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.readonly = !this.authService.hasPermissions(['domain_openid_create', 'domain_openid_update']);
   }
 
@@ -102,6 +102,7 @@ export class ClientRegistrationSettingsComponent implements OnInit {
 
   patch() {
     this.domainService.patchOpenidDCRSettings(this.domain.id, this.domain).subscribe((response) => {
+      this.domainStore.set(response);
       this.domain = response;
       this.domainService.notify(this.domain);
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');

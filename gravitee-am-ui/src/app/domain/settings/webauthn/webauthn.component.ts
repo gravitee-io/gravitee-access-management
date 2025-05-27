@@ -16,11 +16,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { each, find, findIndex, forEach, remove } from 'lodash';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
 import { EntrypointService } from '../../../services/entrypoint.service';
+import { DomainStoreService } from '../../../stores/domain.store';
 
 @Component({
   selector: 'app-domain-webauthn',
@@ -48,10 +50,13 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
     private authService: AuthService,
     private route: ActivatedRoute,
     private entrypointService: EntrypointService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => {
+      this.domain = deepClone(domain);
+    });
     this.domainId = this.domain.id;
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);
@@ -87,6 +92,7 @@ export class DomainSettingsWebAuthnComponent implements OnInit {
 
     this.domainService.patchWebAuthnSettings(this.domainId, this.domain).subscribe((data) => {
       this.domain = data;
+      this.domainStore.set(data);
       this.formChanged = false;
       this.snackbarService.open('WebAuthn configuration updated');
     });
