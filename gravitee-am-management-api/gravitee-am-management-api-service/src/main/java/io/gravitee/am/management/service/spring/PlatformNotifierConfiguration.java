@@ -160,7 +160,7 @@ public class PlatformNotifierConfiguration extends NotifierConfiguration {
             @Value("${notifiers.log.enabled:true}") boolean enabled) {
         if(enabled) {
             return new LoggerNotificationDefinitionFactory<>(notifierSettings,
-                    obj -> "Certificate %s of application %s in domain %s expires on %s".formatted(
+                    obj -> "Client Secret %s of application %s in domain %s expires on %s".formatted(
                             obj.getClientSecret().getName(),
                             obj.getApplication().getName(),
                             obj.getDomain().getName(),
