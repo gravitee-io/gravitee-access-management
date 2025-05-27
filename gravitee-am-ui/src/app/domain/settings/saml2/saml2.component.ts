@@ -18,12 +18,14 @@ import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { GioLicenseService, LicenseOptions } from '@gravitee/ui-particles-angular';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DomainService } from '../../../services/domain.service';
 import { AuthService } from '../../../services/auth.service';
 import { CertificateService } from '../../../services/certificate.service';
 import { AmFeature } from '../../../components/gio-license/gio-license-data';
+import { DomainStoreService } from '../../../stores/domain.store';
 
 @Component({
   selector: 'app-saml2',
@@ -49,11 +51,12 @@ export class Saml2Component implements OnInit {
     private certificateService: CertificateService,
     private route: ActivatedRoute,
     private licenseService: GioLicenseService,
+    private domainStore: DomainStoreService,
     public dialog: MatDialog,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.certificates = this.route.snapshot.data['certificates'];
     this.domainSamlSettings = this.domain.saml || {};
     this.domainId = this.domain.id;
@@ -68,6 +71,7 @@ export class Saml2Component implements OnInit {
   save() {
     this.domainSamlSettings.certificate = this.domainSamlSettings.certificate ? this.domainSamlSettings.certificate : null;
     this.domainService.patch(this.domainId, { saml: this.domainSamlSettings }).subscribe((data) => {
+      this.domainStore.set(data);
       this.domain['saml'] = data.saml;
       this.formChanged = false;
       this.form.reset(this.domain.saml);

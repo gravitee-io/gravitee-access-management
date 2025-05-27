@@ -17,13 +17,13 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatInput } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
-import { difference, find, map, remove } from 'lodash';
+import { cloneDeep, difference, find, map, remove } from 'lodash';
 
 import { DomainService } from '../../../services/domain.service';
 import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { AuthService } from '../../../services/auth.service';
 import { NavbarService } from '../../../components/navbar/navbar.service';
+import { DomainStoreService } from '../../../stores/domain.store';
 
 export interface Tag {
   id: string;
@@ -57,13 +57,15 @@ export class DomainSettingsGeneralComponent implements OnInit {
     private snackbarService: SnackbarService,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService,
     private navbarService: NavbarService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
     this.envId = this.route.snapshot.params['envHrid'];
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => {
+      this.domain = cloneDeep(domain);
+    });
     this.dataPlanes = this.route.snapshot.data['dataPlanes'];
     this.domainOIDCSettings = this.domain.oidc || {};
     this.logoutRedirectUris = map(this.domainOIDCSettings.postLogoutRedirectUris, function (item) {
@@ -184,6 +186,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
       requestUris: map(this.requestUris, 'value'),
     };
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe((response) => {
+      this.domainStore.set(response);
       this.domainService.notify(response);
       this.formChanged = false;
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');

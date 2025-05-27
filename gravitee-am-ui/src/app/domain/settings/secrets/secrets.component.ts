@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { duration } from 'moment/moment';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { TimeConverterService } from '../../../services/time-converter.service';
+import { DomainStoreService } from '../../../stores/domain.store';
 
 @Component({
   selector: 'app-domain-secrets',
@@ -35,13 +36,13 @@ export class DomainSettingsSecretsComponent implements OnInit {
 
   constructor(
     private domainService: DomainService,
-    private route: ActivatedRoute,
     private snackbarService: SnackbarService,
     private timeConverterService: TimeConverterService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit(): void {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.secretSettings = this.domain.secretExpirationSettings ? this.domain.secretExpirationSettings : { enabled: false };
     const time = this.secretSettings?.expiryTimeSeconds ? this.secretSettings.expiryTimeSeconds : 7776000;
     const expirationTime = this.timeConverterService.getTime(time, 'seconds');
@@ -78,7 +79,8 @@ export class DomainSettingsSecretsComponent implements OnInit {
       enabled: this.form.value.enabled,
       expiryTimeSeconds: duration(this.form.value.expirationTime, this.form.value.expirationUnit).asSeconds(),
     };
-    this.domainService.patch(this.domain.id, { secretSettings: toPatch }).subscribe(() => {
+    this.domainService.patch(this.domain.id, { secretSettings: toPatch }).subscribe((domain) => {
+      this.domainStore.set(domain);
       this.snackbarService.open('Secrets configuration updated');
       this.form.markAsPristine();
     });

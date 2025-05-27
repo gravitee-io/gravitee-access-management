@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
+import { DomainStoreService } from '../../../stores/domain.store';
 
 @Component({
   selector: 'app-domain-login',
@@ -35,11 +36,13 @@ export class DomainSettingsLoginComponent implements OnInit {
     private domainService: DomainService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
-    private route: ActivatedRoute,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => {
+      this.domain = deepClone(domain);
+    });
     this.domainId = this.domain.id;
     this.domain.loginSettings = this.domain.loginSettings || {};
     this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
@@ -51,14 +54,7 @@ export class DomainSettingsLoginComponent implements OnInit {
     this.domain.loginSettings = loginSettings;
     this.domainService.patchLoginSettings(this.domainId, this.domain).subscribe((data) => {
       this.domain = data;
-      this.snackbarService.open('Login configuration updated');
-    });
-  }
-
-  save() {
-    this.domainService.patchLoginSettings(this.domainId, this.domain).subscribe((data) => {
-      this.domain = data;
-      this.formChanged = false;
+      this.domainStore.set(data);
       this.snackbarService.open('Login configuration updated');
     });
   }

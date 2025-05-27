@@ -452,6 +452,7 @@ import { DataPlaneService } from './services/data-plane.service';
 import { DataPlanesResolver } from './resolvers/data-planes.resolver';
 import { SecretsCertificatesModule } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.module';
 import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secrets.component';
+import { DomainStoreService } from './stores/domain.store';
 
 @NgModule({
   declarations: [
@@ -899,6 +900,7 @@ import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secret
     PasswordPolicyService,
     DataPlaneService,
     DataPlanesResolver,
+    DomainStoreService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

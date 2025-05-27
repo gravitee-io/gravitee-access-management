@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { SnackbarService } from '../../../services/snackbar.service';
 import { DomainService } from '../../../services/domain.service';
 import { AuthService } from '../../../services/auth.service';
+import { DomainStoreService } from '../../../stores/domain.store';
 
 @Component({
   selector: 'app-uma',
@@ -35,17 +36,18 @@ export class UmaComponent implements OnInit {
     private domainService: DomainService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
-    private route: ActivatedRoute,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_uma_update']);
   }
 
   save() {
     this.domainService.patchUmaSettings(this.domainId, this.domain).subscribe((data) => {
+      this.domainStore.set(data);
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open('UMA configuration updated');
