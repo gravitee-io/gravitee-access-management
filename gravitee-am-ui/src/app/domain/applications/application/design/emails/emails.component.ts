@@ -15,8 +15,10 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { EmailTemplateFactoryService } from '../../../../../services/email.template.factory.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 @Component({
   selector: 'app-application-emails',
@@ -31,13 +33,14 @@ export class ApplicationEmailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
+    private domainStore: DomainStoreService,
     emailTemplateFactoryService: EmailTemplateFactoryService,
   ) {
     this.emailTemplateFactoryService = emailTemplateFactoryService;
   }
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = deepClone(this.domainStore.current);
     this.application = this.route.snapshot.data['application'];
   }
 
