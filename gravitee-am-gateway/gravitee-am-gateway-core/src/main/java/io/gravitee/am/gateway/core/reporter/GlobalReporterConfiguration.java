@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.model.Reference;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Reporter;
-import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.rxjava3.core.Flowable;
+package io.gravitee.am.gateway.core.reporter;
+
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
+ * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface ReporterRepository extends CrudRepository<Reporter, String> {
-
-    Flowable<Reporter> findAll();
-
-    Flowable<Reporter> findByReference(Reference reference);
-
-    Flowable<Reporter> findByReferenceType(ReferenceType type);
-
-    Flowable<Reporter> findInheritedFrom(Reference parentReference);
+@Configuration
+public class GlobalReporterConfiguration {
+    @Bean
+    public GatewayGlobalReporterManager globalAuditReporterManager() {
+        return new GatewayGlobalReporterManager();
+    }
 }
