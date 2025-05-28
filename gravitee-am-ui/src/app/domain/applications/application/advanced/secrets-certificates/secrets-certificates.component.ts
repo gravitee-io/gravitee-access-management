@@ -19,10 +19,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { GIO_DIALOG_WIDTH } from '@gravitee/ui-particles-angular';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { EMPTY, Observable } from 'rxjs';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { CertificateService } from '../../../../../services/certificate.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 import { NewClientSecretComponent } from './new-client-secret/new-client-secret.component';
 import { CopyClientSecretComponent, CopyClientSecretCopyDialogData } from './copy-client-secret/copy-client-secret.component';
@@ -61,10 +63,11 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
     private applicationService: ApplicationService,
     private certificateService: CertificateService,
     private matDialog: MatDialog,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit(): void {
-    this.domain = this.route.snapshot.parent.data['domain'];
+    this.domain = deepClone(this.domainStore.current);
     this.application = structuredClone(this.route.snapshot.data['application']);
     this.certificates = this.route.snapshot.data['certificates'];
     if (this.application.certificate) {

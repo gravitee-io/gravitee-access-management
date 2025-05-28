@@ -15,9 +15,11 @@
  */
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { EntrypointService } from '../../../../services/entrypoint.service';
+import { DomainStoreService } from '../../../../stores/domain.store';
 
 @Component({
   selector: 'application-overview',
@@ -35,10 +37,11 @@ export class ApplicationEndpointsComponent implements OnInit {
     private route: ActivatedRoute,
     private snackbarService: SnackbarService,
     private entrypointService: EntrypointService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = deepClone(this.domainStore.current);
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.application = this.route.snapshot.data['application'];
     this.baseUrl = this.entrypointService.resolveBaseUrl(this.entrypoint, this.domain);

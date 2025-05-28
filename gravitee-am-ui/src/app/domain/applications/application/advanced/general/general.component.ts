@@ -16,13 +16,14 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
-import { MatDialog } from '@angular/material/dialog';
 import { map, remove } from 'lodash';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { AuthService } from '../../../../../services/auth.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 @Component({
   selector: 'application-general',
@@ -77,11 +78,11 @@ export class ApplicationGeneralComponent implements OnInit {
     private applicationService: ApplicationService,
     private authService: AuthService,
     private dialogService: DialogService,
-    private readonly matDialog: MatDialog,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = deepClone(this.domainStore.current);
     this.domainId = this.domain.id;
     this.application = structuredClone(this.route.snapshot.data['application']);
     this.applicationType = this.application.type.toUpperCase();

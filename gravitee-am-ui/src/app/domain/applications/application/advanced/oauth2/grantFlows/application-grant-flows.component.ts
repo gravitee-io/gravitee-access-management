@@ -16,10 +16,12 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, minBy, some } from 'lodash';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { ApplicationService } from '../../../../../../services/application.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
 import { AuthService } from '../../../../../../services/auth.service';
+import { DomainStoreService } from '../../../../../../stores/domain.store';
 
 @Component({
   selector: 'application-grant-types',
@@ -60,6 +62,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
     private applicationService: ApplicationService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
@@ -223,7 +226,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
         grantType.disabled = true;
       }
       if (this.CIBA_GRANT_TYPE === grantType.value && this.route.snapshot.data['domain']) {
-        const domain = this.route.snapshot.data['domain'];
+        const domain = deepClone(this.domainStore.current);
         grantType.disabled = domain.oidc.cibaSettings && !domain.oidc.cibaSettings.enabled;
       }
     });
