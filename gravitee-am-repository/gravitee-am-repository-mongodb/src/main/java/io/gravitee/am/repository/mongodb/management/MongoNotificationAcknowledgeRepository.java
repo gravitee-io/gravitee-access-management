@@ -78,7 +78,7 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
 
     @Override
     public Completable deleteByResourceId(String id, String resourceType) {
-        return Completable.fromPublisher(collection.deleteOne(and(eq(FIELD_RESOURCE_ID, id), eq(FIELD_RESOURCE_TYPE, resourceType))));
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_RESOURCE_ID, id), eq(FIELD_RESOURCE_TYPE, resourceType))));
     }
 
     @Override

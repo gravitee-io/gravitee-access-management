@@ -85,8 +85,7 @@ public class ClientSecretManager extends AbstractService<ClientSecretManager> im
     private Completable renewClientSecretNotifications(Payload payload) {
         return applicationService.findById(payload.getReferenceId()).flatMapCompletable(application ->
                 applicationSecretService.findById(payload.getReferenceId(), payload.getId()).flatMapCompletable(clientSecret ->
-                        clientSecretNotifierService.unregisterClientSecretExpiration(payload.getId())
-                                .andThen(clientSecretNotifierService.deleteClientSecretExpirationAcknowledgement(payload.getId()))
+                        removeClientSecretNotifications(clientSecret.getId())
                                 .andThen(clientSecretNotifierService.registerClientSecretExpiration(application, clientSecret))));
     }
 
