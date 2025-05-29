@@ -81,6 +81,7 @@ export const NewFormTemplateEnum = {
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+  ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type NewFormTemplateEnum = typeof NewFormTemplateEnum[keyof typeof NewFormTemplateEnum];
