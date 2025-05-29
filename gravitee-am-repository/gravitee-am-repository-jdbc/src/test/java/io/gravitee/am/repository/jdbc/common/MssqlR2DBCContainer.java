@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.common;
 
 import io.r2dbc.spi.ConnectionFactoryOptions;
+import io.r2dbc.spi.Option;
 import org.testcontainers.containers.MSSQLR2DBCDatabaseContainer;
 import org.testcontainers.containers.MSSQLServerContainer;
 
@@ -42,7 +43,10 @@ public class MssqlR2DBCContainer implements R2dbcDatabaseContainer {
     }
 
     public ConnectionFactoryOptions getOptions() {
-        return MSSQLR2DBCDatabaseContainer.getOptions(dbContainer);
+        return ConnectionFactoryOptions.builder()
+                .option(Option.valueOf("preferCursoredExecution"), false) // due to r2dbc-mssql 1.0.1+
+                .from(MSSQLR2DBCDatabaseContainer.getOptions(dbContainer))
+                .build();
     }
 
     @Override
