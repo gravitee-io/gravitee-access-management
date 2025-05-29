@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.net.URI;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.permissions.Permissions.of;
@@ -80,7 +81,7 @@ public class DomainsResource extends AbstractDomainResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List accessible security domains for current user",
                     content = @Content(mediaType =  "application/json",
-                            array = @ArraySchema(schema = @Schema(implementation = Domain.class)))),
+                            array = @ArraySchema(schema = @Schema(implementation = DomainPage.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void list(
             @PathParam("organizationId") String organizationId,
@@ -101,7 +102,7 @@ public class DomainsResource extends AbstractDomainResource {
                 .map(this::filterDomainInfos)
                 .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
                 .toList()
-                .map(domains -> new Page<Domain>(domains.stream().skip((long) page * size).limit(size).collect(Collectors.toList()), page, domains.size()))
+                .map(domains -> new DomainPage(domains.stream().skip((long) page * size).limit(size).collect(Collectors.toList()), page, domains.size()))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -164,6 +165,12 @@ public class DomainsResource extends AbstractDomainResource {
                                         findAllPermissions(authenticatedUser, organizationId, environmentId, domain.getId())
                                                 .map(userPermissions -> filterDomainInfos(domain, userPermissions))))
                 ).subscribe(response::resume, response::resume);
+    }
+
+    public static final class DomainPage extends Page<Domain> {
+        public DomainPage(Collection<Domain> data, int currentPage, long totalCount) {
+            super(data, currentPage, totalCount);
+        }
     }
 
 
