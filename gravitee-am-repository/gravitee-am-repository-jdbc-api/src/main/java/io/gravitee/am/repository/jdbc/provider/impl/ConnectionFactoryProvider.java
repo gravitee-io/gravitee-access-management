@@ -54,6 +54,7 @@ import static io.r2dbc.spi.ConnectionFactoryOptions.USER;
 public class ConnectionFactoryProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionFactoryProvider.class);
     public static final String TAG_SOURCE = "pool";
+    public static final String TAG_PREFER_CURSORED_EXECUTION = "preferCursoredExecution";
     public static final String TAG_DRIVER = "r2dbc_driver";
     public static final String TAG_DATABASE = "r2dbc_db";
     public static final String TAG_SERVER = "r2dbc_server";
@@ -178,7 +179,10 @@ public class ConnectionFactoryProvider {
 
             builder = TlsOptionsHelper.setSSLOptions(builder, environment, prefix, driver);
 
-            connectionPool = (ConnectionPool)ConnectionFactories.get(builder.build());
+            final String preferCursorExecution = environment.getProperty(prefix + "preferCursorExecution", "false");
+            builder.option(Option.valueOf(TAG_PREFER_CURSORED_EXECUTION), preferCursorExecution);
+
+            connectionPool = ConnectionFactories.get(builder.build());
         }
 
         LOGGER.info("Connection pool created for {} database", prefix);
