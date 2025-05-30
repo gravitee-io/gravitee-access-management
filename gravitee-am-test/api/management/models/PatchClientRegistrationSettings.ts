@@ -73,7 +73,7 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  isOpenDynamicClientRegistrationEnabled?: boolean;
+  allowRedirectUriParamsExpressionLanguage?: boolean;
   /**
    *
    * @type {boolean}
@@ -86,6 +86,12 @@ export interface PatchClientRegistrationSettings {
    * @memberof PatchClientRegistrationSettings
    */
   isDynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  isOpenDynamicClientRegistrationEnabled?: boolean;
 }
 
 export function PatchClientRegistrationSettingsFromJSON(json: any): PatchClientRegistrationSettings {
@@ -103,13 +109,16 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
     defaultScopes: !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
     isAllowedScopesEnabled: !exists(json, 'isAllowedScopesEnabled') ? undefined : json['isAllowedScopesEnabled'],
     allowedScopes: !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
-    isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
+    allowRedirectUriParamsExpressionLanguage: !exists(json, 'allowRedirectUriParamsExpressionLanguage')
       ? undefined
-      : json['isOpenDynamicClientRegistrationEnabled'],
+      : json['allowRedirectUriParamsExpressionLanguage'],
     clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
     isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
       ? undefined
       : json['isDynamicClientRegistrationEnabled'],
+    isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
+      ? undefined
+      : json['isOpenDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -127,8 +136,9 @@ export function PatchClientRegistrationSettingsToJSON(value?: PatchClientRegistr
     defaultScopes: value.defaultScopes,
     isAllowedScopesEnabled: value.isAllowedScopesEnabled,
     allowedScopes: value.allowedScopes,
-    isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
+    allowRedirectUriParamsExpressionLanguage: value.allowRedirectUriParamsExpressionLanguage,
     clientTemplateEnabled: value.clientTemplateEnabled,
     isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
+    isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
   };
 }

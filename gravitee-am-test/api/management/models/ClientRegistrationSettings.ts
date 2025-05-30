@@ -52,6 +52,12 @@ export interface ClientRegistrationSettings {
   allowWildCardRedirectUri?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof ClientRegistrationSettings
+   */
+  allowRedirectUriParamsExpressionLanguage?: boolean;
+  /**
+   *
    * @type {Array<string>}
    * @memberof ClientRegistrationSettings
    */
@@ -100,6 +106,9 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
     allowLocalhostRedirectUri: !exists(json, 'allowLocalhostRedirectUri') ? undefined : json['allowLocalhostRedirectUri'],
     allowHttpSchemeRedirectUri: !exists(json, 'allowHttpSchemeRedirectUri') ? undefined : json['allowHttpSchemeRedirectUri'],
     allowWildCardRedirectUri: !exists(json, 'allowWildCardRedirectUri') ? undefined : json['allowWildCardRedirectUri'],
+    allowRedirectUriParamsExpressionLanguage: !exists(json, 'allowRedirectUriParamsExpressionLanguage')
+      ? undefined
+      : json['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
     allowedScopes: !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
     isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
@@ -124,6 +133,7 @@ export function ClientRegistrationSettingsToJSON(value?: ClientRegistrationSetti
     allowLocalhostRedirectUri: value.allowLocalhostRedirectUri,
     allowHttpSchemeRedirectUri: value.allowHttpSchemeRedirectUri,
     allowWildCardRedirectUri: value.allowWildCardRedirectUri,
+    allowRedirectUriParamsExpressionLanguage: value.allowRedirectUriParamsExpressionLanguage,
     defaultScopes: value.defaultScopes,
     allowedScopes: value.allowedScopes,
     isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,

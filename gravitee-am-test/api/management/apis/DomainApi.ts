@@ -16095,6 +16095,7 @@ export const Get11TemplateEnum = {
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+  ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type Get11TemplateEnum = typeof Get11TemplateEnum[keyof typeof Get11TemplateEnum];
@@ -16121,6 +16122,7 @@ export const Get12TemplateEnum = {
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+  ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type Get12TemplateEnum = typeof Get12TemplateEnum[keyof typeof Get12TemplateEnum];
@@ -16147,6 +16149,7 @@ export const Get5TemplateEnum = {
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+  ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type Get5TemplateEnum = typeof Get5TemplateEnum[keyof typeof Get5TemplateEnum];
@@ -16173,6 +16176,7 @@ export const Get6TemplateEnum = {
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+  ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type Get6TemplateEnum = typeof Get6TemplateEnum[keyof typeof Get6TemplateEnum];
