@@ -92,7 +92,36 @@
     },
     "passwordEncoder" : {
       "type": "string",
-      "enum": ["BCrypt", "SHA", "SHA-1", "SHA-256", "SHA-384", "SHA-512", "MD5", "SHA-256+MD5", "None"],
+      "enum": [
+        "BCrypt",
+        "PBKDF2WithHmacSHA1",
+        "PBKDF2WithHmacSHA256",
+        "PBKDF2WithHmacSHA512",
+        "SHA",
+        "SHA-1",
+        "SHA-256",
+        "SHA-384",
+        "SHA-512",
+        "MD5",
+        "SHA-256+MD5",
+        "None"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "BCrypt": "BCrypt",
+          "PBKDF2WithHmacSHA1": "PBKDF2-SHA1",
+          "PBKDF2WithHmacSHA256": "PBKDF2-SHA256",
+          "PBKDF2WithHmacSHA512": "PBKDF2-SHA512",
+          "SHA": "SHA",
+          "SHA-1": "SHA-1",
+          "SHA-256": "SHA-256",
+          "SHA-512": "SHA-512",
+          "MD5": "MD5",
+          "SHA-256+MD5": "SHA-256+MD5",
+          "None": "None"
+        }
+      },
       "default": "BCrypt",
       "title": "Password encoder",
       "description": "The encoding mechanism to store password value."
@@ -106,7 +135,7 @@
         "rounds": {
           "type": "number",
           "title": "Rounds",
-          "description": "Number of iterations (useful only for BCrypt, SHA)"
+          "description": "Number of iterations (useful only for BCrypt, PBKDF2, SHA)"
         }
       }
     },
