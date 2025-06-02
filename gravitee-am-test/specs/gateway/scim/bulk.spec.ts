@@ -283,6 +283,39 @@ describe('SCIM Bulk endpoint', () => {
     expect(op.location).toBeUndefined();
   });
 
+  it('should reject update if users externalId is overwritten', async () => {
+    const userLocation = await createRandomUser();
+    const user = await readScimUserProfile(userLocation);
+
+    const changedUser = { ...user };
+    changedUser['externalId'] = 'test';
+
+    const updateOp: BulkOperation = {
+      method: 'PUT',
+      path: '/Users/' + userLocation.substring(userLocation.lastIndexOf('/') + 1),
+      bulkId: random.word(),
+      data: changedUser,
+    };
+
+    const updateRequest: BulkRequest = {
+      schemas: ['urn:ietf:params:scim:api:messages:2.0:BulkRequest'],
+      Operations: [updateOp],
+    };
+
+    const scimResponse = await performPost(scimEndpoint, '/Bulk', JSON.stringify(updateRequest), {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${scimAccessToken}`,
+    }).expect(200);
+
+    const bulkResponse: BulkResponse = scimResponse.body;
+    console.log(bulkResponse);
+    expect(bulkResponse.Operations).toHaveLength(1);
+    const op = bulkResponse.Operations[0];
+    expect(op.bulkId).toBeDefined();
+    expect(op.bulkId).toEqual(updateOp.bulkId);
+    expect(op.status).toEqual('400');
+  });
+
   it('should stop processing at second failure when failOnErrors=2', async () => {
     const operation1: BulkOperation = {
       method: 'POST',

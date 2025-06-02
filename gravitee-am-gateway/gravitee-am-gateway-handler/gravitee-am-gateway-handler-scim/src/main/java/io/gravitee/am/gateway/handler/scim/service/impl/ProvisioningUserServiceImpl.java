@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.scim.exception.ForbiddenOperationException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.SCIMException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
@@ -348,6 +349,10 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
                             // and update the user
                             .andThen(Single.defer(() -> {
                                 io.gravitee.am.model.User userToUpdate = convertUserToUpdate(existingUser, scimUser);
+
+                                if(scimUser.getExternalId() != null && !existingUser.getExternalId().equals(scimUser.getExternalId())) {
+                                    return Single.error(new ForbiddenOperationException("The externalId cannot be overwritten"));
+                                }
 
                                 // set source
                                 String source = scimUser.getSource() != null ? scimUser.getSource() : (idp != null ? idp : existingUser.getSource());

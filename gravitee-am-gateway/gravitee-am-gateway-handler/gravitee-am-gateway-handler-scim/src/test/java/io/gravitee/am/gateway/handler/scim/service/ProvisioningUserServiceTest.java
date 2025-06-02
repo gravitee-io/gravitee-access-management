@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.scim.exception.ForbiddenOperationException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
 import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
@@ -1069,6 +1070,30 @@ public class ProvisioningUserServiceTest {
 
         TestObserver<User> testObserver = userService.create(newUser, null, "/", null, new Client()).test();
         testObserver.assertError(err -> err instanceof UserInvalidException);
+    }
+
+    @Test
+    public void shouldNotUpdateUser_externalIdOverwrite() {
+        io.gravitee.am.model.User existingUser = mock(io.gravitee.am.model.User.class);
+        when(existingUser.getId()).thenReturn("user-id");
+        when(existingUser.getUsername()).thenReturn("username");
+        when(existingUser.getReferenceId()).thenReturn(DOMAIN_ID);
+        when(existingUser.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
+        when(existingUser.getExternalId()).thenReturn("externalId");
+
+        User scimUser = mock(User.class);
+        when(scimUser.getPassword()).thenReturn(PASSWORD);
+        when(scimUser.isActive()).thenReturn(true);
+        when(scimUser.getExternalId()).thenReturn("newExternalid");
+
+        when(userRepository.findById(existingUser.getId())).thenReturn(Maybe.just(existingUser));
+        ArgumentCaptor<io.gravitee.am.model.User> userCaptor = ArgumentCaptor.forClass(io.gravitee.am.model.User.class);
+        TestObserver<User> testObserver = userService.update(existingUser.getId(), scimUser, null, "/", null, null).test();
+        testObserver.assertError(ForbiddenOperationException.class);
+        testObserver.assertError(throwable -> throwable.getMessage().equals("The externalId cannot be overwritten"));
+
+        verify(userRepository, never()).update(userCaptor.capture());
+        verify(identityProviderManager, never()).getUserProvider(anyString());
     }
 
 
