@@ -54,8 +54,12 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
     private static final int TABLE_NAME_MAX_LENGTH = 50;
     public static final String PASSWORD = "password";
 
-    private static final Set<String> SUPPORTED_PASSWORD_ENCODER = Set.of("BCrypt", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5");
-
+    private static final Set<String> SUPPORTED_PASSWORD_ENCODER = Set.of("BCrypt", "PBKDF2-SHA1", "PBKDF2-SHA256", "PBKDF2-SHA512", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5");
+    private static final Map<String, String> PBKDF2_PASSWORD_ENCODER_MAP = Map.of(
+            "PBKDF2-SHA1", "PBKDF2WithHmacSHA1",
+            "PBKDF2-SHA256", "PBKDF2WithHmacSHA256",
+            "PBKDF2-SHA512", "PBKDF2WithHmacSHA512"
+    );
     private final IdentityProviderService identityProviderService;
 
     private final RepositoriesEnvironment environment;
@@ -128,7 +132,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             configMap.put("findUserByEmailQuery", "{email: ?}");
             configMap.put("usernameField", "username");
             configMap.put("passwordField", PASSWORD);
-            configMap.put("passwordEncoder", encoder);
+            configMap.put("passwordEncoder", parsePasswordEncoder(encoder));
             updatePasswordEncoderOptions(configMap, encoder);
 
         } else if (useJdbcRepositories()) {
@@ -160,7 +164,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             configMap.put("identifierAttribute", "id");
             configMap.put("usernameAttribute", "username");
             configMap.put("passwordAttribute", PASSWORD);
-            configMap.put("passwordEncoder", encoder);
+            configMap.put("passwordEncoder", parsePasswordEncoder(encoder));
             updatePasswordEncoderOptions(configMap, encoder);
         }
         return configMap;
@@ -202,12 +206,22 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
         }
     }
 
+    private String parsePasswordEncoder(final String encoder) {
+        if (encoder.toLowerCase().startsWith("pbkdf2")) {
+            return PBKDF2_PASSWORD_ENCODER_MAP.get(encoder);
+        }
+        return encoder;
+    }
+
     private void updatePasswordEncoderOptions(Map<String, Object> configMap, String encoder) {
         if ("bcrypt".equalsIgnoreCase(encoder)) {
             String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "10");
             configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
         } else if (encoder.toLowerCase().startsWith("sha")) {
             String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "1");
+            configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
+        } else if (encoder.toLowerCase().startsWith("pbkdf2")) {
+            String rounds = environment.getProperty("domains.identities.default.passwordEncoder.properties.rounds", "600000");
             configMap.put("passwordEncoderOptions", new PasswordEncoderOptions(Integer.parseInt(rounds)));
         }
     }

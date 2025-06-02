@@ -16,6 +16,9 @@
 
 package io.gravitee.am.service.authentication.crypto.password;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -26,6 +29,20 @@ public class PBKDF2PasswordEncoderTest extends AbstractPasswordEncoderTest {
     @Override
     protected PasswordEncoder getEncoder() {
         return encoder;
+    }
+
+    @Test
+    public void testPassword_match_not_equals_with_salt() {
+        String hash = "v5EFuaKK7l26tMEt/vNs3A==";
+        String encodedPassword = "xSnKPp1Zg+IOPhvZmb056iAav1nd+qtCs1OQQ0o/nvA=";
+        Assert.assertFalse(getEncoder().matches("wrongPassword", encodedPassword, hash));
+    }
+
+    @Test
+    public void testPassword_match_equals() {
+        String hash = "v5EFuaKK7l26tMEt/vNs3A==";
+        String encodedPassword = "xSnKPp1Zg+IOPhvZmb056iAav1nd+qtCs1OQQ0o/nvA=";
+        Assert.assertTrue(getEncoder().matches("password", encodedPassword, hash));
     }
 
 }
