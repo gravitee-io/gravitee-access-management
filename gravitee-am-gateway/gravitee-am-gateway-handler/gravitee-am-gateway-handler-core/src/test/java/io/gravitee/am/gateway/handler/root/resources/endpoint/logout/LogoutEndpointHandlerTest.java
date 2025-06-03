@@ -120,6 +120,32 @@ public class LogoutEndpointHandlerTest extends RxWebTestBase {
                 HttpStatusCode.FOUND_302, "Found", null);
     }
 
+    @Test
+    public void shouldInvokeLogoutEndpoint_targetUrl_withDeepLink() throws Exception {
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=net.openid.appauthdemo:/oauth2redirect",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.equals("net.openid.appauthdemo:/oauth2redirect"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldInvokeLogoutEndpoint_Invalid_targetUrl_noClient() throws Exception {
+        testRequest(
+                HttpMethod.GET, "/logout?target_url=https%3A%2F%2Fsomewhere\\@test",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("error=redirect_uri_mismatch"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
 
     @Test
     public void shouldInvokeLogoutEndpoint_targetUrl_alloaw_atDomainLevel_appUrls_not_defined() throws Exception {
