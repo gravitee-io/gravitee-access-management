@@ -180,12 +180,9 @@ public class ConnectionFactoryProvider {
 
             builder = TlsOptionsHelper.setSSLOptions(builder, environment, prefix, driver);
 
-<<<<<<< HEAD
-=======
             final String preferCursorExecution = environment.getProperty(prefix + "preferCursorExecution", "false");
             builder.option(Option.valueOf(TAG_PREFER_CURSORED_EXECUTION), preferCursorExecution);
 
->>>>>>> 3d1592569 (fix: r2dbc-mssql in 1.0.1+ version problem with cursoredExecution)
             connectionPool = ConnectionFactories.get(builder.build());
         }
 
