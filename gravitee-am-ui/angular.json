@@ -17,7 +17,8 @@
           "options": {
             "allowedCommonJsDependencies": ["crypto-browserify", "stream-browserify", "readable-stream"],
             "outputPath": {
-              "base": "dist"
+              "base": "dist",
+              "browser": ""
             },
             "index": "src/index.html",
             "tsConfig": "src/tsconfig.app.json",
