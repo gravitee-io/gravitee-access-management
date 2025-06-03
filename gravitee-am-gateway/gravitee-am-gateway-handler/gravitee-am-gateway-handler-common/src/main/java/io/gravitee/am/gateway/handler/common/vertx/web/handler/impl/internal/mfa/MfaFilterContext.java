@@ -205,4 +205,8 @@ public class MfaFilterContext {
     public boolean isUserSilentAuth() {
         return TRUE.equals(routingContext.get(ConstantKeys.SILENT_AUTH_CONTEXT_KEY));
     }
+
+    public String getEndUserId() {
+        return Optional.ofNullable(this.endUser).map(User::getId).orElse(null);
+    }
 }

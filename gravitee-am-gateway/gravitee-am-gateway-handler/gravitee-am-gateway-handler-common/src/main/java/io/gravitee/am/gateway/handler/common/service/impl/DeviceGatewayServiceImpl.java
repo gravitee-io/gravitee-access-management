@@ -27,7 +27,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 import java.util.Optional;
@@ -56,7 +55,10 @@ public class DeviceGatewayServiceImpl implements DeviceGatewayService {
 
     @Override
     public Single<Boolean> deviceExists(Domain domain, String client, UserId user, String rememberDevice, String deviceId) {
-        return dataPlaneRegistry.getDeviceRepository(domain).findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(domain.getId(), client, user, rememberDevice, deviceId).isEmpty();
+        return dataPlaneRegistry.getDeviceRepository(domain).findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(domain.getId(), client, user, rememberDevice, deviceId)
+                .isEmpty()
+                .doOnSuccess(notFound ->
+                        log.debug("call deviceExists(domain:{}, client:{}, userId:{}, rememberDevice:{}, deviceId:{}) result with : {}", domain.getId(), client, user, rememberDevice, deviceId, !notFound));
     }
 
     @Override
@@ -74,6 +76,11 @@ public class DeviceGatewayServiceImpl implements DeviceGatewayService {
                 .setDeviceId(deviceId)
                 .setCreatedAt(new Date())
                 .setExpiresAt(new Date(expiresAt))
-        );
+        ).doOnSuccess(ignoreMe ->
+                        log.debug("createDevice(domain:{}, client:{}, userId:{}, rememberDevice:{}, deviceId:{}) successful",
+                                domain.getId(), client, user, rememberDevice, deviceId))
+                .doOnError(exception ->
+                        log.debug("createDevice(domain:{}, client:{}, userId:{}, rememberDevice:{}, deviceId:{}) failed : {}",
+                                domain.getId(), client, user, rememberDevice, deviceId, exception.getMessage()));
     }
 }
