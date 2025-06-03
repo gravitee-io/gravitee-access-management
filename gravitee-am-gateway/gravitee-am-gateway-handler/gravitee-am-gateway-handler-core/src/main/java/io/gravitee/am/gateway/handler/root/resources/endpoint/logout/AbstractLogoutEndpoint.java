@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.logout;
 
 import com.google.common.base.Strings;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.exception.oauth2.RedirectMismatchException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.oidc.StandardClaims;
@@ -36,6 +37,9 @@ import io.vertx.core.Handler;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -130,6 +134,22 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         List<String> registeredUris = client != null && !isEmpty(client.getPostLogoutRedirectUris()) ? client.getPostLogoutRedirectUris() : (domain.getOidc() != null ? domain.getOidc().getPostLogoutRedirectUris() : null);
         if (!isMatchingRedirectUri(logoutRedirectUrl, registeredUris, domain.isRedirectUriStrictMatching() || domain.usePlainFapiProfile())) {
             routingContext.fail(new InvalidRequestException("The post_logout_redirect_uri MUST match the registered callback URLs"));
+            return;
+        }
+
+        try {
+            // use UriBuilder to sanitize the uri so non urlEncoded character will be encoded
+            // to avoid URISyntaxException due to the space in the scope parameter value
+            URI uri = UriBuilder.fromURIString(logoutRedirectUrl).build();
+            if(uri.getUserInfo() != null){
+                routingContext.fail(new RedirectMismatchException(String.format("The post_logout_redirect_uri [ %s ] MUST NOT contain userInfo part", logoutRedirectUrl)));
+                return;
+            }
+        } catch (URISyntaxException ex){
+            // the URI is invalid, only log the error to avoid regression
+            // URI white list will reject the value if necessary
+            LOGGER.warn("The post_logout_redirect_uri [{}] has syntax error redirect to error page: {}", logoutRedirectUrl, ex.getMessage());
+            routingContext.fail(new RedirectMismatchException(String.format("The post_logout_redirect_uri [ %s ] MUST NOT contain userInfo part", logoutRedirectUrl)));
             return;
         }
 
