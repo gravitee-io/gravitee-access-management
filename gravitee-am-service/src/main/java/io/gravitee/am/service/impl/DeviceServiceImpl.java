@@ -71,7 +71,10 @@ public class DeviceServiceImpl implements DeviceService {
 
     @Override
     public Single<Boolean> deviceExists(String domain, String client, UserId user, String rememberDevice, String deviceId) {
-        return deviceRepository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(domain, client, user, rememberDevice, deviceId).isEmpty();
+        return deviceRepository.findByDomainAndClientAndUserAndDeviceIdentifierAndDeviceId(domain, client, user, rememberDevice, deviceId).isEmpty()
+                .doOnSuccess(notFound ->
+                        LOGGER.debug("call deviceExists(domain:{}, client:{}, userId:{}, rememberDevice:{}, deviceId:{}) result with : {}",
+                        domain, client, user, rememberDevice, deviceId, !notFound));
     }
 
     @Override
@@ -89,7 +92,12 @@ public class DeviceServiceImpl implements DeviceService {
                 .setDeviceId(deviceId)
                 .setCreatedAt(new Date())
                 .setExpiresAt(new Date(expiresAt))
-        );
+        ).doOnSuccess(ignoreMe ->
+                LOGGER.debug("createDevice(domain:{}, client:{}, userId:{}, rememberDevice:{}, deviceId:{}) successful",
+                        domain, client, user, rememberDevice, deviceId))
+        .doOnError(exception ->
+                LOGGER.debug("createDevice(domain:{}, client:{}, userId:{}, rememberDevice:{}, deviceId:{}) failed : {}",
+                        domain, client, user, rememberDevice, deviceId, exception.getMessage()));
     }
 
     @Override
