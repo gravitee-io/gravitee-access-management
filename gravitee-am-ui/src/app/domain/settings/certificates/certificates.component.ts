@@ -26,6 +26,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
   selector: 'app-certificates',
   templateUrl: './certificates.component.html',
   styleUrls: ['./certificates.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsCertificatesComponent implements OnInit {
   private certificateTypes: any = {
@@ -195,6 +196,7 @@ export class DomainSettingsCertificatesComponent implements OnInit {
   selector: 'certificate-public-key-dialog',
   templateUrl: './dialog/public-key.component.html',
   styleUrls: ['./dialog/public-key.component.scss'],
+  standalone: false,
 })
 export class CertitificatePublicKeyDialogComponent {
   public title: string;

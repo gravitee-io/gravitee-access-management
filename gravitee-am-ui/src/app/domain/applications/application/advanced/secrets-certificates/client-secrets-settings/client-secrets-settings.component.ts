@@ -25,6 +25,7 @@ import { TimeConverterService } from '../../../../../../services/time-converter.
   selector: 'app-client-secrets-settings',
   templateUrl: './client-secrets-settings.component.html',
   styleUrl: '../secrets-certificates.component.scss',
+  standalone: false,
 })
 export class ClientSecretsSettingsComponent implements OnInit {
   domainSettingsUrl: string;

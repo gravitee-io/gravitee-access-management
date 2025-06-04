@@ -27,6 +27,7 @@ import { DomainStoreService } from '../../../../../../stores/domain.store';
   selector: 'application-grant-types',
   templateUrl: './application-grant-flows.component.html',
   styleUrls: ['./application-grant-flows.component.scss'],
+  standalone: false,
 })
 export class ApplicationGrantFlowsComponent implements OnInit {
   private CIBA_GRANT_TYPE = 'urn:openid:params:grant-type:ciba';
@@ -93,7 +94,7 @@ export class ApplicationGrantFlowsComponent implements OnInit {
       if (this.applicationOauthSettings.jwks) {
         try {
           JSON.parse(this.applicationOauthSettings.jwks);
-        } catch (e) {
+        } catch {
           this.snackbarService.open('The jwks parameter is malformed.');
           return;
         }

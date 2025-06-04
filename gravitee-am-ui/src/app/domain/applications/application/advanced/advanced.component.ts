@@ -24,6 +24,7 @@ import { AuthService } from '../../../../services/auth.service';
   selector: 'app-application-advanced',
   templateUrl: './advanced.component.html',
   styleUrls: ['./advanced.component.scss'],
+  standalone: false,
 })
 export class ApplicationAdvancedComponent implements OnDestroy {
   private subscription: Subscription;

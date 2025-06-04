@@ -30,6 +30,7 @@ import { ProviderService } from '../../../services/provider.service';
   selector: 'app-users',
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.scss'],
+  standalone: false,
 })
 export class UsersComponent implements OnInit {
   private re = /\b(eq|ne|co|sw|ew|pr|gt|ge|lt|le|and|or)\b/gi;
@@ -202,6 +203,7 @@ export class UsersComponent implements OnInit {
 @Component({
   selector: 'users-search-info-dialog',
   templateUrl: './dialog/users-search-info.component.html',
+  standalone: false,
 })
 export class UsersSearchInfoDialogComponent {
   constructor(public dialogRef: MatDialogRef<UsersSearchInfoDialogComponent>) {}

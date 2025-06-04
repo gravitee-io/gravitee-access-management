@@ -27,6 +27,7 @@ import { DomainStoreService } from '../../../stores/domain.store';
   selector: 'app-domain-secrets',
   templateUrl: './secrets.component.html',
   styleUrl: './secrets.component.scss',
+  standalone: false,
 })
 export class DomainSettingsSecretsComponent implements OnInit {
   domainId: string;

@@ -18,6 +18,7 @@ import moment from 'moment';
 
 @Pipe({
   name: 'humanDate',
+  standalone: false,
 })
 export class HumanDatePipe implements PipeTransform {
   transform(value: any): any {

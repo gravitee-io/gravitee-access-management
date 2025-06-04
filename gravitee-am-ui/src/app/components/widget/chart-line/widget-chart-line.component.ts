@@ -23,6 +23,7 @@ import { Chart } from '../widget.model';
   selector: 'gv-widget-chart-line',
   templateUrl: './widget-chart-line.component.html',
   styleUrls: ['./widget-chart-line.component.scss'],
+  standalone: false,
 })
 export class WidgetChartLineComponent implements OnChanges {
   @Input() Highcharts: typeof Highcharts;

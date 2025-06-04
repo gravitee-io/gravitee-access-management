@@ -19,6 +19,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
   selector: 'mfa-intelligent',
   templateUrl: './mfa-risk-based.component.html',
   styleUrls: ['./mfa-risk-based.component.scss'],
+  standalone: false,
 })
 export class MfaRiskBasedComponent implements OnInit {
   /* Arbitrary score */

@@ -20,6 +20,7 @@ import { AppConfig } from '../../config/app.config';
 @Component({
   selector: 'app-logout',
   template: ``,
+  standalone: false,
 })
 export class LogoutComponent implements OnInit {
   private logoutEndpoint = AppConfig.settings.baseURL + '/auth/logout';

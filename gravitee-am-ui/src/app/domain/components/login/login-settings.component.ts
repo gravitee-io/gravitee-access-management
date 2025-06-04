@@ -19,6 +19,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewC
   selector: 'app-login-settings',
   templateUrl: './login-settings.component.html',
   styleUrls: ['./login-settings.component.scss'],
+  standalone: false,
 })
 export class LoginSettingsComponent implements OnChanges {
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix

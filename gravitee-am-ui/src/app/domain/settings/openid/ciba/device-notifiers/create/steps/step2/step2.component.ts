@@ -21,6 +21,7 @@ import { OrganizationService } from '../../../../../../../../services/organizati
   selector: 'device-notifier-creation-step2',
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss'],
+  standalone: false,
 })
 export class DeviceNotifierCreationStep2Component implements OnInit {
   @Input() deviceNotifier: any;

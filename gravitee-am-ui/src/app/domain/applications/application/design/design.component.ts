@@ -24,6 +24,7 @@ import { AuthService } from '../../../../services/auth.service';
   selector: 'app-application-design',
   templateUrl: './design.component.html',
   styleUrls: ['./design.component.scss'],
+  standalone: false,
 })
 export class ApplicationDesignComponent implements OnDestroy {
   private subscription: Subscription;

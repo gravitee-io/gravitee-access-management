@@ -19,6 +19,7 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   selector: 'extension-grant-form',
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
+  standalone: false,
 })
 export class ExtensionGrantFormComponent implements OnChanges {
   // eslint-disable-next-line @angular-eslint/no-input-rename

@@ -38,6 +38,7 @@ interface Dictionary {
   selector: 'app-dictionaries',
   templateUrl: './dictionaries.component.html',
   styleUrls: ['./dictionaries.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsDictionariesComponent implements OnInit {
   domain: any = {};
@@ -262,7 +263,7 @@ export class DomainSettingsDictionariesComponent implements OnInit {
         this.formContent = content;
         try {
           JSON.parse(content);
-        } catch (e) {
+        } catch {
           this.snackbarService.open('JSON file was invalid');
         }
       });

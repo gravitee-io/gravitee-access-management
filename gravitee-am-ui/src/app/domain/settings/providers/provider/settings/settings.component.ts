@@ -31,6 +31,7 @@ import { enrichFormWithCerts } from '../provider.form.enricher';
   selector: 'provider-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
+  standalone: false,
 })
 export class ProviderSettingsComponent implements OnInit {
   @ViewChild('providerForm', { static: true }) public form: NgForm;

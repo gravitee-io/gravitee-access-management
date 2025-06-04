@@ -44,6 +44,7 @@ export interface ClientSecret {
   selector: 'app-application-certificates',
   templateUrl: './secrets-certificates.component.html',
   styleUrls: ['./secrets-certificates.component.scss'],
+  standalone: false,
 })
 export class ApplicationSecretsCertificatesComponent implements OnInit {
   domain: any;

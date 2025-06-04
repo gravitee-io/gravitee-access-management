@@ -26,6 +26,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-domain-settings-memberships',
   templateUrl: './memberships.component.html',
   styleUrls: ['./memberships.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsMembershipsComponent implements OnInit {
   @ViewChild('membersTable') table: any;
@@ -88,6 +89,7 @@ export class DomainSettingsMembershipsComponent implements OnInit {
   selector: 'app-domain-memberships-dialog',
   templateUrl: '../../components/memberships/dialog/memberships-dialog.html',
   styleUrls: ['../../components/memberships/dialog/memberships-dialog.scss'],
+  standalone: false,
 })
 export class DomainMembershipsDialogComponent {
   private domainId: string;

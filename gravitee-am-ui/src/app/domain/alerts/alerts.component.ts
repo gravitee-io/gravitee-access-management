@@ -20,6 +20,7 @@ import { ActivatedRoute, Router } from '@angular/router';
   selector: 'app-domain-alerts',
   templateUrl: './alerts.component.html',
   styleUrls: ['./alerts.component.scss'],
+  standalone: false,
 })
 export class DomainAlertsComponent implements OnInit {
   alertStatus: any;

@@ -27,6 +27,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-user-devices',
   templateUrl: './devices.component.html',
   styleUrls: ['./devices.component.scss'],
+  standalone: false,
 })
 export class UserDevicesComponent implements OnInit {
   private domainId: string;

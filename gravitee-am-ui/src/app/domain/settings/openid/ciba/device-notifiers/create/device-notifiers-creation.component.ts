@@ -24,6 +24,7 @@ import { SnackbarService } from '../../../../../../services/snackbar.service';
   selector: 'app-device-notifiers-creation',
   templateUrl: './device-notifiers-creation.component.html',
   styleUrls: ['./device-notifiers-creation.component.scss'],
+  standalone: false,
 })
 export class DeviceNotifiersCreationComponent implements OnInit {
   private domainId: string;

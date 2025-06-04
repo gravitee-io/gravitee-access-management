@@ -26,6 +26,7 @@ import { DomainStoreService } from '../../../../../stores/domain.store';
   selector: 'password-policy',
   templateUrl: './password-policy.component.html',
   styleUrls: ['./password-policy.component.scss'],
+  standalone: false,
 })
 export class PasswordPolicyComponent implements OnInit {
   @ViewChild('applicationForm', { static: true }) form: any;

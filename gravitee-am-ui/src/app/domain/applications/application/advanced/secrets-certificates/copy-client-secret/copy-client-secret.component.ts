@@ -27,6 +27,7 @@ export interface CopyClientSecretCopyDialogData {
   selector: 'app-copy-client-secret',
   templateUrl: './copy-client-secret.component.html',
   styleUrl: '../secrets-certificates.component.scss',
+  standalone: false,
 })
 export class CopyClientSecretComponent {
   notCopied = true;

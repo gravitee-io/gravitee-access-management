@@ -54,6 +54,7 @@ import { JsonSchemaFormService } from '@ajsf/core';
       </div>
     </div>
   </div>`,
+  standalone: false,
 })
 export class MaterialFileComponent implements OnInit {
   formControl: AbstractControl;

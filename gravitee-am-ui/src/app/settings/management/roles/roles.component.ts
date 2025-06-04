@@ -26,6 +26,7 @@ import { OrganizationService } from '../../../services/organization.service';
   selector: 'app-settings-management-roles',
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
+  standalone: false,
 })
 export class ManagementRolesComponent implements OnInit {
   @ViewChild('rolesTable') table: any;

@@ -24,6 +24,7 @@ import { ExtensionGrantService } from '../../../../../../services/extension-gran
   selector: 'extension-grant-creation-step2',
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss'],
+  standalone: false,
 })
 export class ExtensionGrantCreationStep2Component implements OnInit {
   @Input() extensionGrant: any;

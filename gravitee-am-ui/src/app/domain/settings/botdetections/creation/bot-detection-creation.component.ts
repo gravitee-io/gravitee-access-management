@@ -24,6 +24,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
   selector: 'app-bot-detection-creation',
   templateUrl: './bot-detection-creation.component.html',
   styleUrls: ['./bot-detection-creation.component.scss'],
+  standalone: false,
 })
 export class BotDetectionCreationComponent implements OnInit {
   private domainId: string;

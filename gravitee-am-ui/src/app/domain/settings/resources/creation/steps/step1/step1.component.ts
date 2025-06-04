@@ -24,6 +24,7 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   selector: 'resource-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss'],
+  standalone: false,
 })
 export class ResourceCreationStep1Component implements OnInit, OnDestroy {
   private resourceTypes: any = {

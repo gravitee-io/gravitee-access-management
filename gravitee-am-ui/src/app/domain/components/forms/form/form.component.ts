@@ -31,6 +31,7 @@ export interface DialogData {
   selector: 'app-form',
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
+  standalone: false,
 })
 export class FormComponent implements OnInit, AfterViewInit {
   private organizationContext = false;
@@ -188,6 +189,7 @@ export class FormComponent implements OnInit, AfterViewInit {
 @Component({
   selector: 'form-info-dialog',
   templateUrl: './dialog/form-info.component.html',
+  standalone: false,
 })
 export class FormInfoDialogComponent {
   constructor(

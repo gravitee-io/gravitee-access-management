@@ -28,6 +28,7 @@ import { DomainStoreService } from '../../../stores/domain.store';
   selector: 'app-domain-webauthn',
   templateUrl: './webauthn.component.html',
   styleUrls: ['./webauthn.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsWebAuthnComponent implements OnInit {
   private entrypoint: any;

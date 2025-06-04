@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-domain-device-identifiers',
   templateUrl: './device-identifiers.component.html',
   styleUrls: ['./device-identifiers.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsDeviceIdentifiersComponent implements OnInit {
   private deviceIdentifierTypes: any = {

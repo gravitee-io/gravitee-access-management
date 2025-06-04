@@ -28,6 +28,7 @@ import { DialogService } from '../../../../../services/dialog.service';
   selector: 'app-application-flows',
   templateUrl: './flows.component.html',
   styleUrls: ['./flows.component.scss'],
+  standalone: false,
 })
 export class ApplicationFlowsComponent implements OnInit {
   private domainId: string;

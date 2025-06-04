@@ -19,6 +19,7 @@ import { Component, Input } from '@angular/core';
   selector: 'app-emptystate',
   templateUrl: './emptystate.component.html',
   styleUrls: ['./emptystate.component.scss'],
+  standalone: false,
 })
 export class EmptystateComponent {
   @Input() message: string;

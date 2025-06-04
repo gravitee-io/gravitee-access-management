@@ -26,6 +26,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-openid-client-registration-allowed-scope',
   templateUrl: './allowed-scope.component.html',
   styleUrls: ['./allowed-scope.component.scss'],
+  standalone: false,
 })
 export class ClientRegistrationAllowedScopeComponent implements OnInit {
   domain: any = {};

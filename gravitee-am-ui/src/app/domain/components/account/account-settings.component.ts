@@ -30,6 +30,7 @@ interface Duration {
   selector: 'app-account-settings',
   templateUrl: './account-settings.component.html',
   styleUrls: ['./account-settings.component.scss'],
+  standalone: false,
 })
 export class AccountSettingsComponent implements OnInit, OnChanges {
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix

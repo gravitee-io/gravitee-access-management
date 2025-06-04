@@ -25,6 +25,7 @@ import { DomainStoreService } from '../../../../stores/domain.store';
   selector: 'application-overview',
   templateUrl: './endpoints.component.html',
   styleUrls: ['./endpoints.component.scss'],
+  standalone: false,
 })
 export class ApplicationEndpointsComponent implements OnInit {
   application: any;

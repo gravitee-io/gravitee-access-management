@@ -22,6 +22,7 @@ import { FormTemplateFactoryService } from '../../../services/form.template.fact
   selector: 'app-domain-forms',
   templateUrl: './forms.component.html',
   styleUrls: ['./forms.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsFormsComponent implements OnInit {
   forms: any[];

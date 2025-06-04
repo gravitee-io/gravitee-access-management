@@ -24,6 +24,7 @@ import { FactorService } from '../../../../services/factor.service';
   selector: 'app-factor-creation',
   templateUrl: './factor-creation.component.html',
   styleUrls: ['./factor-creation.component.scss'],
+  standalone: false,
 })
 export class FactorCreationComponent implements OnInit {
   private domainId: string;

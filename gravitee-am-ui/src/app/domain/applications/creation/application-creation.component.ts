@@ -32,6 +32,7 @@ import {
   selector: 'app-creation',
   templateUrl: './application-creation.component.html',
   styleUrls: ['./application-creation.component.scss'],
+  standalone: false,
 })
 export class ApplicationCreationComponent implements OnInit {
   public application: any = {};

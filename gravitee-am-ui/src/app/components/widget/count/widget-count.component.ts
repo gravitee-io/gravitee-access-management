@@ -21,6 +21,7 @@ import { Chart } from '../widget.model';
   selector: 'gv-widget-count',
   templateUrl: './widget-count.component.html',
   styleUrls: ['./widget-count.component.scss'],
+  standalone: false,
 })
 export class WidgetCountComponent implements OnChanges {
   @Input() chart: Chart;

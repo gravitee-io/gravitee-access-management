@@ -34,6 +34,7 @@ export interface Scope {
   selector: 'app-role',
   templateUrl: './role.component.html',
   styleUrls: ['./role.component.scss'],
+  standalone: false,
 })
 export class RoleComponent implements OnInit {
   @ViewChild('chipInput', { static: true }) chipInput: MatInput;

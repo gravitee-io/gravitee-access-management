@@ -19,6 +19,7 @@ import { Component } from '@angular/core';
   selector: 'app-snackbar',
   templateUrl: './snackbar.component.html',
   styleUrls: ['./snackbar.component.scss'],
+  standalone: false,
 })
 export class SnackbarComponent {
   public title: string;

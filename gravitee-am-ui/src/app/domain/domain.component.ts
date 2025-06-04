@@ -24,6 +24,7 @@ import { AuthService } from '../services/auth.service';
   selector: 'app-domain',
   templateUrl: './domain.component.html',
   styleUrls: ['./domain.component.scss'],
+  standalone: false,
 })
 export class DomainComponent implements OnInit {
   domain: any = {};

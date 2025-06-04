@@ -24,6 +24,7 @@ import { DomainStoreService } from '../../../../../stores/domain.store';
   selector: 'app-application-forms',
   templateUrl: './forms.component.html',
   styleUrls: ['./forms.component.scss'],
+  standalone: false,
 })
 export class ApplicationFormsComponent implements OnInit {
   domain: any;

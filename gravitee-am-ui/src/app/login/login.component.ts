@@ -20,6 +20,7 @@ import { AppConfig } from '../../config/app.config';
 @Component({
   selector: 'app-login',
   template: ``,
+  standalone: false,
 })
 export class LoginComponent implements OnInit {
   private loginEndpoint = AppConfig.settings.baseURL + '/auth/authorize';

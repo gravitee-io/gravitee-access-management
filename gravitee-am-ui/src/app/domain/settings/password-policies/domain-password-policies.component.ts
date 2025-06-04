@@ -28,6 +28,7 @@ import { PasswordPolicy } from './domain-password-policies.model';
   selector: 'domain-password-policies',
   templateUrl: './domain-password-policies.component.html',
   styleUrls: ['./domain-password-policies.component.scss'],
+  standalone: false,
 })
 export class PasswordPoliciesComponent implements OnInit {
   domainId: string;

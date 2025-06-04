@@ -24,6 +24,7 @@ import { ApplicationService } from '../../services/application.service';
   selector: 'app-applications',
   templateUrl: './applications.component.html',
   styleUrls: ['./applications.component.scss'],
+  standalone: false,
 })
 export class ApplicationsComponent implements OnInit {
   applications: any[];

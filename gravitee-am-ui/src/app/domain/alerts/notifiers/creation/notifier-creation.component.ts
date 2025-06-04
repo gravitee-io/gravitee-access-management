@@ -24,6 +24,7 @@ import { AlertService } from '../../../../services/alert.service';
   selector: 'alert-notifier-creation',
   templateUrl: './notifier-creation.component.html',
   styleUrls: ['./notifier-creation.component.scss'],
+  standalone: false,
 })
 export class DomainAlertNotifierCreationComponent implements OnInit {
   public alertNotifier: any = {};

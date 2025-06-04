@@ -19,7 +19,7 @@ import 'codemirror/mode/htmlmixed/htmlmixed';
 import 'codemirror/addon/selection/mark-selection';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { APP_INITIALIZER, CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -904,12 +904,10 @@ import { DomainStoreService } from './stores/domain.store';
       useClass: HttpRequestInterceptor,
       multi: true,
     },
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initCurrentUser,
-      multi: true,
-      deps: [AuthService, EnvironmentService],
-    },
+    provideAppInitializer(() => {
+      const initializerFn = initCurrentUser(inject(AuthService), inject(EnvironmentService));
+      return initializerFn();
+    }),
     provideHttpClient(withInterceptorsFromDi()),
   ],
 })

@@ -19,5 +19,6 @@ import { Component } from '@angular/core';
   selector: 'gv-loader',
   templateUrl: './loader.component.html',
   styleUrls: ['./loader.component.scss'],
+  standalone: false,
 })
 export class LoaderComponent {}

@@ -23,6 +23,7 @@ import { Enroll } from '../../model';
   selector: 'mfa-conditional',
   templateUrl: './mfa-conditional.component.html',
   styleUrls: ['./mfa-conditional.component.scss'],
+  standalone: false,
 })
 export class MfaConditionalComponent {
   @Input() enrollment: Enroll;

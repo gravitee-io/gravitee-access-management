@@ -26,6 +26,7 @@ import { AlertService } from '../../../services/alert.service';
   selector: 'app-domain-alert-notifiers',
   templateUrl: './notifiers.component.html',
   styleUrls: ['./notifiers.component.scss'],
+  standalone: false,
 })
 export class DomainAlertNotifiersComponent implements OnInit {
   private notifiersByType: any;

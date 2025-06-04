@@ -27,6 +27,7 @@ import { AuthService } from '../../../../services/auth.service';
   selector: 'app-bot-detection',
   templateUrl: './bot-detection.component.html',
   styleUrls: ['./bot-detection.component.scss'],
+  standalone: false,
 })
 export class BotDetectionComponent implements OnInit {
   private domainId: string;

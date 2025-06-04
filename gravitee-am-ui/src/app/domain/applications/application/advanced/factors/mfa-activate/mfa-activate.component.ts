@@ -22,6 +22,7 @@ import { Enroll, ModeOption } from '../model';
   selector: 'mfa-activate',
   templateUrl: './mfa-activate.component.html',
   styleUrls: ['./mfa-activate.component.scss'],
+  standalone: false,
 })
 export class MfaActivateComponent implements OnInit, AfterViewInit {
   private static modeOptions: Record<string, ModeOption> = {

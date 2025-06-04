@@ -21,6 +21,7 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   selector: 'certificate-creation-step2',
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss'],
+  standalone: false,
 })
 export class CertificateCreationStep2Component implements OnInit, OnChanges {
   @Input() certificate: any;

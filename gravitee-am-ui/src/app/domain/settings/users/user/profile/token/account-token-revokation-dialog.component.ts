@@ -39,6 +39,7 @@ function valueEquals(expectedValue: string): ValidatorFn {
   selector: 'account-token-revokation-dialog',
   templateUrl: './account-token-revokation-dialog.component.html',
   styleUrls: ['./account-token-revokation-dialog.component.scss'],
+  standalone: false,
 })
 export class AccountTokenRevokationDialogComponent {
   tokenControl: FormControl<string>;

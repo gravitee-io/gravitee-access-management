@@ -24,6 +24,7 @@ import { NavigationService } from '../../services/navigation.service';
   selector: 'gv-submenu',
   templateUrl: './submenu.component.html',
   styleUrls: ['./submenu.component.scss'],
+  standalone: false,
 })
 export class SubmenuComponent implements OnInit, OnDestroy {
   @Input() displaySections = true;
@@ -71,6 +72,7 @@ export class SubmenuComponent implements OnInit, OnDestroy {
       <gio-submenu-item [active]="rla.isActive">{{ link.label }}</gio-submenu-item>
     </a>
   </ng-container> `,
+  standalone: false,
 })
 export class SubmenuItemsComponent {
   @Input() items: any[];

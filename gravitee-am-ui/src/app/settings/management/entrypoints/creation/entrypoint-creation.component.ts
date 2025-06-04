@@ -23,6 +23,7 @@ import { EntrypointService } from '../../../../services/entrypoint.service';
   selector: 'app-creation',
   templateUrl: './entrypoint-creation.component.html',
   styleUrls: ['./entrypoint-creation.component.scss'],
+  standalone: false,
 })
 export class EntrypointCreationComponent {
   entrypoint: any = { tags: [] };

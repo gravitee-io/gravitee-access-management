@@ -28,6 +28,7 @@ import { SpelGrammarService } from '../../../../../services/spel-grammar.service
   selector: 'provider-mappers',
   templateUrl: './mappers.component.html',
   styleUrls: ['./mappers.component.scss'],
+  standalone: false,
 })
 export class ProviderMappersComponent implements OnInit {
   private domainId: string;
@@ -173,6 +174,7 @@ export class ProviderMappersComponent implements OnInit {
 @Component({
   selector: 'create-mapper',
   templateUrl: './create/create.component.html',
+  standalone: false,
 })
 export class CreateMapperComponent implements OnInit {
   rule: string;

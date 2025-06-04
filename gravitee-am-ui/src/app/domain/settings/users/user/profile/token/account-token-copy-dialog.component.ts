@@ -29,6 +29,7 @@ export interface AccountTokenCopyDialogData {
   selector: 'account-token-copy-dialog',
   templateUrl: './account-token-copy-dialog.component.html',
   styleUrls: ['./account-token-dialog.component.scss'],
+  standalone: false,
 })
 export class AccountTokenCopyDialogComponent {
   notCopied = true;

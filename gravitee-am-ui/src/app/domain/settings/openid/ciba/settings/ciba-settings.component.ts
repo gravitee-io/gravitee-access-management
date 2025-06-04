@@ -26,6 +26,7 @@ import { DomainStoreService } from '../../../../../stores/domain.store';
   selector: 'app-oidc-ciba-settings',
   templateUrl: './ciba-settings.component.html',
   styleUrls: ['./ciba-settings.component.scss'],
+  standalone: false,
 })
 export class CibaSettingsComponent implements OnInit {
   domainId: string;

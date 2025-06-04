@@ -26,6 +26,7 @@ import { DomainStoreService } from '../../../../stores/domain.store';
   selector: 'application-overview',
   templateUrl: './overview.component.html',
   styleUrls: ['./overview.component.scss'],
+  standalone: false,
 })
 export class ApplicationOverviewComponent implements OnInit {
   domain: any;
@@ -85,7 +86,7 @@ export class ApplicationOverviewComponent implements OnInit {
         encoded = encoded.slice(0, -1);
       }
       return encoded;
-    } catch (e) {
+    } catch {
       return redirectUri;
     }
   }

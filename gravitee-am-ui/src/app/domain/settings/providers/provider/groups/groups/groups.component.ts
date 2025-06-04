@@ -42,6 +42,7 @@ interface ProviderModel {
   selector: 'app-groups',
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss',
+  standalone: false,
 })
 export class ProviderGroupsComponent implements OnInit {
   mappers: MapperModel[] = [];
@@ -178,6 +179,7 @@ interface OutputData {
 @Component({
   selector: 'create-group-mapper',
   templateUrl: './create/create.component.html',
+  standalone: false,
 })
 export class CreateGroupMapperComponent implements OnInit {
   @ViewChild('userGroupForm', { static: true }) form: NgForm;

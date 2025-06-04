@@ -31,6 +31,7 @@ import { TimeConverterService } from '../../../../../../services/time-converter.
   selector: 'application-scopes',
   templateUrl: './application-scopes.component.html',
   styleUrls: ['./application-scopes.component.scss'],
+  standalone: false,
 })
 export class ApplicationScopesComponent implements OnInit {
   private domainId: string;
@@ -205,6 +206,7 @@ export class ApplicationScopesComponent implements OnInit {
 @Component({
   selector: 'add-scope',
   templateUrl: './add/add-scope.component.html',
+  standalone: false,
 })
 export class AddScopeComponent {
   @ViewChild('scopeInput', { static: true }) scopeInput: ElementRef<HTMLInputElement>;
