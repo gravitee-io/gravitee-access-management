@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.7.0
+  version: 4.7.6
 servers:
 - url: /management
 security:
@@ -415,7 +415,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Domain"
+                  $ref: "#/components/schemas/DomainPage"
         "500":
           description: Internal server error
     post:
@@ -10491,7 +10491,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/UserEntity"
         "400":
           description: Invalid user profile
         "404":
@@ -11489,13 +11489,13 @@ components:
           type: array
           items:
             type: string
-        dynamicClientRegistrationEnabled:
+        allowedScopesEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
-        clientTemplateEnabled:
+        dynamicClientRegistrationEnabled:
           type: boolean
-        allowedScopesEnabled:
+        clientTemplateEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -11701,11 +11701,9 @@ components:
           $ref: "#/components/schemas/CorsSettings"
         dataPlaneId:
           type: string
-        redirectUriLocalhostAllowed:
+        dynamicClientRegistrationTemplateEnabled:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
-        redirectUriWildcardAllowed:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -11713,8 +11711,23 @@ components:
           type: boolean
         redirectUriStrictMatching:
           type: boolean
-        dynamicClientRegistrationTemplateEnabled:
+        redirectUriLocalhostAllowed:
           type: boolean
+        redirectUriWildcardAllowed:
+          type: boolean
+    DomainPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Domain"
+        currentPage:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
     DomainUserBulkRequest:
       required:
       - action
@@ -12847,9 +12860,11 @@ components:
         name:
           type: string
         minLength:
+          minimum: 0
           type: integer
           format: int32
         maxLength:
+          minimum: 0
           type: integer
           format: int32
         includeNumbers:
@@ -13685,10 +13700,10 @@ components:
           type: array
           items:
             type: string
-        dynamicClientRegistrationEnabled:
+        openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
-        openDynamicClientRegistrationEnabled:
+        dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         clientTemplateEnabled:
@@ -14905,9 +14920,11 @@ components:
         name:
           type: string
         minLength:
+          minimum: 0
           type: integer
           format: int32
         maxLength:
+          minimum: 0
           type: integer
           format: int32
         includeNumbers:
@@ -15283,18 +15300,8 @@ components:
           type: string
         zoneInfo:
           type: string
-        fullId:
-          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         inactive:
           type: boolean
         profile:
@@ -15307,6 +15314,16 @@ components:
           type: string
         disabled:
           type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserEntity:
       type: object
       properties:
@@ -15482,18 +15499,8 @@ components:
           type: string
         zoneInfo:
           type: string
-        fullId:
-          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         inactive:
           type: boolean
         profile:
@@ -15506,6 +15513,16 @@ components:
           type: string
         disabled:
           type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserId:
       type: object
       properties:
