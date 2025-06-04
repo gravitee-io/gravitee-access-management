@@ -40,6 +40,8 @@ let applicationFailingELParam
 let applicationSingleELParam;
 let applicationMultiELParam;
 let applicationMultiELParamAndRegular;
+let applicationWithoutEL;
+
 let oidc;
 let user;
 
@@ -54,6 +56,11 @@ const failingELParam = {
     redirect_uri_1: `https://callback/?param={#context.attributes['nonexisting'].applicationType}`,
     redirect_uri_2: `https://callback2/?param={#noExistingProperty}&param3=test&param2={#context.attributes['client'].applicationType}`
 
+}
+
+const normalConfiguration = {
+    callback1: 'https://callback/',
+    redirect_uri_1: `https://callback/?param=test`
 }
 
 const singleParam = {
@@ -129,6 +136,17 @@ beforeAll(async () => {
         identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
     }, applicationFailingELParam.id)
 
+    applicationWithoutEL = await createApplication(domain.id, accessToken, {
+        name: faker.commerce.productName(),
+        type: 'WEB',
+        description: faker.lorem.paragraph(),
+        redirectUris: [normalConfiguration.redirect_uri_1],
+    });
+
+    await patchApplication(domain.id, accessToken, {
+        identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
+    }, applicationWithoutEL.id)
+
     user = await createUser(domain.id, accessToken, {
         firstName: 'john',
         lastName: 'doe',
@@ -150,6 +168,16 @@ beforeAll(async () => {
 
 describe('Redirect URI', () => {
     describe('Dynamic parameters', () => {
+        it('No EL redirect_uri registered', async () => {
+            const authResponse = await initiateLoginFlow(applicationWithoutEL.settings.oauth.clientId, oidc, domain, 'code', singleParam.callback1);
+            const loginResponse = await login(authResponse, user.username, applicationWithoutEL.settings.oauth.clientId, user.password);
+            const tokenResponse = await performGet(loginResponse.headers['location'], '', {
+                Cookie: loginResponse.headers['set-cookie'],
+            }).expect(302);
+            expect(tokenResponse.headers['location']).toContain('https://callback/?param=test');
+            expect(tokenResponse.headers['location']).toContain('code=');
+        });
+
         it('Single EL parameter', async () => {
            const authResponse = await initiateLoginFlow(applicationSingleELParam.settings.oauth.clientId, oidc, domain, 'code', singleParam.callback1);
            const loginResponse = await login(authResponse, user.username, applicationSingleELParam.settings.oauth.clientId, user.password);
