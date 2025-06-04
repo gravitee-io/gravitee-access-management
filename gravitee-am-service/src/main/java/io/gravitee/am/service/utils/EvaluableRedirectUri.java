@@ -34,7 +34,7 @@ public class EvaluableRedirectUri {
     public Maybe<String> evaluate(ExecutionContext ctx){
         return evaluateQuery(ctx)
                 .map(evaluatedQuery -> UriBuilder.fromURIString(fullUri).query(evaluatedQuery).buildString())
-                .switchIfEmpty(Maybe.error(new IllegalStateException("URI evaluation failed")));
+                .switchIfEmpty(Maybe.just(fullUri));
     }
 
     @SneakyThrows
