@@ -25,6 +25,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
   selector: 'app-domain-flows',
   templateUrl: './flows.component.html',
   styleUrls: ['./flows.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsFlowsComponent implements OnInit {
   private domainId: string;

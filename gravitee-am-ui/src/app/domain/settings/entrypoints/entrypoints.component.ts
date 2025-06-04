@@ -27,6 +27,7 @@ import { DomainStoreService } from '../../../stores/domain.store';
   selector: 'app-general',
   templateUrl: './entrypoints.component.html',
   styleUrls: ['./entrypoints.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsEntrypointsComponent implements OnInit {
   @ViewChild('chipInput') chipInput: MatInput;

@@ -20,6 +20,7 @@ import { MatDialogRef } from '@angular/material/dialog';
   selector: 'app-renew-client-secret',
   templateUrl: './renew-client-secret.component.html',
   styleUrl: '../secrets-certificates.component.scss',
+  standalone: false,
 })
 export class RenewClientSecretComponent {
   constructor(public dialogRef: MatDialogRef<RenewClientSecretComponent>) {}

@@ -24,6 +24,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-application-cookie-settings',
   templateUrl: './cookie.component.html',
   styleUrls: ['./cookie.component.scss'],
+  standalone: false,
 })
 export class ApplicationCookieSettingsComponent implements OnInit {
   private domainId: string;

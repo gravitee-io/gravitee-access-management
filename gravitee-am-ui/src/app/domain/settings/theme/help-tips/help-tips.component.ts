@@ -19,6 +19,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/cor
   selector: 'app-help-tips',
   templateUrl: './help-tips.component.html',
   styleUrls: ['./help-tips.component.scss'],
+  standalone: false,
 })
 export class HelpTipsThemeComponent implements OnInit, OnChanges {
   @Input() template: string;

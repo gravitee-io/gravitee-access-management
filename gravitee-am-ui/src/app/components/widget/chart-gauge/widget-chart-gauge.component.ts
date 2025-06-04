@@ -22,6 +22,7 @@ import { Chart } from '../widget.model';
   selector: 'gv-widget-chart-gauge',
   templateUrl: './widget-chart-gauge.component.html',
   styleUrls: ['./widget-chart-gauge.component.scss'],
+  standalone: false,
 })
 export class WidgetChartGaugeComponent implements OnChanges {
   @Input() Highcharts: typeof Highcharts;

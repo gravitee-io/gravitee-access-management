@@ -19,5 +19,6 @@ import { Component } from '@angular/core';
   selector: 'app-settings-management',
   templateUrl: './management.component.html',
   styleUrls: ['./management.component.scss'],
+  standalone: false,
 })
 export class ManagementComponent {}

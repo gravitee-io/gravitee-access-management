@@ -25,6 +25,7 @@ import { DomainStoreService } from '../../../stores/domain.store';
   selector: 'app-uma',
   templateUrl: './uma.component.html',
   styleUrls: ['./uma.component.scss'],
+  standalone: false,
 })
 export class UmaComponent implements OnInit {
   domainId: string;

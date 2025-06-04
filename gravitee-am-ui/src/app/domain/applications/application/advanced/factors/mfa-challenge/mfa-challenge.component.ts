@@ -25,6 +25,7 @@ import { Challenge, ModeOption } from '../model';
   selector: 'mfa-challenge',
   templateUrl: './mfa-challenge.component.html',
   styleUrls: ['./mfa-challenge.component.scss'],
+  standalone: false,
 })
 export class MfaChallengeComponent implements OnInit {
   private static readonly RISK_ASSESSMENT_PREFIX: string = "#context.attributes['risk_assessment'].";

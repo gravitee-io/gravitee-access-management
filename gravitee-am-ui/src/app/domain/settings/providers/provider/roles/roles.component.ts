@@ -27,6 +27,7 @@ import { SpelGrammarService } from '../../../../../services/spel-grammar.service
   selector: 'app-roles',
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
+  standalone: false,
 })
 export class ProviderRolesComponent implements OnInit {
   private domainId: string;
@@ -153,6 +154,7 @@ export class ProviderRolesComponent implements OnInit {
 @Component({
   selector: 'create-role-mapper',
   templateUrl: './create/create.component.html',
+  standalone: false,
 })
 export class CreateRoleMapperComponent implements OnInit {
   @ViewChild('userRoleForm', { static: true }) form: NgForm;

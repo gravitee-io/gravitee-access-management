@@ -19,6 +19,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
   selector: 'assessment',
   templateUrl: './assessment.component.html',
   styleUrls: ['./assessment.component.scss'],
+  standalone: false,
 })
 export class AssessmentComponent implements OnInit {
   @Input() title: string;

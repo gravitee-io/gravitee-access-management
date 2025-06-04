@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-domain-resources',
   templateUrl: './resources.component.html',
   styleUrls: ['./resources.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsResourcesComponent implements OnInit {
   private resourceTypes: any = {

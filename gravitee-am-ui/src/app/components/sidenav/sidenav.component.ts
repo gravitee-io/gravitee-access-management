@@ -28,6 +28,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'gv-sidenav',
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.scss'],
+  standalone: false,
 })
 export class SidenavComponent implements OnInit, OnDestroy {
   private environmentSubscription: Subscription;
@@ -123,6 +124,7 @@ export class SidenavComponent implements OnInit, OnDestroy {
 @Pipe({
   name: 'displayableItemFilter',
   pure: false,
+  standalone: false,
 })
 export class DisplayableItemPipe implements PipeTransform {
   transform(items: any[]): any {

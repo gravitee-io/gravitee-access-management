@@ -24,6 +24,7 @@ import { Plugin } from '../../../../../../entities/plugins/Plugin';
   selector: 'factor-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss'],
+  standalone: false,
 })
 export class FactorCreationStep1Component implements OnInit, OnDestroy {
   private factorTypes: any = {

@@ -21,6 +21,7 @@ import { remove } from 'lodash';
   selector: 'application-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss'],
+  standalone: false,
 })
 export class ApplicationCreationStep1Component implements OnInit {
   @Input() application;

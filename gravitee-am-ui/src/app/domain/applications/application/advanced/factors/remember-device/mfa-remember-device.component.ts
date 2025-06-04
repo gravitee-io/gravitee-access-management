@@ -24,6 +24,7 @@ import { Enroll, RememberDevice } from '../model';
   selector: 'mfa-remember-device',
   templateUrl: './mfa-remember-device.component.html',
   styleUrls: ['./mfa-remember-device.component.scss'],
+  standalone: false,
 })
 export class MfaRememberDeviceComponent implements OnInit, OnChanges {
   @Input() rememberDevice: any;

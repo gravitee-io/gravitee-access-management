@@ -34,6 +34,7 @@ export interface DialogData {
   selector: 'app-email',
   templateUrl: './email.component.html',
   styleUrls: ['./email.component.scss'],
+  standalone: false,
 })
 export class EmailComponent implements OnInit, AfterViewInit {
   private domainId: string;
@@ -206,6 +207,7 @@ export class EmailComponent implements OnInit, AfterViewInit {
 @Component({
   selector: 'email-info-dialog',
   templateUrl: './dialog/email-info.component.html',
+  standalone: false,
 })
 export class EmailInfoDialogComponent {
   constructor(

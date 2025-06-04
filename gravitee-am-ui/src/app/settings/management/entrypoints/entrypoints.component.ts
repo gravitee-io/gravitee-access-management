@@ -26,6 +26,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-entrypoints',
   templateUrl: './entrypoints.component.html',
   styleUrls: ['./entrypoints.component.scss'],
+  standalone: false,
 })
 export class EntrypointsComponent implements OnInit {
   public entrypoints: any[];

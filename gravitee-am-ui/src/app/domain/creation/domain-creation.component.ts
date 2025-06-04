@@ -24,6 +24,7 @@ import { SnackbarService } from '../../services/snackbar.service';
   selector: 'app-creation',
   templateUrl: './domain-creation.component.html',
   styleUrls: ['./domain-creation.component.scss'],
+  standalone: false,
 })
 export class DomainCreationComponent implements OnInit {
   domain: any = {};

@@ -22,6 +22,7 @@ import { DashboardData } from '../components/dashboard/dashboard.component';
   selector: 'app-domain-overview',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
+  standalone: false,
 })
 export class DomainDashboardComponent implements OnInit {
   domain: any = {};

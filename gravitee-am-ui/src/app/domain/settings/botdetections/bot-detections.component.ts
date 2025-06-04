@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-domain-bot-detections',
   templateUrl: './bot-detections.component.html',
   styleUrls: ['./bot-detections.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsBotDetectionsComponent implements OnInit {
   private detectionTypes: any = {

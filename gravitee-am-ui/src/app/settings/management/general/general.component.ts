@@ -24,6 +24,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-settings-management-general',
   templateUrl: './general.component.html',
   styleUrls: ['./general.component.scss'],
+  standalone: false,
 })
 export class ManagementGeneralComponent implements OnInit {
   settings: any;

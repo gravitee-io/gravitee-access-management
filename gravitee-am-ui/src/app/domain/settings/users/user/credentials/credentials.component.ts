@@ -26,6 +26,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-user-credentials',
   templateUrl: './credentials.component.html',
   styleUrls: ['./credentials.component.scss'],
+  standalone: false,
 })
 export class UserCredentialsComponent implements OnInit {
   private domainId: string;

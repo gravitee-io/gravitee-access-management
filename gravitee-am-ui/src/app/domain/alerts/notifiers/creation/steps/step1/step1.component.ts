@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'alert-notifier-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss'],
+  standalone: false,
 })
 export class DomainAlertNotifierCreationStep1Component implements OnInit {
   notifiers: any[];

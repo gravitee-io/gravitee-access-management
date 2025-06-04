@@ -21,6 +21,7 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-callback',
   template: ``,
+  standalone: false,
 })
 export class LogoutCallbackComponent implements OnInit {
   constructor(

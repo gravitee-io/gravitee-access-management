@@ -24,6 +24,7 @@ import { SnackbarService } from '../../services/snackbar.service';
 @Component({
   selector: 'app-login-callback',
   template: ``,
+  standalone: false,
 })
 export class LoginCallbackComponent implements OnInit {
   constructor(

@@ -29,6 +29,7 @@ import { DomainStoreService } from '../../../../../stores/domain.store';
   selector: 'application-general',
   templateUrl: './general.component.html',
   styleUrls: ['./general.component.scss'],
+  standalone: false,
 })
 export class ApplicationGeneralComponent implements OnInit {
   @ViewChild('applicationForm', { static: true }) form: any;

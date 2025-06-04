@@ -50,6 +50,7 @@ type PasswordInput = { pass: string; profile?: UserProfile };
   selector: 'password-policy-status',
   templateUrl: './password-policy-status.component.html',
   styleUrls: ['./password-policy-status.component.scss'],
+  standalone: false,
 })
 export class PasswordPolicyStatusComponent implements OnChanges, OnDestroy {
   @Input() policy: DomainPasswordPolicy;

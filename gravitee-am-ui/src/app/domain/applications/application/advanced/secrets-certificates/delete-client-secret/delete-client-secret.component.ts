@@ -25,6 +25,7 @@ export interface DeleteClientSecretData {
   selector: 'app-delete-client-secret',
   templateUrl: './delete-client-secret.component.html',
   styleUrl: '../secrets-certificates.component.scss',
+  standalone: false,
 })
 export class DeleteClientSecretComponent {
   descriptionControl = new FormControl('');

@@ -24,6 +24,7 @@ import { DomainStoreService } from '../../../../../stores/domain.store';
   selector: 'app-application-emails',
   templateUrl: './emails.component.html',
   styleUrls: ['./emails.component.scss'],
+  standalone: false,
 })
 export class ApplicationEmailsComponent implements OnInit {
   emails: any[];

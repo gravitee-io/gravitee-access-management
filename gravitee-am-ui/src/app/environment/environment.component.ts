@@ -26,6 +26,7 @@ import { EnvironmentService } from '../services/environment.service';
   selector: 'app-home',
   templateUrl: './environment.component.html',
   styleUrls: ['./environment.component.scss'],
+  standalone: false,
 })
 export class EnvironmentComponent implements OnInit {
   readonly = true;

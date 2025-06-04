@@ -27,6 +27,7 @@ import { AuthService } from '../../../../services/auth.service';
   selector: 'app-extension-grant',
   templateUrl: './extension-grant.component.html',
   styleUrls: ['./extension-grant.component.scss'],
+  standalone: false,
 })
 export class ExtensionGrantComponent implements OnInit {
   private domainId: string;

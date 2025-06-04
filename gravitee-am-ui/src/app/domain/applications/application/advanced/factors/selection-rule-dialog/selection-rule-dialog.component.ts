@@ -22,6 +22,7 @@ export interface SelectionRuleDialogResult {
 @Component({
   selector: 'factor-selection-rule-dialog',
   templateUrl: './selection-rule-dialog.component.html',
+  standalone: false,
 })
 export class SelectionRuleDialogComponent implements OnInit {
   selectionRule: string;

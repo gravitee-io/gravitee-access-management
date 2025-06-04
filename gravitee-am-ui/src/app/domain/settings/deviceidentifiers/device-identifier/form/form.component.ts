@@ -19,6 +19,7 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   selector: 'device-identifier-form',
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
+  standalone: false,
 })
 export class DeviceIdentifierFormComponent implements OnChanges {
   // eslint-disable-next-line @angular-eslint/no-input-rename

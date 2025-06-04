@@ -24,6 +24,7 @@ import { map } from 'lodash';
   selector: 'role-selection',
   templateUrl: './role-selection.component.html',
   styleUrls: ['./role-selection.component.scss'],
+  standalone: false,
 })
 export class RoleSelectionComponent implements OnInit, OnDestroy {
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix

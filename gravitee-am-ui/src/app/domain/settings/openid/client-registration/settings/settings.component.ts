@@ -26,6 +26,7 @@ import { DomainStoreService } from '../../../../../stores/domain.store';
   selector: 'app-openid-client-registration-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
+  standalone: false,
 })
 export class ClientRegistrationSettingsComponent implements OnInit {
   formChanged = false;

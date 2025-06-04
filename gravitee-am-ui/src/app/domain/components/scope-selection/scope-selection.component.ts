@@ -33,6 +33,7 @@ export interface Scope {
   selector: 'scope-selection',
   templateUrl: './scope-selection.component.html',
   styleUrls: ['./scope-selection.component.scss'],
+  standalone: false,
 })
 export class ScopeSelectionComponent implements OnInit, AfterViewInit {
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
@@ -79,7 +80,7 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
     this.applySort();
   }
 
-  applyChange(row) {
+  applyChange(row: any) {
     this.selection.toggle(row);
     this.applySort();
     this.onScopeSelection.emit(this.selection.selected);
@@ -104,7 +105,11 @@ export class ScopeSelectionComponent implements OnInit, AfterViewInit {
 
   /** Selects all rows if they are not all selected; otherwise clear selection. */
   masterToggle() {
-    this.isAllSelected() ? this.selection.clear() : this.scopes.data.forEach((row) => this.selection.select(row));
+    if (this.isAllSelected()) {
+      this.selection.clear();
+    } else {
+      this.scopes.data.forEach((row) => this.selection.select(row));
+    }
     this.onScopeSelection.emit(this.selection.selected);
   }
 

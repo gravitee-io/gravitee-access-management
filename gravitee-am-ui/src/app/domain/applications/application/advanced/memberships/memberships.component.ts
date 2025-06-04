@@ -26,6 +26,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-application-memberships',
   templateUrl: './memberships.component.html',
   styleUrls: ['./memberships.component.scss'],
+  standalone: false,
 })
 export class ApplicationMembershipsComponent implements OnInit {
   private domainId: string;
@@ -89,6 +90,7 @@ export class ApplicationMembershipsComponent implements OnInit {
   selector: 'app-application-memberships-dialog',
   templateUrl: '../../../../components/memberships/dialog/memberships-dialog.html',
   styleUrls: ['../../../../components/memberships/dialog/memberships-dialog.scss'],
+  standalone: false,
 })
 export class ApplicationMembershipsDialogComponent {
   private domainId: string;

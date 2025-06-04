@@ -31,6 +31,7 @@ import { DomainStoreService } from '../../../stores/domain.store';
   selector: 'app-saml2',
   templateUrl: './saml2.component.html',
   styleUrls: ['./saml2.component.scss'],
+  standalone: false,
 })
 export class Saml2Component implements OnInit {
   @ViewChild('samlSettingsForm', { static: true }) form: any;

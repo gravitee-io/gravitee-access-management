@@ -22,6 +22,7 @@ import { EmailTemplateFactoryService } from '../../../services/email.template.fa
   selector: 'app-domain-emails',
   templateUrl: './emails.component.html',
   styleUrls: ['./emails.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsEmailsComponent implements OnInit {
   domain: any;

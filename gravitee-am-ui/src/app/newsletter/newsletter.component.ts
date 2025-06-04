@@ -24,6 +24,7 @@ import { SnackbarService } from '../services/snackbar.service';
   selector: 'app-newsletter',
   templateUrl: './newsletter.component.html',
   styleUrls: ['./newsletter.component.scss'],
+  standalone: false,
 })
 export class NewsletterComponent implements OnInit {
   @ViewChild('newsletter', { static: true }) newsletter;

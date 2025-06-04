@@ -23,6 +23,7 @@ import { TagService } from '../../../../services/tag.service';
   selector: 'app-creation',
   templateUrl: './tag-creation.component.html',
   styleUrls: ['./tag-creation.component.scss'],
+  standalone: false,
 })
 export class TagCreationComponent {
   tag: any = {};

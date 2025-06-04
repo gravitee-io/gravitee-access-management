@@ -37,6 +37,7 @@ import { ActivatedRoute } from '@angular/router';
       </mat-form-field>
     </div>
   `,
+  standalone: false,
 })
 export class MaterialCertificateComponent implements OnInit {
   @Input() layoutNode: any;

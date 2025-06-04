@@ -22,6 +22,7 @@ import { AuthService } from '../../../../../../services/auth.service';
   selector: 'app-application-form',
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
+  standalone: false,
 })
 export class ApplicationFormComponent implements OnInit {
   private domainId: string;

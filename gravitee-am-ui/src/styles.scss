@@ -1,12 +1,13 @@
 /* You can add global styles to this file, and also import other style files */
+@use 'sass:meta';
 @use 'sass:map';
 @use '@angular/material' as mat;
 @use '@gravitee/ui-particles-angular' as gio;
 @import '@gravitee/ui-components/assets/css/gravitee-console-theme.css';
-@import '@swimlane/ngx-datatable/themes/material';
-@import '@swimlane/ngx-datatable/assets/icons';
-@import 'codemirror/lib/codemirror';
-@import 'codemirror/theme/material';
+@include meta.load-css('@swimlane/ngx-datatable/themes/material');
+@include meta.load-css('@swimlane/ngx-datatable/assets/icons');
+@include meta.load-css('codemirror/lib/codemirror');
+@include meta.load-css('codemirror/theme/material');
 
 /* Configure theme */
 @include gio.import-fonts;

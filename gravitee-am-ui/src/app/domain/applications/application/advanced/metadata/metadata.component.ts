@@ -25,6 +25,7 @@ import { SnackbarService } from '../../../../../services/snackbar.service';
   selector: 'app-application-metadata',
   templateUrl: './metadata.component.html',
   styleUrls: ['./metadata.component.scss'],
+  standalone: false,
 })
 export class ApplicationMetadataComponent implements OnInit {
   @ViewChild('metadataForm', { static: true }) public form: NgForm;

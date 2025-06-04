@@ -24,6 +24,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
   selector: 'app-creation',
   templateUrl: './scope-creation.component.html',
   styleUrls: ['./scope-creation.component.scss'],
+  standalone: false,
 })
 export class ScopeCreationComponent implements OnInit {
   private domainId: string;

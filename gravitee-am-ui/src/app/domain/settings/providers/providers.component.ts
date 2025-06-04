@@ -26,6 +26,7 @@ import { OrganizationService } from '../../../services/organization.service';
   selector: 'app-providers',
   templateUrl: './providers.component.html',
   styleUrls: ['./providers.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsProvidersComponent implements OnInit {
   providers: any[];

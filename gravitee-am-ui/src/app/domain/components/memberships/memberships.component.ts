@@ -26,6 +26,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-memberships',
   templateUrl: './memberships.component.html',
   styleUrls: ['./memberships.component.scss'],
+  standalone: false,
 })
 export class MembershipsComponent implements OnInit, OnChanges {
   @Input() roleType: any;

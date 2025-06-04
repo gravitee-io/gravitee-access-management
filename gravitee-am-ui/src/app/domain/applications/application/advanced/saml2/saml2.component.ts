@@ -34,6 +34,7 @@ interface ApplicationSaml2SettingsPayload {
   selector: 'app-application-saml2',
   templateUrl: './saml2.component.html',
   styleUrls: ['./saml2.component.scss'],
+  standalone: false,
 })
 export class ApplicationSaml2Component implements OnInit {
   @ViewChild('samlSettingsForm', { static: true }) form: any;

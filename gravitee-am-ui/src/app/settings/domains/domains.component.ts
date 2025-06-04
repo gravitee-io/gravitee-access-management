@@ -23,6 +23,7 @@ import { DomainService } from '../../services/domain.service';
   selector: 'app-domains',
   templateUrl: './domains.component.html',
   styleUrls: ['./domains.component.scss'],
+  standalone: false,
 })
 export class DomainsComponent implements OnInit {
   private searchValue: string;

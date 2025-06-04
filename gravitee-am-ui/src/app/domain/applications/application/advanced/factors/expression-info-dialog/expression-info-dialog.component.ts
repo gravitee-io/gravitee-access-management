@@ -19,6 +19,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 @Component({
   selector: 'expression-mfa-dialog',
   templateUrl: './expression-info-dialog.component.html',
+  standalone: false,
 })
 export class ExpressionInfoDialogComponent {
   private readonly DEFAULT_INFO = `{#request.params['scope'][0] == 'write'}

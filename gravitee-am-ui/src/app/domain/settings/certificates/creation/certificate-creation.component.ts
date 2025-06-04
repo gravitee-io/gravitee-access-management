@@ -25,6 +25,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
   selector: 'app-certificate-creation',
   templateUrl: './certificate-creation.component.html',
   styleUrls: ['./certificate-creation.component.scss'],
+  standalone: false,
 })
 export class CertificateCreationComponent implements OnInit, AfterViewChecked {
   public certificate: any = {};

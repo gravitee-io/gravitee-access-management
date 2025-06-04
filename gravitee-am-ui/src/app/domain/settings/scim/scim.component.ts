@@ -26,6 +26,7 @@ import { DomainStoreService } from '../../../stores/domain.store';
   selector: 'app-scim',
   templateUrl: './scim.component.html',
   styleUrls: ['./scim.component.scss'],
+  standalone: false,
 })
 export class ScimComponent implements OnInit {
   domainId: string;
@@ -95,6 +96,7 @@ export class ScimComponent implements OnInit {
 @Component({
   selector: 'idp-selection-info-dialog',
   templateUrl: './dialog/scim-info.component.html',
+  standalone: false,
 })
 export class IdpSelectionInfoDialogComponent {
   constructor(public dialogRef: MatDialogRef<IdpSelectionInfoDialogComponent>) {}

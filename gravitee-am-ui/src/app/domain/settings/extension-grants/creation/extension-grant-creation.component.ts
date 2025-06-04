@@ -24,6 +24,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
   selector: 'app-extension-grant-creation',
   templateUrl: './extension-grant-creation.component.html',
   styleUrls: ['./extension-grant-creation.component.scss'],
+  standalone: false,
 })
 export class ExtensionGrantCreationComponent implements OnInit {
   private domainId: string;

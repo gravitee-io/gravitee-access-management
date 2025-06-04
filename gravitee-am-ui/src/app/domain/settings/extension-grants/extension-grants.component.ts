@@ -25,6 +25,7 @@ import { ExtensionGrantService } from '../../../services/extension-grant.service
   selector: 'app-extension-grants',
   templateUrl: './extension-grants.component.html',
   styleUrls: ['./extension-grants.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsExtensionGrantsComponent implements OnInit {
   private extensionGrantTypes: any = {

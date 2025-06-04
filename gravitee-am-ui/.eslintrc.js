@@ -23,6 +23,7 @@ module.exports = {
         'plugin:prettier/recommended',
       ],
       rules: {
+        '@angular-eslint/prefer-standalone': 'off',
         '@typescript-eslint/no-explicit-any': 'off',
         '@typescript-eslint/no-unused-vars': [
           'error',

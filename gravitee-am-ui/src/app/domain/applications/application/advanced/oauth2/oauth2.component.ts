@@ -24,6 +24,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-application-oauth2',
   templateUrl: './oauth2.component.html',
   styleUrls: ['./oauth2.component.scss'],
+  standalone: false,
 })
 export class ApplicationOAuth2Component implements OnDestroy {
   private subscription: Subscription;

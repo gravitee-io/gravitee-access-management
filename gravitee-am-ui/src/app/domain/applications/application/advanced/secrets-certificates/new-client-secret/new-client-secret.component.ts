@@ -21,6 +21,7 @@ import { MatDialogRef } from '@angular/material/dialog';
   selector: 'app-new-client-secret',
   templateUrl: './new-client-secret.component.html',
   styleUrl: '../secrets-certificates.component.scss',
+  standalone: false,
 })
 export class NewClientSecretComponent {
   descriptionControl = new FormControl('', [Validators.required, this.noWhitespaceValidator]);

@@ -34,6 +34,7 @@ export interface Tag {
   selector: 'app-general',
   templateUrl: './general.component.html',
   styleUrls: ['./general.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsGeneralComponent implements OnInit {
   @ViewChild('chipInput', { static: true }) chipInput: MatInput;

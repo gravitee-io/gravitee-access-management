@@ -24,6 +24,7 @@ import { DomainStoreService } from '../../../stores/domain.store';
 @Component({
   selector: 'app-self-service-account',
   templateUrl: './self-service-account.component.html',
+  standalone: false,
 })
 export class DomainSettingsSelfServiceAccountComponent implements OnInit {
   domainId: string;

@@ -25,6 +25,7 @@ import { AuthService } from '../../services/auth.service';
   selector: 'app-domain-settings-memberships',
   templateUrl: './memberships.component.html',
   styleUrls: ['./memberships.component.scss'],
+  standalone: false,
 })
 export class SettingsMembershipsComponent implements OnInit {
   roleType = 'ORGANIZATION';

@@ -24,6 +24,7 @@ import { OrganizationService } from '../../../../services/organization.service';
   selector: 'app-creation',
   templateUrl: './role-creation.component.html',
   styleUrls: ['./role-creation.component.scss'],
+  standalone: false,
 })
 export class RoleCreationComponent implements OnInit {
   private domainId: string;

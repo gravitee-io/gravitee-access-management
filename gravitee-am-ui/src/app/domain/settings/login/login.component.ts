@@ -25,6 +25,7 @@ import { DomainStoreService } from '../../../stores/domain.store';
   selector: 'app-domain-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsLoginComponent implements OnInit {
   domainId: string;

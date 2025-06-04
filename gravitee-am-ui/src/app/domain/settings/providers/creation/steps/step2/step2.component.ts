@@ -25,6 +25,7 @@ import { enrichFormWithCerts } from '../../../provider/provider.form.enricher';
   selector: 'provider-creation-step2',
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss'],
+  standalone: false,
 })
 export class ProviderCreationStep2Component implements OnInit, OnChanges {
   @Input() provider: any;

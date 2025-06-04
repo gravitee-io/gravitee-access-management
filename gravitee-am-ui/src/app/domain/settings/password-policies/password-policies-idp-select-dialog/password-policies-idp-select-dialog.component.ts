@@ -21,7 +21,6 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatBadge } from '@angular/material/badge';
 import { GioSafePipeModule } from '@gravitee/ui-particles-angular';
 import { NgIf } from '@angular/common';
 
@@ -37,7 +36,6 @@ export interface IdpDataModel {
 
 @Component({
   selector: 'app-password-policies-idp-select-dialog',
-  standalone: true,
   imports: [
     FlexModule,
     MatButton,
@@ -45,7 +43,6 @@ export interface IdpDataModel {
     ReactiveFormsModule,
     MatTabsModule,
     MatIconModule,
-    MatBadge,
     GioSafePipeModule,
     NgIf,
     FormsModule,

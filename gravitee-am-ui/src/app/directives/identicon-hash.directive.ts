@@ -18,6 +18,7 @@ import { update } from 'jdenticon';
 
 @Directive({
   selector: '[identiconHash]',
+  standalone: false,
 })
 export class IdenticonHashDirective implements OnChanges {
   @Input() identiconHash: string;

@@ -25,6 +25,7 @@ import { DomainStoreService } from '../../../../stores/domain.store';
   selector: 'app-oidc-profile',
   templateUrl: './oidc-profile.component.html',
   styleUrls: ['./oidc-profile.component.scss'],
+  standalone: false,
 })
 export class OIDCProfileComponent implements OnInit {
   domainId: string;

@@ -33,6 +33,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-group-members',
   templateUrl: './members.component.html',
   styleUrls: ['./members.component.scss'],
+  standalone: false,
 })
 export class GroupMembersComponent implements OnInit {
   private domainId: string;
@@ -145,6 +146,7 @@ export class GroupMembersComponent implements OnInit {
 @Component({
   selector: 'add-member',
   templateUrl: './add/add-member.component.html',
+  standalone: false,
 })
 export class AddMemberComponent {
   @ViewChild('memberInput', { static: true }) memberInput: ElementRef<HTMLInputElement>;

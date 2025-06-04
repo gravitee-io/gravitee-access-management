@@ -25,6 +25,7 @@ import { OrganizationService } from '../../../../services/organization.service';
 @Component({
   templateUrl: './notifier.component.html',
   styleUrls: ['./notifier.component.scss'],
+  standalone: false,
 })
 export class DomainAlertNotifierComponent implements OnInit {
   domain: any = {};

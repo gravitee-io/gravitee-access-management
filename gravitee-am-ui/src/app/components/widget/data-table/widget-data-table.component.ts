@@ -22,6 +22,7 @@ import { Chart } from '../widget.model';
   selector: 'gv-widget-data-table',
   templateUrl: './widget-data-table.component.html',
   styleUrls: ['./widget-data-table.component.scss'],
+  standalone: false,
 })
 export class WidgetDataTableComponent implements OnInit, OnChanges {
   @Input() chart: Chart;

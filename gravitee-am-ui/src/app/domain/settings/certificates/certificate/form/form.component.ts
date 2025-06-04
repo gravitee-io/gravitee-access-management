@@ -21,6 +21,7 @@ import { MaterialFileComponent } from '../../../../../components/json-schema-for
   selector: 'certificate-form',
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
+  standalone: false,
 })
 export class CertificateFormComponent implements OnChanges {
   // eslint-disable-next-line @angular-eslint/no-input-rename

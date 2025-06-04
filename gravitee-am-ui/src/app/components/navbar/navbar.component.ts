@@ -31,6 +31,7 @@ import { NavbarService } from './navbar.service';
   selector: 'gv-navbar',
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.scss'],
+  standalone: false,
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();

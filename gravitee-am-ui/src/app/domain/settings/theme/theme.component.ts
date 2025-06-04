@@ -30,6 +30,7 @@ import { FormTemplateFactoryService } from '../../../services/form.template.fact
   selector: 'app-theme',
   templateUrl: './theme.component.html',
   styleUrls: ['./theme.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsThemeComponent implements OnInit {
   private envId: string;

@@ -22,6 +22,7 @@ import { TimeConverterService } from '../../../../../../services/time-converter.
   selector: 'time-period-picker',
   templateUrl: './time-period-picker.component.html',
   styleUrls: ['./time-period-picker.component.scss'],
+  standalone: false,
 })
 export class TimePeriodPickerComponent implements OnInit {
   private humanTime: { skipTime: any; skipUnit: any };
