@@ -36,6 +36,16 @@ public class EvaluableRedirectUriTest {
     }
 
     @Test
+    public void should_evaluate_single_el_param_2(){
+        EvaluableRedirectUri redirectUri = new EvaluableRedirectUri("https://example.com/?{#context.attributes['test']}");
+        ExecutionContext executionContext = new SimpleAuthenticationContext(null, Map.of("test", "value"));
+
+
+        redirectUri.evaluate(executionContext).test()
+                .assertValue(value -> value.equals("https://example.com/?value"));
+    }
+
+    @Test
     public void should_evaluate_multiple_el_param(){
         EvaluableRedirectUri redirectUri = new EvaluableRedirectUri("https://example.com/?param={#context.attributes['test']}&param2={#context.attributes['test2']}");
         ExecutionContext executionContext = new SimpleAuthenticationContext(null, Map.of("test", "value", "test2", "value2"));
@@ -73,6 +83,16 @@ public class EvaluableRedirectUriTest {
 
         redirectUri.evaluate(executionContext).test()
                 .assertValue(value -> value.equals("https://example.com/?param="));
+    }
+
+    @Test
+    public void should_evaluate_to_empty_if_value_is_missing_2(){
+        EvaluableRedirectUri redirectUri = new EvaluableRedirectUri("https://example.com/?{#context.attributes['test']}");
+        ExecutionContext executionContext = new SimpleAuthenticationContext(null, Map.of());
+
+
+        redirectUri.evaluate(executionContext).test()
+                .assertValue(value -> value.equals("https://example.com/"));
     }
 
     @Test

@@ -65,7 +65,10 @@ const normalConfiguration = {
 
 const singleParam = {
     callback1: 'https://callback/',
-    redirect_uri_1: `https://callback/?param={#context.attributes['client'].applicationType}`
+    callback2: 'https://callback2/',
+    redirect_uri_1: `https://callback/?param={#context.attributes['client'].applicationType}`,
+    redirect_uri_2: `https://callback2/?{#context.attributes['client'].applicationType}`
+
 }
 
 const multiParam = {
@@ -96,7 +99,7 @@ beforeAll(async () => {
         name: faker.commerce.productName(),
         type: 'WEB',
         description: faker.lorem.paragraph(),
-        redirectUris: [singleParam.redirect_uri_1],
+        redirectUris: [singleParam.redirect_uri_1, singleParam.redirect_uri_2],
     });
 
     await patchApplication(domain.id, accessToken, {
@@ -178,10 +181,20 @@ describe('Redirect URI', () => {
             expect(tokenResponse.headers['location']).toContain('code=');
         });
 
-        it('Single EL parameter', async () => {
-           const authResponse = await initiateLoginFlow(applicationSingleELParam.settings.oauth.clientId, oidc, domain, 'code', singleParam.callback1);
+        it('Single dynamic parameter without key', async () => {
+           const authResponse = await initiateLoginFlow(applicationSingleELParam.settings.oauth.clientId, oidc, domain, 'code', singleParam.callback2);
            const loginResponse = await login(authResponse, user.username, applicationSingleELParam.settings.oauth.clientId, user.password);
            const tokenResponse = await performGet(loginResponse.headers['location'], '', {
+                Cookie: loginResponse.headers['set-cookie'],
+            }).expect(302);
+            expect(tokenResponse.headers['location']).toContain('https://callback2/?web');
+            expect(tokenResponse.headers['location']).toContain('code=');
+        });
+
+        it('Single dynamic parameter with key', async () => {
+            const authResponse = await initiateLoginFlow(applicationSingleELParam.settings.oauth.clientId, oidc, domain, 'code', singleParam.callback1);
+            const loginResponse = await login(authResponse, user.username, applicationSingleELParam.settings.oauth.clientId, user.password);
+            const tokenResponse = await performGet(loginResponse.headers['location'], '', {
                 Cookie: loginResponse.headers['set-cookie'],
             }).expect(302);
             expect(tokenResponse.headers['location']).toContain('https://callback/?param=web');
