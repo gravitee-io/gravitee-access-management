@@ -18,9 +18,11 @@ package io.gravitee.am.service.validators.domain;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.service.exception.InvalidDomainException;
+import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSettingsValidator;
 import io.gravitee.am.service.validators.path.PathValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -38,11 +40,15 @@ public class DomainValidatorImpl implements DomainValidator {
 
     private final PathValidator pathValidator;
     private final VirtualHostValidator virtualHostValidator;
+    private final ClientRegistrationSettingsValidator clientRegistrationSettingsValidator;
 
     @Autowired
-    public DomainValidatorImpl(PathValidator pathValidator, VirtualHostValidator virtualHostValidator){
+    public DomainValidatorImpl(PathValidator pathValidator,
+                               VirtualHostValidator virtualHostValidator,
+                               ClientRegistrationSettingsValidator clientRegistrationSettingsValidator ){
         this.pathValidator = pathValidator;
         this.virtualHostValidator = virtualHostValidator;
+        this.clientRegistrationSettingsValidator = clientRegistrationSettingsValidator;
     }
 
     @Override
@@ -81,6 +87,17 @@ public class DomainValidatorImpl implements DomainValidator {
 
             chain.add(pathValidator.validate(domain.getPath()));
         }
+
+        chain.add(clientRegistrationSettingsValidator.validate(domain)
+                .concatMapCompletable(result -> {
+                    List<String> invalidClients = result.clientsWithInvalidRedirectUris();
+                    if (!invalidClients.isEmpty()) {
+                        return Completable.error(new InvalidDomainException("Redirect URIs must be changed, apps: %s".formatted(invalidClients)));
+                    } else {
+                        return Completable.complete();
+                    }
+                })
+        );
 
         if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().getCertificates() != null) {
             boolean containsInvalidCertFormat = domain.getWebAuthnSettings()
