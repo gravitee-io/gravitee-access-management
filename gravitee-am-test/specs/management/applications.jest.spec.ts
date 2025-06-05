@@ -18,12 +18,9 @@ import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
-    allowRedirectUriExpressionLanguage,
-    createDomain,
     deleteDomain,
     patchDomain,
     setupDomainForTest,
-    startDomain
 } from '@management-commands/domain-management-commands';
 import {
   createApplication,
@@ -176,6 +173,35 @@ describe('Entrypoints: User accounts', () => {
 });
 
 describe('Redirect URI', () => {
+    it('Should not turn dynamic params when any application contains redirect uris with same hostname and path', async () => {
+        expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+        const app = {
+            name: faker.commerce.productName(),
+            type: 'browser',
+            description: faker.lorem.paragraph(),
+            redirectUris: ['https://callback/?param=test', 'https://callback/?param2=test2'],
+        };
+
+        const createdApp = await createApplication(domain.id, accessToken, app);
+
+        try {
+            await patchDomain(domain.id, accessToken, {
+                oidc: {
+                    clientRegistrationSettings: {
+                        allowRedirectUriParamsExpressionLanguage: true,
+                    },
+                },
+            });
+        } catch (ex) {
+            expect(ex.response.status).toEqual(400);
+        }
+
+        expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+
+        await deleteApplication(domain.id, accessToken, createdApp.id)
+
+    });
+
     it('Should turn on dynamic parameters evaluation', async () => {
         expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
         domain = await patchDomain(domain.id, accessToken, {
