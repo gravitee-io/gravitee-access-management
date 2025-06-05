@@ -799,7 +799,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                         }
                         if(domain.isRedirectUriExpressionLanguageEnabled()){
                             if(!clientRedirectUrisValidator.validateRedirectUris(oAuthSettings.getRedirectUris())) {
-                                return Single.error(new InvalidRedirectUriException("There can be only a single redirect_uri with EL per domain"));
+                                return Single.error(new InvalidRedirectUriException("Only one redirect URI with the same hostname and path is allowed."));
                             }
                         }
                     } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
