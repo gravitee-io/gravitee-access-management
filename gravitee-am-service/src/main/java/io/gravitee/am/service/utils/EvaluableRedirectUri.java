@@ -34,7 +34,7 @@ public class EvaluableRedirectUri {
     public Maybe<String> evaluate(ExecutionContext ctx){
         return evaluateQuery(ctx)
                 .map(evaluatedQuery -> UriBuilder.fromURIString(fullUri).query(evaluatedQuery).buildString())
-                .switchIfEmpty(Maybe.just(fullUri));
+                .switchIfEmpty(Maybe.just(removeELQueryParams()));
     }
 
     @SneakyThrows
