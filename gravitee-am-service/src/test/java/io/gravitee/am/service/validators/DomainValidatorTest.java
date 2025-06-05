@@ -15,20 +15,28 @@
  */
 package io.gravitee.am.service.validators;
 
+import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.validators.domain.DomainValidator;
 import io.gravitee.am.service.validators.domain.DomainValidatorImpl;
+import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSettingsValidator;
 import io.gravitee.am.service.validators.path.PathValidatorImpl;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidatorImpl;
+import io.reactivex.rxjava3.core.Single;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
@@ -41,7 +49,12 @@ public class DomainValidatorTest {
     @Before
     public void before(){
         final PathValidatorImpl pathValidator = new PathValidatorImpl();
-        domainValidator = new DomainValidatorImpl(pathValidator, new VirtualHostValidatorImpl(pathValidator));
+
+        ApplicationService applicationService = Mockito.mock(ApplicationService.class);
+        when(applicationService.findByDomain(Mockito.anyString())).thenReturn(Single.just(Set.of()));
+        ClientRegistrationSettingsValidator clientRegistrationSettingsValidator = new ClientRegistrationSettingsValidator(applicationService);
+
+        domainValidator = new DomainValidatorImpl(pathValidator, new VirtualHostValidatorImpl(pathValidator), clientRegistrationSettingsValidator);
     }
 
     @Test
@@ -153,6 +166,7 @@ public class DomainValidatorTest {
 
     private Domain getValidDomain() {
         Domain domain = new Domain();
+        domain.setId("id");
         domain.setName("Domain Test");
         domain.setPath("/validPath");
         domain.setVhostMode(false);
