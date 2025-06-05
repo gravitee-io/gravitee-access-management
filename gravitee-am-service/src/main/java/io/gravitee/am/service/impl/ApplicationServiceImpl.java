@@ -74,10 +74,10 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.am.service.utils.GrantTypeUtils;
-import io.gravitee.am.service.utils.EvaluableRedirectUri;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
+import io.gravitee.am.service.validators.dynamicparams.ClientRedirectUrisValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -175,6 +175,8 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationTokenCustomClaimsValidator customClaimsValidator;
+
+    private ClientRedirectUrisValidator clientRedirectUrisValidator = new ClientRedirectUrisValidator();
 
     @Override
     public Flowable<Application> findAll() {
@@ -796,10 +798,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                             }
                         }
                         if(domain.isRedirectUriExpressionLanguageEnabled()){
-                            Map<String, Long> counts = oAuthSettings.getRedirectUris().stream()
-                                    .map(EvaluableRedirectUri::new)
-                                    .collect(Collectors.groupingBy(EvaluableRedirectUri::getRootUrl, Collectors.counting()));
-                            if(counts.values().stream().anyMatch(size -> size > 1)) {
+                            if(!clientRedirectUrisValidator.validateRedirectUris(oAuthSettings.getRedirectUris())) {
                                 return Single.error(new InvalidRedirectUriException("There can be only a single redirect_uri with EL per domain"));
                             }
                         }
