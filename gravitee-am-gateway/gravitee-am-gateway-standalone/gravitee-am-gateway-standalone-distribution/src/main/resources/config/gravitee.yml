@@ -303,6 +303,7 @@ user:
 
 handlers:
   request:
+    removeXForwardedHeaders: false
     transaction:
       header: X-Gravitee-Transaction-Id
   oauth2:
