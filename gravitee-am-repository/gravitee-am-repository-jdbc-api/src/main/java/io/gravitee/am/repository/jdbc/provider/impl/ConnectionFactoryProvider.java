@@ -30,14 +30,17 @@ import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
 import io.r2dbc.spi.Option;
 import io.r2dbc.spi.ValidationDepth;
+import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
 import static io.r2dbc.spi.ConnectionFactoryOptions.DRIVER;
@@ -66,6 +69,8 @@ public class ConnectionFactoryProvider {
     public static final long DEFAULT_SETTINGS_MAX_LIFE_TIME = -1;
     public static final long DEFAULT_SETTINGS_MAX_ACQUIRE_TIME = 3000;
     public static final long DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME = 5000;
+
+    public static final String DRIVER_SQLSERVER = "sqlserver";
 
     private final Environment environment;
     private final String prefix;
@@ -104,13 +109,25 @@ public class ConnectionFactoryProvider {
                 .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME, ChronoUnit.MILLIS))
                 .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
 
+
+        val referCursorExecutionOptionNotFound = new AtomicBoolean(true);
         List<Map<String, String>> options = configuration.getOptions();
         if (options != null && !options.isEmpty()) {
             options.forEach(claimMapper -> {
                 String option = claimMapper.get("option");
                 String value = claimMapper.get("value");
                 builder.option(Option.valueOf(option), ObjectUtils.stringToValue(value));
+                if (TAG_PREFER_CURSORED_EXECUTION.equals(option)) {
+                    referCursorExecutionOptionNotFound.set(false);
+                }
             });
+        }
+
+        if ( DRIVER_SQLSERVER.equalsIgnoreCase(configuration.getProtocol()) && referCursorExecutionOptionNotFound.get()) {
+            // set default value for preferCurserExecution to false only for SQLServer if it is missing so
+            // it will not override other driver default value if they introduce this option. This is a SQLServer workaround
+            // due to https://github.com/r2dbc/r2dbc-mssql/issues/276
+            builder.option(Option.valueOf(TAG_PREFER_CURSORED_EXECUTION), false);
         }
 
         ConnectionPool connectionPool = (ConnectionPool) ConnectionFactories.get(builder.build());
@@ -179,8 +196,15 @@ public class ConnectionFactoryProvider {
 
             builder = TlsOptionsHelper.setSSLOptions(builder, environment, prefix, driver);
 
-            final String preferCursorExecution = environment.getProperty(prefix + "preferCursorExecution", "false");
-            builder.option(Option.valueOf(TAG_PREFER_CURSORED_EXECUTION), preferCursorExecution);
+            final String preferCursorExecution = environment.getProperty(prefix + TAG_PREFER_CURSORED_EXECUTION);
+            if ( DRIVER_SQLSERVER.equalsIgnoreCase(driver) ) {
+                // set default value for preferCurserExecution to false only for SQLServer if it is missing so
+                // it will not override other driver default value if they introduce this option. This is a SQLServer workaround
+                // due to https://github.com/r2dbc/r2dbc-mssql/issues/276
+                builder.option(Option.valueOf(TAG_PREFER_CURSORED_EXECUTION), StringUtils.hasLength(preferCursorExecution) ? preferCursorExecution : "false");
+            } else if (StringUtils.hasLength(preferCursorExecution)) {
+                builder.option(Option.valueOf(TAG_PREFER_CURSORED_EXECUTION), preferCursorExecution);
+            }
 
             connectionPool = ConnectionFactories.get(builder.build());
         }
