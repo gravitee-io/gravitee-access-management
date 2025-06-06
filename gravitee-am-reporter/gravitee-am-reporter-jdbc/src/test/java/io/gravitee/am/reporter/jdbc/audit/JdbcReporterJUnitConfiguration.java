@@ -25,6 +25,7 @@ import io.gravitee.am.repository.provider.ClientWrapper;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
+import io.r2dbc.spi.Option;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -72,6 +73,7 @@ public class JdbcReporterJUnitConfiguration extends JdbcReporterSpringConfigurat
         if (connectionFactory == null) {
             ConnectionFactoryOptions options = dbContainer.getOptions();
             options = ConnectionFactoryOptions.builder()
+                    .option(Option.valueOf("preferCursoredExecution"), false) // due to r2dbc-mssql 1.0.1+
                     .from(options)
                     .option(DRIVER, "pool")
                     .option(PROTOCOL, (String) options.getValue(DRIVER))
