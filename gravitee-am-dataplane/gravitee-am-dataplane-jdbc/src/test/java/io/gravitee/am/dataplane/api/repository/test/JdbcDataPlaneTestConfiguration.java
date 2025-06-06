@@ -25,6 +25,7 @@ import io.gravitee.am.dataplane.jdbc.spring.JdbcDataPlaneSpringConfiguration;
 import io.r2dbc.spi.ConnectionFactories;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.ConnectionFactoryOptions;
+import io.r2dbc.spi.Option;
 import liquibase.Contexts;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
@@ -128,6 +129,7 @@ public class JdbcDataPlaneTestConfiguration extends AbstractRepositoryConfigurat
         R2dbcDatabaseContainer dbContainer = provider.getDatabaseContainer();
         ConnectionFactoryOptions options = dbContainer.getOptions();
         options = ConnectionFactoryOptions.builder()
+                .option(Option.valueOf("preferCursoredExecution"), false) // due to r2dbc-mssql 1.0.1+
                 .from(options)
                 .option(DRIVER, "pool")
                 .option(PROTOCOL,(String) options.getValue(DRIVER))
