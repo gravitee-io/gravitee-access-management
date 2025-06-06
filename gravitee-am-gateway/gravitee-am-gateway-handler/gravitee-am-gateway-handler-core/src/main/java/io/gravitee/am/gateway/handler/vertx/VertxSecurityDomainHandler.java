@@ -53,6 +53,7 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 
@@ -87,9 +88,17 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     @Autowired
     private Environment environment;
 
+    @Value("${handlers.request.removeXForwardedHeaders:false}")
+    private boolean removeXForwardedHeaders;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
+
+        if(removeXForwardedHeaders){
+            logger.info("Adding XForwardedHeadersSanitizer handler, headers will be removed from incoming requests");
+            router.route().handler(new XForwardedHeadersSanitizer());
+        }
 
         // start root protocol with required routes (login page, register, ...)
         startRootProtocol();
