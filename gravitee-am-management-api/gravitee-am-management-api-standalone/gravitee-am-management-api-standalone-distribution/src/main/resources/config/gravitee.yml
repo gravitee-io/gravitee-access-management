@@ -208,10 +208,10 @@ domains:
 #      passwordEncoder:
 #         # Algorithms used to hash the user password.
 #         # Can be one of :
-#         # "BCrypt", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5"
+#         # "BCrypt", "PBKDF2-SHA1", "PBKDF2-SHA256", "PBKDF2-SHA512", "SHA-256", "SHA-384", "SHA-512", "SHA-256+MD5"
 #        algorithm: BCrypt
 #        properties:
-#          # Number of rounds used by BCrypt
+#          # Number of rounds used by BCrypt, PBKDF2
 #          rounds: 10
   certificates:
     default:

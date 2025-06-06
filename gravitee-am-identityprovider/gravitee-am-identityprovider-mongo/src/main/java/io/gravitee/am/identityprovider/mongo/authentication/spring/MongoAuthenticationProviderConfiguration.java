@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.service.authentication.crypto.password.MD5PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.MessageDigestPasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.NoOpPasswordEncoder;
+import io.gravitee.am.service.authentication.crypto.password.PBKDF2PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoderOptions;
 import io.gravitee.am.service.authentication.crypto.password.SHAMD5PasswordEncoder;
@@ -36,6 +37,7 @@ import java.util.regex.Pattern;
 
 import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.BCRYPT;
 import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.MD5;
+import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.PBKDF2;
 import static io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder.SHA;
 import static java.util.Optional.ofNullable;
 
@@ -85,6 +87,18 @@ public class MongoAuthenticationProviderConfiguration {
             if (configuration.getPasswordEncoderOptions() != null && configuration.getPasswordEncoderOptions().getRounds() > 0) {
                 passwordEncoder.setIterationsRounds(configuration.getPasswordEncoderOptions().getRounds());
             }
+            return passwordEncoder;
+        }
+
+        if (configuration.getPasswordEncoder().startsWith(PBKDF2)) {
+            int saltLength = configuration.getPasswordSaltLength() > 0 ?
+                    configuration.getPasswordSaltLength() :
+                    PBKDF2PasswordEncoder.DEFAULT_SALT_SIZE;
+            int iterations = (configuration.getPasswordEncoderOptions() != null && configuration.getPasswordEncoderOptions().getRounds() > 0) ?
+                    configuration.getPasswordEncoderOptions().getRounds() :
+                    PBKDF2PasswordEncoder.DEFAULT_ROUNDS;
+            PBKDF2PasswordEncoder passwordEncoder = new PBKDF2PasswordEncoder(saltLength, iterations, configuration.getPasswordEncoder());
+            passwordEncoder.setEncodeSaltAsBase64(BASE_64.equals(configuration.getPasswordEncoding()));
             return passwordEncoder;
         }
 

@@ -167,4 +167,36 @@ public class DefaultIdentityProviderServiceTest {
         assertEquals("SHA-384", test.get("passwordEncoder"));
         assertEquals(11, ((PasswordEncoderOptions) test.get("passwordEncoderOptions")).getRounds());
     }
+
+    @Test
+    public void shouldReturnUpdatedIterationRoundsForPbkdf2SHA1Alg() {
+        environment.setProperty("domains.identities.default.passwordEncoder.algorithm", "PBKDF2-SHA1");
+        environment.setProperty("domains.identities.default.passwordEncoder.properties.rounds", "31000");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertEquals("PBKDF2WithHmacSHA1", test.get("passwordEncoder"));
+        assertEquals(31000, ((PasswordEncoderOptions) test.get("passwordEncoderOptions")).getRounds());
+    }
+
+    @Test
+    public void shouldReturnUpdatedIterationRoundsForPbkdf2SHA256Alg() {
+        environment.setProperty("domains.identities.default.passwordEncoder.algorithm", "PBKDF2-SHA256");
+        environment.setProperty("domains.identities.default.passwordEncoder.properties.rounds", "31000");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertEquals("PBKDF2WithHmacSHA256", test.get("passwordEncoder"));
+        assertEquals(31000, ((PasswordEncoderOptions) test.get("passwordEncoderOptions")).getRounds());
+    }
+
+    @Test
+    public void shouldReturnUpdatedIterationRoundsForPbkdf2SHA512Alg() {
+        environment.setProperty("domains.identities.default.passwordEncoder.algorithm", "PBKDF2-SHA512");
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertEquals("PBKDF2WithHmacSHA512", test.get("passwordEncoder"));
+        assertEquals(600000, ((PasswordEncoderOptions) test.get("passwordEncoderOptions")).getRounds());
+    }
 }

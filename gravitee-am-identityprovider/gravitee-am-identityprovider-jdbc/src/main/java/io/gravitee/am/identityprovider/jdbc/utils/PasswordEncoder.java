@@ -25,5 +25,6 @@ public interface PasswordEncoder {
     String BCRYPT = "BCrypt";
     String SHA = "SHA";
     String MD5 = "MD5";
+    String PBKDF2 = "PBKDF2";
 }
 
