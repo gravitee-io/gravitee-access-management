@@ -81,7 +81,7 @@ export class ApplicationOverviewComponent implements OnInit {
 
   cleanELParameters(redirectUri: string): string {
     try {
-      let encoded = redirectUri.replace(/([^={}?&]*=)?\{#[^={}?&]*}/g, '');
+      let encoded = redirectUri.replace(/&?([^={}?&]*=)?\{#[^={}?&]*}/g, '');
       if (encoded.endsWith('?')) {
         encoded = encoded.slice(0, -1);
       }
