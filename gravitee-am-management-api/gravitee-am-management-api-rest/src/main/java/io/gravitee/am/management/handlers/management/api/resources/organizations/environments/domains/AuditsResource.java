@@ -48,6 +48,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import static io.gravitee.am.management.service.permissions.Permissions.of;
+import static io.gravitee.am.management.service.permissions.Permissions.or;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
@@ -91,7 +94,10 @@ public class AuditsResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_AUDIT, Acl.LIST)
                 .andThen(auditService.search(domain, queryBuilder.build(), param.getPage(), param.getSize())
-                .flatMap(auditPage -> hasPermission(authenticatedUser, ReferenceType.DOMAIN, domain, Permission.DOMAIN_AUDIT, Acl.READ)
+                .flatMap(auditPage -> hasPermission(authenticatedUser,
+                        or(of(ReferenceType.DOMAIN, domain, Permission.DOMAIN_AUDIT, Acl.READ),
+                                of(ReferenceType.ENVIRONMENT, environmentId, Permission.DOMAIN_AUDIT, Acl.READ),
+                                of(ReferenceType.ORGANIZATION, organizationId, Permission.DOMAIN_AUDIT, Acl.READ)))
                         .map(hasPermission -> {
                             if (hasPermission) {
                                 return auditPage;
