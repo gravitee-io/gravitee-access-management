@@ -24,7 +24,7 @@ import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.http.HttpMethod;
@@ -62,7 +62,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     private Domain domain;
 
     @Mock
-    private ApplicationClientSecretService applicationClientSecretService;
+    private SecretService secretService;
 
     @Mock
     private AuditService auditService;
@@ -72,7 +72,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         super.setUp();
         when(domain.getId()).thenReturn("id");
         router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, null, auditService))
+                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, null, auditService))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(new ExceptionHandler());
     }

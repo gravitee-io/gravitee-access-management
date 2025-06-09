@@ -22,6 +22,7 @@ import { Widget } from './widget.model';
   selector: 'gv-widget',
   templateUrl: './widget.component.html',
   styleUrls: ['./widget.component.scss'],
+  standalone: false,
 })
 export class WidgetComponent {
   @Input() widget: Widget;

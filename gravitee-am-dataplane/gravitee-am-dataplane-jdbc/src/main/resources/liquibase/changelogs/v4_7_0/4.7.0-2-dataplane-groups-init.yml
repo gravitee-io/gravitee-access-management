@@ -1,0 +1,158 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-2-groups
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: groups
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_groups
+                  name: id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reference_id
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reference_type
+                  type: VARCHAR(64)
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP(6)
+            tableName: groups
+
+  - changeSet:
+      id: dp-init-2-groups-idx_groups_ref
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_groups_ref
+              tableName: groups
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName: idx_groups_ref
+            tableName: groups
+
+  - changeSet:
+      id: dp-init-2-group_members
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: group_members
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: group_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: member
+                  type: VARCHAR(64)
+            tableName: group_members
+
+  - changeSet:
+      id: dp-init-2-groups_member-idx_group_members_group
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_group_members_group
+              tableName: group_members
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: group_id
+            indexName: idx_group_members_group
+            tableName: group_members
+
+  - changeSet:
+      id: dp-init-2-groups_member-idx_group_members_member
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_group_members_member
+              tableName: group_members
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: member
+            indexName: idx_group_members_member
+            tableName: group_members
+
+  - changeSet:
+      id: dp-init-2-group_roles
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: group_roles
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                  name: group_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: role
+                  type: VARCHAR(64)
+            tableName: group_roles
+
+  - changeSet:
+      id: dp-init-2-group_roles-idx_group_roles_group
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_group_roles_group
+              tableName: group_roles
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: group_id
+            indexName: idx_group_roles_group
+            tableName: group_roles

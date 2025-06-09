@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.management</groupId>
         <artifactId>gravitee-am-management-api</artifactId>
-        <version>4.7.0-SNAPSHOT</version>
+        <version>4.9.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-management-api-service</artifactId>
@@ -122,6 +122,12 @@
         <dependency>
             <groupId>io.gravitee.am.plugins.handlers</groupId>
             <artifactId>gravitee-am-plugins-handlers-authdevice-notifier</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-dataplane</artifactId>
             <version>${project.version}</version>
         </dependency>
 

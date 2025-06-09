@@ -15,7 +15,7 @@
 
       &.selected,
       i.selected {
-        border: 1px solid mat.get-color-from-palette(gio.$mat-primary-palette, 'default');
+        border: 1px solid mat.m2-get-color-from-palette(gio.$mat-primary-palette, 'default');
       }
 
       &:not(.selected) {

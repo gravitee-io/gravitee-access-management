@@ -18,13 +18,13 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.management.handlers.management.api.model.ResourceEntity;
 import io.gravitee.am.management.handlers.management.api.model.ResourceListItem;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.model.uma.Resource;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
@@ -70,7 +70,7 @@ public class ApplicationResourcesResource extends AbstractResource {
     private ApplicationService applicationService;
 
     @Autowired
-    private ResourceService resourceService;
+    private UMAResourceManagementService resourceService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -87,28 +87,28 @@ public class ApplicationResourcesResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("application") String application,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_RESOURCES_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_RESOURCE, Acl.LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> applicationService.findById(application))
+        checkAnyPermission(organizationId, environmentId, domainId, application, Permission.APPLICATION_RESOURCE, Acl.LIST)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> applicationService.findById(application)
                         .switchIfEmpty(Single.error(new ApplicationNotFoundException(application)))
                         .flatMap(application1 -> resourceService.findByDomainAndClient(domain, application1.getId(), page, Integer.min(MAX_RESOURCES_SIZE_PER_PAGE, size)))
                         .flatMap(pagedResources -> Observable.fromIterable(pagedResources.getData())
-                                .flatMapSingle(r -> resourceService.countAccessPolicyByResource(r.getId())
+                                .flatMapSingle(r -> resourceService.countAccessPolicyByResource(domain, r.getId())
                                         .map(policies -> {
                                             ResourceEntity resourceEntity = new ResourceEntity(r);
                                             resourceEntity.setPolicies(policies);
                                             return resourceEntity;
                                         }))
                                 .toList()
-                                .zipWith(resourceService.getMetadata((List<Resource>) pagedResources.getData()), (v1, v2) ->
-                                        new Page<>(Collections.singletonList(new ResourceListItem(v1, v2)), page, pagedResources.getTotalCount())))
+                                .zipWith(resourceService.getMetadata(domain, (List<Resource>) pagedResources.getData()), (v1, v2) ->
+                                        new Page<>(Collections.singletonList(new ResourceListItem(v1, v2)), page, pagedResources.getTotalCount()))))
                 )
                 .subscribe(response::resume, response::resume);
     }

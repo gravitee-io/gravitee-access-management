@@ -144,7 +144,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
         }
 
         public boolean updateRequire() {
-            return (addresses || attributes || entitlements || role || dynamicRole || identities);
+            return (addresses || attributes || entitlements || role || dynamicRole || dynamicGroup || identities);
         }
 
         public static UpdateActions updateAll() {
@@ -155,6 +155,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
             return new UpdateActions()
                     .updateRole(false)
                     .updateDynamicRole(false)
+                    .updateDynamicGroup(false)
                     .updateEntitlements(false)
                     .updateAttributes(false)
                     .updateAddresses(false)
@@ -173,6 +174,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
             actions.updateAddresses(needUpdate(existingUser.getAddresses(), updatedUser.getAddresses()));
             actions.updateRole(needUpdate(existingUser.getRoles(), updatedUser.getRoles()));
             actions.updateDynamicRole(needUpdate(existingUser.getDynamicRoles(), updatedUser.getDynamicRoles()));
+            actions.updateDynamicGroup(needUpdate(existingUser.getDynamicGroups(), updatedUser.getDynamicGroups()));
             actions.updateIdentities(needUpdate(existingUser.getIdentities(), updatedUser.getIdentities()));
 
             return actions;

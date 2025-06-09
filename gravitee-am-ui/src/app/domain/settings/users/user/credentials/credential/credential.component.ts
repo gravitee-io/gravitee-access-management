@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-user-credential',
   templateUrl: './credential.component.html',
   styleUrls: ['./credential.component.scss'],
+  standalone: false,
 })
 export class UserCredentialComponent implements OnInit {
   credential: any;

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.common.spring;
 
+import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.GatewayAuditReporterManager;
@@ -39,7 +41,6 @@ import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.flow.impl.FlowManagerImpl;
 import io.gravitee.am.gateway.handler.common.group.GroupManager;
 import io.gravitee.am.gateway.handler.common.group.impl.DefaultGroupManager;
-import io.gravitee.am.gateway.handler.common.group.impl.InMemoryGroupManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.impl.JWTServiceImpl;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
@@ -55,13 +56,35 @@ import io.gravitee.am.gateway.handler.common.role.impl.DefaultRoleManager;
 import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.ruleengine.SpELRuleEngine;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.gateway.handler.common.service.impl.RevokeTokenGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.mfa.DomainEventListener;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.UserEventListener;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.DomainEventListenerImpl;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.RateLimiterServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.UserEventListenerImpl;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.VerifyAttemptServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.common.service.impl.CredentialGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.impl.DeviceGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.impl.LoginAttemptGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.uma.impl.UMAPermissionTicketServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.uma.impl.UMAResourceGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.service.impl.UserActivityGatewayServiceImpl;
 import io.gravitee.am.gateway.handler.common.spring.web.WebConfiguration;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.common.user.UserStore;
 import io.gravitee.am.gateway.handler.common.user.impl.NoUserStore;
 import io.gravitee.am.gateway.handler.common.user.impl.UserEnhancerFacade;
-import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImpl;
-import io.gravitee.am.gateway.handler.common.user.impl.UserServiceImplV2;
+import io.gravitee.am.gateway.handler.common.user.impl.UserGatewayServiceImpl;
+import io.gravitee.am.gateway.handler.common.user.impl.UserGatewayServiceImplV2;
 import io.gravitee.am.gateway.handler.common.user.impl.UserStoreImpl;
 import io.gravitee.am.gateway.handler.common.user.impl.UserStoreImplV2;
 import io.gravitee.am.gateway.handler.common.utils.ConfigurationHelper;
@@ -77,14 +100,19 @@ import io.gravitee.am.gateway.handler.context.spring.ContextConfiguration;
 import io.gravitee.am.gateway.policy.spring.PolicyConfiguration;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.service.DomainDataPlane;
+import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.dataplane.user.activity.configuration.UserActivityConfiguration;
 import io.gravitee.am.service.impl.user.UserEnhancer;
 import io.gravitee.node.api.cache.CacheManager;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import jakarta.annotation.PostConstruct;
+import lombok.val;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -248,11 +276,11 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public UserService userService(Domain domain) {
+    public UserGatewayService userService(Domain domain) {
         if (domain.getVersion() == DomainVersion.V1_0) {
-            return new UserServiceImpl();
+            return new UserGatewayServiceImpl();
         }
-        return new UserServiceImplV2();
+        return new UserGatewayServiceImplV2();
     }
 
     @Bean
@@ -268,6 +296,9 @@ public class CommonConfiguration {
         final String registrationVerifySubject = environment.getProperty("user.registration.verify.email.subject", String.class, "${msg('email.registration_verify.subject')}");
         final int userRegistrationVerifyTimeValue = environment.getProperty("user.registration.verify.time.value", Integer.class, 7);
         final TimeUnit userRegistrationVerifyTimeUnit = environment.getProperty("user.registration.verify.time.unit", TimeUnit.class, TimeUnit.DAYS);
+        final String registrationConfirmationSubject = environment.getProperty("user.registration.confirmation.email.subject", String.class, "${msg('email.registration_confirmation.subject')}");
+        final int userRegistrationConfirmationTimeValue = environment.getProperty("user.registration.confirmation.time.value", Integer.class, 24);
+        final TimeUnit userRegistrationConfirmationTimeUnit = environment.getProperty("user.registration.confirmation.time.unit", TimeUnit.class, TimeUnit.HOURS);
 
         return new EmailServiceImpl(
                 enabled,
@@ -279,7 +310,9 @@ public class CommonConfiguration {
                 mfaChallengeExpireAfter,
                 mfaVerifyAttemptSubject,
                 registrationVerifySubject,
-                Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue))
+                Math.toIntExact(userRegistrationVerifyTimeUnit.toSeconds(userRegistrationVerifyTimeValue)),
+                registrationConfirmationSubject,
+                Math.toIntExact(userRegistrationConfirmationTimeUnit.toSeconds(userRegistrationConfirmationTimeValue))
         );
     }
 
@@ -303,12 +336,18 @@ public class CommonConfiguration {
         return new PasswordPolicyManagerImpl();
     }
     @Bean
-    public GroupManager groupManager(Environment environment) {
-        if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
-            return new InMemoryGroupManager();
-        } else {
-            return new DefaultGroupManager();
-        }
+    public GroupManager groupManager(Environment environment, EventManager eventManager, DataPlaneRegistry registry, Domain domain) {
+        final val cachedRepository = registry.getGroupRepository(domain);
+        // FIXME: sync process can not be done anymore, need to convert as a classical cache.
+        //        Since the first implementation of the DataPlane split, groups are managed on the GW
+        //        as consequence Sync is not possible.
+        //        we may have to rethink the way users are linked to the group to keep track of the groups into the user profile
+        //        so the Group can be request only of the user profile has at least one group and group can be cached for a short living time
+        /*if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
+            return new InMemoryGroupManager(domain, eventManager, cachedRepository);
+        } else {*/
+            return new DefaultGroupManager(cachedRepository);
+        /*}*/
     }
 
     @Bean
@@ -326,5 +365,64 @@ public class CommonConfiguration {
         return new UserEnhancerFacade(groupManager, roleManager);
     }
 
+    @Bean
+    public CredentialGatewayService credentialGatewayService(DataPlaneRegistry dataPlaneRegistry) {
+        return new CredentialGatewayServiceImpl(dataPlaneRegistry);
+    }
+
+    @Bean
+    public UserActivityGatewayService userActivityGatewayService(UserActivityConfiguration configuration, DataPlaneRegistry dataPlaneRegistry) {
+        return new UserActivityGatewayServiceImpl(configuration, dataPlaneRegistry);
+    }
+
+    @Bean
+    public DeviceGatewayService deviceGatewayService(DataPlaneRegistry dataPlaneRegistry) {
+        return new DeviceGatewayServiceImpl(dataPlaneRegistry);
+    }
+
+    @Bean
+    public LoginAttemptGatewayService loginAttemptGatewayService(DataPlaneRegistry dataPlaneRegistry) {
+        return new LoginAttemptGatewayServiceImpl(dataPlaneRegistry);
+    }
+
+    @Bean
+    public UMAResourceGatewayService umaResourceGatewayService(Domain domain, DataPlaneRegistry dataPlaneRegistry, ScopeService scopeService) {
+        return new UMAResourceGatewayServiceImpl(domain, dataPlaneRegistry, scopeService);
+    }
+
+    @Bean
+    public DomainDataPlane domainDataPlane(Domain domain, DataPlaneRegistry dataPlaneRegistry){
+        DataPlaneDescription description = dataPlaneRegistry.getDescription(domain);
+        return new DomainDataPlane(domain, description);
+    }
+
+    @Bean
+    public UMAPermissionTicketService umaPermissionTicketService() {
+        return new UMAPermissionTicketServiceImpl();
+    }
+
+    @Bean
+    public RevokeTokenGatewayService revokeTokenGatewayService() {
+        return new RevokeTokenGatewayServiceImpl();
+    }
+
+    @Bean
+    public RateLimiterService rateLimiterService() {
+        return new RateLimiterServiceImpl();
+    }
+    @Bean
+    public VerifyAttemptService verifyAttemptService() {
+        return new VerifyAttemptServiceImpl();
+    }
+
+    @Bean
+    public UserEventListener userEventListener() {
+        return new UserEventListenerImpl();
+    }
+
+    @Bean
+    public DomainEventListener domainEventListener() {
+        return new DomainEventListenerImpl();
+    }
 
 }

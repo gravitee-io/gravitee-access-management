@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-device-notifiers',
   templateUrl: './device-notifiers.component.html',
   styleUrls: ['./device-notifiers.component.scss'],
+  standalone: false,
 })
 export class DeviceNotifiersComponent implements OnInit {
   private notifierTypes: any = {

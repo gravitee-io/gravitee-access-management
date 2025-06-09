@@ -16,14 +16,14 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnHandler;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Single;
@@ -52,11 +52,11 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnRegisterSuccessEndpoint.class);
 
     public WebAuthnRegisterSuccessEndpoint(TemplateEngine templateEngine,
-                                           CredentialService credentialService,
-                                           Domain domain) {
+                                           CredentialGatewayService credentialService,
+                                           DomainDataPlane domainDataPlane) {
         super(templateEngine);
         setCredentialService(credentialService);
-        this.domain = domain;
+        setDomainDataplane(domainDataPlane);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
             // get the current application
             final Client client = routingContext.get(ConstantKeys.CLIENT_CONTEXT_KEY);
             // prepare the context
-            final Map<String, Object> data = generateData(routingContext, domain, client);
+            final Map<String, Object> data = generateData(routingContext, domainDataPlane.getDomain(), client);
             // add the device name
             final String deviceName = authenticatedUser.getUsername() + "'s " + getClientOS(routingContext.request());
             data.put(ConstantKeys.PASSWORDLESS_DEVICE_NAME, deviceName);
@@ -124,13 +124,13 @@ public class WebAuthnRegisterSuccessEndpoint extends WebAuthnHandler {
             return;
         }
 
-        credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+        credentialService.findByCredentialId(domainDataPlane.getDomain(), credentialId)
                 .firstElement()
                 .switchIfEmpty(Single.error(new CredentialNotFoundException(credentialId)))
                 .flatMap(credential -> {
                     credential.setDeviceName(deviceName);
                     credential.setUpdatedAt(new Date());
-                    return credentialService.update(credential);
+                    return credentialService.update(domainDataPlane.getDomain(), credential);
                 })
                 .subscribe(__ -> {
                             // at this stage the registration has been done

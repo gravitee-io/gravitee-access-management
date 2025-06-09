@@ -1,0 +1,199 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-5-scope_approvals
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: scope_approvals
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_scope_approvals
+                  name: id
+                  type: VARCHAR(64)
+              - column:
+                  name: domain
+                  type: VARCHAR(64)
+              - column:
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  name: client_id
+                  type: VARCHAR(255)
+              - column:
+                  name: transaction_id
+                  type: VARCHAR(64)
+              - column:
+                  name: scope
+                  type: VARCHAR(64)
+              - column:
+                  name: status
+                  type: VARCHAR(64)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: expires_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: user_external_id
+                  type: VARCHAR(255)
+              - column:
+                  name: user_source
+                  type: VARCHAR(64)
+            tableName: scope_approvals
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_transaction_id
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_transaction_id
+              tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: transaction_id
+            indexName: idx_scope_approvals_transaction_id
+            tableName: scope_approvals
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_domain_user
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_domain_user
+              tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: user_id
+            indexName: idx_scope_approvals_domain_user
+            tableName: scope_approvals
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_expire
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_expire
+              tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: expires_at
+            indexName: idx_scope_approvals_expire
+            tableName: scope_approvals
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_domain_client_user_scope
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_domain_client_user_scope
+              tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_id
+              - column:
+                  name: scope
+            indexName: idx_scope_approvals_domain_client_user_scope
+            tableName: scope_approvals
+            unique: true
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_user_ext_id
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_user_ext_id
+              tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+            indexName: idx_scope_approvals_user_ext_id
+            tableName: scope_approvals
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-idx_scope_approvals_domain_user_id_extid
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_domain_user_id_extid
+              tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: user_id
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+            indexName: idx_scope_approvals_domain_user_id_extid
+            tableName: scope_approvals
+
+  - changeSet:
+      id: dp-init-5-scope_approvals-ext-index
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+              tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: client_id
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+              - column:
+                  name: scope
+            indexName: idx_scope_approvals_domain_client_user_id_extid_scope
+            tableName: scope_approvals
+            unique: false

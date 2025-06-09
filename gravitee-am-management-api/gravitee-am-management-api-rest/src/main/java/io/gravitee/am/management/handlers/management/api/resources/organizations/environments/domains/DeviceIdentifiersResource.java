@@ -120,7 +120,7 @@ public class DeviceIdentifiersResource extends AbstractResource {
                 .andThen(deviceIdentifierPluginService.checkPluginDeployment(newDeviceIdentifier.getType()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> deviceIdentifierService.create(domain, newDeviceIdentifier, authenticatedUser))
+                        .flatMapSingle(existingDomain -> deviceIdentifierService.create(existingDomain, newDeviceIdentifier, authenticatedUser))
                         .map(deviceIdentifier -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/device-identifiers/" + deviceIdentifier.getId()))
                                 .entity(deviceIdentifier)

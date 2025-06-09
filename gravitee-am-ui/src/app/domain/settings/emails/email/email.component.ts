@@ -22,6 +22,7 @@ import { AuthService } from '../../../../services/auth.service';
   selector: 'app-domain-email',
   templateUrl: './email.component.html',
   styleUrls: ['./email.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsEmailComponent implements OnInit {
   private domainId: string;

@@ -17,13 +17,13 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatInput } from '@angular/material/input';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
-import { difference, find, map, remove } from 'lodash';
+import { cloneDeep, difference, find, map, remove } from 'lodash';
 
 import { DomainService } from '../../../services/domain.service';
 import { DialogService } from '../../../services/dialog.service';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { AuthService } from '../../../services/auth.service';
 import { NavbarService } from '../../../components/navbar/navbar.service';
+import { DomainStoreService } from '../../../stores/domain.store';
 
 export interface Tag {
   id: string;
@@ -34,6 +34,7 @@ export interface Tag {
   selector: 'app-general',
   templateUrl: './general.component.html',
   styleUrls: ['./general.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsGeneralComponent implements OnInit {
   @ViewChild('chipInput', { static: true }) chipInput: MatInput;
@@ -41,6 +42,7 @@ export class DomainSettingsGeneralComponent implements OnInit {
   private envId: string;
   formChanged = false;
   domain: any = {};
+  dataPlanes: any[] = [];
   domainOIDCSettings: any = {};
   tags: Tag[];
   selectedTags: Tag[];
@@ -56,13 +58,16 @@ export class DomainSettingsGeneralComponent implements OnInit {
     private snackbarService: SnackbarService,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService,
     private navbarService: NavbarService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
     this.envId = this.route.snapshot.params['envHrid'];
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => {
+      this.domain = cloneDeep(domain);
+    });
+    this.dataPlanes = this.route.snapshot.data['dataPlanes'];
     this.domainOIDCSettings = this.domain.oidc || {};
     this.logoutRedirectUris = map(this.domainOIDCSettings.postLogoutRedirectUris, function (item) {
       return { value: item };
@@ -73,8 +78,14 @@ export class DomainSettingsGeneralComponent implements OnInit {
     if (this.domain.tags === undefined) {
       this.domain.tags = [];
     }
-    this.readonly = !this.authService.hasPermissions(['domain_settings_update']);
     this.initTags();
+    this.updateDataPlaneName();
+  }
+
+  private updateDataPlaneName() {
+    if (this.domain.dataPlaneId && this.dataPlanes) {
+      this.domain.dataPlaneName = this.dataPlanes.find((dp) => dp.id === this.domain.dataPlaneId)?.name;
+    }
   }
 
   initTags() {
@@ -176,12 +187,13 @@ export class DomainSettingsGeneralComponent implements OnInit {
       requestUris: map(this.requestUris, 'value'),
     };
     this.domainService.patchGeneralSettings(this.domain.id, this.domain).subscribe((response) => {
+      this.domainStore.set(response);
       this.domainService.notify(response);
       this.formChanged = false;
       this.snackbarService.open('Domain ' + this.domain.name + ' updated');
       // if hrid has changed, reload the page
-      if (response.hrid !== this.domain.hrid) {
-        this.router.navigate(['/environments', this.envId, 'domains', response.hrid, 'settings', 'general']);
+      if (response.id !== this.domain.id) {
+        this.router.navigate(['/environments', this.envId, 'domains', response.id, 'settings', 'general']);
       } else {
         this.domain = response;
       }

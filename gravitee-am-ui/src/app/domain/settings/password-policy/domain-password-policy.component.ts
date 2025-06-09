@@ -34,6 +34,7 @@ import { DomainPasswordPolicy } from './domain-password-policy.model';
   selector: 'password-policy',
   templateUrl: './domain-password-policy.component.html',
   styleUrls: ['./domain-password-policy.component.scss'],
+  standalone: false,
 })
 export class DomainPasswordPolicyComponent implements OnInit {
   @ViewChild('applicationForm') form: any;

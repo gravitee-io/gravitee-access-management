@@ -1,0 +1,203 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-1-webauthn_credentials
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: webauthn_credentials
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_webauthn_credentials
+                  name: id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reference_id
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reference_type
+                  type: VARCHAR(64)
+              - column:
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  name: username
+                  type: VARCHAR(320)
+              - column:
+                  name: user_agent
+                  type: VARCHAR(255)
+              - column:
+                  name: ip_address
+                  type: VARCHAR(255)
+              - column:
+                  name: credential_id
+                  type: VARCHAR(128)
+              - column:
+                  name: public_key
+                  type: TEXT
+              - column:
+                  name: counter
+                  type: BIGINT
+              - column:
+                  name: created_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: accessed_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: aaguid
+                  type: VARCHAR(64)
+              - column:
+                  name: att_stmt_fmt
+                  type: VARCHAR(64)
+              - column:
+                  name: att_stmt
+                  type: TEXT
+              - column:
+                  name: last_checked_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: device_name
+                  type: VARCHAR(255)
+            tableName: webauthn_credentials
+
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-user
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_userid
+              tableName: webauthn_credentials
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: user_id
+            indexName: idx_webauthn_credentials_ref_userid
+            tableName: webauthn_credentials
+
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-credential
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_credential
+              tableName: webauthn_credentials
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: credential_id
+            indexName: idx_webauthn_credentials_ref_credential
+            tableName: webauthn_credentials
+
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-username
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_username
+              tableName: webauthn_credentials
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: username
+            indexName: idx_webauthn_credentials_ref_username
+            tableName: webauthn_credentials
+
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-aaguid
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_aaguid
+              tableName: webauthn_credentials
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: aaguid
+            indexName: idx_webauthn_credentials_ref_aaguid
+            tableName: webauthn_credentials
+
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref
+              tableName: webauthn_credentials
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+            indexName: idx_webauthn_credentials_ref
+            tableName: webauthn_credentials
+
+  - changeSet:
+      id: dp-init-1-webauthn_credentials-index-ref-username-createAt
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_webauthn_credentials_ref_username_createdAt
+              tableName: webauthn_credentials
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: username
+              - column:
+                  descending: true
+                  name: created_at
+            indexName: idx_webauthn_credentials_ref_username_createdAt
+            tableName: webauthn_credentials
+

@@ -18,8 +18,10 @@ package io.gravitee.am.service;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.ClientType;
 import io.gravitee.am.common.oauth2.GrantType;
+import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.Domain;
@@ -31,12 +33,12 @@ import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
+import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.account.FormField;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
-import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
@@ -49,7 +51,7 @@ import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.InvalidTargetUrlException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.am.service.impl.ApplicationServiceImpl;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
@@ -62,6 +64,7 @@ import io.gravitee.am.service.model.PatchMFASettings;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -90,6 +93,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
@@ -164,15 +168,18 @@ public class ApplicationServiceTest {
     private ApplicationSecretConfig applicationSecretConfig = new ApplicationSecretConfig("BCrypt", mock(ConfigurableEnvironment.class));
 
     @Spy
-    private ApplicationClientSecretService applicationClientSecretService = new ApplicationClientSecretService();
+    private SecretService secretService = new SecretService();
 
     @Mock
-    private ClientSecret clientSecret;
+    private BiFunction<Domain, Application, Completable> revokeToken;
 
     @Mock
-    private TokenService tokenService;
+    private User principal;
 
-    private final static String DOMAIN = "domain1";
+    @Spy
+    private ApplicationTokenCustomClaimsValidator customClaimsValidator = new ApplicationTokenCustomClaimsValidator();
+
+    private final static Domain DOMAIN = new Domain("domain1");
 
     @Test
     public void shouldFindById() {
@@ -206,8 +213,8 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainAndClientId() {
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, "my-client")).thenReturn(Maybe.just(new Application()));
-        TestObserver testObserver = applicationService.findByDomainAndClientId(DOMAIN, "my-client").test();
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), "my-client")).thenReturn(Maybe.just(new Application()));
+        TestObserver testObserver = applicationService.findByDomainAndClientId(DOMAIN.getId(), "my-client").test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
@@ -217,8 +224,8 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainAndClientId_noApp() {
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, "my-client")).thenReturn(Maybe.empty());
-        TestObserver testObserver = applicationService.findByDomainAndClientId(DOMAIN, "my-client").test();
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), "my-client")).thenReturn(Maybe.empty());
+        TestObserver testObserver = applicationService.findByDomainAndClientId(DOMAIN.getId(), "my-client").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
@@ -226,9 +233,9 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainAndClientId_technicalException() {
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, "my-client")).thenReturn(Maybe.error(TechnicalException::new));
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), "my-client")).thenReturn(Maybe.error(TechnicalException::new));
         TestObserver testObserver = new TestObserver();
-        applicationService.findByDomainAndClientId(DOMAIN, "my-client").subscribe(testObserver);
+        applicationService.findByDomainAndClientId(DOMAIN.getId(), "my-client").subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -236,8 +243,8 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(applicationRepository.findByDomain(DOMAIN, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
-        TestObserver<Set<Application>> testObserver = applicationService.findByDomain(DOMAIN).test();
+        when(applicationRepository.findByDomain(DOMAIN.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
+        TestObserver<Set<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -247,10 +254,10 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(applicationRepository.findByDomain(DOMAIN, 0, Integer.MAX_VALUE)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomain(DOMAIN.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        applicationService.findByDomain(DOMAIN).subscribe(testObserver);
+        applicationService.findByDomain(DOMAIN.getId()).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -259,8 +266,8 @@ public class ApplicationServiceTest {
     @Test
     public void shouldFindByDomainPagination() {
         Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
-        when(applicationRepository.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.just(pageClients));
-        TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN, 1, 1).test();
+        when(applicationRepository.findByDomain(DOMAIN.getId(), 1, 1)).thenReturn(Single.just(pageClients));
+        TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), 1, 1).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -270,10 +277,10 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByDomainPagination_technicalException() {
-        when(applicationRepository.findByDomain(DOMAIN, 1, 1)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.findByDomain(DOMAIN.getId(), 1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        applicationService.findByDomain(DOMAIN, 1, 1).subscribe(testObserver);
+        applicationService.findByDomain(DOMAIN.getId(), 1, 1).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -323,8 +330,8 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByExtensionGrant() {
-        when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Flowable.just(new Application()));
-        TestObserver<Set<Application>> testObserver = applicationService.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant").test();
+        when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN.getId(), "client-extension-grant")).thenReturn(Flowable.just(new Application()));
+        TestObserver<Set<Application>> testObserver = applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "client-extension-grant").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -334,19 +341,19 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindByExtensionGrant_technicalException() {
-        when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant")).thenReturn(Flowable.error(TechnicalException::new));
+        when(applicationRepository.findByDomainAndExtensionGrant(DOMAIN.getId(), "client-extension-grant")).thenReturn(Flowable.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        applicationService.findByDomainAndExtensionGrant(DOMAIN, "client-extension-grant").subscribe(testObserver);
+        applicationService.findByDomainAndExtensionGrant(DOMAIN.getId(), "client-extension-grant").subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
     }
 
     @Test
-    public void shouldFindAll() {
+    public void shouldFetchAll() {
         when(applicationRepository.findAll(0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page(Collections.singleton(new Application()), 0, 1)));
-        TestObserver<Set<Application>> testObserver = applicationService.findAll().test();
+        TestObserver<Set<Application>> testObserver = applicationService.fetchAll().test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -355,18 +362,18 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldFindAll_technicalException() {
+    public void shouldFetchAll_technicalException() {
         when(applicationRepository.findAll(0, Integer.MAX_VALUE)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        applicationService.findAll().subscribe(testObserver);
+        applicationService.fetchAll().subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
     }
 
     @Test
-    public void shouldFindAllPagination() {
+    public void shouldFetchAllPagination() {
         Page pageClients = new Page(Collections.singleton(new Application()), 1, 1);
         when(applicationRepository.findAll(1, 1)).thenReturn(Single.just(pageClients));
         TestObserver<Page<Application>> testObserver = applicationService.findAll(1, 1).test();
@@ -378,7 +385,7 @@ public class ApplicationServiceTest {
     }
 
     @Test
-    public void shouldFindAllPagination_technicalException() {
+    public void shouldFetchAllPagination_technicalException() {
         when(applicationRepository.findAll(1, 1)).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
@@ -390,8 +397,8 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindTotalClientsByDomain() {
-        when(applicationRepository.countByDomain(DOMAIN)).thenReturn(Single.just(1l));
-        TestObserver<Long> testObserver = applicationService.countByDomain(DOMAIN).test();
+        when(applicationRepository.countByDomain(DOMAIN.getId())).thenReturn(Single.just(1l));
+        TestObserver<Long> testObserver = applicationService.countByDomain(DOMAIN.getId()).test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
@@ -402,10 +409,10 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldFindTotalClientsByDomain_technicalException() {
-        when(applicationRepository.countByDomain(DOMAIN)).thenReturn(Single.error(TechnicalException::new));
+        when(applicationRepository.countByDomain(DOMAIN.getId())).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver testObserver = new TestObserver<>();
-        applicationService.countByDomain(DOMAIN).subscribe(testObserver);
+        applicationService.countByDomain(DOMAIN.getId()).subscribe(testObserver);
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -437,7 +444,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldCreate_noCertificate() {
         NewApplication newClient = prepareCreateServiceApp();
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+        when(certificateService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
@@ -445,7 +452,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(applicationRepository.findByDomainAndClientId(eq(DOMAIN), eq(CLIENT_ID))).thenReturn(Maybe.empty());
+        when(applicationRepository.findByDomainAndClientId(eq(DOMAIN.getId()), eq(CLIENT_ID))).thenReturn(Maybe.empty());
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
@@ -456,7 +463,7 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID);
         verify(applicationRepository, times(1)).create(any(Application.class));
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
     }
@@ -464,7 +471,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldCreate_WithClientSecretHash() {
         NewApplication newClient = prepareCreateApp(true);
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+        when(certificateService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
@@ -472,7 +479,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID)).thenReturn(Maybe.empty());
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
@@ -483,7 +490,7 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID);
         verify(applicationRepository, times(1)).create(argThat(app ->
                 app.getSecretSettings() != null &&
                         app.getSecretSettings().size() == 1 &&
@@ -497,7 +504,7 @@ public class ApplicationServiceTest {
 
     public void shouldCreate_AppWithRedirectUri() {
         NewApplication newClient = prepareCreateApp(true);
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+        when(certificateService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
@@ -508,7 +515,7 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(), null);
         verify(applicationRepository, times(1)).create(any(Application.class));
 
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
@@ -526,7 +533,7 @@ public class ApplicationServiceTest {
 
         testObserver.assertError(InvalidRedirectUriException.class);
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(), null);
         verify(applicationRepository, never()).create(any(Application.class));
         verify(membershipService, never()).addOrUpdate(eq(ORGANIZATION_ID), any());
     }
@@ -555,7 +562,7 @@ public class ApplicationServiceTest {
         customCert.setName("Custom");
         customCert.setCreatedAt(new Date(now.plusDays(3).toInstant(ZoneOffset.UTC).toEpochMilli()));
 
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
+        when(certificateService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
@@ -567,7 +574,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID)).thenReturn(Maybe.empty());
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -575,7 +582,7 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN,  CLIENT_ID);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(),  CLIENT_ID);
         verify(applicationRepository, times(1)).create(any(Application.class));
         verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(lastestDefaultCert.getId())));
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
@@ -605,7 +612,7 @@ public class ApplicationServiceTest {
         customCert.setName("Custom");
         customCert.setExpiresAt(new Date(now.plusDays(3).toInstant(ZoneOffset.UTC).toEpochMilli()));
 
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
+        when(certificateService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(lastestDefaultCert, firstDefaultCert, customCert));
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
@@ -617,7 +624,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(applicationRepository.findByDomainAndClientId(eq(DOMAIN), eq(CLIENT_ID))).thenReturn(Maybe.empty());
+        when(applicationRepository.findByDomainAndClientId(eq(DOMAIN.getId()), eq(CLIENT_ID))).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenAnswer(args -> Single.just(args.getArguments()[0]));
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
@@ -626,7 +633,7 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID);
         verify(applicationRepository, times(1)).create(any(Application.class));
         verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(firstDefaultCert.getId())));
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
@@ -650,7 +657,7 @@ public class ApplicationServiceTest {
         customCert.setName("Custom");
         customCert.setExpiresAt(new Date(now.plusDays(3).toInstant(ZoneOffset.UTC).toEpochMilli()));
 
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.just(customCert, firstDefaultCert));
+        when(certificateService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(customCert, firstDefaultCert));
 
         DefaultUser user = new DefaultUser("username");
         user.setAdditionalInformation(Collections.singletonMap(Claims.ORGANIZATION, ORGANIZATION_ID));
@@ -662,7 +669,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID)).thenReturn(Maybe.empty());
 
         TestObserver<Application> testObserver = applicationService.create(DOMAIN, newClient, user).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -670,7 +677,7 @@ public class ApplicationServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID);
         verify(applicationRepository, times(1)).create(any(Application.class));
         verify(applicationRepository, times(1)).create(argThat(app -> app.getCertificate().equalsIgnoreCase(customCert.getId())));
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
@@ -683,7 +690,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.create(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)).thenReturn(Maybe.just(new Role()));
         return newClient;
@@ -698,11 +705,11 @@ public class ApplicationServiceTest {
         } else {
             when(newClient.getRedirectUris()).thenReturn(List.of());
         }
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), null)).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
@@ -724,7 +731,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.error(TechnicalException::new));
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID)).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Application> testObserver = new TestObserver<>();
         applicationService.create(DOMAIN, newClient).subscribe(testObserver);
@@ -749,10 +756,10 @@ public class ApplicationServiceTest {
             return mock;
         }).when(applicationTemplateManager).apply(any());
 
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
+        when(certificateService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), null)).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenReturn(Single.error(TechnicalException::new));
 
         TestObserver<Application> testObserver = new TestObserver<>();
@@ -760,7 +767,7 @@ public class ApplicationServiceTest {
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, null);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(), null);
     }
 
     @Test
@@ -774,28 +781,28 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.just(new Application()));
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID)).thenReturn(Maybe.just(new Application()));
 
         TestObserver<Application> testObserver = new TestObserver<>();
         applicationService.create(DOMAIN, newClient).subscribe(testObserver);
 
         testObserver.assertError(ApplicationAlreadyExistsException.class);
         testObserver.assertNotComplete();
-        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN, CLIENT_ID);
+        verify(applicationRepository, times(1)).findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID);
         verify(applicationRepository, never()).create(any(Application.class));
     }
 
     @Test
     public void create_failWithNoDomain() {
-        TestObserver testObserver = applicationService.create(new Application()).test();
+        TestObserver testObserver = applicationService.create(DOMAIN, new Application()).test();
         testObserver.assertNotComplete();
         testObserver.assertError(InvalidClientMetadataException.class);
     }
 
     @Test
     public void create_implicit_invalidRedirectUri() {
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), null)).thenReturn(Maybe.empty());
 
         Application toCreate = emptyAppWithDomain();
         ApplicationSettings settings = new ApplicationSettings();
@@ -806,7 +813,7 @@ public class ApplicationServiceTest {
         settings.setOauth(oAuthSettings);
         toCreate.setSettings(settings);
 
-        TestObserver testObserver = applicationService.create(toCreate).test();
+        TestObserver testObserver = applicationService.create(DOMAIN, toCreate).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -815,8 +822,8 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldNot_create_with_client_secret_jwt_when_bcrypt_used_to_hash_client_secret() {
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, null)).thenReturn(Maybe.empty());
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), null)).thenReturn(Maybe.empty());
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
         Application toCreate = emptyAppWithDomain();
@@ -828,7 +835,7 @@ public class ApplicationServiceTest {
         settings.setOauth(oAuthSettings);
         toCreate.setSettings(settings);
 
-        TestObserver testObserver = applicationService.create(toCreate).test();
+        TestObserver testObserver = applicationService.create(DOMAIN,toCreate).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -839,14 +846,14 @@ public class ApplicationServiceTest {
     public void create_generateUuidAsClientId() {
         NewApplication newClient = Mockito.mock(NewApplication.class);
         Application createClient = Mockito.mock(Application.class);
-        when(createClient.getDomain()).thenReturn(DOMAIN);
+        when(createClient.getDomain()).thenReturn(DOMAIN.getId());
         when(newClient.getName()).thenReturn("my-client");
         when(newClient.getType()).thenReturn(ApplicationType.SERVICE);
-        when(applicationRepository.findByDomainAndClientId(DOMAIN, CLIENT_ID)).thenReturn(Maybe.empty());
+        when(applicationRepository.findByDomainAndClientId(DOMAIN.getId(), CLIENT_ID)).thenReturn(Maybe.empty());
         when(applicationRepository.create(any(Application.class))).thenReturn(Single.just(createClient));
         when(domainService.findById(anyString())).thenReturn(Maybe.just(new Domain()));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doAnswer(invocation -> {
             Application mock = invocation.getArgument(0);
             mock.getSettings().getOauth().setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
@@ -854,7 +861,7 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(certificateService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+        when(certificateService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
 
         TestObserver testObserver = applicationService.create(DOMAIN, newClient).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -901,11 +908,11 @@ public class ApplicationServiceTest {
         when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(updated));
 
         doReturn(true).when(accountSettingsValidator).validate(any());
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
 
-        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -914,6 +921,35 @@ public class ApplicationServiceTest {
         verify(applicationRepository, times(1)).findById(anyString());
         verify(identityProviderService, times(2)).findById(anyString());
         verify(applicationRepository, times(1)).update(any(Application.class));
+    }
+
+    @Test
+    public void shouldInvalidatePatch_custom_claim_gis() {
+        PatchApplication patchClient = new PatchApplication();
+        patchClient.setIdentityProviders(getApplicationIdentityProviders());
+        PatchApplicationSettings patchApplicationSettings = new PatchApplicationSettings();
+        PatchApplicationOAuthSettings patchApplicationOAuthSettings = new PatchApplicationOAuthSettings();
+        patchApplicationOAuthSettings.setResponseTypes(Optional.of(List.of("token")));
+        patchApplicationOAuthSettings.setGrantTypes(Optional.of(List.of("implicit")));
+        patchApplicationSettings.setOauth(Optional.of(patchApplicationOAuthSettings));
+        patchApplicationSettings.setPasswordSettings(Optional.empty());
+        patchClient.setSettings(Optional.of(patchApplicationSettings));
+
+        Application toPatch = emptyAppWithDomain();
+        ApplicationSettings settings = new ApplicationSettings();
+        ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
+        oAuthSettings.setTokenCustomClaims(List.of(TokenClaim.of(TokenTypeHint.ACCESS_TOKEN,"gis", "value")));
+        settings.setOauth(oAuthSettings);
+        toPatch.setSettings(settings);
+
+        IdentityProvider idp1 = new IdentityProvider();
+        idp1.setId("idp1");
+
+        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(toPatch));
+        TestObserver<Application> testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(err -> err instanceof InvalidParameterException);
     }
 
     private Optional<Set<PatchApplicationIdentityProvider>> getApplicationIdentityProviders() {
@@ -934,7 +970,7 @@ public class ApplicationServiceTest {
         ApplicationOAuthSettings clientOAuthSettings = new ApplicationOAuthSettings();
         clientOAuthSettings.setClientType(ClientType.PUBLIC);
         clientSettings.setOauth(clientOAuthSettings);
-        client.setDomain(DOMAIN);
+        client.setDomain(DOMAIN.getId());
         client.setSettings(clientSettings);
 
         PatchApplication patchClient = new PatchApplication();
@@ -947,10 +983,10 @@ public class ApplicationServiceTest {
         patchClient.setSettings(Optional.of(patchApplicationSettings));
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -964,7 +1000,7 @@ public class ApplicationServiceTest {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
@@ -977,7 +1013,7 @@ public class ApplicationServiceTest {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
 
@@ -990,7 +1026,7 @@ public class ApplicationServiceTest {
         PatchApplication patchClient = Mockito.mock(PatchApplication.class);
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
 
         testObserver.assertError(ApplicationNotFoundException.class);
         testObserver.assertNotComplete();
@@ -1092,7 +1128,7 @@ public class ApplicationServiceTest {
         existingApp.setType(ApplicationType.SERVICE);
         existingApp.setSettings(new ApplicationSettings());
         existingApp.getSettings().setOauth(new ApplicationOAuthSettings());
-        existingApp.setDomain(DOMAIN);
+        existingApp.setDomain(DOMAIN.getId());
         String clientSecret = "something";
         existingApp.getSettings().getOauth().setClientSecret(clientSecret);
         when(applicationRepository.findById(eq(APP_ID))).thenReturn(Maybe.just(existingApp));
@@ -1110,7 +1146,7 @@ public class ApplicationServiceTest {
         settings.setOauth(Optional.of(oAuthSettings));
         toPatch.setSettings(Optional.of(settings));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, APP_ID, toPatch).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, APP_ID, toPatch, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1202,7 +1238,7 @@ public class ApplicationServiceTest {
     public void shouldPatch() {
         Application client = new Application();
         client.setId("my-client");
-        client.setDomain(DOMAIN);
+        client.setDomain(DOMAIN.getId());
 
         IdentityProvider idp1 = new IdentityProvider();
         idp1.setId("idp1");
@@ -1223,12 +1259,12 @@ public class ApplicationServiceTest {
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(idp1));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(idp2));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1243,7 +1279,7 @@ public class ApplicationServiceTest {
     public void shouldPatch_Application_ResetPassword_ValidField() {
         Application client = new Application();
         client.setId("my-client");
-        client.setDomain(DOMAIN);
+        client.setDomain(DOMAIN.getId());
 
         IdentityProvider idp1 = new IdentityProvider();
         idp1.setId("idp1");
@@ -1270,12 +1306,12 @@ public class ApplicationServiceTest {
         when(identityProviderService.findById("id1")).thenReturn(Maybe.just(idp1));
         when(identityProviderService.findById("id2")).thenReturn(Maybe.just(idp2));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1290,7 +1326,7 @@ public class ApplicationServiceTest {
     public void shouldNoPatch_Application_ResetPassword_InvalidField() {
         Application client = new Application();
         client.setId("my-client");
-        client.setDomain(DOMAIN);
+        client.setDomain(DOMAIN.getId());
 
         IdentityProvider idp1 = new IdentityProvider();
         idp1.setId("idp1");
@@ -1316,7 +1352,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         doReturn(false).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNotComplete();
@@ -1342,12 +1378,12 @@ public class ApplicationServiceTest {
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1372,12 +1408,12 @@ public class ApplicationServiceTest {
 
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(scopeService.validateScope(DOMAIN, new ArrayList<>())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN.getId(), new ArrayList<>())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1394,7 +1430,7 @@ public class ApplicationServiceTest {
         when(existingClient.getDomain()).thenReturn("my-domain");
         when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
         when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         Form form = new Form();
         form.setId("form-id");
         when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.just(form));
@@ -1408,7 +1444,7 @@ public class ApplicationServiceTest {
         when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Flowable.just(membership));
         when(membershipService.delete(anyString())).thenReturn(Completable.complete());
 
-        TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
+        TestObserver testObserver = applicationService.delete(existingClient.getId(), DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1427,12 +1463,12 @@ public class ApplicationServiceTest {
         when(existingClient.getId()).thenReturn("my-client");
         when(applicationRepository.findById(existingClient.getId())).thenReturn(Maybe.just(existingClient));
         when(applicationRepository.delete(existingClient.getId())).thenReturn(Completable.complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(formService.findByDomainAndClient(existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.empty());
         when(emailTemplateService.findByClient(ReferenceType.DOMAIN, existingClient.getDomain(), existingClient.getId())).thenReturn(Flowable.empty());
         when(membershipService.findByReference(existingClient.getId(), ReferenceType.APPLICATION)).thenReturn(Flowable.empty());
 
-        TestObserver testObserver = applicationService.delete(existingClient.getId()).test();
+        TestObserver testObserver = applicationService.delete(existingClient.getId(), DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1449,7 +1485,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
         when(applicationRepository.delete(anyString())).thenReturn(Completable.error(TechnicalException::new));
 
-        TestObserver testObserver = applicationService.delete("my-client").test();
+        TestObserver testObserver = applicationService.delete("my-client", DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
@@ -1460,7 +1496,7 @@ public class ApplicationServiceTest {
     public void shouldDelete2_technicalException() {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
 
-        TestObserver testObserver = applicationService.delete("my-client").test();
+        TestObserver testObserver = applicationService.delete("my-client", DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(TechnicalManagementException.class);
@@ -1471,7 +1507,7 @@ public class ApplicationServiceTest {
     public void shouldDelete_clientNotFound() {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
 
-        TestObserver testObserver = applicationService.delete("my-client").test();
+        TestObserver testObserver = applicationService.delete("my-client", DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertError(ApplicationNotFoundException.class);
@@ -1493,12 +1529,12 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         doReturn(true).when(accountSettingsValidator).validate(any());
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1519,12 +1555,12 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1545,12 +1581,12 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1571,12 +1607,12 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1597,12 +1633,12 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidRedirectUriException.class);
         testObserver.assertNotComplete();
 
@@ -1627,7 +1663,7 @@ public class ApplicationServiceTest {
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
 
@@ -1641,7 +1677,7 @@ public class ApplicationServiceTest {
 
         Application client = new Application();
         client.setType(ApplicationType.SERVICE);
-        client.setDomain(DOMAIN);
+        client.setDomain(DOMAIN.getId());
         ApplicationSettings settings = new ApplicationSettings();
         ApplicationOAuthSettings oAuthSettings = new ApplicationOAuthSettings();
         oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
@@ -1654,7 +1690,7 @@ public class ApplicationServiceTest {
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertNotComplete();
 
@@ -1676,14 +1712,14 @@ public class ApplicationServiceTest {
         client.setSettings(settings);
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(new Application()));
         when(applicationRepository.update(any(Application.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
-        when(scopeService.validateScope(DOMAIN, Collections.emptyList())).thenReturn(Single.just(true));
+        when(scopeService.validateScope(DOMAIN.getId(), Collections.emptyList())).thenReturn(Single.just(true));
         doReturn(true).when(accountSettingsValidator).validate(any());
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
@@ -1691,95 +1727,6 @@ public class ApplicationServiceTest {
 
         verify(applicationRepository, times(1)).findById(anyString());
         verify(applicationRepository, times(1)).update(any(Application.class));
-    }
-
-    @Test
-    public void shouldRenewSecret() {
-        Application client = emptyAppWithDomain();
-        ApplicationSettings applicationSettings = new ApplicationSettings();
-        ApplicationOAuthSettings applicationOAuthSettings = new ApplicationOAuthSettings();
-        applicationSettings.setOauth(applicationOAuthSettings);
-        client.setSettings(applicationSettings);
-
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(client));
-
-        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(applicationRepository, times(1)).findById(anyString());
-        verify(applicationRepository, times(1)).update(any(Application.class));
-        verify(applicationRepository, times(1)).update(argThat(app ->
-                app.getSettings() != null &&
-                    app.getSecrets() != null &&
-                    !app.getSecrets().isEmpty())
-        );
-    }
-
-    /**
-     * Since we introduce the client secret hashing, the renew secret action for an existing application
-     * using client_secret_jwt as auth method will generate a None hashed secret as we need it to validate
-     * the jwt signature. (for this Test Class default algo for client secret hash is BCrypt)
-     */
-    @Test
-    public void shouldRenewSecret_withNone_If_client_secret_jwt_method() {
-        Application client = emptyAppWithDomain();
-        ApplicationSettings applicationSettings = new ApplicationSettings();
-        ApplicationOAuthSettings applicationOAuthSettings = new ApplicationOAuthSettings();
-        applicationOAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_JWT);
-        applicationSettings.setOauth(applicationOAuthSettings);
-        client.setSecretSettings(List.of(ApplicationSecretConfig.buildNoneSecretSettings()));// None
-        client.setSettings(applicationSettings);
-
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(client));
-        when(applicationRepository.update(any(Application.class))).thenReturn(Single.just(client));
-
-        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertComplete();
-        testObserver.assertNoErrors();
-
-        verify(applicationRepository, times(1)).findById(anyString());
-        verify(applicationRepository, times(1)).update(any(Application.class));
-        verify(applicationRepository, times(1)).update(argThat(app ->
-                app.getSettings() != null &&
-                    app.getSecretSettings() != null &&
-                    app.getSecretSettings().get(0).getAlgorithm().equalsIgnoreCase("none") &&
-                    app.getSecrets() != null &&
-                    !app.getSecrets().isEmpty())
-        );
-    }
-
-    @Test
-    public void shouldRenewSecret_clientNotFound() {
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.empty());
-
-        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertError(ApplicationNotFoundException.class);
-        testObserver.assertNotComplete();
-
-        verify(applicationRepository, never()).update(any());
-    }
-
-    @Test
-    public void shouldRenewSecret_technicalException() {
-        when(applicationRepository.findById("my-client")).thenReturn(Maybe.error(TechnicalException::new));
-
-        TestObserver testObserver = applicationService.renewClientSecret(DOMAIN, "my-client").test();
-        testObserver.awaitDone(10, TimeUnit.SECONDS);
-
-        testObserver.assertError(TechnicalManagementException.class);
-        testObserver.assertNotComplete();
-
-        verify(applicationRepository, never()).update(any());
     }
 
     @Test
@@ -1788,13 +1735,13 @@ public class ApplicationServiceTest {
         Application client = createClientWithPostLogoutRedirectUris("https://gravitee.io/*");
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1804,7 +1751,7 @@ public class ApplicationServiceTest {
 
     private static Application emptyAppWithDomain() {
         Application app = new Application();
-        app.setDomain(DOMAIN);
+        app.setDomain(DOMAIN.getId());
         return app;
     }
 
@@ -1814,13 +1761,13 @@ public class ApplicationServiceTest {
         Application client = createClientWithPostLogoutRedirectUris("noscheme");
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         doReturn(true).when(accountSettingsValidator).validate(any());
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1834,13 +1781,13 @@ public class ApplicationServiceTest {
         Application client = createClientWithPostLogoutRedirectUris("http://gravitee.io/callback");
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1854,13 +1801,13 @@ public class ApplicationServiceTest {
         Application client = createClientWithPostLogoutRedirectUris("http://localhost/callback");
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1874,13 +1821,13 @@ public class ApplicationServiceTest {
         Application client =createClientWithPostLogoutRedirectUris("malformed:uri:exception");
 
         when(patchClient.patch(any())).thenReturn(client);
-        when(domainService.findById(DOMAIN)).thenReturn(Maybe.just(new Domain()));
+        when(domainService.findById(DOMAIN.getId())).thenReturn(Maybe.just(new Domain()));
         Application app = emptyAppWithDomain();
         when(applicationRepository.findById("my-client")).thenReturn(Maybe.just(app));
         doReturn(true).when(accountSettingsValidator).validate(any());
         when(scopeService.validateScope(anyString(), any())).thenReturn(Single.just(true));
 
-        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient).test();
+        TestObserver testObserver = applicationService.patch(DOMAIN, "my-client", patchClient, principal, revokeToken).test();
         testObserver.assertError(InvalidTargetUrlException.class);
         testObserver.assertNotComplete();
 
@@ -1896,7 +1843,7 @@ public class ApplicationServiceTest {
     @Test
     public void shouldAddMfaToAppWithLegacyMfaConfiguration() {
         Application client = Application.builder()
-                .domain(DOMAIN)
+                .domain(DOMAIN.getId())
                 .settings(ApplicationSettings.builder()
                         .mfa(MFASettings.builder()
                                 .factor(new FactorSettings(null, null)) // client's existing config
@@ -1911,7 +1858,7 @@ public class ApplicationServiceTest {
 
         var factorId = UUID.randomUUID().toString();
         PatchApplication patch = mfaConfigurationPatch(factorId);
-        applicationService.patch(client.getDomain(), client.getId(), patch)
+        applicationService.patch(new Domain(client.getDomain()), client.getId(), patch, principal, revokeToken)
                 .test()
                 .assertValue(app -> app.getSettings().getMfa().getFactor().getDefaultFactorId().equals(factorId))
                 .assertNoErrors();
@@ -1919,52 +1866,52 @@ public class ApplicationServiceTest {
 
     @Test
     public void shouldDisableApplicationAndRemoveTokens() {
-        var client = Application.builder().domain(DOMAIN).enabled(true).settings(ApplicationSettings.builder().build()).build();
+        var client = Application.builder().domain(DOMAIN.getId()).enabled(true).settings(ApplicationSettings.builder().build()).build();
 
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(tokenService.deleteByApplication(any())).thenAnswer(invocation -> Completable.complete());
+        when(revokeToken.apply(any(), any())).thenAnswer(invocation -> Completable.complete());
 
         var patch =  PatchApplication.builder().enabled(Optional.of(false)).build();
-        applicationService.patch(client.getDomain(), client.getId(), patch)
+        applicationService.patch(new Domain(client.getDomain()), client.getId(), patch, principal, revokeToken)
                 .test()
                 .assertNoErrors();
 
-        verify(tokenService, times(1)).deleteByApplication(any());
+        verify(revokeToken).apply(any(), any());
     }
 
     @Test
     public void shouldDisableApplicationEvenIfTokenRemoveThrowError() {
-        var client = Application.builder().domain(DOMAIN).enabled(true).settings(ApplicationSettings.builder().build()).build();
+        var client = Application.builder().domain(DOMAIN.getId()).enabled(true).settings(ApplicationSettings.builder().build()).build();
 
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(tokenService.deleteByApplication(any())).thenAnswer(invocation -> Completable.error(new RuntimeException()));
+        when(revokeToken.apply(any(), any())).thenAnswer(invocation -> Completable.error(new RuntimeException()));
 
         var patch =  PatchApplication.builder().enabled(Optional.of(false)).build();
-        applicationService.patch(client.getDomain(), client.getId(), patch)
+        applicationService.patch(new Domain(client.getDomain()), client.getId(), patch, principal, revokeToken)
                 .test()
                 .assertNoErrors();
 
-        verify(tokenService, times(1)).deleteByApplication(any());
+        verify(revokeToken).apply(any(), any());
     }
 
     @Test
     public void shouldNotDisableApplicationAndRemoveTokensWhenItIsAlreadyDisabled() {
-        var client = Application.builder().domain(DOMAIN).enabled(false).settings(ApplicationSettings.builder().build()).build();
+        var client = Application.builder().domain(DOMAIN.getId()).enabled(false).settings(ApplicationSettings.builder().build()).build();
 
         when(applicationRepository.findById(any())).thenReturn(Maybe.just(client));
         when(applicationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
 
         var patch =  PatchApplication.builder().enabled(Optional.of(false)).build();
-        applicationService.patch(client.getDomain(), client.getId(), patch)
+        applicationService.patch(new Domain(client.getDomain()), client.getId(), patch, principal, revokeToken)
                 .test()
                 .assertNoErrors();
 
-        verify(tokenService, never()).deleteByApplication(any());
+        verify(revokeToken, never()).apply(any(), any());
     }
 
     private PatchApplication mfaConfigurationPatch(String factorId) {

@@ -29,6 +29,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-group-roles',
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
+  standalone: false,
 })
 export class GroupRolesComponent implements OnInit {
   private domainId: string;
@@ -118,6 +119,7 @@ export class GroupRolesComponent implements OnInit {
 @Component({
   selector: 'add-group-roles',
   templateUrl: './add/add-group-roles.component.html',
+  standalone: false,
 })
 export class AddGroupRolesComponent implements OnInit {
   private domainId: string;

@@ -27,6 +27,10 @@ import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
 import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.reactivex.rxjava3.core.Observable;
 import org.bson.Document;
@@ -36,6 +40,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
+
+import static org.mockito.Mockito.mock;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -61,6 +67,11 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
         users.forEach(doc -> Observable.fromPublisher(collection.insertOne(doc)).blockingFirst());
     }
 
+    @Bean
+    public DataPlaneRegistry dataPlaneRegistry() {
+        return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class));
+    }
+    
     @Bean
     public MongoIdentityProviderConfiguration mongoIdentityProviderConfiguration() {
         MongoIdentityProviderConfiguration configuration = new MongoIdentityProviderConfiguration();

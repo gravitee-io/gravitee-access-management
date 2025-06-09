@@ -57,6 +57,13 @@ export class EmailTemplateFactoryService {
       icon: 'notifications',
       defaultExpirationSeconds: EmailTemplateFactoryService.DEFAULT_EXPIRATION_SECONDS_1_DAY,
     },
+    client_secret_expiration: {
+      name: 'Client Secret Expiration',
+      description: 'Email notification about Client Secret expiration',
+      template: 'CLIENT_SECRET_EXPIRATION',
+      icon: 'notifications',
+      defaultExpirationSeconds: EmailTemplateFactoryService.DEFAULT_EXPIRATION_SECONDS_1_DAY,
+    },
     registration_verify: {
       name: 'Account registered verification',
       description: 'Email notification about Account verification after registration',

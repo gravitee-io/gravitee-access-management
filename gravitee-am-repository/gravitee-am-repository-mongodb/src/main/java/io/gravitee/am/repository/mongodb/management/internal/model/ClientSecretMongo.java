@@ -15,12 +15,17 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class ClientSecretMongo {
 
     private String id;
@@ -28,44 +33,6 @@ public class ClientSecretMongo {
     private String name;
     private String secret;
     private Date createdAt;
+    private Date expiresAt;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getSettingsId() {
-        return settingsId;
-    }
-
-    public void setSettingsId(String settingsId) {
-        this.settingsId = settingsId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getSecret() {
-        return secret;
-    }
-
-    public void setSecret(String secret) {
-        this.secret = secret;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
 }

@@ -22,6 +22,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-forms',
   templateUrl: './forms.component.html',
   styleUrls: ['./forms.component.scss'],
+  standalone: false,
 })
 export class FormsComponent implements OnInit {
   @Input() forms: any[];

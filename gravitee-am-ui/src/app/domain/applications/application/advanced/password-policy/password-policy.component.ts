@@ -15,15 +15,18 @@
  */
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { ApplicationService } from '../../../../../services/application.service';
 import { AuthService } from '../../../../../services/auth.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 @Component({
   selector: 'password-policy',
   templateUrl: './password-policy.component.html',
   styleUrls: ['./password-policy.component.scss'],
+  standalone: false,
 })
 export class PasswordPolicyComponent implements OnInit {
   @ViewChild('applicationForm', { static: true }) form: any;
@@ -54,10 +57,11 @@ export class PasswordPolicyComponent implements OnInit {
     private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
     private authService: AuthService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = deepClone(this.domainStore.current);
     this.domainId = this.domain.id;
     this.application = this.route.snapshot.data['application'];
     this.passwordSettings = this.application.settings.passwordSettings;

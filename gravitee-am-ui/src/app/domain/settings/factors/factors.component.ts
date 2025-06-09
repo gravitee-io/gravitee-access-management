@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-domain-factors',
   templateUrl: './factors.component.html',
   styleUrls: ['./factors.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsFactorsComponent implements OnInit {
   private factorTypes: any = {

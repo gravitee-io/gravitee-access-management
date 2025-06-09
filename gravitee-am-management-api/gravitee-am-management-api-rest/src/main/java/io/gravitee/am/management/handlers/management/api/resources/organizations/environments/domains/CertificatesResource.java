@@ -122,7 +122,7 @@ public class CertificatesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(schema -> certificateFacade.create(domain, newCertificate, authenticatedUser))
+                        .flatMapSingle(existingDomain -> certificateFacade.create(existingDomain, newCertificate, authenticatedUser))
                         .map(certificate -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
                                 .entity(ModifiedCertificateEntity.of(certificate))
@@ -152,7 +152,7 @@ public class CertificatesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_CERTIFICATE, Acl.CREATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(schema -> certificateFacade.rotate(domain, principal))
+                        .flatMapSingle(existingDomain -> certificateFacade.rotate(existingDomain, principal))
                         .map(certificate -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/certificates/" + certificate.getId()))
                                 .entity(ModifiedCertificateEntity.of(certificate))

@@ -17,11 +17,12 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.activity;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity.Type;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.common.http.HttpHeaders;
 import io.reactivex.rxjava3.core.Completable;
 import org.junit.Before;
@@ -52,16 +53,17 @@ import static org.mockito.Mockito.verify;
 public class UserActivityHandlerTest {
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     private UserActivityHandler userActivityHandler;
     private Client client;
     private User user;
+    private Domain domain;
     private SpyRoutingContext routingContext;
 
     @Before
     public void setUp() {
-        userActivityHandler = new UserActivityHandler(userActivityService);
+        userActivityHandler = new UserActivityHandler(userActivityService, domain);
 
         client = new Client();
         client.setDomain("domain-id");
@@ -69,11 +71,13 @@ public class UserActivityHandlerTest {
         user = new User();
         user.setReferenceId("domain-id");
         user.setId("user-id");
+        domain = new Domain();
+        domain.setId(user.getReferenceId());
 
         routingContext = new SpyRoutingContext();
         routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
         doReturn(true).when(userActivityService).canSaveUserActivity();
-        doReturn(Completable.complete()).when(userActivityService).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        doReturn(Completable.complete()).when(userActivityService).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 
     @Test
@@ -82,7 +86,7 @@ public class UserActivityHandlerTest {
         userActivityHandler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
-        verify(userActivityService, times(0)).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        verify(userActivityService, times(0)).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 
     @Test
@@ -91,7 +95,7 @@ public class UserActivityHandlerTest {
         userActivityHandler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
-        verify(userActivityService, times(0)).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        verify(userActivityService, times(0)).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 
     @Test
@@ -99,7 +103,7 @@ public class UserActivityHandlerTest {
         userActivityHandler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
-        verify(userActivityService, times(1)).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        verify(userActivityService, times(1)).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 
     @Test
@@ -109,7 +113,7 @@ public class UserActivityHandlerTest {
         userActivityHandler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
-        verify(userActivityService, times(1)).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        verify(userActivityService, times(1)).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 
     @Test
@@ -119,7 +123,7 @@ public class UserActivityHandlerTest {
         userActivityHandler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
-        verify(userActivityService, times(1)).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        verify(userActivityService, times(1)).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 
     @Test
@@ -128,7 +132,16 @@ public class UserActivityHandlerTest {
         userActivityHandler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
-        verify(userActivityService, times(1)).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        verify(userActivityService, times(1)).save(any(), anyString(), eq(Type.LOGIN), any());
+    }
+
+    @Test
+    public void must_save_user_activity_with_login_attempt_long_value_and_do_next() {
+        routingContext.session().put(LOGIN_ATTEMPT_KEY, 30L);
+        userActivityHandler.handle(routingContext);
+
+        assertTrue(routingContext.verifyNext(1));
+        verify(userActivityService, times(1)).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 
 
@@ -142,7 +155,7 @@ public class UserActivityHandlerTest {
         userActivityHandler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
-        verify(userActivityService, times(1)).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        verify(userActivityService, times(1)).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 
     @Test
@@ -152,11 +165,11 @@ public class UserActivityHandlerTest {
         routingContext.session().put(LOGIN_ATTEMPT_KEY, 30);
 
         doReturn(Completable.error(new IllegalArgumentException("An unexpected error has occurred")))
-                .when(userActivityService).save(anyString(), anyString(), eq(Type.LOGIN), any());
+                .when(userActivityService).save(any(), anyString(), eq(Type.LOGIN), any());
 
         userActivityHandler.handle(routingContext);
 
         assertTrue(routingContext.verifyNext(1));
-        verify(userActivityService, times(1)).save(anyString(), anyString(), eq(Type.LOGIN), any());
+        verify(userActivityService, times(1)).save(any(), anyString(), eq(Type.LOGIN), any());
     }
 }

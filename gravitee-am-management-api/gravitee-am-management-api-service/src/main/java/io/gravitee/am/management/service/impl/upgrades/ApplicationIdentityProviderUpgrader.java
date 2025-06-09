@@ -16,6 +16,7 @@
 
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.SystemTask;
@@ -28,7 +29,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -42,6 +42,7 @@ import static java.util.stream.Collectors.joining;
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
 
     private static final String TASK_ID = "application_identity_provider_migration";
@@ -75,7 +76,7 @@ public class ApplicationIdentityProviderUpgrader extends SystemTaskUpgrader {
     }
 
     private Single<Boolean> migrateApplicationIdentityProviders(SystemTask task) {
-        return applicationRepository.findAll().flatMapPublisher(Flowable::fromIterable)
+        return applicationRepository.fetchAll().flatMapPublisher(Flowable::fromIterable)
                 .filter(application -> application.getIdentityProviders() != null && !application.getIdentityProviders().isEmpty())
                 .flatMapSingle(this::addRuleInApplicationIdentityProvider)
                 .ignoreElements()

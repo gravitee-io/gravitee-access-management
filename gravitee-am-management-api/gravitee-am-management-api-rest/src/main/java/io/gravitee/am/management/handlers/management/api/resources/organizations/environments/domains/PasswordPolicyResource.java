@@ -17,7 +17,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
@@ -72,7 +72,7 @@ public class PasswordPolicyResource extends AbstractDomainResource {
     private PasswordHistoryService passwordHistoryService;
     @Autowired
     @Qualifier("managementUserService")
-    private UserService userService;
+    private ManagementUserService userService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -195,21 +195,20 @@ public class PasswordPolicyResource extends AbstractDomainResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(() -> new DomainNotFoundException(domainId)))
-                        .flatMap(d -> passwordPolicyService.findByReferenceAndId(ReferenceType.DOMAIN, d.getId(), policyId))
-                        .flatMapSingle(policy -> {
-                            if (request.userId() == null) {
-                                return Single.just(passwordService.evaluate(request.password(), policy, new User()));
-                            } else {
-                                return userService.findById(request.userId())
-                                        .defaultIfEmpty(new User())
-                                        .flatMap(u -> passwordHistoryService.passwordAlreadyUsed(ReferenceType.DOMAIN, domainId, request.userId(), request.password(), policy)
-                                                .map(historyResult -> {
-                                                    var evaluationResult = passwordService.evaluate(request.password(), policy, u);
-                                                    return evaluationResult.toBuilder().recentPasswordsNotReused(!historyResult).build();
-                                                }));
-
-                            }
-                        }))
+                        .flatMap(domain -> passwordPolicyService.findByReferenceAndId(ReferenceType.DOMAIN, domain.getId(), policyId)
+                                .flatMapSingle(policy -> {
+                                    if (request.userId() == null) {
+                                        return Single.just(passwordService.evaluate(request.password(), policy, new User()));
+                                    } else {
+                                        return userService.findById(domain, request.userId())
+                                                .defaultIfEmpty(new User())
+                                                .flatMap(u -> passwordHistoryService.passwordAlreadyUsed(domain, request.userId(), request.password(), policy)
+                                                        .map(historyResult -> {
+                                                            var evaluationResult = passwordService.evaluate(request.password(), policy, u);
+                                                            return evaluationResult.toBuilder().recentPasswordsNotReused(!historyResult).build();
+                                                        }));
+                                    }
+                                })))
                 .subscribe(response::resume,response::resume);
     }
 

@@ -17,21 +17,21 @@ package io.gravitee.am.gateway.handler.common.group.impl;
 
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.GroupEvent;
+import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.gateway.handler.common.group.GroupManager;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.repository.management.api.GroupRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Flowable;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,25 +40,25 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 
+@AllArgsConstructor
 public class InMemoryGroupManager extends AbstractService implements Service, InitializingBean, GroupManager, EventListener<GroupEvent, Payload> {
     private static final Logger LOGGER = LoggerFactory.getLogger(InMemoryGroupManager.class);
 
-    @Autowired
     Domain domain;
 
-    @Autowired
     EventManager eventManager;
 
-    @Autowired
     GroupRepository groupRepository;
 
     final ConcurrentMap<String, Group> groups = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        groupRepository.findAll(ReferenceType.DOMAIN, domain.getId()).subscribe(
-                group -> groups.put(group.getId(), group),
-                error -> LOGGER.error("Unable to initialize groups for domain {}", domain.getName(), error));
+        groupRepository.findAll(ReferenceType.DOMAIN, domain.getId())
+                .subscribe(
+                        group -> groups.put(group.getId(), group),
+                        error -> LOGGER.error("Unable to initialize groups for domain {}", domain.getName(), error)
+                );
     }
 
     @Override

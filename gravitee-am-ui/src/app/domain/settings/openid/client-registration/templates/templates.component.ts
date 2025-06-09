@@ -37,6 +37,7 @@ export interface Client {
   selector: 'app-openid-client-registration-templates',
   templateUrl: './templates.component.html',
   styleUrls: ['./templates.component.scss'],
+  standalone: false,
 })
 export class ClientRegistrationTemplatesComponent implements OnInit, AfterViewInit {
   domain: any = {};

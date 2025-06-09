@@ -24,6 +24,7 @@ import { OrganizationService } from '../../../../services/organization.service';
   selector: 'group-creation',
   templateUrl: './group-creation.component.html',
   styleUrls: ['./group-creation.component.scss'],
+  standalone: false,
 })
 export class GroupCreationComponent implements OnInit {
   private domainId: string;

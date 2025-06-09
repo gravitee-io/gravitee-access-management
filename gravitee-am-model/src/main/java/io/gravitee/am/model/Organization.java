@@ -17,6 +17,7 @@ package io.gravitee.am.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -59,6 +60,7 @@ public class Organization implements Resource {
         this.identities = cloned.identities;
         this.createdAt = cloned.createdAt;
         this.updatedAt = cloned.updatedAt;
+        this.hrids = cloned.hrids != null ? new ArrayList<>(cloned.hrids) : null;
     }
 
     @Override

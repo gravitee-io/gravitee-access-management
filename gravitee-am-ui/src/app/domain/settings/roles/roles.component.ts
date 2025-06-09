@@ -25,6 +25,7 @@ import { SnackbarService } from '../../../services/snackbar.service';
   selector: 'app-roles',
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsRolesComponent implements OnInit {
   private searchValue: string;

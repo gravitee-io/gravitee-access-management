@@ -22,6 +22,7 @@ import { AuthService } from '../../../../services/auth.service';
   selector: 'app-audits-settings',
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
+  standalone: false,
 })
 export class AuditsSettingsComponent implements OnInit {
   reporters: any[];

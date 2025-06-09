@@ -15,13 +15,16 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { FormTemplateFactoryService } from '../../../../../services/form.template.factory.service';
+import { DomainStoreService } from '../../../../../stores/domain.store';
 
 @Component({
   selector: 'app-application-forms',
   templateUrl: './forms.component.html',
   styleUrls: ['./forms.component.scss'],
+  standalone: false,
 })
 export class ApplicationFormsComponent implements OnInit {
   domain: any;
@@ -30,10 +33,11 @@ export class ApplicationFormsComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private formTemplateFactoryService: FormTemplateFactoryService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = deepClone(this.domainStore.current);
     this.application = this.route.snapshot.data['application'];
   }
 

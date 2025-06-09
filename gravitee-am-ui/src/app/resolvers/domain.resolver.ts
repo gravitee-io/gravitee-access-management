@@ -15,26 +15,31 @@
  */
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 
 import { DomainService } from '../services/domain.service';
 import { NavbarService } from '../components/navbar/navbar.service';
+import { DomainStoreService } from '../stores/domain.store';
 
 @Injectable()
 export class DomainResolver {
   constructor(
     private domainService: DomainService,
+    private domainStore: DomainStoreService,
     private navbarService: NavbarService,
   ) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
-    const domainHrid = route.paramMap.get('domainId');
-
-    return this.domainService.get(domainHrid).pipe(
+    const domainId = route.paramMap.get('domainId');
+    if (this.domainStore.current?.id === domainId) {
+      return of(this.domainStore.current);
+    }
+    return this.domainService.getById(domainId).pipe(
       mergeMap((domain) =>
         this.domainService.permissions(domain.id).pipe(
           map((__) => {
+            this.domainStore.set(domain);
             this.navbarService.notifyDomain(domain);
             return domain;
           }),

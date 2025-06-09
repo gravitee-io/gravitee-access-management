@@ -17,7 +17,7 @@ package io.gravitee.am.management.standalone.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
-import io.gravitee.am.management.service.spring.ServiceConfiguration;
+import io.gravitee.am.management.service.spring.ManagementServiceConfiguration;
 import io.gravitee.am.management.standalone.node.ManagementNode;
 import io.gravitee.am.management.standalone.node.ManagementNodeMetadataResolver;
 import io.gravitee.am.management.standalone.server.ManagementApiServer;
@@ -25,6 +25,11 @@ import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration
 import io.gravitee.am.plugins.authdevice.notifier.spring.AuthenticationDeviceNotifierSpringConfiguration;
 import io.gravitee.am.plugins.botdetection.spring.BotDetectionSpringConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateSpringConfiguration;
+import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
+import io.gravitee.am.plugins.dataplane.core.MultiDataPlaneLoader;
+import io.gravitee.am.plugins.dataplane.spring.DataPlaneSpringConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantSpringConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorSpringConfiguration;
@@ -34,6 +39,7 @@ import io.gravitee.am.plugins.notifier.spring.NotifierConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
+import io.gravitee.am.service.spring.ServiceConfiguration;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.event.impl.EventManagerImpl;
 import io.gravitee.el.ExpressionLanguageInitializer;
@@ -64,8 +70,9 @@ import org.springframework.core.env.Environment;
         VertxConfiguration.class,
         PluginConfiguration.class,
         ManagementApiServer.class,
+        DataPlaneSpringConfiguration.class,
+        ManagementServiceConfiguration.class,
         ServiceConfiguration.class,
-        io.gravitee.am.service.spring.ServiceConfiguration.class,
         IdentityProviderSpringConfiguration.class,
         CertificateSpringConfiguration.class,
         ExtensionGrantSpringConfiguration.class,
@@ -140,4 +147,8 @@ public class StandaloneConfiguration {
         return new PluginConfigurationValidatorsRegistry();
     }
 
+    @Bean
+    public DataPlaneRegistry dataPlaneRegistry(MultiDataPlaneLoader loader, DataPlanePluginManager manager) {
+        return new DataPlaneRegistryImpl(loader, manager);
+    }
 }

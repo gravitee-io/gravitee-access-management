@@ -27,6 +27,7 @@ import { AuthService } from '../../../../../../services/auth.service';
   selector: 'application-tokens',
   templateUrl: './application-tokens.component.html',
   styleUrls: ['./application-tokens.component.scss'],
+  standalone: false,
 })
 export class ApplicationTokensComponent implements OnInit {
   @ViewChild('claimsTable') table: any;
@@ -147,6 +148,7 @@ export class ApplicationTokensComponent implements OnInit {
 @Component({
   selector: 'app-create-claim',
   templateUrl: './claims/add-claim.component.html',
+  standalone: false,
 })
 export class CreateClaimComponent {
   claim: any = {};
@@ -164,6 +166,7 @@ export class CreateClaimComponent {
 @Component({
   selector: 'claims-info-dialog',
   templateUrl: './dialog/claims-info.component.html',
+  standalone: false,
 })
 export class ClaimsInfoDialogComponent {
   constructor(public dialogRef: MatDialogRef<ClaimsInfoDialogComponent>) {}

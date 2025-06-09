@@ -142,7 +142,7 @@ import { ApplicationSaml2Component } from './domain/applications/application/adv
 import { ApplicationScopesComponent } from './domain/applications/application/advanced/oauth2/scopes/application-scopes.component';
 import { ApplicationTokensComponent } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
-import { ApplicationCertificatesComponent } from './domain/applications/application/advanced/certificates/certificates.component';
+import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
@@ -245,6 +245,8 @@ import { DomainPasswordPolicyComponent } from './domain/settings/password-policy
 import { PasswordPolicyResolver } from './resolvers/password-policy-resolver';
 import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver.service';
 import { ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
+import { DataPlanesResolver } from './resolvers/data-planes.resolver';
+import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secrets.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -850,6 +852,7 @@ export const routes: Routes = [
                 component: DomainCreationComponent,
                 resolve: {
                   environment: EnvironmentResolver,
+                  dataPlanes: DataPlanesResolver,
                 },
                 canActivate: [AuthGuard],
                 data: {
@@ -1160,6 +1163,22 @@ export const routes: Routes = [
                                 },
                               },
                               {
+                                path: 'secrets-certificates',
+                                component: ApplicationSecretsCertificatesComponent,
+                                canActivate: [AuthGuard],
+                                resolve: { certificates: SignCertificatesResolver },
+                                data: {
+                                  menu: {
+                                    label: 'Secrets & Certificates',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read', 'application_certificate_list'],
+                                  },
+                                },
+                              },
+                              {
                                 path: 'metadata',
                                 component: ApplicationMetadataComponent,
                                 canActivate: [AuthGuard],
@@ -1324,22 +1343,6 @@ export const routes: Routes = [
                                 },
                               },
                               {
-                                path: 'certificates',
-                                component: ApplicationCertificatesComponent,
-                                canActivate: [AuthGuard],
-                                resolve: { certificates: SignCertificatesResolver },
-                                data: {
-                                  menu: {
-                                    label: 'Certificates',
-                                    section: 'Security',
-                                    level: 'level3',
-                                  },
-                                  perms: {
-                                    only: ['application_certificate_list'],
-                                  },
-                                },
-                              },
-                              {
                                 path: 'password-policy',
                                 component: PasswordPolicyComponent,
                                 canActivate: [AuthGuard],
@@ -1462,6 +1465,7 @@ export const routes: Routes = [
                         canActivate: [AuthGuard],
                         resolve: {
                           tags: TagsResolver,
+                          dataPlanes: DataPlanesResolver,
                         },
                         data: {
                           menu: {
@@ -1730,6 +1734,21 @@ export const routes: Routes = [
                         data: {
                           menu: {
                             label: 'WebAuthn',
+                            section: 'Security',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_settings_read'],
+                          },
+                        },
+                      },
+                      {
+                        path: 'secrets',
+                        component: DomainSettingsSecretsComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'Client Secrets',
                             section: 'Security',
                             level: 'level2',
                           },

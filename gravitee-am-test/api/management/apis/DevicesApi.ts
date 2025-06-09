@@ -29,7 +29,7 @@
 import * as runtime from '../runtime';
 import { User, UserFromJSON, UserToJSON } from '../models';
 
-export interface Delete8Request {
+export interface Delete9Request {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -52,34 +52,34 @@ export class DevicesApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
    * Delete a device
    */
-  async delete8Raw(
-    requestParameters: Delete8Request,
+  async delete9Raw(
+    requestParameters: Delete9Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete8.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete9.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete8.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling delete9.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete8.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete9.');
     }
 
     if (requestParameters.user === null || requestParameters.user === undefined) {
-      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete8.');
+      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete9.');
     }
 
     if (requestParameters.device === null || requestParameters.device === undefined) {
-      throw new runtime.RequiredError('device', 'Required parameter requestParameters.device was null or undefined when calling delete8.');
+      throw new runtime.RequiredError('device', 'Required parameter requestParameters.device was null or undefined when calling delete9.');
     }
 
     const queryParameters: any = {};
@@ -116,8 +116,8 @@ export class DevicesApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
    * Delete a device
    */
-  async delete8(requestParameters: Delete8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete8Raw(requestParameters, initOverrides);
+  async delete9(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete9Raw(requestParameters, initOverrides);
   }
 
   /**

@@ -106,6 +106,13 @@
 
 # Configuration of additional reporters
 #reporters:
+#  # settings about audit common to all reporters
+#  audits:
+#    # List of audit types to exclude from audit generation
+#    excluded_audit_types:
+#    - CLIENT_AUTHENTICATION
+#    - TOKEN_CREATED
+#    - TOKEN_REVOKED
 #  file:
 #    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/audit-logs/
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
@@ -145,24 +152,37 @@ services:
     enabled: true
     tryAvoidDuplicateNotification: false
 
-  # Rules about certificate expiry notifications.
-  # Require the platform notifier service.
-  certificate:
-    enabled: true
-    # frequency on which the notifier mechanism will test
-    # if new notifications need to be send
-    # default: 0 0 5 * * * (every day at 5am)
-    cronExpression: 0 0 5 * * *
-    # send notification if certificate is going to expire in less than 20 days, then 15 days before...
-    expiryThresholds: 20,15,10,5,1
-    # Subject of the email send by the email notifier
-    expiryEmailSubject: Certificate will expire soon
+    ### Rules about certificate expiry notifications. Require the platform notifier service.
+    #certificate:
+      #enabled: true
+      ## frequency on which the notifier mechanism will test
+      ## if new notifications need to be send
+      ## default: 0 0 5 * * * (every day at 5am)
+      #cronExpression: 0 0 5 * * *
+      ## send notification if certificate is going to expire in less than 20 days, then 15 days before...
+      #expiryThresholds: 20,15,10,5,1
+      ## Subject of the email send by the email notifier
+      #expiryEmailSubject: Certificate will expire soon
+
+    # Rules about client's secrets expiry notifications. Require the platform notifier service.
+    client-secret:
+      enabled: true
+      # frequency on which the notifier mechanism will test
+      # if new notifications need to be send
+      # default: 0 0 5 * * * (every day at 5am)
+      cronExpression: 0 0 5 * * *
+      # send notification if client secret is going to expire in less than 20 days, then 15 days before...
+      expiryThresholds: 20,15,10,5,1
+      expiryEmailSubject: Client secret will expire soon
 
 license:
   expire-notification:
     enabled: true
 
 notifiers:
+  kafka:
+    enabled: false
+
   email:
     enabled: false
     host: smtp.my.domain
@@ -223,6 +243,8 @@ domains:
 #    algorithm: None
 #    properties:
 #      rounds: 10
+# Define max number of secrets for application.
+#  secretsMax: 10
 
 # JWT used to generate signed token for management security mechanism (Bearer Token) and to verify emails
 jwt:
@@ -356,6 +378,10 @@ user:
     maxRequestOperations: 1000
 
 repositories:
+  # specify which scope is used as reference
+  # to initialize the IdentityProviders with the "use system cluster"
+  # option enabled (only management and gateway scopes are allowed as value)
+  system-cluster: management
   # Management repository is used to store global configuration such as domains, clients, ...
   # This is the default configuration using MongoDB (single server)
   # For more information about MongoDB configuration, please have a look to:
@@ -414,6 +440,15 @@ repositories:
       host: ${ds.mongodb.host}
       port: ${ds.mongodb.port}
   #    ensureIndexOnStart: true
+
+dataPlanes:
+  - id: default
+    name: Legacy domains
+    type: mongodb
+    mongodb:
+      dbname: ${ds.mongodb.dbname}
+      host: ${ds.mongodb.host}
+      port: ${ds.mongodb.port}
 
 # Gateway entry point used in emails
 gateway:

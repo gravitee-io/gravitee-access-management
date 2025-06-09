@@ -25,7 +25,8 @@ import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.auth.user.impl.UserAuthenticationManagerImpl;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
@@ -38,7 +39,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.common.event.EventManager;
 import io.reactivex.rxjava3.core.Maybe;
@@ -88,10 +88,10 @@ public class UserAuthenticationManagerTest {
     private EventManager eventManager;
 
     @Mock
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptGatewayService loginAttemptService;
 
     @Mock
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Mock
     private PasswordService passwordService;
@@ -618,11 +618,11 @@ public class UserAuthenticationManagerTest {
             }
         }));
 
-        when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.empty());
+        when(loginAttemptService.checkAccount(any(), any(), any())).thenReturn(Maybe.empty());
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
             public Object getCredentials() {
-                return null;
+                return "pass";
             }
 
             @Override
@@ -637,8 +637,8 @@ public class UserAuthenticationManagerTest {
         }).test();
 
         observer.assertError(BadCredentialsException.class);
-        verify(userService, never()).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString());
-        verify(loginAttemptService, never()).loginFailed(any(), any());
+        verify(userService, never()).findByUsernameAndSource(anyString(), anyString());
+        verify(loginAttemptService, never()).loginFailed(any(), any(), any());
         verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }
@@ -671,8 +671,8 @@ public class UserAuthenticationManagerTest {
         }));
 
         when(domain.getId()).thenReturn("domain-id");
-        when(userService.findByDomainAndUsernameAndSource(anyString(), anyString(), anyString(), anyBoolean())).thenReturn(Maybe.empty());
-        when(loginAttemptService.checkAccount(any(), any())).thenReturn(Maybe.empty());
+        when(userService.findByUsernameAndSource(anyString(), anyString(), anyBoolean())).thenReturn(Maybe.empty());
+        when(loginAttemptService.checkAccount(any(), any(), any())).thenReturn(Maybe.empty());
         TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
             @Override
             public Object getCredentials() {
@@ -691,8 +691,8 @@ public class UserAuthenticationManagerTest {
         }).test();
 
         observer.assertError(BadCredentialsException.class);
-        verify(userService, times(1)).findByDomainAndUsernameAndSource(anyString(), anyString(), anyString(), anyBoolean());
-        verify(loginAttemptService, never()).loginFailed(any(), any());
+        verify(userService, times(1)).findByUsernameAndSource(anyString(), anyString(), anyBoolean());
+        verify(loginAttemptService, never()).loginFailed(any(), any(), any());
         verify(userAuthenticationService, never()).lockAccount(any(), any(), any(), any());
         verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.FAILURE), any());
     }

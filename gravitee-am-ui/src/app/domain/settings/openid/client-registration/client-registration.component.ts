@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-openid-client-registration',
   templateUrl: './client-registration.component.html',
   styleUrls: ['./client-registration.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsOpenidClientRegistrationComponent implements OnInit {
   private domainId: string;

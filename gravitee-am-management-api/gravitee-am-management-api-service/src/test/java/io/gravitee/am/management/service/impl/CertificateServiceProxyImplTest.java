@@ -16,10 +16,12 @@
 package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.Template;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.CertificatePluginService;
 import io.gravitee.am.service.CertificateService;
@@ -28,7 +30,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Test;
-import org.springframework.mock.env.MockEnvironment;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -57,6 +58,8 @@ class CertificateServiceProxyImplTest {
     ApplicationService appService = mock();
     CertificatePluginService certPluginService = mock();
 
+    NotifierSettings settings = new NotifierSettings(true, Template.CERTIFICATE_EXPIRATION, "* * * * *", List.of(30), "subject");
+
     @Test
     void shouldFindCertsWithUsages() {
         when(certService.findByDomain(TEST_DOMAIN)).thenReturn(Flowable.fromIterable(List.of(systemCert(), validCert(), expiredCert())));
@@ -64,7 +67,7 @@ class CertificateServiceProxyImplTest {
         when(appService.findByCertificate(any())).thenAnswer(i -> someRandomApps());
         when(idpService.findByCertificate(eq(Reference.domain(TEST_DOMAIN)), any())).thenAnswer(i -> someRandomIdps());
 
-        var service = new CertificateServiceProxyImpl(certService, idpService, appService, certPluginService, mock(), new ObjectMapper(), new MockEnvironment());
+        var service = new CertificateServiceProxyImpl(certService, idpService, appService, certPluginService, mock(), new ObjectMapper(), settings);
         var foundCerts = service.findByDomainAndUse(TEST_DOMAIN, null)
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
@@ -90,7 +93,7 @@ class CertificateServiceProxyImplTest {
         when(appService.findByCertificate(any())).thenAnswer(i -> someRandomApps());
         when(idpService.findByCertificate(eq(Reference.domain(TEST_DOMAIN)), any())).thenAnswer(i -> someRandomIdps());
 
-        var service = new CertificateServiceProxyImpl(certService, idpService, appService, certPluginService, mock(), new ObjectMapper(), new MockEnvironment());
+        var service = new CertificateServiceProxyImpl(certService, idpService, appService, certPluginService, mock(), new ObjectMapper(), settings);
 
         var foundCerts = service.findByDomainAndUse(TEST_DOMAIN, null)
                 .test()

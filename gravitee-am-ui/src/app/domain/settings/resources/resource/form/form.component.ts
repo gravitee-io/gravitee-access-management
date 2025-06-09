@@ -19,6 +19,7 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   selector: 'resource-form',
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
+  standalone: false,
 })
 export class ResourceFormComponent implements OnChanges {
   // eslint-disable-next-line @angular-eslint/no-input-rename

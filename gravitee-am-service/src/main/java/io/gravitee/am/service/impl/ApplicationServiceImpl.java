@@ -24,11 +24,11 @@ import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
@@ -36,7 +36,6 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
@@ -57,7 +56,6 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
@@ -70,7 +68,6 @@ import io.gravitee.am.service.exception.InvalidTargetUrlException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.am.service.model.PatchApplication;
-import io.gravitee.am.service.model.TopApplication;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ApplicationAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
@@ -78,6 +75,9 @@ import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.utils.CertificateTimeComparator;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
+import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator;
+import io.gravitee.am.service.validators.claims.ApplicationTokenCustomClaimsValidator.ValidationResult;
+import io.gravitee.am.service.validators.dynamicparams.ClientRedirectUrisValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -97,15 +97,16 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.ClientAuthenticationMethod.CLIENT_SECRET_JWT;
 import static io.gravitee.am.common.web.UriBuilder.isHttp;
 import static java.util.Objects.nonNull;
-import static java.util.Optional.ofNullable;
 import static org.springframework.util.CollectionUtils.isEmpty;
 import static org.springframework.util.StringUtils.hasLength;
 import static org.springframework.util.StringUtils.hasText;
@@ -140,7 +141,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private AuditService auditService;
 
     @Autowired
-    private DomainReadService domainService;
+    private DomainReadService domainReadService;
 
     @Autowired
     private EventService eventService;
@@ -153,9 +154,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ScopeService scopeService;
-
-    @Autowired
-    private TokenService tokenService;
 
     @Autowired
     private IdentityProviderService identityProviderService;
@@ -173,7 +171,18 @@ public class ApplicationServiceImpl implements ApplicationService {
     private ApplicationSecretConfig applicationSecretConfig;
 
     @Autowired
-    private ApplicationClientSecretService clientSecretService;
+    private SecretService clientSecretService;
+
+    @Autowired
+    private ApplicationTokenCustomClaimsValidator customClaimsValidator;
+
+    private ClientRedirectUrisValidator clientRedirectUrisValidator = new ClientRedirectUrisValidator();
+
+    @Override
+    public Flowable<Application> findAll() {
+        LOGGER.debug("Find applications");
+        return applicationRepository.findAll();
+    }
 
     @Override
     public Single<Page<Application>> findAll(int page, int size) {
@@ -281,14 +290,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> create(String domain, NewApplication newApplication, User principal) {
+    public Single<Application> create(Domain domain, NewApplication newApplication, User principal) {
         LOGGER.debug("Create a new application {} for domain {}", newApplication, domain);
         Application application = new Application();
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
         application.setDescription(newApplication.getDescription());
         application.setType(newApplication.getType());
-        application.setDomain(domain);
+        application.setDomain(domain.getId());
         application.setMetadata(newApplication.getMetadata());
 
         // apply default oauth 2.0 settings
@@ -302,18 +311,18 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // apply default SAML 2.0 settings
         if (ApplicationType.SERVICE != application.getType() && !ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
-                try {
-                    final String url = newApplication.getRedirectUris().get(0);
-                    ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
-                    samlSettings.setEntityId(UriBuilder.fromHttpUrl(url).buildRootUrl());
-                    samlSettings.setAttributeConsumeServiceUrl(url);
-                    applicationSettings.setSaml(samlSettings);
-                } catch (Exception ex) {
-                    // silent exception
-                    // redirect_uri can use custom URI (especially for mobile deep links)
-                    LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
-                }
+            try {
+                final String url = newApplication.getRedirectUris().get(0);
+                ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
+                samlSettings.setEntityId(UriBuilder.fromHttpUrl(url).buildRootUrl());
+                samlSettings.setAttributeConsumeServiceUrl(url);
+                applicationSettings.setSaml(samlSettings);
+            } catch (Exception ex) {
+                // silent exception
+                // redirect_uri can use custom URI (especially for mobile deep links)
+                LOGGER.debug("An error has occurred when generating SAML attribute consume service url", ex);
             }
+        }
 
         application.setSettings(applicationSettings);
 
@@ -331,14 +340,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> create(Application application) {
+    public Single<Application> create(Domain domain, Application application) {
         LOGGER.debug("Create a new application {} ", application);
 
         if (application.getDomain() == null || application.getDomain().trim().isEmpty()) {
             return Single.error(new InvalidClientMetadataException("No domain set on application"));
         }
 
-        return create0(application.getDomain(), application, null)
+        return create0(domain, application, null)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
@@ -390,7 +399,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> patch(String domain, String id, PatchApplication patchApplication, User principal) {
+    public Single<Application> patch(Domain domain, String id, PatchApplication patchApplication, User principal, BiFunction<Domain, Application, Completable> revokeTokenProcessor) {
         LOGGER.debug("Patch an application {} for domain {}", id, domain);
 
         return applicationRepository.findById(id)
@@ -406,6 +415,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                         toPatch.getSettings().getOauth().setClientSecret(null);
                     }
 
+                    ValidationResult claimValidation = customClaimsValidator.validate(toPatch);
+                    if (claimValidation.isInvalid()) {
+                        return Single.error(new InvalidParameterException("Invalid token claims: " + claimValidation.invalidClaims()));
+                    }
+
                     final AccountSettings accountSettings = toPatch.getSettings().getAccount();
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
@@ -413,7 +427,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return innerUpdate(existingApplication, toPatch, principal)
                             .flatMap(app -> {
                                 if (toPatch.isEnabled() != existingApplication.isEnabled() && !toPatch.isEnabled()) {
-                                    return tokenService.deleteByApplication(app).onErrorComplete().toSingleDefault(app);
+                                    return revokeTokenProcessor.apply(domain, app).onErrorComplete().toSingleDefault(app);
                                 } else {
                                     return Single.just(app);
                                 }
@@ -433,74 +447,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public Single<Application> renewClientSecret(String domain, String id, User principal) {
-        LOGGER.debug("Renew client secret for application {} and domain {}", id, domain);
-        return applicationRepository.findById(id)
-                .switchIfEmpty(Single.error(new ApplicationNotFoundException(id)))
-                .flatMap(application -> {
-                    // check application
-                    if (application.getSettings() == null) {
-                        return Single.error(new IllegalStateException("Application settings is undefined"));
-                    }
-                    if (application.getSettings().getOauth() == null) {
-                        return Single.error(new IllegalStateException("Application OAuth 2.0 settings is undefined"));
-                    }
-
-                    // Replace the SecretSettings into the App config if the settings are different
-                    // from the last time a secret has been generated for this app.
-                    // NOTE: remember to append the settings instead of replacing them when we will manage multiple secret.
-                    var secretSettings = this.applicationSecretConfig.toSecretSettings();
-                    if (!SecretHashAlgorithm.NONE.name().equals(secretSettings.getAlgorithm()) && CLIENT_SECRET_JWT.equals(application.getSettings().getOauth().getTokenEndpointAuthMethod()) ) {
-                        // client exist with client_secret_jwt authentication method,
-                        // we force the None algorithm to allow secret renewal
-                        secretSettings = ApplicationSecretConfig.buildNoneSecretSettings();
-                    }
-
-                    if (!doesAppReferenceSecretSettings(application, secretSettings)) {
-                        application.setSecretSettings(List.of(secretSettings));
-                    }
-
-                    // here the client_secret has been generated, we can generate the HashValue here
-                    // as we do not want to store the clear text value for the client Secret
-                    // we keep the value and force the value into OAuth setting to null
-                    // in order to restore it after the creation
-                    final var rawSecret = SecureRandomString.generate();
-                    var clientSecret = this.clientSecretService.generateClientSecret(rawSecret, secretSettings);
-                    application.setSecrets(List.of(clientSecret));
-                    application.getSettings().getOauth().setClientSecret(null);
-                    application.setUpdatedAt(new Date());
-                    return applicationRepository.update(application).map(app -> {
-                        app.getSettings().getOauth().setClientSecret(rawSecret);
-                        return app;
-                    });
-                })
-                // create event for sync process
-                .flatMap(application1 -> {
-                    Event event = new Event(Type.APPLICATION, new Payload(application1.getId(), ReferenceType.DOMAIN, application1.getDomain(), Action.UPDATE));
-                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));
-                })
-                .doOnSuccess(updatedApplication -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).application(updatedApplication)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).reference(Reference.domain(domain)).type(EventType.APPLICATION_CLIENT_SECRET_RENEWED).throwable(throwable)))
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to renew client secret for application {} and domain {}", id, domain, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to renew client secret for application %s and domain %s", id, domain), ex));
-                });
-    }
-
-    private static boolean doesAppReferenceSecretSettings(Application application, ApplicationSecretSettings secretSettings) {
-        return ofNullable(application.getSecretSettings())
-                .map(settings -> settings
-                        .stream()
-                        .anyMatch(conf -> conf.getId() != null && conf.getId().equals(secretSettings.getId()))
-                ).orElse(false);
-    }
-
-    @Override
-    public Completable delete(String id, User principal) {
+    public Completable delete(String id, User principal, Domain domain) {
         LOGGER.debug("Delete application {}", id);
         return applicationRepository.findById(id)
                 .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(id)))
@@ -508,7 +455,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                     // create event for sync process
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.DELETE));
                     return applicationRepository.delete(id)
-                            .andThen(Completable.fromSingle(eventService.create(event)))
+                            .andThen(Completable.fromSingle(eventService.create(event, domain)))
                             // delete email templates
                             .andThen(emailTemplateService.findByClient(ReferenceType.DOMAIN, application.getDomain(), application.getId())
                                     .flatMapCompletable(email -> emailTemplateService.delete(email.getId()))
@@ -520,6 +467,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                             // delete memberships
                             .andThen(membershipService.findByReference(application.getId(), ReferenceType.APPLICATION)
                                     .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
+                            )
+                            // trigger events to delete client secrets notifiers
+                            .andThen(Flowable.fromIterable(application.getSecrets())
+                                    .flatMapCompletable(applicationSecret -> Completable.fromSingle(
+                                            eventService.create(new Event(Type.APPLICATION_SECRET, new Payload(applicationSecret.getId(), ReferenceType.APPLICATION, id, Action.DELETE))))
+                                    )
                             )
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_DELETED).application(application)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).application(application).principal(principal).type(EventType.APPLICATION_DELETED).throwable(throwable)));
@@ -562,49 +515,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 });
     }
 
-    @Override
-    public Single<Set<TopApplication>> findTopApplications() {
-        LOGGER.debug("Find top applications");
-        return applicationRepository.findAll(0, Integer.MAX_VALUE)
-                .flatMapObservable(pagedApplications -> Observable.fromIterable(pagedApplications.getData()))
-                .flatMapSingle(application -> tokenService.findTotalTokensByApplication(application)
-                        .map(totalToken -> {
-                            TopApplication topApplication = new TopApplication();
-                            topApplication.setApplication(application);
-                            topApplication.setAccessTokens(totalToken.getTotalAccessTokens());
-                            return topApplication;
-                        })
-                )
-                .toList()
-                .map(topApplications -> topApplications.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find top applications", ex);
-                    return Single.error(new TechnicalManagementException("An error occurs while trying to find top applications", ex));
-                });
-    }
-
-    @Override
-    public Single<Set<TopApplication>> findTopApplicationsByDomain(String domain) {
-        LOGGER.debug("Find top applications for domain: {}", domain);
-        return applicationRepository.findByDomain(domain, 0, Integer.MAX_VALUE)
-                .flatMapObservable(pagedApplications -> Observable.fromIterable(pagedApplications.getData()))
-                .flatMapSingle(application -> tokenService.findTotalTokensByApplication(application)
-                        .map(totalToken -> {
-                            TopApplication topApplication = new TopApplication();
-                            topApplication.setApplication(application);
-                            topApplication.setAccessTokens(totalToken.getTotalAccessTokens());
-                            return topApplication;
-                        })
-                )
-                .toList()
-                .map(topApplications -> topApplications.stream().filter(topClient -> topClient.getAccessTokens() > 0).collect(Collectors.toSet()))
-                .onErrorResumeNext(ex -> {
-                    LOGGER.error("An error occurs while trying to find top applications for domain {}", domain, ex);
-                    return Single.error(new TechnicalManagementException(String.format("An error occurs while trying to find top applications for domain %s", domain), ex));
-                });
-    }
-
-    private Single<Application> create0(String domain, Application application, User principal) {
+    private Single<Application> create0(Domain domain, Application application, User principal) {
         // created and updated date
         application.setCreatedAt(new Date());
         application.setUpdatedAt(application.getCreatedAt());
@@ -621,12 +532,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         if (rawSecret != null) {
             // PUBLIC client doesn't need to have secret, so we have to test it before generated the hash
             applicationSettings.getOauth().setClientSecret(null);
-            var clientSecret = this.clientSecretService.generateClientSecret(rawSecret, secretSettings);
+            var clientSecret = this.clientSecretService.generateClientSecret("Default", rawSecret, secretSettings, domain.getSecretExpirationSettings(), applicationSettings.getSecretExpirationSettings());
             application.setSecrets(List.of(clientSecret));
         }
 
         // check uniqueness
-        return checkApplicationUniqueness(domain, application)
+        return checkApplicationUniqueness(domain.getId(), application)
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
                 .flatMap(this::validateApplicationAuthMethod)
@@ -643,7 +554,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 })
                 // create the owner
                 .flatMap(application1 -> {
-                    if (principal == null || principal.getAdditionalInformation() == null || !hasText((String)principal.getAdditionalInformation().get(Claims.ORGANIZATION))) {
+                    if (principal == null || principal.getAdditionalInformation() == null || !hasText((String) principal.getAdditionalInformation().get(Claims.ORGANIZATION))) {
                         // There is no principal or we can not find the organization the user is attached to. Can't assign role.
                         return Single.just(application1);
                     }
@@ -665,7 +576,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                 // create event for sync process
                 .flatMap(application1 -> {
                     Event event = new Event(Type.APPLICATION, new Payload(application.getId(), ReferenceType.DOMAIN, application.getDomain(), Action.CREATE));
-                    return eventService.create(event).flatMap(domain1 -> Single.just(application1));
+                    return eventService.create(event, domain).flatMap(domain1 -> Single.just(application1));
                 })
                 .doOnSuccess(application1 -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).principal(principal).type(EventType.APPLICATION_CREATED).application(application1)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ApplicationAuditBuilder.class).reference(Reference.domain(application.getDomain())).principal(principal).type(EventType.APPLICATION_CREATED).throwable(throwable)));
@@ -697,6 +608,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     /**
      * Set default domain certificate for the application
+     *
      * @param application the application to create
      * @return the application with the certificate
      */
@@ -722,9 +634,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                                     // legacy way to retrieve default certificate before we introduce the system flag
                                     // keep it for backward compatibility in case of issue with the SystemCertificateUpgrader
                                     certificates
-                                        .stream()
-                                        .filter(certificate -> "Default".equals(certificate.getName()))
-                                        .findFirst()
+                                            .stream()
+                                            .filter(certificate -> "Default".equals(certificate.getName()))
+                                            .findFirst()
                             )
                             .orElse(certificates.get(0));
 
@@ -750,8 +662,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             return Single.just(application);
         }
         return Observable.fromIterable(application.getIdentityProviders())
-                .flatMapSingle(appId -> identityProviderService.findById(appId.getIdentity())
-                        .map(__ -> Optional.of(appId))
+                .flatMapSingle(appIdP -> identityProviderService.findById(appIdP.getIdentity())
+                        .map(__ -> Optional.of(appIdP))
                         .defaultIfEmpty(Optional.empty())
                         .filter(Optional::isPresent)
                         .map(Optional::get)
@@ -793,6 +705,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         return Single.just(app);
     }
+
     /**
      * <pre>
      * This function will return an error if :
@@ -814,7 +727,7 @@ public class ApplicationServiceImpl implements ApplicationService {
      * The redirect_uris do not respect domain conditions (localhost, scheme and wildcard)
      * </pre>
      *
-     * @param application application to check
+     * @param application    application to check
      * @param updateTypeOnly does the method call comes from the application type update ? (if true, redirect_uri validation is skipped)
      * @return a client only if every condition are respected.
      */
@@ -838,7 +751,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateRedirectUris(Application application, boolean updateTypeOnly) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     //check redirect_uri
@@ -851,7 +764,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                             return Single.error(new InvalidRedirectUriException());
                         }
                     }
-
                     //check redirect_uri content
                     if (!CollectionUtils.isEmpty(oAuthSettings.getRedirectUris())) {
                         for (String redirectUri : oAuthSettings.getRedirectUris()) {
@@ -883,6 +795,11 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 }
                             } catch (IllegalArgumentException | URISyntaxException ex) {
                                 return Single.error(new InvalidRedirectUriException("redirect_uri : " + redirectUri + IS_MALFORMED));
+                            }
+                        }
+                        if(domain.isRedirectUriExpressionLanguageEnabled()){
+                            if(!clientRedirectUrisValidator.validateRedirectUris(oAuthSettings.getRedirectUris())) {
+                                return Single.error(new InvalidRedirectUriException("Only one redirect URI with the same hostname and path is allowed."));
                             }
                         }
                     } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
@@ -982,7 +899,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validatePostLogoutRedirectUris(Application application) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     if (oAuthSettings.getPostLogoutRedirectUris() != null) {
@@ -1025,7 +942,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateRequestUris(Application application) {
         ApplicationOAuthSettings oAuthSettings = application.getSettings().getOauth();
 
-        return domainService.findById(application.getDomain())
+        return domainReadService.findById(application.getDomain())
                 .switchIfEmpty(Single.error(new DomainNotFoundException(application.getDomain())))
                 .flatMap(domain -> {
                     if (oAuthSettings.getRequestUris() != null) {

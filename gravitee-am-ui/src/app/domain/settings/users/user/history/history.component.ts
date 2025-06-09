@@ -28,6 +28,7 @@ import { UserService } from '../../../../../services/user.service';
   selector: 'app-history',
   templateUrl: './history.component.html',
   styleUrls: ['./history.component.scss'],
+  standalone: false,
 })
 export class UserHistoryComponent implements OnInit {
   @ViewChild('auditsTable', { static: true })

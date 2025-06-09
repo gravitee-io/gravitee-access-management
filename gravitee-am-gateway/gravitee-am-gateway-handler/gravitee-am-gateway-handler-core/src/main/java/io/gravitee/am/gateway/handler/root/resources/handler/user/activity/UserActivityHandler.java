@@ -17,9 +17,10 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.user.activity;
 
 import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity.Type;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -30,8 +31,8 @@ import java.util.HashMap;
 
 import static io.gravitee.am.common.utils.ConstantKeys.GEOIP_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.LOGIN_ATTEMPT_KEY;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -41,9 +42,11 @@ import static java.util.Optional.ofNullable;
 public class UserActivityHandler implements Handler<RoutingContext> {
 
     private static final Logger logger = LoggerFactory.getLogger(UserActivityHandler.class);
-    private final UserActivityService userActivityService;
+    private final UserActivityGatewayService userActivityService;
+    private final Domain domain;
 
-    public UserActivityHandler(UserActivityService userActivityService) {
+    public UserActivityHandler(UserActivityGatewayService userActivityService, Domain domain) {
+        this.domain = domain;
         this.userActivityService = userActivityService;
     }
 
@@ -66,7 +69,7 @@ public class UserActivityHandler implements Handler<RoutingContext> {
         addUserAgent(context, data);
         addLoginAttempt(context, data);
 
-        userActivityService.save(user.getReferenceId(), user.getId(), Type.LOGIN, data)
+        userActivityService.save(domain, user.getId(), Type.LOGIN, data)
                 .doOnComplete(() -> logger.debug("User Activity saved successfully"))
                 .doOnError(err -> logger.error("An unexpected error has occurred '{}'", err.getMessage(), err))
                 .doFinally(context::next)
@@ -75,7 +78,10 @@ public class UserActivityHandler implements Handler<RoutingContext> {
 
     private void addLoginAttempt(RoutingContext context, HashMap<String, Object> data) {
         if (context.session() != null) {
-            data.put(LOGIN_ATTEMPT_KEY, context.session().get(LOGIN_ATTEMPT_KEY));
+            Number sessionValue = context.session().get(LOGIN_ATTEMPT_KEY);
+            if(sessionValue != null) {
+                data.put(LOGIN_ATTEMPT_KEY, sessionValue.intValue());
+            }
         }
     }
 

@@ -22,7 +22,7 @@ import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.oauth2.ExpiredLoginHintTokenException;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AbstractRequestResolver;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
@@ -51,10 +51,10 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
     private final Domain domain;
     private final JWSService jwsService;
     private final JWKService jwkService;
-    private final UserService userService;
+    private final UserGatewayService userService;
     private final SubjectManager subjectManager;
 
-    public CibaAuthenticationRequestResolver(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService, SubjectManager subjectManager) {
+    public CibaAuthenticationRequestResolver(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, SubjectManager subjectManager) {
         this.domain = domain;
         this.jwsService = jwsService;
         this.jwkService = jwkService;
@@ -91,7 +91,7 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                 criteria.setFilterValue(authRequest.getLoginHint());
                 criteria.setOperator("eq");
 
-                return userService.findByDomainAndCriteria(domain.getId(), criteria).map(users -> {
+                return userService.findByCriteria(criteria).map(users -> {
                     if (users.size() != 1) {
                         LOGGER.warn("login_hint match multiple users or no one");
                         throw new InvalidRequestException("Invalid hint");
@@ -175,7 +175,7 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
             criteria.setFilterName(field);
             criteria.setFilterValue(subIdObject.getAsString(field));
 
-            return userService.findByDomainAndCriteria(domain.getId(), criteria).flatMap(users -> {
+            return userService.findByCriteria(criteria).flatMap(users -> {
                 if (users.size() != 1) {
                     LOGGER.warn("login_hint_token match multiple users or no one");
                     return Single.error(new InvalidRequestException("Invalid hint"));

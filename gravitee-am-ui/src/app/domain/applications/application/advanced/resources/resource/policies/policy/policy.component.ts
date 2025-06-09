@@ -21,6 +21,7 @@ import 'codemirror/mode/groovy/groovy.js';
   selector: 'app-application-resource-policy',
   templateUrl: './policy.component.html',
   styleUrls: ['./policy.component.scss'],
+  standalone: false,
 })
 export class ApplicationResourcePolicyComponent implements OnInit {
   policy: any;

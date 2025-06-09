@@ -22,6 +22,7 @@ import { DashboardData } from '../../../components/dashboard/dashboard.component
   selector: 'app-application-analytics',
   templateUrl: './analytics.component.html',
   styleUrls: ['./analytics.component.scss'],
+  standalone: false,
 })
 export class ApplicationAnalyticsComponent implements OnInit {
   dashboard: DashboardData = {

@@ -29,6 +29,7 @@ import { OrganizationService } from '../../../../services/organization.service';
   selector: 'app-idp',
   templateUrl: './idp.component.html',
   styleUrls: ['./idp.component.scss'],
+  standalone: false,
 })
 export class ApplicationIdPComponent implements OnInit {
   private domainId: string;
@@ -194,6 +195,7 @@ export class ApplicationIdPComponent implements OnInit {
 @Component({
   selector: 'create-idp-selection-rule',
   templateUrl: './selection-rule/create/create.component.html',
+  standalone: false,
 })
 export class CreateIdpSelectionRuleComponent {
   spelGrammar: any;

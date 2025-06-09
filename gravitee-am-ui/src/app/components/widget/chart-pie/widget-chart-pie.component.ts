@@ -22,6 +22,7 @@ import { Chart } from '../widget.model';
   selector: 'gv-widget-chart-pie',
   templateUrl: './widget-chart-pie.component.html',
   styleUrls: ['./widget-chart-pie.component.scss'],
+  standalone: false,
 })
 export class WidgetChartPieComponent implements OnChanges {
   @Input() Highcharts: typeof Highcharts;

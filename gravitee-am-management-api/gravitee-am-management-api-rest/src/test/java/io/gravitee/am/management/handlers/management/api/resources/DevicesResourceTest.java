@@ -18,12 +18,10 @@ package io.gravitee.am.management.handlers.management.api.resources;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -31,6 +29,7 @@ import org.mockito.Mockito;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -56,8 +55,8 @@ public class DevicesResourceTest extends JerseySpringTest {
 
         doReturn(Flowable.just(
                 List.of(device, device2, device3)
-        )).when(deviceService).findByDomainAndUser(Mockito.eq(domainId), Mockito.any());
-        doReturn(Single.just(user)).when(userService).findById(ReferenceType.DOMAIN, domainId, userId);
+        )).when(deviceService).findByDomainAndUser(any(), Mockito.any());
+        doReturn(Maybe.just(user)).when(userService).findById(mockDomain, userId);
 
         final Response response = target("domains")
                 .path(domainId)

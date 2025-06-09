@@ -26,6 +26,7 @@ import { SnackbarService } from '../../../../../services/snackbar.service';
   selector: 'app-reporter',
   templateUrl: './reporter.component.html',
   styleUrls: ['./reporter.component.scss'],
+  standalone: false,
 })
 export class ReporterComponent implements OnInit {
   @ViewChild('reporterForm', { static: true }) form: any;

@@ -26,6 +26,7 @@ export interface AccountTokenCreationDialogResult {
   selector: 'account-token-creation-dialog',
   templateUrl: './account-token-creation-dialog.component.html',
   styleUrls: ['./account-token-dialog.component.scss'],
+  standalone: false,
 })
 export class AccountTokenCreationDialogComponent {
   tokenControl = new FormControl<string>('', [Validators.required, Validators.minLength(3)]);

@@ -16,13 +16,12 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.DomainGroupService;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.exception.GroupNotFoundException;
 import io.gravitee.am.service.exception.MemberAlreadyExistsException;
 import io.gravitee.am.service.exception.MemberNotFoundException;
 import io.gravitee.am.service.exception.UserNotFoundException;
@@ -51,13 +50,13 @@ import java.util.List;
 public class GroupMemberResource extends AbstractResource {
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private DomainService domainService;
 
     @Autowired
-    private UserService userService;
+    private ManagementUserService userService;
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -74,36 +73,35 @@ public class GroupMemberResource extends AbstractResource {
     public void addMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("group") String group,
             @PathParam("member") String userId,
             @Suspended final AsyncResponse response) {
 
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> groupService.findById(group))
-                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                        .flatMapSingle(group1 -> userService.findById(userId)
-                                .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
-                                .flatMap(user -> {
-                                    if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
-                                        return Single.error(new MemberAlreadyExistsException(userId));
-                                    }
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> domainGroupService.findById(domain, group)
+                                .flatMap(group1 -> userService.findById(domain, userId)
+                                        .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
+                                        .flatMap(user -> {
+                                            if (group1.getMembers() != null && group1.getMembers().contains(userId)) {
+                                                return Single.error(new MemberAlreadyExistsException(userId));
+                                            }
 
-                                    List<String> groupMembers = group1.getMembers() != null ? new ArrayList<>(group1.getMembers()) : new ArrayList<>();
-                                    groupMembers.add(userId);
+                                            List<String> groupMembers = group1.getMembers() != null ? new ArrayList<>(group1.getMembers()) : new ArrayList<>();
+                                            groupMembers.add(userId);
 
-                                    UpdateGroup updateGroup = new UpdateGroup();
-                                    updateGroup.setName(group1.getName());
-                                    updateGroup.setDescription(group1.getDescription());
-                                    updateGroup.setRoles(group1.getRoles());
-                                    updateGroup.setMembers(groupMembers);
-                                    return groupService.update(domain, group, updateGroup, authenticatedUser);
-                                })
-                        ))
+                                            UpdateGroup updateGroup = new UpdateGroup();
+                                            updateGroup.setName(group1.getName());
+                                            updateGroup.setDescription(group1.getDescription());
+                                            updateGroup.setRoles(group1.getRoles());
+                                            updateGroup.setMembers(groupMembers);
+                                            return domainGroupService.update(domain, group, updateGroup, authenticatedUser);
+                                        })
+                                )))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -122,18 +120,17 @@ public class GroupMemberResource extends AbstractResource {
     public void removeMember(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("group") String group,
             @PathParam("member") String userId,
             @Suspended final AsyncResponse response) {
         final io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> groupService.findById(group))
-                        .switchIfEmpty(Maybe.error(new GroupNotFoundException(group)))
-                        .flatMapSingle(group1 -> userService.findById(userId)
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> domainGroupService.findById(domain, group)
+                                .flatMap(group1 -> userService.findById(domain, userId)
                                 .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
                                 .flatMap(user -> {
                                     if (group1.getMembers() == null || !group1.getMembers().contains(userId)) {
@@ -148,9 +145,9 @@ public class GroupMemberResource extends AbstractResource {
                                     updateGroup.setDescription(group1.getDescription());
                                     updateGroup.setRoles(group1.getRoles());
                                     updateGroup.setMembers(groupMembers);
-                                    return groupService.update(domain, group, updateGroup, authenticatedUser);
+                                    return domainGroupService.update(domain, group, updateGroup, authenticatedUser);
                                 })
-                        ))
+                        )))
                 .subscribe(response::resume, response::resume);
     }
 }

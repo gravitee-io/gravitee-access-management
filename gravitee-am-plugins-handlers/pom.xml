@@ -23,7 +23,7 @@
     <parent>
         <artifactId>gravitee-am-parent</artifactId>
         <groupId>io.gravitee.am</groupId>
-        <version>4.7.0-SNAPSHOT</version>
+        <version>4.9.0-SNAPSHOT</version>
     </parent>
 
     <groupId>io.gravitee.am.plugins.handlers</groupId>
@@ -45,6 +45,7 @@
         <module>gravitee-am-plugins-handlers-botdetection</module>
         <module>gravitee-am-plugins-handlers-deviceidentifier</module>
         <module>gravitee-am-plugins-handlers-authdevice-notifier</module>
+        <module>gravitee-am-plugins-handlers-dataplane</module>
     </modules>
 
     <dependencies>

@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.oidc.service.clientregistration.ClientServ
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CookieSettings;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.account.AccountSettings;
@@ -31,6 +32,7 @@ import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.service.ApplicationSecretService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.utils.GrantTypeUtils;
@@ -65,6 +67,9 @@ public class ClientServiceImpl implements ClientService {
     @Autowired
     private ApplicationService applicationService;
 
+    @Autowired
+    private ApplicationSecretService applicationSecretService;
+
     @Override
     public Maybe<Client> findById(String id) {
         LOGGER.debug("Find client by ID: {}", id);
@@ -80,7 +85,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Single<Client> create(Client client) {
+    public Single<Client> create(Domain domain, Client client) {
         LOGGER.debug("Create a client {} for domain {}", client, client.getDomain());
 
         if (client.getDomain() == null || client.getDomain().trim().isEmpty()) {
@@ -116,7 +121,7 @@ public class ClientServiceImpl implements ClientService {
         client.setCreatedAt(new Date());
         client.setUpdatedAt(client.getCreatedAt());
 
-        return applicationService.create(convert(client)).map(Application::toClient);
+        return applicationService.create(domain, convert(client)).map(Application::toClient);
     }
 
     @Override
@@ -132,16 +137,15 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public Completable delete(String clientId, User principal) {
+    public Completable delete(String clientId, User principal, Domain domain) {
         LOGGER.debug("Delete client {}", clientId);
-        return applicationService.delete(clientId, principal);
+        return applicationService.delete(clientId, principal, domain);
     }
 
     @Override
-    public Single<Client> renewClientSecret(String domain, String id, User principal) {
-        LOGGER.debug("Renew client secret for client {} in domain {}", id, domain);
-        return applicationService.renewClientSecret(domain, id, principal)
-                .map(Application::toClient);
+    public Single<Client> renewClientSecret(Domain domain, Client client, String clientSecretId, User principal) {
+        LOGGER.debug("Renew client secret for client {} in domain {}", client.getId(), domain);
+        return applicationSecretService.renew(domain, convert(client), clientSecretId, principal).map(Application::toClient);
     }
 
     private Application convert(Client client) {

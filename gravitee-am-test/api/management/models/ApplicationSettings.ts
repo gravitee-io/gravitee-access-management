@@ -55,6 +55,12 @@ import {
   RiskAssessmentSettingsFromJSONTyped,
   RiskAssessmentSettingsToJSON,
 } from './RiskAssessmentSettings';
+import {
+  SecretExpirationSettings,
+  SecretExpirationSettingsFromJSON,
+  SecretExpirationSettingsFromJSONTyped,
+  SecretExpirationSettingsToJSON,
+} from './SecretExpirationSettings';
 
 /**
  *
@@ -116,6 +122,12 @@ export interface ApplicationSettings {
    * @memberof ApplicationSettings
    */
   riskAssessment?: RiskAssessmentSettings;
+  /**
+   *
+   * @type {SecretExpirationSettings}
+   * @memberof ApplicationSettings
+   */
+  secretExpirationSettings?: SecretExpirationSettings;
 }
 
 export function ApplicationSettingsFromJSON(json: any): ApplicationSettings {
@@ -136,6 +148,9 @@ export function ApplicationSettingsFromJSONTyped(json: any, ignoreDiscriminator:
     mfa: !exists(json, 'mfa') ? undefined : MFASettingsFromJSON(json['mfa']),
     cookieSettings: !exists(json, 'cookieSettings') ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
     riskAssessment: !exists(json, 'riskAssessment') ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
+    secretExpirationSettings: !exists(json, 'secretExpirationSettings')
+      ? undefined
+      : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
   };
 }
 
@@ -156,5 +171,6 @@ export function ApplicationSettingsToJSON(value?: ApplicationSettings | null): a
     mfa: MFASettingsToJSON(value.mfa),
     cookieSettings: CookieSettingsToJSON(value.cookieSettings),
     riskAssessment: RiskAssessmentSettingsToJSON(value.riskAssessment),
+    secretExpirationSettings: SecretExpirationSettingsToJSON(value.secretExpirationSettings),
   };
 }

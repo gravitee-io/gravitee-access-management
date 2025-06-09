@@ -170,6 +170,13 @@ services:
 
 # Configuration of additional reporters
 #reporters:
+#  # settings about audit common to all reporters
+#  audits:
+#    # List of audit types to exclude from audit generation
+#    excluded_audit_types:
+#    - CLIENT_AUTHENTICATION
+#    - TOKEN_CREATED
+#    - TOKEN_REVOKED
 #  file:
 #    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/audit-logs/
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
@@ -269,10 +276,18 @@ user:
       pattern: ^[^±!£$%^&*§¡€¢¶•ªº«»\\/<>?:;|=,]{1,100}$
 
   registration:
-    email:
-      #subject: New user registration
-    token:
-      #expire-after: 86400 # the end of validity of the token in seconds for registration email (default 86400 = a day)
+    verify: #just verification via email
+      email:
+        #subject: New user registration
+      time:
+        #unit: DAYS
+        #value: 3
+    confirmation: #password set via link received in email
+      email:
+        #subject: New user registration
+      time:
+        #unit: DAYS
+        #value: 3
   resetPassword:
     email:
       #subject: Please reset your password
@@ -307,6 +322,10 @@ handlers:
       maxRequestOperations: 1000
 
 repositories:
+  # specify which scope is used as reference
+  # to initialize the IdentityProviders with the "use system cluster"
+  # option enabled (only management and gateway scopes are allowed as value)
+  system-cluster: management
   # Management repository is used to store global configuration such as domains, clients, ...
   # This is the default configuration using MongoDB (single server)
   # For more information about MongoDB configuration, please have a look to:
@@ -352,6 +371,9 @@ repositories:
   gateway:
     type: mongodb
     use-management-settings: true
+    dataPlane:
+      id: default
+
     mongodb:
       dbname: ${ds.mongodb.dbname}
       host: ${ds.mongodb.host}
@@ -546,4 +568,6 @@ liquibase:
 #    algorithm: None
 #    properties:
 #      rounds: 10
+#  Define max number of secrets for application:
+#  secretsMax: 10
 

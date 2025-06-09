@@ -26,6 +26,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.PasswordSettings;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SAMLSettings;
+import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
@@ -45,6 +46,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettings
 import io.gravitee.am.repository.mongodb.management.internal.model.PasswordSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SAMLSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SCIMSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.SecretSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.SelfServiceAccountManagementSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.WebAuthnSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.CIBASettingNotifierMongo;
@@ -72,6 +74,9 @@ import java.util.stream.Collectors;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.in;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -211,6 +216,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domain.setIdentities(domainMongo.getIdentities());
         domain.setMaster(domainMongo.isMaster());
         domain.setCorsSettings(domainMongo.getCorsSettings());
+        domain.setDataPlaneId(domainMongo.getDataPlaneId());
+        domain.setSecretExpirationSettings(convert(domainMongo.getSecretSettings()));
 
         return domain;
     }
@@ -248,7 +255,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         domainMongo.setIdentities(domain.getIdentities());
         domainMongo.setMaster(domain.isMaster());
         domainMongo.setCorsSettings(domain.getCorsSettings());
-
+        domainMongo.setDataPlaneId(domain.getDataPlaneId());
+        domainMongo.setSecretSettings(convert(domain.getSecretExpirationSettings()));
         return domainMongo;
     }
 
@@ -293,7 +301,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedScopesEnabled(dcrMongo.isAllowedScopesEnabled());
         result.setAllowedScopes(dcrMongo.getAllowedScopes());
         result.setClientTemplateEnabled(dcrMongo.isClientTemplateEnabled());
-
+        result.setAllowRedirectUriParamsExpressionLanguage(dcrMongo.isAllowRedirectUriParamsExpressionLanguage());
         return result;
     }
 
@@ -379,7 +387,7 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         result.setAllowedScopesEnabled(dcr.isAllowedScopesEnabled());
         result.setAllowedScopes(dcr.getAllowedScopes());
         result.setClientTemplateEnabled(dcr.isClientTemplateEnabled());
-
+        result.setAllowRedirectUriParamsExpressionLanguage(dcr.isAllowRedirectUriParamsExpressionLanguage());
         return result;
     }
 
@@ -518,5 +526,13 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     private static SAMLSettingsMongo convert(SAMLSettings saml) {
         return SAMLSettingsMongo.convert(saml);
+    }
+
+    private static SecretExpirationSettings convert(SecretSettingsMongo secretSettingsMongo){
+        return secretSettingsMongo != null ? secretSettingsMongo.toModel() : null;
+    }
+
+    private static SecretSettingsMongo convert(SecretExpirationSettings secretExpirationSettings){
+        return SecretSettingsMongo.fromModel(secretExpirationSettings);
     }
 }

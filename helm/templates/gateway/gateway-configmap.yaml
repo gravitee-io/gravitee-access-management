@@ -49,10 +49,10 @@ data:
     {{- end }}
       port: {{ .Values.gateway.service.internalPort }}
       host: 0.0.0.0
-    #  idleTimeout: 0
-    #  tcpKeepAlive: true
-    #  compressionSupported: false
-    #  instances: 0
+      #  idleTimeout: 0
+      #  tcpKeepAlive: true
+      #  compressionSupported: false
+      #  instances: 0
       maxHeaderSize: {{ .Values.gateway.http.maxHeaderSize }}
       maxChunkSize: {{ .Values.gateway.http.maxChunkSize }}
       maxInitialLineLength: {{ .Values.gateway.http.maxInitialLineLength }}
@@ -161,6 +161,11 @@ data:
         {{- end }}
       {{- end }}
 
+    {{- if .Values.reporters }}
+    reporters:
+{{ toYaml .Values.reporters | indent 6 }}
+    {{- end }}
+
     jwt:
       secret: {{ .Values.gateway.jwt.secret }}
       kid: {{ .Values.gateway.jwt.kid | default "default-gravitee-AM-key" }}
@@ -212,209 +217,7 @@ data:
 {{ toYaml .Values.gateway.resilience | indent 6}}
 {{- end }}
 
-    repositories:
-      management:
-        type: {{ .Values.management.type | default "mongodb" }}
-        {{- if or (eq .Values.management.type "mongodb") (kindIs "invalid" .Values.management.type) }}
-        mongodb:
-          sslEnabled: {{ .Values.mongo.sslEnabled }}
-          {{- if .Values.mongo.keystore }}
-          keystore:
-            {{ toYaml .Values.mongo.keystore | nindent 10 | trim -}}
-          {{- end }}
-          {{- if .Values.mongo.truststore }}
-          truststore:
-            {{ toYaml .Values.mongo.truststore | nindent 10 | trim -}}
-          {{- end }}
-          socketKeepAlive: {{ .Values.mongo.socketKeepAlive }}
-          {{- if .Values.mongo.uri }}
-          uri: {{ .Values.mongo.uri }}
-          {{- else if .Values.mongo.servers }}
-          servers:
-            {{- .Values.mongo.servers | nindent 10 }}
-          dbname: {{ .Values.mongo.dbname }}
-          {{- if (eq .Values.mongo.auth.enabled true) }}
-          username: {{ .Values.mongo.auth.username }}
-          {{- if .Values.mongo.auth.password }}
-          password: {{ .Values.mongo.auth.password }}
-          {{- end }}
-          {{- if .Values.mongo.auth.source }}
-          authSource: {{ .Values.mongo.auth.source }}
-          {{- end }}
-          {{- end }}
-          {{- else }}
-          uri: mongodb://{{- if (eq .Values.mongo.auth.enabled true) }}{{ .Values.mongo.auth.username }}:{{ .Values.mongo.auth.password }}@{{- end }}{{ .Values.mongo.dbhost }}:{{ .Values.mongo.dbport }}/{{ .Values.mongo.dbname }}?{{- if .Values.mongo.rsEnabled }}&replicaSet={{ .Values.mongo.rs }}{{- end }}{{- if (eq .Values.mongo.auth.enabled true) }}&authSource={{ .Values.mongo.auth.source }}{{- end }}{{- if .Values.mongo.connectTimeoutMS }}&connectTimeoutMS={{ .Values.mongo.connectTimeoutMS }}{{- end }}
-          {{- end }}
-        {{- else if (eq .Values.management.type "jdbc") }}
-        jdbc:
-          driver: {{ .Values.jdbc.driver }}
-          host: {{ .Values.jdbc.host }}
-          port: {{ .Values.jdbc.port }}
-          database: {{ .Values.jdbc.database }}
-          {{- if .Values.jdbc.username }}
-          username: {{ .Values.jdbc.username }}
-          {{- end }}
-          {{- if .Values.jdbc.password }}
-          password: {{ .Values.jdbc.password }}
-          {{- end }}
-          {{- if .Values.jdbc.pool }}
-          {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
-          {{- end }}
-          {{- if .Values.jdbc.sslEnabled }}
-          sslEnabled: {{ .Values.jdbc.sslEnabled }}
-          {{- end }}
-          {{- if .Values.jdbc.sslMode }}
-          sslMode: {{ .Values.jdbc.sslMode }}
-          {{- end }}
-          {{- if .Values.jdbc.sslServerCert }}
-          sslServerCert: {{ .Values.jdbc.sslServerCert }}
-          {{- end }}
-          {{- if .Values.jdbc.trustServerCertificate }}
-          trustServerCertificate: {{ .Values.jdbc.trustServerCertificate }}
-          {{- end }}
-          {{- if .Values.jdbc.disableSslHostnameVerification }}
-          disableSslHostnameVerification: {{ .Values.jdbc.disableSslHostnameVerification }}
-          {{- end }}
-          {{- if .Values.jdbc.trustStore }}
-          trustStore:
-            {{ toYaml .Values.jdbc.trustStore | nindent 10 | trim -}}
-          {{- end }}
-        {{- end }}
-      oauth2:
-        type: {{ .Values.oauth2.type | default "mongodb" }}
-        {{- if or (eq .Values.oauth2.type "mongodb") (kindIs "invalid" .Values.oauth2.type) }}
-        mongodb:
-          sslEnabled: {{ .Values.mongo.sslEnabled }}
-          {{- if .Values.mongo.keystore }}
-          keystore:
-            {{ toYaml .Values.mongo.keystore | nindent 10 | trim -}}
-          {{- end }}
-          {{- if .Values.mongo.truststore }}
-          truststore:
-            {{ toYaml .Values.mongo.truststore | nindent 10 | trim -}}
-          {{- end }}
-          socketKeepAlive: {{ .Values.mongo.socketKeepAlive }}
-          {{- if .Values.mongo.uri }}
-          uri: {{ .Values.mongo.uri }}
-          {{- else if .Values.mongo.servers }}
-          servers:
-            {{- .Values.mongo.servers | nindent 10 }}
-          dbname: {{ .Values.mongo.dbname }}
-          {{- if (eq .Values.mongo.auth.enabled true) }}
-          username: {{ .Values.mongo.auth.username }}
-          {{- if .Values.mongo.auth.password }}
-          password: {{ .Values.mongo.auth.password }}
-          {{- end }}
-          {{- if .Values.mongo.auth.source }}
-          authSource: {{ .Values.mongo.auth.source }}
-          {{- end }}
-          {{- end }}
-          {{- else }}
-          uri: mongodb://{{- if (eq .Values.mongo.auth.enabled true) }}{{ .Values.mongo.auth.username }}:{{ .Values.mongo.auth.password }}@{{- end }}{{ .Values.mongo.dbhost }}:{{ .Values.mongo.dbport }}/{{ .Values.mongo.dbname }}?{{- if .Values.mongo.rsEnabled }}&replicaSet={{ .Values.mongo.rs }}{{- end }}{{- if (eq .Values.mongo.auth.enabled true) }}&authSource={{ .Values.mongo.auth.source }}{{- end }}{{- if .Values.mongo.connectTimeoutMS }}&connectTimeoutMS={{ .Values.mongo.connectTimeoutMS }}{{- end }}
-          {{- end }}
-        {{- else if (eq .Values.oauth2.type "jdbc") }}
-        jdbc:
-          driver: {{ .Values.jdbc.driver }}
-          host: {{ .Values.jdbc.host }}
-          port: {{ .Values.jdbc.port }}
-          database: {{ .Values.jdbc.database }}
-          {{- if .Values.jdbc.username }}
-          username: {{ .Values.jdbc.username }}
-          {{- end }}
-          {{- if .Values.jdbc.password }}
-          password: {{ .Values.jdbc.password }}
-          {{- end }}
-          {{- if .Values.jdbc.pool }}
-          {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
-          {{- end }}
-          {{- if .Values.jdbc.sslEnabled }}
-          sslEnabled: {{ .Values.jdbc.sslEnabled }}
-          {{- end }}
-          {{- if .Values.jdbc.sslMode }}
-          sslMode: {{ .Values.jdbc.sslMode }}
-          {{- end }}
-          {{- if .Values.jdbc.sslServerCert }}
-          sslServerCert: {{ .Values.jdbc.sslServerCert }}
-          {{- end }}
-          {{- if .Values.jdbc.trustServerCertificate }}
-          trustServerCertificate: {{ .Values.jdbc.trustServerCertificate }}
-          {{- end }}
-          {{- if .Values.jdbc.disableSslHostnameVerification }}
-          disableSslHostnameVerification: {{ .Values.jdbc.disableSslHostnameVerification }}
-          {{- end }}
-          {{- if .Values.jdbc.trustStore }}
-          trustStore:
-            {{ toYaml .Values.jdbc.trustStore | nindent 10 | trim -}}
-          {{- end }}
-        {{- end }}
-      gateway:
-        type: {{ .Values.gateway.type | default "mongodb" }}
-        {{- if or (eq .Values.gateway.type "mongodb") (kindIs "invalid" .Values.gateway.type) }}
-        mongodb:
-          sslEnabled: {{ .Values.mongo.sslEnabled }}
-          {{- if .Values.mongo.keystore }}
-          keystore:
-            {{ toYaml .Values.mongo.keystore | nindent 10 | trim -}}
-          {{- end }}
-          {{- if .Values.mongo.truststore }}
-          truststore:
-            {{ toYaml .Values.mongo.truststore | nindent 10 | trim -}}
-          {{- end }}
-          socketKeepAlive: {{ .Values.mongo.socketKeepAlive }}
-          {{- if .Values.mongo.uri }}
-          uri: {{ .Values.mongo.uri }}
-          {{- else if .Values.mongo.servers }}
-          servers:
-            {{- .Values.mongo.servers | nindent 10 }}
-          dbname: {{ .Values.mongo.dbname }}
-          {{- if (eq .Values.mongo.auth.enabled true) }}
-          username: {{ .Values.mongo.auth.username }}
-          {{- if .Values.mongo.auth.password }}
-          password: {{ .Values.mongo.auth.password }}
-          {{- end }}
-          {{- if .Values.mongo.auth.source }}
-          authSource: {{ .Values.mongo.auth.source }}
-          {{- end }}
-          {{- end }}
-          {{- else }}
-          uri: mongodb://{{- if (eq .Values.mongo.auth.enabled true) }}{{ .Values.mongo.auth.username }}:{{ .Values.mongo.auth.password }}@{{- end }}{{ .Values.mongo.dbhost }}:{{ .Values.mongo.dbport }}/{{ .Values.mongo.dbname }}?{{- if .Values.mongo.rsEnabled }}&replicaSet={{ .Values.mongo.rs }}{{- end }}{{- if (eq .Values.mongo.auth.enabled true) }}&authSource={{ .Values.mongo.auth.source }}{{- end }}{{- if .Values.mongo.connectTimeoutMS }}&connectTimeoutMS={{ .Values.mongo.connectTimeoutMS }}{{- end }}
-          {{- end }}
-        {{- else if (eq .Values.gateway.type "jdbc") }}
-        jdbc:
-          driver: {{ .Values.jdbc.driver }}
-          host: {{ .Values.jdbc.host }}
-          port: {{ .Values.jdbc.port }}
-          database: {{ .Values.jdbc.database }}
-          {{- if .Values.jdbc.username }}
-          username: {{ .Values.jdbc.username }}
-          {{- end }}
-          {{- if .Values.jdbc.password }}
-          password: {{ .Values.jdbc.password }}
-          {{- end }}
-          {{- if .Values.jdbc.pool }}
-          {{ toYaml .Values.jdbc.pool | nindent 8 | trim -}}
-          {{- end }}
-          {{- if .Values.jdbc.sslEnabled }}
-          sslEnabled: {{ .Values.jdbc.sslEnabled }}
-          {{- end }}
-          {{- if .Values.jdbc.sslMode }}
-          sslMode: {{ .Values.jdbc.sslMode }}
-          {{- end }}
-          {{- if .Values.jdbc.sslServerCert }}
-          sslServerCert: {{ .Values.jdbc.sslServerCert }}
-          {{- end }}
-          {{- if .Values.jdbc.trustServerCertificate }}
-          trustServerCertificate: {{ .Values.jdbc.trustServerCertificate }}
-          {{- end }}
-          {{- if .Values.jdbc.disableSslHostnameVerification }}
-          disableSslHostnameVerification: {{ .Values.jdbc.disableSslHostnameVerification }}
-          {{- end }}
-          {{- if .Values.jdbc.trustStore }}
-          trustStore:
-            {{ toYaml .Values.jdbc.trustStore | nindent 10 | trim -}}
-          {{- end }}
-        {{- end }}
-
+{{ include "repositories" . | indent 4}}
   {{- if .Values.gateway.consent }}
     consent:
 {{ toYaml .Values.gateway.consent | indent 6  }}

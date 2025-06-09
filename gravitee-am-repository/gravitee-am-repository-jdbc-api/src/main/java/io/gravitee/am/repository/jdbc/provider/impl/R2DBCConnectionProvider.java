@@ -25,7 +25,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.convert.MappingR2dbcConverter;
 import org.springframework.data.r2dbc.convert.R2dbcCustomConversions;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -92,6 +91,7 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     private ReactiveTransactionManager transactionManager;
 
     private boolean notUseMngSettingsForOauth2;
+    private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
 
     @Override
@@ -142,7 +142,7 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     @Override
     public ClientWrapper getClientWrapper(String name) {
         if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
-            return oauthConnectionFactory;
+            return notUseGwSettingsForOauth2 ? oauthConnectionFactory : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
             return gatewayConnectionFactory;
         } else {
@@ -153,6 +153,19 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     @Override
     public ClientWrapper<ConnectionFactory> getClientFromConfiguration(R2DBCConnectionConfiguration configuration) {
         return new R2DBCPoolWrapper(configuration, ConnectionFactoryProvider.createClient(configuration));
+    }
+
+    @Override
+    public ClientWrapper<ConnectionFactory> getClientWrapperFromPrefix(String prefix) {
+        if (GATEWAY.getRepositoryPropertyKey().equals(prefix)) {
+            if (notUseMngSettingsForGateway) {
+                return gatewayConnectionFactory;
+            } else {
+                return commonConnectionFactory;
+            }
+        }
+        // mAPI, create a connection pool for each DP
+        return new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, prefix));
     }
 
     @Override
@@ -172,7 +185,9 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     @Override
     public void afterPropertiesSet() throws Exception {
         final var useMngSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() +".use-management-settings", Boolean.class, true);
+        final var useGwSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", Boolean.class, false);
         final var useMngSettingsForGateway = environment.getProperty(GATEWAY.getRepositoryPropertyKey() +".use-management-settings", Boolean.class, true);
+        notUseGwSettingsForOauth2 = !useGwSettingsForOauth2;
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
         notUseMngSettingsForGateway = !useMngSettingsForGateway;
         // create the connection pool just after the bean Initialization to guaranty the uniqueness
@@ -180,7 +195,7 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
         if (notUseMngSettingsForGateway) {
             gatewayConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, GATEWAY.getRepositoryPropertyKey()));
         }
-        if (notUseMngSettingsForOauth2) {
+        if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
             oauthConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, OAUTH2.getRepositoryPropertyKey()));
         }
     }

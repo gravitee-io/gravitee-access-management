@@ -1,0 +1,109 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-3-devices
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: devices
+      changes:
+        - createTable:
+            columns:
+              - column:
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+                    primaryKeyName: pk_devices
+                  name: id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reference_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: reference_type
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: client
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: user_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: device_identifier_id
+                  type: VARCHAR(64)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: device_id
+                  type: VARCHAR(255)
+              - column:
+                  constraints:
+                    nullable: false
+                  name: type
+                  type: VARCHAR(255)
+              - column:
+                  name: created_at
+                  type: TIMESTAMP(6)
+              - column:
+                  name: expires_at
+                  type: TIMESTAMP(6)
+            tableName: devices
+
+  - changeSet:
+      id: dp-init-3-devices-idx_devices_domain_client_user
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_devices_domain_client_user
+              tableName: devices
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: client
+              - column:
+                  name: user_id
+            indexName: idx_devices_domain_client_user
+            tableName: devices
+
+  - changeSet:
+      id: dp-init-3-devices-index
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_devices_domain_client_user_remember_device_device_id
+              tableName: devices
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: client
+              - column:
+                  name: user_id
+              - column:
+                  name: device_identifier_id
+              - column:
+                  name: device_id
+            indexName: idx_devices_domain_client_user_remember_device_device_id
+            tableName: devices

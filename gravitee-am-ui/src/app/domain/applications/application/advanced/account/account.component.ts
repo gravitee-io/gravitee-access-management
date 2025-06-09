@@ -24,6 +24,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-application-account-settings',
   templateUrl: './account.component.html',
   styleUrls: ['./account.component.scss'],
+  standalone: false,
 })
 export class ApplicationAccountSettingsComponent implements OnInit {
   private domainId: string;

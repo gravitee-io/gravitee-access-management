@@ -19,41 +19,37 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.model.ScopeEntity;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.model.Reference;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.UserId;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.ScopeApprovalService;
 import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
 @RequiredArgsConstructor
-
 public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
 
     public static final String UNKNOWN_ID = "unknown-id";
 
-
-    private final DomainService domainService;
     private final ScopeApprovalService scopeApprovalService;
+    private final RevokeTokenManagementService revokeTokenManagementService;
     private final ApplicationService applicationService;
     private final ScopeService scopeService;
-    private final UserService userService;
+    private final DataPlaneRegistry dataPlaneRegistry;
 
 
-    public Single<List<ScopeApprovalEntity>> getUserConsents(String domain, String rawUserId, String clientId) {
+    public Single<List<ScopeApprovalEntity>> getUserConsents(Domain domain, String rawUserId, String clientId) {
         var userId = UserId.internal(rawUserId);
-        return domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                // in management context, all users either have the internal ID, or aren't available anyway
-                .flatMapSingle(d -> userService.findById(Reference.domain(d.getId()), userId))
+        return dataPlaneRegistry.getUserRepository(domain)
+                        .findById(domain.asReference(), userId)
+                        .switchIfEmpty(Single.error(new UserNotFoundException(userId)))
                 .flatMapPublisher(u -> {
                     if (clientId == null || clientId.isEmpty()) {
                         return scopeApprovalService.findByDomainAndUser(domain, u.getFullId());
@@ -71,16 +67,12 @@ public class ScopeApprovalAdapterImpl implements ScopeApprovalAdapter {
                 .toList();
     }
 
-    public Completable revokeUserConsents(String domain, String rawUserId, String clientId, User authenticatedUser) {
+    public Completable revokeUserConsents(Domain domain, String rawUserId, String clientId, User authenticatedUser) {
         var userId = UserId.internal(rawUserId);
-        return domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .flatMapCompletable(__ -> {
-                    if (clientId == null || clientId.isEmpty()) {
-                        return scopeApprovalService.revokeByUser(domain, userId, authenticatedUser);
-                    }
-                    return scopeApprovalService.revokeByUserAndClient(domain, userId, clientId, authenticatedUser);
-                });
+        if (clientId == null || clientId.isEmpty()) {
+            return scopeApprovalService.revokeByUser(domain, userId, revokeTokenManagementService::sendProcessRequest, authenticatedUser);
+        }
+        return scopeApprovalService.revokeByUserAndClient(domain, userId, clientId, revokeTokenManagementService::sendProcessRequest, authenticatedUser);
     }
 
     private String getScopeBase(String scope) {

@@ -22,6 +22,7 @@ import { NavigationService } from '../../services/navigation.service';
   selector: 'gv-tab-navbar',
   templateUrl: './tab-navbar.component.html',
   styleUrls: ['./tab-navbar.component.scss'],
+  standalone: false,
 })
 export class TabNavbarComponent implements OnInit, OnDestroy {
   subMenuItems: any;

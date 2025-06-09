@@ -21,8 +21,8 @@ import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidSyntaxException;
 import io.gravitee.am.gateway.handler.scim.exception.InvalidValueException;
-import io.gravitee.am.gateway.handler.scim.service.GroupService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.identityprovider.api.User;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
@@ -37,12 +37,12 @@ import java.util.Set;
  */
 public class AbstractGroupEndpoint {
 
-    protected UserService userService;
-    protected GroupService groupService;
+    protected ProvisioningUserService userService;
+    protected ScimGroupService groupService;
     protected ObjectMapper objectMapper;
     protected SubjectManager subjectManager;
 
-    public AbstractGroupEndpoint(GroupService groupService, ObjectMapper objectMapper, UserService userService, SubjectManager subjectManager) {
+    public AbstractGroupEndpoint(ScimGroupService groupService, ObjectMapper objectMapper, ProvisioningUserService userService, SubjectManager subjectManager) {
         this.groupService = groupService;
         this.objectMapper = objectMapper;
         this.userService = userService;

@@ -18,6 +18,7 @@ import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/cor
 @Component({
   selector: 'app-user-avatar',
   templateUrl: './user-avatar.component.html',
+  standalone: false,
 })
 export class UserAvatarComponent implements OnInit, OnChanges {
   @Input() user: any;

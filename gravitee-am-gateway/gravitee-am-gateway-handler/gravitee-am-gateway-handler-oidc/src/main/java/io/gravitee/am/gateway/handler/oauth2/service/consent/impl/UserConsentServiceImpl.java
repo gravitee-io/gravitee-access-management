@@ -50,6 +50,7 @@ import static java.util.Objects.nonNull;
 public class UserConsentServiceImpl implements UserConsentService {
 
     private final int approvalExpirySeconds;
+
     @Autowired
     private ScopeApprovalService scopeApprovalService;
 
@@ -68,7 +69,7 @@ public class UserConsentServiceImpl implements UserConsentService {
 
     @Override
     public Single<Set<String>> checkConsent(Client client, io.gravitee.am.model.User user) {
-        return scopeApprovalService.findByDomainAndUserAndClient(domain.getId(), user.getFullId(), client.getClientId())
+        return scopeApprovalService.findByDomainAndUserAndClient(domain, user.getFullId(), client.getClientId())
                 .filter(approval -> {
                     Date today = new Date();
                     return approval.getExpiresAt().after(today) && APPROVED.equals(approval.getStatus());
@@ -89,7 +90,7 @@ public class UserConsentServiceImpl implements UserConsentService {
 
         approvals.forEach(a -> a.setExpiresAt(computeExpiry(scopeApprovals, a.getScope(), parameterizedScopes)));
         // save consent
-        return scopeApprovalService.saveConsent(domain.getId(), client, approvals, principal);
+        return scopeApprovalService.saveConsent(domain, client, approvals, principal);
     }
 
     @Override

@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee.am.management</groupId>
         <artifactId>gravitee-am-management-api</artifactId>
-        <version>4.7.0-SNAPSHOT</version>
+        <version>4.9.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-management-api-rest</artifactId>
@@ -48,6 +48,11 @@
         <dependency>
             <groupId>io.gravitee.am.plugins.handlers</groupId>
             <artifactId>gravitee-am-plugins-handlers-identityprovider</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-dataplane</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -148,9 +153,10 @@
             <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>io.gravitee.am.repository</groupId>
-            <artifactId>gravitee-am-repository-junit</artifactId>
+            <groupId>io.gravitee.am.dataplane</groupId>
+            <artifactId>gravitee-am-dataplane-junit</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>

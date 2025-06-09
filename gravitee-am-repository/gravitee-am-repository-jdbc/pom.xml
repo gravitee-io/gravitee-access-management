@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-repository</artifactId>
         <groupId>io.gravitee.am.repository</groupId>
-        <version>4.7.0-SNAPSHOT</version>
+        <version>4.9.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
@@ -33,7 +33,6 @@
     <properties>
         <dozer.version>6.5.2</dozer.version>
 
-        <liquibase.version>4.21.1</liquibase.version>
         <liquibase-slf4j.version>4.0.0</liquibase-slf4j.version>
 
         <skip-repositories-tests>true</skip-repositories-tests>

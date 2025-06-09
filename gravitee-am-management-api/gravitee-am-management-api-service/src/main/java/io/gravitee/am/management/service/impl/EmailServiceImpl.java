@@ -39,17 +39,18 @@ import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
+import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
+import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.DomainBasedDictionaryProvider;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.vertx.rxjava3.core.MultiMap;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
@@ -71,7 +72,7 @@ import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
  * @author GraviteeSource Team
  */
 @Component("managementEmailService")
-public class EmailServiceImpl implements EmailService, InitializingBean {
+public class EmailServiceImpl implements EmailService {
 
     private static final String ADMIN_CLIENT = "admin";
 
@@ -81,6 +82,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private final String registrationVerifySubject;
     private final Integer registrationVerifyExpireAfter;
     private final String certificateExpirySubject;
+    private final String clientSecretExpirySubject;
 
     private final EmailManager emailManager;
 
@@ -95,8 +97,6 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private final DomainReadService domainService;
 
     private final I18nDictionaryService i18nDictionaryService;
-
-    private final DomainBasedDictionaryProvider dictionaryProvider;
 
     private final Environment environment;
 
@@ -121,45 +121,35 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         this.registrationSubject = registrationSubject();
         this.registrationExpireAfter = registrationExpireAfter();
         this.registrationVerifySubject = registrationVerifySubject();
+        this.clientSecretExpirySubject = clientSecretExpirySubject();
         this.registrationVerifyExpireAfter = registrationVerifyExpireAfter();
         this.certificateExpirySubject = certificateExpirySubject();
-        this.dictionaryProvider = new DomainBasedDictionaryProvider();
         this.i18nDictionaryService = i18nDictionaryService;
-
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        this.emailService.setDictionaryProvider(dictionaryProvider);
     }
 
     @Override
     public Maybe<Email> send(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
         if (enabled) {
             return refreshDomainDictionaries(domain)
-                    .andThen(prepareAndSend(domain, client, template, user));
+                    .flatMapMaybe(provider -> prepareAndSend(domain, client, template, user, provider));
         }
         return Maybe.empty();
     }
 
-    private Maybe<Email> prepareAndSend(Domain domain, Application client, io.gravitee.am.model.Template template, User user) {
+    private Maybe<Email> prepareAndSend(Domain domain, Application client, io.gravitee.am.model.Template template, User user, DomainBasedDictionaryProvider dictionaryProvider) {
         // get raw email template
         return getEmailTemplate(template, user).map(emailTemplate -> {
             // prepare email
             Email email = prepareEmail(domain, client, template, emailTemplate, user);
             // send email
-            sendEmail(email, user);
+            sendEmail(email, user, dictionaryProvider);
             return email;
         });
     }
 
-    private Completable refreshDomainDictionaries(Domain domain) {
-        return Completable.fromAction(this.dictionaryProvider::resetDictionaries)
-                .andThen(this.i18nDictionaryService.findAll(ReferenceType.DOMAIN, domain.getId())
-                .map(dict -> {
-                    this.dictionaryProvider.loadDictionary(dict);
-                    return dict;
-                }).ignoreElements().onErrorComplete());
+    private Single<DomainBasedDictionaryProvider> refreshDomainDictionaries(Domain domain) {
+        return this.i18nDictionaryService.findAll(ReferenceType.DOMAIN, domain.getId())
+                .collect(DomainBasedDictionaryProvider::new, (prov, dict) -> prov.loadDictionary(dict));
     }
 
     @Override
@@ -167,11 +157,11 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         return emailManager.getEmail(template, user, getDefaultSubject(template), getDefaultExpireAt(template));
     }
 
-    private void sendEmail(Email email, User user) {
+    private void sendEmail(Email email, User user, DomainBasedDictionaryProvider dictionaryProvider) {
         if (enabled) {
             try {
                 final var locale = preferredLanguage(user, Locale.ENGLISH);
-                final var emailToSend = processEmailTemplate(email, locale);
+                final var emailToSend = processEmailTemplate(email, locale, dictionaryProvider);
                 emailService.send(emailToSend);
                 auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                         .reference(Reference.domain(user.getReferenceId()))
@@ -191,7 +181,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     public Maybe<Email> getFinalEmail(Domain domain, Application client, io.gravitee.am.model.Template template, User user, Map<String, Object> params) {
         // get raw email template
         return emailManager.getEmail(template, ReferenceType.DOMAIN, domain.getId(), user, getDefaultSubject(template), getDefaultExpireAt(template))
-                .map(emailTemplate -> {
+                .flatMap(emailTemplate -> {
                     // prepare email
                     final var email = prepareEmail(domain, client, template, emailTemplate, user);
 
@@ -203,34 +193,43 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
 
                     // send email
                     var locale = preferredLanguage(user, Locale.ENGLISH);
-                    return processEmailTemplate(email, locale);
+                    return refreshDomainDictionaries(domain)
+                            .map(provider -> processEmailTemplate(email, locale, provider)).toMaybe();
                 });
     }
 
-    private Email processEmailTemplate(Email email, Locale locale) throws IOException, TemplateException {
+    private Email processEmailTemplate(Email email, Locale locale, DomainBasedDictionaryProvider dictionaryProvider) throws IOException, TemplateException {
         final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
         final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
         // compute email subject
-        final String subject = processTemplate(plainTextTemplate, email.getParams(), locale);
+        final String subject = processTemplate(plainTextTemplate, email.getParams(), locale, dictionaryProvider);
         // compute email content
-        final String content = processTemplate(template, email.getParams(), locale);
+        final String content = processTemplate(template, email.getParams(), locale, dictionaryProvider);
         final Email emailToSend = new Email(email);
         emailToSend.setSubject(subject);
         emailToSend.setContent(content);
         return emailToSend;
     }
 
-    private String processTemplate(Template plainTextTemplate, Map<String, Object> params, Locale preferredLanguage) throws TemplateException, IOException {
+    private String processTemplate(Template plainTextTemplate, Map<String, Object> params, Locale preferredLanguage, DomainBasedDictionaryProvider dictionaryProvider) throws TemplateException, IOException {
         var result = new StringWriter(1024);
 
         var dataModel = new HashMap<>(params);
-        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDictionaryProvider().getDictionaryFor(preferredLanguage)));
+        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.computeDictionaryProvider(dictionaryProvider).getDictionaryFor(preferredLanguage)));
 
         var env = plainTextTemplate.createProcessingEnvironment(new SimpleHash(dataModel,
                 new DefaultObjectWrapperBuilder(Configuration.VERSION_2_3_22).build()), result);
         env.process();
 
         return result.toString();
+    }
+
+    public DictionaryProvider computeDictionaryProvider(DomainBasedDictionaryProvider dictionaryProvider) {
+        if (dictionaryProvider != null) {
+            return new CompositeDictionaryProvider(dictionaryProvider, emailService.getDefaultDictionaryProvider());
+        } else {
+            return emailService.getDefaultDictionaryProvider();
+        }
     }
 
     private Email prepareEmail(Domain domain, Application client, io.gravitee.am.model.Template template, io.gravitee.am.model.Email emailTemplate, User user) {
@@ -305,6 +304,8 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
                 return registrationVerifySubject;
             case CERTIFICATE_EXPIRATION:
                 return certificateExpirySubject;
+            case CLIENT_SECRET_EXPIRATION:
+                return clientSecretExpirySubject;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
         }
@@ -317,6 +318,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             case REGISTRATION_VERIFY:
                 return registrationVerifyExpireAfter;
             case CERTIFICATE_EXPIRATION:
+            case CLIENT_SECRET_EXPIRATION:
                 return -1;
             default:
                 throw new IllegalArgumentException(template.template() + " not found");
@@ -344,7 +346,16 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     }
 
     private String certificateExpirySubject() {
-        return environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon");
+        String emailSubject = environment.getProperty("services.notifier.certificate.expiryEmailSubject");
+        if(emailSubject == null) {
+            return environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon");
+        } else {
+            return null;
+        }
+    }
+
+    private String clientSecretExpirySubject() {
+        return environment.getProperty("services.notifier.client-secret.expiryEmailSubject", "Client secret will expire soon");
     }
 
 }

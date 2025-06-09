@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.uma;
 import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.uma.resources.endpoint.PermissionEndpoint;
@@ -27,10 +28,9 @@ import io.gravitee.am.gateway.handler.uma.resources.endpoint.ResourceRegistratio
 import io.gravitee.am.gateway.handler.uma.resources.handler.MethodNotSupportedHandler;
 import io.gravitee.am.gateway.handler.uma.resources.handler.UMAProtectionApiAccessHandler;
 import io.gravitee.am.gateway.handler.uma.resources.handler.UmaExceptionHandler;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.gateway.handler.uma.service.discovery.UMADiscoveryService;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.PermissionTicketService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
@@ -74,10 +74,10 @@ public class UMAProvider extends AbstractProtocolProvider {
     private UMADiscoveryService discoveryService;
 
     @Autowired
-    private ResourceService resourceService;
+    private UMAResourceGatewayService resourceService;
 
     @Autowired
-    private PermissionTicketService permissionTicketService;
+    private UMAPermissionTicketService permissionTicketService;
 
     @Autowired
     private SubjectManager subjectManager;

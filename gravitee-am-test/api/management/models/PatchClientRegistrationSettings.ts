@@ -73,6 +73,18 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
+  allowRedirectUriParamsExpressionLanguage?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  clientTemplateEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
   isDynamicClientRegistrationEnabled?: boolean;
   /**
    *
@@ -80,12 +92,6 @@ export interface PatchClientRegistrationSettings {
    * @memberof PatchClientRegistrationSettings
    */
   isOpenDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchClientRegistrationSettings
-   */
-  clientTemplateEnabled?: boolean;
 }
 
 export function PatchClientRegistrationSettingsFromJSON(json: any): PatchClientRegistrationSettings {
@@ -103,13 +109,16 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
     defaultScopes: !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
     isAllowedScopesEnabled: !exists(json, 'isAllowedScopesEnabled') ? undefined : json['isAllowedScopesEnabled'],
     allowedScopes: !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
+    allowRedirectUriParamsExpressionLanguage: !exists(json, 'allowRedirectUriParamsExpressionLanguage')
+      ? undefined
+      : json['allowRedirectUriParamsExpressionLanguage'],
+    clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
     isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
       ? undefined
       : json['isDynamicClientRegistrationEnabled'],
     isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
       ? undefined
       : json['isOpenDynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
   };
 }
 
@@ -127,8 +136,9 @@ export function PatchClientRegistrationSettingsToJSON(value?: PatchClientRegistr
     defaultScopes: value.defaultScopes,
     isAllowedScopesEnabled: value.isAllowedScopesEnabled,
     allowedScopes: value.allowedScopes,
+    allowRedirectUriParamsExpressionLanguage: value.allowRedirectUriParamsExpressionLanguage,
+    clientTemplateEnabled: value.clientTemplateEnabled,
     isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
     isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
-    clientTemplateEnabled: value.clientTemplateEnabled,
   };
 }

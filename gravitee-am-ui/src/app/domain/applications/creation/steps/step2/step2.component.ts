@@ -21,6 +21,7 @@ import { find } from 'lodash';
   selector: 'application-creation-step2',
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss'],
+  standalone: false,
 })
 export class ApplicationCreationStep2Component implements OnInit {
   @Input() application: any;
@@ -63,5 +64,9 @@ export class ApplicationCreationStep2Component implements OnInit {
 
   displayRedirectUri(): boolean {
     return this.application.type !== 'SERVICE';
+  }
+
+  elRedirectUriEnabled(): boolean {
+    return this.domain?.oidc?.clientRegistrationSettings?.allowRedirectUriParamsExpressionLanguage;
   }
 }

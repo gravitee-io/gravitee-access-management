@@ -65,6 +65,10 @@ public class IdentityProvider {
     private Date updatedAt;
 
     private String passwordPolicy;
+    /**
+     * ID of Data Plane
+     */
+    private String dataPlaneId;
 
     public IdentityProvider(IdentityProvider other) {
         this.id = other.id;
@@ -82,6 +86,7 @@ public class IdentityProvider {
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
         this.passwordPolicy = other.passwordPolicy;
+        this.dataPlaneId = other.dataPlaneId;
     }
 
     @Override

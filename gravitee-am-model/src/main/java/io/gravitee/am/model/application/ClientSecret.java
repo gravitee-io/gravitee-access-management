@@ -16,8 +16,9 @@
 
 package io.gravitee.am.model.application;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 
@@ -25,14 +26,17 @@ import java.util.Date;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class ClientSecret {
     private String id;
     private String settingsId;
     private String name;
-    @JsonIgnore
     private String secret;
     @Schema(type = "java.lang.Long")
     private Date createdAt;
+    @Schema(type = "java.lang.Long")
+    private Date expiresAt;
 
     public ClientSecret() {
     }
@@ -43,45 +47,12 @@ public class ClientSecret {
         this.name = other.name;
         this.secret = other.secret;
         this.createdAt = other.createdAt;
+        this.expiresAt = other.expiresAt;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getSettingsId() {
-        return settingsId;
-    }
-
-    public void setSettingsId(String settingsId) {
-        this.settingsId = settingsId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getSecret() {
-        return secret;
-    }
-
-    public void setSecret(String secret) {
-        this.secret = secret;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
+    public ClientSecret safeSecret() {
+        ClientSecret clientSecret = new ClientSecret(this);
+        clientSecret.setSecret(null);
+        return clientSecret;
     }
 }

@@ -52,6 +52,12 @@ export interface ClientRegistrationSettings {
   allowWildCardRedirectUri?: boolean;
   /**
    *
+   * @type {boolean}
+   * @memberof ClientRegistrationSettings
+   */
+  allowRedirectUriParamsExpressionLanguage?: boolean;
+  /**
+   *
    * @type {Array<string>}
    * @memberof ClientRegistrationSettings
    */
@@ -67,13 +73,13 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  isDynamicClientRegistrationEnabled?: boolean;
+  isOpenDynamicClientRegistrationEnabled?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  isOpenDynamicClientRegistrationEnabled?: boolean;
+  allowedScopesEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -85,7 +91,7 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  allowedScopesEnabled?: boolean;
+  isDynamicClientRegistrationEnabled?: boolean;
 }
 
 export function ClientRegistrationSettingsFromJSON(json: any): ClientRegistrationSettings {
@@ -100,16 +106,19 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
     allowLocalhostRedirectUri: !exists(json, 'allowLocalhostRedirectUri') ? undefined : json['allowLocalhostRedirectUri'],
     allowHttpSchemeRedirectUri: !exists(json, 'allowHttpSchemeRedirectUri') ? undefined : json['allowHttpSchemeRedirectUri'],
     allowWildCardRedirectUri: !exists(json, 'allowWildCardRedirectUri') ? undefined : json['allowWildCardRedirectUri'],
+    allowRedirectUriParamsExpressionLanguage: !exists(json, 'allowRedirectUriParamsExpressionLanguage')
+      ? undefined
+      : json['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
     allowedScopes: !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
-    isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
-      ? undefined
-      : json['isDynamicClientRegistrationEnabled'],
     isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
       ? undefined
       : json['isOpenDynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
     allowedScopesEnabled: !exists(json, 'allowedScopesEnabled') ? undefined : json['allowedScopesEnabled'],
+    clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
+    isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
+      ? undefined
+      : json['isDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -124,11 +133,12 @@ export function ClientRegistrationSettingsToJSON(value?: ClientRegistrationSetti
     allowLocalhostRedirectUri: value.allowLocalhostRedirectUri,
     allowHttpSchemeRedirectUri: value.allowHttpSchemeRedirectUri,
     allowWildCardRedirectUri: value.allowWildCardRedirectUri,
+    allowRedirectUriParamsExpressionLanguage: value.allowRedirectUriParamsExpressionLanguage,
     defaultScopes: value.defaultScopes,
     allowedScopes: value.allowedScopes,
-    isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
     isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
-    clientTemplateEnabled: value.clientTemplateEnabled,
     allowedScopesEnabled: value.allowedScopesEnabled,
+    clientTemplateEnabled: value.clientTemplateEnabled,
+    isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
   };
 }

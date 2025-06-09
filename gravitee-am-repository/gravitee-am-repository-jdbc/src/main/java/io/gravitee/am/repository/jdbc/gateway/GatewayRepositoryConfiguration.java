@@ -34,7 +34,6 @@ import java.util.Optional;
 
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
-import static io.gravitee.am.repository.Scope.OAUTH2;
 
 @Configuration
 @ComponentScan({
@@ -42,6 +41,8 @@ import static io.gravitee.am.repository.Scope.OAUTH2;
 })
 @EnableR2dbcRepositories
 public class GatewayRepositoryConfiguration extends AbstractRepositoryConfiguration {
+
+    public static final String LIQUIBASE_FILE = "liquibase/gateway-master.yml";
 
     @Autowired
     public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
@@ -90,7 +91,7 @@ public class GatewayRepositoryConfiguration extends AbstractRepositoryConfigurat
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(getGatewayPool(), environment, GATEWAY.getRepositoryPropertyKey() + ".jdbc.");
+        initializeDatabaseSchema(getGatewayPool(), environment, GATEWAY.getRepositoryPropertyKey() + ".jdbc.", LIQUIBASE_FILE);
     }
 
 }

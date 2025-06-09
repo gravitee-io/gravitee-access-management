@@ -29,7 +29,6 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gt;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)

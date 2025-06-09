@@ -20,6 +20,7 @@ import { ActivatedRoute, Router } from '@angular/router';
   selector: 'app-group',
   templateUrl: './group.component.html',
   styleUrls: ['./group.component.scss'],
+  standalone: false,
 })
 export class GroupComponent implements OnInit {
   private domainId: string;

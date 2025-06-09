@@ -16,15 +16,18 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatInput } from '@angular/material/input';
 import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
+import { DomainStoreService } from '../../../stores/domain.store';
 
 @Component({
   selector: 'app-general',
   templateUrl: './entrypoints.component.html',
   styleUrls: ['./entrypoints.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsEntrypointsComponent implements OnInit {
   @ViewChild('chipInput') chipInput: MatInput;
@@ -84,10 +87,11 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
     private snackbarService: SnackbarService,
     private route: ActivatedRoute,
     private authService: AuthService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.domain.corsSettings = this.domain.corsSettings || this.defaultCorsConfiguration;
     if (this.domain.corsSettings.maxAge === 0) {
@@ -122,6 +126,7 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
   update(): void {
     this.domainService.patchEntrypoints(this.domain.id, this.domain).subscribe((response) => {
       this.domain = response;
+      this.domainStore.set(response);
       if (this.domain.corsSettings.maxAge === 0) {
         this.domain.corsSettings.maxAge = null;
       }

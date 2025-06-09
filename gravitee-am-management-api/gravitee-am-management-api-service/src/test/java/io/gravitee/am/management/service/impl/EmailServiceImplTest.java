@@ -24,6 +24,7 @@ import freemarker.core.HTMLOutputFormat;
 import freemarker.core.TemplateClassResolver;
 import freemarker.core.TemplateConfiguration;
 import freemarker.template.Configuration;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.management.service.EmailManager;
 import io.gravitee.am.management.service.EmailService;
@@ -37,6 +38,7 @@ import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.application.DomainReadServiceImpl;
@@ -53,6 +55,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.util.StringUtils;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -90,6 +93,8 @@ public class EmailServiceImplTest {
     @Mock
     private Environment environment;
 
+    @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
 
     JavaMailSenderImpl mailSender;
 
@@ -131,7 +136,12 @@ public class EmailServiceImplTest {
         when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
         when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
         when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
+        when(environment.getProperty("services.notifier.certificate.expiryEmailSubject")).thenReturn(null);
         when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
+        when(environment.getProperty("services.notifier.client-secret.expiryEmailSubject", "Client secret will expire soon")).thenReturn("Client secret will expire soon");
+
+        when(dataPlaneRegistry.getDescription(any()))
+                .thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", "http://localhost:1234/unittest"));
 
         var cut = new EmailServiceImpl(
                 emailManager,
@@ -139,7 +149,7 @@ public class EmailServiceImplTest {
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainReadServiceImpl(mock(), "http://localhost:1234/unittest"),
+                new DomainReadServiceImpl(mock(), dataPlaneRegistry, "http://localhost:1234/default/unittest"),
                 i18nDictionaryService,
                 environment
         );
@@ -164,17 +174,32 @@ public class EmailServiceImplTest {
 
         cut.send(createDomain(), application, registrationTpl, user).test().await().assertComplete();
 
-        org.assertj.core.api.Assertions.assertThat(greenMail.getReceivedMessages())
-                .hasSize(1)
-                .extracting(x -> new MimeMessageParser(x).parse())
-                .allSatisfy(message ->
-                                MimeMessageParserAssert
-                                        .assertThat(message)
-                                        .hasFrom("no-reply@gravitee.io")
-                                        .hasTo("john.doe@unittest.com")
-                                        .hasSubject(subject)
-                                        .hasHtmlContent(Files.readString(Path.of(String.format("src/test/resources/templates/%s_%s.html", registrationTpl.template(), lang))))
-                );
+        if (StringUtils.hasText(registrationUrl)) {
+            org.assertj.core.api.Assertions.assertThat(greenMail.getReceivedMessages())
+                    .hasSize(1)
+                    .extracting(x -> new MimeMessageParser(x).parse())
+                    .allSatisfy(message ->
+                            MimeMessageParserAssert
+                                    .assertThat(message)
+                                    .hasFrom("no-reply@gravitee.io")
+                                    .hasTo("john.doe@unittest.com")
+                                    .hasSubject(subject)
+                                    .hasHtmlContent(Files.readString(Path.of(String.format("src/test/resources/templates/%s_%s.html", registrationTpl.template(), lang))))
+                                    .contentContains(registrationUrl.substring(0, registrationUrl.indexOf("?")))
+                    );
+        } else {
+            org.assertj.core.api.Assertions.assertThat(greenMail.getReceivedMessages())
+                    .hasSize(1)
+                    .extracting(x -> new MimeMessageParser(x).parse())
+                    .allSatisfy(message ->
+                            MimeMessageParserAssert
+                                    .assertThat(message)
+                                    .hasFrom("no-reply@gravitee.io")
+                                    .hasTo("john.doe@unittest.com")
+                                    .hasSubject(subject)
+                                    .hasHtmlContent(Files.readString(Path.of(String.format("src/test/resources/templates/%s_%s.html", registrationTpl.template(), lang))))
+                    );
+        }
     }
 
     @Test
@@ -184,7 +209,8 @@ public class EmailServiceImplTest {
         when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
         when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
         when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
-        when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
+        when(environment.getProperty("services.notifier.certificate.expiryEmailSubject")).thenReturn("Certificate will expire soon");
+        when(environment.getProperty("services.notifier.client-secret.expiryEmailSubject", "Client secret will expire soon")).thenReturn("Client secret will expire soon");
 
         var cut = new EmailServiceImpl(
                 emailManager,

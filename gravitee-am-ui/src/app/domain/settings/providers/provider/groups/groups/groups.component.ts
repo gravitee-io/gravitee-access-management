@@ -42,6 +42,7 @@ interface ProviderModel {
   selector: 'app-groups',
   templateUrl: './groups.component.html',
   styleUrl: './groups.component.scss',
+  standalone: false,
 })
 export class ProviderGroupsComponent implements OnInit {
   mappers: MapperModel[] = [];
@@ -96,7 +97,6 @@ export class ProviderGroupsComponent implements OnInit {
   add() {
     const inputData: InputData = {
       groups: Array.from(this.groups.values()),
-      organizationContext: this.organizationContext,
     };
     const dialogRef = this.dialog.open(CreateGroupMapperComponent, {
       data: inputData,
@@ -169,7 +169,6 @@ export class ProviderGroupsComponent implements OnInit {
 
 interface InputData {
   groups: GroupModel[];
-  organizationContext: boolean;
 }
 
 interface OutputData {
@@ -180,6 +179,7 @@ interface OutputData {
 @Component({
   selector: 'create-group-mapper',
   templateUrl: './create/create.component.html',
+  standalone: false,
 })
 export class CreateGroupMapperComponent implements OnInit {
   @ViewChild('userGroupForm', { static: true }) form: NgForm;

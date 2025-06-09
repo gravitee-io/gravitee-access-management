@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.management.standalone</groupId>
         <artifactId>gravitee-am-management-api-standalone</artifactId>
-        <version>4.7.0-SNAPSHOT</version>
+        <version>4.9.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -151,7 +151,7 @@
         <dependency>
             <groupId>com.graviteesource.am.certificate</groupId>
             <artifactId>gravitee-am-certificate-aws</artifactId>
-            <version>1.0.0</version>
+            <version>${gravitee-am-certificate-aws.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
@@ -215,14 +215,6 @@
         <dependency>
             <groupId>io.gravitee.am.management</groupId>
             <artifactId>gravitee-am-management-api-services-sync</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.gravitee.am.management</groupId>
-            <artifactId>gravitee-am-management-api-services-purge</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
@@ -428,7 +420,22 @@
         <dependency>
             <groupId>com.graviteesource.secretprovider</groupId>
             <artifactId>gravitee-secret-provider-aws</artifactId>
-            <version>1.0.0</version>
+            <version>${gravitee-secretprovider-aws.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.dataplane</groupId>
+            <artifactId>gravitee-am-dataplane-mongodb</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.dataplane</groupId>
+            <artifactId>gravitee-am-dataplane-jdbc</artifactId>
+            <version>${project.version}</version>
             <type>zip</type>
             <scope>runtime</scope>
         </dependency>
@@ -467,6 +474,18 @@
                         <configuration>
                             <outputDirectory>${basedir}/target/staging</outputDirectory>
                             <artifactItems>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.dataplane</groupId>
+                                    <artifactId>gravitee-am-dataplane-mongodb</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.dataplane</groupId>
+                                    <artifactId>gravitee-am-dataplane-jdbc</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
                                 <!-- Identity providers -->
                                 <artifactItem>
                                     <groupId>io.gravitee.am.identityprovider</groupId>
@@ -551,7 +570,7 @@
                                 <artifactItem>
                                     <groupId>com.graviteesource.am.certificate</groupId>
                                     <artifactId>gravitee-am-certificate-aws</artifactId>
-                                    <version>1.0.0</version>
+                                    <version>${gravitee-am-certificate-aws.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 
@@ -611,13 +630,6 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.management</groupId>
                                     <artifactId>gravitee-am-management-api-services-sync</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.management</groupId>
-                                    <artifactId>gravitee-am-management-api-services-purge</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
@@ -784,7 +796,7 @@
                                 <artifactItem>
                                     <groupId>com.graviteesource.secretprovider</groupId>
                                     <artifactId>gravitee-secret-provider-aws</artifactId>
-                                    <version>1.0.0</version>
+                                    <version>${gravitee-secretprovider-aws.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 

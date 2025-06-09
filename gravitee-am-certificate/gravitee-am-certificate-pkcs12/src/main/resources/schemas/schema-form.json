@@ -7,7 +7,8 @@
       "title": "PKCS#12 file",
       "description": "PKCS file",
       "type" : "string",
-      "widget" : "file"
+      "widget" : "file",
+      "sensitive" : true
     },
     "storepass" : {
       "title": "Keystore password",

@@ -17,13 +17,14 @@ package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.json.Json;
@@ -52,15 +53,15 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
 
     public WebAuthnRegisterHandler(UserService userService,
                                    FactorManager factorManager,
-                                   Domain domain,
+                                   DomainDataPlane domainDataplane,
                                    WebAuthn webAuthn,
-                                   CredentialService credentialService) {
+                                   CredentialGatewayService credentialService) {
         setUserService(userService);
         setFactorManager(factorManager);
         setCredentialService(credentialService);
-        setDomain(domain);
+        setDomainDataplane(domainDataplane);
         this.webAuthn = webAuthn;
-        this.origin = getOrigin(domain.getWebAuthnSettings());
+        this.origin = domainDataplane.getWebAuthnOrigin();
     }
 
     @Override
@@ -123,7 +124,7 @@ public class WebAuthnRegisterHandler extends WebAuthnHandler {
                             entries.getJsonObject("user").put("id", user.getId());
 
                             // force registration if option is enabled
-                            if (domain.getWebAuthnSettings() != null && domain.getWebAuthnSettings().isForceRegistration()) {
+                            if (domainDataPlane.getDomain().getWebAuthnSettings() != null && domainDataPlane.getDomain().getWebAuthnSettings().isForceRegistration()) {
                                 entries.remove("excludeCredentials");
                             }
 

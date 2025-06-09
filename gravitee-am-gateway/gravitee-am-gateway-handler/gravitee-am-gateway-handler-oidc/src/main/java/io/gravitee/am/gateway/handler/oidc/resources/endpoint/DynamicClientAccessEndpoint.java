@@ -148,7 +148,6 @@ public class DynamicClientAccessEndpoint extends DynamicClientRegistrationEndpoi
      */
     public void renewClientSecret(RoutingContext context) {
         LOGGER.debug("Dynamic client registration RENEW SECRET endpoint");
-
         this.getClient(context)
                 .flatMapSingle(Single::just)
                 .flatMapSingle(toRenew -> dcrService.renewSecret(toRenew, UriBuilderRequest.resolveProxyRequest(context)))

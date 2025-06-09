@@ -103,7 +103,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"user-domain-app-version\", \n\t\"description\": \"test System for User Management specifications\"\n}"
+							"raw": "{\n\t\"name\": \"user-domain-app-version\", \n\t\"description\": \"test System for User Management specifications\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
@@ -3602,7 +3602,7 @@
 											"pm.test(\"UM - authenticate - wrong user\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.error).to.eql('invalid_grant');",
-											"    pm.expect(jsonData.error_description).to.eql('The credentials you entered are invalid');",
+											"    pm.expect(jsonData.error_description).to.eql('The credentials entered are invalid');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -3679,7 +3679,7 @@
 											"pm.test(\"UM - authenticate - wrong credentials\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.error).to.eql('invalid_grant');",
-											"    pm.expect(jsonData.error_description).to.eql('The credentials you entered are invalid');",
+											"    pm.expect(jsonData.error_description).to.eql('The credentials entered are invalid');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -4266,7 +4266,7 @@
 											"pm.test(\"UM - authenticate - wrong user\", function () {",
 											"    var jsonData = pm.response.json();",
 											"    pm.expect(jsonData.error).to.eql('invalid_grant');",
-											"    pm.expect(jsonData.error_description).to.eql('The credentials you entered are invalid');",
+											"    pm.expect(jsonData.error_description).to.eql('The credentials entered are invalid');",
 											"});"
 										],
 										"type": "text/javascript"

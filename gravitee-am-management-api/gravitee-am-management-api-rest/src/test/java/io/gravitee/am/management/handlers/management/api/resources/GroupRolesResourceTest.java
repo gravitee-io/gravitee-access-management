@@ -47,7 +47,7 @@ public class GroupRolesResourceTest extends JerseySpringTest {
         mockGroup.setRoles(Collections.singletonList("role-1"));
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Maybe.just(mockGroup)).when(groupService).findById(mockGroup.getId());
+        doReturn(Single.just(mockGroup)).when(domainGroupService).findById(mockDomain, mockGroup.getId());
         doReturn(Single.just(Collections.singleton("role-1"))).when(roleService).findByIdIn(mockGroup.getRoles());
 
         final Response response = target("domains")

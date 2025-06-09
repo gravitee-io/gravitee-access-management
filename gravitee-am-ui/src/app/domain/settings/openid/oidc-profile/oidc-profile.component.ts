@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { AuthService } from '../../../../services/auth.service';
 import { DomainService } from '../../../../services/domain.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
+import { DomainStoreService } from '../../../../stores/domain.store';
 
 @Component({
   selector: 'app-oidc-profile',
   templateUrl: './oidc-profile.component.html',
   styleUrls: ['./oidc-profile.component.scss'],
+  standalone: false,
 })
 export class OIDCProfileComponent implements OnInit {
   domainId: string;
@@ -35,17 +37,18 @@ export class OIDCProfileComponent implements OnInit {
     private domainService: DomainService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
-    private route: ActivatedRoute,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domainStore.domain$.subscribe((domain) => (this.domain = deepClone(domain)));
     this.domainId = this.domain.id;
     this.editMode = this.authService.hasPermissions(['domain_openid_update']);
   }
 
   save() {
     this.domainService.patchOpenidDCRSettings(this.domainId, this.domain).subscribe((data) => {
+      this.domainStore.set(data);
       this.domain = data;
       this.formChanged = false;
       this.snackbarService.open('OpenID Profile configuration updated');

@@ -70,7 +70,9 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
             try (Connection connection = DriverManager.getConnection(jdbcUrl,
                     (String) options.getValue(USER), options.getValue(PASSWORD).toString())) {
                 LOGGER.debug("Running Liquibase on {}", jdbcUrl);
-                runLiquibase(connection);
+                runLiquibase(connection, "liquibase/management-master.yml");
+                runLiquibase(connection, "liquibase/oauth-master.yml");
+                runLiquibase(connection, "liquibase/gateway-master.yml");
                 runLiquibase_addSpecificTestIndexes(connection);
             }
         }
@@ -127,7 +129,7 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
         options = ConnectionFactoryOptions.builder()
                 .from(options)
                 .option(DRIVER, "pool")
-                .option(PROTOCOL,(String) options.getValue(DRIVER))
+                .option(PROTOCOL, (String) options.getValue(DRIVER))
                 .build();
         return ConnectionFactories.get(options);
     }

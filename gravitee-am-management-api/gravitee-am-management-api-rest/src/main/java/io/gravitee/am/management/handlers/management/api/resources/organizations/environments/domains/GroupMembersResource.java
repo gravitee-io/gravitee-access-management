@@ -17,13 +17,12 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains.UsersResource.UserPage;
+import io.gravitee.am.management.service.DomainGroupService;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.management.service.IdentityProviderServiceProxy;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Observable;
@@ -60,7 +59,7 @@ public class GroupMembersResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private DomainService domainService;
@@ -84,16 +83,16 @@ public class GroupMembersResource extends AbstractResource {
     public void list(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("group") String group,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue(MAX_MEMBERS_SIZE_PER_PAGE_STRING) int size,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_GROUP, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> groupService.findMembers(ReferenceType.DOMAIN, domain, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_GROUP, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> domainGroupService.findMembers(domain, group, page, Integer.min(size, MAX_MEMBERS_SIZE_PER_PAGE)))
                         .flatMap(pagedMembers -> {
                             if (pagedMembers.getData() == null) {
                                 return Single.just(pagedMembers);

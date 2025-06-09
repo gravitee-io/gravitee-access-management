@@ -25,6 +25,7 @@ import { DialogService } from '../../../services/dialog.service';
   selector: 'app-tags',
   templateUrl: './tags.component.html',
   styleUrls: ['./tags.component.scss'],
+  standalone: false,
 })
 export class TagsComponent implements OnInit {
   public tags: any[];

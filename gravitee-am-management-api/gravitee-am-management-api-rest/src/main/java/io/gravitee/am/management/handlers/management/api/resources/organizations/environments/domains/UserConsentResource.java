@@ -20,6 +20,7 @@ import io.gravitee.am.management.handlers.management.api.model.ApplicationEntity
 import io.gravitee.am.management.handlers.management.api.model.ScopeApprovalEntity;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.permissions.Permission;
@@ -59,6 +60,9 @@ public class UserConsentResource extends AbstractResource {
     @Autowired
     private ApplicationService applicationService;
 
+    @Autowired
+    private RevokeTokenManagementService revokeTokenManagementService;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Get a user consent",
@@ -73,15 +77,15 @@ public class UserConsentResource extends AbstractResource {
     public void get(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @PathParam("consent") String consent,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> scopeApprovalService.findById(consent))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.READ)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> scopeApprovalService.findById(domain, consent))
                         .switchIfEmpty(Maybe.error(new ScopeApprovalNotFoundException(consent)))
                         .flatMapSingle(scopeApproval -> getClient(scopeApproval.getDomain(), scopeApproval.getClientId())
                                 .map(clientEntity -> {
@@ -103,16 +107,16 @@ public class UserConsentResource extends AbstractResource {
     public void revoke(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @PathParam("consent") String consent,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapCompletable(__ -> scopeApprovalService.revokeByConsent(domain, UserId.internal(user), consent, authenticatedUser)))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(domain -> scopeApprovalService.revokeByConsent(domain, UserId.internal(user), consent, revokeTokenManagementService::sendProcessRequest, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

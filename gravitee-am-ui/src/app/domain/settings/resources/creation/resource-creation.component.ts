@@ -24,6 +24,7 @@ import { ResourceService } from '../../../../services/resource.service';
   selector: 'app-resource-creation',
   templateUrl: './resource-creation.component.html',
   styleUrls: ['./resource-creation.component.scss'],
+  standalone: false,
 })
 export class ResourceCreationComponent implements OnInit {
   private domainId: string;

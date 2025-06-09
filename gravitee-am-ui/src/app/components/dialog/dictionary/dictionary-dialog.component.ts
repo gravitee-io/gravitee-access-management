@@ -28,6 +28,7 @@ interface Language {
   selector: 'app-dictionary-dialog',
   templateUrl: './dictionary-dialog.component.html',
   styleUrls: ['./dictionary-dialog.component.scss'],
+  standalone: false,
 })
 export class DictionaryDialogComponent implements OnInit {
   prop1: string;

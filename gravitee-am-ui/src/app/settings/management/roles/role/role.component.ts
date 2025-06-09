@@ -28,6 +28,7 @@ import { AuthService } from '../../../../services/auth.service';
   selector: 'app-settings-management-role',
   templateUrl: './role.component.html',
   styleUrls: ['./role.component.scss'],
+  standalone: false,
 })
 export class ManagementRoleComponent implements OnInit {
   @ViewChild('roleForm', { static: true }) form: NgForm;

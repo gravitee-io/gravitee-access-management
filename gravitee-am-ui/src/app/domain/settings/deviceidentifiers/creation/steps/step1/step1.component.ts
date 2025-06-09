@@ -21,6 +21,7 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   selector: 'device-identifier-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss'],
+  standalone: false,
 })
 export class DeviceIdentifierCreationStep1Component implements OnInit {
   private deviceIdentifierTypes: any = {

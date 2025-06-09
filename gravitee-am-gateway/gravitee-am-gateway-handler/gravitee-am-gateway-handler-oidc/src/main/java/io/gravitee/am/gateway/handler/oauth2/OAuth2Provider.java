@@ -21,6 +21,8 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowHandler;
@@ -30,6 +32,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.handler.SSOSessionHandler
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XFrameHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.XSSHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.CookieSessionHandler;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.AuthorizationEndpoint;
 import io.gravitee.am.gateway.handler.oauth2.resources.endpoint.authorization.consent.UserConsentEndpoint;
@@ -59,7 +62,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.par.PushedAuthorizationRequestService;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
@@ -75,10 +78,8 @@ import io.gravitee.am.gateway.handler.root.resources.handler.transactionid.Trans
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
-import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
-import io.gravitee.am.service.impl.ApplicationClientSecretService;
+import io.gravitee.am.service.impl.SecretService;
 import io.gravitee.common.http.MediaType;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpMethod;
@@ -91,7 +92,6 @@ import io.vertx.rxjava3.ext.web.handler.StaticHandler;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
 /**
@@ -119,6 +119,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private Flow flow;
 
     @Autowired
+    private ExecutionContextFactory executionContextFactory;
+
+    @Autowired
     private UserConsentService userConsentService;
 
     @Autowired
@@ -128,7 +131,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private IntrospectionService introspectionService;
 
     @Autowired
-    private RevocationTokenService revocationTokenService;
+    private OAuthRevocationTokenService revocationTokenService;
 
     @Autowired
     private OpenIDDiscoveryService openIDDiscoveryService;
@@ -194,10 +197,10 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private ScopeManager scopeManager;
 
     @Autowired
-    private DeviceService deviceService;
+    private DeviceGatewayService deviceService;
 
     @Autowired
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -207,7 +210,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private GraviteeMessageResolver messageResolver;
 
     @Autowired
-    private ApplicationClientSecretService applicationClientSecretService;
+    private SecretService secretService;
 
     @Autowired
     private AuditService auditService;
@@ -237,7 +240,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, applicationClientSecretService, certificateHeader, auditService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
 
         // static handler
         staticHandler(oauth2Router);
@@ -256,7 +259,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
         xssHandler(oauth2Router);
 
         AuthenticationFlowContextHandler authenticationFlowContextHandler = new AuthenticationFlowContextHandler(authenticationFlowContextService, environment);
-        RedirectUriValidationHandler redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
+        Handler<RoutingContext> redirectUriValidationHandler = new RedirectUriValidationHandler(domain);
         ReturnUrlValidationHandler returnUrlValidationHandler = new ReturnUrlValidationHandler(domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
 
@@ -275,9 +278,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
-                .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper))
+                .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, domain))
                 .handler(authenticationFlowHandler.create())
-                .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationRequestMFAPromptHandler())
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
@@ -290,7 +293,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
-                .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)
@@ -302,7 +305,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
-                .handler(new AuthorizationRequestResolveHandler(scopeManager))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)

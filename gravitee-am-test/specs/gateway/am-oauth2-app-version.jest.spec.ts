@@ -47,6 +47,7 @@ import {
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 import { Domain } from '../../api/management/models';
 import * as domain from 'domain';
+import { cli } from 'cypress';
 
 global.fetch = fetch;
 
@@ -78,7 +79,7 @@ beforeAll(async () => {
   application2 = await createApp2(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
   application3 = await createApp3(masterDomain, accessToken, scope.key);
 
-  const masterDomainStarted = await startDomain(masterDomain.id, accessToken).then((x) => waitForDomainStart(masterDomain));
+  const masterDomainStarted = await startDomain(masterDomain.id, accessToken).then(() => waitForDomainStart(masterDomain));
   masterDomain = masterDomainStarted.domain;
   openIdConfiguration = masterDomainStarted.oidcConfig;
 });
@@ -156,7 +157,7 @@ describe('OAuth2 - App version', () => {
           Authorization: 'Basic ' + applicationBase64Token(application1),
         }).expect(400, {
           error: 'invalid_grant',
-          error_description: 'The credentials you entered are invalid',
+          error_description: 'The credentials entered are invalid',
         });
       });
 
@@ -200,21 +201,24 @@ describe('OAuth2 - App version', () => {
       });
 
       it('renew client - must renew secrets and test token', async () => {
-        application3 = await renewApplicationSecrets(masterDomain.id, accessToken, application3.id).then(async (app) => {
-          await waitForDomainSync();
-          await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
-            'Content-type': 'application/x-www-form-urlencoded',
-            Authorization: 'Basic ' + applicationBase64Token(application3),
-          }).expect(401);
+        const newSecret = await renewApplicationSecrets(masterDomain.id, accessToken, application3.id, application3.secrets[0].id).then(
+          async (clintSecret) => {
+            await waitForDomainSync();
+            await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
+              'Content-type': 'application/x-www-form-urlencoded',
+              Authorization: 'Basic ' + applicationBase64Token(application3),
+            }).expect(401);
 
-          const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
-            'Content-type': 'application/x-www-form-urlencoded',
-            Authorization: 'Basic ' + applicationBase64Token(app),
-          }).expect(200);
+            const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
+              'Content-type': 'application/x-www-form-urlencoded',
+              Authorization: 'Basic ' + getBase64BasicAuth(application3.settings.oauth.clientId, clintSecret.secret),
+            }).expect(200);
 
-          assertGeneratedToken(response.body, 'scope1');
-          return app;
-        });
+            assertGeneratedToken(response.body, 'scope1');
+            return clintSecret;
+          },
+        );
+        application3.settings.oauth.clientSecret = newSecret.secret;
       });
 
       it('must perform invalid request', async () => {

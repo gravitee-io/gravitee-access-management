@@ -129,7 +129,7 @@ public class ScopeResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> scopeService.patch(domain, scope, patchScope, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> scopeService.patch(existingDomain, scope, patchScope, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -159,7 +159,7 @@ public class ScopeResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.UPDATE)
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(irrelevant -> scopeService.update(domain, scope, updateScope, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> scopeService.update(existingDomain, scope, updateScope, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -176,13 +176,15 @@ public class ScopeResource extends AbstractResource {
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("scope") String scope,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_SCOPE, Acl.DELETE)
-                .andThen(scopeService.delete(scope, false, authenticatedUser))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SCOPE, Acl.DELETE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(domain -> scopeService.delete(domain, scope, false, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 }

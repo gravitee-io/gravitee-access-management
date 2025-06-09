@@ -16,10 +16,10 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.exception.NotImplementedException;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
@@ -106,7 +106,7 @@ public abstract class AbstractEndpoint {
     }
 
 
-    protected void addUserActivityTemplateVariables(RoutingContext routingContext, UserActivityService userActivityService) {
+    protected void addUserActivityTemplateVariables(RoutingContext routingContext, UserActivityGatewayService userActivityService) {
         routingContext.put(USER_ACTIVITY_ENABLED, userActivityService.canSaveUserActivity());
         if (userActivityService.canSaveUserActivity()) {
             final long time = Math.abs(userActivityService.getRetentionTime());

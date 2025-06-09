@@ -15,15 +15,18 @@
  */
 import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { deepClone } from '@gravitee/ui-components/src/lib/utils';
 
 import { AuthService } from '../../../../services/auth.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { EntrypointService } from '../../../../services/entrypoint.service';
+import { DomainStoreService } from '../../../../stores/domain.store';
 
 @Component({
   selector: 'application-overview',
   templateUrl: './overview.component.html',
   styleUrls: ['./overview.component.scss'],
+  standalone: false,
 })
 export class ApplicationOverviewComponent implements OnInit {
   domain: any;
@@ -46,10 +49,11 @@ export class ApplicationOverviewComponent implements OnInit {
     private authService: AuthService,
     private snackbarService: SnackbarService,
     private entrypointService: EntrypointService,
+    private domainStore: DomainStoreService,
   ) {}
 
   ngOnInit() {
-    this.domain = this.route.snapshot.data['domain'];
+    this.domain = deepClone(this.domainStore.current);
     this.entrypoint = this.route.snapshot.data['entrypoint'];
     this.application = this.route.snapshot.data['application'];
     const applicationOAuthSettings = this.application.settings == null ? {} : this.application.settings.oauth || {};
@@ -59,7 +63,7 @@ export class ApplicationOverviewComponent implements OnInit {
       this.clientId = applicationOAuthSettings.clientId;
       this.redirectUri =
         applicationOAuthSettings.redirectUris && applicationOAuthSettings.redirectUris[0] !== undefined
-          ? applicationOAuthSettings.redirectUris[0]
+          ? this.cleanELParameters(applicationOAuthSettings.redirectUris[0])
           : 'Not defined';
       this.encodedRedirectUri = encodeURIComponent(this.redirectUri);
       this.tokenEndpointAuthMethod = applicationOAuthSettings.tokenEndpointAuthMethod;
@@ -72,6 +76,18 @@ export class ApplicationOverviewComponent implements OnInit {
     if (this.forcePKCE) {
       this.codeVerifier = this.generateCodeVerifier();
       this.generateCodeChallenge(this.codeVerifier).then((data) => (this.codeChallenge = data));
+    }
+  }
+
+  cleanELParameters(redirectUri: string): string {
+    try {
+      let encoded = redirectUri.replace(/&?([^={}?&]*=)?\{#[^={}?&]*}/g, '');
+      if (encoded.endsWith('?')) {
+        encoded = encoded.slice(0, -1);
+      }
+      return encoded;
+    } catch {
+      return redirectUri;
     }
   }
 

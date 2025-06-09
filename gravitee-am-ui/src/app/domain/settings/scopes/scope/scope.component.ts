@@ -28,6 +28,7 @@ import { AuthService } from '../../../../services/auth.service';
   selector: 'app-scope',
   templateUrl: './scope.component.html',
   styleUrls: ['./scope.component.scss'],
+  standalone: false,
 })
 export class ScopeComponent implements OnInit {
   private domainId: string;

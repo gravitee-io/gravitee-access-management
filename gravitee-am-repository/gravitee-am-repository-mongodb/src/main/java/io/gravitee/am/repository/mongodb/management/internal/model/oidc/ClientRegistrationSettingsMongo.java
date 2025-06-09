@@ -25,6 +25,7 @@ public class ClientRegistrationSettingsMongo {
 
     private boolean allowLocalhostRedirectUri;
     private boolean allowHttpSchemeRedirectUri;
+    private boolean allowRedirectUriParamsExpressionLanguage;
     private boolean allowWildCardRedirectUri;
     private boolean isDynamicClientRegistrationEnabled;
     private boolean isOpenDynamicClientRegistrationEnabled;
@@ -104,5 +105,13 @@ public class ClientRegistrationSettingsMongo {
 
     public void setClientTemplateEnabled(boolean clientTemplateEnabled) {
         isClientTemplateEnabled = clientTemplateEnabled;
+    }
+
+    public boolean isAllowRedirectUriParamsExpressionLanguage() {
+        return allowRedirectUriParamsExpressionLanguage;
+    }
+
+    public void setAllowRedirectUriParamsExpressionLanguage(boolean allowRedirectUriParamsExpressionLanguage) {
+        this.allowRedirectUriParamsExpressionLanguage = allowRedirectUriParamsExpressionLanguage;
     }
 }

@@ -17,10 +17,13 @@ package io.gravitee.am.management.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
-import io.gravitee.am.management.service.DomainService;
-import io.gravitee.am.management.service.IdentityProviderManager;
+import io.gravitee.am.management.service.DomainGroupService;
+import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.AuthenticationDeviceNotifier;
 import io.gravitee.am.model.Certificate;
@@ -28,6 +31,7 @@ import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.Factor;
@@ -52,6 +56,7 @@ import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oauth2.Scope;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.model.uma.Resource;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
@@ -65,25 +70,20 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.UserActivityService;
-import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidDomainException;
@@ -97,6 +97,7 @@ import io.gravitee.am.service.model.NewSystemScope;
 import io.gravitee.am.service.model.PatchDomain;
 import io.gravitee.am.service.validators.accountsettings.AccountSettingsValidator;
 import io.gravitee.am.service.validators.domain.DomainValidator;
+import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSettingsValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -110,11 +111,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -141,6 +144,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class DomainServiceTest {
 
+    public static final String ENTRYPOINT_ID1 = "entrypoint-1";
+    public static final String TAG_ID2 = "tag#2";
+    public static final String TAG_ID1 = "tag#1";
+    public static final String ENTRYPOINT_ID2 = "entrypoint-2";
+    public static final String ENTRYPOINT_ID_DEFAULT = "DEFAULT";
     private static final String DOMAIN_ID = "id-domain";
     private static final String IDP_ID = "id-idp";
     private static final String CERTIFICATE_ID = "id-certificate";
@@ -163,6 +171,9 @@ public class DomainServiceTest {
 
     @InjectMocks
     private DomainServiceImpl domainService = new DomainServiceImpl();
+
+    @Mock
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Mock
     private DomainValidator domainValidator;
@@ -234,10 +245,10 @@ public class DomainServiceTest {
     private ExtensionGrantService extensionGrantService;
 
     @Mock
-    private UserService userService;
+    private UserRepository userRepository;
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityManagementService userActivityService;
 
     @Mock
     private RoleService roleService;
@@ -246,7 +257,7 @@ public class DomainServiceTest {
     private ScopeService scopeService;
 
     @Mock
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Mock
     private FormService formService;
@@ -273,7 +284,7 @@ public class DomainServiceTest {
     private FactorService factorService;
 
     @Mock
-    private ResourceService resourceService;
+    private UMAResourceManagementService resourceService;
 
     @Mock
     private EnvironmentService environmentService;
@@ -294,19 +305,16 @@ public class DomainServiceTest {
     private ThemeService themeService;
 
     @Mock
-    private RateLimiterService rateLimiterService;
-
-    @Mock
     private PasswordHistoryService passwordHistoryService;
-
-    @Mock
-    private VerifyAttemptService verifyAttemptService;
 
     @Mock
     private PasswordPolicyService passwordPolicyService;
 
     @Mock
     private DomainReadService domainReadService;
+
+    @Mock
+    private EntrypointService entrypointService;
 
     @Mock
     private DefaultIdentityProviderService defaultIdentityProviderService;
@@ -355,6 +363,7 @@ public class DomainServiceTest {
     public void shouldCreate() {
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
+        newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -362,11 +371,13 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
-        when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
-        when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(certificateService.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
         when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
@@ -383,9 +394,9 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain");
         verify(domainRepository, times(1)).create(argThat(argDomain -> argDomain.getVersion().equals(domain.getVersion())));
-        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
-        verify(certificateService).create(eq(domain.getId()));
-        verify(eventService).create(any());
+        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(any(), any(NewSystemScope.class));
+        verify(certificateService).create(any());
+        verify(eventService).create(any(), any());
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
         verify(reporterService).createDefault(Reference.domain(domain.getId()));
         verify(reporterService).notifyInheritedReporters(any(), any(), any());
@@ -402,6 +413,7 @@ public class DomainServiceTest {
 
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
+        newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -409,11 +421,13 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
-        when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
-        when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(certificateService.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(roleService.findSystemRole(SystemRole.DOMAIN_PRIMARY_OWNER, DOMAIN)).thenReturn(Maybe.just(new Role()));
         when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
@@ -429,9 +443,9 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain");
         verify(domainRepository, times(1)).create(argThat(argDomain -> argDomain.getVersion().equals(domain.getVersion())));
-        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
-        verify(certificateService).create(eq(domain.getId()));
-        verify(eventService).create(any());
+        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(any(), any(NewSystemScope.class));
+        verify(certificateService).create(any());
+        verify(eventService).create(any(), any());
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
         verify(reporterService, never()).createDefault(any());
         verify(reporterService).notifyInheritedReporters(any(), any(), any());
@@ -448,6 +462,7 @@ public class DomainServiceTest {
 
         NewDomain newDomain = new NewDomain();
         newDomain.setName("my-domain");
+        newDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         Domain domain = new Domain();
@@ -455,11 +470,13 @@ public class DomainServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
         domain.setId("domain-id");
         domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(domainRepository.create(any(Domain.class))).thenReturn(Single.just(domain));
-        when(scopeService.create(anyString(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
-        when(certificateService.create(eq(domain.getId()))).thenReturn(Single.just(new Certificate()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(scopeService.create(any(), any(NewSystemScope.class))).thenReturn(Single.just(new Scope()));
+        when(certificateService.create(any())).thenReturn(Single.just(new Certificate()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(membershipService.addOrUpdate(eq(ORGANIZATION_ID), any())).thenReturn(Single.just(new Membership()));
         when(reporterService.createDefault(any())).thenReturn(Single.just(new Reporter()));
         when(reporterService.notifyInheritedReporters(any(),any(),any())).thenReturn(Completable.complete());
@@ -475,9 +492,9 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain");
         verify(domainRepository, times(1)).create(argThat(argDomain -> argDomain.getVersion().equals(domain.getVersion())));
-        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(anyString(), any(NewSystemScope.class));
-        verify(certificateService).create(eq(domain.getId()));
-        verify(eventService).create(any());
+        verify(scopeService, times(io.gravitee.am.common.oidc.Scope.values().length)).create(any(), any(NewSystemScope.class));
+        verify(certificateService).create(any());
+        verify(eventService).create(any(), any());
         verify(membershipService).addOrUpdate(eq(ORGANIZATION_ID), any());
         verify(reporterService).createDefault(Reference.domain(domain.getId()));
         verify(reporterService).notifyInheritedReporters(any(), any(), any());
@@ -493,6 +510,8 @@ public class DomainServiceTest {
     public void shouldCreate_technicalException() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
+        when(newDomain.getDataPlaneId()).thenReturn("default");
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.error(TechnicalException::new));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -508,6 +527,8 @@ public class DomainServiceTest {
     public void shouldCreate2_technicalException() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
+        when(newDomain.getDataPlaneId()).thenReturn("default");
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.empty());
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
 
@@ -524,6 +545,8 @@ public class DomainServiceTest {
     public void shouldCreate_existingDomain() {
         NewDomain newDomain = Mockito.mock(NewDomain.class);
         when(newDomain.getName()).thenReturn("my-domain");
+        when(newDomain.getDataPlaneId()).thenReturn("default");
+        when(dataPlaneRegistry.getDataPlanes()).thenReturn(List.of(new DataPlaneDescription(DataPlaneDescription.DEFAULT_DATA_PLANE_ID,"default","mongodb","test", "http://localhost:8092")));
         when(domainRepository.findByHrid(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, "my-domain")).thenReturn(Maybe.just(new Domain()));
 
         TestObserver<Domain> testObserver = new TestObserver<>();
@@ -567,7 +590,7 @@ public class DomainServiceTest {
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -584,7 +607,7 @@ public class DomainServiceTest {
                         domainArg.getReferenceId().equals(domain.getReferenceId()) &&
                         domainArg.getReferenceType().equals(domain.getReferenceType())
         ));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
@@ -617,7 +640,7 @@ public class DomainServiceTest {
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(updatedDomain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -630,7 +653,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
@@ -664,7 +687,7 @@ public class DomainServiceTest {
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(updatedDomain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -677,7 +700,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
@@ -707,7 +730,7 @@ public class DomainServiceTest {
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -720,7 +743,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
     }
 
     @Test
@@ -745,7 +768,7 @@ public class DomainServiceTest {
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -758,7 +781,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
     }
 
     @Test
@@ -842,6 +865,138 @@ public class DomainServiceTest {
     }
 
     @Test
+    public void shouldNotPatch_newDataPlaneId() {
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setDataPlaneId(Optional.of("new-data-plane-id"));
+        Domain domain = new Domain();
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+
+        TestObserver<Domain> testObserver = domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+    }
+
+    @Test
+    public void shouldPatch_theSameDataPlaneId(){
+        PatchDomain patchDomain = new PatchDomain();
+        patchDomain.setDataPlaneId(Optional.of("default"));
+
+        Domain domain = new Domain();
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.just(domain));
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+        doReturn(true).when(accountSettingsValidator).validate(any());
+
+        domainService.patch(new GraviteeContext(ORGANIZATION_ID, ENVIRONMENT_ID, DOMAIN_ID), DOMAIN_ID, patchDomain, null)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any(), any());
+        verify(auditService).report(argThat(builder -> {
+            var audit = builder.build(OBJECT_MAPPER);
+            return audit.getReferenceType().equals(DOMAIN) && audit.getReferenceId().equals(DOMAIN_ID);
+        }));
+    }
+
+    @Test
+    public void shouldNotUpdate_newDataPlaneId() {
+        Domain updateDomain = Mockito.mock(Domain.class);
+        when(updateDomain.getDataPlaneId()).thenReturn("new-data-plane-id");
+        Domain domain = new Domain();
+        final var DOMAIN_ID = "my-domain";
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setVersion(DomainVersion.V2_0);
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+
+        TestObserver<Domain> testObserver = domainService.update(DOMAIN_ID, updateDomain).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertError(InvalidParameterException.class);
+    }
+
+    @Test
+    public void shouldUpdate_theSameDataPlaneId(){
+        final var DOMAIN_ID = "my-domain";
+        Domain updateDomain = new Domain();
+
+        updateDomain.setId(DOMAIN_ID);
+        updateDomain.setHrid(DOMAIN_ID);
+        updateDomain.setReferenceType(ReferenceType.ENVIRONMENT);
+        updateDomain.setReferenceId(ENVIRONMENT_ID);
+        updateDomain.setName(DOMAIN_ID + "1");
+        updateDomain.setPath("/test");
+        updateDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+
+        Domain domain = new Domain();
+        domain.setId(DOMAIN_ID);
+        domain.setHrid(DOMAIN_ID);
+        domain.setReferenceType(ReferenceType.ENVIRONMENT);
+        domain.setReferenceId(ENVIRONMENT_ID);
+        domain.setName(DOMAIN_ID);
+        domain.setPath("/test");
+        domain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+
+        Domain updatedDomain = new Domain(domain);
+        updatedDomain.setName(UUID.randomUUID().toString());
+        updatedDomain.setDataPlaneId(DataPlaneDescription.DEFAULT_DATA_PLANE_ID);
+
+        when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
+        when(domainRepository.findByHrid(any(), anyString(), anyString())).thenReturn(Maybe.empty());
+        when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
+        when(domainReadService.listAll()).thenReturn(Flowable.empty());
+        when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(updatedDomain));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
+        doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
+
+        domainService.update(DOMAIN_ID, updateDomain)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        verify(domainRepository, times(1)).findById(anyString());
+        verify(domainRepository, times(1)).update(any(Domain.class));
+        verify(eventService, times(1)).create(any(), any());
+    }
+
+    @Test
     public void shouldDelete() {
         Application mockApp1 = new Application();
         mockApp1.setId("client-1");
@@ -866,10 +1021,11 @@ public class DomainServiceTest {
         final AuthenticationDeviceNotifier authDeviceNotifier = new AuthenticationDeviceNotifier();
         authDeviceNotifier.setId(AUTH_DEVICE_ID);
 
+        when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(mockApplications));
-        when(applicationService.delete(anyString())).thenReturn(complete());
+        when(applicationService.delete(anyString(), any())).thenReturn(complete());
         when(certificate.getId()).thenReturn(CERTIFICATE_ID);
         when(certificateService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(certificate));
         when(certificateService.delete(anyString())).thenReturn(complete());
@@ -882,14 +1038,14 @@ public class DomainServiceTest {
         when(role.getId()).thenReturn(ROLE_ID);
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.singleton(role)));
         when(roleService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(complete());
-        when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
-        when(userActivityService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
+        when(userRepository.deleteByReference(any())).thenReturn(complete());
+        when(userActivityService.deleteByDomain(any())).thenReturn(complete());
         when(scope.getId()).thenReturn(SCOPE_ID);
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.singleton(scope), 0, 1)));
-        when(scopeService.delete(SCOPE_ID, true)).thenReturn(complete());
+        when(scopeService.delete(any(), eq(SCOPE_ID), eq(true))).thenReturn(complete());
         when(group.getId()).thenReturn(GROUP_ID);
-        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(group));
-        when(groupService.delete(eq(DOMAIN), eq(DOMAIN_ID), anyString())).thenReturn(complete());
+        when(domainGroupService.findAll(any())).thenReturn(Flowable.just(group));
+        when(domainGroupService.delete(any(), anyString(), any())).thenReturn(complete());
         when(form.getId()).thenReturn(FORM_ID);
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(form));
         when(formService.delete(eq(DOMAIN_ID), anyString())).thenReturn(complete());
@@ -908,8 +1064,8 @@ public class DomainServiceTest {
         when(factor.getId()).thenReturn(FACTOR_ID);
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(factor));
         when(factorService.delete(DOMAIN_ID, FACTOR_ID)).thenReturn(complete());
-        when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(new HashSet<>(Collections.singletonList(resource))));
-        when(resourceService.delete(resource)).thenReturn(complete());
+        when(resourceService.findByDomain(any())).thenReturn(Flowable.just(resource));
+        when(resourceService.delete(any(), any())).thenReturn(complete());
         when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.just(alertTrigger));
         when(alertTriggerService.delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ALERT_TRIGGER_ID), isNull())).thenReturn(complete());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.just(alertNotifier));
@@ -918,11 +1074,9 @@ public class DomainServiceTest {
         when(authenticationDeviceNotifierService.delete(any(), eq(AUTH_DEVICE_ID), any())).thenReturn(complete());
         when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.just(new I18nDictionary()));
         when(i18nDictionaryService.delete(eq(DOMAIN), eq(DOMAIN_ID), any(), any())).thenReturn(complete());
-        when(passwordHistoryService.deleteByReference(DOMAIN, DOMAIN_ID)).thenReturn(complete());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
-        when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
-        when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
 
@@ -933,22 +1087,22 @@ public class DomainServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        verify(applicationService, times(2)).delete(anyString());
+        verify(applicationService, times(2)).delete(anyString(), any());
         verify(certificateService, times(1)).delete(CERTIFICATE_ID);
         verify(identityProviderService, times(1)).delete(DOMAIN_ID, IDP_ID);
         verify(extensionGrantService, times(1)).delete(DOMAIN_ID, EXTENSION_GRANT_ID);
         verify(roleService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
-        verify(userService, times(1)).deleteByDomain(DOMAIN_ID);
-        verify(userActivityService, times(1)).deleteByDomain(DOMAIN_ID);
-        verify(scopeService, times(1)).delete(SCOPE_ID, true);
-        verify(groupService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(GROUP_ID));
+        verify(userRepository, times(1)).deleteByReference(any());
+        verify(userActivityService, times(1)).deleteByDomain(any());
+        verify(scopeService, times(1)).delete(any(), eq(SCOPE_ID), eq(true));
+        verify(domainGroupService, times(1)).delete(any(), eq(GROUP_ID), any());
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
         verify(emailTemplateService, times(1)).delete(EMAIL_ID);
         verify(reporterService, times(1)).delete(REPORTER_ID);
         verify(flowService, times(1)).delete(FLOW_ID);
         verify(membershipService, times(1)).delete(MEMBERSHIP_ID);
         verify(factorService, times(1)).delete(DOMAIN_ID, FACTOR_ID);
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
         verify(auditService).report(argThat(builder -> {
             var audit = builder.build(OBJECT_MAPPER);
             return audit.getReferenceType().equals(ORGANIZATION) && audit.getReferenceId().equals(graviteeContext.getOrganizationId());
@@ -957,6 +1111,7 @@ public class DomainServiceTest {
 
     @Test
     public void shouldDeleteWithoutRelatedData() {
+        when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
         when(applicationService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
@@ -965,25 +1120,23 @@ public class DomainServiceTest {
         when(extensionGrantService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(roleService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
         when(scopeService.findByDomain(DOMAIN_ID, 0, Integer.MAX_VALUE)).thenReturn(Single.just(new Page<>(Collections.emptySet(), 0, 1)));
-        when(userService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
-        when(userActivityService.deleteByDomain(DOMAIN_ID)).thenReturn(complete());
-        when(groupService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
+        when(userRepository.deleteByReference(any())).thenReturn(complete());
+        when(userActivityService.deleteByDomain(any())).thenReturn(complete());
+        when(domainGroupService.findAll(any())).thenReturn(Flowable.empty());
         when(formService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(emailTemplateService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(reporterService.findByReference(Reference.domain(DOMAIN_ID))).thenReturn(Flowable.empty());
         when(flowService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
         when(membershipService.findByReference(DOMAIN_ID, DOMAIN)).thenReturn(Flowable.empty());
         when(factorService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(resourceService.findByDomain(DOMAIN_ID)).thenReturn(Single.just(Collections.emptySet()));
+        when(resourceService.findByDomain(any())).thenReturn(Flowable.empty());
         when(alertTriggerService.findByDomainAndCriteria(DOMAIN_ID, new AlertTriggerCriteria())).thenReturn(Flowable.empty());
         when(alertNotifierService.findByDomainAndCriteria(DOMAIN_ID, new AlertNotifierCriteria())).thenReturn(Flowable.empty());
         when(authenticationDeviceNotifierService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(i18nDictionaryService.findAll(DOMAIN, DOMAIN_ID)).thenReturn(Flowable.empty());
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
-        when(rateLimiterService.deleteByDomain(any(), any())).thenReturn(complete());
-        when(passwordHistoryService.deleteByReference(DOMAIN, DOMAIN_ID)).thenReturn(complete());
-        when(verifyAttemptService.deleteByDomain(any(), any())).thenReturn(complete());
+        when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
 
@@ -993,12 +1146,12 @@ public class DomainServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(applicationService, never()).delete(anyString());
+        verify(applicationService, never()).delete(anyString(), any());
         verify(certificateService, never()).delete(anyString());
         verify(identityProviderService, never()).delete(anyString(), anyString());
         verify(extensionGrantService, never()).delete(anyString(), anyString());
         verify(roleService, never()).delete(eq(DOMAIN), eq(DOMAIN_ID), anyString());
-        verify(scopeService, never()).delete(anyString(), anyBoolean());
+        verify(scopeService, never()).delete(any(), anyString(), anyBoolean());
         verify(formService, never()).delete(anyString(), anyString());
         verify(emailTemplateService, never()).delete(anyString());
         verify(reporterService, never()).delete(anyString());
@@ -1007,7 +1160,7 @@ public class DomainServiceTest {
         verify(factorService, never()).delete(anyString(), anyString());
         verify(alertTriggerService, never()).delete(any(ReferenceType.class), anyString(), anyString(), any(io.gravitee.am.identityprovider.api.User.class));
         verify(alertNotifierService, never()).delete(any(ReferenceType.class), anyString(), anyString(), any(io.gravitee.am.identityprovider.api.User.class));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
     }
 
     @Test
@@ -1062,7 +1215,7 @@ public class DomainServiceTest {
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -1071,7 +1224,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
     }
 
     @Test
@@ -1093,7 +1246,7 @@ public class DomainServiceTest {
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -1102,7 +1255,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
     }
 
     @Test
@@ -1122,7 +1275,7 @@ public class DomainServiceTest {
         when(environmentService.findById(ENVIRONMENT_ID)).thenReturn(Single.just(new Environment()));
         when(domainReadService.listAll()).thenReturn(Flowable.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
         doReturn(true).when(accountSettingsValidator).validate(any());
@@ -1131,7 +1284,7 @@ public class DomainServiceTest {
 
         verify(domainRepository, times(1)).findById(anyString());
         verify(domainRepository, times(1)).update(any(Domain.class));
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
     }
 
     @Test
@@ -1220,7 +1373,7 @@ public class DomainServiceTest {
         when(domainRepository.findById(anyString())).thenReturn(Maybe.just(domain));
         when(domainRepository.findByHrid(any(), any(), any())).thenReturn(Maybe.empty());
         when(domainRepository.update(any(Domain.class))).thenReturn(Single.just(domain));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(environmentService.findById(any())).thenReturn(Single.just(new Environment()));
         doReturn(Single.just(List.of()).ignoreElement()).when(domainValidator).validate(any(), any());
         doReturn(Single.just(List.of()).ignoreElement()).when(virtualHostValidator).validateDomainVhosts(any(), any());
@@ -1229,6 +1382,147 @@ public class DomainServiceTest {
         domainService.update("any-id", domain).test().assertComplete().assertNoErrors();
 
         verify(domainRepository, times(1)).update(any(Domain.class));
+    }
+
+
+    @Test
+    public void shouldGetEntrypoint_entrypoint1() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Arrays.asList(TAG_ID2));
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Collections.emptyList());
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>(Arrays.asList(TAG_ID1, TAG_ID2)));
+
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1 &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID1)));
+    }
+
+    @Test
+    public void shouldGetEntrypoint_default() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Collections.emptyList());
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Collections.emptyList());
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        defaultEntrypoint.setUrl("http://localhost:8092");
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>());
+
+        when(dataPlaneRegistry.getDescription(mockDomain)).thenReturn(new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", null));
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1 &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID_DEFAULT)) &&
+                entrypoints.get(0).getUrl().equals(defaultEntrypoint.getUrl()));
+    }
+
+    @Test
+    public void shouldGetEntrypoint_default_overrideUrl() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Collections.emptyList());
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Collections.emptyList());
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+        defaultEntrypoint.setUrl("http://localhost:8092");
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>());
+
+        DataPlaneDescription dataPlaneDescription = new DataPlaneDescription("dp1", "legacy", "mongodb", "baseProp", "http://dataplane:8092");
+        when(dataPlaneRegistry.getDescription(mockDomain)).thenReturn(dataPlaneDescription);
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 1 &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID_DEFAULT)) &&
+                entrypoints.get(0).getUrl().equals(dataPlaneDescription.gatewayUrl()));
+    }
+
+    @Test
+    public void shouldGetEntrypoints_Entrypoint1And2() {
+
+        final Entrypoint entrypoint = new Entrypoint();
+        entrypoint.setId(ENTRYPOINT_ID1);
+        entrypoint.setName("entrypoint-1-name");
+        entrypoint.setTags(Arrays.asList(TAG_ID1));
+        entrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint entrypoint2 = new Entrypoint();
+        entrypoint2.setId(ENTRYPOINT_ID2);
+        entrypoint2.setName("entrypoint-2-name");
+        entrypoint2.setTags(Arrays.asList(TAG_ID2));
+        entrypoint2.setOrganizationId(ORGANIZATION_ID);
+
+        final Entrypoint defaultEntrypoint = new Entrypoint();
+        defaultEntrypoint.setId(ENTRYPOINT_ID_DEFAULT);
+        defaultEntrypoint.setName("Default");
+        defaultEntrypoint.setTags(Collections.emptyList());
+        defaultEntrypoint.setDefaultEntrypoint(true);
+        defaultEntrypoint.setOrganizationId(ORGANIZATION_ID);
+
+        Domain mockDomain = new Domain();
+        mockDomain.setId(DOMAIN_ID);
+        mockDomain.setTags(new HashSet<>(Arrays.asList(TAG_ID1, TAG_ID2)));
+
+        doReturn(Flowable.just(entrypoint, entrypoint2, defaultEntrypoint)).when(entrypointService).findAll(ORGANIZATION_ID);
+
+        final var subscriber = domainService.listEntryPoint(mockDomain, ORGANIZATION_ID).test();
+        subscriber.assertValue(entrypoints -> entrypoints.size() == 2 &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID1)) &&
+                entrypoints.stream().anyMatch(e -> e.getId().equals(ENTRYPOINT_ID2)));
     }
 
     private static CorsSettings getCorsSettings(Set<String> allowedOrigins) {

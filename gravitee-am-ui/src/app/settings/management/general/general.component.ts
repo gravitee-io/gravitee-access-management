@@ -16,7 +16,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ProviderService } from '../../../services/provider.service';
 import { SnackbarService } from '../../../services/snackbar.service';
 import { OrganizationService } from '../../../services/organization.service';
 import { AuthService } from '../../../services/auth.service';
@@ -25,15 +24,17 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-settings-management-general',
   templateUrl: './general.component.html',
   styleUrls: ['./general.component.scss'],
+  standalone: false,
 })
 export class ManagementGeneralComponent implements OnInit {
   settings: any;
   identityProviders: any[] = [];
   socialIdentities: any[] = [];
   readonly: boolean;
+  selectedIdentityProviders: any[] = [];
+  selectedSocialIdentities: any[] = [];
 
   constructor(
-    private providerService: ProviderService,
     private organizationService: OrganizationService,
     private snackbarService: SnackbarService,
     private authService: AuthService,
@@ -49,18 +50,20 @@ export class ManagementGeneralComponent implements OnInit {
       this.socialIdentities = data.filter((idp) => idp.external);
 
       // Prepare the list of selected idps and social idps.
-      this.settings.identityProviders = this.identityProviders
-        .filter((idp) => !idp.external && this.settings.identities.includes(idp.id))
-        .map((idp) => idp.id);
-      this.settings.socialIdentities = this.socialIdentities
-        .filter((idp) => idp.external && this.settings.identities.includes(idp.id))
-        .map((idp) => idp.id);
+      if (this.settings.identities) {
+        this.selectedIdentityProviders = this.identityProviders
+          .filter((idp) => !idp.external && this.settings.identities.includes(idp.id))
+          .map((idp) => idp.id);
+        this.selectedSocialIdentities = this.socialIdentities
+          .filter((idp) => idp.external && this.settings.identities.includes(idp.id))
+          .map((idp) => idp.id);
+      }
     });
   }
 
   update() {
     const settings = {};
-    settings['identities'] = this.settings.identityProviders.concat(this.settings.socialIdentities);
+    settings['identities'] = this.selectedIdentityProviders.concat(this.selectedSocialIdentities);
 
     this.organizationService.patchSettings(settings).subscribe(() => {
       this.snackbarService.open('Settings updated');

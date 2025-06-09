@@ -38,6 +38,7 @@ enum AccountType {
   animations: [trigger('fadeInOut', [transition(':leave', [animate(500, style({ opacity: 0 }))])])],
   templateUrl: './user-creation.component.html',
   styleUrls: ['./user-creation.component.scss'],
+  standalone: false,
 })
 export class UserCreationComponent implements OnInit {
   preRegistration = false;

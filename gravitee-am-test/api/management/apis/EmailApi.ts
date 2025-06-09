@@ -39,7 +39,7 @@ import {
   UpdateEmailToJSON,
 } from '../models';
 
-export interface Create1Request {
+export interface Create2Request {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -47,14 +47,14 @@ export interface Create1Request {
   newEmail: NewEmail;
 }
 
-export interface Create4Request {
+export interface Create5Request {
   organizationId: string;
   environmentId: string;
   domain: string;
   newEmail: NewEmail;
 }
 
-export interface Delete1Request {
+export interface Delete2Request {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -62,7 +62,7 @@ export interface Delete1Request {
   email: string;
 }
 
-export interface Delete4Request {
+export interface Delete5Request {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -109,39 +109,39 @@ export class EmailApi extends runtime.BaseAPI {
    * User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified organization
    * Create a email for an application
    */
-  async create1Raw(
-    requestParameters: Create1Request,
+  async create2Raw(
+    requestParameters: Create2Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create1.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling create2.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling create1.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling create2.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create1.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create2.');
     }
 
     if (requestParameters.application === null || requestParameters.application === undefined) {
       throw new runtime.RequiredError(
         'application',
-        'Required parameter requestParameters.application was null or undefined when calling create1.',
+        'Required parameter requestParameters.application was null or undefined when calling create2.',
       );
     }
 
     if (requestParameters.newEmail === null || requestParameters.newEmail === undefined) {
       throw new runtime.RequiredError(
         'newEmail',
-        'Required parameter requestParameters.newEmail was null or undefined when calling create1.',
+        'Required parameter requestParameters.newEmail was null or undefined when calling create2.',
       );
     }
 
@@ -181,40 +181,40 @@ export class EmailApi extends runtime.BaseAPI {
    * User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified organization
    * Create a email for an application
    */
-  async create1(requestParameters: Create1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.create1Raw(requestParameters, initOverrides);
+  async create2(requestParameters: Create2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.create2Raw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified organization
    * Create a email
    */
-  async create4Raw(
-    requestParameters: Create4Request,
+  async create5Raw(
+    requestParameters: Create5Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create4.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling create5.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling create4.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling create5.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create4.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create5.');
     }
 
     if (requestParameters.newEmail === null || requestParameters.newEmail === undefined) {
       throw new runtime.RequiredError(
         'newEmail',
-        'Required parameter requestParameters.newEmail was null or undefined when calling create4.',
+        'Required parameter requestParameters.newEmail was null or undefined when calling create5.',
       );
     }
 
@@ -253,45 +253,45 @@ export class EmailApi extends runtime.BaseAPI {
    * User must have the DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the specified organization
    * Create a email
    */
-  async create4(requestParameters: Create4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.create4Raw(requestParameters, initOverrides);
+  async create5(requestParameters: Create5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.create5Raw(requestParameters, initOverrides);
   }
 
   /**
    * User must have APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified organization
    * Delete an email for an application
    */
-  async delete1Raw(
-    requestParameters: Delete1Request,
+  async delete2Raw(
+    requestParameters: Delete2Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete1.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete2.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete1.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling delete2.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete1.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete2.');
     }
 
     if (requestParameters.application === null || requestParameters.application === undefined) {
       throw new runtime.RequiredError(
         'application',
-        'Required parameter requestParameters.application was null or undefined when calling delete1.',
+        'Required parameter requestParameters.application was null or undefined when calling delete2.',
       );
     }
 
     if (requestParameters.email === null || requestParameters.email === undefined) {
-      throw new runtime.RequiredError('email', 'Required parameter requestParameters.email was null or undefined when calling delete1.');
+      throw new runtime.RequiredError('email', 'Required parameter requestParameters.email was null or undefined when calling delete2.');
     }
 
     const queryParameters: any = {};
@@ -328,38 +328,38 @@ export class EmailApi extends runtime.BaseAPI {
    * User must have APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified application or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified domain or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified environment or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified organization
    * Delete an email for an application
    */
-  async delete1(requestParameters: Delete1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete1Raw(requestParameters, initOverrides);
+  async delete2(requestParameters: Delete2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete2Raw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified organization
    * Delete an email
    */
-  async delete4Raw(
-    requestParameters: Delete4Request,
+  async delete5Raw(
+    requestParameters: Delete5Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete4.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete5.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete4.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling delete5.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete4.');
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete5.');
     }
 
     if (requestParameters.email === null || requestParameters.email === undefined) {
-      throw new runtime.RequiredError('email', 'Required parameter requestParameters.email was null or undefined when calling delete4.');
+      throw new runtime.RequiredError('email', 'Required parameter requestParameters.email was null or undefined when calling delete5.');
     }
 
     const queryParameters: any = {};
@@ -395,8 +395,8 @@ export class EmailApi extends runtime.BaseAPI {
    * User must have the DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified domain or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified environment or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the specified organization
    * Delete an email
    */
-  async delete4(requestParameters: Delete4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete4Raw(requestParameters, initOverrides);
+  async delete5(requestParameters: Delete5Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete5Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -738,6 +738,7 @@ export const Get11TemplateEnum = {
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+  ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type Get11TemplateEnum = typeof Get11TemplateEnum[keyof typeof Get11TemplateEnum];
@@ -764,6 +765,7 @@ export const Get5TemplateEnum = {
   IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
   Error: 'ERROR',
   CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+  ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type Get5TemplateEnum = typeof Get5TemplateEnum[keyof typeof Get5TemplateEnum];

@@ -17,7 +17,7 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.management.service.UserService;
+import io.gravitee.am.management.service.ManagementUserService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.permissions.Permission;
@@ -54,7 +54,7 @@ public class UserFactorResource extends AbstractResource {
     private DomainService domainService;
 
     @Autowired
-    private UserService userService;
+    private ManagementUserService userService;
 
     @DELETE
     @Operation(summary = "Revoke user factor",
@@ -67,27 +67,27 @@ public class UserFactorResource extends AbstractResource {
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @PathParam("user") String user,
             @PathParam("factor") String factor,
             @Suspended final AsyncResponse response) {
         final User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_USER, Acl.UPDATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> userService.findById(user))
-                        .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
-                        .flatMapSingle(user1 -> {
-                            if (user1.getFactors() != null) {
-                                List<EnrolledFactor> enrolledFactors = user1.getFactors()
-                                        .stream()
-                                        .filter(enrolledFactor -> !factor.equals(enrolledFactor.getFactorId()))
-                                        .collect(Collectors.toList());
-                                return userService.enrollFactors(user, enrolledFactors, authenticatedUser);
-                            }
-                            return Single.just(user1);
-                        }))
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMap(domain -> userService.findById(domain, user)
+                                .switchIfEmpty(Maybe.error(new UserNotFoundException(user)))
+                                .flatMapSingle(user1 -> {
+                                    if (user1.getFactors() != null) {
+                                        List<EnrolledFactor> enrolledFactors = user1.getFactors()
+                                                .stream()
+                                                .filter(enrolledFactor -> !factor.equals(enrolledFactor.getFactorId()))
+                                                .collect(Collectors.toList());
+                                        return userService.enrollFactors(domain, user, enrolledFactors, authenticatedUser);
+                                    }
+                                    return Single.just(user1);
+                                })))
                 .subscribe(__ -> response.resume(Response.noContent().build()), response::resume);
     }
 }

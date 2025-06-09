@@ -21,8 +21,10 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AbstractSensitiveProxy;
 import io.gravitee.am.management.service.CertificateServiceProxy;
+import io.gravitee.am.management.service.impl.notifications.notifiers.NotifierSettings;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.service.ApplicationService;
@@ -43,14 +45,13 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implements CertificateServiceProxy {
@@ -70,25 +71,16 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                                        CertificatePluginService certificatePluginService,
                                        AuditService auditService,
                                        ObjectMapper objectMapper,
-                                       Environment environment) {
+                                       @Qualifier("certificateNotifierSettings") NotifierSettings certificateNotifierSettings) {
         this.certificateService = certificateService;
         this.idps = idps;
         this.apps = apps;
         this.certificatePluginService = certificatePluginService;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
-        this.certExpirationWarningThreshold = Duration.ofDays(getCertWarningThresholdDays(environment));
+        this.certExpirationWarningThreshold = Duration.ofDays(certificateNotifierSettings.expiryThresholds().get(0));
     }
 
-    private static int getCertWarningThresholdDays(Environment env) {
-        final String expiryThresholds = env.getProperty("services.certificate.expiryThresholds", String.class, DomainNotifierServiceImpl.DEFAULT_CERTIFICATE_EXPIRY_THRESHOLDS);
-        return Stream.of(expiryThresholds.trim().split(","))
-                .map(String::trim)
-                .map(Integer::valueOf)
-                .sorted(Comparator.reverseOrder())
-                .toList()
-                .get(0);
-    }
 
     @Override
     public Maybe<Certificate> findById(String id) {
@@ -155,7 +147,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
-    public Single<Certificate> create(String domain, NewCertificate newCertificate, User principal) {
+    public Single<Certificate> create(Domain domain, NewCertificate newCertificate, User principal) {
         return certificateService.create(domain, newCertificate, principal, false)
                 .flatMap(cert -> filterSensitiveData(cert)
                     .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
@@ -170,7 +162,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
-    public Single<Certificate> update(String domain, String id, UpdateCertificate updateCertificate, User principal) {
+    public Single<Certificate> update(Domain domain, String id, UpdateCertificate updateCertificate, User principal) {
         return certificateService.findById(id)
                 .switchIfEmpty(Single.error(() -> new CertificateNotFoundException(id)))
                 .flatMap(oldCertificate -> filterSensitiveData(oldCertificate)
@@ -196,7 +188,7 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
     }
 
     @Override
-    public Single<Certificate> rotate(String domain, User principal) {
+    public Single<Certificate> rotate(Domain domain, User principal) {
         return certificateService.rotate(domain, principal);
     }
 

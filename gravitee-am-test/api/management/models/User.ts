@@ -387,19 +387,13 @@ export interface User {
    * @type {string}
    * @memberof User
    */
-  zoneInfo?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
   locale?: string;
   /**
    *
    * @type {string}
    * @memberof User
    */
-  middleName?: string;
+  zoneInfo?: string;
   /**
    *
    * @type {{ [key: string]: any; }}
@@ -417,19 +411,7 @@ export interface User {
    * @type {string}
    * @memberof User
    */
-  birthdate?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof User
-   */
-  phoneNumber?: string;
-  /**
-   *
-   * @type {UserId}
-   * @memberof User
-   */
-  fullId?: UserId;
+  middleName?: string;
   /**
    *
    * @type {boolean}
@@ -448,6 +430,30 @@ export interface User {
    * @memberof User
    */
   website?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  birthdate?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof User
+   */
+  phoneNumber?: string;
+  /**
+   *
+   * @type {boolean}
+   * @memberof User
+   */
+  disabled?: boolean;
+  /**
+   *
+   * @type {UserId}
+   * @memberof User
+   */
+  fullId?: UserId;
 }
 
 /**
@@ -528,17 +534,18 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     forceResetPassword: !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
     serviceAccount: !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
     address: !exists(json, 'address') ? undefined : json['address'],
-    zoneInfo: !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
     locale: !exists(json, 'locale') ? undefined : json['locale'],
-    middleName: !exists(json, 'middleName') ? undefined : json['middleName'],
+    zoneInfo: !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
     lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
     identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
-    birthdate: !exists(json, 'birthdate') ? undefined : json['birthdate'],
-    phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
-    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
+    middleName: !exists(json, 'middleName') ? undefined : json['middleName'],
     inactive: !exists(json, 'inactive') ? undefined : json['inactive'],
     profile: !exists(json, 'profile') ? undefined : json['profile'],
     website: !exists(json, 'website') ? undefined : json['website'],
+    birthdate: !exists(json, 'birthdate') ? undefined : json['birthdate'],
+    phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
+    disabled: !exists(json, 'disabled') ? undefined : json['disabled'],
+    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
   };
 }
 
@@ -607,16 +614,17 @@ export function UserToJSON(value?: User | null): any {
     forceResetPassword: value.forceResetPassword,
     serviceAccount: value.serviceAccount,
     address: value.address,
-    zoneInfo: value.zoneInfo,
     locale: value.locale,
-    middleName: value.middleName,
+    zoneInfo: value.zoneInfo,
     lastIdentityInformation: value.lastIdentityInformation,
     identitiesAsMap: value.identitiesAsMap,
-    birthdate: value.birthdate,
-    phoneNumber: value.phoneNumber,
-    fullId: UserIdToJSON(value.fullId),
+    middleName: value.middleName,
     inactive: value.inactive,
     profile: value.profile,
     website: value.website,
+    birthdate: value.birthdate,
+    phoneNumber: value.phoneNumber,
+    disabled: value.disabled,
+    fullId: UserIdToJSON(value.fullId),
   };
 }

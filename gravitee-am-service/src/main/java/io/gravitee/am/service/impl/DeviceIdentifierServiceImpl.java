@@ -21,6 +21,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
@@ -87,12 +88,12 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
     }
 
     @Override
-    public Single<DeviceIdentifier> create(String domain, NewDeviceIdentifier newDeviceIdentifier, User principal) {
+    public Single<DeviceIdentifier> create(Domain domain, NewDeviceIdentifier newDeviceIdentifier, User principal) {
         log.debug("Create a new device identifier {} for domain {}", newDeviceIdentifier, domain);
 
         DeviceIdentifier deviceIdentifier = new DeviceIdentifier();
         deviceIdentifier.setId(newDeviceIdentifier.getId() == null ? RandomString.generate() : newDeviceIdentifier.getId());
-        deviceIdentifier.setReferenceId(domain);
+        deviceIdentifier.setReferenceId(domain.getId());
         deviceIdentifier.setReferenceType(ReferenceType.DOMAIN);
         deviceIdentifier.setName(newDeviceIdentifier.getName());
         deviceIdentifier.setType(newDeviceIdentifier.getType());
@@ -104,7 +105,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                 .flatMap(rd -> {
                     // create event for sync process
                     Event event = new Event(Type.DEVICE_IDENTIFIER, new Payload(rd.getId(), rd.getReferenceType(), rd.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(rd));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(rd));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -115,11 +116,11 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create a device identifier", ex));
                 })
                 .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_CREATED).deviceIdentifier(detection)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_CREATED).reference(Reference.domain(domain)).throwable(throwable)));
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_CREATED).reference(Reference.domain(domain.getId())).throwable(throwable)));
     }
 
     @Override
-    public Single<DeviceIdentifier> update(String domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier, User principal) {
+    public Single<DeviceIdentifier> update(Domain domain, String id, UpdateDeviceIdentifier updateDeviceIdentifier, User principal) {
         log.debug("Update device identifier {} for domain {}", id, domain);
 
         return deviceIdentifierRepository.findById(id)
@@ -134,7 +135,7 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                             .flatMap(detection -> {
                                 // create event for sync process
                                 Event event = new Event(Type.DEVICE_IDENTIFIER, new Payload(detection.getId(), detection.getReferenceType(), detection.getReferenceId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(detection));
+                                return eventService.create(event, domain).flatMap(__ -> Single.just(detection));
                             })
                             .doOnSuccess(detection -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_UPDATED).oldValue(oldDeviceIdentifier).deviceIdentifier(detection)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(DeviceIdentifierAuditBuilder.class).principal(principal).type(EventType.DEVICE_IDENTIFIER_UPDATED).reference(new Reference(deviceIdentifierToUpdate.getReferenceType(), deviceIdentifierToUpdate.getReferenceId())).throwable(throwable)));

@@ -22,6 +22,7 @@ import { NavigationService } from '../../services/navigation.service';
   selector: 'gv-breadcrumb',
   templateUrl: './breadcrumb.component.html',
   styleUrls: ['./breadcrumb.component.scss'],
+  standalone: false,
 })
 export class BreadcrumbComponent implements OnInit, OnDestroy {
   private subscription: Subscription;

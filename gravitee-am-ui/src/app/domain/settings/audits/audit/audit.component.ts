@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-audit',
   templateUrl: './audit.component.html',
   styleUrls: ['./audit.component.scss'],
+  standalone: false,
 })
 export class AuditComponent implements OnInit {
   audit: any;

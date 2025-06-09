@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Domain;
@@ -38,6 +39,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.DOMA
  */
 @Component
 @RequiredArgsConstructor
+@ManagementRepositoryScope
 public class DomainIdpUpgrader extends AsyncUpgrader {
 
     private static final Logger logger = LoggerFactory.getLogger(DomainIdpUpgrader.class);
@@ -61,7 +63,7 @@ public class DomainIdpUpgrader extends AsyncUpgrader {
                         (isEmpty -> {
                     if (isEmpty) {
                         logger.info("No default idp found for domain {}, update domain", domain.getName());
-                        return defaultIdentityProviderService.create(domain.getId());
+                        return defaultIdentityProviderService.create(domain);
                     }
                     return Single.just(new IdentityProvider());
                 });

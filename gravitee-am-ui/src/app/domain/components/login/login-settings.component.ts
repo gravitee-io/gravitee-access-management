@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-login-settings',
   templateUrl: './login-settings.component.html',
   styleUrls: ['./login-settings.component.scss'],
+  standalone: false,
 })
-export class LoginSettingsComponent implements OnInit, OnChanges {
+export class LoginSettingsComponent implements OnChanges {
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() onSavedLoginSettings = new EventEmitter<any>();
   @Input() loginSettings: any;
@@ -29,13 +29,8 @@ export class LoginSettingsComponent implements OnInit, OnChanges {
   @Input() readonly = false;
   @ViewChild('loginForm', { static: true }) form: any;
   formChanged = false;
-  private domainId: string;
 
-  constructor(private route: ActivatedRoute) {}
-
-  ngOnInit(): void {
-    this.domainId = this.route.snapshot.data['domain']?.id;
-  }
+  constructor() {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.loginSettings.previousValue && changes.loginSettings.currentValue) {

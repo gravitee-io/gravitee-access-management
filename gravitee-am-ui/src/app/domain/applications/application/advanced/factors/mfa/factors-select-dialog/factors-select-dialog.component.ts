@@ -35,6 +35,7 @@ export interface DialogResult {
   selector: 'app-factors-select-dialog',
   templateUrl: './factors-select-dialog.component.html',
   styleUrls: ['./factors-select-dialog.component.scss'],
+  standalone: false,
 })
 export class FactorsSelectDialogComponent implements OnInit {
   factors: MfaFactor[];

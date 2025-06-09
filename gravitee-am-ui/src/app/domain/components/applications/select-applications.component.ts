@@ -24,6 +24,7 @@ import { ApplicationService } from '../../../services/application.service';
 @Component({
   selector: 'app-select-applications',
   templateUrl: './select-applications.component.html',
+  standalone: false,
 })
 export class SelectApplicationsComponent implements OnInit {
   private domainId: string;

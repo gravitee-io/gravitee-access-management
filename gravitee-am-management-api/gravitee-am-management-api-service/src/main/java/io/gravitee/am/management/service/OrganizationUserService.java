@@ -19,8 +19,11 @@ import io.gravitee.am.model.AccountAccessToken;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.gravitee.am.service.model.NewAccountAccessToken;
 import io.gravitee.am.service.model.NewOrganizationUser;
+import io.gravitee.am.service.model.UpdateUser;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -30,7 +33,19 @@ import io.reactivex.rxjava3.core.Single;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface OrganizationUserService extends CommonUserService {
+public interface OrganizationUserService {
+
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, String query, int page, int size);
+
+    Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria filterCriteria, int page, int size);
+
+    Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size);
+
+    Single<User> findById(ReferenceType referenceType, String referenceId, String id);
+
+    Single<User> update(ReferenceType referenceType, String referenceId, String id, UpdateUser updateUser, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<User> updateStatus(ReferenceType referenceType, String referenceId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
 
     Single<User> createOrUpdate(ReferenceType referenceType, String referenceId, NewOrganizationUser newUser);
 
@@ -49,4 +64,12 @@ public interface OrganizationUserService extends CommonUserService {
     Maybe<AccountAccessToken> revokeToken(String organizationId, String userId, String tokenId, io.gravitee.am.identityprovider.api.User authenticatedUser);
     Single<User> updateStatus(String organizationId, String id, boolean status, io.gravitee.am.identityprovider.api.User principal);
 
+
+    default Single<User> delete(ReferenceType referenceType, String referenceId, String userId) {
+        return delete(referenceType, referenceId, userId, null);
+    }
+
+    Single<User> delete(ReferenceType referenceType, String referenceId, String userId, io.gravitee.am.identityprovider.api.User principal);
+
+    Single<User> updateUsername(ReferenceType referenceType, String referenceId, String id, String username, io.gravitee.am.identityprovider.api.User principal);
 }

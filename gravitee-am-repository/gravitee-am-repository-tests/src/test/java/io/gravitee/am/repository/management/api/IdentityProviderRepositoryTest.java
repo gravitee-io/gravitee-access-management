@@ -79,6 +79,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         identityProvider.setExternal(true);
         identityProvider.setSystem(true);
         identityProvider.setType("type" + random);
+        identityProvider.setDataPlaneId(UUID.randomUUID().toString());
 
         Map<String, String> mappers = new HashMap<>();
         mappers.put("mapper", "mapper" + random);
@@ -116,6 +117,7 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(idp -> idp.getName().equals(identityProvider.getName()));
         testObserver.assertValue(idp -> idp.getType().equals(identityProvider.getType()));
         testObserver.assertValue(idp -> idp.isSystem() == identityProvider.isSystem());
+        testObserver.assertValue(idp -> idp.getDataPlaneId().equals(identityProvider.getDataPlaneId()));
         testObserver.assertValue(idp -> idp.getConfiguration().equals(identityProvider.getConfiguration()));
         testObserver.assertValue(idp -> idp.getReferenceId().equals(identityProvider.getReferenceId()));
         testObserver.assertValue(idp -> idp.getReferenceType().equals(identityProvider.getReferenceType()));

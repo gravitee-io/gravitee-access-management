@@ -66,3 +66,4 @@ workflows:
           mapping: |
             gravitee-am-reporter/.* run-container-test true
             gravitee-am-repository/.* run-container-test true
+            gravitee-am-dataplane/.* run-container-test true

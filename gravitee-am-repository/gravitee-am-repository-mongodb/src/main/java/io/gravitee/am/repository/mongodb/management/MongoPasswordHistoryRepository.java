@@ -36,7 +36,10 @@ import java.util.Objects;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static io.gravitee.am.common.utils.RandomString.generate;
-
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_ID;
 @Component
 public class MongoPasswordHistoryRepository extends AbstractManagementMongoRepository implements PasswordHistoryRepository {
 

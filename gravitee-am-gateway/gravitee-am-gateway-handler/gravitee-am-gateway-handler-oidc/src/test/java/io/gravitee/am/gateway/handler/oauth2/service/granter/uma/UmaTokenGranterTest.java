@@ -24,6 +24,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
@@ -32,6 +33,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.AccessToken;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.gateway.policy.PolicyChainException;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
@@ -44,8 +46,6 @@ import io.gravitee.am.model.uma.UMASettings;
 import io.gravitee.am.model.uma.policy.AccessPolicy;
 import io.gravitee.am.model.uma.policy.AccessPolicyType;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import io.gravitee.am.service.PermissionTicketService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.exception.InvalidPermissionTicketException;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
@@ -112,10 +112,10 @@ public class UmaTokenGranterTest {
     private UserAuthenticationManager userAuthenticationManager;
 
     @Mock
-    private PermissionTicketService permissionTicketService;
+    private UMAPermissionTicketService permissionTicketService;
 
     @Mock
-    private ResourceService resourceService;
+    private UMAResourceGatewayService resourceService;
 
     @Mock
     private RulesEngine rulesEngine;
@@ -254,7 +254,7 @@ public class UmaTokenGranterTest {
 
     @Test
     public void grant_ticketNotFound() {
-        when(permissionTicketService.remove(TICKET_ID)).thenReturn(Single.error(InvalidPermissionTicketException::new));
+        when(permissionTicketService.remove(eq(TICKET_ID))).thenReturn(Single.error(InvalidPermissionTicketException::new));
         TestObserver<Token> testObserver = umaTokenGranter.grant(tokenRequest, client).test();
         testObserver.assertNotComplete().assertError(InvalidPermissionTicketException.class);
     }

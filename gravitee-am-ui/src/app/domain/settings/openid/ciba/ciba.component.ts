@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-oidc-ciba',
   templateUrl: './ciba.component.html',
   styleUrls: ['./ciba.component.scss'],
+  standalone: false,
 })
 export class CibaComponent implements OnInit {
   private domainId: string;

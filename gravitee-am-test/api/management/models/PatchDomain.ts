@@ -39,6 +39,12 @@ import {
 import { PatchSAMLSettings, PatchSAMLSettingsFromJSON, PatchSAMLSettingsFromJSONTyped, PatchSAMLSettingsToJSON } from './PatchSAMLSettings';
 import { SCIMSettings, SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON } from './SCIMSettings';
 import {
+  SecretExpirationSettings,
+  SecretExpirationSettingsFromJSON,
+  SecretExpirationSettingsFromJSONTyped,
+  SecretExpirationSettingsToJSON,
+} from './SecretExpirationSettings';
+import {
   SelfServiceAccountManagementSettings,
   SelfServiceAccountManagementSettingsFromJSON,
   SelfServiceAccountManagementSettingsFromJSONTyped,
@@ -170,6 +176,18 @@ export interface PatchDomain {
   corsSettings?: CorsSettings;
   /**
    *
+   * @type {string}
+   * @memberof PatchDomain
+   */
+  dataPlaneId?: string;
+  /**
+   *
+   * @type {SecretExpirationSettings}
+   * @memberof PatchDomain
+   */
+  secretSettings?: SecretExpirationSettings;
+  /**
+   *
    * @type {Set<string>}
    * @memberof PatchDomain
    */
@@ -274,6 +292,8 @@ export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean
     master: !exists(json, 'master') ? undefined : json['master'],
     saml: !exists(json, 'saml') ? undefined : PatchSAMLSettingsFromJSON(json['saml']),
     corsSettings: !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
+    dataPlaneId: !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
+    secretSettings: !exists(json, 'secretSettings') ? undefined : SecretExpirationSettingsFromJSON(json['secretSettings']),
     requiredPermissions: !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
   };
 }
@@ -305,6 +325,8 @@ export function PatchDomainToJSON(value?: PatchDomain | null): any {
     master: value.master,
     saml: PatchSAMLSettingsToJSON(value.saml),
     corsSettings: CorsSettingsToJSON(value.corsSettings),
+    dataPlaneId: value.dataPlaneId,
+    secretSettings: SecretExpirationSettingsToJSON(value.secretSettings),
     requiredPermissions: value.requiredPermissions,
   };
 }

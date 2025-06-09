@@ -25,8 +25,8 @@ import io.gravitee.am.gateway.handler.scim.exception.UniquenessException;
 import io.gravitee.am.gateway.handler.scim.model.Group;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.resources.ErrorHandler;
-import io.gravitee.am.gateway.handler.scim.service.GroupService;
-import io.gravitee.am.gateway.handler.scim.service.UserService;
+import io.gravitee.am.gateway.handler.scim.service.ScimGroupService;
+import io.gravitee.am.gateway.handler.scim.service.ProvisioningUserService;
 import io.gravitee.am.service.exception.InvalidGroupException;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -50,7 +50,7 @@ import static org.mockito.Mockito.when;
 public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
 
     @Mock
-    private GroupService groupService;
+    private ScimGroupService groupService;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -59,7 +59,7 @@ public class CreateGroupEndpointHandlerTest extends RxWebTestBase {
     private ObjectWriter objectWriter;
 
     @Mock
-    private UserService userService;
+    private ProvisioningUserService userService;
 
     @Mock
     private SubjectManager subjectManager;

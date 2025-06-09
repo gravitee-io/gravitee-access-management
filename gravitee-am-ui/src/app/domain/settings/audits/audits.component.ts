@@ -32,6 +32,7 @@ import { EnvironmentService } from '../../../services/environment.service';
   selector: 'app-audits',
   templateUrl: './audits.component.html',
   styleUrls: ['./audits.component.scss'],
+  standalone: false,
 })
 export class AuditsComponent implements OnInit {
   private startDateChanged = false;

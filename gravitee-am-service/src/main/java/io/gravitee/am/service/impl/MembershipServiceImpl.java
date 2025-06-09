@@ -20,6 +20,8 @@ import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.OrganizationGroupService;
 import io.gravitee.am.model.Group;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Platform;
@@ -36,8 +38,6 @@ import io.gravitee.am.repository.management.api.MembershipRepository;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
-import io.gravitee.am.service.GroupService;
-import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.OrganizationUserService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -87,7 +87,7 @@ public class MembershipServiceImpl implements MembershipService {
     private OrganizationUserService orgUserService;
 
     @Autowired
-    private GroupService groupService;
+    private OrganizationGroupService orgGroupService;
 
     @Autowired
     private RoleService roleService;
@@ -220,7 +220,7 @@ public class MembershipServiceImpl implements MembershipService {
         List<String> roleIds = memberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList());
 
         return Single.zip(orgUserService.findByIdIn(userIds).toMap(io.gravitee.am.model.User::getId, this::convert),
-                groupService.findByIdIn(groupIds).toMap(Group::getId, this::convert),
+                orgGroupService.findByIdIn(groupIds).toMap(Group::getId, this::convert),
                 roleService.findByIdIn(roleIds), (users, groups, roles) -> {
             Map<String, Map<String, Object>> metadata = new HashMap<>();
             metadata.put("users", (Map)users);
@@ -359,7 +359,7 @@ public class MembershipServiceImpl implements MembershipService {
             return orgUserService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
                     .ignoreElement();
         } else {
-            return groupService.findById(ReferenceType.ORGANIZATION, organizationId, membership.getMemberId())
+            return orgGroupService.findById(organizationId, membership.getMemberId())
                     .ignoreElement();
         }
     }

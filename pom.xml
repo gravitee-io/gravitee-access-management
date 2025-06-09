@@ -31,7 +31,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>4.7.0-SNAPSHOT</version>
+    <version>4.9.0-SNAPSHOT</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>
@@ -69,14 +69,15 @@
         <module>gravitee-am-authdevice-notifier</module>
         <module>gravitee-am-ciba-delegated-service</module>
         <module>gravitee-am-monitoring</module>
+        <module>gravitee-am-dataplane</module>
     </modules>
 
     <properties>
         <awaitility.version>4.2.2</awaitility.version>
-        <gravitee-bom.version>8.2.10</gravitee-bom.version>
+        <gravitee-bom.version>8.2.22</gravitee-bom.version>
         <gravitee-common.version>4.2.0</gravitee-common.version>
-        <gravitee-plugin.version>4.2.0</gravitee-plugin.version>
-        <gravitee-node.version>6.7.0</gravitee-node.version>
+        <gravitee-plugin.version>4.6.0</gravitee-plugin.version>
+        <gravitee-node.version>7.1.0</gravitee-node.version>
         <gravitee-reporter.version>1.17.1</gravitee-reporter.version>
         <gravitee-gateway-api.version>3.5.0</gravitee-gateway-api.version>
         <gravitee-expression-language.version>3.1.0</gravitee-expression-language.version>
@@ -95,7 +96,7 @@
         <angus-mail.version>2.0.3</angus-mail.version>
         <angus-activation.version>2.0.2</angus-activation.version>
         <mongodb-driver-reactivestreams.version>4.11.5</mongodb-driver-reactivestreams.version>
-        <embed.mongo.version>4.7.1</embed.mongo.version>
+        <embed.mongo.version>4.18.1</embed.mongo.version>
         <json-patch.version>1.9</json-patch.version>
         <guava.version>32.1.3-jre</guava.version>
         <zxing.version>3.4.1</zxing.version>
@@ -108,12 +109,13 @@
         <wiremock.version>3.0.4</wiremock.version>
         <reactor-netty.version>1.0.39</reactor-netty.version>
         <json-path.version>2.9.0</json-path.version>
-        <commons-io.version>2.11.0</commons-io.version>
+        <commons-io.version>2.18.0</commons-io.version>
         <common-text.version>1.10.0</common-text.version>
         <commons-cli.version>1.4</commons-cli.version>
         <ognl.version>3.3.4</ognl.version>
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
-        <test-container.version>1.20.3</test-container.version>
+        <test-container.version>1.20.4</test-container.version>
+        <liquibase.version>4.31.1</liquibase.version>
 
         <!-- R2DBC dependencies -->
         <spring-data-r2dbc.version>3.2.2</spring-data-r2dbc.version>
@@ -136,12 +138,6 @@
         <testcontainer-lower-version-mysql>mysql-tc~8.0</testcontainer-lower-version-mysql>
         <testcontainer-lower-version-maria>mariadb-tc~10.3</testcontainer-lower-version-maria>
         <testcontainer-lower-version-mssql>mssql-tc~2019-latest</testcontainer-lower-version-mssql>
-        <!--
-        we have to redefine the property here
-        due to the spring-security-crypto dep into
-        the gravitee-am-service module
-        -->
-        <spring-security.version>6.4.2</spring-security.version>
 
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>3.0.1</gravitee-policy-callout-http.version>
@@ -157,25 +153,27 @@
         <gravitee-alert-api.version>2.0.0</gravitee-alert-api.version>
         <gravitee-notifier-api.version>1.4.3</gravitee-notifier-api.version>
         <gravitee-risk-assessment-api.version>2.0.0</gravitee-risk-assessment-api.version>
-        <gravitee-secretprovider-kubernetes.version>1.0.1</gravitee-secretprovider-kubernetes.version>
+        <gravitee-secretprovider-kubernetes.version>2.0.0</gravitee-secretprovider-kubernetes.version>
+        <gravitee-secretprovider-aws.version>2.0.0</gravitee-secretprovider-aws.version>
         <gravitee-resource-mfa-mock.version>1.0.0</gravitee-resource-mfa-mock.version>
         <gravitee-factor-mock.version>1.0.0</gravitee-factor-mock.version>
 
         <!-- EE plugin included in default bundle -->
-        <gravitee-am-idp-saml2.version>4.0.1</gravitee-am-idp-saml2.version>
+        <gravitee-am-idp-saml2.version>4.0.2</gravitee-am-idp-saml2.version>
         <gravitee-am-idp-ldap.version>2.1.2</gravitee-am-idp-ldap.version>
         <gravitee-am-idp-azure-ad.version>2.0.0</gravitee-am-idp-azure-ad.version>
-        <gravitee-am-idp-franceconnect.version>3.0.0</gravitee-am-idp-franceconnect.version>
+        <gravitee-am-idp-franceconnect.version>3.1.0</gravitee-am-idp-franceconnect.version>
         <gravitee-am-idp-salesforce.version>2.0.0</gravitee-am-idp-salesforce.version>
         <gravitee-am-factor-call.version>1.0.1</gravitee-am-factor-call.version>
         <gravitee-am-factor-sms.version>1.0.2</gravitee-am-factor-sms.version>
         <gravitee-am-factor-fido2.version>3.0.0</gravitee-am-factor-fido2.version>
-        <gravitee-am-factor-http.version>3.0.0</gravitee-am-factor-http.version>
+        <gravitee-am-factor-http.version>3.0.1</gravitee-am-factor-http.version>
         <gravitee-am-factor-recovery-code.version>1.0.1</gravitee-am-factor-recovery-code.version>
         <gravitee-am-factor-otp-sender.version>3.0.0</gravitee-am-factor-otp-sender.version>
         <gravitee-am-resource-twilio.version>1.2.0</gravitee-am-resource-twilio.version>
-        <gravitee-am-policy-account-linking.version>1.0.0</gravitee-am-policy-account-linking.version>
         <gravitee-am-policy-mfa-challenge.version>2.0.0</gravitee-am-policy-mfa-challenge.version>
+        <gravitee-am-policy-account-linking.version>2.0.0</gravitee-am-policy-account-linking.version>
+        <gravitee-am-certificate-aws.version>3.0.0</gravitee-am-certificate-aws.version>
 
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
@@ -195,7 +193,7 @@
         <javax.servlet-api.version>3.0.1</javax.servlet-api.version>
 
         <!-- R2DBC -->
-        <r2dbc-postgresql.version>1.0.2.RELEASE</r2dbc-postgresql.version>
+        <r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
         <r2dbc-mariadb.version>1.1.3</r2dbc-mariadb.version>
         <!--
         DO NOT use the 1.0.2.RELEASE as this version seems to be buggy
@@ -217,7 +215,7 @@
         <ongres.scram.version>2.1</ongres.scram.version>
 
         <!-- Sonar - Jacoco -->
-        <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.13</jacoco-maven-plugin.version>
         <protobuf-java.version>3.25.6</protobuf-java.version>
         <jakarta.mail-api.version>2.1.3</jakarta.mail-api.version>
     </properties>

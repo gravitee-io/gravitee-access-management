@@ -45,6 +45,8 @@ import java.util.Optional;
 @EnableR2dbcRepositories
 public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfiguration {
 
+    public static final String LIQUIBASE_FILE = "liquibase/oauth-master.yml";
+
     @Autowired
     public ConnectionProvider<ConnectionFactory, R2DBCConnectionConfiguration> connectionFactoryProvider;
 
@@ -91,7 +93,7 @@ public class OAuth2RepositoryConfiguration extends AbstractRepositoryConfigurati
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        initializeDatabaseSchema(getOauth2Pool(), environment, Scope.OAUTH2.getRepositoryPropertyKey() + ".jdbc.");
+        initializeDatabaseSchema(getOauth2Pool(), environment, Scope.OAUTH2.getRepositoryPropertyKey() + ".jdbc.", LIQUIBASE_FILE);
     }
 
 }

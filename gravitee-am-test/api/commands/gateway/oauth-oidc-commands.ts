@@ -57,6 +57,12 @@ export const performOptions = (baseUrl, uri = '', headers = null) => {
   return request.send();
 };
 
+export const performDelete = (baseUrl, uri = '', headers) => {
+  const request = supertest(baseUrl).delete(uri);
+  setHeaders(request, headers);
+  return request.send();
+};
+
 export const getWellKnownOpenIdConfiguration = (domainHrid: string) =>
   performGet(process.env.AM_GATEWAY_URL, `/${domainHrid}${URLS.WELL_KNOWN_OPENID_CONFIG}`);
 

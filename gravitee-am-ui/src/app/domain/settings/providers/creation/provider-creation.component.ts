@@ -24,6 +24,7 @@ import { SnackbarService } from '../../../../services/snackbar.service';
   selector: 'app-idp-creation',
   templateUrl: './provider-creation.component.html',
   styleUrls: ['./provider-creation.component.scss'],
+  standalone: false,
 })
 export class ProviderCreationComponent implements OnInit {
   public provider: any = {};

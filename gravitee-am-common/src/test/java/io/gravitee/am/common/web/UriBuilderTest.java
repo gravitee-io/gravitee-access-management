@@ -44,6 +44,13 @@ public class UriBuilderTest {
                 {"https://op-test:60001/requests/something?the=best#fragment", 60001,
                         new UriParts("https", "op-test", null, "/requests/something", "the=best", "fragment"), true},
                 {"com.google.app:/callback", -1, new UriParts("com.google.app", null, null, "/callback", null, null), false},
+                {"https://gravitee3.local:2000/test?xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}#asd#asda", 2000, new UriParts("https", "gravitee3.local", null, "/test", "xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", "asd#asda"), true},
+                {"http://gravitee3.local:2000/test?xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}#asd#asda", 2000, new UriParts("http", "gravitee3.local", null, "/test", "xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", "asd#asda"), true},
+                {"https://gravitee3.local/test?xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}#asd#asda", -1, new UriParts("https", "gravitee3.local", null, "/test", "xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", "asd#asda"), true},
+                {"https://gravitee3.local:2000?xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", 2000, new UriParts("https", "gravitee3.local", null, "", "xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", null), true},
+                {"http://gravitee3.local/?xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", -1, new UriParts("http", "gravitee3.local", null, "/", "xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", null), true},
+                {"https://gravitee3.local:2000?param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", 2000, new UriParts("https", "gravitee3.local", null, "", "param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", null), true}
+
         });
     }
 

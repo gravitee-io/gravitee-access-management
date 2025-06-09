@@ -26,6 +26,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-user-factors',
   templateUrl: './factors.component.html',
   styleUrls: ['./factors.component.scss'],
+  standalone: false,
 })
 export class UserFactorsComponent implements OnInit {
   private domainId: string;

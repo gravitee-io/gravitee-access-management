@@ -34,6 +34,12 @@ import { PasswordSettings, PasswordSettingsFromJSON, PasswordSettingsFromJSONTyp
 import { SAMLSettings, SAMLSettingsFromJSON, SAMLSettingsFromJSONTyped, SAMLSettingsToJSON } from './SAMLSettings';
 import { SCIMSettings, SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON } from './SCIMSettings';
 import {
+  SecretExpirationSettings,
+  SecretExpirationSettingsFromJSON,
+  SecretExpirationSettingsFromJSONTyped,
+  SecretExpirationSettingsToJSON,
+} from './SecretExpirationSettings';
+import {
   SelfServiceAccountManagementSettings,
   SelfServiceAccountManagementSettingsFromJSON,
   SelfServiceAccountManagementSettingsFromJSONTyped,
@@ -213,22 +219,16 @@ export interface Domain {
   corsSettings?: CorsSettings;
   /**
    *
-   * @type {boolean}
+   * @type {string}
    * @memberof Domain
    */
-  isDynamicClientRegistrationEnabled?: boolean;
+  dataPlaneId?: string;
   /**
    *
-   * @type {boolean}
+   * @type {SecretExpirationSettings}
    * @memberof Domain
    */
-  isOpenDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
-  redirectUriStrictMatching?: boolean;
+  secretExpirationSettings?: SecretExpirationSettings;
   /**
    *
    * @type {boolean}
@@ -240,19 +240,37 @@ export interface Domain {
    * @type {boolean}
    * @memberof Domain
    */
-  redirectUriLocalhostAllowed?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
   redirectUriUnsecuredHttpSchemeAllowed?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof Domain
    */
+  redirectUriLocalhostAllowed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
   redirectUriWildcardAllowed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriStrictMatching?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  dynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  openDynamicClientRegistrationEnabled?: boolean;
 }
 
 /**
@@ -314,21 +332,25 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
       : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
     saml: !exists(json, 'saml') ? undefined : SAMLSettingsFromJSON(json['saml']),
     corsSettings: !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
-    isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
+    dataPlaneId: !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
+    secretExpirationSettings: !exists(json, 'secretExpirationSettings')
       ? undefined
-      : json['isDynamicClientRegistrationEnabled'],
-    isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
-      ? undefined
-      : json['isOpenDynamicClientRegistrationEnabled'],
-    redirectUriStrictMatching: !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
+      : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
     dynamicClientRegistrationTemplateEnabled: !exists(json, 'dynamicClientRegistrationTemplateEnabled')
       ? undefined
       : json['dynamicClientRegistrationTemplateEnabled'],
-    redirectUriLocalhostAllowed: !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
     redirectUriUnsecuredHttpSchemeAllowed: !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed')
       ? undefined
       : json['redirectUriUnsecuredHttpSchemeAllowed'],
+    redirectUriLocalhostAllowed: !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
+    dynamicClientRegistrationEnabled: !exists(json, 'dynamicClientRegistrationEnabled')
+      ? undefined
+      : json['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: !exists(json, 'openDynamicClientRegistrationEnabled')
+      ? undefined
+      : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -367,12 +389,14 @@ export function DomainToJSON(value?: Domain | null): any {
     selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value.selfServiceAccountManagementSettings),
     saml: SAMLSettingsToJSON(value.saml),
     corsSettings: CorsSettingsToJSON(value.corsSettings),
-    isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
-    isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
-    redirectUriStrictMatching: value.redirectUriStrictMatching,
+    dataPlaneId: value.dataPlaneId,
+    secretExpirationSettings: SecretExpirationSettingsToJSON(value.secretExpirationSettings),
     dynamicClientRegistrationTemplateEnabled: value.dynamicClientRegistrationTemplateEnabled,
-    redirectUriLocalhostAllowed: value.redirectUriLocalhostAllowed,
     redirectUriUnsecuredHttpSchemeAllowed: value.redirectUriUnsecuredHttpSchemeAllowed,
+    redirectUriLocalhostAllowed: value.redirectUriLocalhostAllowed,
     redirectUriWildcardAllowed: value.redirectUriWildcardAllowed,
+    redirectUriStrictMatching: value.redirectUriStrictMatching,
+    dynamicClientRegistrationEnabled: value.dynamicClientRegistrationEnabled,
+    openDynamicClientRegistrationEnabled: value.openDynamicClientRegistrationEnabled,
   };
 }

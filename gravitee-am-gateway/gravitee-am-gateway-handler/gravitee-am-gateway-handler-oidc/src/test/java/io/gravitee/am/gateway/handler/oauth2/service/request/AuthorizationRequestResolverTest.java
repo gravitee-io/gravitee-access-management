@@ -17,15 +17,18 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
+import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
@@ -40,7 +43,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorizationRequestResolverTest {
 
-    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver();
+    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver(Mockito.mock());
 
     @Mock
     private ScopeManager scopeManager;
@@ -338,4 +341,32 @@ public class AuthorizationRequestResolverTest {
         // Request should have been enhanced with all of user's permissions, even though none of them has been requested
         testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().contains(scope) && request.getScopes().size() == 4);
     }
+
+    @Test
+    public void shouldEnrichRedirectUriWithEl() {
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri("https://test.com/callback");
+        Client client = new Client();
+        client.setRedirectUris(List.of("https://test.com/callback?param={#context.attributes['test']}"));
+
+        ExecutionContext executionContext = new SimpleAuthenticationContext(null, Map.of("test", "value"));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.evaluateELQueryParams(authorizationRequest, client, executionContext).test();
+        testObserver.assertValue(value -> value.getRedirectUri().equals("https://test.com/callback?param=value"));
+    }
+
+    @Test
+    public void shouldEnrichRedirectUriWithEl_2() {
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri("https://test2.com/callback");
+        Client client = new Client();
+        client.setRedirectUris(List.of("https://test.com/callback?param={#context.attributes['test']}", "https://test2.com/callback?param2={#context.attributes['test2']}"));
+
+        ExecutionContext executionContext = new SimpleAuthenticationContext(null, Map.of("test", "value", "test2", "value2"));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.evaluateELQueryParams(authorizationRequest, client, executionContext).test();
+        testObserver.assertValue(value -> value.getRedirectUri().equals("https://test2.com/callback?param2=value2"));
+    }
+
+
 }

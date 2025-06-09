@@ -319,7 +319,7 @@ async function createOidcProvider(clientDomain: Domain, providerDomain: Domain, 
       maxPoolSize: 200,
       storeOriginalTokens: false,
       codeChallengeMethod: 'S256',
-      responseMode: 'default'
+      responseMode: 'default',
     }),
     external: true,
   };

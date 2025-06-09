@@ -15,14 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.management.handlers.management.api.resources.AbstractUsersResource;
+import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.ManagementUserService;
+import io.gravitee.am.management.service.dataplane.DeviceManagementService;
 import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.DeviceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -47,7 +48,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author GraviteeSource Team
  */
 @Tag(name = "devices")
-public class DevicesResource extends AbstractUsersResource {
+public class DevicesResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
@@ -56,7 +57,10 @@ public class DevicesResource extends AbstractUsersResource {
     private DomainService domainService;
 
     @Autowired
-    private DeviceService deviceService;
+    private DeviceManagementService deviceService;
+
+    @Autowired
+    private ManagementUserService userService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -79,8 +83,10 @@ public class DevicesResource extends AbstractUsersResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER_DEVICE, Acl.LIST)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(domain -> this.userService.findById(ReferenceType.DOMAIN, domain.getId(), userId))
-                        .flatMapSingle(user -> this.deviceService.findByDomainAndUser(domainId, user.getFullId()).toList()))
+                        .flatMap(domain ->
+                                this.userService.findById(domain, userId)
+                                        .switchIfEmpty(Maybe.error(new UserNotFoundException(userId)))
+                                        .flatMapSingle(user -> this.deviceService.findByDomainAndUser(domain, user.getFullId()).toList())))
                 .subscribe(response::resume, response::resume);
     }
 

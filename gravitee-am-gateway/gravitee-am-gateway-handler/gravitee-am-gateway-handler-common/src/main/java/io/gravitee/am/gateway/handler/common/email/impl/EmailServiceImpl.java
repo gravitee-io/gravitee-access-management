@@ -38,6 +38,8 @@ import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.am.model.safe.UserProperties;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.DomainReadService;
+import io.gravitee.am.service.i18n.CompositeDictionaryProvider;
+import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.FreemarkerMessageResolver;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -68,7 +70,7 @@ import static io.gravitee.am.service.utils.UserProfileUtils.preferredLanguage;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class EmailServiceImpl implements EmailService, InitializingBean {
+public class EmailServiceImpl implements EmailService {
 
     private final boolean enabled;
     private final String resetPasswordSubject;
@@ -79,7 +81,9 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
     private final Integer mfaChallengeExpireAfter;
     private final String mfaVerifyAttemptSubject;
     private final String registrationVerifySubject;
-    private final int userRegistrationExpireAfter;
+    private final int userRegistrationVerifyExpiresAfter;
+    private final String registrationConfirmationSubject;
+    private final int userRegistrationConfirmationVerifyExpiresAfter;
     @Autowired
     private EmailManager emailManager;
 
@@ -116,7 +120,9 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
             int mfaChallengeExpireAfter,
             String mfaVerifyAttemptSubject,
             String registrationVerifySubject,
-            int userRegistrationExpiresAfter) {
+            int userRegistrationVerifyExpiresAfter,
+            String registrationConfirmationSubject,
+            int userRegistrationConfirmationVerifyExpiresAfter) {
         this.enabled = enabled;
         this.resetPasswordSubject = resetPasswordSubject;
         this.resetPasswordExpireAfter = resetPasswordExpireAfter;
@@ -126,12 +132,9 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         this.mfaChallengeExpireAfter = mfaChallengeExpireAfter;
         this.mfaVerifyAttemptSubject = mfaVerifyAttemptSubject;
         this.registrationVerifySubject = registrationVerifySubject;
-        this.userRegistrationExpireAfter = userRegistrationExpiresAfter;
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        this.emailService.setDictionaryProvider(this.graviteeMessageResolver.getDynamicDictionaryProvider());
+        this.userRegistrationVerifyExpiresAfter = userRegistrationVerifyExpiresAfter;
+        this.registrationConfirmationSubject = registrationConfirmationSubject;
+        this.userRegistrationConfirmationVerifyExpiresAfter = userRegistrationConfirmationVerifyExpiresAfter;
     }
 
     @Override
@@ -326,7 +329,7 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         var result = new StringWriter(1024);
 
         var dataModel = new HashMap<>(params);
-        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(this.emailService.getDictionaryProvider().getDictionaryFor(preferredLanguage)));
+        dataModel.put(FreemarkerMessageResolver.METHOD_NAME, new FreemarkerMessageResolver(getDictionaryProvider().getDictionaryFor(preferredLanguage)));
 
         var env = plainTextTemplate.createProcessingEnvironment(dataModel, result);
         env.process();
@@ -334,42 +337,40 @@ public class EmailServiceImpl implements EmailService, InitializingBean {
         return result.toString();
     }
 
+    public DictionaryProvider getDictionaryProvider() {
+        if (graviteeMessageResolver.getDynamicDictionaryProvider() != null) {
+            return new CompositeDictionaryProvider(graviteeMessageResolver.getDynamicDictionaryProvider(), emailService.getDefaultDictionaryProvider());
+        } else {
+            return emailService.getDefaultDictionaryProvider();
+        }
+    }
+
     private String getTemplateName(io.gravitee.am.model.Template template, Client client) {
         return template.template() + ((client != null) ? EmailManager.TEMPLATE_NAME_SEPARATOR + client.getId() : "");
     }
 
     private String getDefaultSubject(io.gravitee.am.model.Template template) {
-        switch (template) {
-            case RESET_PASSWORD:
-                return resetPasswordSubject;
-            case BLOCKED_ACCOUNT:
-                return blockedAccountSubject;
-            case MFA_CHALLENGE:
-                return mfaChallengeSubject;
-            case VERIFY_ATTEMPT:
-                return mfaVerifyAttemptSubject;
-            case REGISTRATION_VERIFY:
-                return registrationVerifySubject;
-            default:
-                throw new IllegalArgumentException(template.template() + " not found");
-        }
+        return switch (template) {
+            case RESET_PASSWORD -> resetPasswordSubject;
+            case BLOCKED_ACCOUNT -> blockedAccountSubject;
+            case MFA_CHALLENGE -> mfaChallengeSubject;
+            case VERIFY_ATTEMPT -> mfaVerifyAttemptSubject;
+            case REGISTRATION_VERIFY -> registrationVerifySubject;
+            case REGISTRATION_CONFIRMATION -> registrationConfirmationSubject;
+            default -> throw new IllegalArgumentException(template.template() + " not found");
+        };
     }
 
     private Integer getDefaultExpireAt(io.gravitee.am.model.Template template) {
-        switch (template) {
-            case RESET_PASSWORD:
-                return resetPasswordExpireAfter;
-            case BLOCKED_ACCOUNT:
-                return blockedAccountExpireAfter;
-            case MFA_CHALLENGE:
-                return mfaChallengeExpireAfter;
-            case VERIFY_ATTEMPT:
-                return 0;
-            case REGISTRATION_VERIFY:
-                return userRegistrationExpireAfter;
-            default:
-                throw new IllegalArgumentException(template.template() + " not found");
-        }
+        return switch (template) {
+            case RESET_PASSWORD -> resetPasswordExpireAfter;
+            case BLOCKED_ACCOUNT -> blockedAccountExpireAfter;
+            case MFA_CHALLENGE -> mfaChallengeExpireAfter;
+            case VERIFY_ATTEMPT -> 0;
+            case REGISTRATION_VERIFY -> userRegistrationVerifyExpiresAfter;
+            case REGISTRATION_CONFIRMATION -> userRegistrationConfirmationVerifyExpiresAfter;
+            default -> throw new IllegalArgumentException(template.template() + " not found");
+        };
     }
 
 }

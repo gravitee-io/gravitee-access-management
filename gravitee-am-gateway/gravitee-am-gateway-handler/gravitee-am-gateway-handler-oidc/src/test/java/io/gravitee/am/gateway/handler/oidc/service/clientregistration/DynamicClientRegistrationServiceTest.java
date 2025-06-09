@@ -15,7 +15,13 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration;
 
-import com.nimbusds.jose.*;
+import com.nimbusds.jose.EncryptionMethod;
+import com.nimbusds.jose.JWEAlgorithm;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.gen.RSAKeyGenerator;
@@ -51,6 +57,8 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
+import io.gravitee.am.service.impl.SecretService;
+import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -74,20 +82,34 @@ import org.springframework.core.env.Environment;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.*;
-import static org.junit.Assert.*;
+import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY;
+import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.OPENID_DCR_ACCESS_TOKEN_VALIDITY;
+import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.OPENID_DCR_ID_TOKEN_VALIDITY;
+import static io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl.DynamicClientRegistrationServiceImpl.OPENID_DCR_REFRESH_TOKEN_VALIDITY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Alexandre FARIA (contact at alexandrefaria.net)
@@ -143,7 +165,11 @@ public class DynamicClientRegistrationServiceTest {
     @Mock
     private Environment environment;
 
+    @Mock
+    private SecretService secretService;
+
     private static final String DOMAIN_ID = "domain";
+    private static final Domain DOMAIN = new Domain(DOMAIN_ID);
     private static final String BASE_PATH = "";
     private static final String ID_SOURCE = "123";
     private static final String ID_TARGET = "abc";
@@ -160,18 +186,13 @@ public class DynamicClientRegistrationServiceTest {
         when(openIDProviderMetadata.getIssuer()).thenReturn("https://issuer");
         when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just("jwt"));
 
-        when(clientService.create(any())).thenAnswer(i -> {
-            Client res = i.getArgument(0);
+        when(clientService.create(any(), any())).thenAnswer(i -> {
+            Client res = i.getArgument(1);
             res.setId(ID_TARGET);
             return Single.just(res);
         });
         when(clientService.update(any())).thenAnswer(i -> Single.just(i.getArgument(0)));
-        when(clientService.delete(any())).thenReturn(Completable.complete());
-        when(clientService.renewClientSecret(any(), any())).thenAnswer(i -> {
-            Client toRenew = new Client();
-            toRenew.setClientSecret("secretRenewed");
-            return Single.just(toRenew);
-        });
+        when(clientService.delete(any(), any())).thenReturn(Completable.complete());
 
         when(domain.useFapiBrazilProfile()).thenReturn(false);
         when(environment.getProperty(OPENID_DCR_ACCESS_TOKEN_VALIDITY, Integer.class, Client.DEFAULT_ACCESS_TOKEN_VALIDITY_SECONDS)).thenReturn(Client.DEFAULT_REFRESH_TOKEN_VALIDITY_SECONDS);
@@ -224,11 +245,11 @@ public class DynamicClientRegistrationServiceTest {
                 client.getIdentityProviders() == null &&
                 client.getCertificate() == null
         );
-        verify(clientService, times(1)).create(any());
+        verify(clientService, times(1)).create(any(), any());
     }
 
     @Test
-    public void create_applyDefaultIdentiyProvider() {
+    public void create_applyDefaultIdentityProvider() {
         IdentityProvider identityProvider = Mockito.mock(IdentityProvider.class);
         when(identityProvider.getId()).thenReturn("identity-provider-id-123");
         when(identityProviderService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(identityProvider));
@@ -817,6 +838,71 @@ public class DynamicClientRegistrationServiceTest {
     }
 
     @Test
+    public void patch_non_hashed_secret_should_be_provided_in_response() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setJwksUri(Optional.of("something"));
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+
+        final var app = new Client();
+
+        final var bcryptSecretSettings = new ApplicationSecretSettings();
+        bcryptSecretSettings.setAlgorithm(SecretHashAlgorithm.BCRYPT.name());
+        bcryptSecretSettings.setId(UUID.randomUUID().toString());
+        final var noneSecretSettings = new ApplicationSecretSettings();
+        noneSecretSettings.setAlgorithm(SecretHashAlgorithm.NONE.name());
+        noneSecretSettings.setId(UUID.randomUUID().toString());
+        app.setSecretSettings(List.of(noneSecretSettings, bcryptSecretSettings));
+
+        final var noneClientSecret = new ClientSecret();
+        noneClientSecret.setSettingsId(noneSecretSettings.getId());
+        noneClientSecret.setSecret(UUID.randomUUID().toString());
+        final var bcryptClientSecret = new ClientSecret();
+        bcryptClientSecret.setSettingsId(bcryptSecretSettings.getId());
+        bcryptClientSecret.setSecret(UUID.randomUUID().toString());
+
+        app.setClientSecrets(List.of(bcryptClientSecret, noneClientSecret));
+
+        TestObserver<Client> testObserver = dcrService.patch(app, request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> noneClientSecret.getSecret().equals(client.getClientSecret()));
+        verify(clientService, times(1)).update(any());
+    }
+
+    @Test
+    public void patch_secret_should_not_be_provided_in_response_if_hashed() {
+        DynamicClientRegistrationRequest request = new DynamicClientRegistrationRequest();
+        request.setRedirectUris(Optional.of(Arrays.asList("https://graviee.io/callback")));
+        request.setJwksUri(Optional.of("something"));
+
+        when(jwkService.getKeys(anyString())).thenReturn(Maybe.just(new JWKSet()));
+
+        final var app = new Client();
+
+        final var bcryptSecretSettings = new ApplicationSecretSettings();
+        bcryptSecretSettings.setAlgorithm(SecretHashAlgorithm.BCRYPT.name());
+        bcryptSecretSettings.setId(UUID.randomUUID().toString());
+        final var noneSecretSettings = new ApplicationSecretSettings();
+        noneSecretSettings.setAlgorithm(SecretHashAlgorithm.NONE.name());
+        noneSecretSettings.setId(UUID.randomUUID().toString());
+        app.setSecretSettings(List.of(noneSecretSettings, bcryptSecretSettings));
+
+        final var bcryptClientSecret = new ClientSecret();
+        bcryptClientSecret.setSettingsId(bcryptSecretSettings.getId());
+        bcryptClientSecret.setSecret(UUID.randomUUID().toString());
+
+        app.setClientSecrets(List.of(bcryptClientSecret));
+
+        TestObserver<Client> testObserver = dcrService.patch(app, request, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(client -> client.getClientSecret() == null);
+        verify(clientService, times(1)).update(any());
+    }
+
+    @Test
     public void update_missingRedirectUri() {
         TestObserver<Client> testObserver = dcrService.update(new Client(), new DynamicClientRegistrationRequest(), BASE_PATH).test();
         testObserver.assertError(InvalidRedirectUriException.class);
@@ -843,7 +929,7 @@ public class DynamicClientRegistrationServiceTest {
         TestObserver<Client> testObserver = dcrService.delete(new Client()).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        verify(clientService, times(1)).delete(any());
+        verify(clientService, times(1)).delete(any(), any());
     }
 
     @Test
@@ -854,12 +940,140 @@ public class DynamicClientRegistrationServiceTest {
         toRenew.setClientId("client_id");
         toRenew.setClientSecret("oldSecret");
 
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setSecret("oldSecret");
+        clientSecret.setId("secret-id");
+        List<ClientSecret> clientSecrets = new ArrayList<>();
+        clientSecrets.add(clientSecret);
+        toRenew.setClientSecrets(clientSecrets);
+
+        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
+            Client c = i.getArgument(1);
+            c.getClientSecrets().getFirst().setSecret("renewedSecret");
+            return Single.just(c);
+        });
+
         TestObserver<Client> testObserver = dcrService.renewSecret(toRenew, BASE_PATH).test();
         testObserver.assertNoErrors();
         testObserver.assertComplete();
-        testObserver.assertValue(client -> client.getClientSecret().equals("secretRenewed"));
-        verify(clientService, times(1)).renewClientSecret(anyString(), anyString());
+        testObserver.assertValue(client -> client.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
+        verify(clientService, times(1)).renewClientSecret(any(), any(), anyString());
         verify(clientService, times(1)).update(any());
+    }
+
+    @Test
+    public void renewSecret_missingClientSecret() {
+        Client client = new Client();
+        ApplicationSecretSettings applicationSecretSettings = new ApplicationSecretSettings("setting-id", SecretHashAlgorithm.NONE.name(), Map.of());
+        client.setClientSecret("clientSecret");
+        client.setSecretSettings(List.of(applicationSecretSettings));
+
+        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
+            Client c = i.getArgument(1);
+            c.getClientSecrets().getFirst().setSecret("renewedSecret");
+            return Single.just(c);
+        });
+
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenAnswer(i -> {
+            ClientSecret clientSecret = new ClientSecret();
+            clientSecret.setSecret(i.getArgument(1));
+            clientSecret.setName(i.getArgument(0));
+            clientSecret.setSettingsId("settings-id");
+            clientSecret.setId("secret-id");
+            return clientSecret;
+        });
+
+        TestObserver<Client> testObserver = dcrService.renewSecret(client, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
+        verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
+        verify(clientService, times(1)).update(any());
+
+    }
+
+    @Test
+    public void renewSecret_missingAllClientSecrets() {
+        Client client = new Client();
+
+        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
+            Client c = i.getArgument(1);
+            c.getClientSecrets().getFirst().setSecret("renewedSecret");
+            return Single.just(c);
+        });
+
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenAnswer(i -> {
+            ClientSecret clientSecret = new ClientSecret();
+            clientSecret.setSecret(i.getArgument(1));
+            clientSecret.setName(i.getArgument(0));
+            clientSecret.setSettingsId("settings-id");
+            clientSecret.setId("secret-id");
+            return clientSecret;
+        });
+
+        TestObserver<Client> testObserver = dcrService.renewSecret(client, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
+        verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
+        verify(clientService, times(1)).update(any());
+
+    }
+
+    @Test
+    public void renewSecret_missingClientSecretAndSecretSettings() {
+        Client client = new Client();
+        client.setClientSecret("topSecret");
+
+        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
+            Client c = i.getArgument(1);
+            c.getClientSecrets().getFirst().setSecret("renewedSecret");
+            return Single.just(c);
+        });
+
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenAnswer(i -> {
+            ClientSecret clientSecret = new ClientSecret();
+            clientSecret.setSecret(i.getArgument(1));
+            clientSecret.setName(i.getArgument(0));
+            clientSecret.setSettingsId("settings-id");
+            clientSecret.setId("secret-id");
+            return clientSecret;
+        });
+
+        TestObserver<Client> testObserver = dcrService.renewSecret(client, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
+        verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
+        verify(clientService, times(1)).update(any());
+    }
+
+    @Test
+    public void renewSecret_determinateClientSecretBasedOnHash() {
+        Client client = new Client();
+        ApplicationSecretSettings applicationSecretSettings = new ApplicationSecretSettings("setting-id", SecretHashAlgorithm.NONE.name(), Map.of());
+        client.setClientSecret("clientSecret");
+        client.setSecretSettings(List.of(applicationSecretSettings));
+
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setSecret("clientSecret");
+        clientSecret.setSettingsId("setting-id");
+        clientSecret.setId("secret-id");
+        client.setClientSecrets(List.of(clientSecret));
+
+        when(clientService.renewClientSecret(any(), any(), any())).thenAnswer(i -> {
+            Client c = i.getArgument(1);
+            c.getClientSecrets().getFirst().setSecret("renewedSecret");
+            return Single.just(c);
+        });
+
+        TestObserver<Client> testObserver = dcrService.renewSecret(client, BASE_PATH).test();
+        testObserver.assertNoErrors();
+        testObserver.assertComplete();
+        testObserver.assertValue(c -> c.getClientSecrets().stream().map(ClientSecret::getSecret).anyMatch(s -> s.equals("renewedSecret")));
+        verify(clientService, times(1)).renewClientSecret(any(), argThat(c -> !c.getClientSecrets().isEmpty() && c.getClientSecrets().getFirst().getSecret().equals("renewedSecret")), anyString());
+        verify(clientService, times(1)).update(any());
+        verify(secretService, never()).generateClientSecret(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -875,7 +1089,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(throwable -> "No template found for software_id 123".equals(
                 throwable.getMessage()));
-        verify(clientService, times(0)).create(any());
+        verify(clientService, times(0)).create(any(), any());
     }
 
     @Test
@@ -901,7 +1115,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertError(InvalidClientMetadataException.class);
         testObserver.assertError(throwable -> "Client behind software_id is not a template".equals(
                 throwable.getMessage()));
-        verify(clientService, times(0)).create(any());
+        verify(clientService, times(0)).create(any(), any());
     }
 
     @Test
@@ -932,7 +1146,7 @@ public class DynamicClientRegistrationServiceTest {
 
         when(flowService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
         when(formService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Single.just(Collections.emptyList()));
-        when(emailTemplateService.copyFromClient(DOMAIN_ID, ID_SOURCE, ID_TARGET)).thenReturn(Flowable.empty());
+        when(emailTemplateService.copyFromClient(any(Domain.class), eq(ID_SOURCE), eq(ID_TARGET))).thenReturn(Flowable.empty());
         when(domain.isDynamicClientRegistrationTemplateEnabled()).thenReturn(true);
         when(clientService.findById("123")).thenReturn(Maybe.just(template));
 
@@ -956,7 +1170,7 @@ public class DynamicClientRegistrationServiceTest {
                         client.getCookieSettings() != null &&
                         client.getRiskAssessment() != null
         );
-        verify(clientService, times(1)).create(argThat(duplicateClient -> duplicateClient.getClientSecrets().isEmpty() && duplicateClient.getSecretSettings().isEmpty()));
+        verify(clientService, times(1)).create(any(), argThat(duplicateClient -> duplicateClient.getClientSecrets().isEmpty() && duplicateClient.getSecretSettings().isEmpty()));
     }
 
     @Test
@@ -981,7 +1195,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
         testObserver.assertValue(client -> client.getAuthorizationSignedResponseAlg().equals(JWSAlgorithm.RS256.getName()));
-        verify(clientService, times(1)).create(any());
+        verify(clientService, times(1)).create(any(), any());
     }
 
     @Test
@@ -1375,7 +1589,7 @@ public class DynamicClientRegistrationServiceTest {
         testObserver.assertNoErrors();
         testObserver.assertComplete();
 
-        verify(clientService).create(argThat(client -> client.getAccessTokenValiditySeconds() == FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY
+        verify(clientService).create(any(), argThat(client -> client.getAccessTokenValiditySeconds() == FAPI_OPENBANKING_BRAZIL_DEFAULT_ACCESS_TOKEN_VALIDITY
                 && client.getRefreshTokenValiditySeconds() == 1000
                 && client.getIdTokenValiditySeconds() == 1100));
 

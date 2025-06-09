@@ -4,6 +4,7 @@ apis/AuditApi.ts
 apis/AuthenticationDeviceNotifierApi.ts
 apis/BotDetectionApi.ts
 apis/CertificateApi.ts
+apis/DataPlaneApi.ts
 apis/DefaultApi.ts
 apis/DeviceIdentifierApi.ts
 apis/DeviceIdentifiersApi.ts
@@ -81,6 +82,7 @@ models/ClientSecret.ts
 models/CookieSettings.ts
 models/CorsSettings.ts
 models/Credential.ts
+models/DataPlane.ts
 models/DeviceIdentifier.ts
 models/Domain.ts
 models/DomainUserBulkRequest.ts
@@ -121,6 +123,7 @@ models/NewApplication.ts
 models/NewAuthenticationDeviceNotifier.ts
 models/NewBotDetection.ts
 models/NewCertificate.ts
+models/NewClientSecret.ts
 models/NewDeviceIdentifier.ts
 models/NewDictionary.ts
 models/NewDomain.ts
@@ -195,6 +198,7 @@ models/Scope.ts
 models/ScopeApprovalEntity.ts
 models/ScopeEntity.ts
 models/ScopePage.ts
+models/SecretExpirationSettings.ts
 models/SecurityProfileSettings.ts
 models/SelfServiceAccountManagementSettings.ts
 models/ServiceResource.ts

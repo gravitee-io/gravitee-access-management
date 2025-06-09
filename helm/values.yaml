@@ -138,7 +138,7 @@ mongodb-replicaset:
   replicaSetName: rs0
   image:
     repository: bitnami/mongodb
-    tag: 5.0.9-debian-10-r20
+    tag: 5.0.24-debian-11-r20
   auth:
     enabled: false
   resources:
@@ -561,6 +561,16 @@ api:
     notifier:
       enabled: true
       tryAvoidDuplicateNotification: true
+      client-secret:
+        enabled: true
+        # frequency on which the notifier mechanism will test
+        # if new notifications need to be send
+        # default: 0 0 5 * * * (every day at 5am)
+        cronExpression: 0 0 5 * * *
+        # send notification if client secret is going to expire in less than 20 days, then 15 days before...
+        expiryThresholds: 20,15,10,5,1
+        # Subject of the email send by the email notifier
+        expiryEmailSubject: "Client secret will expire soon"
 
     certificate:
       enabled: true
@@ -616,6 +626,11 @@ api:
 
 gateway:
   enabled: true
+  ## upgrader can be enabled
+  ## this is missing by default to be sure that upgrades are managed on mAPI startup
+  ## * missing upgrader key or upgrader = false will not execute the upgrader job but will execute the upgrade on MAPI startup
+  ## * upgrader = true will execute the upgrader job and the upgrader will not be executed on MAPI startup
+  #upgrader: true
   name: gateway
   type: mongodb
 
@@ -828,8 +843,6 @@ gateway:
   #   request:
   #     transaction:
   #       header: X-Gravitee-Transaction-Id
-  #     request:
-  #       header: X-Gravitee-Request-Id
   # sharding_tags:
   replicaCount: 1
   image:

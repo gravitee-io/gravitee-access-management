@@ -19,9 +19,9 @@ import 'codemirror/mode/htmlmixed/htmlmixed';
 import 'codemirror/addon/selection/mark-selection';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { APP_INITIALIZER, CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule, inject, provideAppInitializer } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -288,7 +288,7 @@ import {
   CreateClaimComponent,
 } from './domain/applications/application/advanced/oauth2/tokens/application-tokens.component';
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
-import { ApplicationCertificatesComponent } from './domain/applications/application/advanced/certificates/certificates.component';
+import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
 import {
   ApplicationMembershipsComponent,
@@ -434,7 +434,6 @@ import { HelpTipsThemeComponent } from './domain/settings/theme/help-tips/help-t
 import { EmailTemplateFactoryService } from './services/email.template.factory.service';
 import { FormTemplateFactoryService } from './services/form.template.factory.service';
 import { LicenseGuard } from './guards/license-guard.service';
-import { ApplicationClientSecretDialogModule } from './domain/applications/client-secret/application-client-secret-dialog.module';
 import { MfaChallengeComponent } from './domain/applications/application/advanced/factors/mfa-challenge/mfa-challenge.component';
 import { InfoBannerComponent } from './domain/applications/application/advanced/factors/info-banner/info-banner.component';
 import { ExpressionInfoDialogComponent } from './domain/applications/application/advanced/factors/expression-info-dialog/expression-info-dialog.component';
@@ -449,6 +448,11 @@ import { PasswordPolicyService } from './services/password-policy.service';
 import { CreateGroupMapperComponent, ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
 import { IdentitiesOrganizationResolver } from './resolvers/identities-organization.resolver';
 import { PasswordPolicyStatusComponent } from './domain/settings/password-policy/pass-policy-status/password-policy-status.component';
+import { DataPlaneService } from './services/data-plane.service';
+import { DataPlanesResolver } from './resolvers/data-planes.resolver';
+import { SecretsCertificatesModule } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.module';
+import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secrets.component';
+import { DomainStoreService } from './stores/domain.store';
 
 @NgModule({
   declarations: [
@@ -626,7 +630,7 @@ import { PasswordPolicyStatusComponent } from './domain/settings/password-policy
     AddScopeComponent,
     ApplicationTokensComponent,
     ApplicationGrantFlowsComponent,
-    ApplicationCertificatesComponent,
+    ApplicationSecretsCertificatesComponent,
     ApplicationMetadataComponent,
     ApplicationMembershipsComponent,
     ApplicationFactorsComponent,
@@ -703,15 +707,16 @@ import { PasswordPolicyStatusComponent } from './domain/settings/password-policy
     MfaChallengeComponent,
     FactorsSelectDialogComponent,
     PasswordPoliciesComponent,
+    DomainSettingsSecretsComponent,
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  bootstrap: [AppComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
-    HttpClientModule,
     AppRoutingModule,
-
     MatAutocompleteModule,
     MatButtonModule,
     MatButtonToggleModule,
@@ -745,7 +750,6 @@ import { PasswordPolicyStatusComponent } from './domain/settings/password-policy
     MatStepperModule,
     MatBadgeModule,
     MaterialDesignFrameworkModule,
-
     GioMatConfigModule,
     GioMenuModule,
     GioTopBarModule,
@@ -756,16 +760,15 @@ import { PasswordPolicyStatusComponent } from './domain/settings/password-policy
     GioSafePipeModule,
     GioSaveBarModule,
     GioLicenseExpirationNotificationModule,
-
     DragDropModule,
     FlexLayoutModule,
     NgxDatatableModule,
     CodemirrorModule,
     ClipboardModule,
     HighchartsChartModule,
-    ApplicationClientSecretDialogModule,
     AccountTokenDialogModule,
     NgOptimizedImage,
+    SecretsCertificatesModule,
   ],
   providers: [
     DomainService,
@@ -893,20 +896,20 @@ import { PasswordPolicyStatusComponent } from './domain/settings/password-policy
     PasswordPoliciesResolver,
     PasswordPolicyResolver,
     PasswordPolicyService,
+    DataPlaneService,
+    DataPlanesResolver,
+    DomainStoreService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,
       multi: true,
     },
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initCurrentUser,
-      multi: true,
-      deps: [AuthService, EnvironmentService],
-    },
+    provideAppInitializer(() => {
+      const initializerFn = initCurrentUser(inject(AuthService), inject(EnvironmentService));
+      return initializerFn();
+    }),
+    provideHttpClient(withInterceptorsFromDi()),
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  bootstrap: [AppComponent],
 })
 export class AppModule {}
 

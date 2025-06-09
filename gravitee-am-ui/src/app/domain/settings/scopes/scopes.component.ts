@@ -26,6 +26,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-scopes',
   templateUrl: './scopes.component.html',
   styleUrls: ['./scopes.component.scss'],
+  standalone: false,
 })
 export class DomainSettingsScopesComponent implements OnInit {
   private searchValue: string;

@@ -17,7 +17,11 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import {
+    deleteDomain,
+    patchDomain,
+    setupDomainForTest,
+} from '@management-commands/domain-management-commands';
 import {
   createApplication,
   deleteApplication,
@@ -36,10 +40,12 @@ global.fetch = fetch;
 let accessToken: string;
 let domain: Domain;
 let application;
+let secret;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-applications'), { accessToken }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('domain-applications'), { accessToken })
+      .then((it) => it.domain)
 });
 
 describe('when creating applications', () => {
@@ -64,6 +70,7 @@ describe('when creating applications', () => {
       expect(createdApp.description).toEqual(app.description);
       expect(createdApp.type).toEqual(app.type);
       application = createdApp;
+      secret = createdApp.secrets[0];
     });
   }
 });
@@ -93,10 +100,9 @@ describe('after creating applications', () => {
   });
 
   it('must renew application secrets', async () => {
-    const renewedSecretApp = await renewApplicationSecrets(domain.id, accessToken, application.id);
-    expect(renewedSecretApp.settings.oauth.clientId).toEqual(application.settings.oauth.clientId);
-    expect(renewedSecretApp.settings.oauth.clientSecret).not.toEqual(application.settings.oauth.clientSecret);
-    application = renewedSecretApp;
+    const renewedSecret = await renewApplicationSecrets(domain.id, accessToken, application.id, secret.id);
+    expect(renewedSecret.secret).not.toEqual(secret.secret);
+    secret = renewedSecret;
   });
 
   it('must find all Applications', async () => {
@@ -164,6 +170,169 @@ describe('Entrypoints: User accounts', () => {
     expect(accountSettings.rememberMe).toBe(true);
     expect(accountSettings.rememberMeDuration).toBe(7200);
   });
+});
+
+describe('Redirect URI', () => {
+    it('Should not turn dynamic params when any application contains redirect uris with same hostname and path', async () => {
+        expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+        const app = {
+            name: faker.commerce.productName(),
+            type: 'browser',
+            description: faker.lorem.paragraph(),
+            redirectUris: ['https://callback/?param=test', 'https://callback/?param2=test2'],
+        };
+
+        const createdApp = await createApplication(domain.id, accessToken, app);
+
+        try {
+            await patchDomain(domain.id, accessToken, {
+                oidc: {
+                    clientRegistrationSettings: {
+                        allowRedirectUriParamsExpressionLanguage: true,
+                    },
+                },
+            });
+        } catch (ex) {
+            expect(ex.response.status).toEqual(400);
+        }
+
+        expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+
+        await deleteApplication(domain.id, accessToken, createdApp.id)
+
+    });
+
+    it('Should turn on dynamic parameters evaluation', async () => {
+        expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+        domain = await patchDomain(domain.id, accessToken, {
+            oidc: {
+                clientRegistrationSettings: {
+                    allowRedirectUriParamsExpressionLanguage: true,
+                },
+            },
+        });
+        expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(true);
+    })
+    it('Should create app with redirect URI with EL', async () => {
+        const app = {
+            name: faker.commerce.productName(),
+            type: 'browser',
+            description: faker.lorem.paragraph(),
+            redirectUris: ['https://callback/?param={#context.attributes[\'test\']}'],
+        };
+
+        const createdApp = await createApplication(domain.id, accessToken, app);
+        expect(createdApp.settings.oauth.redirectUris).toStrictEqual(["https://callback/?param={#context.attributes['test']}"]);
+    });
+
+    it('Should add new redirect URI with EL', async () => {
+        const app = {
+            name: faker.commerce.productName(),
+            type: 'browser',
+            description: faker.lorem.paragraph(),
+            redirectUris: ['https://callback/?param={#context.attributes[\'test\']}'],
+        };
+
+        const patch = {
+            settings: {
+                oauth: {
+                    redirectUris: ['https://callback2/?param={#context.attributes[\'test\']}', 'https://callback/?param={#context.attributes[\'test\']}']
+                }
+            }
+        }
+
+        const createdApp = await createApplication(domain.id, accessToken, app)
+            .then(app => patchApplication(domain.id, accessToken, patch, app.id));
+
+        expect(createdApp.settings.oauth.redirectUris).toStrictEqual(["https://callback2/?param={#context.attributes[\'test\']}", "https://callback/?param={#context.attributes['test']}"]);
+    });
+
+    it('Should add new redirect URI with EL with many params', async () => {
+        const app = {
+            name: faker.commerce.productName(),
+            type: 'browser',
+            description: faker.lorem.paragraph(),
+            redirectUris: ['https://callback/?param={#context.attributes[\'test\']}'],
+        };
+
+        const patch = {
+            settings: {
+                oauth: {
+                    redirectUris: ['https://callback/?param={#context.attributes[\'test\']}', 'https://callback2/?param={#context.attributes[\'test\']}&param2={#context.attributes[\'test\']}&xxx=123&test']
+                }
+            }
+        }
+
+        const createdApp = await createApplication(domain.id, accessToken, app)
+            .then(app => patchApplication(domain.id, accessToken, patch, app.id));
+
+        expect(createdApp.settings.oauth.redirectUris).toStrictEqual(["https://callback/?param={#context.attributes[\'test\']}", "https://callback2/?param={#context.attributes[\'test\']}&param2={#context.attributes[\'test\']}&xxx=123&test"]);
+    });
+
+    it('Should not add new redirect URI with EL if its the same domain and path', async () => {
+        const app = {
+            name: faker.commerce.productName(),
+            type: 'browser',
+            description: faker.lorem.paragraph(),
+            redirectUris: ['https://callback/path?param={#context.attributes[\'test\']}'],
+        };
+
+        const patch = {
+            settings: {
+                oauth: {
+                    redirectUris: ['https://callback/path?param2={#context.attributes[\'test\']}', 'https://callback/path?param={#context.attributes[\'test\']}']
+                }
+            }
+        }
+
+        let createdApp = await createApplication(domain.id, accessToken, app);
+
+        try {
+            createdApp = await patchApplication(domain.id, accessToken, patch, createdApp.id);
+        } catch (ex) {
+            expect(ex.response.status).toEqual(400);
+        }
+
+        expect(createdApp.settings.oauth.redirectUris).toStrictEqual(["https://callback/path?param={#context.attributes['test']}"]);
+    });
+
+    it('Should not add new redirect with fragment', async () => {
+        const app = {
+            name: faker.commerce.productName(),
+            type: 'browser',
+            description: faker.lorem.paragraph(),
+            redirectUris: ['https://callback/path?param={#context.attributes[\'test\']}'],
+        };
+
+        const patch = {
+            settings: {
+                oauth: {
+                    redirectUris: ['https://callback/path?param2={#context.attributes[\'test\']}#fragment']
+                }
+            }
+        }
+
+        const createdApp = await createApplication(domain.id, accessToken, app);
+
+        try {
+            await patchApplication(domain.id, accessToken, patch, createdApp.id);
+        } catch (ex) {
+            expect(ex.response.status).toEqual(400);
+        }
+
+    });
+
+    it('Should turn off dynamic parameters evaluation', async () => {
+        domain = await patchDomain(domain.id, accessToken, {
+            oidc: {
+                clientRegistrationSettings: {
+                    allowRedirectUriParamsExpressionLanguage: false,
+                },
+            },
+        });
+        expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
+    });
+
 });
 
 afterAll(async () => {

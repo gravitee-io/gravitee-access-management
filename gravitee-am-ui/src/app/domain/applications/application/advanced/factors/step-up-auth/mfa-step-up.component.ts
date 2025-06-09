@@ -23,6 +23,7 @@ import { StepUpAuth } from '../model';
   selector: 'mfa-step-up',
   templateUrl: './mfa-step-up.component.html',
   styleUrls: ['./mfa-step-up.component.scss'],
+  standalone: false,
 })
 export class MfaStepUpComponent {
   @Output() settingsChange: EventEmitter<StepUpAuth> = new EventEmitter<StepUpAuth>();

@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-cookie-settings',
   templateUrl: './cookie-settings.component.html',
   styleUrls: ['./cookie-settings.component.scss'],
+  standalone: false,
 })
 export class CookieSettingsComponent implements OnInit, OnChanges {
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix

@@ -41,7 +41,7 @@ import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.factor.FactorStatus;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.service.exception.FactorNotFoundException;
 import io.gravitee.am.service.exception.RateLimitException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -479,7 +479,7 @@ public class AccountFactorsEndpointHandler {
         final User user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
         final String factorId = routingContext.request().getParam(FACTOR_ID);
 
-        accountService.removeFactor(user.getId(), factorId, new DefaultUser(user))
+        accountService.removeFactor(user, factorId, new DefaultUser(user))
                 .subscribe(
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         routingContext::fail
@@ -561,7 +561,7 @@ public class AccountFactorsEndpointHandler {
         }
 
         Observable.fromIterable(recoveryCodes)
-                .flatMapCompletable(recoveryCode -> accountService.removeFactor(user.getId(), recoveryCode, new DefaultUser(user)))
+                .flatMapCompletable(recoveryCode -> accountService.removeFactor(user, recoveryCode, new DefaultUser(user)))
                 .subscribe(
                         () -> AccountResponseHandler.handleNoBodyResponse(routingContext),
                         routingContext::fail

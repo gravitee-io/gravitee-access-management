@@ -20,6 +20,7 @@ import { ActivatedRoute } from '@angular/router';
   selector: 'app-provider',
   templateUrl: './provider.component.html',
   styleUrls: ['./provider.component.scss'],
+  standalone: false,
 })
 export class ProviderComponent implements OnInit {
   private domainId: string;

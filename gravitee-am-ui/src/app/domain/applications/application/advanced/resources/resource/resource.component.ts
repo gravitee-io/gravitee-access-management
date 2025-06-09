@@ -22,6 +22,7 @@ import { ApplicationService } from '../../../../../../services/application.servi
   selector: 'app-application-resource',
   templateUrl: './resource.component.html',
   styleUrls: ['./resource.component.scss'],
+  standalone: false,
 })
 export class ApplicationResourceComponent implements OnInit {
   resource: any;

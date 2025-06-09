@@ -45,6 +45,12 @@
       "widget": "password",
       "sensitive": true
     },
+    "useSystemCluster" : {
+      "type" : "boolean",
+      "default" : false,
+      "title": "Use System Cluster",
+      "description": "Use MongoCluster configured in the system configuration instead of the values defined in this form"
+    },
     "database" : {
       "type" : "string",
       "title": "The database used to run query",
@@ -52,7 +58,6 @@
     },
     "usersCollection" : {
       "type" : "string",
-      "default": "users",
       "title": "The collection used to run query",
       "description": "The collection which is containing all the users."
     },
@@ -154,5 +159,18 @@
     "usernameField",
     "passwordField",
     "passwordEncoder"
+  ],
+  "anyOf":[
+    {
+      "required": [
+        "uri"
+      ]
+    },
+    {
+      "required": [
+        "host",
+        "port"
+      ]
+    }
   ]
 }

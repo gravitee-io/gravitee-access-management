@@ -19,16 +19,17 @@ package io.gravitee.am.gateway.handler.risk;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.risk.RiskAssessmentHandler;
 import io.gravitee.am.model.Device;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserActivity;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.DeviceService;
-import io.gravitee.am.service.UserActivityService;
 import io.gravitee.risk.assessment.api.assessment.Assessment;
 import io.gravitee.risk.assessment.api.assessment.AssessmentMessageResult;
 import io.gravitee.risk.assessment.api.assessment.AssessmentResult;
@@ -72,10 +73,10 @@ import static org.mockito.Mockito.when;
 public class RiskAssessmentHandlerTest {
 
     @Mock
-    private DeviceService deviceService;
+    private DeviceGatewayService deviceService;
 
     @Mock
-    private UserActivityService userActivityService;
+    private UserActivityGatewayService userActivityService;
 
     @Mock
     private EventBus eventBus;
@@ -86,6 +87,7 @@ public class RiskAssessmentHandlerTest {
     private SpyRoutingContext routingContext;
     private Client client;
     private User user;
+    private Domain domain;
 
     @Before
     public void before() {
@@ -94,9 +96,10 @@ public class RiskAssessmentHandlerTest {
         client.setClientId("client-id");
         user = new User();
         user.setId("user-id");
-
+        domain = new Domain();
+        domain.setId(user.getReferenceId());
         routingContext = new SpyRoutingContext();
-        handler = new RiskAssessmentHandler(deviceService, userActivityService, eventBus, objectMapper);
+        handler = new RiskAssessmentHandler(deviceService, userActivityService, eventBus, objectMapper, domain);
     }
 
     @Test
@@ -167,7 +170,7 @@ public class RiskAssessmentHandlerTest {
         when(eventBus.request(anyString(), anyString())).thenReturn(Single.just(mockMessage));
 
         doReturn(Flowable.just(new Device().setDeviceId("1"), new Device().setDeviceId("2")))
-                .when(deviceService).findByDomainAndUser(anyString(), any());
+                .when(deviceService).findByDomainAndUser(any(), any());
 
         handler.handle(routingContext);
 
@@ -193,7 +196,7 @@ public class RiskAssessmentHandlerTest {
         routingContext.session().put(DEVICE_ID, "deviceId");
 
         doReturn(Flowable.error(new IllegalArgumentException()))
-                .when(deviceService).findByDomainAndUser(anyString(), any());
+                .when(deviceService).findByDomainAndUser(any(), any());
 
         handler.handle(routingContext);
 
@@ -235,7 +238,7 @@ public class RiskAssessmentHandlerTest {
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         var mockMessage = Mockito.mock(Message.class);
         when(mockMessage.body()).thenReturn(returnMessageResult(NONE, NONE, HIGH));
@@ -257,7 +260,7 @@ public class RiskAssessmentHandlerTest {
         routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
         routingContext.setUser(new io.vertx.rxjava3.ext.auth.User(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
 
-        doReturn(Flowable.error(new IllegalArgumentException())).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        doReturn(Flowable.error(new IllegalArgumentException())).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         handler.handle(routingContext);
 
@@ -278,7 +281,7 @@ public class RiskAssessmentHandlerTest {
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         var mockMessage = Mockito.mock(Message.class);
         when(mockMessage.body()).thenReturn("{ wrong message }");
@@ -303,7 +306,7 @@ public class RiskAssessmentHandlerTest {
         doReturn(Flowable.just(
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date()),
                 new UserActivity().setLatitude(50.34D).setLongitude(3.025D).setCreatedAt(new Date())
-        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(anyString(), any(), anyString(), eq(2));
+        )).when(userActivityService).findByDomainAndTypeAndUserAndLimit(any(Domain.class), any(), anyString(), eq(2));
 
         when(eventBus.request(anyString(), anyString())).thenReturn(Single.error(new IllegalArgumentException("Cannot get message")));
 

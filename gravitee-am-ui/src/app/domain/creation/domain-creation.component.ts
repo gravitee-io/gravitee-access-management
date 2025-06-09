@@ -24,10 +24,13 @@ import { SnackbarService } from '../../services/snackbar.service';
   selector: 'app-creation',
   templateUrl: './domain-creation.component.html',
   styleUrls: ['./domain-creation.component.scss'],
+  standalone: false,
 })
 export class DomainCreationComponent implements OnInit {
   domain: any = {};
+  dataPlanes: any[];
   displayNavLink: boolean;
+  oneDataPlane = false;
   @ViewChild('createDomainBtn', { static: true }) createDomainBtn: any;
 
   constructor(
@@ -39,6 +42,13 @@ export class DomainCreationComponent implements OnInit {
 
   ngOnInit() {
     this.displayNavLink = !this.router.url.startsWith('/settings');
+    this.dataPlanes = this.route.snapshot.data['dataPlanes'];
+    if (this.dataPlanes.length === 1) {
+      this.domain.dataPlaneId = this.dataPlanes[0].id;
+      this.oneDataPlane = true;
+    } else {
+      this.dataPlanes.sort((a, b) => a.name.localeCompare(b.name));
+    }
   }
 
   create() {
@@ -48,7 +58,7 @@ export class DomainCreationComponent implements OnInit {
       (data) => {
         this.createDomainBtn.nativeElement.loading = false;
         this.snackbarService.open('Domain ' + data.name + ' created');
-        this.router.navigate(['..', data.hrid], { relativeTo: this.route });
+        this.router.navigate(['..', data.id], { relativeTo: this.route });
       },
       (error: unknown) => {
         this.createDomainBtn.nativeElement.loading = false;

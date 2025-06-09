@@ -28,6 +28,7 @@ import { Challenge, Enroll, MfaFactor, RememberDevice, StepUpAuth } from './mode
   selector: 'app-application-factors',
   templateUrl: './factors.component.html',
   styleUrls: ['./factors.component.scss'],
+  standalone: false,
 })
 export class ApplicationFactorsComponent implements OnInit {
   private domainId: string;

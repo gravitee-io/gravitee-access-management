@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.gateway.standalone</groupId>
         <artifactId>gravitee-am-gateway-standalone</artifactId>
-        <version>4.7.0-SNAPSHOT</version>
+        <version>4.9.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-standalone-container</artifactId>
@@ -55,6 +55,13 @@
             <groupId>io.gravitee.node</groupId>
             <artifactId>gravitee-node-cluster-plugin-standalone</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-dataplane</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
 
         <!-- Gravitee.io Access Management -->
         <dependency>

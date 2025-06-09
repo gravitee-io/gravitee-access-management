@@ -15,26 +15,26 @@
  */
 package io.gravitee.am.gateway.handler.common.group.impl;
 
+import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.gateway.handler.common.group.GroupManager;
 import io.gravitee.am.model.Group;
-import io.gravitee.am.repository.management.api.GroupRepository;
 import io.reactivex.rxjava3.core.Flowable;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 
 import java.util.List;
 
+@AllArgsConstructor
 public class DefaultGroupManager implements GroupManager {
 
-    @Autowired
-    private GroupRepository repository;
+    private GroupRepository groupRepository;
 
     @Override
     public Flowable<Group> findByMember(String userId) {
-        return repository.findByMember(userId);
+        return groupRepository.findByMember(userId);
     }
 
     @Override
     public Flowable<Group> findByIds(List<String> ids) {
-        return repository.findByIdIn(ids);
+        return groupRepository.findByIdIn(ids);
     }
 }

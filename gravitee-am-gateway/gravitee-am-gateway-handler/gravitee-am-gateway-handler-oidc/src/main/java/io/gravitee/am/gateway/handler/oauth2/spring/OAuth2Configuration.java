@@ -30,8 +30,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.Exte
 import io.gravitee.am.gateway.handler.oauth2.service.granter.extensiongrant.impl.ExtensionGrantManagerImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.IntrospectionService;
 import io.gravitee.am.gateway.handler.oauth2.service.introspection.impl.IntrospectionServiceImpl;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.RevocationTokenService;
-import io.gravitee.am.gateway.handler.oauth2.service.revocation.impl.RevocationTokenServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.OAuthRevocationTokenService;
+import io.gravitee.am.gateway.handler.oauth2.service.revocation.impl.OAuthRevocationTokenServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeService;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.impl.ScopeManagerImpl;
@@ -96,8 +96,8 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
     @Bean
-    public RevocationTokenService revocationTokenService() {
-        return new RevocationTokenServiceImpl();
+    public OAuthRevocationTokenService revocationTokenService() {
+        return new OAuthRevocationTokenServiceImpl();
     }
 
     @Bean

@@ -24,6 +24,7 @@ import { DeviceIdentifierService } from '../../../../services/device-identifier.
   selector: 'app-device-identifiers-creation',
   templateUrl: './device-identifier-creation.component.html',
   styleUrls: ['./device-identifier-creation.component.scss'],
+  standalone: false,
 })
 export class DeviceIdentifierCreationComponent implements OnInit {
   private domainId: string;

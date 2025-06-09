@@ -104,7 +104,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n\t\"name\": \"oauth2-app-version\", \n\t\"description\": \"test oauth2 authorization framework specifications\"\n}"
+							"raw": "{\n\t\"name\": \"oauth2-app-version\", \n\t\"description\": \"test oauth2 authorization framework specifications\", \n\t\"dataPlaneId\": \"default\"\n}"
 						},
 						"url": {
 							"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
@@ -1496,7 +1496,8 @@
 													"var body = JSON.parse(responseBody);",
 													"pm.environment.set('client3', body.id);",
 													"pm.environment.set('clientId3', body.settings.oauth.clientId);",
-													"pm.environment.set('clientSecret3', body.settings.oauth.clientSecret);"
+													"pm.environment.set('clientSecret3', body.settings.oauth.clientSecret);",
+													"pm.environment.set('clientSecretId3', body.secrets[0].id);"
 												],
 												"type": "text/javascript"
 											}
@@ -1673,7 +1674,7 @@
 													"});",
 													"",
 													"var body = JSON.parse(responseBody);",
-													"pm.environment.set('clientSecretNew3', body.settings.oauth.clientSecret);",
+													"pm.environment.set('clientSecretNew3', body.secret);",
 													"",
 													"// wait for sync process",
 													"setTimeout(function(){}, 10000);"
@@ -1696,7 +1697,7 @@
 											"raw": ""
 										},
 										"url": {
-											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client3}}/secret/_renew",
+											"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/{{domain}}/applications/{{client3}}/secrets/{{clientSecretId3}}/_renew",
 											"host": [
 												"{{management_url}}"
 											],
@@ -1710,7 +1711,8 @@
 												"{{domain}}",
 												"applications",
 												"{{client3}}",
-												"secret",
+												"secrets",
+                                                "{{clientSecretId3}}",
 												"_renew"
 											]
 										}
@@ -12654,7 +12656,7 @@
 											"    pm.expect(body).to.have.property('error_description');",
 											"    ",
 											"    pm.expect(body.error).to.eql('invalid_client');",
-											"    pm.expect(body.error_description).to.eql('Client authentication failed due to unknown or invalid client');",
+											"    pm.expect(body.error_description).to.eql('Client authentication failed due to unknown clientId, expired or invalid client secret');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -13487,7 +13489,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"name\": \"cross-app-version\", \n\t\"description\": \"test cross domain authorization framework specifications\"\n}"
+									"raw": "{\n\t\"name\": \"cross-app-version\", \n\t\"description\": \"test cross domain authorization framework specifications\", \n\t\"dataPlaneId\": \"default\"\n}"
 								},
 								"url": {
 									"raw": "{{management_url}}/management/organizations/{{defaultOrganizationId}}/environments/{{defaultEnvironmentId}}/domains/",
@@ -14817,7 +14819,7 @@
 											"    pm.response.to.be.header('Content-Type', 'application/json');",
 											"    var body = pm.response.json();",
 											"    pm.expect(body.error).to.eql('invalid_client');",
-											"    pm.expect(body.error_description).to.eql('Client authentication failed due to unknown or invalid client');",
+											"    pm.expect(body.error_description).to.eql('Client authentication failed due to unknown clientId, expired or invalid client secret');",
 											"});"
 										],
 										"type": "text/javascript"

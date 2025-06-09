@@ -20,10 +20,12 @@ import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.oidc.StandardClaims;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
 import io.gravitee.am.gateway.handler.account.model.UpdateUsername;
 import io.gravitee.am.gateway.handler.account.services.impl.AccountServiceImpl;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
@@ -35,9 +37,7 @@ import io.gravitee.am.model.PasswordPolicy;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.SelfServiceAccountManagementSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.InvalidPasswordException;
@@ -78,7 +78,7 @@ import static org.mockito.Mockito.when;
 public class AccountServiceTest {
 
     @Mock
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Mock
     private UserValidator userValidator;
@@ -118,16 +118,16 @@ public class AccountServiceTest {
         when(credential.getReferenceType()).thenReturn(ReferenceType.DOMAIN);
         when(credential.getReferenceId()).thenReturn("id");
 
-        when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
-        when(credentialService.delete(credentialId)).thenReturn(Completable.complete());
+        when(credentialService.findById(domain, credentialId)).thenReturn(Maybe.just(credential));
+        when(credentialService.delete(domain, credentialId)).thenReturn(Completable.complete());
 
         TestObserver testObserver = accountService.removeWebAuthnCredential(userId, credentialId, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(credentialService, times(1)).findById(credentialId);
-        verify(credentialService, times(1)).delete(credentialId);
+        verify(credentialService, times(1)).findById(domain, credentialId);
+        verify(credentialService, times(1)).delete(domain, credentialId);
         verify(auditService, times(1)).report(any());
     }
 
@@ -137,15 +137,15 @@ public class AccountServiceTest {
         final String credentialId = "credential-id";
         final User principal = new DefaultUser();
 
-        when(credentialService.findById(credentialId)).thenReturn(Maybe.empty());
+        when(credentialService.findById(domain, credentialId)).thenReturn(Maybe.empty());
 
         TestObserver testObserver = accountService.removeWebAuthnCredential(userId, credentialId, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(credentialService, times(1)).findById(credentialId);
-        verify(credentialService, never()).delete(credentialId);
+        verify(credentialService, times(1)).findById(domain, credentialId);
+        verify(credentialService, never()).delete(domain, credentialId);
         verify(auditService, never()).report(any());
     }
 
@@ -157,15 +157,15 @@ public class AccountServiceTest {
         final Credential credential = mock(Credential.class);
         when(credential.getUserId()).thenReturn("unknown-user-id");
 
-        when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
+        when(credentialService.findById(domain, credentialId)).thenReturn(Maybe.just(credential));
 
         TestObserver testObserver = accountService.removeWebAuthnCredential(userId, credentialId, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(credentialService, times(1)).findById(credentialId);
-        verify(credentialService, never()).delete(credentialId);
+        verify(credentialService, times(1)).findById(domain, credentialId);
+        verify(credentialService, never()).delete(domain, credentialId);
         verify(auditService, never()).report(any());
     }
 
@@ -176,15 +176,15 @@ public class AccountServiceTest {
         final String deviceName = "device-name";
         final User principal = new DefaultUser();
 
-        when(credentialService.findById(credentialId)).thenReturn(Maybe.empty());
+        when(credentialService.findById(domain, credentialId)).thenReturn(Maybe.empty());
 
         TestObserver testObserver = accountService.updateWebAuthnCredential(userId, credentialId, deviceName, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertNotComplete();
         testObserver.assertError(CredentialNotFoundException.class);
 
-        verify(credentialService, times(1)).findById(credentialId);
-        verify(credentialService, never()).update(any());
+        verify(credentialService, times(1)).findById(domain, credentialId);
+        verify(credentialService, never()).update(any(), any());
         verify(auditService, never()).report(any());
     }
 
@@ -197,16 +197,16 @@ public class AccountServiceTest {
 
         Credential credential = new Credential();
         credential.setUserId("wrong-user-id");
-        when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
+        when(credentialService.findById(domain, credentialId)).thenReturn(Maybe.just(credential));
 
         TestObserver testObserver = accountService.updateWebAuthnCredential(userId, credentialId, deviceName, principal).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(credentialService, times(1)).findById(credentialId);
+        verify(credentialService, times(1)).findById(domain, credentialId);
         // we do not update the credential
-        verify(credentialService, never()).update(any());
+        verify(credentialService, never()).update(any(), any());
         verify(auditService, never()).report(any());
     }
 
@@ -219,9 +219,9 @@ public class AccountServiceTest {
 
         Credential credential = new Credential();
         credential.setUserId("user-id");
-        when(credentialService.findById(credentialId)).thenReturn(Maybe.just(credential));
+        when(credentialService.findById(domain, credentialId)).thenReturn(Maybe.just(credential));
         ArgumentCaptor<Credential> argumentCaptor = ArgumentCaptor.forClass(Credential.class);
-        when(credentialService.update(argumentCaptor.capture())).thenReturn(Single.just(credential));
+        when(credentialService.update(any(), argumentCaptor.capture())).thenReturn(Single.just(credential));
         credential.setReferenceType(ReferenceType.DOMAIN);
         credential.setReferenceId("id");
 
@@ -230,8 +230,8 @@ public class AccountServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
 
-        verify(credentialService, times(1)).findById(credentialId);
-        verify(credentialService, times(1)).update(any());
+        verify(credentialService, times(1)).findById(domain, credentialId);
+        verify(credentialService, times(1)).update(any(), any());
         verify(auditService, times(1)).report(any());
 
         Credential updatedCredential = argumentCaptor.getValue();

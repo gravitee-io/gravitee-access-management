@@ -23,6 +23,7 @@ public enum Type {
 
     DOMAIN,
     APPLICATION,
+    APPLICATION_SECRET,
     IDENTITY_PROVIDER,
     CERTIFICATE,
     EXTENSION_GRANT,
@@ -46,5 +47,6 @@ public enum Type {
     I18N_DICTIONARY,
     THEME,
     PASSWORD_POLICY,
-    UNKNOWN // used during unmarshalling to avoid Exception which will block the sync process
+    UNKNOWN, // used during unmarshalling to avoid Exception which will block the sync process
+    REVOKE_TOKEN
 }

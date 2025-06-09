@@ -21,6 +21,7 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   selector: 'alert-notifier-creation-step2',
   templateUrl: './step2.component.html',
   styleUrls: ['./step2.component.scss'],
+  standalone: false,
 })
 export class DomainAlertNotifierCreationStep2Component implements OnChanges {
   @Input() alertNotifier: any;

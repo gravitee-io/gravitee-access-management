@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oidc.service.clientregistration.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jwt.JWTParser;
@@ -37,6 +39,8 @@ import io.gravitee.am.gateway.handler.oidc.service.jws.JWSService;
 import io.gravitee.am.gateway.handler.oidc.service.utils.JWAlgorithmUtils;
 import io.gravitee.am.gateway.handler.oidc.service.utils.SubjectTypeUtils;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.CertificateService;
@@ -44,11 +48,15 @@ import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
+import io.gravitee.am.service.exception.ApplicationSecretConfigurationException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.impl.SecretService;
+import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.gravitee.am.service.utils.GrantTypeUtils;
 import io.gravitee.am.service.utils.ResponseTypeUtils;
+import io.micrometer.common.util.StringUtils;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -64,13 +72,17 @@ import org.springframework.core.env.Environment;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -134,13 +146,16 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private SecretService secretService;
+
     @Override
     public Single<Client> create(DynamicClientRegistrationRequest request, String basePath) {
         //If Dynamic client registration from template is enabled and request contains a software_id
         if (domain.isDynamicClientRegistrationTemplateEnabled() && request.getSoftwareId() != null && request.getSoftwareId().isPresent()) {
-            return this.createClientFromTemplate(request, basePath);
+            return this.createClientFromTemplate(request, basePath).map(this::mapClientSecret);
         }
-        return this.createClientFromRequest(request, basePath);
+        return this.createClientFromRequest(request, basePath).map(this::mapClientSecret);
     }
 
     @Override
@@ -148,7 +163,8 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         return this.validateClientPatchRequest(request)
                 .map(req -> req.patch(toPatch))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::update);
+                .flatMap(clientService::update)
+                .map(this::mapClientSecret);
     }
 
     @Override
@@ -156,30 +172,107 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
         return this.validateClientRegistrationRequest(request)
                 .map(req -> req.patch(toUpdate))
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::update);
+                .flatMap(clientService::update)
+                .map(this::mapClientSecret);
     }
 
     @Override
     public Single<Client> delete(Client toDelete) {
-        return this.clientService.delete(toDelete.getId()).toSingleDefault(toDelete);
+        return this.clientService.delete(toDelete.getId(), domain).toSingleDefault(toDelete);
     }
 
     @Override
-    public Single<Client> renewSecret(Client toRenew, String basePath) {
-        return clientService.renewClientSecret(domain.getId(), toRenew.getId())
+    public Single<Client> renewSecret(Client client, String basePath) {
+
+        Optional<ClientSecret> clientSecretToRenew = determinateClientSecret(client);
+
+        //Mapping client secret to list to handle the rotation.
+        if (clientSecretToRenew.isEmpty()) {
+            ApplicationSecretSettings noneSettings;
+            if (client.getSecretSettings() == null || client.getSecretSettings().isEmpty() || client.getSecretSettings().stream().noneMatch(setting -> setting.getAlgorithm().equalsIgnoreCase(SecretHashAlgorithm.NONE.name()))) {
+                noneSettings = buildNoneSecretSettings();
+                client.setSecretSettings(List.of(noneSettings));
+            } else {
+                noneSettings = client.getSecretSettings().stream().filter(setting -> setting.getAlgorithm().equalsIgnoreCase(SecretHashAlgorithm.NONE.name())).findFirst().get();
+            }
+            String rawClientSecret;
+            if (StringUtils.isNotBlank(client.getClientSecret())) {
+                rawClientSecret = client.getClientSecret();
+            } else {
+                rawClientSecret = SecureRandomString.generate();
+            }
+            clientSecretToRenew = Optional.of(secretService.generateClientSecret("Default", rawClientSecret, noneSettings, domain.getSecretExpirationSettings(), client.getSecretExpirationSettings()));
+            client.setClientSecrets(List.of(clientSecretToRenew.get()));
+        }
+        String clientSecretId = clientSecretToRenew.get().getId();
+
+        return clientService.renewClientSecret(domain, client, clientSecretId)
                 // after each modification we must update the registration token
-                .flatMap(clientWithRenewedSecret -> applyRegistrationAccessToken(basePath, clientWithRenewedSecret))
+                .flatMap(renewed -> applyRegistrationAccessToken(basePath, renewed))
                 .flatMap(updatedClient -> {
                     // force the client secret to null to prevent persistence
-                    final var rawSecret = updatedClient.getClientSecret();
-                    updatedClient.setClientSecret(null);
+                    var rawSecret = updatedClient.getClientSecrets().stream().filter(cs -> cs.getId().equals(clientSecretId)).findFirst().orElse(new ClientSecret());
                     return clientService.update(updatedClient)
                             .map(app -> {
                                 // restore the client secret to make it accessible in the DRC output
-                                app.setClientSecret(rawSecret);
+                                app.setClientSecret(rawSecret.getSecret());
                                 return app;
                             });
                 });
+    }
+
+    private ApplicationSecretSettings buildNoneSecretSettings() {
+        try {
+            ObjectMapper om = new ObjectMapper();
+            SecretHashAlgorithm noneAlg = SecretHashAlgorithm.NONE;
+            Map<String, Object> noProperties = Map.of();
+            final var serializedConfig = om.writeValueAsString(List.of(noneAlg, noProperties));
+            final var id = Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(serializedConfig.getBytes()));
+            return new ApplicationSecretSettings(id, noneAlg.name(), noProperties);
+        } catch (JsonProcessingException | NoSuchAlgorithmException e) {
+            throw new ApplicationSecretConfigurationException(e);
+        }
+    }
+
+    private Optional<ClientSecret> determinateClientSecret(Client client) {
+        List<ClientSecret> clientSecrets = client.getClientSecrets();
+        if (client.getClientSecrets() == null) {
+            return Optional.empty();
+        }
+
+        if (StringUtils.isNotBlank(client.getClientSecret())) {
+            Optional<ClientSecret> clientSecretFromSecret = client.getClientSecrets().stream().filter(cs -> cs.getSecret().equals(client.getClientSecret())).findFirst();
+            if (clientSecretFromSecret.isPresent()) {
+                return clientSecretFromSecret;
+            }
+        }
+
+        return clientSecrets.stream()
+                .filter(cs -> client.getSecretSettings().stream()
+                        .anyMatch(setting ->
+                                setting.getId().equals(cs.getSettingsId()) &&
+                                        SecretHashAlgorithm.NONE.name().equalsIgnoreCase(setting.getAlgorithm())))
+                .findFirst();
+    }
+
+
+    private Client mapClientSecret(Client client) {
+        // Copying client secret from the list to a raw text to be it returned.
+        // We return the first secret with no encryption that is not expired.
+        if (client.getClientSecret() == null && client.getClientSecrets() != null) {
+            var clientSecrets = client.getClientSecrets();
+            for (var clientSecret : clientSecrets) {
+                Optional<ApplicationSecretSettings> first = client.getSecretSettings().stream().filter(settings -> settings.getId().equals(clientSecret.getSettingsId())).findFirst();
+                if (first.isPresent() && first.get().getAlgorithm().equalsIgnoreCase("none")) {
+                    Date expiresAt = clientSecret.getExpiresAt();
+                    if (expiresAt == null || expiresAt.after(new Date())) {
+                        client.setClientSecret(clientSecret.getSecret());
+                        break;
+                    }
+                }
+            }
+        }
+        return client;
     }
 
     private Single<Client> createClientFromRequest(DynamicClientRegistrationRequest request, String basePath) {
@@ -194,7 +287,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::applyDefaultCertificateProvider)
                 .flatMap(this::applyAccessTokenValidity)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::create);
+                .flatMap(app -> clientService.create(domain, app));
     }
 
     private Single<Client> applyAccessTokenValidity(Client client) {
@@ -221,7 +314,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
                 .flatMap(this::sanitizeTemplate)
                 .map(request::patch)
                 .flatMap(app -> this.applyRegistrationAccessToken(basePath, app))
-                .flatMap(clientService::create)
+                .flatMap(app -> clientService.create(domain, app))
                 .flatMap(c -> copyFlows(request.getSoftwareId().get(), c))
                 .flatMap(c -> copyForms(request.getSoftwareId().get(), c))
                 .flatMap(c -> copyEmails(request.getSoftwareId().get(), c));
@@ -260,7 +353,7 @@ public class DynamicClientRegistrationServiceImpl implements DynamicClientRegist
     }
 
     private Single<Client> copyEmails(String sourceId, Client client) {
-        return emailTemplateService.copyFromClient(domain.getId(), sourceId, client.getId())
+        return emailTemplateService.copyFromClient(domain, sourceId, client.getId())
                 .toList()
                 .flatMap(irrelevant -> Single.just(client));
     }

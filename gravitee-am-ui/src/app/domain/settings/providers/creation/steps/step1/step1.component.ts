@@ -23,6 +23,7 @@ import { IdentityProvider } from '../../../../../../entities/identity-providers/
   selector: 'provider-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss'],
+  standalone: false,
 })
 export class ProviderCreationStep1Component implements OnInit {
   identities: IdentityProvider[];

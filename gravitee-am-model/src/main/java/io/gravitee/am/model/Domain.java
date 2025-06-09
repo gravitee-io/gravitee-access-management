@@ -181,7 +181,26 @@ public class Domain implements Resource {
      */
     private CorsSettings corsSettings;
 
+    /**
+     * ID of Data Plane
+     */
+    private String dataPlaneId;
+
+    /**
+     * Client secret settings
+     */
+
+    private SecretExpirationSettings secretExpirationSettings;
+
     public Domain() {
+    }
+
+    /**
+     * For testing purpose only
+     * @param id
+     */
+    public Domain(String id) {
+        this.id = id;
     }
 
     public Domain(Domain other) {
@@ -212,6 +231,8 @@ public class Domain implements Resource {
         this.selfServiceAccountManagementSettings = other.selfServiceAccountManagementSettings;
         this.saml = other.saml;
         this.corsSettings = other.corsSettings;
+        this.dataPlaneId = other.dataPlaneId;
+        this.secretExpirationSettings = other.secretExpirationSettings;
     }
 
     @Override
@@ -431,45 +452,61 @@ public class Domain implements Resource {
         this.corsSettings = corsSettings;
     }
 
+    public String getDataPlaneId() {
+        return dataPlaneId;
+    }
+
+    public void setDataPlaneId(String dataPlaneId) {
+        this.dataPlaneId = dataPlaneId;
+    }
+
+    public SecretExpirationSettings getSecretExpirationSettings() {
+        return secretExpirationSettings;
+    }
+
+    public void setSecretExpirationSettings(SecretExpirationSettings secretExpirationSettings) {
+        this.secretExpirationSettings = secretExpirationSettings;
+    }
+
     public boolean isDynamicClientRegistrationEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled();
     }
 
     public boolean isOpenDynamicClientRegistrationEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isDynamicClientRegistrationEnabled() &&
                 this.getOidc().getClientRegistrationSettings().isOpenDynamicClientRegistrationEnabled();
     }
 
     public boolean isDynamicClientRegistrationTemplateEnabled() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isClientTemplateEnabled();
     }
 
     public boolean isRedirectUriLocalhostAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isAllowLocalhostRedirectUri();
     }
 
     public boolean isRedirectUriUnsecuredHttpSchemeAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isAllowHttpSchemeRedirectUri();
     }
 
     public boolean isRedirectUriWildcardAllowed() {
-        return this.getOidc()!=null &&
-                this.getOidc().getClientRegistrationSettings()!=null &&
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
                 this.getOidc().getClientRegistrationSettings().isAllowWildCardRedirectUri();
     }
 
     public boolean isRedirectUriStrictMatching() {
-        return this.getOidc()!=null && this.getOidc().isRedirectUriStrictMatching();
+        return this.getOidc() != null && this.getOidc().isRedirectUriStrictMatching();
     }
 
     public boolean usePlainFapiProfile() {
@@ -490,6 +527,12 @@ public class Domain implements Resource {
                 this.getOidc().getCibaSettings().isEnabled();
     }
 
+    public boolean isRedirectUriExpressionLanguageEnabled() {
+        return this.getOidc() != null &&
+                this.getOidc().getClientRegistrationSettings() != null &&
+                this.getOidc().getClientRegistrationSettings().isAllowRedirectUriParamsExpressionLanguage();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -505,4 +548,7 @@ public class Domain implements Resource {
         return id.hashCode();
     }
 
+    public final Reference asReference() {
+        return Reference.domain(this.getId());
+    }
 }

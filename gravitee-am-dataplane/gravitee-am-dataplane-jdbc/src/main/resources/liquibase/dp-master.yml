@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-1-dataplane-webauthn-credentails-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-2-dataplane-groups-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-3-dataplane-devices-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-4-dataplane-password_histories-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-5-dataplane-scope_approvals-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-6-dataplane-users-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-7-dataplane-login_attempts-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-8-dataplane-uma_access_policies-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-9-dataplane-uma_permission_tickets-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-10-dataplane-uma_resource_set-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-11-dataplane-uma_resource_scope-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-12-dataplane-upgrader-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4.7.0-13-dataplane-dynamic_user_groups-init.yml

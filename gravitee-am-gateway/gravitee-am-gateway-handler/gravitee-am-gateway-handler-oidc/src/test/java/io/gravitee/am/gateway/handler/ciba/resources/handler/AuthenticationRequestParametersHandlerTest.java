@@ -30,7 +30,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDProviderMetadata;
@@ -78,7 +78,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
     @Mock
     private JWKService jwkService;
     @Mock
-    private UserService userService;
+    private UserGatewayService userService;
     @Mock
     private ScopeManager scopeManager;
     @Mock
@@ -281,7 +281,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user)));
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -310,7 +310,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user, user)));
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user, user)));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -355,7 +355,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user, user)));
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user, user)));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -442,7 +442,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         final User user = new User();
         user.setId(UUID.randomUUID().toString());
-        when(userService.findByDomainAndCriteria(any(), any())).thenReturn(Single.just(List.of(user)));
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
 
         router.route().order(-1).handler(routingContext -> {
             routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -506,7 +506,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
     private class AuthenticationRequestParametersHandlerMock extends AuthenticationRequestParametersHandler {
         private CibaAuthenticationRequest cibaRequest;
 
-        public AuthenticationRequestParametersHandlerMock(Domain domain, JWSService jwsService, JWKService jwkService, UserService userService, ScopeManager scopeManager, SubjectManager subjectManager) {
+        public AuthenticationRequestParametersHandlerMock(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager) {
             super(domain, jwsService, jwkService, userService, scopeManager, subjectManager);
         }
 

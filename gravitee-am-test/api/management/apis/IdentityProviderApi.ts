@@ -53,7 +53,7 @@ export interface AssignPasswordPolicyToIdpRequest {
   assignPasswordPolicy: AssignPasswordPolicy;
 }
 
-export interface Create9Request {
+export interface Create10Request {
   organizationId: string;
   newIdentityProvider: NewIdentityProvider;
 }
@@ -65,7 +65,7 @@ export interface CreateIdentityProviderRequest {
   newIdentityProvider: NewIdentityProvider;
 }
 
-export interface Delete12Request {
+export interface Delete13Request {
   organizationId: string;
   identity: string;
 }
@@ -224,21 +224,21 @@ export class IdentityProviderApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization
    * Create an identity provider for the organization
    */
-  async create9Raw(
-    requestParameters: Create9Request,
+  async create10Raw(
+    requestParameters: Create10Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create9.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling create10.',
       );
     }
 
     if (requestParameters.newIdentityProvider === null || requestParameters.newIdentityProvider === undefined) {
       throw new runtime.RequiredError(
         'newIdentityProvider',
-        'Required parameter requestParameters.newIdentityProvider was null or undefined when calling create9.',
+        'Required parameter requestParameters.newIdentityProvider was null or undefined when calling create10.',
       );
     }
 
@@ -277,8 +277,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization
    * Create an identity provider for the organization
    */
-  async create9(requestParameters: Create9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.create9Raw(requestParameters, initOverrides);
+  async create10(requestParameters: Create10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.create10Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -364,21 +364,21 @@ export class IdentityProviderApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization
    * Delete an identity provider
    */
-  async delete12Raw(
-    requestParameters: Delete12Request,
+  async delete13Raw(
+    requestParameters: Delete13Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete12.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete13.',
       );
     }
 
     if (requestParameters.identity === null || requestParameters.identity === undefined) {
       throw new runtime.RequiredError(
         'identity',
-        'Required parameter requestParameters.identity was null or undefined when calling delete12.',
+        'Required parameter requestParameters.identity was null or undefined when calling delete13.',
       );
     }
 
@@ -413,8 +413,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization
    * Delete an identity provider
    */
-  async delete12(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete12Raw(requestParameters, initOverrides);
+  async delete13(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete13Raw(requestParameters, initOverrides);
   }
 
   /**

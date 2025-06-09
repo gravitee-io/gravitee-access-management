@@ -23,6 +23,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.AbstractEndpoint;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
@@ -31,15 +32,13 @@ import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Credential;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
-import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.factor.EnrolledFactorSecurity;
 import io.gravitee.am.model.login.WebAuthnSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.reactivex.rxjava3.core.Completable;
@@ -67,8 +66,8 @@ import static io.gravitee.am.common.utils.ConstantKeys.USER_LOGIN_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_CREDENTIAL_INTERNAL_ID_CONTEXT_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.webauthn.WebAuthnAuthenticatorIntegrity.authIntegrity;
 import static io.gravitee.am.model.factor.FactorStatus.ACTIVATED;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveIp;
-import static io.gravitee.am.service.impl.user.activity.utils.ConsentUtils.canSaveUserAgent;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
+import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -79,9 +78,9 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
     private static final Logger logger = LoggerFactory.getLogger(WebAuthnHandler.class);
     private FactorManager factorManager;
     private UserService userService;
-    protected CredentialService credentialService;
+    protected CredentialGatewayService credentialService;
     private UserAuthenticationManager userAuthenticationManager;
-    protected Domain domain;
+    protected DomainDataPlane domainDataPlane;
 
     protected WebAuthnHandler() {
     }
@@ -98,7 +97,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         this.userService = userService;
     }
 
-    public void setCredentialService(CredentialService credentialService) {
+    public void setCredentialService(CredentialGatewayService credentialService) {
         this.credentialService = credentialService;
     }
 
@@ -106,8 +105,8 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         this.userAuthenticationManager = userAuthenticationManager;
     }
 
-    public void setDomain(Domain domain) {
-        this.domain = domain;
+    public void setDomainDataplane(DomainDataPlane domainDataPlane) {
+        this.domainDataPlane = domainDataPlane;
     }
 
     protected static boolean isEmptyString(JsonObject json, String key) {
@@ -242,7 +241,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
         if (canSaveUserAgent(context)) {
             authenticationContext.set(Claims.USER_AGENT, RequestUtils.userAgent(httpServerRequest));
         }
-        authenticationContext.set(Claims.DOMAIN, domain.getId());
+        authenticationContext.set(Claims.DOMAIN, domainDataPlane.getDomain().getId());
         authenticationContext.setAttribute(DEVICE_ID, context.request().getParam(DEVICE_ID));
         return authenticationContext;
     }
@@ -263,7 +262,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                                                                                                       AuthenticationContext authenticationContext,
                                                                                                       String username,
                                                                                                       String credentialId) {
-        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+        return credentialService.findByCredentialId(domainDataPlane.getDomain(), credentialId)
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
                 .flatMap(credential -> userAuthenticationManager.connectWithPasswordless(client, credential.getUserId(), new EndUserAuthentication(username, null, authenticationContext)))
@@ -303,7 +302,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                                            String credentialId,
                                            String userId,
                                            boolean afterLogin) {
-        return credentialService.findByCredentialId(ReferenceType.DOMAIN, domain.getId(), credentialId)
+        return credentialService.findByCredentialId(domainDataPlane.getDomain(), credentialId)
                 // filter on userId to restrict the credential to the current user.
                 // if credentialToUpdate has null userid, we are in the registration phase
                 // we want to assign this credential to the user profile, so we accept it.
@@ -317,22 +316,16 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
                 .map(credential -> {
                     // update last checked date only after a passwordless login and only if the option is enabled
                     if(afterLogin){
-                        return authIntegrity(domain.getWebAuthnSettings())
+                        return authIntegrity(domainDataPlane.getDomain().getWebAuthnSettings())
                                 .updateLastCheckedDate(credential);
                     } else {
                         return credential;
                     }
                 })
-                .flatMapSingle(credential -> credentialService.update(ReferenceType.DOMAIN, domain.getId(), credentialId, credential))
+                .flatMapSingle(credential -> credentialService.update(domainDataPlane.getDomain(), credentialId, credential))
                 .firstElement()
                 .switchIfEmpty(Single.error(() -> new CredentialNotFoundException(credentialId)))
                 .doOnError(error -> logger.error("An error has occurred while updating user {} webauthn credential", userId, error));
     }
 
-    public static String getOrigin(WebAuthnSettings settings) {
-        return (settings!= null
-                && settings.getOrigin() != null) ?
-                settings.getOrigin() :
-                DEFAULT_ORIGIN;
-    }
 }

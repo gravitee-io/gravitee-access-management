@@ -136,6 +136,17 @@ public class NotificationAcknowledgeRepositoryTest extends AbstractManagementTes
         acknowledge.setCounter(1);
         repository.create(acknowledge).blockingGet();
 
+        NotificationAcknowledge acknowledge1 = new NotificationAcknowledge();
+        acknowledge1.setId("testid1");
+        acknowledge1.setType("ui-notifier");
+        acknowledge1.setResourceId("resource");
+        acknowledge1.setAudienceId("audience");
+        acknowledge1.setCreatedAt(new Date());
+        acknowledge1.setUpdatedAt(new Date());
+        acknowledge1.setResourceType("resource_type");
+        acknowledge1.setCounter(1);
+        repository.create(acknowledge1).blockingGet();
+
         TestObserver<NotificationAcknowledge> testObserver = repository.findById(acknowledge.getId()).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();

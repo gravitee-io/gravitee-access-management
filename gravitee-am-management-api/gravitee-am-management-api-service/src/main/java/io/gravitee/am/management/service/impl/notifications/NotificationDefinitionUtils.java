@@ -15,19 +15,16 @@
  */
 package io.gravitee.am.management.service.impl.notifications;
 
-import io.gravitee.am.model.Certificate;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.User;
+import io.gravitee.am.management.service.impl.notifications.definition.NotifierSubject;
 import io.gravitee.am.model.safe.CertificateProperties;
-import io.gravitee.am.model.safe.DomainProperties;
-import io.gravitee.am.model.safe.UserProperties;
+import io.gravitee.am.model.safe.ClientSecretProperties;
 import io.gravitee.node.api.notifier.NotificationDefinition;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -37,56 +34,20 @@ import java.util.Map;
 public class NotificationDefinitionUtils {
     public static final String TYPE_UI_NOTIFIER = "ui-notifier";
     public static final String TYPE_EMAIL_NOTIFIER = "email-notifier";
-    public static final String TYPE_LOG_NOTIFIER = "log-notifier";
-    public static final String RESOURCE_TYPE_CERTIFICATE = "certificate";
-    public static final String NOTIFIER_DATA_USER = "user";
-    public static final String NOTIFIER_DATA_DOMAIN = "domain";
-    public static final String NOTIFIER_DATA_CERTIFICATE = "certificate";
+    public static final String TYPE_KAFKA_NOTIFIER = "kafka-notifier";
+    public static final String TYPE_LOGGER_NOTIFIER = "log-notifier";
 
-    public static Date getCertificateExpirationDate(NotificationDefinition definition) {
+
+    public static Optional<Date> getExpirationDate(NotificationDefinition definition) {
         Date expiry = null;
         final Map<String, Object> data = definition.getData();
-        if (data != null && data.containsKey(NOTIFIER_DATA_CERTIFICATE)) {
-            expiry = ((CertificateProperties)data.get(NOTIFIER_DATA_CERTIFICATE)).getExpiresAt();
+        if (data != null && data.containsKey(NotifierSubject.NOTIFIER_DATA_CERTIFICATE)) {
+            expiry = ((CertificateProperties) data.get(NotifierSubject.NOTIFIER_DATA_CERTIFICATE)).getExpiresAt();
         }
-        return expiry;
+        else if (data != null && data.containsKey(NotifierSubject.NOTIFIER_DATA_CLIENT_SECRET)) {
+            expiry = ((ClientSecretProperties) data.get(NotifierSubject.NOTIFIER_DATA_CLIENT_SECRET)).getExpiresAt();
+        }
+        return Optional.ofNullable(expiry);
     }
 
-    public static class ParametersBuilder {
-        private User user;
-        private Domain domain;
-        private Certificate certificate;
-
-        public ParametersBuilder withUser(User user) {
-            this.user = user;
-            return this;
-        }
-
-        public ParametersBuilder withDomain(Domain domain) {
-            this.domain = domain;
-            return this;
-        }
-
-        public ParametersBuilder withCertificate(Certificate certificate) {
-            this.certificate = certificate;
-            return this;
-        }
-
-        public Map<String, Object> build() {
-            var result = new HashMap();
-            if (user != null) {
-                result.put(NOTIFIER_DATA_USER, new UserProperties(user, false));
-            }
-
-            if (domain != null) {
-                result.put(NOTIFIER_DATA_DOMAIN, new DomainProperties(domain));
-            }
-
-            if (certificate != null) {
-                result.put(NOTIFIER_DATA_CERTIFICATE, new CertificateProperties(certificate));
-            }
-
-            return result;
-        }
-    }
 }

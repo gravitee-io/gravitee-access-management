@@ -25,8 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists } from '../runtime';
-
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export

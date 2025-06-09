@@ -22,6 +22,7 @@ import { AuthService } from '../../../services/auth.service';
   selector: 'app-emails',
   templateUrl: './emails.component.html',
   styleUrls: ['./emails.component.scss'],
+  standalone: false,
 })
 export class EmailsComponent implements OnInit {
   appId: string;

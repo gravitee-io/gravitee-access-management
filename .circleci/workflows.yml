@@ -7,7 +7,7 @@ orbs:
   aws-cli: circleci/aws-cli@5.1.2
   aws-s3: circleci/aws-s3@4.1.0
   helm: circleci/helm@2.0.1
-  aquasec: gravitee-io/aquasec@1.0.4
+  aquasec: gravitee-io/aquasec@1.0.5
 
 executors:
   ubuntu:
@@ -59,7 +59,7 @@ executors:
         enum: [ "small", "medium", "large", "xlarge" ]
         default: "medium"
     docker:
-      - image: cimg/node:18.16
+      - image: cimg/node:18.16.1
     resource_class: << parameters.class >>
 
 parameters:
@@ -81,8 +81,8 @@ parameters:
     description: "Do we have to release a RC"
   graviteeio_version:
     type: string
-    default: "cicd"
-    description: "Release version number to use to publish the Docker nightly images ?"
+    default: "x.y.z"
+    description: "Release version number to use to publish the Docker and RPM nightly images"
   run-container-test:
     type: boolean
     default: false
@@ -290,10 +290,26 @@ commands:
         type: string
         default: ""
         description: "The Gravitee.io release version number of Gravitee.io AM, for which to build and publish all zip bundles"
+      dry_run:
+        type: boolean
+        default: true
+        description: Run in dry run mode? (publish to nightly repo)
     steps:
       - keeper/env-export:
           secret-url: keeper://8CG6HxY5gYsl-85eJKuIoA/field/password
           var-name: GIO_PACKAGECLOUD_TOKEN
+      - keeper/env-export:
+          secret-url: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_pub_key
+          var-name: GPG_KEY_PUBLIC
+      - keeper/env-export:
+          secret-url: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/armor_format_private_key
+          var-name: GPG_KEY_PRIVATE
+      - keeper/env-export:
+          secret-url: keeper://riW92t8X4tk4ZmQc8-FZ4Q/field/login
+          var-name: GPG_KEY_NAME
+      - keeper/env-export:
+          secret-url: keeper://riW92t8X4tk4ZmQc8-FZ4Q/custom_field/passphrase
+          var-name: GPG_KEY_PASSPHRASE
       - run:
           environment:
             GRAVITEEIO_VERSION: << parameters.graviteeio_version >>
@@ -302,12 +318,43 @@ commands:
             export MAJOR_VERSION_NUMBER=$(echo ${GRAVITEEIO_VERSION} | awk -F '.' '{print $1}')
             export GIT_GRAVITEE_PACKAGES_REPO=$(mktemp -d -t "git_gravitee_packages_repo-XXXXXXXXXX")
             
-            git clone git@github.com:gravitee-io/packages.git ${GIT_GRAVITEE_PACKAGES_REPO}
+            git clone \
+              --depth 1 \
+              --branch master \
+              --single-branch \
+              --no-tag \
+              git@github.com:gravitee-io/packages.git \
+              ${GIT_GRAVITEE_PACKAGES_REPO}
             
             cd ${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x
-            ./build.sh -v << parameters.graviteeio_version >>
+            ./build.sh -v "${GRAVITEEIO_VERSION}"
             
-            docker run --rm -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} digitalocean/packagecloud push --yes --skip-errors --verbose graviteeio/rpms/el/7 /packages/*.rpm
+            echo "change RPM file owner from root to graviteeio"
+            docker run --rm \
+                -v "${PWD}:/rpms" \
+                --workdir /rpms \
+                --entrypoint /bin/sh \
+                graviteeio/fpm:rpm \
+                -c 'chown 1001:1001 *.rpm'
+
+            echo "Sign RPMs with GPG key"
+            docker run --rm \
+                -v "${PWD}:/rpms" \
+                -e "GPG_KEY_NAME" \
+                -e "GPG_KEY_PUBLIC" \
+                -e "GPG_KEY_PRIVATE" \
+                -e "GPG_KEY_PASSPHRASE" \
+                graviteeio/rpmsign
+            
+            # we use inlined cicleci parmeter dry-run to get it in text - from env var it will be interpreted as 0 or 1.
+            publishLocation="$( [ "<< parameters.dry_run >>" == "false" ] && echo "rpms" || echo "nightly" )"
+            
+            echo "RPMs will be published in https://packagecloud.io/graviteeio/${publishLocation}"
+            docker run --rm \
+              -v "${GIT_GRAVITEE_PACKAGES_REPO}/am/${MAJOR_VERSION_NUMBER}.x:/packages" \
+              -e PACKAGECLOUD_TOKEN=${GIO_PACKAGECLOUD_TOKEN} \
+              digitalocean/packagecloud \
+                push --yes --skip-errors --verbose "graviteeio/${publishLocation}/el/7" /packages/*.rpm
 
   cmd-helm-tests:
     description: execute the unit tests of the helm chart
@@ -530,15 +577,19 @@ jobs:
             curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
             curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
 
-            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
-            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
+            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
 
             cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
+            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
-
+            
             cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
+            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
             
             # EXPORT env var to start AM using SMTP Server
@@ -574,6 +625,14 @@ jobs:
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
+            export gravitee_dataPlanes_0_id=default
+            export gravitee_dataPlanes_0_jdbc_database=postgres
+            export gravitee_dataPlanes_0_jdbc_driver=postgresql
+            export gravitee_dataPlanes_0_jdbc_host=localhost
+            export gravitee_dataPlanes_0_jdbc_password=T0pS3cr3t
+            export gravitee_dataPlanes_0_jdbc_port=5432
+            export gravitee_dataPlanes_0_jdbc_username=postgres
+            export gravitee_dataPlanes_0_type=jdbc
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay  
             export gravitee_services_sync_cron="*/2 * * * * *"
@@ -699,17 +758,22 @@ jobs:
             curl --retry 4 --retry-delay 10 --retry-all-errors https://jdbc.postgresql.org/download/postgresql-42.6.0.jar -o postgresql-jdbc.jar
             curl --retry 4 --retry-delay 10 --retry-all-errors https://repo1.maven.org/maven2/org/postgresql/r2dbc-postgresql/1.0.2.RELEASE/r2dbc-postgresql-1.0.2.RELEASE.jar -o r2dbc-postgresql.jar
 
-            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
-            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc
+            mkdir -p gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
+            mkdir -p gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc
 
             cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp postgresql-jdbc.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
+            cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-management-api-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
 
             cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/repository-am-jdbc/
+            cp postgresql-jdbc.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
+            cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/dataplane-am-jdbc/
             cp r2dbc-postgresql.jar gravitee-am-gateway-standalone-${AM_VERSION}/plugins/ext/reporter-am-jdbc/
             # EXPORT env vart to start AM using PSQL
+            
             export GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE=jdbc
             export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_DRIVER=postgresql
             export GRAVITEE_REPOSITORIES_MANAGEMENT_JDBC_HOST=localhost
@@ -731,6 +795,14 @@ jobs:
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_DATABASE=postgres
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_USERNAME=postgres
             export GRAVITEE_REPOSITORIES_GATEWAY_JDBC_PASSWORD=T0pS3cr3t
+            export gravitee_dataPlanes_0_id=default
+            export gravitee_dataPlanes_0_jdbc_database=postgres
+            export gravitee_dataPlanes_0_jdbc_driver=postgresql
+            export gravitee_dataPlanes_0_jdbc_host=localhost
+            export gravitee_dataPlanes_0_jdbc_password=T0pS3cr3t
+            export gravitee_dataPlanes_0_jdbc_port=5432
+            export gravitee_dataPlanes_0_jdbc_username=postgres
+            export gravitee_dataPlanes_0_type=jdbc
             
             # Reduce the sync frequency to avoid flaky test due to synchronization delay
             export gravitee_services_sync_cron="*/2 * * * * *"
@@ -1523,6 +1595,7 @@ jobs:
       - checkout
       - publish_rpms:
           graviteeio_version: << parameters.graviteeio_version >>
+          dry_run:  << parameters.dry_run >>
 
   release_notes_am:
     executor:
@@ -1622,31 +1695,26 @@ jobs:
       - setup_remote_docker
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
           scanner_url: https://82fb8f75da.cloud.aquasec.com
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
           scanner_url: https://82fb8f75da.cloud.aquasec.com
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
           scanner_url: https://82fb8f75da.cloud.aquasec.com
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-noble
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>-noble
           scanner_url: https://82fb8f75da.cloud.aquasec.com
       - aquasec/register_artifact:
           artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
-          debug: true
       - aquasec/scan_docker_image:
           docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>-noble
           scanner_url: https://82fb8f75da.cloud.aquasec.com
@@ -2111,7 +2179,6 @@ workflows:
           requires:
             - publish-images-azure-registry
           built_docker_image_file: /tmp/built-docker-images.txt
-          debug: true
           filters:
             branches:
               only:
@@ -2156,6 +2223,7 @@ workflows:
       - publish_am_rpms:
           context: cicd-orchestrator
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run:  << pipeline.parameters.dry_run >>
 
   publish_docker_images:
     when:

@@ -18,5 +18,6 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'dummy',
   template: ``,
+  standalone: false,
 })
 export class DummyComponent {}

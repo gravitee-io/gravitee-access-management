@@ -18,6 +18,7 @@ import { Component, EventEmitter, Output } from '@angular/core';
 @Component({
   selector: 'user-claim-component',
   templateUrl: './user-claim.component.html',
+  standalone: false,
 })
 export class UserClaimComponent {
   private claimId: string = Math.random().toString(36).substring(7);

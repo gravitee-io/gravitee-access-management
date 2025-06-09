@@ -25,13 +25,15 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.policy.ExtensionPoint;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.dataplane.api.repository.UserRepository;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -44,8 +46,6 @@ import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.CommonUserRepository;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.exception.UserNotFoundException;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -88,7 +88,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
     private Domain domain;
 
     @Autowired
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
@@ -247,8 +247,8 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         final boolean accountLinkingMode = linkedAccount != null;
         final Maybe<User> findExistingUser =
                 accountLinkingMode ? userService.findById(linkedAccount) :
-                        userService.findByDomainAndExternalIdAndSource(domain.getId(), externalId, source)
-                                .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndUsernameAndSource(domain.getId(), username, source)));
+                        userService.findByExternalIdAndSource(externalId, source)
+                                .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(username, source)));
 
         return findExistingUser
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(username)))
@@ -308,7 +308,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                                 Boolean accountLinking) {
         LOGGER.debug("Updating user: username[{}]", preConnectedUser.getUsername());
 
-        var updateActions = CommonUserRepository.UpdateActions.none();
+        var updateActions = UserRepository.UpdateActions.none();
 
         // update authentication information
         if (afterAuthentication) {

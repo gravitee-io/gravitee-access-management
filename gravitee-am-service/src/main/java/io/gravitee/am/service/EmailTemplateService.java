@@ -16,6 +16,7 @@
 package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.model.NewEmail;
@@ -48,35 +49,31 @@ public interface EmailTemplateService {
 
     Maybe<Email> findById(String id);
 
-    Flowable<Email> copyFromClient(String domain, String clientSource, String clientTarget);
+    Flowable<Email> copyFromClient(Domain domain, String clientSource, String clientTarget);
 
-    Single<Email> create(ReferenceType referenceType, String referenceId, NewEmail newEmail, User principal);
+    Single<Email> create(Domain domain, NewEmail newEmail, User principal);
 
-    Single<Email> create(String domain, NewEmail newEmail, User principal);
+    Single<Email> create(Domain domain, String client, NewEmail newEmail, User principal);
 
-    Single<Email> create(ReferenceType referenceType, String referenceId, String client, NewEmail newEmail, User principal);
+    Single<Email> update(Domain domain, String id, UpdateEmail updateEmail, User principal);
 
-    Single<Email> create(String domain, String client, NewEmail newEmail, User principal);
-
-    Single<Email> update(String domain, String id, UpdateEmail updateEmail, User principal);
-
-    Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail, User principal);
+    Single<Email> update(Domain domain, String client, String id, UpdateEmail updateEmail, User principal);
 
     Completable delete(String emailId, User principal);
 
-    default Single<Email> create(String domain, NewEmail newEmail) {
+    default Single<Email> create(Domain domain, NewEmail newEmail) {
         return create(domain, newEmail,  null);
     }
 
-    default Single<Email> create(String domain, String client, NewEmail newEmail) {
+    default Single<Email> create(Domain domain, String client, NewEmail newEmail) {
         return create(domain, client, newEmail, null);
     }
 
-    default Single<Email> update(String domain, String id, UpdateEmail updateEmail) {
+    default Single<Email> update(Domain domain, String id, UpdateEmail updateEmail) {
         return update(domain, id, updateEmail,  null);
     }
 
-    default Single<Email> update(String domain, String client, String id, UpdateEmail updateEmail) {
+    default Single<Email> update(Domain domain, String client, String id, UpdateEmail updateEmail) {
         return update(domain, client, id, updateEmail, null);
     }
 

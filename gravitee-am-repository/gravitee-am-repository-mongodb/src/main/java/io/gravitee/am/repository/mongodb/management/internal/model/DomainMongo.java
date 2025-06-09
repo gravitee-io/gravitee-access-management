@@ -22,6 +22,8 @@ import io.gravitee.am.model.VirtualHost;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import io.gravitee.am.repository.mongodb.management.internal.model.oidc.OIDCSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.uma.UMASettingsMongo;
+import lombok.Getter;
+import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonId;
 
 import java.util.List;
@@ -31,6 +33,8 @@ import java.util.Set;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class DomainMongo extends Auditable {
 
     @BsonId
@@ -84,205 +88,9 @@ public class DomainMongo extends Auditable {
 
     private boolean master;
 
-    public String getId() {
-        return id;
-    }
+    private String dataPlaneId;
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getHrid() {
-        return hrid;
-    }
-
-    public void setHrid(String hrid) {
-        this.hrid = hrid;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public DomainVersion getVersion() {
-        return version;
-    }
-
-    public void setVersion(DomainVersion version) {
-        this.version = version;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public OIDCSettingsMongo getOidc() {
-        return oidc;
-    }
-
-    public void setOidc(OIDCSettingsMongo oidc) {
-        this.oidc = oidc;
-    }
-
-    public UMASettingsMongo getUma() {
-        return uma;
-    }
-
-    public void setUma(UMASettingsMongo uma) {
-        this.uma = uma;
-    }
-
-    public SCIMSettingsMongo getScim() {
-        return scim;
-    }
-
-    public void setScim(SCIMSettingsMongo scim) {
-        this.scim = scim;
-    }
-
-    public LoginSettingsMongo getLoginSettings() {
-        return loginSettings;
-    }
-
-    public void setLoginSettings(LoginSettingsMongo loginSettings) {
-        this.loginSettings = loginSettings;
-    }
-
-    public WebAuthnSettingsMongo getWebAuthnSettings() {
-        return webAuthnSettings;
-    }
-
-    public void setWebAuthnSettings(WebAuthnSettingsMongo webAuthnSettings) {
-        this.webAuthnSettings = webAuthnSettings;
-    }
-
-    public AccountSettingsMongo getAccountSettings() {
-        return accountSettings;
-    }
-
-    public void setAccountSettings(AccountSettingsMongo accountSettings) {
-        this.accountSettings = accountSettings;
-    }
-
-    public Set<String> getTags() {
-        return tags;
-    }
-
-    public void setTags(Set<String> tags) {
-        this.tags = tags;
-    }
-
-    public Set<String> getIdentities() {
-        return identities;
-    }
-
-    public void setIdentities(Set<String> identities) {
-        this.identities = identities;
-    }
-
-    public ReferenceType getReferenceType() {
-        return referenceType;
-    }
-
-    public void setReferenceType(ReferenceType referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public boolean isVhostMode() {
-        return vhostMode;
-    }
-
-    public void setVhostMode(boolean vhostMode) {
-        this.vhostMode = vhostMode;
-    }
-
-    public List<VirtualHost> getVhosts() {
-        return vhosts;
-    }
-
-    public void setVhosts(List<VirtualHost> vhosts) {
-        this.vhosts = vhosts;
-    }
-
-    public boolean isAlertEnabled() {
-        return alertEnabled;
-    }
-
-    public void setAlertEnabled(boolean alertEnabled) {
-        this.alertEnabled = alertEnabled;
-    }
-
-    public PasswordSettingsMongo getPasswordSettings() {
-        return passwordSettings;
-    }
-
-    public void setPasswordSettings(PasswordSettingsMongo passwordSettings) {
-        this.passwordSettings = passwordSettings;
-    }
-
-    public SelfServiceAccountManagementSettingsMongo getSelfServiceAccountManagementSettings() {
-        return selfServiceAccountManagementSettings;
-    }
-
-    public void setSelfServiceAccountManagementSettings(SelfServiceAccountManagementSettingsMongo selfServiceAccountManagementSettings) {
-        this.selfServiceAccountManagementSettings = selfServiceAccountManagementSettings;
-    }
-
-    public SAMLSettingsMongo getSaml() {
-        return saml;
-    }
-
-    public void setSaml(SAMLSettingsMongo saml) {
-        this.saml = saml;
-    }
-
-    public boolean isMaster() {
-        return master;
-    }
-
-    public void setMaster(boolean master) {
-        this.master = master;
-    }
-
-    public CorsSettings getCorsSettings() {
-        return corsSettings;
-    }
-
-    public void setCorsSettings(CorsSettings corsSettings) {
-        this.corsSettings = corsSettings;
-    }
+    private SecretSettingsMongo secretSettings;
 
     @Override
     public boolean equals(Object o) {

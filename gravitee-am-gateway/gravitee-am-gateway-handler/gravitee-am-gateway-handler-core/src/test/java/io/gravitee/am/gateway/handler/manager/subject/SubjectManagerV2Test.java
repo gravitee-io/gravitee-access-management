@@ -20,7 +20,7 @@ package io.gravitee.am.gateway.handler.manager.subject;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -35,12 +35,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static io.gravitee.am.common.jwt.Claims.GIO_INTERNAL_SUB;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -58,7 +55,7 @@ public class SubjectManagerV2Test {
     private Domain domain;
 
     @Mock
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Mock
     private ClientManager clientManager;
@@ -87,7 +84,7 @@ public class SubjectManagerV2Test {
 
         TestObserver<User> observer = cut.findUserBySub(token).test();
         observer.assertError(IllegalArgumentException.class);
-        verify(userService, never()).findByDomainAndExternalIdAndSource(any(), any(), any());
+        verify(userService, never()).findByExternalIdAndSource(any(), any());
     }
 
     @Test
@@ -98,7 +95,7 @@ public class SubjectManagerV2Test {
         final var token = new JWT();
         cut.updateJWT(token, user);
 
-        when(userService.findByDomainAndExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
+        when(userService.findByExternalIdAndSource(any(), any())).thenReturn(Maybe.just(user));
         TestObserver<User> observer = cut.findUserBySub(token).test();
 
         observer.await(10, TimeUnit.SECONDS);
@@ -114,7 +111,7 @@ public class SubjectManagerV2Test {
         final var token = new JWT();
         cut.updateJWT(token, user);
 
-        when(userService.findByDomainAndExternalIdAndSource(any(), any(), any())).thenReturn(Maybe.just(user));
+        when(userService.findByExternalIdAndSource(any(), any())).thenReturn(Maybe.just(user));
         TestObserver<io.gravitee.am.identityprovider.api.User> observer = cut.getPrincipal(token).test();
 
         observer.await(10, TimeUnit.SECONDS);
@@ -132,7 +129,7 @@ public class SubjectManagerV2Test {
         observer.assertNoErrors();
         observer.assertValueCount(0);
 
-        verify(userService, never()).findByDomainAndExternalIdAndSource(any(), any(), any());
+        verify(userService, never()).findByExternalIdAndSource(any(), any());
     }
 
     @Test

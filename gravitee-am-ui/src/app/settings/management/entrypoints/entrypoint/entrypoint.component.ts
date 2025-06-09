@@ -30,6 +30,7 @@ import { Tag } from '../../../../domain/settings/general/general.component';
   selector: 'app-entrypoint',
   templateUrl: './entrypoint.component.html',
   styleUrls: ['./entrypoint.component.scss'],
+  standalone: false,
 })
 export class EntrypointComponent implements OnInit {
   entrypoint: any;

@@ -108,9 +108,11 @@ export class OrganizationService {
   updateIdentityProvider(id, idp) {
     return this.http.put<any>(this.organizationURL + '/identities/' + id, {
       name: idp.name,
+      type: idp.type,
       configuration: idp.configuration,
       mappers: idp.mappers,
       roleMapper: idp.roleMapper,
+      groupMapper: idp.groupMapper,
     });
   }
 
@@ -357,6 +359,7 @@ export class OrganizationService {
   updateReporter(reporterId, reporter): Observable<any> {
     return this.http.put<any>(this.organizationURL + '/reporters/' + reporterId, {
       name: reporter.name,
+      type: reporter.type,
       enabled: reporter.enabled,
       inherited: reporter.inherited,
       configuration: reporter.configuration,

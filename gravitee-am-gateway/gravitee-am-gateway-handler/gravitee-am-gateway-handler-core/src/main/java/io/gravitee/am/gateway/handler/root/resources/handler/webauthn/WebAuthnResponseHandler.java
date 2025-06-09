@@ -18,12 +18,13 @@ package io.gravitee.am.gateway.handler.root.resources.handler.webauthn;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.model.Credential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.service.CredentialService;
+import io.gravitee.am.service.DomainDataPlane;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.webauthn.WebAuthnCredentials;
@@ -52,17 +53,17 @@ public class WebAuthnResponseHandler extends WebAuthnHandler {
 
     public WebAuthnResponseHandler(UserService userService,
                                    FactorManager factorManager,
-                                   Domain domain,
+                                   DomainDataPlane domainDataPlane,
                                    WebAuthn webAuthn,
-                                   CredentialService credentialService,
+                                   CredentialGatewayService credentialService,
                                    UserAuthenticationManager userAuthenticationManager) {
         setUserService(userService);
         setFactorManager(factorManager);
         setCredentialService(credentialService);
         setUserAuthenticationManager(userAuthenticationManager);
-        setDomain(domain);
+        setDomainDataplane(domainDataPlane);
         this.webAuthn = webAuthn;
-        this.origin = getOrigin(domain.getWebAuthnSettings());
+        this.origin = domainDataPlane.getWebAuthnOrigin();
     }
 
     @Override

@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -43,12 +46,45 @@ public class EventServiceImpl implements EventService {
     @Autowired
     private EventRepository eventRepository;
 
+    @Lazy
+    @Autowired
+    private DomainRepository domainRepository;
+
+    /**
+     * This method will call DB to get domain. Use this method when domain is not accessible.
+     * When it is easy to take domain, use create(Event, Domain)
+     */
     @Override
     public Single<Event> create(Event event) {
+        if (event.getPayload().getReferenceType().equals(ReferenceType.DOMAIN) && event.getDataPlaneId() == null && event.getEnvironmentId() == null) {
+            return domainRepository.findById(event.getPayload().getReferenceId())
+                    .map(domain -> {
+                        event.setDataPlaneId(domain.getDataPlaneId());
+                        event.setEnvironmentId(domain.getReferenceId());
+                        return event;
+                    })
+                    .switchIfEmpty(Single.fromCallable(() -> {
+                        LOGGER.warn("Domain not found for referenceId: {}", event.getPayload().getReferenceId());
+                        return event;
+                    })).flatMap(this::eventCreation);
+        } else {
+            return eventCreation(event);
+        }
+    }
+
+    @Override
+    public Single<Event> create(Event event, Domain domain) {
+        event.setDataPlaneId(domain.getDataPlaneId());
+        event.setEnvironmentId(domain.getReferenceId());
+        return eventCreation(event);
+    }
+
+    private Single<Event> eventCreation(Event event) {
         LOGGER.debug("Create a new event {}", event);
 
         event.setCreatedAt(new Date());
         event.setUpdatedAt(event.getCreatedAt());
+
         return eventRepository.create(event)
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -58,6 +94,7 @@ public class EventServiceImpl implements EventService {
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an event", ex));
                 });
     }
+
 
     @Override
     public Single<List<Event>> findByTimeFrame(long from, long to) {

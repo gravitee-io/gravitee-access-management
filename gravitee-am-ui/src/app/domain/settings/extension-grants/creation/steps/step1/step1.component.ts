@@ -21,6 +21,7 @@ import { OrganizationService } from '../../../../../../services/organization.ser
   selector: 'extension-grant-creation-step1',
   templateUrl: './step1.component.html',
   styleUrls: ['./step1.component.scss'],
+  standalone: false,
 })
 export class ExtensionGrantCreationStep1Component implements OnInit {
   private extensionGrantTypes: any = {

@@ -131,8 +131,7 @@
             input.attr("type") === "password" ? input.attr("type", "text") : input.attr("type", "password");
         });
 
-        $("#username").on("keyup", toggleSubmit);
-        $("#password").on("keyup", toggleSubmit);
+        $("#username, #password").on("input keyup change", toggleSubmit);
 
         function toggleSubmit() {
             const submitBtn = $("#submitBtn");
@@ -161,10 +160,12 @@
 </script>
 
 <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
-        th:src="@{assets/js/remember-device/fingerprintjs-v3.js}"></script>
+        th:src="@{assets/js/fp/fp.min.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}"
+        th:src="@{assets/js/remember-device/fingerprintjs-v3-gravitee.js}"></script>
 <script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'FingerprintJsV3Community'}" th:attr="nonce=${script_inline_nonce}">
     $(document).ready(function () {
-        loadFingerprintJsV3(fp => {
+        loadFingerprintJsV3Gravitee(fp => {
             if (fp.visitorId) {
                 $("#form")
                     .append('<input type="hidden" name="deviceId" value="' + fp.visitorId + '"/>')

@@ -18,10 +18,13 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.gravitee.am.certificate.api.CertificateProvider;
 import io.gravitee.am.common.plugin.ValidationResult;
+import io.gravitee.am.identityprovider.api.Metadata;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Certificate;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.certificate.core.CertificatePluginManager;
 import io.gravitee.am.repository.exceptions.TechnicalException;
@@ -62,6 +65,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -83,7 +89,7 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class CertificateServiceTest {
 
-    public static final String DOMAIN_NAME = "my-domain";
+    public static final Domain DOMAIN = new Domain("my-domain");
     public static String certificateSchemaDefinition;
     public static String certificateAwsSchemaDefinition;
     public static String certificateConfiguration;
@@ -123,8 +129,6 @@ public class CertificateServiceTest {
 
     @Mock
     private CertificatePluginManager certificatePluginManager;
-
-    private final static String DOMAIN = "domain1";
 
     @BeforeClass
     public static void readCertificateSchemaDefinition() throws Exception {
@@ -178,8 +182,8 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldFindByDomain() {
-        when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(new Certificate()));
-        TestSubscriber<Certificate> testSubscriber = certificateService.findByDomain(DOMAIN).test();
+        when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(new Certificate()));
+        TestSubscriber<Certificate> testSubscriber = certificateService.findByDomain(DOMAIN.getId()).test();
         testSubscriber.awaitDone(10, TimeUnit.SECONDS);
 
         testSubscriber.assertComplete();
@@ -189,9 +193,9 @@ public class CertificateServiceTest {
 
     @Test
     public void shouldFindByDomain_technicalException() {
-        when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Flowable.error(TechnicalException::new));
+        when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.error(TechnicalException::new));
 
-        TestSubscriber<Certificate> testObserver = certificateService.findByDomain(DOMAIN).test();
+        TestSubscriber<Certificate> testObserver = certificateService.findByDomain(DOMAIN.getId()).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();
@@ -201,9 +205,9 @@ public class CertificateServiceTest {
     public void shouldDelete() {
         // prepare certificate
         Certificate certificate = Mockito.mock(Certificate.class);
-        when(certificate.getDomain()).thenReturn(DOMAIN);
+        when(certificate.getDomain()).thenReturn(DOMAIN.getId());
 
-        when(identityProviderService.findByDomain(DOMAIN)).thenReturn(Flowable.empty());
+        when(identityProviderService.findByDomain(DOMAIN.getId())).thenReturn(Flowable.empty());
         when(certificateRepository.findById("my-certificate")).thenReturn(Maybe.just(certificate));
         when(applicationService.findByCertificate("my-certificate")).thenReturn(Flowable.empty());
         when(certificateRepository.delete("my-certificate")).thenReturn(Completable.complete());
@@ -287,16 +291,16 @@ public class CertificateServiceTest {
         newCertificate.setConfiguration(certificateNode.toString());
         when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
         when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
-        certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class))
+        certificateService.create(DOMAIN, newCertificate, Mockito.mock(User.class))
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete();
 
         verify(certificatePluginManager, times(1)).validate(any());
         verify(certificateRepository, times(1)).create(any());
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
     }
 
     @Test
@@ -313,16 +317,16 @@ public class CertificateServiceTest {
         certificate.setType(type);
         when(certificateRepository.findById(any())).thenReturn(Maybe.just(certificate));
         when(certificateRepository.update(any())).thenReturn(Single.just(new Certificate()));
-        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
-        certificateService.update(DOMAIN_NAME,  id, newCertificate, Mockito.mock(User.class))
+        certificateService.update(DOMAIN,  id, newCertificate, Mockito.mock(User.class))
                 .test()
                 .awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete();
 
         verify(certificatePluginManager, times(1)).validate(any());
         verify(certificateRepository, times(1)).update(any());
-        verify(eventService, times(1)).create(any());
+        verify(eventService, times(1)).create(any(), any());
         verify(validationService).validate(any(), any());
     }
 
@@ -344,7 +348,7 @@ public class CertificateServiceTest {
         newCertificate.setConfiguration(certificateNode.toString());
         when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.invalid("The certificate you uploaded has already expired. Please select a different certificate to upload."));
 
-        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(error -> error instanceof InvalidParameterException && "The certificate you uploaded has already expired. Please select a different certificate to upload.".equals(error.getMessage()));
     }
@@ -368,9 +372,42 @@ public class CertificateServiceTest {
         when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.invalid("The configuration details entered are incorrect. Please check those and try again."));
 
 
-        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME, newCertificate, Mockito.mock(User.class)).test();
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN, newCertificate, Mockito.mock(User.class)).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(error -> error instanceof InvalidParameterException && "The configuration details entered are incorrect. Please check those and try again.".equals(error.getMessage()));
+    }
+
+    @Test
+    public void shouldUpdateCertificate() throws JsonProcessingException {
+        when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN))
+                .thenReturn(Maybe.just(certificateSchemaDefinition));
+        var certificateNode = objectMapper.createObjectNode();
+        var contentNode = objectMapper.createObjectNode();
+        contentNode.put("content", Base64.getEncoder().encode("file-content-cert".getBytes(StandardCharsets.UTF_8)));
+        contentNode.put("name", "test.p12");
+        certificateNode.put("content", objectMapper.writeValueAsString(contentNode));
+        certificateNode.put("alias", "am-server");
+        certificateNode.put("storepass", "server-secret");
+        certificateNode.put("keypass", "incorrect password");
+        var existingCertificate = new Certificate();
+        existingCertificate.setId(UUID.randomUUID().toString());
+        existingCertificate.setName("certificate");
+        existingCertificate.setType(DEFAULT_CERTIFICATE_PLUGIN);
+        existingCertificate.setConfiguration(certificateNode.toString());
+        existingCertificate.setMetadata(new HashMap<>());
+
+        var updatedCert = new UpdateCertificate();
+        updatedCert.setName("certificate");
+        updatedCert.setConfiguration(certificateNode.toString());
+
+        when(certificateRepository.findById(any())).thenReturn(Maybe.just(existingCertificate));
+        when(certificateRepository.update(any())).thenAnswer(answer -> Single.just(answer.getArguments()[0]));
+        when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+
+        TestObserver<Certificate> testObserver = certificateService.update(DOMAIN, existingCertificate.getId(), updatedCert, Mockito.mock(User.class)).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertNoErrors();
     }
 
     @Test
@@ -393,18 +430,18 @@ public class CertificateServiceTest {
         certificateNode.put("keypass", "server-secret");
         doReturn(new ObjectMapper().writeValueAsString(certificateNode)).when(objectMapper).writeValueAsString(any(ObjectNode.class));
         when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
-        when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         doReturn(mock(ObjectNode.class)).when(objectMapper).createObjectNode();
         when(certificatePluginService.getSchema(CertificateServiceImpl.DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
         when(certificatePluginManager.validate(any())).thenReturn(ValidationResult.valid());
 
-        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN_NAME).test();
+        TestObserver<Certificate> testObserver = certificateService.create(DOMAIN).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         if (shouldBeSuccessful) {
             verify(certificateRepository).create(argThat(cert -> cert.isSystem()
-                    && cert.getDomain().equals(DOMAIN_NAME)
+                    && cert.getDomain().equals(DOMAIN.getId())
                     && cert.getName().equals("Default")
             ));
         }
@@ -427,7 +464,7 @@ public class CertificateServiceTest {
         final var now = LocalDateTime.now();
         final Certificate certOldest = new Certificate();
         certOldest.setSystem(true);
-        certOldest.setDomain(DOMAIN);
+        certOldest.setDomain(DOMAIN.getId());
         certOldest.setName("Cert-1");
         certOldest.setConfiguration(certificateConfiguration);
         certOldest.setType(DEFAULT_CERTIFICATE_PLUGIN);
@@ -436,7 +473,7 @@ public class CertificateServiceTest {
 
         final Certificate certIntermediate = new Certificate();
         certIntermediate.setSystem(true);
-        certIntermediate.setDomain(DOMAIN);
+        certIntermediate.setDomain(DOMAIN.getId());
         certIntermediate.setName("Cert-2");
         certIntermediate.setConfiguration(certificateConfiguration);
         certIntermediate.setType(DEFAULT_CERTIFICATE_PLUGIN);
@@ -446,7 +483,7 @@ public class CertificateServiceTest {
         final Certificate certLatest = new Certificate();
         certLatest.setSystem(true);
         certLatest.setId("latest-cert-id");
-        certLatest.setDomain(DOMAIN);
+        certLatest.setDomain(DOMAIN.getId());
         certLatest.setName("Cert-3");
         certLatest.setConfiguration(certificateConfigurationWithOptions);
         certLatest.setType(DEFAULT_CERTIFICATE_PLUGIN);
@@ -455,21 +492,21 @@ public class CertificateServiceTest {
 
         final Certificate certCustom = new Certificate();
         certCustom.setSystem(false);
-        certCustom.setDomain(DOMAIN);
+        certCustom.setDomain(DOMAIN.getId());
         certCustom.setName("Cert-4");
         certCustom.setConfiguration(certificateConfiguration);
         certCustom.setType(DEFAULT_CERTIFICATE_PLUGIN);
         certCustom.setCreatedAt(new Date(now.minusYears(1).toInstant(ZoneOffset.UTC).toEpochMilli()));
         certCustom.setExpiresAt(new Date(now.plusDays(10).toInstant(ZoneOffset.UTC).toEpochMilli()));
 
-        when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(certOldest, certLatest, certIntermediate, certCustom));
+        when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(certOldest, certLatest, certIntermediate, certCustom));
 
         initializeCertificatSettings(2048, "SHA256withRSA");
 
         final Certificate renewedCert = new Certificate();
         renewedCert.setId("renewed-cert-id");
         when(certificateRepository.create(any())).thenReturn(Single.just(renewedCert));
-        when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(Event.class), any(Domain.class))).thenReturn(Single.just(new Event()));
 
         when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
@@ -480,7 +517,7 @@ public class CertificateServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         verify(certificateRepository).create(argThat(cert -> cert.isSystem()
-                && cert.getDomain().equals(DOMAIN)
+                && cert.getDomain().equals(DOMAIN.getId())
                 && cert.getName().matches("Default\\s[\\d-\\s:]+")
                 && cert.getConfiguration().contains("[\"sig\"]")
                 && cert.getConfiguration().contains("RS256")
@@ -492,7 +529,7 @@ public class CertificateServiceTest {
             result &= definition.getDelay() == 1;
             result &= definition.getUnit().equals(TimeUnit.MINUTES);
             if (definition instanceof AssignSystemCertificateDefinition) {
-                result &= ((AssignSystemCertificateDefinition) definition).getDomainId().equals(DOMAIN);
+                result &= ((AssignSystemCertificateDefinition) definition).getDomainId().equals(DOMAIN.getId());
                 result &= ((AssignSystemCertificateDefinition) definition).getDeprecatedCertificate().equals(certLatest.getId());
                 result &= ((AssignSystemCertificateDefinition) definition).getRenewedCertificate() != null;
             } else {
@@ -508,19 +545,19 @@ public class CertificateServiceTest {
 
         final Certificate certCustom = new Certificate();
         certCustom.setSystem(false);
-        certCustom.setDomain(DOMAIN);
+        certCustom.setDomain(DOMAIN.getId());
         certCustom.setName("Cert-4");
         certCustom.setConfiguration(certificateConfiguration);
         certCustom.setType(DEFAULT_CERTIFICATE_PLUGIN);
         certCustom.setCreatedAt(new Date(now.minusYears(1).toInstant(ZoneOffset.UTC).toEpochMilli()));
         certCustom.setExpiresAt(new Date(now.plusDays(10).toInstant(ZoneOffset.UTC).toEpochMilli()));
 
-        when(certificateRepository.findByDomain(DOMAIN)).thenReturn(Flowable.just(certCustom));
+        when(certificateRepository.findByDomain(DOMAIN.getId())).thenReturn(Flowable.just(certCustom));
 
         initializeCertificatSettings(2048, "SHA256withRSA");
 
         when(certificateRepository.create(any())).thenReturn(Single.just(new Certificate()));
-        when(eventService.create(any(Event.class))).thenReturn(Single.just(new Event()));
+        when(eventService.create(any(Event.class), any(Domain.class))).thenReturn(Single.just(new Event()));
 
         when(certificatePluginService.getSchema(DEFAULT_CERTIFICATE_PLUGIN))
                 .thenReturn(Maybe.just(certificateSchemaDefinition));
@@ -532,7 +569,7 @@ public class CertificateServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         verify(certificateRepository).create(argThat(cert -> cert.isSystem()
-                && cert.getDomain().equals(DOMAIN)
+                && cert.getDomain().equals(DOMAIN.getId())
                 && cert.getName().equals("Default")
                 && !cert.getConfiguration().contains("[\"sig\"]")
                 && !cert.getConfiguration().contains("RS256")

@@ -17,10 +17,10 @@ package io.gravitee.am.gateway.handler.uma.resources.endpoint;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.service.uma.UMAPermissionTicketService;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.uma.PermissionTicket;
-import io.gravitee.am.service.PermissionTicketService;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Single;
@@ -55,7 +55,7 @@ public class PermissionEndpointTest {
     private Domain domain;
 
     @Mock
-    private PermissionTicketService permissionTicketService;
+    private UMAPermissionTicketService permissionTicketService;
 
     @Mock
     private Client client;
@@ -82,7 +82,6 @@ public class PermissionEndpointTest {
     @Before
     public void setUp() {
         when(context.get(ConstantKeys.CLIENT_CONTEXT_KEY)).thenReturn(client);
-        when(domain.getId()).thenReturn(DOMAIN_ID);
         when(client.getId()).thenReturn(CLIENT_ID);
     }
 
@@ -133,7 +132,7 @@ public class PermissionEndpointTest {
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);
-        when(permissionTicketService.create(anyList(), eq(DOMAIN_ID), eq(CLIENT_ID))).thenReturn(Single.just(success));
+        when(permissionTicketService.create(anyList(), eq(CLIENT_ID))).thenReturn(Single.just(success));
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(context.response(), times(1)).setStatusCode(intCaptor.capture());
@@ -151,7 +150,7 @@ public class PermissionEndpointTest {
         when(context.response()).thenReturn(response);
         when(response.putHeader(anyString(),anyString())).thenReturn(response);
         when(response.setStatusCode(anyInt())).thenReturn(response);
-        when(permissionTicketService.create(anyList(), eq(DOMAIN_ID), eq(CLIENT_ID))).thenReturn(Single.just(success));
+        when(permissionTicketService.create(anyList(), eq(CLIENT_ID))).thenReturn(Single.just(success));
         endpoint.handle(context);
         verify(response, times(1)).putHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON);
         verify(context.response(), times(1)).setStatusCode(intCaptor.capture());

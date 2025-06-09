@@ -27,6 +27,7 @@ import { DialogService } from '../../../../services/dialog.service';
   selector: 'app-certificate',
   templateUrl: './certificate.component.html',
   styleUrls: ['./certificate.component.scss'],
+  standalone: false,
 })
 export class CertificateComponent implements OnInit {
   private domainId: string;

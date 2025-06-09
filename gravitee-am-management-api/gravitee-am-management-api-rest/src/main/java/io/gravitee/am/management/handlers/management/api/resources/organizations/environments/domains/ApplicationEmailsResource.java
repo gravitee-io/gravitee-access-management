@@ -17,12 +17,12 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Email;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -126,13 +126,13 @@ public class ApplicationEmailsResource extends AbstractResource {
                 .andThen(emailTemplateValidator.validate(newEmail))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMap(irrelevant -> applicationService.findById(application))
-                        .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
-                        .flatMapSingle(__ -> emailTemplateService.create(domain, application, newEmail, authenticatedUser))
-                        .map(email -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/emails/" + email.getId()))
-                                .entity(email)
-                                .build()))
+                        .flatMap(existingDomain -> applicationService.findById(application)
+                                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application)))
+                                .flatMapSingle(__ -> emailTemplateService.create(existingDomain, application, newEmail, authenticatedUser))
+                                .map(email -> Response
+                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application + "/emails/" + email.getId()))
+                                        .entity(email)
+                                        .build())))
                 .subscribe(response::resume, response::resume);
     }
 

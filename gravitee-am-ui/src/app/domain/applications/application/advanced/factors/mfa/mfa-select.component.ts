@@ -27,6 +27,7 @@ import { getDisplayFactorType, getFactorTypeIcon } from './mfa-select-icon';
   selector: 'mfa-select',
   templateUrl: './mfa-select.component.html',
   styleUrls: ['./mfa-select.component.scss'],
+  standalone: false,
 })
 export class MfaSelectComponent implements OnChanges {
   @Input() factors: MfaFactor[];
@@ -93,9 +94,9 @@ export class MfaSelectComponent implements OnChanges {
   }
 
   private getDomainMfaSettingsLink(): string {
-    const domainName = this.route.snapshot.data['domain']?.hrid;
+    const domainId = this.route.snapshot.data['domain']?.id;
     const environment = this.route.snapshot.data['domain']?.referenceId;
-    return `/environments/${environment}/domains/${domainName}/settings/factors`.toLowerCase();
+    return `/environments/${environment}/domains/${domainId}/settings/factors`.toLowerCase();
   }
 
   getFactorIconType(type: any): string {

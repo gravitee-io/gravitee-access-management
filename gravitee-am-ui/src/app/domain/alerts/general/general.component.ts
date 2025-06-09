@@ -32,6 +32,7 @@ export interface Tag {
   selector: 'app-domain-alert-general',
   templateUrl: './general.component.html',
   styleUrls: ['./general.component.scss'],
+  standalone: false,
 })
 export class DomainAlertGeneralComponent implements OnInit {
   formChanged = false;

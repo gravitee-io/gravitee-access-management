@@ -17,13 +17,15 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.PatchApplication;
@@ -44,7 +46,6 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
-import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -74,6 +75,9 @@ public class ApplicationResource extends AbstractResource {
 
     @Context
     private ResourceContext resourceContext;
+
+    @Autowired
+    private RevokeTokenManagementService revokeTokenManagementService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -218,38 +222,15 @@ public class ApplicationResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION, Acl.DELETE)
-                .andThen(applicationService.delete(application, authenticatedUser))
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMapCompletable(exitingDomain -> applicationService.delete(application, authenticatedUser, exitingDomain)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
-    @POST
-    @Path("secret/_renew")
-    @Operation(
-            operationId = "renewClientSecret",
-            summary = "Renew application secret",
-            description = "User must have APPLICATION_OPENID[UPDATE] permission on the specified application " +
-                    "or APPLICATION_OPENID[UPDATE] permission on the specified domain " +
-                    "or APPLICATION_OPENID[UPDATE] permission on the specified environment " +
-                    "or APPLICATION_OPENID[UPDATE] permission on the specified organization")
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Application secret successfully updated",
-                    content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = Application.class))),
-            @ApiResponse(responseCode = "500", description = "Internal server error")})
-    public void renewClientSecret(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
-            @PathParam("application") String application,
-            @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
-
-        checkAnyPermission(organizationId, environmentId, domain, application, Permission.APPLICATION_OPENID, Acl.READ)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(__ -> applicationService.renewClientSecret(domain, application, authenticatedUser)))
-                .subscribe(response::resume, response::resume);
+    @Path("secrets")
+    public ApplicationSecretsResource getApplicationResource(){
+        return resourceContext.getResource(ApplicationSecretsResource.class);
     }
 
     @Path("emails")
@@ -282,7 +263,7 @@ public class ApplicationResource extends AbstractResource {
         return resourceContext.getResource(ApplicationFlowsResource.class);
     }
 
-    public void updateInternal(String organizationId, String environmentId, String domain, String application, PatchApplication patchApplication, final AsyncResponse response) {
+    public void updateInternal(String organizationId, String environmentId, String domainId, String application, PatchApplication patchApplication, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
         Set<Permission> requiredPermissions = patchApplication.getRequiredPermissions();
@@ -292,12 +273,12 @@ public class ApplicationResource extends AbstractResource {
             response.resume(new BadRequestException("You need to specify at least one value to update."));
         } else {
             Completable.merge(requiredPermissions.stream()
-                    .map(permission -> checkAnyPermission(organizationId, environmentId, domain, application, permission, Acl.UPDATE))
+                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, application, permission, Acl.UPDATE))
                     .collect(Collectors.toList()))
-                    .andThen(domainService.findById(domain)
-                            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                            .flatMapSingle(patch -> applicationService.patch(domain, application, patchApplication, authenticatedUser)
-                                    .flatMap(updatedApplication -> findAllPermissions(authenticatedUser, organizationId, environmentId, domain, application)
+                    .andThen(domainService.findById(domainId)
+                            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                            .flatMapSingle(domain -> applicationService.patch(domain, application, patchApplication, authenticatedUser, revokeTokenManagementService::deleteByApplication)
+                                    .flatMap(updatedApplication -> findAllPermissions(authenticatedUser, organizationId, environmentId, domainId, application)
                                             .map(userPermissions -> filterApplicationInfos(updatedApplication, userPermissions)))))
                     .subscribe(response::resume, response::resume);
         }
@@ -346,6 +327,7 @@ public class ApplicationResource extends AbstractResource {
                 filteredApplicationSettings.setMfa(settings.getMfa());
                 filteredApplicationSettings.setCookieSettings(settings.getCookieSettings());
                 filteredApplicationSettings.setRiskAssessment(settings.getRiskAssessment());
+                filteredApplicationSettings.setSecretExpirationSettings(settings.getSecretExpirationSettings());
             }
 
             if (hasAnyPermission(userPermissions, Permission.APPLICATION_OPENID, Acl.READ)) {
@@ -357,7 +339,7 @@ public class ApplicationResource extends AbstractResource {
             }
         }
 
-        filteredApplication.setSecrets(application.getSecrets());
+        filteredApplication.setSecrets(application.getSecrets().stream().map(ClientSecret::safeSecret).toList());
         filteredApplication.setSecretSettings(application.getSecretSettings());
 
         return filteredApplication;

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
@@ -25,7 +26,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +39,7 @@ import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPL
  * @author GraviteeSource Team
  */
 @Component
+@ManagementRepositoryScope
 public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "scope_settings_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
@@ -81,7 +82,7 @@ public class ApplicationScopeSettingsUpgrader extends SystemTaskUpgrader {
     }
 
     private Single<Boolean> migrateScopeSettings(SystemTask task) {
-        return applicationService.findAll()
+        return applicationService.fetchAll()
                 .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(app -> {
                     logger.debug("Process application '{}'", app.getId());

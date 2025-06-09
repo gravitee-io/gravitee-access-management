@@ -29,6 +29,7 @@ import { AuthService } from '../../../../../services/auth.service';
   selector: 'app-user-roles',
   templateUrl: './roles.component.html',
   styleUrls: ['./roles.component.scss'],
+  standalone: false,
 })
 export class UserRolesComponent implements OnInit {
   private domainId: string;
@@ -140,6 +141,7 @@ export class UserRolesComponent implements OnInit {
 @Component({
   selector: 'add-user-roles',
   templateUrl: './add/add-user-roles.component.html',
+  standalone: false,
 })
 export class AddUserRolesComponent implements OnInit {
   private domainId: string;

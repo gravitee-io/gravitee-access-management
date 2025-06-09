@@ -73,6 +73,8 @@ public class EmailServiceTest {
             300,
             "Verify your MFA attempt",
             "Complete your registration",
+            Long.valueOf(DAYS.toSeconds(7)).intValue(),
+            "Verify your registration",
             Long.valueOf(DAYS.toSeconds(7)).intValue());
 
     @Mock
@@ -116,10 +118,6 @@ public class EmailServiceTest {
         when(this.emailService.getDefaultDictionaryProvider()).thenReturn(FileSystemDictionaryProvider.getInstance("src/test/resources/templates/i18n"));
 
         when(this.graviteeMessageResolver.getDynamicDictionaryProvider()).thenReturn(this.domainBasedDictionaryProvider);
-
-        cut.afterPropertiesSet();
-
-        doReturn(new CompositeDictionaryProvider(this.graviteeMessageResolver.getDynamicDictionaryProvider(), emailService.getDefaultDictionaryProvider())).when(emailService).getDictionaryProvider();
     }
 
     @Test

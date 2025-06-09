@@ -87,7 +87,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
     @Autowired
     private JWKService jwkService;
 
-    private RedirectUriValidator redirectUriValidator = new RedirectUriValidator();
+    private RedirectUriValidator redirectUriValidator = new RedirectUriValidator(this::checkMatchingRedirectUri);
 
     @Override
     public Single<JWT> readFromURI(String requestUri, Client client, OpenIDProviderMetadata oidcMetadata) {
@@ -255,7 +255,7 @@ public class PushedAuthorizationRequestServiceImpl implements PushedAuthorizatio
     }
 
     private void checkRedirectUri(Client client, String requestedRedirectUri) {
-        this.redirectUriValidator.validate(client, requestedRedirectUri, this::checkMatchingRedirectUri);
+        this.redirectUriValidator.validate(client, requestedRedirectUri);
     }
 
     private void checkMatchingRedirectUri(String requestedRedirect, List<String> registeredClientRedirectUris) {

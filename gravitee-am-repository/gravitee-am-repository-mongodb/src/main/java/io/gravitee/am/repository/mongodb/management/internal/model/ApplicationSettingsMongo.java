@@ -16,11 +16,15 @@
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
 import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class ApplicationSettingsMongo {
 
     private ApplicationOAuthSettingsMongo oauth;
@@ -32,77 +36,5 @@ public class ApplicationSettingsMongo {
     private MFASettingsMongo mfa;
     private CookieSettingsMongo cookieSettings;
     private RiskAssessmentSettingsMongo riskAssessment;
-
-    public ApplicationOAuthSettingsMongo getOauth() {
-        return oauth;
-    }
-
-    public void setOauth(ApplicationOAuthSettingsMongo oauth) {
-        this.oauth = oauth;
-    }
-
-    public ApplicationSAMLSettingsMongo getSaml() {
-        return saml;
-    }
-
-    public void setSaml(ApplicationSAMLSettingsMongo saml) {
-        this.saml = saml;
-    }
-
-    public AccountSettingsMongo getAccount() {
-        return account;
-    }
-
-    public void setAccount(AccountSettingsMongo account) {
-        this.account = account;
-    }
-
-    public LoginSettingsMongo getLogin() {
-        return login;
-    }
-
-    public void setLogin(LoginSettingsMongo login) {
-        this.login = login;
-    }
-
-    public ApplicationAdvancedSettingsMongo getAdvanced() {
-        return advanced;
-    }
-
-    public void setAdvanced(ApplicationAdvancedSettingsMongo advanced) {
-        this.advanced = advanced;
-    }
-
-    public PasswordSettingsMongo getPasswordSettings() {
-        return passwordSettings;
-    }
-
-    public void setPasswordSettings(PasswordSettingsMongo passwordSettings) {
-        this.passwordSettings = passwordSettings;
-    }
-
-    public MFASettingsMongo getMfa() {
-        return mfa;
-    }
-
-    public void setMfa(MFASettingsMongo mfa) {
-        this.mfa = mfa;
-    }
-
-    public CookieSettingsMongo getCookieSettings() {
-        return cookieSettings;
-    }
-
-    public void setCookieSettings(CookieSettingsMongo cookieSettings) {
-        this.cookieSettings = cookieSettings;
-    }
-
-    public RiskAssessmentSettingsMongo getRiskAssessment() {
-        return riskAssessment;
-    }
-
-    public ApplicationSettingsMongo setRiskAssessment(RiskAssessmentSettingsMongo riskAssessment) {
-        this.riskAssessment = riskAssessment;
-        return this;
-    }
+    private SecretSettingsMongo secretExpirationSettings;
 }

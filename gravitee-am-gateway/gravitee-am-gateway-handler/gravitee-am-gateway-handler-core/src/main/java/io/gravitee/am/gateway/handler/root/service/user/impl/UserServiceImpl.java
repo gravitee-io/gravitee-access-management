@@ -21,6 +21,7 @@ import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
@@ -28,6 +29,10 @@ import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
+import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.root.service.response.RegistrationResponse;
 import io.gravitee.am.gateway.handler.root.service.response.ResetPasswordResponse;
 import io.gravitee.am.gateway.handler.root.service.user.UserRegistrationIdpResolver;
@@ -51,12 +56,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.CredentialService;
 import io.gravitee.am.service.DomainReadService;
-import io.gravitee.am.service.LoginAttemptService;
-import io.gravitee.am.service.TokenService;
 import io.gravitee.am.service.exception.ClientNotFoundException;
 import io.gravitee.am.service.exception.EmailFormatInvalidException;
 import io.gravitee.am.service.exception.EnforceUserIdentityException;
@@ -97,7 +98,6 @@ import java.util.Optional;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ID_TOKEN;
-import static io.gravitee.am.model.ReferenceType.DOMAIN;
 import static io.gravitee.am.model.Template.REGISTRATION_VERIFY;
 import static io.gravitee.am.model.Template.RESET_PASSWORD;
 import static io.reactivex.rxjava3.core.Completable.complete;
@@ -121,7 +121,7 @@ public class UserServiceImpl implements UserService {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
-    private io.gravitee.am.gateway.handler.common.user.UserService userService;
+    private UserGatewayService userService;
 
     @Autowired
     @Qualifier("managementJwtParser")
@@ -146,10 +146,10 @@ public class UserServiceImpl implements UserService {
     private AuditService auditService;
 
     @Autowired
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptGatewayService loginAttemptService;
 
     @Autowired
-    private CredentialService credentialService;
+    private CredentialGatewayService credentialService;
 
     @Autowired
     private UserValidator userValidator;
@@ -158,7 +158,7 @@ public class UserServiceImpl implements UserService {
     private JWTService jwtService;
 
     @Autowired
-    private TokenService tokenService;
+    private RevokeTokenGatewayService tokenService;
 
     @Autowired
     private EmailValidator emailValidator;
@@ -237,7 +237,7 @@ public class UserServiceImpl implements UserService {
         final var rawPassword = user.getPassword();
         // validate user and then check user uniqueness
         return userValidator.validate(user)
-                .andThen(userService.findByDomainAndUsernameAndSource(domain.getId(), user.getUsername(), source).isEmpty()
+                .andThen(userService.findByUsernameAndSource(user.getUsername(), source).isEmpty()
                         .flatMapMaybe(checkUserPresence(user, source))
                         .switchIfEmpty(Single.error(() -> new UserProviderNotFoundException(source)))
                         .flatMap(userProvider -> userProvider.create(convert(user)))
@@ -404,7 +404,7 @@ public class UserServiceImpl implements UserService {
                     return userProvider.findByUsername(user.getUsername())
                             .switchIfEmpty(Single.error(() -> new UserNotFoundException(user.getUsername())))
                             .flatMap(idpUser -> passwordHistoryService
-                                    .addPasswordToHistory(DOMAIN, domain.getId(), user, user.getPassword(), principal, getPasswordPolicy(client, identityProviderManager.getIdentityProvider(user.getSource())))
+                                    .addPasswordToHistory(domain, user, user.getPassword(), principal, getPasswordPolicy(client, identityProviderManager.getIdentityProvider(user.getSource())))
                                     .switchIfEmpty(Single.just(new PasswordHistory()))
                                     .flatMap(passwordHistory -> userProvider.updatePassword(idpUser, user.getPassword())))
                             .onErrorResumeNext(ex -> {
@@ -447,12 +447,12 @@ public class UserServiceImpl implements UserService {
                             .client(client.getId())
                             .username(user1.getUsername())
                             .build();
-                    return loginAttemptService.reset(criteria).andThen(Single.just(user1));
+                    return loginAttemptService.reset(domain, criteria).andThen(Single.just(user1));
                 })
                 // delete passwordless devices
                 .flatMap(user1 -> {
                     if (accountSettings != null && accountSettings.isDeletePasswordlessDevicesAfterResetPassword()) {
-                        return credentialService.deleteByUserId(user1.getReferenceType(), user1.getReferenceId(), user1.getId())
+                        return credentialService.deleteByUserId(domain, user1.getId())
                                 .andThen(Single.just(user1));
                     }
                     return Single.just(user1);
@@ -497,7 +497,7 @@ public class UserServiceImpl implements UserService {
             return Completable.error(new UserNotFoundException(email));
         }
 
-        return userService.findByDomainAndCriteria(domain.getId(), params.buildCriteria())
+        return userService.findByCriteria(params.buildCriteria())
                 .flatMap(users -> {
                     List<User> foundUsers = narrowUsersForForgotPassword(client, users);
 
@@ -570,8 +570,8 @@ public class UserServiceImpl implements UserService {
                                     return Single.error(new UserNotFoundException());
                                 }
                                 final UserAuthentication idpUser = optional.get();
-                                return userService.findByDomainAndUsernameAndSource(domain.getId(), idpUser.getUser().getUsername(), idpUser.getSource())
-                                        .switchIfEmpty(Maybe.defer(() -> userService.findByDomainAndExternalIdAndSource(domain.getId(), idpUser.getUser().getId(), idpUser.getSource())))
+                                return userService.findByUsernameAndSource(idpUser.getUser().getUsername(), idpUser.getSource())
+                                        .switchIfEmpty(Maybe.defer(() -> userService.findByExternalIdAndSource(idpUser.getUser().getId(), idpUser.getSource())))
                                         .map(Optional::ofNullable)
                                         .defaultIfEmpty(Optional.empty())
                                         .flatMap(optEndUser -> {
@@ -800,7 +800,7 @@ public class UserServiceImpl implements UserService {
     private Single<User> createPasswordHistory(Client client, User user, String rawPassword, io.gravitee.am.identityprovider.api.User principal) {
         final var provider = identityProviderManager.getIdentityProvider(user.getSource());
         passwordHistoryService
-                .addPasswordToHistory(DOMAIN, domain.getId(), user, rawPassword, principal, getPasswordPolicy(client, provider))
+                .addPasswordToHistory(domain, user, rawPassword, principal, getPasswordPolicy(client, provider))
                 .subscribe(passwordHistory -> logger.debug("Created password history for user {}", user.getUsername()),
                         throwable -> logger.debug("Failed to create password history", throwable));
         return Single.just(user);

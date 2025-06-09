@@ -23,12 +23,17 @@ import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.web.UriBuilder;
+import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.DefaultIdentityProviderService;
+import io.gravitee.am.management.service.DomainGroupService;
 import io.gravitee.am.management.service.DomainService;
+import io.gravitee.am.management.service.dataplane.UMAResourceManagementService;
+import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.model.CorsSettings;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.DomainVersion;
+import io.gravitee.am.model.Entrypoint;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
@@ -40,6 +45,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.oidc.OIDCSettings;
 import io.gravitee.am.model.permissions.SystemRole;
+import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.management.api.DomainRepository;
 import io.gravitee.am.repository.management.api.search.AlertNotifierCriteria;
 import io.gravitee.am.repository.management.api.search.AlertTriggerCriteria;
@@ -52,28 +58,24 @@ import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
+import io.gravitee.am.service.EntrypointService;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.ExtensionGrantService;
 import io.gravitee.am.service.FactorService;
 import io.gravitee.am.service.FlowService;
 import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.GroupService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
-import io.gravitee.am.service.RateLimiterService;
 import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ThemeService;
-import io.gravitee.am.service.UserActivityService;
-import io.gravitee.am.service.UserService;
-import io.gravitee.am.service.VerifyAttemptService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
+import io.gravitee.am.service.exception.InvalidDataPlaneException;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.exception.InvalidParameterException;
 import io.gravitee.am.service.exception.InvalidRedirectUriException;
@@ -148,6 +150,8 @@ public class DomainServiceImpl implements DomainService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(DomainServiceImpl.class);
 
+    @Autowired
+    private DataPlaneRegistry dataPlaneRegistry;
 
     @Lazy
     @Autowired
@@ -157,7 +161,7 @@ public class DomainServiceImpl implements DomainService {
     private DomainReadService domainReadService;
 
     @Autowired
-    private UserActivityService userActivityService;
+    private UserActivityManagementService userActivityService;
 
     @Autowired
     private DomainValidator domainValidator;
@@ -184,13 +188,10 @@ public class DomainServiceImpl implements DomainService {
     private RoleService roleService;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private ScopeService scopeService;
 
     @Autowired
-    private GroupService groupService;
+    private DomainGroupService domainGroupService;
 
     @Autowired
     private EmailTemplateService emailTemplateService;
@@ -220,7 +221,7 @@ public class DomainServiceImpl implements DomainService {
     private EnvironmentService environmentService;
 
     @Autowired
-    private ResourceService resourceService;
+    private UMAResourceManagementService resourceService;
 
     @Autowired
     private AlertTriggerService alertTriggerService;
@@ -238,16 +239,13 @@ public class DomainServiceImpl implements DomainService {
     private ThemeService themeService;
 
     @Autowired
-    private RateLimiterService rateLimiterService;
-
-    @Autowired
     private PasswordHistoryService passwordHistoryService;
 
     @Autowired
-    private VerifyAttemptService verifyAttemptService;
+    private PasswordPolicyService passwordPolicyService;
 
     @Autowired
-    private PasswordPolicyService passwordPolicyService;
+    private EntrypointService entrypointService;
 
     @Autowired
     private DefaultIdentityProviderService defaultIdentityProviderService;
@@ -337,6 +335,9 @@ public class DomainServiceImpl implements DomainService {
         LOGGER.debug("Create a new domain: {}", newDomain);
         // generate hrid
         String hrid = IdGenerator.generate(newDomain.getName());
+        if (dataPlaneRegistry.getDataPlanes().stream().map(DataPlaneDescription::id).noneMatch(id -> id.equals(newDomain.getDataPlaneId()))) {
+            return Single.error(new InvalidDataPlaneException("An error occurred while trying to create a domain. Data Plane with provided Id doesn't exist."));
+        }
         return domainRepository.findByHrid(ReferenceType.ENVIRONMENT, environmentId, hrid)
                 .isEmpty()
                 .flatMap(empty -> {
@@ -357,6 +358,7 @@ public class DomainServiceImpl implements DomainService {
                         domain.setReferenceId(environmentId);
                         domain.setCreatedAt(new Date());
                         domain.setUpdatedAt(domain.getCreatedAt());
+                        domain.setDataPlaneId(newDomain.getDataPlaneId());
 
                         return environmentService.findById(domain.getReferenceId())
                                 .doOnSuccess(environment -> setDeployMode(domain, environment))
@@ -392,7 +394,7 @@ public class DomainServiceImpl implements DomainService {
                     if (!createDefaultIdentityProvider) {
                         return Single.just(domain);
                     }
-                    return defaultIdentityProviderService.create(domain.getId()).map(__ -> domain);
+                    return defaultIdentityProviderService.create(domain).map(__ -> domain);
                 })
                 // create default reporter
                 .flatMap(domain -> {
@@ -405,7 +407,7 @@ public class DomainServiceImpl implements DomainService {
                 // create event for sync process
                 .flatMap(domain -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain.getId(), DOMAIN, domain.getId(), Action.CREATE));
-                    return eventService.create(event).flatMap(e -> Single.just(domain));
+                    return eventService.create(event, domain).flatMap(e -> Single.just(domain));
                 })
                 .flatMap(domain -> reporterService.notifyInheritedReporters(Reference.organization(organizationId), Reference.domain(domain.getId()), Action.CREATE)
                         .andThen(Single.just(domain)))
@@ -435,6 +437,10 @@ public class DomainServiceImpl implements DomainService {
         return domainRepository.findById(domainId)
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(existingDomain -> {
+                    if(existingDomain.getDataPlaneId() != null &&
+                            !existingDomain.getDataPlaneId().equals(domain.getDataPlaneId())){
+                        return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
+                    }
                     domain.setId(existingDomain.getId());
                     domain.setVersion(existingDomain.getVersion());
                     domain.setReferenceId(existingDomain.getReferenceId());
@@ -447,7 +453,7 @@ public class DomainServiceImpl implements DomainService {
                 // create event for sync process
                 .flatMap(domain1 -> {
                     Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(domain1));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(domain1));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
@@ -465,6 +471,11 @@ public class DomainServiceImpl implements DomainService {
                 .switchIfEmpty(Single.error(new DomainNotFoundException(domainId)))
                 .flatMap(oldDomain -> {
                     Domain toPatch = patchDomain.patch(oldDomain);
+                    if(oldDomain.getDataPlaneId() != null &&
+                            !oldDomain.getDataPlaneId().equals(toPatch.getDataPlaneId())){
+                        return Single.error(new InvalidParameterException("Once domain is created, [dataPlaneId] cannot be changed."));
+                    }
+
                     final AccountSettings accountSettings = toPatch.getAccountSettings();
                     if (Boolean.FALSE.equals(accountSettingsValidator.validate(accountSettings))) {
                         return Single.error(new InvalidParameterException("Unexpected forgot password field"));
@@ -476,7 +487,7 @@ public class DomainServiceImpl implements DomainService {
                             // create event for sync process
                             .flatMap(domain1 -> {
                                 Event event = new Event(Type.DOMAIN, new Payload(domain1.getId(), DOMAIN, domain1.getId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(domain1));
+                                return eventService.create(event, domain1).flatMap(__ -> Single.just(domain1));
                             })
                             .doOnSuccess(domain1 -> {
                                 auditService.report(AuditBuilder.builder(DomainAuditBuilder.class).principal(principal).type(EventType.DOMAIN_UPDATED).oldValue(oldDomain).domain(domain1));
@@ -526,7 +537,7 @@ public class DomainServiceImpl implements DomainService {
                     // delete applications
                     return applicationService.findByDomain(domainId)
                             .flatMapCompletable(applications -> {
-                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId())).toList();
+                                List<Completable> deleteApplicationsCompletable = applications.stream().map(a -> applicationService.delete(a.getId(), domain)).toList();
                                 return Completable.concat(deleteApplicationsCompletable);
                             })
                             // delete identity providers
@@ -551,20 +562,20 @@ public class DomainServiceImpl implements DomainService {
                                     })
                             )
                             //Delete all trace of activity of users for this domain
-                            .andThen(userActivityService.deleteByDomain(domainId))
+                            .andThen(userActivityService.deleteByDomain(domain))
                             // delete users
                             // do not delete one by one for memory consumption issue
                             // https://github.com/gravitee-io/issues/issues/6999
-                            .andThen(userService.deleteByDomain(domainId))
+                            .andThen(dataPlaneRegistry.getUserRepository(domain).deleteByReference(domain.asReference()))
                             // delete groups
-                            .andThen(groupService.findByDomain(domainId)
+                            .andThen(domainGroupService.findAll(domain)
                                     .flatMapCompletable(group ->
-                                            groupService.delete(DOMAIN, domainId, group.getId()))
+                                            domainGroupService.delete(domain, group.getId(), principal))
                             )
                             // delete scopes
                             .andThen(scopeService.findByDomain(domainId, 0, Integer.MAX_VALUE)
                                     .flatMapCompletable(scopes -> {
-                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(s.getId(), true)).toList();
+                                        List<Completable> deleteScopesCompletable = scopes.getData().stream().map(s -> scopeService.delete(domain, s.getId(), true)).toList();
                                         return Completable.concat(deleteScopesCompletable);
                                     })
                             )
@@ -597,11 +608,8 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(factor -> factorService.delete(domainId, factor.getId()))
                             )
                             // delete uma resources
-                            .andThen(resourceService.findByDomain(domainId)
-                                    .flatMapCompletable(resources -> {
-                                        List<Completable> deletedResourceCompletable = resources.stream().map(resourceService::delete).toList();
-                                        return Completable.concat(deletedResourceCompletable);
-                                    })
+                            .andThen(resourceService.findByDomain(domain)
+                                    .flatMapCompletable(resource -> resourceService.delete(domain, resource))
                             )
                             // delete alert triggers
                             .andThen(alertTriggerService.findByDomainAndCriteria(domainId, new AlertTriggerCriteria())
@@ -629,13 +637,10 @@ public class DomainServiceImpl implements DomainService {
                                     .flatMapCompletable(theme -> themeService.delete(domain, theme.getId(), principal)
                                     )
                             )
-                            // delete rate limit
-                            .andThen(rateLimiterService.deleteByDomain(domain, DOMAIN))
-                            .andThen(passwordHistoryService.deleteByReference(ReferenceType.DOMAIN, domainId))
+                            .andThen(passwordHistoryService.deleteByReference(domain))
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
-                            .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
                             .andThen(domainRepository.delete(domainId))
-                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE)))))
+                            .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.DOMAIN_DELETED)
@@ -645,7 +650,7 @@ public class DomainServiceImpl implements DomainService {
                                     .principal(principal)
                                     .type(EventType.DOMAIN_DELETED)
                                     .throwable(throwable)
-                                            .domain(domain)
+                                    .domain(domain)
                                     .reference(Reference.organization(graviteeContext.getOrganizationId()))));
                 })
                 .onErrorResumeNext(ex -> {
@@ -663,6 +668,27 @@ public class DomainServiceImpl implements DomainService {
         return domainReadService.buildUrl(domain, path, queryParams);
     }
 
+    @Override
+    public Single<List<Entrypoint>> listEntryPoint(Domain domain, String organizationId) {
+        return entrypointService.findAll(organizationId)
+                .filter(entrypoint -> entrypoint.isDefaultEntrypoint()
+                        || (entrypoint.getTags() != null && !entrypoint.getTags().isEmpty() && domain.getTags() != null && entrypoint.getTags().stream().anyMatch(tag -> domain.getTags().contains(tag))))
+                .toList()
+                .map(filteredEntrypoints -> {
+                    if (filteredEntrypoints.size() > 1) {
+                        // Remove default entrypoint if another entrypoint has matched.
+                        filteredEntrypoints.removeIf(Entrypoint::isDefaultEntrypoint);
+                    } else if (filteredEntrypoints.get(0).isDefaultEntrypoint()) {
+                        // default entrypoint present, we check if the DataPlane description contains a GatewayUrl
+                        // if so, we use it otherwise we keep the default entrypoint
+                        ofNullable(this.dataPlaneRegistry.getDescription(domain).gatewayUrl())
+                                .ifPresent(url -> filteredEntrypoints.get(0).setUrl(url));
+                    }
+
+                    return filteredEntrypoints;
+                });
+    }
+
     private Single<Domain> createSystemScopes(Domain domain) {
         return Observable.fromArray(io.gravitee.am.common.oidc.Scope.values())
                 .flatMapSingle(systemScope -> {
@@ -673,7 +699,7 @@ public class DomainServiceImpl implements DomainService {
                     scope.setName(systemScope.getLabel());
                     scope.setDescription(systemScope.getDescription());
                     scope.setDiscovery(systemScope.isDiscovery());
-                    return scopeService.create(domain.getId(), scope);
+                    return scopeService.create(domain, scope);
                 })
                 .lastOrError()
                 .map(scope -> domain);
@@ -682,7 +708,7 @@ public class DomainServiceImpl implements DomainService {
 
     private Single<Domain> createDefaultCertificate(Domain domain) {
         return certificateService
-                .create(domain.getId())
+                .create(domain)
                 .map(certificate -> domain);
     }
 

@@ -25,6 +25,7 @@ import io.gravitee.am.common.exception.authentication.NegotiateContinueException
 import io.gravitee.am.common.exception.authentication.UsernameNotFoundException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
+import io.gravitee.am.dataplane.api.search.LoginAttemptCriteria;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
@@ -32,7 +33,8 @@ import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
-import io.gravitee.am.gateway.handler.common.user.UserService;
+import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.Domain;
@@ -41,9 +43,8 @@ import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
-import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
-import io.gravitee.am.service.LoginAttemptService;
 import io.gravitee.am.service.PasswordService;
+import io.gravitee.am.service.authentication.crypto.password.bcrypt.BCryptPasswordEncoder;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Completable;
@@ -84,13 +85,13 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     private EventManager eventManager;
 
     @Autowired
-    private LoginAttemptService loginAttemptService;
+    private LoginAttemptGatewayService loginAttemptService;
 
     @Autowired
     private UserAuthenticationService userAuthenticationService;
 
     @Autowired
-    private UserService userService;
+    private UserGatewayService userService;
 
     @Autowired
     private PasswordService passwordService;
@@ -100,6 +101,8 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
     @Autowired
     private GatewayMetricProvider gatewayMetricProvider;
+
+    private BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
 
     @Override
     public Single<User> authenticate(Client client, Authentication authentication, boolean preAuthenticated) {
@@ -124,10 +127,12 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                         Throwable lastException = userAuthentication.lastException();
                         if (lastException != null) {
                             if (lastException instanceof BadCredentialsException) {
-                                return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
+                                return Single.error(new BadCredentialsException("The credentials entered are invalid", lastException));
                             } else if (lastException instanceof UsernameNotFoundException) {
                                 // if an IdP return UsernameNotFoundException, convert it as BadCredentials in order to avoid helping attackers
-                                return Single.error(new BadCredentialsException("The credentials you entered are invalid", lastException));
+                                //PEN-21 Encoding password takes a while. To ensure execution time the same for not existing user, introduced fake password checking.
+                                bCryptPasswordEncoder.matches(authentication.getCredentials().toString(), "$2a$10$hdjt9YGrSudbIljTqAtcW.KOxNJscq00Nxv088wPy6GDKXCJe0aCm");
+                                return Single.error(new BadCredentialsException("The credentials entered are invalid", lastException));
                             } else if (lastException instanceof AccountStatusException) {
                                 return Single.error(lastException);
                             } else if (lastException instanceof NegotiateContinueException) {
@@ -138,7 +143,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             }
                         } else {
                             // if an IdP return null user, throw BadCredentials in order to avoid helping attackers
-                            return Single.error(new BadCredentialsException("The credentials you entered are invalid"));
+                            return Single.error(new BadCredentialsException("The credentials entered are invalid"));
                         }
                     } else {
                         // complete user connection
@@ -195,7 +200,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
                             .flatMap(preAuth -> {
                                 if (preAuth) {
                                     final String username = authentication.getPrincipal().toString();
-                                    return userService.findByDomainAndUsernameAndSource(domain.getId(), username, authProvider)
+                                    return userService.findByUsernameAndSource(username, authProvider)
                                             .switchIfEmpty(Maybe.error(() -> new UsernameNotFoundException(username)))
                                             .flatMap(user -> {
                                                 final Authentication enhanceAuthentication = new EndUserAuthentication(user, null, authentication.getContext());
@@ -251,7 +256,7 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
         // check if user is locked
         return loginAttemptService
-                .checkAccount(criteria, accountSettings)
+                .checkAccount(domain, criteria, accountSettings)
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
                 .flatMapCompletable(optLoginAttempt -> {
@@ -263,15 +268,15 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
 
                     // no exception clear login attempt
                     if (userAuthentication.lastException() == null) {
-                        return loginAttemptService.loginSucceeded(criteria);
+                        return loginAttemptService.loginSucceeded(domain, criteria);
                     }
 
                     if (userAuthentication.lastException() instanceof BadCredentialsException) {
                         // do not execute login attempt feature for non-existing users
                         // normally the IdP should respond with Maybe.empty() or UsernameNotFoundException
                         // but we can't control custom IdP that's why we have to check user existence
-                        return userService.findByDomainAndUsernameAndSource(criteria.domain(), criteria.username(), criteria.identityProvider(), true)
-                                .flatMapCompletable(user -> loginAttemptService.loginFailed(criteria, accountSettings)
+                        return userService.findByUsernameAndSource(criteria.username(), criteria.identityProvider(), true)
+                                .flatMapCompletable(user -> loginAttemptService.loginFailed(domain, criteria, accountSettings)
                                         .flatMapCompletable(loginAttempt -> {
                                             if (loginAttempt.isAccountLocked(accountSettings.getMaxLoginAttempts())) {
                                                 return userAuthenticationService.lockAccount(criteria, accountSettings, client, user);

@@ -35,17 +35,21 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.times;
@@ -57,7 +61,7 @@ import static org.mockito.Mockito.when;
  * @author Jeoffrey HAEYAERT (jeoffrey.haeyaert at graviteesource.com)
  * @author GraviteeSource Team
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class OrganizationServiceTest {
 
     public static final String ORGANIZATION_ID = "orga#1";
@@ -77,7 +81,7 @@ public class OrganizationServiceTest {
 
     private OrganizationService cut;
 
-    @Before
+    @BeforeEach
     public void before() {
 
         cut = new OrganizationServiceImpl(organizationRepository, roleService, entrypointService, auditService);
@@ -370,5 +374,34 @@ public class OrganizationServiceTest {
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertError(OrganizationNotFoundException.class);
+    }
+
+    @Test
+    public void onUpdate_shouldRemoveNullIdps() {
+        Organization existingOrganization = new Organization();
+        existingOrganization.setId(ORGANIZATION_ID);
+
+        when(organizationRepository.findById(ORGANIZATION_ID)).thenReturn(Maybe.just(existingOrganization));
+        when(organizationRepository.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+
+        PatchOrganization patchOrganization = new PatchOrganization();
+        List<String> identities = new ArrayList<>();
+        identities.add("idp1");
+        identities.add("idp2");
+        identities.add(null);
+        patchOrganization.setIdentities(identities);
+
+        TestObserver<Organization> obs = cut.update(ORGANIZATION_ID, patchOrganization, new DefaultUser("username")).test();
+
+        ArgumentCaptor<Organization> captor = ArgumentCaptor.forClass(Organization.class);
+        verify(organizationRepository).update(captor.capture());
+
+        Organization updatedOrganization = captor.getValue();
+
+        assertNotNull(updatedOrganization.getIdentities());
+        assertEquals(2, updatedOrganization.getIdentities().size());
+        assertTrue(updatedOrganization.getIdentities().containsAll(List.of("idp1", "idp2")));
+
+        obs.assertComplete();
     }
 }

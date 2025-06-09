@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: dp-init-9-uma_permission_ticket
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: uma_permission_ticket
+      changes:
+        - createTable:
+            tableName: uma_permission_ticket
+            columns:
+              - column: {name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: {name: domain, type: nvarchar(255), constraints: { nullable: true } }
+              - column: {name: user_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: client_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: {name: permission_request, type: clob, constraints: { nullable: true } }
+              - column: {name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: {name: expire_at, type: timestamp(6), constraints: { nullable: true } }
+
+        - addPrimaryKey:
+            constraintName: pk_uma_permission_ticket
+            columnNames: id
+            tableName: uma_permission_ticket
+
+        - sql:
+            dbms: postgresql
+            sql: ALTER TABLE uma_permission_ticket ALTER permission_request TYPE JSON USING permission_request::json
+
+        - sql:
+            dbms: mysql
+            sql: ALTER TABLE uma_permission_ticket MODIFY permission_request JSON;
+
+  - changeSet:
+      id: dp-init-9-uma_permission_ticket-idx_uma_permission_ticket_expire
+      author: GraviteeSource Team
+      onError: MARK_RAN
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - indexExists:
+              indexName: idx_uma_permission_ticket_expire
+              tableName: uma_permission_ticket
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: expire_at
+            indexName: idx_uma_permission_ticket_expire
+            tableName: uma_permission_ticket
+            unique: false
