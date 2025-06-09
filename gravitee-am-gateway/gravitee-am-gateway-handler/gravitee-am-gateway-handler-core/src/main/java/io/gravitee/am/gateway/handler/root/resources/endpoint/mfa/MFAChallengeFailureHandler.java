@@ -59,7 +59,7 @@ public class MFAChallengeFailureHandler extends AbstractErrorHandler {
         final MultiMap queryParams = updateQueryParams(context, errorDescription);
         String uri;
         if (throwable instanceof SendChallengeException) {
-            uri =  UriBuilderRequest.resolveProxyRequest(context.request(), context.request().uri(), queryParams, true);
+            uri =  UriBuilderRequest.resolveProxyRequest(context.request(), context.request().path(), queryParams, true);
         } else {
             logoutUser(context);
             uri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/login", queryParams, true);
