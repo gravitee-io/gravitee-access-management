@@ -113,10 +113,13 @@ export class EmailComponent implements OnInit, AfterViewInit {
   }
 
   refreshPreview() {
-    const doc = this.preview.nativeElement.contentDocument || this.preview.nativeElement.contentWindow;
-    doc.open();
-    doc.write(this.emailContent);
-    doc.close();
+    const iframe = this.preview.nativeElement;
+    iframe.addEventListener('load', () => {
+      const doc = iframe.contentDocument || iframe.contentWindow;
+      doc.open();
+      doc.write(this.emailContent);
+      doc.close();
+    });
   }
 
   onContentChanges(e) {
