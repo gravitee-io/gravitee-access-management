@@ -34,7 +34,7 @@ public class KafkaNotifierConfigurationProvider {
         while(configuration.getProperty(format("notifiers.kafka.additionalProperties[%d].name", propertyIndex)) != null) {
             final var name = configuration.getProperty(format("notifiers.kafka.additionalProperties[%d].name", propertyIndex), String.class);
             final var value = configuration.getProperty(format("notifiers.kafka.additionalProperties[%d].value", propertyIndex), String.class);
-            additionalProperties.add(Map.of(name, value));
+            additionalProperties.add(Map.of("option", name, "value", value));
             ++propertyIndex;
         }
 
