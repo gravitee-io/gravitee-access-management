@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.7.0
+  version: 4.8.0
 servers:
 - url: /management
 security:
@@ -415,7 +415,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Domain"
+                  $ref: "#/components/schemas/DomainPage"
         "500":
           description: Internal server error
     post:
@@ -1361,6 +1361,7 @@ paths:
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
+          - CLIENT_SECRET_EXPIRATION
           - VERIFY_ATTEMPT
       responses:
         "200":
@@ -1378,7 +1379,7 @@ paths:
         \ on the specified domain or APPLICATION_EMAIL_TEMPLATE[CREATE] permission\
         \ on the specified environment or APPLICATION_EMAIL_TEMPLATE[CREATE] permission\
         \ on the specified organization"
-      operationId: create_1
+      operationId: create_2
       parameters:
       - name: organizationId
         in: path
@@ -1476,7 +1477,7 @@ paths:
         \ on the specified domain or APPLICATION_EMAIL_TEMPLATE[DELETE] permission\
         \ on the specified environment or APPLICATION_EMAIL_TEMPLATE[DELETE] permission\
         \ on the specified organization"
-      operationId: delete_1
+      operationId: delete_2
       parameters:
       - name: organizationId
         in: path
@@ -1755,6 +1756,7 @@ paths:
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
+          - CLIENT_SECRET_EXPIRATION
           - VERIFY_ATTEMPT
       responses:
         "200":
@@ -1771,7 +1773,7 @@ paths:
         \ application or APPLICATION_FORM[CREATE] permission on the specified domain\
         \ or APPLICATION_FORM[CREATE] permission on the specified environment or APPLICATION_FORM[CREATE]\
         \ permission on the specified organization"
-      operationId: create_2
+      operationId: create_3
       parameters:
       - name: organizationId
         in: path
@@ -1867,7 +1869,7 @@ paths:
         \ application or APPLICATION_FORM[DELETE] permission on the specified domain\
         \ or APPLICATION_FORM[DELETE] permission on the specified environment or APPLICATION_FORM[DELETE]\
         \ permission on the specified organization"
-      operationId: delete_2
+      operationId: delete_3
       parameters:
       - name: organizationId
         in: path
@@ -2265,8 +2267,139 @@ paths:
                 $ref: "#/components/schemas/AccessPolicy"
         "500":
           description: Internal server error
-  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/secret/_renew:
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/secrets:
+    get:
+      tags:
+      - application
+      - domain
+      summary: List secrets of an application
+      description: "User must have APPLICATION_OPENID[LIST] permission on the specified\
+        \ application or APPLICATION_OPENID[LIST] permission on the specified domain\
+        \ or APPLICATION_OPENID[LIST] permission on the specified environment or APPLICATION_OPENID[LIST]\
+        \ permission on the specified organization"
+      operationId: getSecrets
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List secrets of an application
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClientSecret"
+        "500":
+          description: Internal server error
     post:
+      tags:
+      - application
+      - domain
+      summary: Create a secret for an application
+      description: "User must have APPLICATION_OPENID[CREATE] permission on the specified\
+        \ application or APPLICATION_OPENID[CREATE] permission on the specified domain\
+        \ or APPLICATION_OPENID[CREATE] permission on the specified environment or\
+        \ APPLICATION_OPENID[CREATE] permission on the specified organization"
+      operationId: create_1
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewClientSecret"
+        required: true
+      responses:
+        "200":
+          description: Application secret successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientSecret"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/secrets/{secret}:
+    delete:
+      tags:
+      - application
+      - domain
+      summary: Delete a secret of an application
+      description: "User must have APPLICATION_OPENID[DELETE] permission on the specified\
+        \ application or APPLICATION_OPENID[DELETE] permission on the specified domain\
+        \ or APPLICATION_OPENID[DELETE] permission on the specified environment or\
+        \ APPLICATION_OPENID[DELETE] permission on the specified organization"
+      operationId: delete_1
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: application
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: secret
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Secret successfully deleted
+        "500":
+          description: Internal server error
+  ? /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/secrets/{secret}/_renew
+  : post:
       tags:
       - application
       - domain
@@ -2297,13 +2430,18 @@ paths:
         required: true
         schema:
           type: string
+      - name: secret
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           description: Application secret successfully updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Application"
+                $ref: "#/components/schemas/ClientSecret"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/type:
@@ -2515,7 +2653,7 @@ paths:
         \ on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission\
         \ on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission\
         \ on the specified organization"
-      operationId: create_3
+      operationId: create_4
       parameters:
       - name: organizationId
         in: path
@@ -2639,7 +2777,7 @@ paths:
         \ on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission\
         \ on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission\
         \ on the specified organization"
-      operationId: delete_3
+      operationId: delete_4
       parameters:
       - name: organizationId
         in: path
@@ -3444,6 +3582,7 @@ paths:
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
+          - CLIENT_SECRET_EXPIRATION
           - VERIFY_ATTEMPT
       responses:
         "200":
@@ -3459,7 +3598,7 @@ paths:
         \ the specified domain or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the\
         \ specified environment or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the\
         \ specified organization"
-      operationId: create_4
+      operationId: create_5
       parameters:
       - name: organizationId
         in: path
@@ -3543,7 +3682,7 @@ paths:
         \ the specified domain or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the\
         \ specified environment or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_4
+      operationId: delete_5
       parameters:
       - name: organizationId
         in: path
@@ -4231,6 +4370,7 @@ paths:
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
+          - CLIENT_SECRET_EXPIRATION
           - VERIFY_ATTEMPT
       responses:
         "200":
@@ -4245,7 +4385,7 @@ paths:
       description: "User must have the DOMAIN_FORM[CREATE] permission on the specified\
         \ domain or DOMAIN_FORM[CREATE] permission on the specified environment or\
         \ DOMAIN_FORM[CREATE] permission on the specified organization"
-      operationId: create_5
+      operationId: create_6
       parameters:
       - name: organizationId
         in: path
@@ -4369,7 +4509,7 @@ paths:
       description: "User must have the DOMAIN_FORM[DELETE] permission on the specified\
         \ domain or DOMAIN_FORM[DELETE] permission on the specified environment or\
         \ DOMAIN_FORM[DELETE] permission on the specified organization"
-      operationId: delete_5
+      operationId: delete_6
       parameters:
       - name: organizationId
         in: path
@@ -5873,7 +6013,7 @@ paths:
       description: "User must have the DOMAIN_REPORTER[CREATE] permission on the specified\
         \ domain or DOMAIN_REPORTER[CREATE] permission on the specified environment\
         \ or DOMAIN_REPORTER[CREATE] permission on the specified organization."
-      operationId: create_6
+      operationId: create_7
       parameters:
       - name: organizationId
         in: path
@@ -5997,7 +6137,7 @@ paths:
       description: "User must have the DOMAIN_REPORTER[DELETE] permission on the specified\
         \ domain or DOMAIN_REPORTER[DELETE] permission on the specified environment\
         \ or DOMAIN_REPORTER[DELETE] permission on the specified organization"
-      operationId: delete_6
+      operationId: delete_7
       parameters:
       - name: organizationId
         in: path
@@ -7333,7 +7473,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_7
+      operationId: delete_8
       parameters:
       - name: organizationId
         in: path
@@ -7627,7 +7767,7 @@ paths:
       description: "User must have the DOMAIN_USER_DEVICE[DELETE] permission on the\
         \ specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified\
         \ environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization"
-      operationId: delete_8
+      operationId: delete_9
       parameters:
       - name: organizationId
         in: path
@@ -7710,7 +7850,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_9
+      operationId: delete_10
       parameters:
       - name: organizationId
         in: path
@@ -7793,7 +7933,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_10
+      operationId: delete_11
       parameters:
       - name: organizationId
         in: path
@@ -8271,6 +8411,7 @@ paths:
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
+          - CLIENT_SECRET_EXPIRATION
           - VERIFY_ATTEMPT
       responses:
         "200":
@@ -8283,7 +8424,7 @@ paths:
       summary: Create a form
       description: "User must have the ORGANIZATION_FORM[CREATE] permission on the\
         \ specified organization"
-      operationId: create_7
+      operationId: create_8
       parameters:
       - name: organizationId
         in: path
@@ -8341,7 +8482,7 @@ paths:
       summary: Delete a form
       description: "User must have the ORGANIZATION_FORM[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_11
+      operationId: delete_12
       parameters:
       - name: organizationId
         in: path
@@ -8402,7 +8543,7 @@ paths:
       summary: Create a platform group
       description: "User must have the ORGANIZATION_GROUP[CREATE] permission on the\
         \ specified organization"
-      operationId: create_8
+      operationId: create_9
       parameters:
       - name: organizationId
         in: path
@@ -8641,7 +8782,7 @@ paths:
       summary: Create an identity provider for the organization
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission\
         \ on the specified organization"
-      operationId: create_9
+      operationId: create_10
       parameters:
       - name: organizationId
         in: path
@@ -8726,7 +8867,7 @@ paths:
       summary: Delete an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission\
         \ on the specified organization"
-      operationId: delete_12
+      operationId: delete_13
       parameters:
       - name: organizationId
         in: path
@@ -8994,7 +9135,7 @@ paths:
       summary: Create a role for the organization
       description: "User must have the ORGANIZATION_ROLE[CREATE] permission on the\
         \ specified organization"
-      operationId: create_10
+      operationId: create_11
       parameters:
       - name: organizationId
         in: path
@@ -9079,7 +9220,7 @@ paths:
       summary: Delete a plaform role
       description: "User must have the ORGANIZATION_ROLE[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_13
+      operationId: delete_14
       parameters:
       - name: organizationId
         in: path
@@ -9177,7 +9318,7 @@ paths:
       summary: Create a sharding tags
       description: "User must have the ORGANIZATION_TAG[CREATE] permission on the\
         \ specified organization"
-      operationId: create_11
+      operationId: create_12
       parameters:
       - name: organizationId
         in: path
@@ -9262,7 +9403,7 @@ paths:
       summary: Delete the sharding tag
       description: "User must have the ORGANIZATION_TAG[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_14
+      operationId: delete_15
       parameters:
       - name: organizationId
         in: path
@@ -10491,7 +10632,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
+                $ref: "#/components/schemas/UserEntity"
         "400":
           description: Invalid user profile
         "404":
@@ -11119,6 +11260,8 @@ components:
           $ref: "#/components/schemas/CookieSettings"
         riskAssessment:
           $ref: "#/components/schemas/RiskAssessmentSettings"
+        secretExpirationSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
     AssessmentSettings:
       type: object
       properties:
@@ -11481,6 +11624,8 @@ components:
           type: boolean
         allowWildCardRedirectUri:
           type: boolean
+        allowRedirectUriParamsExpressionLanguage:
+          type: boolean
         defaultScopes:
           type: array
           items:
@@ -11506,7 +11651,12 @@ components:
           type: string
         name:
           type: string
+        secret:
+          type: string
         createdAt:
+          type: string
+          format: date-time
+        expiresAt:
           type: string
           format: date-time
     CookieSettings:
@@ -11701,11 +11851,15 @@ components:
           $ref: "#/components/schemas/CorsSettings"
         dataPlaneId:
           type: string
+        secretExpirationSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
         redirectUriWildcardAllowed:
+          type: boolean
+        redirectUriExpressionLanguageEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -11715,6 +11869,19 @@ components:
           type: boolean
         dynamicClientRegistrationTemplateEnabled:
           type: boolean
+    DomainPage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Domain"
+        currentPage:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
     DomainUserBulkRequest:
       required:
       - action
@@ -12544,6 +12711,13 @@ components:
           type: string
         configuration:
           type: string
+    NewClientSecret:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
     NewDeviceIdentifier:
       required:
       - configuration
@@ -12626,6 +12800,7 @@ components:
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
+          - CLIENT_SECRET_EXPIRATION
           - VERIFY_ATTEMPT
     NewEntrypoint:
       required:
@@ -12722,6 +12897,7 @@ components:
           - IDENTIFIER_FIRST_LOGIN
           - ERROR
           - CERTIFICATE_EXPIRATION
+          - CLIENT_SECRET_EXPIRATION
           - VERIFY_ATTEMPT
         content:
           type: string
@@ -12847,9 +13023,11 @@ components:
         name:
           type: string
         minLength:
+          minimum: 0
           type: integer
           format: int32
         maxLength:
+          minimum: 0
           type: integer
           format: int32
         includeNumbers:
@@ -13554,6 +13732,8 @@ components:
           $ref: "#/components/schemas/CookieSettings"
         riskAssessment:
           $ref: "#/components/schemas/RiskAssessmentSettings"
+        secretExpirationSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
         requiredPermissions:
           uniqueItems: true
           type: array
@@ -13685,6 +13865,8 @@ components:
           type: array
           items:
             type: string
+        allowRedirectUriParamsExpressionLanguage:
+          type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
@@ -13742,6 +13924,8 @@ components:
           $ref: "#/components/schemas/CorsSettings"
         dataPlaneId:
           type: string
+        secretSettings:
+          $ref: "#/components/schemas/SecretExpirationSettings"
         requiredPermissions:
           uniqueItems: true
           type: array
@@ -14508,6 +14692,14 @@ components:
         totalCount:
           type: integer
           format: int64
+    SecretExpirationSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        expiryTimeSeconds:
+          type: integer
+          format: int64
     SecurityProfileSettings:
       type: object
       properties:
@@ -14905,9 +15097,11 @@ components:
         name:
           type: string
         minLength:
+          minimum: 0
           type: integer
           format: int32
         maxLength:
+          minimum: 0
           type: integer
           format: int32
         includeNumbers:
