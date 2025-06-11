@@ -26,6 +26,8 @@ import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleEmitter;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +47,7 @@ import java.util.Objects;
 public class JWTServiceImpl implements JWTService {
 
     private static final Logger logger = LoggerFactory.getLogger(JWTServiceImpl.class);
+    public static final String AWS_HSM_CERTIFICATE_PROVIDER = "AwsHsmCertificateProvider";
 
     @Autowired
     private CertificateManager certificateManager;
@@ -159,7 +162,7 @@ public class JWTServiceImpl implements JWTService {
     }
 
     private Single<String> sign(CertificateProvider certificateProvider, JWT jwt) {
-        return Single.create(emitter -> {
+        final var signer = Single.create((SingleEmitter<String> emitter) -> {
             try {
                 String encodedToken = certificateProvider.getJwtBuilder().sign(jwt);
                 emitter.onSuccess(encodedToken);
@@ -168,10 +171,16 @@ public class JWTServiceImpl implements JWTService {
                 emitter.onError(new InvalidTokenException("The JWT token couldn't be signed", ex));
             }
         });
+
+        if (certificateProvider.getProvider().getClass().getSimpleName().equals(AWS_HSM_CERTIFICATE_PROVIDER)) {
+            return signer.subscribeOn(Schedulers.io());
+        } else {
+            return signer.subscribeOn(Schedulers.computation());
+        }
     }
 
     private Single<Map<String, Object>> decode(CertificateProvider certificateProvider, String payload, TokenType tokenType) {
-        return Single.create(emitter -> {
+        final var verifier = Single.create((SingleEmitter<Map<String, Object>> emitter) -> {
             try {
                 Map<String, Object> decodedPayload = certificateProvider.getJwtParser().parse(payload);
                 emitter.onSuccess(decodedPayload);
@@ -180,6 +189,12 @@ public class JWTServiceImpl implements JWTService {
                 emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
         });
+
+        if (certificateProvider.getProvider().getClass().getSimpleName().equals(AWS_HSM_CERTIFICATE_PROVIDER)) {
+            return verifier.subscribeOn(Schedulers.io());
+        } else {
+            return verifier.subscribeOn(Schedulers.computation());
+        }
     }
 
 }
