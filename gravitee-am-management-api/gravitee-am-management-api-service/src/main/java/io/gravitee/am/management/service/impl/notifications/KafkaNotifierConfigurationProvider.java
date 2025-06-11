@@ -18,13 +18,26 @@ package io.gravitee.am.management.service.impl.notifications;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+
+import static java.lang.String.format;
 
 @Configuration
 public class KafkaNotifierConfigurationProvider {
 
     @Bean
     public KafkaNotifierConfiguration kafkaNotifierConfiguration(io.gravitee.node.api.configuration.Configuration configuration) {
+
+        final var additionalProperties = new ArrayList<Map<String, String>>();
+        int propertyIndex = 0;
+        while(configuration.getProperty(format("notifiers.kafka.additionalProperties[%d].name", propertyIndex)) != null) {
+            final var name = configuration.getProperty(format("notifiers.kafka.additionalProperties[%d].name", propertyIndex), String.class);
+            final var value = configuration.getProperty(format("notifiers.kafka.additionalProperties[%d].value", propertyIndex), String.class);
+            additionalProperties.add(Map.of(name, value));
+            ++propertyIndex;
+        }
+
         return KafkaNotifierConfiguration.builder()
                 .bootstrapServers(configuration.getProperty("notifiers.kafka.bootstrapServers"))
                 .topic(configuration.getProperty("notifiers.kafka.topic"))
@@ -32,7 +45,7 @@ public class KafkaNotifierConfigurationProvider {
                 .username(configuration.getProperty("notifiers.kafka.username"))
                 .password(configuration.getProperty("notifiers.kafka.password"))
                 .schemaRegistryUrl(configuration.getProperty("notifiers.kafka.schemaRegistryUrl"))
-                .additionalProperties(configuration.getProperty("notifiers.kafka.additionalProperties", List.class))
+                .additionalProperties(additionalProperties)
                 .build();
     }
 
