@@ -27,6 +27,7 @@ import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,6 +40,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import javax.crypto.KeyGenerator;
 import java.security.KeyPairGenerator;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -111,14 +113,13 @@ public class JWTServiceTest {
     }
 
     @Test
-    public void encode_withEncryption_hmacShaKey() {
+    public void encode_withEncryption_hmacShaKey() throws Exception {
         var key = generateKey("HMACSHA256");
         var jwt = new JWT(Map.of("ecv", "to-encrypt",
                 "normalclaim", "lorem-ipsum"));
-        jwtService.encode(jwt, mockCertProvider(mockJwtBuilder("with-encryption"), key))
-                .test()
-                .assertComplete()
-                .assertValue("with-encryption");
+        var test = jwtService.encode(jwt, mockCertProvider(mockJwtBuilder("with-encryption"), key)).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete().assertValue("with-encryption");
     }
 
     @Test
@@ -132,73 +133,73 @@ public class JWTServiceTest {
     }
 
     @Test
-    public void encode_withEncryption_rsaKeyPair() {
+    public void encode_withEncryption_rsaKeyPair() throws Exception {
         var key = generateKeyPair("RSA");
         var jwt = new JWT(Map.of(Claims.ENCRYPTED_CODE_VERIFIER, "value-to-encrypt",
                 "normalclaim", "lorem-ipsum"));
-        jwtService.encode(jwt, mockCertProvider(mockJwtBuilder("with-encryption"), key))
-                .test()
-                .assertComplete()
-                .assertValue("with-encryption");
+        var test = jwtService.encode(jwt, mockCertProvider(mockJwtBuilder("with-encryption"), key)).test();
+
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete().assertValue("with-encryption");
     }
 
     @Test
-    public void encode_noClientCertificate() {
+    public void encode_noClientCertificate() throws Exception {
         this.testEncode(null, "token_default");
     }
 
     @Test
-    public void encode_noClientCertificateFound() {
+    public void encode_noClientCertificateFound() throws Exception  {
         this.testEncode("notExistingId", "token_default");
     }
 
     @Test
-    public void encode_clientCertificateFound() {
+    public void encode_clientCertificateFound() throws Exception  {
         this.testEncode("existingId", "token_rs_256");
     }
 
-    private void testEncode(String clientCertificate, String expectedResult) {
+    private void testEncode(String clientCertificate, String expectedResult) throws Exception {
         Client client = new Client();
         client.setCertificate(clientCertificate);
 
-        jwtService.encode(new JWT(), client).test()
-                .assertComplete()
-                .assertValue(o -> o.equals(expectedResult));
+        var test = jwtService.encode(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete().assertValue(o -> o.equals(expectedResult));
     }
 
     @Test
-    public void encodeUserinfo_withoutSignature() {
+    public void encodeUserinfo_withoutSignature() throws Exception  {
         this.testEncodeUserinfo(null, null, "not_signed_jwt");
     }
 
     @Test
-    public void encodeUserinfo_noMatchingAlgorithm_noClientCertificate() {
+    public void encodeUserinfo_noMatchingAlgorithm_noClientCertificate() throws Exception {
         this.testEncodeUserinfo("unknown", null, "token_default");
     }
 
     @Test
-    public void encodeUserinfo_noMatchingAlgorithm_noClientCertificateFound() {
+    public void encodeUserinfo_noMatchingAlgorithm_noClientCertificateFound() throws Exception {
         this.testEncodeUserinfo("unknown", "notExistingId", "token_default");
     }
 
     @Test
-    public void encodeUserinfo_noMatchingAlgorithm_clientCertificateFound() {
+    public void encodeUserinfo_noMatchingAlgorithm_clientCertificateFound() throws Exception {
         this.testEncodeUserinfo("unknown", "existingId", "token_rs_256");
     }
 
     @Test
-    public void encodeUserinfo_matchingAlgorithm() {
+    public void encodeUserinfo_matchingAlgorithm() throws Exception {
         this.testEncodeUserinfo("RS512", null, "token_rs_512");
     }
 
-    private void testEncodeUserinfo(String algorithm, String clientCertificate, String expectedResult) {
+    private void testEncodeUserinfo(String algorithm, String clientCertificate, String expectedResult) throws Exception {
         Client client = new Client();
         client.setUserinfoSignedResponseAlg(algorithm);
         client.setCertificate(clientCertificate);
 
-        jwtService.encodeUserinfo(new JWT(), client)
-                .test()
-                .assertComplete()
+        var test = jwtService.encodeUserinfo(new JWT(), client).test();
+        test.await(10, TimeUnit.SECONDS);
+        test.assertComplete()
                 .assertValue(o -> o.equals(expectedResult));
     }
 
