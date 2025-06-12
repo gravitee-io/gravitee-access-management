@@ -88,7 +88,9 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     private final Set<String> UNUSED_INDEXES = Set.of(
             "referenceType_1_referenceId_1_username_1_source_1",
             "rt1ri1u1s1",
-            "rt1ri1"
+            "rt1ri1",
+            "rt1ri1ext1",
+            "rt1ri1u1"
     );
 
     protected MongoCollection<T> usersCollection;
@@ -102,11 +104,9 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EMAIL, 1), new IndexOptions().name("rt1ri1e1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_ADDITIONAL_INFO_EMAIL, 1), new IndexOptions().name("rt1ri1ae1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USERNAME, 1), new IndexOptions().name("rt1ri1u1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_DISPLAY_NAME, 1), new IndexOptions().name("rt1ri1d1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_FIRST_NAME, 1), new IndexOptions().name("rt1ri1f1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_LAST_NAME, 1), new IndexOptions().name("rt1ri1l1"));
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1), new IndexOptions().name("rt1ri1ext1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_EXTERNAL_ID, 1).append(FIELD_SOURCE, 1), new IndexOptions().name("rt1ri1ext1s1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_IDENTITIES_USERNAME, 1).append(FIELD_IDENTITIES_PROVIDER_ID, 1), new IndexOptions().name("rt1ri1iu1ip1"));
         super.createIndex(usersCollection, indexes);

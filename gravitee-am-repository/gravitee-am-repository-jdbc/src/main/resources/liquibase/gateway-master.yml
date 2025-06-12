@@ -9,3 +9,6 @@ databaseChangeLog:
       - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-scope-approvals-table.yml
   - include:
       - file: liquibase/gateway/changelogs/v4_7_0/4.7.0-verify-attempt-table.yml
+  - include:
+      - file: liquibase/gateway/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-scopes-approval.yml
+
