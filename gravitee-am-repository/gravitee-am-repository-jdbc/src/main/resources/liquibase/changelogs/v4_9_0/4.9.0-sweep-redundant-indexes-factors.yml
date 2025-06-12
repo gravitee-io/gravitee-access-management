@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-factors
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_factors_domain
+            tableName: verify_attempt
+      changes:
+        - dropIndex:
+            indexName: idx_factors_domain
+            tableName: factors
+
+
+
+
