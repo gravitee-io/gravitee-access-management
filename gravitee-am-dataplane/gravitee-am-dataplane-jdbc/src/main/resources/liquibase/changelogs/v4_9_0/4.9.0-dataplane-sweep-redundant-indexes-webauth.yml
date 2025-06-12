@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-dp-sweep-redundant-indexes-webauthn-1
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_webauthn_credentials_ref
+            tableName: webauthn_credentials
+      changes:
+        - dropIndex:
+            indexName: idx_webauthn_credentials_ref
+            tableName: webauthn_credentials
+
+  - changeSet:
+      id: 4.9.0-dp-sweep-redundant-indexes-webauthn-2
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_webauthn_credentials_ref_username
+            tableName: webauthn_credentials
+      changes:
+        - dropIndex:
+            indexName: idx_webauthn_credentials_ref_username
+            tableName: webauthn_credentials

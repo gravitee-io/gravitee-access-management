@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-dp-sweep-redundant-indexes-scope-approvals-1
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_scope_approvals_domain_user_id_extid
+            tableName: scope_approvals
+      changes:
+        - dropIndex:
+            indexName: idx_scope_approvals_domain_user_id_extid
+            tableName: scope_approvalsdata
+
+  - changeSet:
+      id: 4.9.0-dp-sweep-redundant-indexes-scope-approvals-2
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+          - indexExists:
+              indexName: idx_scope_approvals_domain_source_extid
+              tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: user_source
+              - column:
+                  name: user_external_id
+            indexName: idx_scope_approvals_domain_source_extid
+            tableName: scope_approvals
+  - changeSet:
+      id: 4.9.0-dp-sweep-redundant-indexes-scope-approvals-3
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+          not:
+            - indexExists:
+                indexName: idx_scope_approvals_domain_user_id
+                tableName: scope_approvals
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: domain
+              - column:
+                  name: user_id
+            indexName: idx_scope_approvals_domain_user_id
+            tableName: scope_approvals
+            unique: false
+

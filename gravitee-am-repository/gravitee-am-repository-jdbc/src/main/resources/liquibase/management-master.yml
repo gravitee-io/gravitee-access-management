@@ -169,3 +169,13 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_8_0/4.8.0-update-domain-table.yml
   - include:
       - file: liquibase/changelogs/v4_8_0/4.8.0-update-application-client-secrets-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-factors.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-org-users.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-uma.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-users.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-webauth.yml
