@@ -35,6 +35,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.and;
@@ -53,16 +54,20 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
     private static final String FIELD_KEY = "key";
     private MongoCollection<ScopeMongo> scopesCollection;
 
+    private final Set<String> UNUSED_INDEXES = Set.of("d1");
+
     @PostConstruct
     public void init() {
         scopesCollection = mongoOperations.getCollection("scopes", ScopeMongo.class);
         super.init(scopesCollection);
 
         final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_DOMAIN, 1), new IndexOptions().name("d1"));
         indexes.put(new Document(FIELD_DOMAIN, 1).append(FIELD_KEY, 1), new IndexOptions().name("d1k1"));
 
         super.createIndex(scopesCollection, indexes);
+        if (ensureIndexOnStart) {
+            dropIndexes(scopesCollection, UNUSED_INDEXES::contains).subscribe();
+        }
     }
 
     @Override

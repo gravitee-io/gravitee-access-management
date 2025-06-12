@@ -45,6 +45,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -53,6 +54,7 @@ import static io.gravitee.am.model.common.Page.pageFromOffset;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.dropIndexes;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -66,8 +68,12 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
     private static final String DISPLAY_NAME = "displayName";
     private MongoCollection<GroupMongo> groupsCollection;
 
+    private final Set<String> UNUSED_INDEXES = Set.of("rt1ri1");
+
+
     @Autowired
     private ApplicationContext ctx;
+
 
     @PostConstruct
     public void init() {
@@ -75,10 +81,12 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
         MongoUtils.init(groupsCollection);
 
         final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_NAME, 1), new IndexOptions().name("rt1ri1n1"));
 
         super.createIndex(groupsCollection, indexes);
+        if (getEnsureIndexOnStart()) {
+            dropIndexes(groupsCollection, UNUSED_INDEXES::contains).subscribe();
+        }
     }
 
     @Override

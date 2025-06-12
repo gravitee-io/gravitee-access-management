@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-org-users-1
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_orgs_users_reference_external
+            tableName: organization_users
+      changes:
+        - dropIndex:
+            indexName: idx_orgs_users_reference_external
+            tableName: organization_users
+
+
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-org-users-2
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_org_users_reference_username
+            tableName: organization_users
+      changes:
+        - dropIndex:
+            indexName: idx_org_users_reference_username
+            tableName: organization_users
+
+
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-org-users-3
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_org_users_reference
+            tableName: organization_users
+      changes:
+        - dropIndex:
+            indexName: idx_org_users_reference
+            tableName: organization_users

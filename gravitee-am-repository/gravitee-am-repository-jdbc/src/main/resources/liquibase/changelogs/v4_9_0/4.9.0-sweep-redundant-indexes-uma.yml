@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-uma
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_uma_access_policies_doman
+            tableName: uma_access_policies
+      changes:
+        - dropIndex:
+            indexName: idx_uma_access_policies_doman
+            tableName: uma_access_policies
+

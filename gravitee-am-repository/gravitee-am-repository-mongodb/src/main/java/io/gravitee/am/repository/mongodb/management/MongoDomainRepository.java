@@ -68,6 +68,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -89,16 +90,20 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     private MongoCollection<DomainMongo> domainsCollection;
     private static final String FIELD_HRID = "hrid";
 
+    private final Set<String> UNUSED_INDEXES = Set.of("ri1rt1");
+
     @PostConstruct
     public void init() {
         domainsCollection = mongoOperations.getCollection("domains", DomainMongo.class);
         super.init(domainsCollection);
 
         final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("ri1rt1"));
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_HRID, 1), new IndexOptions().name("ri1rt1h1"));
 
         super.createIndex(domainsCollection, indexes);
+        if (ensureIndexOnStart) {
+            dropIndexes(domainsCollection, UNUSED_INDEXES::contains).subscribe();
+        }
     }
 
     @Override
