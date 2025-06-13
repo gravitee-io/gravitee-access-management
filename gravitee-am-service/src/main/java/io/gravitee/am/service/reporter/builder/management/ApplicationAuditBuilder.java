@@ -52,6 +52,7 @@ public class ApplicationAuditBuilder extends ManagementAuditBuilder<ApplicationA
                 safeApp.getSettings().getOauth().setClientSecret(null);
             }
             safeApp.setSecrets(List.of());
+            return safeApp;
         }
         return value;
     }
