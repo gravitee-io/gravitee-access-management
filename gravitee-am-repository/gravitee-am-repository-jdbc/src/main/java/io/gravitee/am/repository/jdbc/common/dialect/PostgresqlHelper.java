@@ -125,8 +125,9 @@ public class PostgresqlHelper extends AbstractDialectHelper {
     }
 
     @Override
-    protected StringBuilder buildSearchApplications(boolean wildcard, StringBuilder builder) {
+    protected StringBuilder buildSearchApplications(boolean wildcard, boolean withIds, StringBuilder builder) {
         return builder.append("a.domain = :domain")
+                .append(withIds ? " AND a.id IN (:applicationIds)": "")
                 .append(" AND (")
                 .append(" upper(a.name) ").append(wildcard ? SQL_LIKE : "= ")
                 .append(VALUE_PARAM)
@@ -135,8 +136,9 @@ public class PostgresqlHelper extends AbstractDialectHelper {
                 .append(" ) ");
     }
 
-    public String buildPagingClauseUsingOffset(String field, int offset, int size) {
-        return " ORDER BY " + field + " LIMIT " + size + " OFFSET " + offset;
+    public String buildPagingClauseUsingOffset(String field, boolean asc, int offset, int size) {
+        String direction = asc ? "" : " DESC";
+        return " ORDER BY " + field + direction + " LIMIT " + size + " OFFSET " + offset;
     }
 
     @Override

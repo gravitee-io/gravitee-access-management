@@ -34,6 +34,9 @@ public interface SpringApplicationRepository extends RxJava3CrudRepository<JdbcA
     @Query("select count(a.id) from applications a where a.domain = :domain")
     Single<Long> countByDomain(@Param("domain") String domain);
 
+    @Query("select count(a.id) from applications a where a.domain = :domain AND a.id IN (:applicationIds)")
+    Single<Long> countByDomainAndApplicationIds(@Param("domain") String domain, @Param("applicationIds") List<String> applicationIds);
+
     @Query("select * from applications a where a.domain = :domain")
     Flowable<JdbcApplication> findByDomain(@Param("domain") String domain);
 

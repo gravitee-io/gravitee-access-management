@@ -27,6 +27,7 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -103,7 +104,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     public ScimSearch prepareScimSearchQueryUsingOffset(StringBuilder queryBuilder, FilterCriteria criteria, String sortField, int offset, int size, ScimRepository scimRepository) {
         ScimSearch search = new ScimSearch();
         processFilters(queryBuilder, criteria, search, scimRepository);
-        search.buildQueries(size > 0 ? buildPagingClauseUsingOffset(StringUtils.hasLength(sortField)? sortField : "id" , offset, size): "");
+        search.buildQueries(size > 0 ? buildPagingClauseUsingOffset(StringUtils.hasLength(sortField)? sortField : "id", true, offset, size): "");
         return search;
     }
 
@@ -288,15 +289,10 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     protected abstract ScimSearch processJsonFilter(StringBuilder queryBuilder, FilterCriteria criteria, ScimSearch search);
 
     @Override
-    public String buildPagingClause(int page, int size) {
-        return buildPagingClause("id", page, size);
-    }
-
-    @Override
     public String buildSearchUserQuery(boolean wildcard, int page, int size, boolean organizationUser) {
         StringBuilder builder = new StringBuilder("SELECT * FROM " + (organizationUser ? ORGANIZATION_USERS : USERS) + U_WHERE);
         return buildSearchUser(wildcard, builder)
-                .append(buildPagingClause("username", page, size))
+                .append(buildPagingClause("username", true, page, size))
                 .toString();
     }
 
@@ -318,7 +314,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     public String buildSearchScopeQuery(boolean wildcardSearch, int page, int size){
         StringBuilder builder = new StringBuilder("SELECT * FROM scopes s WHERE ");
         return buildSearchScope(wildcardSearch, builder)
-                .append(buildPagingClause("s."+toSql(SqlIdentifier.quoted("key")), page, size))
+                .append(buildPagingClause("s."+toSql(SqlIdentifier.quoted("key")), true, page, size))
                 .toString();
     }
 
@@ -365,22 +361,24 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     }
 
     @Override
-    public String buildSearchApplicationsQuery(boolean wildcard, int page, int size) {
+    public String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc) {
         StringBuilder builder = new StringBuilder("SELECT * FROM applications a WHERE ");
-        return buildSearchApplications(wildcard, builder)
-                .append(buildPagingClause(page, size))
+        return buildSearchApplications(wildcard, withIds, builder)
+                .append(buildPagingClause(sort, asc, page, size))
                 .toString();
     }
+
 
     @Override
-    public String buildCountApplicationsQuery(boolean wildcard) {
+    public String buildCountApplicationsQuery(boolean wildcard, boolean withIds) {
         StringBuilder builder = new StringBuilder("SELECT COUNT(DISTINCT a.id) FROM applications a WHERE ");
-        return buildSearchApplications(wildcard, builder)
+        return buildSearchApplications(wildcard, withIds, builder)
                 .toString();
     }
 
-    protected StringBuilder buildSearchApplications(boolean wildcard, StringBuilder builder) {
+    protected StringBuilder buildSearchApplications(boolean wildcard, boolean withIds, StringBuilder builder) {
         return builder.append("a.domain = :domain")
+                .append(withIds ? " AND a.id IN (:applicationIds)" : "")
                 .append(" AND (")
                 .append(" upper(a.name) ").append(wildcard ? LIKE : "= ")
                 .append(VALUE)
@@ -400,7 +398,7 @@ public abstract class AbstractDialectHelper implements DatabaseDialectHelper {
     public String buildSearchRoleQuery(boolean wildcard, int page, int size) {
         StringBuilder builder = new StringBuilder("SELECT * FROM roles r WHERE ");
         return buildSearchRole(wildcard, builder)
-                .append(buildPagingClause("name", page, size))
+                .append(buildPagingClause("name", true, page, size))
                 .toString();
     }
 

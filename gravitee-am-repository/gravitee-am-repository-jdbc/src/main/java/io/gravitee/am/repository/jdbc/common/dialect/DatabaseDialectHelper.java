@@ -52,9 +52,9 @@ public interface DatabaseDialectHelper {
         return buildCountUserQuery(wildcard, false);
     }
 
-    String buildSearchApplicationsQuery(boolean wildcard, int page, int size);
+    String buildSearchApplicationsQuery(boolean wildcard, boolean withIds, int page, int size, String sort, boolean asc);
 
-    String buildCountApplicationsQuery(boolean wildcard);
+    String buildCountApplicationsQuery(boolean wildcard, boolean withIds);
 
     String buildFindApplicationByDomainAndClient();
 
@@ -66,13 +66,11 @@ public interface DatabaseDialectHelper {
 
     String buildCountRoleQuery(boolean wildcard);
 
-    String buildPagingClause(int page, int size);
-
-    default String buildPagingClause(String field, int page, int size) {
-        return buildPagingClauseUsingOffset(field, page * size, size);
+    default String buildPagingClause(String field, boolean asc, int page, int size) {
+        return buildPagingClauseUsingOffset(field, asc, page * size, size);
     }
 
-    String buildPagingClauseUsingOffset(String field, int offset, int size);
+    String buildPagingClauseUsingOffset(String field, boolean asc, int offset, int size);
 
     enum ScimRepository {GROUPS, ORGANIZATION_USERS, USERS}
 }

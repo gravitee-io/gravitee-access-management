@@ -154,7 +154,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(SELECT_FROM +
                         databaseDialectHelper.toSql(quoted(GROUPS)) +
-                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClauseUsingOffset(COL_NAME, offset, size))
+                        " g WHERE g.reference_id = :refId AND g.reference_type = :refType " + databaseDialectHelper.buildPagingClauseUsingOffset(COL_NAME, true, offset, size))
                         .bind(REF_ID, referenceId)
                         .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
