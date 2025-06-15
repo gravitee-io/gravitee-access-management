@@ -74,8 +74,9 @@ public class MySqlHelper extends AbstractDialectHelper {
         return search;
     }
 
-    public String buildPagingClauseUsingOffset(String field, int offset, int size) {
-        return " ORDER BY " + field + " LIMIT " + size + " OFFSET " + offset;
+    public String buildPagingClauseUsingOffset(String field, boolean asc, int offset, int size) {
+        String direction = asc ? "" : " DESC";
+        return " ORDER BY " + field + direction + " LIMIT " + size + " OFFSET " + offset;
     }
 
 }

@@ -259,6 +259,30 @@ public class ApplicationServiceTest {
     }
 
     @Test
+    public void shouldFindByDomainAndApplicationIds() {
+        when(applicationRepository.findByDomain(eq(DOMAIN.getId()), any(), eq(0), eq(10)))
+                .thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
+        TestObserver<Page<Application>> testObserver = applicationService.findByDomain(DOMAIN.getId(), List.of("id1"),0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(applications -> applications.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldSearchByDomainAndApplicationIds() {
+        when(applicationRepository.search(eq(DOMAIN.getId()), any(), eq("query"), eq(0), eq(10)))
+                .thenReturn(Single.just(new Page<>(Collections.singleton(new Application()), 0, 1)));
+        TestObserver<Page<Application>> testObserver = applicationService.search(DOMAIN.getId(), List.of("id1"), "query", 0, 10).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(applications -> applications.getData().size() == 1);
+    }
+
+    @Test
     public void shouldFindByDomain_technicalException() {
         when(applicationRepository.findByDomain(DOMAIN.getId(), 0, Integer.MAX_VALUE)).thenReturn(Single.error(TechnicalException::new));
 

@@ -200,9 +200,31 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
+        LOGGER.debug("Find applications by domain {} and appIds {}", domain, applicationIds);
+        return applicationRepository.findByDomain(domain, applicationIds, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find applications by domain {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find applications by domain %s", domain), ex));
+                });
+    }
+
+    @Override
     public Single<Page<Application>> search(String domain, String query, int page, int size) {
         LOGGER.debug("Search applications with query {} for domain {}", query, domain);
         return applicationRepository.search(domain, query, page, size)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to search applications with query %s by domain %s", query, domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
+        LOGGER.debug("Search applications with query {} for domain {} and appIds={}", query, domain, applicationIds);
+        return applicationRepository.search(domain, applicationIds, query, page, size)
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to search applications with query {} for domain {}", query, domain, ex);
                     return Single.error(new TechnicalManagementException(

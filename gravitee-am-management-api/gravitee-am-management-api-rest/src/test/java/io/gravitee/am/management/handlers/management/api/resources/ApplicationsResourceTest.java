@@ -19,26 +19,34 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
+import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import static io.gravitee.am.model.ReferenceType.APPLICATION;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -76,8 +84,10 @@ public class ApplicationsResourceTest extends JerseySpringTest {
 
         final Page<Application> applicationPage = new Page(new HashSet<>(Arrays.asList(mockClient, mockClient2)), 0, 2);
 
+        doReturn(Flowable.just("client-1-id"))
+                .when(permissionService).getReferenceIdsWithPermission(Mockito.any(), eq(APPLICATION), eq(Permission.APPLICATION), eq(Set.of(Acl.READ)));
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, Integer.MAX_VALUE);
+        doReturn(Single.just(applicationPage)).when(applicationService).findByDomain(domainId, 0, 50);
 
         final Response response = target("domains").path(domainId).path("applications").request().get();
         assertEquals(HttpStatusCode.OK_200, response.getStatus());

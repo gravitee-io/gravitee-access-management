@@ -107,10 +107,16 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria) {
-
-        LOGGER.debug("Find memberships by reference type {} and reference id {} and criteria {}", referenceType, referenceId, criteria);
+        LOGGER.debug("Find memberships by reference type {} and referenceId {} and criteria {}", referenceType, referenceId, criteria);
 
         return membershipRepository.findByCriteria(referenceType, referenceId, criteria);
+    }
+
+    @Override
+    public Flowable<Membership> findByCriteria(ReferenceType referenceType, MembershipCriteria criteria) {
+        LOGGER.debug("Find memberships by reference type {} and criteria {}", referenceType, criteria);
+
+        return membershipRepository.findByCriteria(referenceType, criteria);
     }
 
     @Override
