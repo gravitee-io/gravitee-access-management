@@ -105,6 +105,30 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     }
 
     @Override
+    public Flowable<Membership> findByCriteria(ReferenceType referenceType, MembershipCriteria criteria) {
+        Bson eqReference = eq(FIELD_REFERENCE_TYPE, referenceType.name());
+        Bson eqGroupId = null;
+        Bson eqUserId = null;
+
+        if (criteria.getGroupIds().isPresent()) {
+            eqGroupId = and(eq(FIELD_MEMBER_TYPE, MemberType.GROUP.name()), in(FIELD_MEMBER_ID, criteria.getGroupIds().get()));
+        }
+
+        if (criteria.getUserId().isPresent()) {
+            eqUserId = and(eq(FIELD_MEMBER_TYPE, MemberType.USER.name()), eq(FIELD_MEMBER_ID, criteria.getUserId().get()));
+        }
+
+        if (criteria.getRoleId().isPresent()) {
+            eqUserId = eq(FIELD_ROLE, criteria.getRoleId().get());
+        }
+
+        return toBsonFilter(criteria.isLogicalOR(), eqGroupId, eqUserId)
+                .map(filter -> and(eqReference, filter))
+                .switchIfEmpty(Single.just(eqReference))
+                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(membershipsCollection.find(filter)))).map(this::convert);
+    }
+
+    @Override
     public Maybe<Membership> findByReferenceAndMember(ReferenceType referenceType, String referenceId, MemberType memberType, String memberId) {
         return Observable.fromPublisher(membershipsCollection.find(
                 and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),

@@ -203,12 +203,26 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
     public Single<Page<Application>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
         return fluxToFlowable(getTemplate().select(JdbcApplication.class)
-                .matching(query(where(COL_DOMAIN).is(domain)).with(PageRequest.of(page, size, Sort.by(COL_ID))))
+                .matching(query(where(COL_DOMAIN).is(domain)).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
                 .all())
                 .map(this::toEntity)
                 .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
                 .toList()
-                .flatMap(data -> applicationRepository.countByDomain(domain).map(total -> new Page<Application>(data, page, total)))
+                .flatMap(data -> applicationRepository.countByDomain(domain).map(total -> new Page<>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+    }
+
+    @Override
+    public Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size) {
+        LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
+        return fluxToFlowable(getTemplate().select(JdbcApplication.class)
+                .matching(query(where(COL_DOMAIN).is(domain).and(where(COL_ID).in(applicationIds)))
+                        .with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
+                .toList()
+                .flatMap(data -> applicationRepository.countByDomain(domain).map(total -> new Page<>(data, page, total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
     }
 
@@ -219,11 +233,38 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         boolean wildcardMatch = query.contains("*");
         String wildcardQuery = query.replaceAll("\\*+", "%");
 
-        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, page, size);
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, false, page, size, COL_UPDATED_AT, false);
         String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch);
 
         return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
                 .bind(COL_DOMAIN, domain)
+                .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
+                .all())
+                .map(this::toEntity)
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .toList()
+                .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
+                        .bind(COL_DOMAIN, domain)
+                        .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
+                        .map((row, rowMetadata) -> row.get(0, Long.class)).first())
+                        .map(total -> new Page<Application>(data, page, total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+    }
+
+    @Override
+    public Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size) {
+        LOGGER.debug("search({}, {}, {}, {})", domain, query, page, size);
+
+        boolean wildcardMatch = query.contains("*");
+        String wildcardQuery = query.replaceAll("\\*+", "%");
+
+        String search = databaseDialectHelper.buildSearchApplicationsQuery(wildcardMatch, true, page, size, COL_UPDATED_AT, false);
+        String count = databaseDialectHelper.buildCountApplicationsQuery(wildcardMatch);
+
+        return fluxToFlowable(getTemplate().getDatabaseClient().sql(search)
+                .bind(COL_DOMAIN, domain)
+                .bind("applicationIds", applicationIds)
                 .bind("value", wildcardMatch ? wildcardQuery.toUpperCase() : query.toUpperCase())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcApplication.class, row))
                 .all())
