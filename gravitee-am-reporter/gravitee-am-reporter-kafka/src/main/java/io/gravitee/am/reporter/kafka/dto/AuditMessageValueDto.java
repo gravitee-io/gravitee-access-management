@@ -16,6 +16,7 @@
 package io.gravitee.am.reporter.kafka.dto;
 
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.node.api.Node;
 import lombok.Builder;
@@ -62,7 +63,7 @@ public class AuditMessageValueDto {
     }
 
     public static AuditMessageValueDto from(Audit audit, GraviteeContext context, Node node) {
-        return builder()
+        var builder = builder()
                 .id(audit.getId())
                 .referenceId(audit.getReferenceId())
                 .referenceType(Objects.toString(audit.getReferenceType()))
@@ -73,9 +74,13 @@ public class AuditMessageValueDto {
                 .actor(AuditEntityDto.from(audit.getActor()))
                 .target(AuditEntityDto.from(audit.getTarget()))
                 .outcome(AuditOutcomeDto.from(audit.getOutcome()))
-                .context(context)
-                .node(node)
-                .build();
+                .node(node);
+
+        builder = builder.context(context);
+        if (context.getDomainId() == null && audit.getReferenceType() == ReferenceType.DOMAIN) {
+            builder = builder.domainId(audit.getReferenceId());
+        }
+        return builder.build();
     }
 
     @SuppressWarnings("unused") // additional methods for @lombok.Builder

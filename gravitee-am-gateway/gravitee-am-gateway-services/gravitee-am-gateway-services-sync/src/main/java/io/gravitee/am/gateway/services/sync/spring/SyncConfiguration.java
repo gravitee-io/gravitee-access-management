@@ -15,10 +15,12 @@
  */
 package io.gravitee.am.gateway.services.sync.spring;
 
+import io.gravitee.am.gateway.core.reporter.GlobalReporterConfiguration;
 import io.gravitee.am.gateway.services.sync.SyncManager;
 import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
@@ -27,6 +29,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
  * @author GraviteeSource Team
  */
 @Configuration
+@Import({GlobalReporterConfiguration.class})
 public class SyncConfiguration {
 
     @Bean
@@ -45,4 +48,5 @@ public class SyncConfiguration {
     public SyncProbe syncProbe() {
         return new SyncProbe();
     }
+
 }

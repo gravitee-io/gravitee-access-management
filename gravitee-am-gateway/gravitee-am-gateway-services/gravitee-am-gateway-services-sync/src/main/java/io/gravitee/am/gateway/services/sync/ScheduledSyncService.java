@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.services.sync;
 
+import io.gravitee.am.gateway.core.reporter.GatewayGlobalReporterManager;
 import io.gravitee.am.gateway.services.sync.healthcheck.SyncProbe;
 import io.gravitee.common.service.AbstractService;
 import io.gravitee.node.api.healthcheck.ProbeManager;
@@ -52,6 +53,9 @@ public class ScheduledSyncService extends AbstractService implements Runnable {
     private SyncManager syncStateManager;
 
     @Autowired
+    private GatewayGlobalReporterManager globalReporterManager;
+
+    @Autowired
     private SyncProbe syncProbe;
 
     @Autowired
@@ -72,6 +76,8 @@ public class ScheduledSyncService extends AbstractService implements Runnable {
             // Sync must start only when doStart() is invoked, that's the reason why we are not
             // using @Scheduled annotation on doSync() method.
             scheduler.schedule(this, new CronTrigger(cronTrigger));
+
+            this.globalReporterManager.start();
         } else {
             logger.warn("Sync service has been disabled");
         }
