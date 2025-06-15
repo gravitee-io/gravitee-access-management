@@ -84,6 +84,13 @@ public class PermissionService {
                 .map(this::aclsPerPermission);
     }
 
+    public Flowable<String> getReferenceIdsWithPermission(User user, ReferenceType referenceType, Permission permission, Set<Acl> acls) {
+        return findMembershipPermissions(user, referenceType)
+                .flattenStreamAsFlowable(map -> map.entrySet().stream()
+                        .filter(entry -> entry.getValue().get(permission).containsAll(acls))
+                        .map(entry -> entry.getKey().getReferenceId()));
+    }
+
     public Single<Boolean> hasPermission(User user, PermissionAcls permissions) {
 
         return haveConsistentReferenceIds(permissions)
@@ -204,6 +211,37 @@ public class PermissionService {
 
                     // Get all user and group memberships.
                     return Flowable.merge(referenceStream.map(p -> membershipService.findByCriteria(p.getKey(), p.getValue(), criteria)).collect(Collectors.toList()), DEFAULT_MAX_CONCURRENCY)
+                            .toList()
+                            .flatMap(allMemberships -> {
+
+                                if (allMemberships.isEmpty()) {
+                                    return Single.just(Collections.emptyMap());
+                                }
+
+                                // Get all roles.
+                                return roleService.findByIdIn(allMemberships.stream().map(Membership::getRoleId).distinct().collect(Collectors.toList()))
+                                        .map(allRoles -> permissionsPerMembership(allMemberships, allRoles));
+                            });
+                });
+    }
+
+    private Single<Map<Membership, Map<Permission, Set<Acl>>>> findMembershipPermissions(User user, ReferenceType referenceType) {
+
+        if (user.getId() == null) {
+            return Single.error(new InvalidUserException("Specified user is invalid"));
+        }
+
+        return orgGroupService.findByMember(user.getId())
+                .map(Group::getId)
+                .collect(Collectors.toList())
+                .flatMap(userGroupIds -> {
+                    MembershipCriteria criteria = new MembershipCriteria();
+                    criteria.setUserId(user.getId());
+                    criteria.setGroupIds(userGroupIds.isEmpty() ? null : userGroupIds);
+                    criteria.setLogicalOR(true);
+
+                    // Get all user and group memberships.
+                    return membershipService.findByCriteria(referenceType, criteria)
                             .toList()
                             .flatMap(allMemberships -> {
 
