@@ -1,0 +1,23 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.8-memberships-reindex.yml
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: memberships
+                indexName: idx_memberships_reftype_refid
+      changes:
+        - dropIndex:
+            indexName: idx_memberships_refid_reftype
+            tableName: memberships
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_type
+              - column:
+                  name: reference_id
+            indexName: idx_memberships_reftype_refid
+            tableName: memberships
+            unique: false
