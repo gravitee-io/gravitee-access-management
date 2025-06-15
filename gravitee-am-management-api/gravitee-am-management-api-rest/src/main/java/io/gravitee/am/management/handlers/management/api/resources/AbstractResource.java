@@ -23,6 +23,7 @@ import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.core.Context;
@@ -107,17 +108,13 @@ public abstract class AbstractResource {
                 .flatMapCompletable(this::checkPermission);
     }
 
+    protected Flowable<String> getResourceIdsWithPermission(User user, ReferenceType referenceType, Permission permission, Acl... acls) {
+        return permissionService.getReferenceIdsWithPermission(user, referenceType, permission, Set.of(acls));
+    }
+
     protected Single<Boolean> hasPermission(User user, ReferenceType referenceType, String referenceId, Permission permission, Acl... acls) {
 
         return hasPermission(user, Permissions.of(referenceType, referenceId, permission, acls));
-    }
-
-    protected Single<Boolean> hasAnyPermission(User user, String organizationId, String environmentId, String domainId, String applicationId, Permission permission, Acl... acls) {
-
-        return hasPermission(user, or(of(ReferenceType.APPLICATION, applicationId, permission, acls),
-                of(ReferenceType.DOMAIN, domainId, permission, acls),
-                of(ReferenceType.ENVIRONMENT, environmentId, permission, acls),
-                of(ReferenceType.ORGANIZATION, organizationId, permission, acls)));
     }
 
     protected Single<Boolean> hasAnyPermission(User user, String organizationId, String environmentId, String domainId, Permission permission, Acl... acls) {
@@ -183,4 +180,5 @@ public abstract class AbstractResource {
 
         return Completable.complete();
     }
+
 }

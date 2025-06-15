@@ -33,6 +33,8 @@ import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
@@ -76,6 +78,33 @@ public class JdbcMembershipRepository extends AbstractJdbcRepository implements 
         Criteria userClause = Criteria.empty();
 
         Criteria referenceClause = where("reference_id").is(referenceId).and(where("reference_type").is(referenceType.name()));
+
+        if (criteria.getGroupIds().isPresent()) {
+            groupClause = where("member_id").in(criteria.getGroupIds().get()).and(where("member_type").is(MemberType.GROUP.name()));
+        }
+
+        if (criteria.getUserId().isPresent()) {
+            userClause = where("member_id").is(criteria.getUserId().get()).and(where("member_type").is(MemberType.USER.name()));
+        }
+
+        if (criteria.getRoleId().isPresent()) {
+            userClause = where("role_id").is(criteria.getRoleId().get());
+        }
+
+        whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? userClause.or(groupClause) : userClause.and(groupClause)));
+
+        return fluxToFlowable(getTemplate().select(Query.query(whereClause), JdbcMembership.class))
+                .map(this::toEntity);
+    }
+
+    @Override
+    public Flowable<Membership> findByCriteria(ReferenceType referenceType, MembershipCriteria criteria) {
+        LOGGER.debug("findByCriteria({},{}", referenceType, criteria);
+        Criteria whereClause = Criteria.empty();
+        Criteria groupClause = Criteria.empty();
+        Criteria userClause = Criteria.empty();
+
+        Criteria referenceClause =where("reference_type").is(referenceType.name());
 
         if (criteria.getGroupIds().isPresent()) {
             groupClause = where("member_id").in(criteria.getGroupIds().get()).and(where("member_type").is(MemberType.GROUP.name()));
