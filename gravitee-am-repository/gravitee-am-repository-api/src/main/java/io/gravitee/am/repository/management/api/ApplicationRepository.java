@@ -38,7 +38,11 @@ public interface ApplicationRepository extends CrudRepository<Application, Strin
 
     Single<Page<Application>> findByDomain(String domain, int page, int size);
 
+    Single<Page<Application>> findByDomain(String domain, List<String> applicationIds, int page, int size);
+
     Single<Page<Application>> search(String domain, String query, int page, int size);
+
+    Single<Page<Application>> search(String domain, List<String> applicationIds, String query, int page, int size);
 
     Flowable<Application> findByCertificate(String certificate);
 

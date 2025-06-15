@@ -35,6 +35,7 @@ import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -54,17 +55,22 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     private static final String FIELD_ROLE = "role";
     private MongoCollection<MembershipMongo> membershipsCollection;
 
+    private final Set<String> UNUSED_INDEXES = Set.of("ri1rt1");
+
     @PostConstruct
     public void init() {
         membershipsCollection = mongoOperations.getCollection("memberships", MembershipMongo.class);
         super.init(membershipsCollection);
 
         final var indexes = new HashMap<Document, IndexOptions>();
-        indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1), new IndexOptions().name("rt1ri1"));
         indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_MEMBER_ID, 1), new IndexOptions().name("ri1mi1"));
         indexes.put(new Document(FIELD_MEMBER_ID, 1).append(FIELD_MEMBER_TYPE, 1), new IndexOptions().name("mi1mt1"));
 
         super.createIndex(membershipsCollection, indexes);
+        if (ensureIndexOnStart) {
+            dropIndexes(membershipsCollection, UNUSED_INDEXES::contains).subscribe();
+        }
     }
 
     @Override
@@ -81,8 +87,17 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
 
     @Override
     public Flowable<Membership> findByCriteria(ReferenceType referenceType, String referenceId, MembershipCriteria criteria) {
-
         Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
+        return findByCriteria(eqReference, criteria);
+    }
+
+    @Override
+    public Flowable<Membership> findByCriteria(ReferenceType referenceType, MembershipCriteria criteria) {
+        Bson eqReference = eq(FIELD_REFERENCE_TYPE, referenceType.name());
+        return findByCriteria(eqReference, criteria);
+    }
+
+    private Flowable<Membership> findByCriteria(Bson eqReference, MembershipCriteria criteria) {
         Bson eqGroupId = null;
         Bson eqUserId = null;
 

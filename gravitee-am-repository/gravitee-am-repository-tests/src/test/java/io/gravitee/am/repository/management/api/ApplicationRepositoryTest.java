@@ -149,6 +149,27 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByDomainAndApplicationIdsPagination() {
+        // create app 1
+        Application app = new Application();
+        app.setName("testClientId");
+        app.setDomain("testDomainPaginationAndAppIds");
+        app = applicationRepository.create(app).blockingGet();
+
+        // create app 2
+        Application app2 = new Application();
+        app2.setName("testClientId2");
+        app2.setDomain("testDomainPaginationAndAppIds");
+        app2 = applicationRepository.create(app2).blockingGet();
+        TestObserver<Page<Application>> testObserver = applicationRepository.findByDomain("testDomainPaginationAndAppIds", List.of(app2.getId()), 0, 1).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(pageApplications -> pageApplications.getTotalCount() == 1 && pageApplications.getData().size() == 1);
+    }
+
+    @Test
     public void testFindById() {
         // create app
         Application app = buildApplication();
@@ -425,6 +446,45 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(apps -> apps.getData().size() == 3);
+        testObserver.assertValue(apps -> apps.getTotalCount() == 3);
+    }
+
+    @Test
+    public void testSearchApplicationIds_wildcard() {
+        final String domain = "domainWithApss";
+        // create app
+        Application app = new Application();
+        app.setDomain(domain);
+        app.setName("clientId");
+        app = applicationRepository.create(app).blockingGet();
+
+        Application app2 = new Application();
+        app2.setDomain(domain);
+        app2.setName("clientId2");
+        app2 = applicationRepository.create(app2).blockingGet();
+
+        Application app3 = new Application();
+        app3.setDomain(domain);
+        app3.setName("test");
+        app3 = applicationRepository.create(app3).blockingGet();
+
+        Application app4 = new Application();
+        app4.setDomain(domain);
+        app4.setName("test");
+        ApplicationSettings settings = new ApplicationSettings();
+        app4.setSettings(settings);
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        settings.setOauth(oauth);
+        oauth.setClientId("clientId4");
+        app4 = applicationRepository.create(app4).blockingGet();
+
+        // fetch apps
+        TestObserver<Page<Application>> testObserver = applicationRepository.search(domain, List.of(app.getId(), app2.getId(), app4.getId()), "clientId*", 0, 2).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(apps -> apps.getData().size() == 2);
         testObserver.assertValue(apps -> apps.getTotalCount() == 3);
     }
 
