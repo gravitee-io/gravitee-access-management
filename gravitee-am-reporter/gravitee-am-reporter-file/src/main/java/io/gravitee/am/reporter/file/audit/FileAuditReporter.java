@@ -63,6 +63,7 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
     public static final String REPORTERS_FILE_ENABLED = "reporters.file.enabled";
     public static final String REPORTERS_FILE_DIRECTORY = "reporters.file.directory";
     public static final String REPORTERS_FILE_OUTPUT = "reporters.file.output";
+    public static final String REPORTERS_FILE_RETAIN_DAYS = "reporters.file.retainDays";
 
     private static Logger LOGGER = LoggerFactory.getLogger(FileAuditReporter.class);
 
@@ -71,6 +72,9 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
 
     @Value("${" + REPORTERS_FILE_OUTPUT + ":JSON}")
     private String outputType;
+
+    @Value("${" + REPORTERS_FILE_RETAIN_DAYS + ":-1}")
+    private long retainDays;
 
     @Autowired
     private Vertx vertx;
@@ -206,10 +210,12 @@ public class FileAuditReporter extends AbstractService<Reporter> implements Audi
         }
 
         final String filename = Paths.get(reporterDirectory, config.getFilename() + "-" + VertxFileWriter.YYYY_MM_DD + '.' + type.getExtension()).toFile().getAbsolutePath();
+        long resolvedRetainDays = config.getRetainDays() > 0 ? config.getRetainDays() : this.retainDays;
         this.writer = new VertxFileWriter<>(
                 vertx,
                 formatter,
-                filename);
+                filename,
+                resolvedRetainDays);
 
         Future<Void> writerInitialization = writer.initialize();
         writerInitialization.onComplete(success -> LOGGER.info("File reporter successfully started"));
