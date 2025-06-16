@@ -73,6 +73,14 @@ public class PBKDF2PasswordEncoder implements PasswordEncoder {
     }
 
     @Override
+    public String encode(CharSequence rawPassword, byte[] salt) {
+        // the underlying encoder does not expose the encode method with the dedicated salt field, we need to duplicate it
+        return (encodeSaltAsBase64) ?
+                b64enc.encodeToString(encode0(rawPassword, salt)) :
+                Hex.encodeHexString(encode0(rawPassword, salt));
+    }
+
+    @Override
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
         return this.encoder.matches(rawPassword, encodedPassword);
     }
