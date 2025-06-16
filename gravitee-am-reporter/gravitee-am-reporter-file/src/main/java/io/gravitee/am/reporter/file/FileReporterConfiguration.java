@@ -29,4 +29,5 @@ public class FileReporterConfiguration implements ReporterConfiguration {
     private String filename;
     private String organizationId;
     private String environmentId;
+    private long retainDays = -1;
 }
