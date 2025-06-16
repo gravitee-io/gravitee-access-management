@@ -1846,6 +1846,7 @@ workflows:
           name: publish RPM packages
           context: cicd-orchestrator
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          dry_run: << pipeline.parameters.dry_run >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
       - job-test-am-charts:
