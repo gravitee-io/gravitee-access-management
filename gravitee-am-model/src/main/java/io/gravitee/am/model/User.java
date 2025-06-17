@@ -22,6 +22,7 @@ import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
+import io.gravitee.am.model.scim.Manager;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -176,6 +177,18 @@ public class User implements IUser {
 
     private Boolean serviceAccount = Boolean.FALSE;
 
+    private String employeeNumber;
+
+    private String costCenter;
+
+    private String organization;
+
+    private String division;
+
+    private String department;
+
+    private Manager manager;
+
     public User() {
 
     }
@@ -251,6 +264,12 @@ public class User implements IUser {
         this.updatedAt = other.updatedAt;
         this.lastUsernameReset = other.lastUsernameReset;
         this.forceResetPassword = other.forceResetPassword;
+        this.employeeNumber = other.employeeNumber;
+        this.costCenter = other.costCenter;
+        this.organization = other.organization;
+        this.division = other.division;
+        this.department = other.department;
+        this.manager = other.manager != null ? new Manager(other.manager) : null;
     }
 
     public static User simpleUser(String userId, ReferenceType referenceType, String referenceId) {
@@ -572,4 +591,13 @@ public class User implements IUser {
         return EnrolledFactor.asIdMap(getFactors());
     }
 
+
+    public boolean isEnterpriseUser() {
+        return (employeeNumber != null && !employeeNumber.isEmpty()) ||
+                (costCenter != null && !costCenter.isEmpty()) ||
+                (organization != null && !organization.isEmpty()) ||
+                (division != null && !division.isEmpty()) ||
+                (department != null && !department.isEmpty()) ||
+                (manager != null);
+    }
 }

@@ -35,3 +35,7 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_9_0/4.9.0-dataplane-sweep-redundant-indexes-users.yml
   - include:
       - file: liquibase/changelogs/v4_9_0/4.9.0-dataplane-sweep-redundant-indexes-webauth.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-1-dataplane-update-users-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-2-dataplane-create-user-manager-table.yml

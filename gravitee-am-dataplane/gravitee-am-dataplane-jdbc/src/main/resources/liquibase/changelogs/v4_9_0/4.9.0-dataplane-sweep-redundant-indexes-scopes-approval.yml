@@ -10,7 +10,7 @@ databaseChangeLog:
       changes:
         - dropIndex:
             indexName: idx_scope_approvals_domain_user_id_extid
-            tableName: scope_approvalsdata
+            tableName: scope_approvals
 
   - changeSet:
       id: 4.9.0-dp-sweep-redundant-indexes-scope-approvals-2

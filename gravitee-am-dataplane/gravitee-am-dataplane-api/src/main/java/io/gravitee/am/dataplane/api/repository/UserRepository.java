@@ -20,6 +20,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.scim.Manager;
 import io.gravitee.am.repository.common.CrudRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Completable;
@@ -113,6 +114,7 @@ public interface UserRepository extends CrudRepository<User, String> {
         private boolean entitlements = true;
         private boolean addresses = true;
         private boolean identities = true;
+        private boolean manager = true;
 
         UpdateActions() {}
 
@@ -178,8 +180,17 @@ public interface UserRepository extends CrudRepository<User, String> {
             return this;
         }
 
+        public boolean updateManager() {
+            return manager;
+        }
+
+        public UpdateActions updateManager(boolean manager) {
+            this.manager = manager;
+            return this;
+        }
+
         public boolean updateRequire() {
-            return (addresses || attributes || entitlements || role || dynamicRole || dynamicGroup || identities);
+            return (addresses || attributes || entitlements || role || dynamicRole || dynamicGroup || identities || manager);
         }
 
         public static UpdateActions updateAll() {
@@ -194,7 +205,8 @@ public interface UserRepository extends CrudRepository<User, String> {
                     .updateEntitlements(false)
                     .updateAttributes(false)
                     .updateAddresses(false)
-                    .updateIdentities(false);
+                    .updateIdentities(false)
+                    .updateManager(false);
         }
 
         public static UpdateActions build(io.gravitee.am.model.User existingUser, io.gravitee.am.model.User updatedUser) {
@@ -210,13 +222,17 @@ public interface UserRepository extends CrudRepository<User, String> {
             actions.updateRole(needUpdate(existingUser.getRoles(), updatedUser.getRoles()));
             actions.updateDynamicRole(needUpdate(existingUser.getDynamicRoles(), updatedUser.getDynamicRoles()));
             actions.updateIdentities(needUpdate(existingUser.getIdentities(), updatedUser.getIdentities()));
+            actions.updateManager(
+                    needUpdate(
+                            existingUser.getManager() != null ? List.of(existingUser.getManager()) : null,
+                            updatedUser.getManager() != null ? List.of(updatedUser.getManager()) : null));
 
             return actions;
         }
+
         private static boolean needUpdate(List existing, List update) {
             return !(((existing == null || existing.isEmpty()) && (update == null || update.isEmpty()))
                     || Objects.equals(existing, update));
         }
     }
-
 }

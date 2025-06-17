@@ -18,6 +18,7 @@ package io.gravitee.am.dataplane.mongodb.repository.model;
 import io.gravitee.am.dataplane.mongodb.repository.model.scim.AddressMongo;
 import io.gravitee.am.dataplane.mongodb.repository.model.scim.AttributeMongo;
 import io.gravitee.am.dataplane.mongodb.repository.model.scim.CertificateMongo;
+import io.gravitee.am.dataplane.mongodb.repository.model.scim.ManagerMongo;
 import io.gravitee.am.model.UserIdentity;
 import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.repository.mongodb.common.model.Auditable;
@@ -88,6 +89,12 @@ public class UserMongo extends Auditable {
     private String lastIdentityUsed;
     private Boolean forceResetPassword;
     private Boolean serviceAccount;
+    private String employeeNumber;
+    private String costCenter;
+    private String organization;
+    private String division;
+    private String department;
+    private ManagerMongo manager;
     /**
      * Map codec support is planned for version 3.7 jira.mongodb.org issue: JAVA-2695
      */

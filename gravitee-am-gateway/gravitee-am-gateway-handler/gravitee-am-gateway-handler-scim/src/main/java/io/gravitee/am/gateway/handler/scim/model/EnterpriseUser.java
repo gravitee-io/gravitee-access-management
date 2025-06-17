@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.scim.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.common.scim.Schema;
 
 import java.util.Arrays;
@@ -32,94 +33,99 @@ public class EnterpriseUser extends User {
 
     public static final List<String> SCHEMAS = Arrays.asList(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_ENTERPRISE_USER);
 
-    /**
-     * A string identifier, typically numeric or alphanumeric, assigned
-     *       to a person, typically based on order of hire or association with
-     *       an organization.
-     */
-    private String employeeNumber;
+    @JsonProperty(Schema.SCHEMA_URI_ENTERPRISE_USER)
+    private EnterpriseUser0 enterpriseUser;
 
-    /**
-     * Identifies the name of a cost center.
-     */
-    private String costCenter;
-
-    /**
-     * Identifies the name of an organization.
-     */
-    private String organization;
-
-    /**
-     * Identifies the name of a division.
-     */
-    private String division;
-
-    /**
-     * Identifies the name of a department.
-     */
-    private String department;
-
-    /**
-     * The user's manager.  A complex type that optionally allows service
-     *       providers to represent organizational hierarchy by referencing the
-     *       "id" attribute of another User.
-     *
-     *       value  The "id" of the SCIM resource representing the user's
-     *          manager.  RECOMMENDED.
-     *
-     *       $ref  The URI of the SCIM resource representing the User's
-     *          manager.  RECOMMENDED.
-     *
-     *       displayName  The displayName of the user's manager.  This
-     *          attribute is OPTIONAL, and mutability is "readOnly".
-     */
-    private String manager;
-
-    public String getEmployeeNumber() {
-        return employeeNumber;
+    public EnterpriseUser0 getEnterpriseUser() {
+        return enterpriseUser;
     }
 
-    public void setEmployeeNumber(String employeeNumber) {
-        this.employeeNumber = employeeNumber;
+    public void setEnterpriseUser(EnterpriseUser0 enterpriseUser) {
+        this.enterpriseUser = enterpriseUser;
     }
 
-    public String getCostCenter() {
-        return costCenter;
-    }
+    public static class EnterpriseUser0 {
 
-    public void setCostCenter(String costCenter) {
-        this.costCenter = costCenter;
-    }
+        /**
+         * A string identifier, typically numeric or alphanumeric, assigned
+         *       to a person, typically based on order of hire or association with
+         *       an organization.
+         */
+        private String employeeNumber;
 
-    public String getOrganization() {
-        return organization;
-    }
+        /**
+         * Identifies the name of a cost center.
+         */
+        private String costCenter;
 
-    public void setOrganization(String organization) {
-        this.organization = organization;
-    }
+        /**
+         * Identifies the name of an organization.
+         */
+        private String organization;
 
-    public String getDivision() {
-        return division;
-    }
+        /**
+         * Identifies the name of a division.
+         */
+        private String division;
 
-    public void setDivision(String division) {
-        this.division = division;
-    }
+        /**
+         * Identifies the name of a department.
+         */
+        private String department;
 
-    public String getDepartment() {
-        return department;
-    }
+        /**
+         * The user's manager.  A complex type that optionally allows service
+         * providers to represent organizational hierarchy by referencing the
+         * "id" attribute of another User.
+         */
+        private Manager manager;
 
-    public void setDepartment(String department) {
-        this.department = department;
-    }
+        public String getEmployeeNumber() {
+            return employeeNumber;
+        }
 
-    public String getManager() {
-        return manager;
-    }
+        public void setEmployeeNumber(String employeeNumber) {
+            this.employeeNumber = employeeNumber;
+        }
 
-    public void setManager(String manager) {
-        this.manager = manager;
+        public String getCostCenter() {
+            return costCenter;
+        }
+
+        public void setCostCenter(String costCenter) {
+            this.costCenter = costCenter;
+        }
+
+        public String getOrganization() {
+            return organization;
+        }
+
+        public void setOrganization(String organization) {
+            this.organization = organization;
+        }
+
+        public String getDivision() {
+            return division;
+        }
+
+        public void setDivision(String division) {
+            this.division = division;
+        }
+
+        public String getDepartment() {
+            return department;
+        }
+
+        public void setDepartment(String department) {
+            this.department = department;
+        }
+
+        public Manager getManager() {
+            return manager;
+        }
+
+        public void setManager(Manager manager) {
+            this.manager = manager;
+        }
     }
 }
