@@ -433,8 +433,11 @@ public class RoleServiceImpl implements RoleService {
         organizationPrimaryOwnerPermissions.put(Permission.ORGANIZATION_AUDIT, Acl.of(READ, LIST));
         organizationPrimaryOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ, LIST));
         organizationPrimaryOwnerPermissions.put(Permission.LICENSE_NOTIFICATION, Acl.of(READ));
+        organizationPrimaryOwnerPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
+
 
         environmentPrimaryOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ));
+        environmentPrimaryOwnerPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
 
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE, DELETE));
         domainPrimaryOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE, DELETE));
@@ -467,8 +470,10 @@ public class RoleServiceImpl implements RoleService {
         organizationOwnerPermissions.put(Permission.ORGANIZATION_AUDIT, Acl.of(READ, LIST));
         organizationOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ, LIST));
         organizationOwnerPermissions.put(Permission.LICENSE_NOTIFICATION, Acl.of(READ));
+        organizationOwnerPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
 
         environmentOwnerPermissions.put(Permission.ENVIRONMENT, Acl.of(READ));
+        environmentOwnerPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
 
         domainOwnerPermissions.put(Permission.DOMAIN, Acl.of(READ, UPDATE));
         domainOwnerPermissions.put(Permission.DOMAIN_SETTINGS, Acl.of(READ, UPDATE));
@@ -493,9 +498,11 @@ public class RoleServiceImpl implements RoleService {
         organizationUserPermissions.put(Permission.ORGANIZATION_ROLE, Acl.of(LIST));
         organizationUserPermissions.put(Permission.ORGANIZATION_TAG, Acl.of(LIST));
         organizationUserPermissions.put(Permission.ENVIRONMENT, Acl.of(LIST));
+        organizationUserPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
 
         environmentUserPermissions.put(Permission.ENVIRONMENT, Acl.of(READ));
         environmentUserPermissions.put(Permission.DOMAIN, Acl.of(LIST));
+        environmentUserPermissions.put(Permission.DATA_PLANE, Acl.of(READ, LIST));
 
         domainUserPermissions.put(Permission.DOMAIN, Acl.of(READ));
         domainUserPermissions.put(Permission.DOMAIN_SCOPE, Acl.of(LIST));
