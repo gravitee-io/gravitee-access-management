@@ -31,6 +31,7 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
+import io.gravitee.am.model.scim.Manager;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
@@ -39,6 +40,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.CertificateMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.scim.ManagerMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -347,6 +349,14 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         updateFields.add(Updates.set("identities", item.getIdentities()));
         updateFields.add(Updates.set("forceResetPassword", item.getForceResetPassword()));
         updateFields.add(Updates.set("serviceAccount", item.getServiceAccount()));
+        updateFields.add(Updates.set("employeeNumber", item.getEmployeeNumber()));
+        updateFields.add(Updates.set("costCenter", item.getCostCenter()));
+        updateFields.add(Updates.set("organization", item.getOrganization()));
+        updateFields.add(Updates.set("division", item.getDivision()));
+        updateFields.add(Updates.set("department", item.getDepartment()));
+        if (actions.updateManager()) {
+            updateFields.add(Updates.set("manager", item.getManager()));
+        }
         return updateFields;
     }
 
@@ -427,6 +437,12 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         user.setUpdatedAt(userMongo.getUpdatedAt());
         user.setForceResetPassword(userMongo.getForceResetPassword());
         user.setServiceAccount(userMongo.getServiceAccount());
+        user.setEmployeeNumber(userMongo.getEmployeeNumber());
+        user.setCostCenter(userMongo.getCostCenter());
+        user.setOrganization(userMongo.getOrganization());
+        user.setDivision(userMongo.getDivision());
+        user.setDepartment(userMongo.getDepartment());
+        user.setManager(toModelManager(userMongo.getManager()));
         return user;
     }
 
@@ -489,6 +505,12 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         userMongo.setUpdatedAt(user.getUpdatedAt());
         userMongo.setForceResetPassword(user.getForceResetPassword());
         userMongo.setServiceAccount(user.getServiceAccount());
+        userMongo.setEmployeeNumber(user.getEmployeeNumber());
+        userMongo.setCostCenter(user.getCostCenter());
+        userMongo.setOrganization(user.getOrganization());
+        userMongo.setDivision(user.getDivision());
+        userMongo.setDepartment(user.getDepartment());
+        userMongo.setManager(toMongoManager(user.getManager()));
         return userMongo;
     }
 
@@ -586,6 +608,30 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                     mongoCertificate.setValue(modelCertificate.getValue());
                     return mongoCertificate;
                 }).collect(Collectors.toList());
+    }
+
+    private Manager toModelManager(ManagerMongo mongoManager) {
+        if (mongoManager == null) {
+            return null;
+        }
+
+        Manager modelManager = new Manager();
+        modelManager.setValue(mongoManager.getValue());
+        modelManager.setRef(mongoManager.getRef());
+        modelManager.setDisplayName(mongoManager.getDisplayName());
+        return modelManager;
+    }
+
+    private ManagerMongo toMongoManager(Manager modelManager) {
+        if (modelManager == null) {
+            return null;
+        }
+
+        ManagerMongo mongoManager = new ManagerMongo();
+        mongoManager.setValue(modelManager.getValue());
+        mongoManager.setRef(modelManager.getRef());
+        mongoManager.setDisplayName(modelManager.getDisplayName());
+        return mongoManager;
     }
 
     private void createOrUpdateIndex() {
