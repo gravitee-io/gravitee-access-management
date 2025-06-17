@@ -165,3 +165,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_7_0/4.7.0-create-dp-upgraders.yml
   - include:
       - file: liquibase/changelogs/v4_7_0/4.7.0-update-identity-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_7_0/4-7-8-schema-dataPlane-permission.yml

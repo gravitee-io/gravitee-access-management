@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.8-dataPlane-permission
+      author: GraviteeSource Team
+      changes:
+        # Fix permission issue on dataPlanes
+        ##############
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{DATA_PLANE}', '[\"READ\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_OWNER', 'ENVIRONMENT_OWNER', 'ORGANIZATION_USER', 'ENVIRONMENT_USER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.DATA_PLANE', JSON_ARRAY('READ', 'LIST')) WHERE name in ('ORGANIZATION_OWNER', 'ENVIRONMENT_OWNER', 'ORGANIZATION_USER', 'ENVIRONMENT_USER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.DATA_PLANE', JSON_QUERY('[\"READ\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_OWNER', 'ENVIRONMENT_OWNER', 'ORGANIZATION_USER', 'ENVIRONMENT_USER');"
