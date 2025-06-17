@@ -53,7 +53,7 @@ public class DataPlanesResource extends AbstractResource {
             operationId = "listDataPlanes",
             summary = "List of data planes",
             description = "List all the data planes accessible to the current user. " +
-                    "User must have DOMAIN[CREATE] permission on the specified environment or organization")
+                    "User must have DATA_PLANE[READ] permission on the specified environment or organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List accessible data planes for current user",
                     content = @Content(mediaType = "application/json",
@@ -64,7 +64,7 @@ public class DataPlanesResource extends AbstractResource {
             @PathParam("environmentId") String environmentId,
             @Suspended final AsyncResponse response) {
 
-        checkAnyPermission(organizationId, environmentId, Permission.DOMAIN, Acl.CREATE)
+        checkAnyPermission(organizationId, environmentId, Permission.DATA_PLANE, Acl.READ)
                 .andThen(Maybe.just(dataPlaneRegistry.getDataPlanes()))
                 .subscribe(response::resume, response::resume);
     }
