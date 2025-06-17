@@ -49,6 +49,8 @@ public enum Permission {
 
     ENVIRONMENT(ReferenceType.PLATFORM, ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT),
 
+    DATA_PLANE(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT),
+
     DOMAIN(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
     DOMAIN_SETTINGS(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
     DOMAIN_FORM(ReferenceType.ORGANIZATION, ReferenceType.ENVIRONMENT, ReferenceType.DOMAIN),
