@@ -175,7 +175,7 @@ public class JWTServiceImpl implements JWTService {
         if (certificateProvider.getProvider().getClass().getSimpleName().equals(AWS_HSM_CERTIFICATE_PROVIDER)) {
             return signer.subscribeOn(Schedulers.io());
         } else {
-            return signer.subscribeOn(Schedulers.computation());
+            return signer;
         }
     }
 
@@ -193,7 +193,7 @@ public class JWTServiceImpl implements JWTService {
         if (certificateProvider.getProvider().getClass().getSimpleName().equals(AWS_HSM_CERTIFICATE_PROVIDER)) {
             return verifier.subscribeOn(Schedulers.io());
         } else {
-            return verifier.subscribeOn(Schedulers.computation());
+            return verifier;
         }
     }
 
