@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-scopes
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_users_reference_username
+            tableName: scopes
+      changes:
+        - dropIndex:
+            indexName: idx_users_reference_username
+            tableName: scopes
+
+
+

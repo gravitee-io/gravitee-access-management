@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-scope-approvals
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_scope_approvals_domain_user
+            tableName: scope_approvals
+      changes:
+        - dropIndex:
+            indexName: idx_scope_approvals_domain_user
+            tableName: scope_approvals
+
+

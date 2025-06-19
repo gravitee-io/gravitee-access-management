@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-users-1
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_users_reference_external
+            tableName: users
+      changes:
+        - dropIndex:
+            indexName: idx_users_reference_external
+            tableName: users
+
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-users-2
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_users_reference
+            tableName: users
+      changes:
+        - dropIndex:
+            indexName: idx_users_reference
+            tableName: users
+
+
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-users-3
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_users_reference_username
+            tableName: users
+      changes:
+        - dropIndex:
+            indexName: idx_users_reference_username
+            tableName: users
+
+
+  - changeSet:
+      id: 4.9.0-sweep-redundant-indexes-users-4
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - indexExists:
+            indexName: idx_user_activities_reference_type_identifier
+            tableName: users
+      changes:
+        - dropIndex:
+            indexName: idx_user_activities_reference_type_identifier
+            tableName: user_activities
