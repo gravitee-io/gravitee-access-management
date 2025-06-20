@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.regex.Pattern;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -82,6 +83,10 @@ public class VertxFileWriter<T extends ReportEntry> {
 
     private final SimpleDateFormat fileDateFormat = new SimpleDateFormat(ROLLOVER_FILE_DATE_FORMAT);
 
+    private long retainDays = -1;
+
+    private final Pattern rolloverFiles;
+
     public VertxFileWriter(Vertx vertx, Formatter<T> formatter, String filename) throws IOException {
         this.vertx = vertx;
         this.formatter = formatter;
@@ -98,7 +103,16 @@ public class VertxFileWriter<T extends ReportEntry> {
 
         this.filename = filename;
 
+        // calculate the rollover files pattern
+        File file = new File(this.filename);
+        rolloverFiles = Pattern.compile(file.getName().replaceFirst(YYYY_MM_DD, "([0-9]{4}_[0-9]{2}_[0-9]{2})"));
+
         __rollover = new Timer(VertxFileWriter.class.getName(), true);
+    }
+
+    public VertxFileWriter(Vertx vertx, Formatter<T> formatter, String filename, long retainDays) throws IOException {
+        this(vertx, formatter, filename);
+        this.retainDays = retainDays;
     }
 
     public Future<Void> initialize() {
@@ -230,9 +244,38 @@ public class VertxFileWriter<T extends ReportEntry> {
                 ZonedDateTime now = ZonedDateTime.now(fileDateFormat.getTimeZone().toZoneId());
                 VertxFileWriter.this.setFile(now);
                 VertxFileWriter.this.scheduleNextRollover(now);
+                VertxFileWriter.this.removeOldFiles();
             } catch (Throwable t) {
                 LOGGER.error("Unexpected error while moving to a new reporter file", t);
             }
         }
+    }
+
+    protected void removeOldFiles() {
+        if (retainDays > 0) {
+            long now = System.currentTimeMillis();
+            File file = new File(this.filename);
+
+            if (rolloverFiles != null) {
+                File dir = new File(file.getParent());
+                String[] logList = dir.list();
+                for (int i = 0; i < logList.length; i++) {
+                    String fn = logList[i];
+                    if (rolloverFiles.matcher(fn).matches()) {
+                        File f = new File(dir, fn);
+                        if (shouldDeleteFile(f, now)) {
+                            boolean fileDeleted = f.delete();
+                            if (!fileDeleted) {
+                                LOGGER.debug("File [{}] has not been removed", fn);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected boolean shouldDeleteFile(File file, long currentTimeInMs) {
+        return retainDays > 0 && currentTimeInMs - file.lastModified() > retainDays * 1000 * 60 * 60 * 24;
     }
 }

@@ -7,6 +7,12 @@
       "title": "Filename",
       "pattern": "^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$",
       "description": "Filename where the information are written."
+    },
+    "retainDays": {
+      "type": "number",
+      "default": -1,
+      "title": "Backup retain days",
+      "description": "Specify the time, in days, after which the audit logs files are deleted (no retention by default)."
     }
   },
   "required" : ["filename"]
