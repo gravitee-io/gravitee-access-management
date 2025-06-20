@@ -25,3 +25,7 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_7_0/4.7.0-12-dataplane-upgrader-table.yml
   - include:
       - file: liquibase/changelogs/v4_7_0/4.7.0-13-dataplane-dynamic_user_groups-init.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-1-update-users-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-2-create-user-manager.yml

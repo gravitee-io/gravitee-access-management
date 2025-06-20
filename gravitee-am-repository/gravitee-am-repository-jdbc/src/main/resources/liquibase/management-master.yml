@@ -169,3 +169,7 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_8_0/4.8.0-update-domain-table.yml
   - include:
       - file: liquibase/changelogs/v4_8_0/4.8.0-update-application-client-secrets-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-update-users-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-create-user-manager.yml
