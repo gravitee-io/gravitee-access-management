@@ -150,7 +150,10 @@ class ClientTokenAuditBuilderTest {
         user.setReferenceId(domainId);
         user.setReferenceType(referenceType);
 
-        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenTarget(user).build(objectMapper);
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .tokenTarget(user)
+                .accessTokenSubject("accessTokenSubjectValue")
+                .build(objectMapper);
 
         assertEquals(domainId, audit.getReferenceId());
         assertEquals(domainId, audit.getTarget().getReferenceId());
@@ -160,7 +163,9 @@ class ClientTokenAuditBuilderTest {
         assertEquals(userDisplayName, audit.getTarget().getDisplayName());
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertEquals(TOKEN_CREATED, audit.getType());
+        assertEquals("accessTokenSubjectValue", audit.getTarget().getAttributes().get("accessTokenSubject"));
     }
+
 
     @Test
     void shouldBuildTokenTargetClient() {

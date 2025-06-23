@@ -46,8 +46,6 @@ public class SubjectManagerV2 implements SubjectManager {
 
     private UserGatewayService userService;
 
-    private ClientManager clientManager;
-
     private Domain domain;
 
     @Override

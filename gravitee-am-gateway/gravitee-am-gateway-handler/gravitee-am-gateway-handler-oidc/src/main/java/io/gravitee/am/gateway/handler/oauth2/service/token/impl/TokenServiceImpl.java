@@ -195,7 +195,8 @@ public class TokenServiceImpl implements TokenService {
                                         }
                                         return params;
                                     })
-                                    .tokenTarget(endUser)));
+                                    .tokenTarget(endUser)
+                                    .accessTokenSubject(enhancedToken.getSubject())));
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(endUser).throwable(error)));
     }
@@ -295,6 +296,7 @@ public class TokenServiceImpl implements TokenService {
      */
     private Token convert(JWT accessToken, String encodedAccessToken, String encodedRefreshToken, OAuth2Request oAuth2Request) {
         AccessToken token = new AccessToken(encodedAccessToken);
+        token.setSubject(accessToken.getSub());
         token.setExpiresIn(Instant.ofEpochSecond(accessToken.getExp()).minusMillis(System.currentTimeMillis()).getEpochSecond());
         token.setScope(accessToken.getScope());
         // set additional information
