@@ -60,14 +60,11 @@ public class SubjectManagerV2Test {
     @Mock
     private UserService userService;
 
-    @Mock
-    private ClientManager clientManager;
-
     private SubjectManager cut;
 
     @BeforeEach
     protected void setup() {
-        cut = new SubjectManagerV2(userService, clientManager, domain);
+        cut = new SubjectManagerV2(userService, domain);
     }
 
     @Test

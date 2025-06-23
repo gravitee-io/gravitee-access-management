@@ -269,18 +269,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
 
         // The actor and/or target of an event is dependent on the action performed.
         // All events have actors but not all have targets.
-        AuditEntity actor = new AuditEntity();
-        actor.setId(actorId);
-        actor.setType(actorType);
-        actor.setAlternativeId(actorAlternativeId);
-        actor.setDisplayName(actorDisplayName);
-        actor.setReferenceType(actorReferenceType);
-        actor.setReferenceId(actorReferenceId);
-        var actorAttributes = new HashMap<String, Object>();
-        ofNullable(actorExternalId).ifPresent(v -> actorAttributes.put(EXTERNAL_ID, v));
-        ofNullable(actorSourceId).ifPresent(v -> actorAttributes.put(SOURCE_ID, v));
-        actor.setAttributes(ImmutableMap.copyOf(actorAttributes));
-        audit.setActor(actor);
+        audit.setActor(createActor());
 
         // Network access point
         AuditAccessPoint accessPoint = new AuditAccessPoint();
@@ -293,18 +282,7 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
 
         // target
         if (targetId != null) {
-            AuditEntity target = new AuditEntity();
-            target.setId(targetId);
-            target.setType(targetType);
-            target.setAlternativeId(targetAlternativeId);
-            target.setDisplayName(targetDisplayName);
-            target.setReferenceType(targetReferenceType);
-            target.setReferenceId(targetReferenceId);
-            var targetAttributes = new HashMap<String, Object>();
-            ofNullable(targetExternalId).ifPresent(v -> targetAttributes.put(EXTERNAL_ID, v));
-            ofNullable(targetSourceId).ifPresent(v -> targetAttributes.put(SOURCE_ID, v));
-            target.setAttributes(ImmutableMap.copyOf(targetAttributes));
-            audit.setTarget(target);
+            audit.setTarget(createTarget());
         }
 
         // result
@@ -341,6 +319,36 @@ public abstract class AuditBuilder<T extends AuditBuilder<T>> {
         audit.setOutcome(result);
 
         return audit;
+    }
+
+    protected AuditEntity createActor() {
+        AuditEntity actor = new AuditEntity();
+        actor.setId(actorId);
+        actor.setType(actorType);
+        actor.setAlternativeId(actorAlternativeId);
+        actor.setDisplayName(actorDisplayName);
+        actor.setReferenceType(actorReferenceType);
+        actor.setReferenceId(actorReferenceId);
+        var actorAttributes = new HashMap<String, Object>();
+        ofNullable(actorExternalId).ifPresent(v -> actorAttributes.put(EXTERNAL_ID, v));
+        ofNullable(actorSourceId).ifPresent(v -> actorAttributes.put(SOURCE_ID, v));
+        actor.setAttributes(ImmutableMap.copyOf(actorAttributes));
+        return actor;
+    }
+
+    protected AuditEntity createTarget(){
+        AuditEntity target = new AuditEntity();
+        target.setId(targetId);
+        target.setType(targetType);
+        target.setAlternativeId(targetAlternativeId);
+        target.setDisplayName(targetDisplayName);
+        target.setReferenceType(targetReferenceType);
+        target.setReferenceId(targetReferenceId);
+        var targetAttributes = new HashMap<String, Object>();
+        ofNullable(targetExternalId).ifPresent(v -> targetAttributes.put(EXTERNAL_ID, v));
+        ofNullable(targetSourceId).ifPresent(v -> targetAttributes.put(SOURCE_ID, v));
+        target.setAttributes(ImmutableMap.copyOf(targetAttributes));
+        return target;
     }
 
     /**
