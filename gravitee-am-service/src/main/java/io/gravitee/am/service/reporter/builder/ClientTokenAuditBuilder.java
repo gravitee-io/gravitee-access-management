@@ -16,6 +16,7 @@
 package io.gravitee.am.service.reporter.builder;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
 import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.model.Reference;
@@ -23,6 +24,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.reporter.api.audit.model.Audit;
+import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.service.reporter.builder.gateway.GatewayAuditBuilder;
 
 import java.util.HashMap;
@@ -36,7 +38,9 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 
 public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAuditBuilder> {
     private static final String REVOKE_MSG_KEY = "revokedMessage";
+    private static final String ACCESS_TOKEN_SUB_ATTRIBUTE_KEY = "accessTokenSubject";
     private final Map<String, Object> tokenNewValue;
+    private String accessTokenSubject;
 
     public ClientTokenAuditBuilder() {
         super();
@@ -112,6 +116,11 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
         return this;
     }
 
+    public ClientTokenAuditBuilder accessTokenSubject(String subject) {
+        this.accessTokenSubject = subject;
+        return this;
+    }
+
 
     public ClientTokenAuditBuilder withParams(Supplier<Map<String, Object>> supplier) {
         final var params = supplier.get();
@@ -127,5 +136,16 @@ public class ClientTokenAuditBuilder extends GatewayAuditBuilder<ClientTokenAudi
             setNewValue(tokenNewValue);
         }
         return super.build(mapper);
+    }
+
+    @Override
+    protected AuditEntity createTarget() {
+        AuditEntity target = super.createTarget();
+        if(accessTokenSubject != null){
+            HashMap<String, Object> attributes = target.getAttributes() == null ? new HashMap<>() : new HashMap<>(target.getAttributes());
+            attributes.put(ACCESS_TOKEN_SUB_ATTRIBUTE_KEY, accessTokenSubject);
+            target.setAttributes(ImmutableMap.copyOf(attributes));
+        }
+        return target;
     }
 }
