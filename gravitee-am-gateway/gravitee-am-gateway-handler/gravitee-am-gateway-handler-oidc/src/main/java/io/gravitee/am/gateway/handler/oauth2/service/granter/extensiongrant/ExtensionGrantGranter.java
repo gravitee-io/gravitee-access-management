@@ -44,7 +44,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jsoup.internal.StringUtil;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -98,6 +100,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
         // Is client allowed to use such grant type ?
         if (!canHandle(client)) {
+            LOGGER.debug("ExtensionGrantGranter cannot handle request for clientID '{}': Unauthorized grant type", client.getClientId());
             throw new UnauthorizedClientException("Unauthorized grant type: " + extensionGrant.getGrantType());
         }
         return Single.just(tokenRequest);
@@ -105,9 +108,17 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
 
     private boolean canHandle(Client client) {
         final List<String> authorizedGrantTypes = client.getAuthorizedGrantTypes();
-        return authorizedGrantTypes != null && !authorizedGrantTypes.isEmpty()
+        final var canHandleResult = authorizedGrantTypes != null && !authorizedGrantTypes.isEmpty()
                 && (authorizedGrantTypes.contains(extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId())
                 || authorizedGrantTypes.contains(extensionGrant.getGrantType()) && extensionGrant.getCreatedAt().equals(minDate));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("ExtensionGrantGranter.canBeHandle for clientID {} ? result={} (authGrantTypes={}, extGrantTypeWithId={})",
+                    client.getClientId(), canHandleResult,
+                    authorizedGrantTypes != null ? StringUtil.join(authorizedGrantTypes, ",") :"[]",
+                    extensionGrant.getGrantType() + EXTENSION_GRANT_SEPARATOR + extensionGrant.getId()
+                    );
+        }
+        return canHandleResult;
     }
 
     @Override

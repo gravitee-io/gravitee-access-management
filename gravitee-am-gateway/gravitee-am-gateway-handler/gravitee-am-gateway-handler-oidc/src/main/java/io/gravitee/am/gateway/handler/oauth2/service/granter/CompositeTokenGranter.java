@@ -45,6 +45,8 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -58,7 +60,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author GraviteeSource Team
  */
 public class CompositeTokenGranter implements TokenGranter, InitializingBean {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(CompositeTokenGranter.class);
     private final ConcurrentMap<String, TokenGranter> tokenGranters = new ConcurrentHashMap<>();
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
@@ -113,7 +115,10 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
                 .fromIterable(tokenGranters.values())
                 .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
                 .firstElement()
-                .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
+                .switchIfEmpty(Single.error(() -> {
+                    LOGGER.debug("Unsupported grant type '{}' for clientId '{}'", tokenRequest.getGrantType(), client.getClientId());
+                    return new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType());
+                }))
                 .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client))
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
     }

@@ -28,6 +28,8 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -38,7 +40,7 @@ import java.util.Optional;
  * @author GraviteeSource Team
  */
 public class AbstractTokenGranter implements TokenGranter {
-
+    protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final String grantType;
 
     private TokenRequestResolver tokenRequestResolver;
@@ -56,7 +58,10 @@ public class AbstractTokenGranter implements TokenGranter {
 
     @Override
     public boolean handle(String grantType, Client client) {
-        return this.grantType.equals(grantType);
+        boolean isHandled = this.grantType.equals(grantType);
+        LOGGER.debug("handle grant type '{}' for clientId '{}' = {} (compared values: {}/{})",
+                grantType, client.getClientId(), isHandled, grantType, this.grantType);
+        return isHandled;
     }
 
     @Override
