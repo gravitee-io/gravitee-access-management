@@ -43,6 +43,7 @@ import { Domain, FlowEntity, FlowEntityTypeEnum } from '../../api/management/mod
 import { assertGeneratedTokenAndGet } from '@gateway-commands/utils';
 import { decodeJwt } from '@utils-commands/jwt';
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';
+import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
 
 let domain: Domain;
 let managementApiAccessToken: string;
@@ -498,11 +499,3 @@ afterAll(async () => {
     await deleteDomain(domain.id, managementApiAccessToken);
   }
 });
-
-function lookupFlowAndResetPolicies(flows: FlowEntity[], type: FlowEntityTypeEnum, scope: string, policies: any) {
-  flows
-    .filter((flow) => {
-      return flow.type.toLocaleLowerCase() === type.toLocaleLowerCase();
-    })
-    .map((flow) => (flow[scope] = policies));
-}
