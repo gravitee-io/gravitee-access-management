@@ -304,6 +304,14 @@
         <!-- AM Device Identifier -->
         <dependency>
             <groupId>io.gravitee.am.deviceidentifier</groupId>
+            <artifactId>gravitee-am-deviceidentifier-cookie</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.deviceidentifier</groupId>
             <artifactId>gravitee-am-deviceidentifier-fingerprintjs-v3-community</artifactId>
             <version>${project.version}</version>
             <type>zip</type>
@@ -706,6 +714,13 @@
                                 </artifactItem>
 
                                 <!-- AM Device Identifier -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.deviceidentifier</groupId>
+                                    <artifactId>gravitee-am-deviceidentifier-cookie</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
                                 <artifactItem>
                                     <groupId>io.gravitee.am.deviceidentifier</groupId>
                                     <artifactId>gravitee-am-deviceidentifier-fingerprintjs-v3-community</artifactId>
