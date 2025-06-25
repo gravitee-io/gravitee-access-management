@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.deviceidentifier.api;
+package io.gravitee.am.deviceidentifier.cookie;
 
-import java.util.Map;
+import io.gravitee.am.deviceidentifier.api.DeviceIdentifier;
+import io.gravitee.am.deviceidentifier.cookie.impl.CookieDeviceIdentifierProvider;
 
 /**
- * @author Rémi Sultan (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface DeviceIdentifierProvider {
+public  class CookieDeviceIdentifier extends DeviceIdentifier<CookieDeviceIdentifierConfiguration, CookieDeviceIdentifierProvider> {
 
-    void addConfigurationVariables(Map<String, Object> variables, String configuration);
+    @Override
+    public Class<CookieDeviceIdentifierConfiguration> configuration() {
+        return CookieDeviceIdentifierConfiguration.class;
+    }
 
-    default boolean useCookieToKeepIdentifier() {
-        return false;
+    @Override
+    public Class<CookieDeviceIdentifierProvider> provider() {
+        return CookieDeviceIdentifierProvider.class;
     }
 }
