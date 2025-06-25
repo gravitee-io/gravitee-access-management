@@ -68,3 +68,53 @@ In order to update them, execute:
 ```
 $ npm run update:sdk:mapi `http://AM_MANAGEMENT_API/management`
 ```
+
+=== Exterenal resources
+To run tests locally you need to have configure following resources:
+
+==== Plugins:
+Add following plugins to your `plugin` directory:
+
+* gravitee-am-resource-sfr
+* gravitee-am-factor-sms
+* gravitee-service-geoip
+
+==== CIBA delegated service
+Build `gravitee-am-ciba-delegated-service`
+
+and run `java -jar gravitee-am-ciba-delegated-service/target/gravitee-am-ciba-delegated-service-${AM_VERSION}.jar`
+
+==== Mock email provider:
+
+Run with command:
+```
+docker run -d --rm -p 5080:5080 -p 5025:5025 gessnerfl/fake-smtp-server:1.10.4
+```
+
+==== Wiremock:
+
+Run with command:
+```
+docker run -d --rm --name wiremock -p 8181:8080 wiremock/wiremock:3.13.1 --verbose --global-response-templating
+```
+
+Configure with following script:
+```
+curl -X POST http://localhost:8181/__admin/mappings \
+  -H "Content-Type: application/json" \
+  -d '{
+    "request": {
+      "method": "POST",
+      "url": "/sfr"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": "{{{request.body}}}",
+      "transformers": ["response-template"]
+    }
+  }'
+
+```
