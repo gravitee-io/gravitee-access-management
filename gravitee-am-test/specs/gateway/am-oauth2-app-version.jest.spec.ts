@@ -21,7 +21,6 @@ import {
   deleteDomain,
   patchDomain,
   startDomain,
-  waitFor,
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
@@ -46,8 +45,6 @@ import {
 } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 import { Domain } from '../../api/management/models';
-import * as domain from 'domain';
-import { cli } from 'cypress';
 
 global.fetch = fetch;
 
@@ -55,7 +52,6 @@ let masterDomain: Domain;
 let accessToken: string;
 let defaultInlineIdp;
 let scope;
-let certificate;
 let application1;
 let application2;
 let application3;
@@ -74,7 +70,7 @@ beforeAll(async () => {
   masterDomain = await mustMakeDomainMaster(masterDomain, accessToken);
   defaultInlineIdp = await createNewIdp(masterDomain, accessToken);
   scope = await createApplicationScope(masterDomain, accessToken, 'scope1');
-  certificate = await createDomainCertificate(masterDomain, accessToken);
+  await createDomainCertificate(masterDomain, accessToken);
   application1 = await createApp1(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
   application2 = await createApp2(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
   application3 = await createApp3(masterDomain, accessToken, scope.key);

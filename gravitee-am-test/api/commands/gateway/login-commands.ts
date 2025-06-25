@@ -36,8 +36,17 @@ export const initiateLoginFlow = async (clientId, openIdConfiguration, domain, r
   return authResponse;
 };
 
-export const login = async (authResponse, userName, clientId, password = 'SomeP@ssw0rd', rememberMe = false) => {
+export const login = async (authResponse, userName, clientId, password = 'SomeP@ssw0rd', rememberMe = false, redirectOidc = false) => {
+  if (redirectOidc) {
+    //This is for testing OIDC as a provider
+    const loginResp = await performGet(authResponse.headers['location'], '', { Cookie: authResponse.headers['set-cookie'] }).expect(302);
+    authResponse = await performGet(loginResp.headers['location'], '', { Cookie: loginResp.headers['set-cookie'] }).expect(302);
+  }
   const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
+  if (redirectOidc) {
+    const parsedUrl = new URL(loginResult.action);
+    clientId = parsedUrl.searchParams.get('client_id');
+  }
   return await performFormPost(
     loginResult.action,
     '',
@@ -80,16 +89,27 @@ export const postConsent = async (consent) => {
 };
 
 export const loginUserNameAndPassword = async (
-  clientId,
-  user,
-  userPassword,
-  rememberMe,
-  openIdConfiguration,
-  domain,
-  redirectUri?,
-  responseType?,
+  clientId: any,
+  user: any,
+  userPassword: any,
+  rememberMe: any,
+  openIdConfiguration: any,
+  domain: any,
+  redirectUri?: any,
+  responseType?: any,
+  redirectOidc?: any,
 ) => {
-  return await loginUser(clientId, user.username, userPassword, rememberMe, openIdConfiguration, domain, redirectUri, responseType);
+  return await loginUser(
+    clientId,
+    user.username,
+    userPassword,
+    rememberMe,
+    openIdConfiguration,
+    domain,
+    redirectUri,
+    responseType,
+    redirectOidc,
+  );
 };
 
 export const loginAdditionalInfoAndPassword = async (clientId, additionalInfo, userPassword, rememberMe, openIdConfiguration, domain) => {
@@ -97,24 +117,24 @@ export const loginAdditionalInfoAndPassword = async (clientId, additionalInfo, u
 };
 
 export const loginUser = async (
-  clientId,
-  nameOrAdditionalInfo,
-  userPassword,
-  rememberMe,
-  openIdConfiguration,
-  domain,
-  reidrectUri?,
-  responseType?,
+  clientId: any,
+  nameOrAdditionalInfo: any,
+  userPassword: any,
+  rememberMe: any,
+  openIdConfiguration: any,
+  domain: any,
+  redirectUri?: any,
+  responseType?: any,
+  redirectOidc?: any,
 ) => {
   let authResponse;
   if (responseType != undefined) {
-    authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain, responseType, reidrectUri);
+    authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain, responseType, redirectUri);
   } else {
-    authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain, reidrectUri);
+    authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain, redirectUri);
   }
-
-  const postLogin = await login(authResponse, nameOrAdditionalInfo, clientId, userPassword, rememberMe);
-  //log in failed with error
+  const postLogin = await login(authResponse, nameOrAdditionalInfo, clientId, userPassword, rememberMe, redirectOidc);
+  //log in failed with an error
   if (postLogin.headers['location'].includes('error=login_failed&error_code=invalid_user&error_description=Invalid+or+unknown+user')) {
     return postLogin;
   }
@@ -122,22 +142,39 @@ export const loginUser = async (
   expect(authorize.headers['location']).toBeDefined();
 
   //log in for the very first time
-  if (authorize.headers['location'].includes(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/consent`)) {
+  if (authorize.headers['location'].includes('/oauth/consent')) {
     const consent = await performGet(authorize.headers['location'], '', {
       Cookie: authorize.headers['set-cookie'],
     }).expect(200);
 
     const authorize2 = await postConsent(consent);
     expect(authorize2.headers['location']).toBeDefined();
-    expect(authorize2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
+    expect(authorize2.headers['location']).toContain(`/oauth/authorize`);
 
     const tokenResponse = await performGet(authorize2.headers['location'], '', {
-      Cookie: authorize.headers['set-cookie'],
+      Cookie: authorize2.headers['set-cookie'],
     }).expect(302);
-
     expect(tokenResponse.headers['location']).toBeDefined();
+    if (redirectOidc) {
+      const authorize3 = await performGet(tokenResponse.headers['location'], '', { Cookie: tokenResponse.headers['set-cookie'] }).expect(
+        302,
+      );
+      const tokenResponse2 = await performGet(authorize3.headers['location'], '', {
+        Cookie: authorize3.headers['set-cookie'],
+      }).expect(302);
+      expect(tokenResponse2.headers['location']).toBeDefined();
+      return tokenResponse2;
+    }
     return tokenResponse;
   } else {
+    if (redirectOidc) {
+      const authorize4 = await performGet(authorize.headers['location'], '', { Cookie: authorize.headers['set-cookie'] }).expect(302);
+      const tokenResponse4 = await performGet(authorize4.headers['location'], '', {
+        Cookie: authorize4.headers['set-cookie'],
+      }).expect(302);
+      expect(tokenResponse4.headers['location']).toBeDefined();
+      return tokenResponse4;
+    }
     return authorize;
   }
 };

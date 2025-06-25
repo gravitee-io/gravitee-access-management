@@ -21,7 +21,6 @@ import { followUpGet, get, postForm, processMfaEndToEnd, processMfaEnrollment } 
 import { extractDomAttr, extractDomValue } from './fixture/mfa-extract-fixture';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { waitFor } from '@management-commands/domain-management-commands';
-import { loginUser } from '@gateway-commands/login-commands';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
