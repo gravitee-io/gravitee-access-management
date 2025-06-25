@@ -58,7 +58,7 @@
 
             <div class="checkbox" th:if="${rememberMeEnabled}">
                 <label for="rememberMe">
-                    <input type="checkbox" id="rememberMe" name="rememberMe" th:checked="${param.rememberMe}" />
+                    <input type="checkbox" id="rememberMe" name="rememberMe" th:checked="${param.rememberMe}"/>
                     <span th:text="#{login.label.remember.me}"/>
                 </label>
             </div>
@@ -174,6 +174,16 @@
                 $("#form").append('<input type="hidden" name="deviceType" value="' + fp.components.platform.value + '"/>');
             }
         });
+    });
+</script>
+
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:src="@{assets/js/device-type-v1.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:attr="nonce=${script_inline_nonce}">
+    const deviceId = "[[${cookieDeviceIdentifier}]]" ;
+
+    $(document).ready(function () {
+        $("#form").append('<input type="hidden" name="deviceId" value="' + deviceId + '"/>')
+        $("#form").append('<input type="hidden" name="deviceType" value="' + retrievePlatform(window.navigator) + '"/>');
     });
 </script>
 </body>
