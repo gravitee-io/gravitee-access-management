@@ -155,6 +155,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 
+import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
 import static io.vertx.core.http.HttpMethod.GET;
 
@@ -329,6 +330,9 @@ public class RootProvider extends AbstractProtocolProvider {
     @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
     private String rememberMeCookieName;
 
+    @Value("${http.cookie.rememberDevice.name:"+ DEFAULT_REMEMBER_DEVICE_COOKIE_NAME +"}")
+    private String rememberDeviceCookieName;
+
     @Override
     protected void doStart() throws Exception {
         super.doStart();
@@ -367,7 +371,7 @@ public class RootProvider extends AbstractProtocolProvider {
         Handler<RoutingContext> geoIpHandler = new GeoIpHandler(userActivityService, vertx.eventBus());
         Handler<RoutingContext> loginAttemptHandler = new LoginAttemptHandler(domain, identityProviderManager, loginAttemptService, userActivityService);
         Handler<RoutingContext> rememberDeviceSettingsHandler = new RememberDeviceSettingsHandler();
-        Handler<RoutingContext> deviceIdentifierHandler = new DeviceIdentifierHandler(domain, deviceService);
+        Handler<RoutingContext> deviceIdentifierHandler = new DeviceIdentifierHandler(domain, deviceService, deviceIdentifierManager, jwtService, rememberDeviceCookieName);
         Handler<RoutingContext> userActivityHandler = new UserActivityHandler(userActivityService, domain);
         Handler<RoutingContext> localeHandler = new LocaleHandler(messageResolver);
         Handler<RoutingContext> loginPostWebAuthnHandler = new LoginPostWebAuthnHandler(webAuthnCookieService);
@@ -498,7 +502,8 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
                 .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domainDataPlane, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService))
+                        domainDataPlane,  credentialService, rateLimiterService, verifyAttemptService, emailService, auditService, deviceIdentifierManager,
+                        jwtService, rememberDeviceCookieName))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
