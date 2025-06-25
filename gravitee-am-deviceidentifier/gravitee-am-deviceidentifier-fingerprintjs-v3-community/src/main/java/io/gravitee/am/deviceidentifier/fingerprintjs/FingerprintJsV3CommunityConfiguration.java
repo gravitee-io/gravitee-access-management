@@ -16,9 +16,15 @@
 package io.gravitee.am.deviceidentifier.fingerprintjs;
 
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FingerprintJsV3CommunityConfiguration implements DeviceIdentifierConfiguration {}
+@Getter
+@Setter
+public class FingerprintJsV3CommunityConfiguration implements DeviceIdentifierConfiguration {
+    private boolean useCookie = false;
+}
