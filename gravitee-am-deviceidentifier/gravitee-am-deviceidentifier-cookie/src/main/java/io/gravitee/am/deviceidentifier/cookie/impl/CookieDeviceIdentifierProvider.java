@@ -14,41 +14,37 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.deviceidentifier.fingerprintjs.impl;
+package io.gravitee.am.deviceidentifier.cookie.impl;
 
+import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.deviceidentifier.api.DeviceIdentifierProvider;
-import io.gravitee.am.deviceidentifier.fingerprintjs.FingerprintJsV3Community;
-import io.gravitee.am.deviceidentifier.fingerprintjs.FingerprintJsV3CommunityConfiguration;
+import io.gravitee.am.deviceidentifier.cookie.CookieDeviceIdentifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
+import java.util.UUID;
 
-import static io.gravitee.am.common.utils.ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY;
 import static java.util.Objects.nonNull;
 
 /**
- * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class FingerprintJsV3CommunityProvider implements DeviceIdentifierProvider {
+public class CookieDeviceIdentifierProvider implements DeviceIdentifierProvider {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(FingerprintJsV3CommunityProvider.class);
-
-    @Autowired
-    protected FingerprintJsV3CommunityConfiguration configuration;
+    private final Logger LOGGER = LoggerFactory.getLogger(CookieDeviceIdentifierProvider.class);
 
     @Override
     public void addConfigurationVariables(Map<String, Object> variables, String configuration) {
-        LOGGER.debug("fingerprintJsV3CommunityProvider.addConfigurationVariables");
+        LOGGER.debug("CookieDeviceIdentifierProvider.addConfigurationVariables");
         if (nonNull(variables)) {
-            variables.put(DEVICE_IDENTIFIER_PROVIDER_KEY, FingerprintJsV3Community.class.getSimpleName());
+            variables.put(ConstantKeys.DEVICE_IDENTIFIER_PROVIDER_KEY, CookieDeviceIdentifier.class.getSimpleName());
+            variables.put("cookieDeviceIdentifier", UUID.randomUUID().toString());
         }
     }
 
     @Override
     public boolean useCookieToKeepIdentifier() {
-        return this.configuration.isUseCookie();
+        return true;
     }
 }
