@@ -43,6 +43,7 @@ import org.mockito.Mockito;
 import javax.net.ssl.SSLSession;
 import javax.security.cert.X509Certificate;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,6 +59,7 @@ public class DummyHttpRequest implements HttpServerRequest {
     private final MultiMap params = MultiMap.caseInsensitiveMultiMap();
 
     private final MultiMap formAttributes = MultiMap.caseInsensitiveMultiMap();
+    private final Map<String, Cookie> cookies = new HashMap<>();
     private HttpMethod method;
 
     private final String path;
@@ -354,7 +356,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public @Nullable Cookie getCookie(String name, String domain, String path) {
-        return null;
+        return cookies.get(name);
     }
 
     @Override
@@ -364,7 +366,7 @@ public class DummyHttpRequest implements HttpServerRequest {
 
     @Override
     public Map<String, Cookie> cookieMap() {
-        return null;
+        return cookies;
     }
 
     @Override
@@ -385,5 +387,9 @@ public class DummyHttpRequest implements HttpServerRequest {
     @Override
     public MultiMap params(boolean semicolonIsNormalChar) {
         return this.params();
+    }
+
+    public void putCookie(Cookie cookie) {
+        this.cookies.put(cookie.getName(), cookie);
     }
 }

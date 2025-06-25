@@ -145,13 +145,13 @@
 
         $("#submitBtn").on('click', function (event){
             /*[# th:if="${bot_detection_plugin == 'google-recaptcha-v3-am-bot-detection'}"]*/
-            event.preventDefault();
-            grecaptcha.ready(function() {
-                grecaptcha.execute(/*[[${bot_detection_configuration.siteKey}]]*/, {action: 'submit'}).then(function(token) {
+                event.preventDefault();
+                grecaptcha.ready(function() {
+                  grecaptcha.execute(/*[[${bot_detection_configuration.siteKey}]]*/, {action: 'submit'}).then(function(token) {
                     $("#"+ /*[[${bot_detection_configuration.get('tokenParameterName')}]]*/ "no-name").val(token);
                     $("#form").unbind('submit').submit();
+                  });
                 });
-            });
             /*[/]*/
 
         });
@@ -206,6 +206,14 @@
     });
 </script>
 
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:src="@{assets/js/device-type-v1.js}"></script>
+<script th:if="${rememberDeviceIsActive && deviceIdentifierProvider == 'CookieDeviceIdentifier'}" th:attr="nonce=${script_inline_nonce}">
+    const deviceId = "[[${cookieDeviceIdentifier}]]" ;
 
+    $(document).ready(function () {
+        $("#form").append('<input type="hidden" name="deviceId" value="' + deviceId + '"/>')
+        $("#form").append('<input type="hidden" name="deviceType" value="' + retrievePlatform(window.navigator) + '"/>');
+    });
+</script>
 </body>
 </html>
