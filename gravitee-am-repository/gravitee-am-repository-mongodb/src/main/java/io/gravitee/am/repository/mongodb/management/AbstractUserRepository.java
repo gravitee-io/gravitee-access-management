@@ -162,7 +162,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     @Override
     public Single<Page<User>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
         try {
-            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
                     eq(FIELD_REFERENCE_TYPE, referenceType.name()),
@@ -185,7 +185,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     @Override
     public Flowable<User> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria) {
         try {
-            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
                     eq(FIELD_REFERENCE_TYPE, referenceType.name()),
