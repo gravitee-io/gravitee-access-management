@@ -197,7 +197,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     @Override
     public Single<Page<User>> search(Reference reference, FilterCriteria criteria, int page, int size) {
         try {
-            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
                     eq(FIELD_REFERENCE_TYPE, reference.type().name()),
@@ -220,7 +220,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     @Override
     public Flowable<User> search(Reference reference, FilterCriteria criteria) {
         try {
-            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
                     eq(FIELD_REFERENCE_TYPE, reference.type().name()),
@@ -461,7 +461,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     @Override
     public Single<Page<User>> searchScim(Reference reference, FilterCriteria criteria, int startIndex, int count) {
         try {
-            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
                     eq(FIELD_REFERENCE_TYPE, reference.type().name()),

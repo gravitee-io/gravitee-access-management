@@ -70,10 +70,8 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
 
     private final Set<String> UNUSED_INDEXES = Set.of("rt1ri1");
 
-
     @Autowired
     private ApplicationContext ctx;
-
 
     @PostConstruct
     public void init() {
@@ -110,7 +108,7 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
     public Single<Page<Group>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int offset, int size) {
         try {
             final FilterCriteria mappedCriteria = mapCriteria(criteria);
-            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(mappedCriteria));
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(mappedCriteria));
 
             Bson mongoQuery = and(
                     eq(FIELD_REFERENCE_TYPE, referenceType.name()),
