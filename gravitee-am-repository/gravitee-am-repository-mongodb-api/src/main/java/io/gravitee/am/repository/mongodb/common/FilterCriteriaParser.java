@@ -50,14 +50,21 @@ public final class FilterCriteriaParser {
         }
     };
     public static final String FOUND_IN_THE_THE_SEARCH_QUERY = "] found in the the search query";
+    private final boolean regexCaseInsensitive;
 
-    private FilterCriteriaParser() {}
+    public FilterCriteriaParser() {
+        this(false);
+    }
 
-    public static String parse(FilterCriteria criteria) {
+    public FilterCriteriaParser(boolean regexCaseInsensitive) {
+        this.regexCaseInsensitive = regexCaseInsensitive;
+    }
+
+    public String parse(FilterCriteria criteria) {
         return parse(criteria, new StringBuilder());
     }
 
-    private static String parse(FilterCriteria criteria, final StringBuilder builder) {
+    private String parse(FilterCriteria criteria, final StringBuilder builder) {
         if (criteria.getFilterComponents() != null) {
             builder.append("{");
             builder.append(convertOperator(criteria.getOperator()));
@@ -85,7 +92,7 @@ public final class FilterCriteriaParser {
             } else {
                 builder.append(convertFilterValue(criteria, filterName, criteria.getOperator()));
             }
-            if ("$regex".equals(operator)) {
+            if (regexCaseInsensitive && "$regex".equals(operator)) {
                 builder.append(",$options:\"i\"");
             }
             builder.append("}");
