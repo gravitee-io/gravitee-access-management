@@ -153,7 +153,7 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     @Override
     public Single<Page<User>> searchScim(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int startIndex, int count) {
         try {
-            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(criteria));
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(criteria));
 
             Bson mongoQuery = and(
                     eq(FIELD_REFERENCE_TYPE, referenceType.name()),
