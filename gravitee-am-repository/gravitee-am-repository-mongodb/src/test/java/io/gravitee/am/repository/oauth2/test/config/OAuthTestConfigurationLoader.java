@@ -18,6 +18,7 @@ package io.gravitee.am.repository.oauth2.test.config;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.MongodbProvider;
+import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -44,5 +45,10 @@ public class OAuthTestConfigurationLoader {
     @Bean
     public RepositoriesEnvironment repositoriesEnvironment(Environment environment) {
         return new RepositoriesEnvironment(environment);
+    }
+
+    @Bean
+    public FilterCriteriaParser filterCriteriaParser(){
+        return new FilterCriteriaParser();
     }
 }
