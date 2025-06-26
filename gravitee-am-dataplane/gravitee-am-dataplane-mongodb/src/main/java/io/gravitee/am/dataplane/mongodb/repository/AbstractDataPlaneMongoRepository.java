@@ -25,6 +25,7 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.Scope;
+import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
 import io.gravitee.am.repository.mongodb.common.MongoUtils;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class AbstractDataPlaneMongoRepository {
+public abstract class AbstractDataPlaneMongoRepository {
 
     @Autowired
     @Qualifier("dataPlaneMongoDatabase")
@@ -49,6 +50,9 @@ public class AbstractDataPlaneMongoRepository {
 
     @Autowired
     private RepositoriesEnvironment environment;
+
+    @Autowired
+    protected FilterCriteriaParser filterCriteriaParser;
 
     protected final boolean getEnsureIndexOnStart() {
         var ensureIndexOnStartOAuth2Old = environment.getProperty(Scope.OAUTH2.getRepositoryPropertyKey() + ".mongodb.ensureIndexOnStart", Boolean.class, true);
