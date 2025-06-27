@@ -92,7 +92,7 @@ public class MongoGroupRepository extends AbstractManagementMongoRepository impl
     public Single<Page<Group>> search(ReferenceType referenceType, String referenceId, FilterCriteria criteria, int page, int size) {
         try {
             final FilterCriteria mappedCriteria = mapCriteria(criteria);
-            BasicDBObject searchQuery = BasicDBObject.parse(FilterCriteriaParser.parse(mappedCriteria));
+            BasicDBObject searchQuery = BasicDBObject.parse(filterCriteriaParser.parse(mappedCriteria));
 
             Bson mongoQuery = and(
                     eq(FIELD_REFERENCE_TYPE, referenceType.name()),

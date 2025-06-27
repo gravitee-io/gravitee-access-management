@@ -17,7 +17,7 @@ package io.gravitee.am.repository.mongodb.common;
 
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
@@ -27,6 +27,8 @@ import java.util.Arrays;
  */
 public class FilterCriteriaParserTest {
 
+    FilterCriteriaParser filterCriteriaParser = new FilterCriteriaParser();
+
     @Test
     public void shouldParse_eq_criteria() {
         FilterCriteria filterCriteria = new FilterCriteria();
@@ -35,7 +37,7 @@ public class FilterCriteriaParserTest {
         filterCriteria.setFilterValue("Alice");
         filterCriteria.setQuoteFilterValue(true);
 
-        String query = FilterCriteriaParser.parse(filterCriteria);
+        String query = filterCriteriaParser.parse(filterCriteria);
         Assert.assertEquals("{\"username\":{$eq:\"Alice\"}}", query);
     }
 
@@ -45,7 +47,7 @@ public class FilterCriteriaParserTest {
         filterCriteria.setOperator("pr");
         filterCriteria.setFilterName("username");
 
-        String query = FilterCriteriaParser.parse(filterCriteria);
+        String query = filterCriteriaParser.parse(filterCriteria);
         Assert.assertEquals("{\"username\":{$ne:null}}", query);
     }
 
@@ -57,7 +59,7 @@ public class FilterCriteriaParserTest {
         filterCriteria.setFilterValue("Alice");
         filterCriteria.setQuoteFilterValue(true);
 
-        String query = FilterCriteriaParser.parse(filterCriteria);
+        String query = filterCriteriaParser.parse(filterCriteria);
         Assert.assertEquals("{\"name.username\":{$eq:\"Alice\"}}", query);
     }
 
@@ -90,8 +92,33 @@ public class FilterCriteriaParserTest {
         rightPart.setFilterComponents(Arrays.asList(rightLeftPart, rightRightPart));
         filterCriteria.setFilterComponents(Arrays.asList(leftPart, rightPart));
 
-        String query = FilterCriteriaParser.parse(filterCriteria);
-        Assert.assertEquals("{$and:[{\"username\":{$eq:\"Alice\"}},{$or:[{\"email\":{$regex:\"Alice\",$options:\"i\"}},{\"nickname\":{$regex:\"^Alice\",$options:\"i\"}}]}]}", query);
+        String query = filterCriteriaParser.parse(filterCriteria);
+        Assert.assertEquals("{$and:[{\"username\":{$eq:\"Alice\"}},{$or:[{\"email\":{$regex:\"Alice\"}},{\"nickname\":{$regex:\"^Alice\"}}]}]}", query);
+    }
+
+    @Test
+    public void should_use_regex_case_insensitive_option() {
+        FilterCriteriaParser filterCriteriaParser = new FilterCriteriaParser(true);
+
+        FilterCriteria filterCriteria = new FilterCriteria();
+        filterCriteria.setOperator("or");
+
+        FilterCriteria rightLeftPart = new FilterCriteria();
+        rightLeftPart.setOperator("co");
+        rightLeftPart.setFilterName("email");
+        rightLeftPart.setFilterValue("Alice");
+        rightLeftPart.setQuoteFilterValue(true);
+
+        FilterCriteria rightRightPart = new FilterCriteria();
+        rightRightPart.setOperator("sw");
+        rightRightPart.setFilterName("nickname");
+        rightRightPart.setFilterValue("Alice");
+        rightRightPart.setQuoteFilterValue(true);
+
+        filterCriteria.setFilterComponents(Arrays.asList(rightLeftPart, rightRightPart));
+
+        String query = filterCriteriaParser.parse(filterCriteria);
+        Assert.assertEquals("{$or:[{\"email\":{$regex:\"Alice\",$options:\"i\"}},{\"nickname\":{$regex:\"^Alice\",$options:\"i\"}}]}", query);
     }
 
     @Test
@@ -102,7 +129,7 @@ public class FilterCriteriaParserTest {
         filterCriteria.setFilterValue("alice.o'brian@test.com");
         filterCriteria.setQuoteFilterValue(true);
 
-        String query = FilterCriteriaParser.parse(filterCriteria);
+        String query = filterCriteriaParser.parse(filterCriteria);
         Assert.assertEquals("{\"email\":{$eq:\"alice.o'brian@test.com\"}}", query);
     }
 

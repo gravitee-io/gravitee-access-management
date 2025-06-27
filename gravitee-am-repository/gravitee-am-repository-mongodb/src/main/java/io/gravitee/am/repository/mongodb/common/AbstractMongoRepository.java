@@ -30,6 +30,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
@@ -61,6 +62,9 @@ public abstract class AbstractMongoRepository {
      * Default UserFields for entities linked to the User.
      */
     protected static final UserIdFields DEFAULT_USER_FIELDS = new UserIdFields(FIELD_USER_ID, FIELD_USER_SOURCE, FIELD_USER_EXTERNAL_ID);
+
+    @Autowired
+    protected FilterCriteriaParser filterCriteriaParser;
 
     protected void init(MongoCollection<?> collection) {
         Single.fromPublisher(collection.createIndex(new Document(FIELD_ID, 1), new IndexOptions()))
