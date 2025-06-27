@@ -17,6 +17,7 @@ package io.gravitee.am.repository.oauth2.api;
 
 import io.gravitee.am.repository.oauth2.AbstractOAuthTest;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,30 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
 
     @Autowired
     private AuthorizationCodeRepository authorizationCodeRepository;
+
+    @Test
+    public void shouldRetrieveAndRemoveAuthorizationCode() {
+        String code = "testCode123213213";
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode(code);
+        authorizationCode.setContextVersion(1);
+
+        authorizationCodeRepository.create(authorizationCode).blockingGet();
+
+        authorizationCodeRepository.findAndRemoveByCode(code)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(authorizationCode1 -> authorizationCode1.getCode().equals(code) && authorizationCode1.getContextVersion() == 1);
+
+        authorizationCodeRepository.findAndRemoveByCode(code)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertNoValues();
+    }
 
     @Test
     public void shouldStoreCode() {

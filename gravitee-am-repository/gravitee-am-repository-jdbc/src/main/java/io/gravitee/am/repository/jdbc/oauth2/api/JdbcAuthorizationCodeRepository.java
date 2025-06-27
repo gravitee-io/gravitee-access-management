@@ -146,6 +146,22 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
     }
 
     @Override
+    public Maybe<AuthorizationCode> findAndRemoveByCode(String code) {
+        LOGGER.debug("findByCode({})", code);
+        return authorizationCodeRepository.remove(code, LocalDateTime.now(UTC))
+                .onErrorResumeNext(err -> {
+                    if (err instanceof ConcurrencyFailureException) {
+                        LOGGER.debug("Unable to find authorization_code {} due to {}, retry...", code, err.getClass().getSimpleName());
+                        return authorizationCodeRepository.remove(code, LocalDateTime.now(UTC));
+                    } else {
+                        return Maybe.error(err);
+                    }
+                })
+                .map(this::toEntity)
+                .doOnError(error -> LOGGER.error("Unable to retrieve AuthorizationCode with code {}", code));
+    }
+
+    @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);

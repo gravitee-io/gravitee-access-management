@@ -33,4 +33,6 @@ public interface SpringAuthorizationCodeRepository extends RxJava3CrudRepository
     @Query("select * from authorization_codes c where c.code = :code and (c.expire_at > :now or c.expire_at is null)")
     Maybe<JdbcAuthorizationCode> findByCode(@Param("code") String code, @Param("now")LocalDateTime now);
 
+    @Query("DELETE FROM authorization_codes c where c.code = :code and (c.expire_at > :now or c.expire_at is null) RETURNING *")
+    Maybe<JdbcAuthorizationCode> remove(@Param("code") String code, @Param("now")LocalDateTime now);
 }
