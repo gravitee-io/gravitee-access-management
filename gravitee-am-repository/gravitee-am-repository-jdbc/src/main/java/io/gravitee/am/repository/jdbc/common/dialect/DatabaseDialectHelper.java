@@ -70,6 +70,10 @@ public interface DatabaseDialectHelper {
         return buildPagingClauseUsingOffset(field, asc, page * size, size);
     }
 
+    boolean supportsReturningOnDelete();
+
+    String buildAuthorizationCodeDeleteAndReturnQuery();
+
     String buildPagingClauseUsingOffset(String field, boolean asc, int offset, int size);
 
     enum ScimRepository {GROUPS, ORGANIZATION_USERS, USERS}
