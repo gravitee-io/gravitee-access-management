@@ -76,16 +76,17 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
 
     @Override
     public Maybe<AuthorizationCode> remove(String code, Client client) {
-        return authorizationCodeRepository.findByCode(code)
+        return authorizationCodeRepository.findAndRemoveByCode(code)
                 .switchIfEmpty(handleInvalidCode(code))
                 .flatMap(authorizationCode -> {
                     if (!authorizationCode.getClientId().equals(client.getClientId())) {
                         return Maybe.error(new InvalidGrantException("The authorization code " + code + " does not belong to the client " + client.getClientId() + "."));
                     }
                     return Maybe.just(authorizationCode);
-                })
-                .flatMap(authorizationCode -> authorizationCodeRepository.delete(authorizationCode.getId()).andThen(Maybe.just(authorizationCode)));
+                });
     }
+
+
 
 
     private Maybe<AuthorizationCode> handleInvalidCode(String code) {
