@@ -36,6 +36,7 @@
         <module>gravitee-am-deviceidentifier-api</module>
         <module>gravitee-am-deviceidentifier-fingerprintjs-v3-community</module>
         <module>gravitee-am-deviceidentifier-fingerprintjs-v3-pro</module>
+        <module>gravitee-am-deviceidentifier-cookie</module>
     </modules>
 
     <dependencies>
