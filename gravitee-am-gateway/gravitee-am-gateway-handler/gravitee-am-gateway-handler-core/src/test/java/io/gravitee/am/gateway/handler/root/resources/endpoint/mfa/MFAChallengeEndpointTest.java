@@ -17,20 +17,26 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.factor.FactorType;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.resources.handler.dummies.SpyRoutingContext;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.model.ApplicationFactorSettings;
 import io.gravitee.am.model.Credential;
+import io.gravitee.am.model.Device;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.FactorSettings;
+import io.gravitee.am.model.MFASettings;
+import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.VerifyAttempt;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -49,10 +55,12 @@ import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.core.Handler;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Session;
 import io.vertx.rxjava3.core.buffer.Buffer;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.common.template.TemplateEngine;
 import io.vertx.rxjava3.ext.web.handler.BodyHandler;
 import io.vertx.rxjava3.ext.web.handler.SessionHandler;
@@ -70,6 +78,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 
 import static io.vertx.core.http.HttpHeaders.APPLICATION_X_WWW_FORM_URLENCODED;
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -114,22 +123,50 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
     private AuditService auditService;
     @Mock
     private AuthenticationFlowContextService authenticationFlowContextService;
+    @Mock
+    private DeviceIdentifierManager deviceIdentifierManager;
+    @Mock
+    private JWTService jwtService;
 
     private LocalSessionStore localSessionStore;
     private MFAChallengeEndpoint mfaChallengeEndpoint;
 
+    private SessionModifier sessionModifier;
+
+    private static class SessionModifier {
+        private Function<io.vertx.rxjava3.ext.web.Session, io.vertx.rxjava3.ext.web.Session> sessionTransformer;
+
+        public void modify(io.vertx.rxjava3.ext.web.Session session) {
+            if (sessionTransformer != null) {
+                sessionTransformer.apply(session);
+            }
+        }
+
+        public void setSessionTransformer(Function<io.vertx.rxjava3.ext.web.Session, io.vertx.rxjava3.ext.web.Session> sessionTransformer) {
+            this.sessionTransformer = sessionTransformer;
+        }
+    }
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
+        sessionModifier = new SessionModifier();
         localSessionStore = LocalSessionStore.create(vertx);
         mfaChallengeEndpoint =
                 new MFAChallengeEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext,
-                        domainDataPlane, credentialService, rateLimiterService, verifyAttemptService, emailService, auditService);
+                        domainDataPlane,  credentialService, rateLimiterService, verifyAttemptService, emailService, auditService,
+                        deviceIdentifierManager, jwtService, ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME);
 
         router.route("/mfa/challenge")
                 .handler(SessionHandler.create(localSessionStore))
                 .handler(BodyHandler.create())
+                .handler(new Handler<RoutingContext>() {
+                    @Override
+                    public void handle(RoutingContext routingContext) {
+                        sessionModifier.modify(routingContext.session());
+                        routingContext.next();
+                    }
+                })
                 .handler(mfaChallengeEndpoint)
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
         when(domain.getId()).thenReturn("id");
@@ -551,6 +588,72 @@ public class MFAChallengeEndpointTest extends RxWebTestBase {
 
         verify(auditService).report(any());
         verify(userService, never()).addFactor(any(), any(), any());
+    }
+
+    @Test
+    public void shouldVerifyCode_rememberDevice_cookie() throws Exception {
+        sessionModifier.setSessionTransformer(session -> {
+            session.put(ConstantKeys.DEVICE_ID, "deviceId");
+            return session;
+        });
+
+        router.route(HttpMethod.POST, "/mfa/challenge")
+                .order(-1)
+                .handler(routingContext -> {
+                    Client client = new Client();
+                    ApplicationFactorSettings applicationFactorSettings = new ApplicationFactorSettings();
+                    applicationFactorSettings.setId("factor");
+                    FactorSettings factorSettings = new FactorSettings();
+                    factorSettings.setApplicationFactors(List.of(applicationFactorSettings));
+                    client.setFactorSettings(factorSettings);
+                    MFASettings mfaSettings = new MFASettings();
+                    RememberDeviceSettings rememberDevice = new RememberDeviceSettings();
+                    rememberDevice.setActive(true);
+                    rememberDevice.setExpirationTimeSeconds(300L);
+                    mfaSettings.setRememberDevice(rememberDevice);
+                    client.setMfaSettings(mfaSettings);
+                    User endUser = new User();
+                    EnrolledFactor enrolledFactor = new EnrolledFactor();
+                    enrolledFactor.setFactorId("factor");
+                    endUser.setFactors(Collections.singletonList(enrolledFactor));
+
+                    routingContext.getDelegate().setUser(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(endUser));
+                    routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+                    routingContext.next();
+                });
+
+        Factor factor = mock(Factor.class);
+        when(factor.getId()).thenReturn("factor");
+        FactorProvider factorProvider = mock(FactorProvider.class);
+        when(factorProvider.verify(any())).thenReturn(Completable.complete());
+        when(factorProvider.useVariableFactorSecurity(any())).thenReturn(false);
+        when(factorManager.getFactor("factor")).thenReturn(factor);
+        when(factorManager.get("factor")).thenReturn(factorProvider);
+        when(verifyAttemptService.checkVerifyAttempt(any(), any(), any(), any())).thenReturn(Maybe.empty());
+        when(deviceIdentifierManager.useCookieBasedDeviceIdentifier(any())).thenReturn(true);
+        when(deviceService.deviceExists(any(), any(), any(), any(), any())).thenReturn(Single.just(true));
+        when(deviceService.create(any(), any(), any(), any(), any(), any(), any())).thenReturn(Single.just(new Device()));
+        when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just(UUID.randomUUID().toString()));
+       
+        testRequest(HttpMethod.POST,
+                "/mfa/challenge",
+                req -> {
+                    req.setChunked(true);
+                    req.putHeader(CONTENT_TYPE, APPLICATION_X_WWW_FORM_URLENCODED);
+                    req.write(Buffer.buffer("code=123456&factorId=factor&rememberDeviceConsent=on"));
+                },
+                res -> {
+                    String location = res.getHeader("Location");
+                    Assert.assertTrue(location.endsWith("/oauth/authorize"));
+                    Assert.assertTrue(res.cookies().stream().anyMatch(cookie -> cookie.contains(ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME)));
+                },
+                302,
+                "Found", null);
+
+        verify(auditService).report(any());
+        verify(userService, never()).addFactor(any(), any(), any());
+        verify(deviceIdentifierManager).useCookieBasedDeviceIdentifier(any());
+        verify(jwtService).encode(any(JWT.class), any(Client.class));
     }
 
     @Test
