@@ -16,7 +16,9 @@
 package io.gravitee.am.repository.jdbc.oauth2.api.spring;
 
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAuthorizationCode;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
@@ -31,6 +33,12 @@ import java.time.LocalDateTime;
 @Repository
 public interface SpringAuthorizationCodeRepository extends RxJava3CrudRepository<JdbcAuthorizationCode, String> {
     @Query("select * from authorization_codes c where c.code = :code and (c.expire_at > :now or c.expire_at is null)")
-    Maybe<JdbcAuthorizationCode> findByCode(@Param("code") String code, @Param("now")LocalDateTime now);
+    Maybe<JdbcAuthorizationCode> findByCode(@Param("code") String code, @Param("now") LocalDateTime now);
+
+    @Query("select * from authorization_codes c where c.code = :code and c.client_id = :clientId and (c.expire_at > :now or c.expire_at is null)")
+    Maybe<JdbcAuthorizationCode> findByCodeAndClientId(@Param("code") String code, @Param("clientId") String clientId, @Param("now")LocalDateTime now);
+
+    @Query("DELETE FROM authorization_codes where code = :code and client_id = :clientId")
+    Maybe<Long> deleteByCodeAndClientId(@Param("code") String code, @Param("clientId") String clientId);
 
 }
