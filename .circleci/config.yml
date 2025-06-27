@@ -67,3 +67,4 @@ workflows:
             gravitee-am-reporter/.* run-container-test true
             gravitee-am-repository/.* run-container-test true
             gravitee-am-dataplane/.* run-container-test true
+            ^.*pom\.xml$ run-container-test true
