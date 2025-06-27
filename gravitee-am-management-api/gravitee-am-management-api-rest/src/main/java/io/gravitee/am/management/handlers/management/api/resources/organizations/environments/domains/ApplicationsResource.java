@@ -17,8 +17,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.gravitee.am.management.handlers.management.api.resources.model.FilteredApplication;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.Application;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ApplicationService;
@@ -26,6 +29,7 @@ import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewApplication;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +43,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -54,8 +59,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Collection;
-
-import static java.util.stream.Collectors.toList;
+import java.util.List;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -101,31 +105,39 @@ public class ApplicationsResource extends AbstractResource {
             @QueryParam("size") @DefaultValue(MAX_APPLICATIONS_SIZE_PER_PAGE_STRING) int size,
             @QueryParam("q") String query,
             @Suspended final AsyncResponse response) {
-        final User authenticatedUser = getAuthenticatedUser();
-
+        User authenticatedUser = getAuthenticatedUser();
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.LIST)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Single.error(new DomainNotFoundException(domain)))
-                        .flatMap(__ -> {
-                            if (query != null) {
-                                return applicationService.search(domain, query, 0, Integer.MAX_VALUE);
-                            } else {
-                                return applicationService.findByDomain(domain, 0, Integer.MAX_VALUE);
-                            }
-                        })
-                        .flatMap(pagedApplications -> Maybe.concat(
-                                pagedApplications.getData().stream()
-                                        .map(application -> hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, application.getId(), Permission.APPLICATION, Acl.READ)
-                                                .filter(Boolean::booleanValue)
-                                                .map(__ -> filterApplicationInfos(application)))
-                                        .collect(toList()))
-                                .sorted((a1, a2) -> a2.getUpdatedAt().compareTo(a1.getUpdatedAt()))
-                                .toList()
-                                .map(applications -> new ApplicationPage(
-                                        applications.stream().skip((long) page * size).limit(size).collect(toList()),
-                                        page,
-                                        applications.size()))))
+                .andThen(checkDomainExists(domain).ignoreElement())
+                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
+                        .filter(hasPermission -> hasPermission)
+                        .flatMapSingle(__ -> listApplications(domain, page, size, query))
+                        .switchIfEmpty(
+                                getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.APPLICATION, Acl.READ)
+                                        .toList()
+                                        .flatMap(ids -> listApplicationsByIds(domain, ids, page, size, query))))
+                .map(apps ->
+                        new ApplicationPage(
+                                apps.getData().stream().map(FilteredApplication::of).toList(),
+                                apps.getCurrentPage(),
+                                apps.getTotalCount())
+                )
                 .subscribe(response::resume, response::resume);
+    }
+
+    private Single<Page<Application>> listApplications(String domain, int page, int size, String query) {
+        if (query != null) {
+            return applicationService.search(domain, query, page, size);
+        } else {
+            return applicationService.findByDomain(domain, page, size);
+        }
+    }
+
+    private Single<Page<Application>> listApplicationsByIds(String domain, List<String> applicationIds, int page, int size, String query) {
+        if (query != null) {
+            return applicationService.search(domain, applicationIds, query, page, size);
+        } else {
+            return applicationService.findByDomain(domain, applicationIds, page, size);
+        }
     }
 
     @POST
@@ -153,9 +165,8 @@ public class ApplicationsResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.CREATE)
-                .andThen(domainService.findById(domain)
-                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                        .flatMapSingle(existingDomain -> applicationService.create(existingDomain, newApplication, authenticatedUser)
+                .andThen(checkDomainExists(domain)
+                        .flatMap(existingDomain -> applicationService.create(existingDomain, newApplication, authenticatedUser)
                                 .map(application -> Response
                                         .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/applications/" + application.getId()))
                                         .entity(application)
@@ -168,21 +179,15 @@ public class ApplicationsResource extends AbstractResource {
         return resourceContext.getResource(ApplicationResource.class);
     }
 
-    private Application filterApplicationInfos(Application application) {
-        Application filteredApplication = new Application();
-        filteredApplication.setId(application.getId());
-        filteredApplication.setName(application.getName());
-        filteredApplication.setDescription(application.getDescription());
-        filteredApplication.setType(application.getType());
-        filteredApplication.setEnabled(application.isEnabled());
-        filteredApplication.setTemplate(application.isTemplate());
-        filteredApplication.setUpdatedAt(application.getUpdatedAt());
 
-        return filteredApplication;
+    private Single<Domain> checkDomainExists(String domain) {
+        return domainService.findById(domain)
+                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                .toSingle();
     }
 
-    public static final class ApplicationPage extends Page<Application> {
-        public ApplicationPage(Collection<Application> data, int currentPage, long totalCount) {
+    public static final class ApplicationPage extends Page<FilteredApplication> {
+        public ApplicationPage(Collection<FilteredApplication> data, int currentPage, long totalCount) {
             super(data, currentPage, totalCount);
         }
     }

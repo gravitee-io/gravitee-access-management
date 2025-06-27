@@ -120,7 +120,7 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void testFindByCriteria() {
+    public void testFindByReferenceIdAndCriteria() {
 
         Membership membership = new Membership();
         membership.setRoleId("role#1");
@@ -141,6 +141,64 @@ public class MembershipRepositoryTest extends AbstractManagementTest {
 
         MembershipCriteria criteria = new MembershipCriteria();
         TestSubscriber<Membership> obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValueCount(2);
+
+        criteria.setUserId("user#1");
+        obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValueCount(1);
+        obs.assertValue(m -> m.getMemberType() == MemberType.USER && m.getMemberId().equals("user#1"));
+
+        criteria.setUserId(null);
+        criteria.setGroupIds(Arrays.asList("group#1"));
+        obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValueCount(1);
+        obs.assertValue(m -> m.getMemberType() == MemberType.GROUP && m.getMemberId().equals("group#1"));
+
+        criteria.setUserId("user#1");
+        criteria.setGroupIds(Arrays.asList("group#1"));
+        obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertNoValues();
+        obs.assertNoErrors();
+
+        criteria.setUserId("user#1");
+        criteria.setGroupIds(Arrays.asList("group#1"));
+        criteria.setLogicalOR(true);
+        obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, ORGANIZATION_ID, criteria).test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValueCount(2);
+    }
+
+    @Test
+    public void testFindByCriteria() {
+
+        Membership membership = new Membership();
+        membership.setRoleId("role#1");
+        membership.setReferenceType(ReferenceType.ORGANIZATION);
+        membership.setReferenceId(ORGANIZATION_ID);
+        membership.setMemberType(MemberType.USER);
+        membership.setMemberId("user#1");
+
+        Membership groupMembership = new Membership();
+        groupMembership.setRoleId("role#1");
+        groupMembership.setReferenceType(ReferenceType.ORGANIZATION);
+        groupMembership.setReferenceId(ORGANIZATION_ID);
+        groupMembership.setMemberType(MemberType.GROUP);
+        groupMembership.setMemberId("group#1");
+
+        membershipRepository.create(membership).blockingGet();
+        membershipRepository.create(groupMembership).blockingGet();
+
+        MembershipCriteria criteria = new MembershipCriteria();
+        TestSubscriber<Membership> obs = membershipRepository.findByCriteria(ReferenceType.ORGANIZATION, criteria).test();
 
         obs.awaitDone(10, TimeUnit.SECONDS);
         obs.assertValueCount(2);
