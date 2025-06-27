@@ -16,6 +16,9 @@
 
 package io.gravitee.am.gateway.handler.root.resources.handler.rememberdevice;
 
+import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.User;
@@ -24,6 +27,7 @@ import io.gravitee.am.service.DeviceService;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
@@ -38,12 +42,19 @@ import static java.util.Optional.ofNullable;
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class DeviceIdentifierHandler implements Handler<RoutingContext> {
 
     private final DeviceService deviceService;
+    private final DeviceIdentifierManager deviceIdentifierManager;
+    private final  JWTService jwtService;
+    private final String rememberDeviceCookiName;
 
-    public DeviceIdentifierHandler(DeviceService deviceService) {
+    public DeviceIdentifierHandler(DeviceService deviceService, DeviceIdentifierManager deviceIdentifierManager, JWTService jwtService, String rememberDeviceCookiName) {
+        this.deviceIdentifierManager = deviceIdentifierManager;
         this.deviceService = deviceService;
+        this.jwtService = jwtService;
+        this.rememberDeviceCookiName = rememberDeviceCookiName;
     }
 
     @Override
@@ -65,24 +76,44 @@ public class DeviceIdentifierHandler implements Handler<RoutingContext> {
     }
 
     private void checkIfDeviceExists(RoutingContext routingContext, Client client, User user, RememberDeviceSettings rememberDeviceSettings) {
-        var domain = client.getDomain();
+        final var deviceIdentifierId = rememberDeviceSettings.getDeviceIdentifierId();
+        final var domain = client.getDomain();
+        extractDeviceId(routingContext, client)
+                .flatMap(deviceId -> this.deviceService.deviceExists(domain, client.getClientId(), user.getFullId(), deviceIdentifierId, deviceId)
+                        .map(isEmpty -> {
+                    routingContext.session().put(DEVICE_ID, deviceId);
+                    if (!isEmpty) {
+                        return Boolean.TRUE;
+                    } else {
+                        var deviceType = routingContext.request().getParam(DEVICE_TYPE);
+                        routingContext.session().put(DEVICE_TYPE, deviceType);
+                        return Boolean.FALSE;
+                    }
+                }).toMaybe())
+                .switchIfEmpty(Maybe.just(Boolean.FALSE))
+                .map(deviceExist -> {
+                    routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, deviceExist);
+                    return deviceExist;
+                })
+                .doFinally(routingContext::next)
+                .subscribe();
+    }
+
+    private Maybe<String> extractDeviceId(RoutingContext routingContext, Client client) {
         var deviceId = routingContext.request().getParam(DEVICE_ID);
-        var deviceIdentifierId = rememberDeviceSettings.getDeviceIdentifierId();
-        if (isNullOrEmpty(deviceId)) {
-            routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
-            routingContext.next();
+        final var deviceIdCookie = routingContext.request().getCookie(rememberDeviceCookiName);
+        if (deviceIdentifierManager.useCookieBasedDeviceIdentifier(client) && deviceIdCookie != null) {
+            return jwtService.decodeAndVerify(deviceIdCookie.getValue(), client, JWTService.TokenType.SESSION)
+                    .map(JWT::getJti)
+                    .toMaybe()
+                    .onErrorResumeNext((err) -> {
+                        log.debug("Remember device cookie validation fails for clientID '{}', fallback to the new deviceId", client.getClientId(), err);
+                        // validation fail, remove the cookie to force new generation.
+                        routingContext.response().removeCookie(rememberDeviceCookiName);
+                        return isNullOrEmpty(deviceId) ? Maybe.empty() : Maybe.just(deviceId);
+                    });
         } else {
-            this.deviceService.deviceExists(domain, client.getClientId(), user.getFullId(), deviceIdentifierId, deviceId).flatMapMaybe(isEmpty -> {
-                routingContext.session().put(DEVICE_ID, deviceId);
-                if (!isEmpty) {
-                    routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
-                } else {
-                    var deviceType = routingContext.request().getParam(DEVICE_TYPE);
-                    routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
-                    routingContext.session().put(DEVICE_TYPE, deviceType);
-                }
-                return Maybe.just(true);
-            }).doFinally(routingContext::next).subscribe();
+            return isNullOrEmpty(deviceId) ? Maybe.empty() : Maybe.just(deviceId);
         }
     }
 }

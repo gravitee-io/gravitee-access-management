@@ -17,15 +17,18 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.factor.FactorDataKeys;
+import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.MovingFactorUtils;
 import io.gravitee.am.factor.api.FactorContext;
 import io.gravitee.am.factor.api.FactorProvider;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.utils.HashUtil;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
+import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
 import io.gravitee.am.gateway.handler.root.service.user.UserService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.model.ApplicationFactorSettings;
@@ -70,6 +73,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.MultiMap;
+import io.vertx.rxjava3.core.http.Cookie;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.core.http.HttpServerResponse;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -146,6 +150,9 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
     private final VerifyAttemptService verifyAttemptService;
     private final EmailService emailService;
     private final AuditService auditService;
+    private final DeviceIdentifierManager deviceIdentifierManager;
+    private final JWTService jwtService;
+    private final String rememberDeviceCookieName;
 
     public MFAChallengeEndpoint(FactorManager factorManager,
                                 UserService userService,
@@ -157,7 +164,11 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 RateLimiterService rateLimiterService,
                                 VerifyAttemptService verifyAttemptService,
                                 EmailService emailService,
-                                AuditService auditService) {
+                                AuditService auditService,
+                                DeviceIdentifierManager deviceIdentifierManager,
+                                JWTService jwtService,
+                                String rememberDeviceCookieName
+    ) {
         super(engine);
         this.applicationContext = applicationContext;
         this.factorManager = factorManager;
@@ -169,6 +180,9 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
         this.verifyAttemptService = verifyAttemptService;
         this.emailService = emailService;
         this.auditService = auditService;
+        this.deviceIdentifierManager = deviceIdentifierManager;
+        this.jwtService = jwtService;
+        this.rememberDeviceCookieName = rememberDeviceCookieName;
     }
 
     @Override
@@ -708,6 +722,31 @@ public class MFAChallengeEndpoint extends MFAEndpoint {
                                 rememberDeviceId,
                                 isNullOrEmpty(deviceType) ? "Unknown" : deviceType,
                                 settings.getExpirationTimeSeconds(), deviceId)
+                        .flatMap(device -> {
+
+                            if (deviceIdentifierManager.useCookieBasedDeviceIdentifier(client)) {
+
+                                final var jwt = new JWT();
+
+                                long now = System.currentTimeMillis() / 1000;
+                                jwt.setIat(now);
+                                jwt.setExp(now + settings.getExpirationTimeSeconds());
+                                jwt.setJti(deviceId);
+
+                                return jwtService.encode(jwt, client)
+                                        .map(jwtValue -> {
+                                            // create the cookie
+                                            var cookie = Cookie.cookie(rememberDeviceCookieName, jwtValue)
+                                                    .setHttpOnly(true)
+                                                    .setMaxAge(settings.getExpirationTimeSeconds());
+                                            routingContext.response().addCookie(cookie);
+                                            // we do not want to continue with the JWT
+                                            // return the device object to finalize the flow
+                                            return device;
+                                        });
+                            }
+                            return Single.just(device);
+                        })
                         .doOnSuccess(device -> routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true))
                         .doOnError(device -> routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false))
                         .toMaybe();

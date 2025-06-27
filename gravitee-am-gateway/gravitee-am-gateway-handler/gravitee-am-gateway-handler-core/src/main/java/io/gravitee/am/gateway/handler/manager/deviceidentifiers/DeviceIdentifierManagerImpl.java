@@ -22,6 +22,7 @@ import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.MFASettings;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.deviceidentifier.core.DeviceIdentifierPluginManager;
@@ -153,8 +154,7 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
     @Override
     public Map<String, ?> getTemplateVariables(Client client) {
         Map<String, Object> variables = new HashMap<>();
-        var mfaSettings = ofNullable(client).orElse(new Client()).getMfaSettings();
-        var rememberDeviceSettings = ofNullable(mfaSettings).orElse(new MFASettings()).getRememberDevice();
+        var rememberDeviceSettings = getRememberDeviceSettings(client);
         variables.put(REMEMBER_DEVICE_IS_ACTIVE, nonNull(rememberDeviceSettings) && !isNullOrEmpty(rememberDeviceSettings.getDeviceIdentifierId()) && rememberDeviceSettings.isActive());
         if (TRUE.equals(variables.get(REMEMBER_DEVICE_IS_ACTIVE))) {
             var rememberDevice = this.deviceIdentifiers.get(rememberDeviceSettings.getDeviceIdentifierId());
@@ -164,6 +164,17 @@ public class DeviceIdentifierManagerImpl extends AbstractService implements Devi
             }
         }
         return variables;
+    }
+
+    private static RememberDeviceSettings getRememberDeviceSettings(Client client) {
+        var mfaSettings = ofNullable(client).orElse(new Client()).getMfaSettings();
+        return ofNullable(mfaSettings).orElse(new MFASettings()).getRememberDevice();
+    }
+
+    @Override
+    public boolean useCookieBasedDeviceIdentifier(Client client) {
+        var rememberDeviceSettings = getRememberDeviceSettings(client);
+        return this.providers.get(rememberDeviceSettings.getDeviceIdentifierId()).useCookieToKeepIdentifier();
     }
 
     /**

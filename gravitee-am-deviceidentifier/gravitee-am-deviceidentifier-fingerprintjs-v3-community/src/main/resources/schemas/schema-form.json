@@ -1,5 +1,11 @@
 {
   "type" : "object",
   "id" : "urn:jsonschema:io:gravitee:am:deviceidentifier:fingerprintjs:FingerprintJsV3Community",
-  "properties" : {}
+  "properties" : {
+    "useCookie" : {
+      "type": "boolean",
+      "title": "Keep track of the deviceId in a cookie",
+      "default": false
+    }
+  }
 }
