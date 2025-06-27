@@ -76,17 +76,9 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
 
     @Override
     public Maybe<AuthorizationCode> remove(String code, Client client) {
-        return authorizationCodeRepository.findByCode(code)
-                .switchIfEmpty(handleInvalidCode(code))
-                .flatMap(authorizationCode -> {
-                    if (!authorizationCode.getClientId().equals(client.getClientId())) {
-                        return Maybe.error(new InvalidGrantException("The authorization code " + code + " does not belong to the client " + client.getClientId() + "."));
-                    }
-                    return Maybe.just(authorizationCode);
-                })
-                .flatMap(authorizationCode -> authorizationCodeRepository.delete(authorizationCode.getId()).andThen(Maybe.just(authorizationCode)));
+        return authorizationCodeRepository.findAndRemoveByCodeAndClientId(code, client.getClientId())
+                .switchIfEmpty(handleInvalidCode(code));
     }
-
 
     private Maybe<AuthorizationCode> handleInvalidCode(String code) {
         // The client MUST NOT use the authorization code more than once.
@@ -97,7 +89,7 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
                 .flatMapCompletable(accessToken -> {
                     Completable deleteAccessTokenAction = accessTokenRepository.delete(accessToken.getToken());
                     if (accessToken.getRefreshToken() != null) {
-                        deleteAccessTokenAction.andThen(refreshTokenRepository.delete(accessToken.getRefreshToken()));
+                        return deleteAccessTokenAction.andThen(refreshTokenRepository.delete(accessToken.getRefreshToken()));
                     }
                     return deleteAccessTokenAction;
                 })

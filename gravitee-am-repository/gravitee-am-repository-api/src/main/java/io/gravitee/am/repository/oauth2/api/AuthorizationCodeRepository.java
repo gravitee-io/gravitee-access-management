@@ -49,6 +49,9 @@ public interface AuthorizationCodeRepository {
      */
     Maybe<AuthorizationCode> findByCode(String code);
 
+    Maybe<AuthorizationCode> findAndRemoveByCodeAndClientId(String code, String clientId);
+
+
     default Completable purgeExpiredData() {
         return Completable.complete();
     }
