@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.oauth2.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.oauth2.api.model.JdbcAuthorizationCode;
 import io.gravitee.am.repository.jdbc.oauth2.api.spring.SpringAuthorizationCodeRepository;
@@ -38,6 +39,7 @@ import java.util.List;
 import static java.time.ZoneOffset.UTC;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
@@ -76,6 +78,9 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
 
     @Autowired
     private SpringAuthorizationCodeRepository authorizationCodeRepository;
+
+    @Autowired
+    private DatabaseDialectHelper databaseDialectHelper;
 
     protected AuthorizationCode toEntity(JdbcAuthorizationCode entity) {
         return mapper.map(entity, AuthorizationCode.class);
@@ -143,6 +148,30 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
                 })
                 .map(this::toEntity)
                 .doOnError(error -> LOGGER.error("Unable to retrieve AuthorizationCode with code {}", code));
+    }
+
+    @Override
+    public Maybe<AuthorizationCode> findAndRemoveByCodeAndClientId(String code, String clientId) {
+        LOGGER.debug("findAndRemoveByCode({})", code);
+        if(databaseDialectHelper.supportsReturningOnDelete()){
+            String query = databaseDialectHelper.buildAuthorizationCodeDeleteAndReturnQuery();
+
+            Mono<JdbcAuthorizationCode> removedCode = getTemplate().getDatabaseClient().sql(query)
+                    .bind("clientId", clientId)
+                    .bind("code", code)
+                    .bind("now", LocalDateTime.now(UTC))
+                    .map((row, rowMetadata) -> rowMapper.read(JdbcAuthorizationCode.class, row))
+                    .first();
+
+            return monoToMaybe(removedCode)
+                    .map(this::toEntity);
+
+        } else {
+            return authorizationCodeRepository.findByCodeAndClientId(code, clientId, LocalDateTime.now(UTC))
+                    .map(this::toEntity)
+                    .flatMap(authCode -> authorizationCodeRepository.deleteByCodeAndClientId(authCode.getCode(), authCode.getClientId()).ignoreElement()
+                            .andThen(Maybe.just(authCode)));
+        }
     }
 
     @Override
