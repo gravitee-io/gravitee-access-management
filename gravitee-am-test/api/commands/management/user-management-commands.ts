@@ -168,6 +168,7 @@ export async function buildCreateAndTestUser(
   expect(newUser.username).toEqual(payload.username);
   expect(newUser.email).toEqual(payload.email);
   expect(newUser.password).not.toBeDefined();
+  newUser.password = password; //Recreate password.
   return newUser;
 }
 

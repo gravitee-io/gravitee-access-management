@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect, it, jest } from '@jest/globals';
 import { createDomain, deleteDomain, startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -25,16 +25,15 @@ import { createResource } from '@management-commands/resource-management-command
 import {
   extractXsrfTokenAndActionResponse,
   logoutUser,
-  performFormPost,
+  performDelete,
   performGet,
   performPost,
 } from '@gateway-commands/oauth-oidc-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { TOTP } from 'otpauth';
 import * as faker from 'faker';
-import { initiateLoginFlow } from '@gateway-commands/login-commands';
+import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { uniqueName } from '@utils-commands/misc';
-
 const cheerio = require('cheerio');
 
 global.fetch = fetch;
@@ -51,10 +50,13 @@ let bruteForceTestApp;
 let emailTestApp;
 let totpFactor;
 let totpApp;
+let smsSfrFactor;
+let smsSfrTestApp;
 
 const mfaChallengeAttemptsResetTime = 1;
 const validMFACode = '333333';
 const sharedSecret = 'K546JFR2PK5CGQLLUTFG4W46IKDFWWUE';
+const sfrUrl = 'http://localhost:8181';
 
 jest.setTimeout(200000);
 
@@ -64,6 +66,8 @@ beforeAll(async () => {
   domain = await createDomain(accessToken, uniqueName('mfa-test-domain'), 'mfa test domain');
 
   mockFactor = await createMockFactor(validMFACode, domain, accessToken);
+  const sfrResource = await createSFRResource(domain, accessToken);
+  smsSfrFactor = await createSMSFactor(domain, accessToken, sfrResource);
 
   emailFactor = await createSMTPResource(domain, accessToken).then((smtpResource) => createEmailFactor(smtpResource, domain, accessToken));
 
@@ -73,6 +77,7 @@ beforeAll(async () => {
   bruteForceTestApp = await createBruteForceTestApp(mockFactor, domain, accessToken, mfaChallengeAttemptsResetTime, [mockFactor.id]);
   emailTestApp = await createMfaApp(domain, accessToken, [emailFactor.id]);
   recoveryCodeTestApp = await createMfaApp(domain, accessToken, [mockFactor.id, recoveryCodeFactor.id]);
+  smsSfrTestApp = await createMfaApp(domain, accessToken, [smsSfrFactor.id]);
 
   totpFactor = await createOtpFactor();
   totpApp = await createMfaApp(domain, accessToken, [totpFactor.id]);
@@ -96,12 +101,7 @@ describe('MFA', () => {
 
       user1 = await buildCreateAndTestUser(domain.id, accessToken, 1);
       expect(user1).toBeDefined();
-
-      const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
-      const postLogin = await login(authResponse, user1, clientId);
-
-      // Post login authentication
-      const authorize = await postLoginAuthentication(postLogin);
+      const authorize = await loginUserNameAndPassword(clientId, user1, user1.password, false, openIdConfiguration, domain);
 
       expect(authorize.headers['location']).toBeDefined();
       expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
@@ -121,7 +121,6 @@ describe('MFA', () => {
       const expectedCode = [200, 200, 302];
 
       for (const responseCode of expectedCode) {
-        console.log('Getting ' + authorize2.headers['location']);
         const rateLimitException = await performGet(authorize2.headers['location'], '', {
           Cookie: authorize2.headers['set-cookie'],
         });
@@ -148,11 +147,7 @@ describe('MFA', () => {
       user2 = await buildCreateAndTestUser(domain.id, accessToken, 1);
       expect(user2).toBeDefined();
 
-      const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
-      const postLogin = await login(authResponse, user2, clientId);
-
-      const authorize = await postLoginAuthentication(postLogin);
-
+      const authorize = await loginUserNameAndPassword(clientId, user2, user2.password, false, openIdConfiguration, domain);
       expect(authorize.headers['location']).toBeDefined();
       expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
 
@@ -203,12 +198,8 @@ describe('MFA', () => {
     it('should login using authenticator code', async () => {
       const clientId = totpApp.settings.oauth.clientId;
       totpUser = await buildCreateAndTestUser(domain.id, accessToken, 1);
-      const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
-      const postLogin = await login(authResponse, totpUser, clientId);
 
-      let authorize = await performGet(postLogin.headers['location'], '', {
-        Cookie: postLogin.headers['set-cookie'],
-      }).expect(302);
+      const authorize = await loginUserNameAndPassword(clientId, totpUser, totpUser.password, false, openIdConfiguration, domain);
       expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
 
       const enrolOtp = await enrollOtpFactor(totpUser, authorize, totpFactor, domain);
@@ -228,18 +219,13 @@ describe('MFA', () => {
     it('should issue challenge when factor already enrolled', async () => {
       const clientId = totpApp.settings.oauth.clientId;
 
-      const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
-      const postLogin = await login(authResponse, totpUser, clientId);
-
-      let authorise = await performGet(postLogin.headers['location'], '', {
-        Cookie: postLogin.headers['set-cookie'],
-      }).expect(302);
-      expect(authorise.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
+      const authorize = await loginUserNameAndPassword(clientId, totpUser, totpUser.password, false, openIdConfiguration, domain);
+      expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
 
       const totp = new TOTP({ issuer: 'Gravitee.io', secret: sharedSecret });
       const totpToken = totp.generate();
-      await verifyFactorFailure(authorise, totpFactor);
-      const successfulVerification = await verifyFactor(authorise, totpToken, totpFactor);
+      await verifyFactorFailure(authorize, totpFactor);
+      const successfulVerification = await verifyFactor(authorize, totpToken, totpFactor);
       await logoutUser(openIdConfiguration.end_session_endpoint, successfulVerification);
     });
     afterAll(async () => {
@@ -256,13 +242,7 @@ describe('MFA', () => {
       user3 = await buildCreateAndTestUser(domain.id, accessToken, 1);
       expect(user3).toBeDefined();
 
-      const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
-      const postLogin = await login(authResponse, user3, clientId);
-
-      const authorize = await performGet(postLogin.headers['location'], '', {
-        Cookie: postLogin.headers['set-cookie'],
-      }).expect(302);
-
+      const authorize = await loginUserNameAndPassword(clientId, user3, user3.password, false, openIdConfiguration, domain);
       expect(authorize.headers['location']).toBeDefined();
       expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
 
@@ -294,18 +274,11 @@ describe('MFA', () => {
       user4 = await buildCreateAndTestUser(domain.id, accessToken, 1);
       expect(user4).toBeDefined();
 
-      const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
-      const postLogin = await login(authResponse, user4, clientId);
+      const loginResponse = await loginUserNameAndPassword(clientId, user4, user4.password, false, openIdConfiguration, domain);
+      expect(loginResponse.headers['location']).toBeDefined();
+      expect(loginResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
 
-      // Post login authentication
-      const authorize = await performGet(postLogin.headers['location'], '', {
-        Cookie: postLogin.headers['set-cookie'],
-      }).expect(302);
-
-      expect(authorize.headers['location']).toBeDefined();
-      expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
-
-      const enrollMFA = await enrollMockFactor(authorize, mockFactor, domain);
+      const enrollMFA = await enrollMockFactor(loginResponse, mockFactor, domain);
 
       const authorize2 = await performGet(enrollMFA.headers['location'], '', {
         Cookie: enrollMFA.headers['set-cookie'],
@@ -346,19 +319,12 @@ describe('MFA', () => {
     it('login using recovery code', async () => {
       const clientId = recoveryCodeTestApp.settings.oauth.clientId;
 
-      const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
-      const postLogin = await login(authResponse, user4, clientId);
+      const loginResponse = await loginUserNameAndPassword(clientId, user4, user4.password, false, openIdConfiguration, domain);
+      expect(loginResponse.headers['location']).toBeDefined();
+      expect(loginResponse.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
 
-      // Post login authentication
-      const authorize = await performGet(postLogin.headers['location'], '', {
-        Cookie: postLogin.headers['set-cookie'],
-      }).expect(302);
-
-      expect(authorize.headers['location']).toBeDefined();
-      expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
-
-      const mfaChallenge = await performGet(authorize.headers['location'], '', {
-        Cookie: authorize.headers['set-cookie'],
+      const mfaChallenge = await performGet(loginResponse.headers['location'], '', {
+        Cookie: loginResponse.headers['set-cookie'],
       }).expect(200);
 
       const alternativeUrl = await getAlternativeUrl(mfaChallenge);
@@ -379,6 +345,36 @@ describe('MFA', () => {
       await deleteUser(domain.id, accessToken, user4.id);
     });
   });
+
+  describe('SMS factor test', () => {
+    let user5;
+    it('Should enroll and authenticate using SMS factor via SFR', async () => {
+      user5 = await buildCreateAndTestUser(domain.id, accessToken, 5);
+      expect(user5).toBeDefined();
+      const loginResponse = await loginUserNameAndPassword(
+        smsSfrTestApp.settings.oauth.clientId,
+        user5,
+        user5.password,
+        false,
+        openIdConfiguration,
+        domain,
+      );
+      const enroll = await enrollSmsFactor(loginResponse, smsSfrFactor, domain);
+      const authorize = await performGet(enroll.headers['location'], '', {
+        Cookie: enroll.headers['set-cookie'],
+      }).expect(302);
+      expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
+
+      const verify = await verifySmsSfrFactor(authorize, smsSfrFactor);
+
+      expect(verify.status).toBe(302);
+      expect(verify.headers['location']).toContain('code=');
+    });
+    afterAll(async () => {
+      await deleteUser(domain.id, accessToken, user5.id);
+      await performDelete(sfrUrl, '/__admin/requests', {});
+    });
+  });
 });
 
 afterAll(async () => {
@@ -386,24 +382,6 @@ afterAll(async () => {
     await deleteDomain(domain.id, accessToken);
   }
 });
-
-const login = async (authResponse, user, clientId) => {
-  const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
-  return await performFormPost(
-    loginResult.action,
-    '',
-    {
-      'X-XSRF-TOKEN': loginResult.token,
-      username: user.username,
-      password: 'SomeP@ssw0rd',
-      client_id: clientId,
-    },
-    {
-      Cookie: loginResult.headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
-  ).expect(302);
-};
 
 const enrollMockFactor = async (authorize, factor, domain) => {
   const authResult = await extractXsrfTokenAndActionResponse(authorize);
@@ -521,18 +499,82 @@ const enrollOtpFactor = async (user, authResponse, otpFactor, domain) => {
   return { headers: enrollMfa.headers, sharedSecret: totpSharedSecret };
 };
 
-const createSMSResource = async (validMFACode, domain, accessToken) => {
-  const smsResource = await createResource(domain.id, accessToken, {
-    type: 'mock-mfa-am-resource',
-    configuration: `{\"code\":\"${validMFACode}\"}`,
-    name: 'Mock Resource',
+const enrollSmsFactor = async (authResponse, factor, domain) => {
+  const result = await performGet(authResponse.headers['location'], '', { Cookie: authResponse.headers['set-cookie'] }).expect(200);
+  const dom = cheerio.load(result.text);
+  const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
+  const action = dom('form').attr('action');
+
+  expect(xsrfToken).toBeDefined();
+  expect(action).toBeDefined();
+
+  const factors = dom('script')
+    .text()
+    .split('\n')
+    .find((line) => line.trim().startsWith('const factors'));
+  const sharedSecret = JSON.parse(factors.substring(factors.indexOf('=') + 1).replaceAll(';', ''))[0].enrollment.key;
+  console.log(sharedSecret);
+  console.log(factor.id);
+
+  const enrollMfa = await performPost(
+    action,
+    '',
+    {
+      factorId: factor.id,
+      sharedSecret: sharedSecret,
+      user_mfa_enrollment: true,
+      phone: '+33780763733',
+      'X-XSRF-TOKEN': xsrfToken,
+    },
+    {
+      Cookie: result.headers['set-cookie'],
+      'Content-type': 'application/x-www-form-urlencoded',
+    },
+  );
+
+  expect(enrollMfa.headers['location']).toBeDefined();
+  expect(enrollMfa.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
+
+  return enrollMfa;
+};
+
+const createSFRResource = async (domain, accessToken) => {
+  const sfrResource = await createResource(domain.id, accessToken, {
+    name: 'sfr',
+    type: 'sfr-am-resource',
+    configuration: JSON.stringify({
+      serviceHost: sfrUrl + '/sfr',
+      serviceId: '1',
+      servicePassword: '1',
+      spaceId: '1',
+      connectTimeout: 10000,
+      idleTimeout: 10000,
+      maxPoolSize: 200,
+    }),
   });
+  expect(sfrResource).toBeDefined();
+  expect(sfrResource).not.toBeNull();
+  expect(sfrResource.id).not.toBeNull();
+  return sfrResource;
+};
 
-  expect(smsResource).toBeDefined();
-  expect(smsResource).not.toBeNull();
-  expect(smsResource.id).not.toBeNull();
-
-  return smsResource;
+const createSMSFactor = async (domain, accessToken, sfrResource) => {
+  const smsFactor = await createFactor(domain.id, accessToken, {
+    name: 'sms-factor',
+    factorType: 'SMS',
+    type: 'sms-am-factor',
+    configuration: JSON.stringify({
+      countryCodes: 'fr',
+      graviteeResource: sfrResource.id,
+      messageBody: "{#context.attributes['code']}",
+      returnDigits: 6,
+      expiresAfter: 300,
+    }),
+  });
+  expect(smsFactor).toBeDefined();
+  expect(smsFactor).not.toBeNull();
+  expect(smsFactor.id).not.toBeNull();
+  return smsFactor;
 };
 
 const createMockFactor = async (code, domain, accessToken) => {
@@ -829,8 +871,33 @@ const verifyMockFactor = async (authResult, code) => {
   ).expect(302);
 };
 
-const postLoginAuthentication = async (postLogin) => {
-  return await performGet(postLogin.headers['location'], '', {
-    Cookie: postLogin.headers['set-cookie'],
-  }).expect(302);
+const verifySmsSfrFactor = async (challenge, factor) => {
+  const challengeResponse = await extractXsrfTokenAndActionResponse(challenge);
+  const code = getSMSCode();
+  return await performPost(
+    challengeResponse.action,
+    '',
+    {
+      factorId: factor.id,
+      code: code,
+      'X-XSRF-TOKEN': challengeResponse.token,
+    },
+    {
+      Cookie: challengeResponse.headers['set-cookie'],
+      'Content-type': 'application/x-www-form-urlencoded',
+    },
+  ).expect(302);
+};
+
+const getSMSCode = async () => {
+  const requests = await performGet(sfrUrl, '/__admin/requests');
+  expect(requests.status).toBe(200);
+  const body = decodeURIComponent(requests.body.requests[0].request.body);
+  const params = new URLSearchParams(body);
+  const messageUnitaireRaw = params.get('messageUnitaire');
+  const messageUnitaireJson = JSON.parse(decodeURIComponent(messageUnitaireRaw));
+  const code = messageUnitaireJson.msgContent;
+
+  expect(code).toBeDefined();
+  return code;
 };
