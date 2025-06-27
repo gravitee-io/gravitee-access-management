@@ -46,6 +46,14 @@
     <logger name="org.eclipse.jetty" level="INFO" />
     <logger name="org.springframework.security" level="INFO" />
 
+    <!--
+    add repository.jdbc.common by default
+    to have Liquibase starting point so we can see last action in case
+    of the process wait forever for the liquibase lock
+     -->
+    <logger name="io.gravitee.am.repository.jdbc.common" level="INFO" />
+
+
     <!-- Strictly speaking, the level attribute is not necessary since -->
     <!-- the level of the root level is set to DEBUG by default.       -->
     <root level="WARN">
