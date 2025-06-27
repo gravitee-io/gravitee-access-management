@@ -31,7 +31,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.core.env.Environment;
 import org.springframework.data.r2dbc.config.AbstractR2dbcConfiguration;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 import org.springframework.r2dbc.connection.R2dbcTransactionManager;
@@ -130,6 +129,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         System.setProperty("liquibase.databaseChangeLogTableName", "databasechangelog");
         System.setProperty("liquibase.databaseChangeLogLockTableName", "databasechangeloglock");
 
+        LOGGER.info("Start Liquibase execution...");
         try (ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader())) {
             final Liquibase liquibase = new Liquibase("liquibase/master.yml", resourceAccessor, new JdbcConnection(connection));
             liquibase.update((Contexts) null);
