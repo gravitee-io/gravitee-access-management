@@ -160,4 +160,14 @@ public class PostgresqlHelper extends AbstractDialectHelper {
                 .append(" a.domain = :domain ")
                 .append(" AND a.settings->'oauth'->>'clientId' = :clientId").toString();
     }
+
+    @Override
+    public boolean supportsReturningOnDelete() {
+        return true;
+    }
+
+    @Override
+    public String buildAuthorizationCodeDeleteAndReturnQuery() {
+        return "DELETE FROM authorization_codes c where c.code = :code and c.client_id = :clientId and (c.expire_at > :now or c.expire_at is null) RETURNING *";
+    }
 }

@@ -30,4 +30,9 @@ public class MariadbHelper extends MySqlHelper {
     protected void loadJdbcDriver() throws Exception {
         Class.forName("org.mariadb.jdbc.Driver");
     }
+
+    @Override
+    public String buildAuthorizationCodeDeleteAndReturnQuery() {
+        throw new UnsupportedOperationException("MariaDB doesn't support returning deleted");
+    }
 }
