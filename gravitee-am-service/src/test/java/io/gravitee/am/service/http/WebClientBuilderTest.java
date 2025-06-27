@@ -15,24 +15,33 @@
  */
 package io.gravitee.am.service.http;
 
+import io.gravitee.common.util.EnvironmentUtils;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyBoolean;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 /**
@@ -192,5 +201,59 @@ class WebClientBuilderTest {
         assertNull(webClientOptions.getKeyStoreOptions());
         assertNull(webClientOptions.getPfxKeyCertOptions());
         assertNotNull(webClientOptions.getPemKeyCertOptions());
+    }
+
+    @Test
+    void shouldApplyProxy() {
+        WebClientOptions webClientOptions = new WebClientOptions();
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.proxy.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.proxy.type", "HTTP")).thenReturn("HTTP");
+        when(environment.getProperty("httpClient.proxy.http.host", "localhost")).thenReturn("localhost");
+        when(environment.getProperty("httpClient.proxy.http.port", Integer.class, Integer.valueOf(System.getProperty("http.proxyPort", "3128")))).thenReturn(8080);
+        when(environment.getProperty("httpClient.proxy.http.username")).thenReturn("user");
+        when(environment.getProperty("httpClient.proxy.http.password")).thenReturn("password");
+
+
+        webClientBuilder.createWebClient(vertx, webClientOptions, null, true);
+
+        assertTrue(webClientOptions.isTrustAll());
+        assertEquals("localhost", webClientOptions.getProxyOptions().getHost());
+        assertEquals(8080, webClientOptions.getProxyOptions().getPort());
+    }
+
+    @Test
+    void shouldNotApplyProxyWhenExcludedHosts() {
+        WebClientOptions webClientOptions = new WebClientOptions();
+
+        Map<String, Object> mockMap = new HashMap<>();
+        mockMap.put("httpClient.proxy.exclude-hosts[0]", "*.test.com");
+        mockMap.put("httpClient.proxy.exclude-hosts[1]", "abc.test.com");
+
+        try (MockedStatic<EnvironmentUtils> utilities = mockStatic(EnvironmentUtils.class)) {
+            utilities.when(() -> EnvironmentUtils.getPropertiesStartingWith(any(ConfigurableEnvironment.class), eq("httpClient.proxy.exclude-hosts")))
+                    .thenReturn(mockMap);
+
+            when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+            when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(true);
+
+            webClientBuilder.createWebClient(vertx, webClientOptions, "http://test.com", true);
+
+            assertTrue(webClientOptions.isTrustAll());
+            assertNull(webClientOptions.getProxyOptions());
+        }
+    }
+
+    @Test
+    void shouldNotApplyProxy() {
+        WebClientOptions webClientOptions = new WebClientOptions();
+        when(environment.getProperty("httpClient.ssl.enabled", Boolean.class, false)).thenReturn(true);
+        when(environment.getProperty("httpClient.ssl.trustAll", Boolean.class, false)).thenReturn(true);
+
+        webClientBuilder.createWebClient(vertx, webClientOptions, null, false);
+
+        assertTrue(webClientOptions.isTrustAll());
+        assertNull(webClientOptions.getProxyOptions());
     }
 }

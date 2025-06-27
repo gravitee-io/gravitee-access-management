@@ -71,6 +71,15 @@ public class WebClientBuilder {
         return createWebClient(vertx, options, null);
     }
 
+    public WebClient createWebClient(Vertx vertx, WebClientOptions options, String url, Boolean withSystemProxy){
+        var configurer = new WebClientOptionsConfigurer(environment);
+        if (!isExcludedHost(url) && withSystemProxy) {
+            configurer.setProxySettings(options);
+        }
+        configurer.setSSLSettings(options);
+        return WebClient.create(vertx, options);
+    }
+
     public WebClient createWebClient(Vertx vertx, WebClientOptions options, String url) {
         var configurer = new WebClientOptionsConfigurer(environment);
         if (!isExcludedHost(url)) {
