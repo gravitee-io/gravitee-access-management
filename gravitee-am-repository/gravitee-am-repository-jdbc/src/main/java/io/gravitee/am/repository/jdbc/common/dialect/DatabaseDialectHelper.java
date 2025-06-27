@@ -68,6 +68,10 @@ public interface DatabaseDialectHelper {
 
     String buildPagingClause(int page, int size);
 
+    boolean supportsReturningOnDelete();
+
+    String buildAuthorizationCodeDeleteAndReturnQuery();
+
     default String buildPagingClause(String field, int page, int size) {
         return buildPagingClauseUsingOffset(field, page * size, size);
     }

@@ -89,4 +89,14 @@ public class MsSqlHelper extends AbstractDialectHelper {
         return " ORDER BY "+ field +" OFFSET "+ offset +" ROWS FETCH NEXT " + size + " ROWS ONLY ";
     }
 
+    @Override
+    public boolean supportsReturningOnDelete() {
+        return true;
+    }
+
+    @Override
+    public String buildAuthorizationCodeDeleteAndReturnQuery() {
+        return "DELETE FROM authorization_codes OUTPUT DELETED.* where code = :code and client_id = :clientId and (expire_at > :now or expire_at is null)";
+    }
+
 }
