@@ -31,7 +31,7 @@ public abstract class AbstractRepositoryConfiguration {
     protected RepositoriesEnvironment environment;
 
     @Bean
-    public FilterCriteriaParser filterCriteriaParser(@Value("${legacy.mongodb.regexCaseInsensitive:false}") boolean regexCaseInsensitive) {
+    public FilterCriteriaParser filterCriteriaParser(@Value("${legacy.mongodb.regexCaseInsensitive:true}") boolean regexCaseInsensitive) {
         return new FilterCriteriaParser(regexCaseInsensitive);
     }
 
