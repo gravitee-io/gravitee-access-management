@@ -68,6 +68,8 @@
             inputDeviceType.setAttribute("name", "deviceType");
             inputDeviceType.value = retrievePlatform(window.navigator);
             document.getElementById('callbackForm').appendChild(inputDeviceType);
+
+            document.getElementById('callbackForm').submit();
         })();
     </script>
 </body>
