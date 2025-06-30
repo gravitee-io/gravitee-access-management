@@ -19,7 +19,6 @@ import io.gravitee.am.common.env.RepositoriesEnvironment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -31,7 +30,7 @@ public abstract class AbstractRepositoryConfiguration {
     protected RepositoriesEnvironment environment;
 
     @Bean
-    public FilterCriteriaParser filterCriteriaParser(@Value("${legacy.mongodb.regexCaseInsensitive:false}") boolean regexCaseInsensitive) {
+    public FilterCriteriaParser filterCriteriaParser(@Value("${legacy.mongodb.regexCaseInsensitive:true}") boolean regexCaseInsensitive) {
         return new FilterCriteriaParser(regexCaseInsensitive);
     }
 
