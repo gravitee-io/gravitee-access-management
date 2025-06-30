@@ -61,7 +61,7 @@ public class MongoDataPlaneSpringConfiguration {
     }
 
     @Bean
-    public FilterCriteriaParser filterCriteriaParser(@Value("${legacy.mongodb.regexCaseInsensitive:false}") boolean regexCaseInsensitive) {
+    public FilterCriteriaParser filterCriteriaParser(@Value("${legacy.mongodb.regexCaseInsensitive:true}") boolean regexCaseInsensitive) {
         return new FilterCriteriaParser(regexCaseInsensitive);
     }
 
