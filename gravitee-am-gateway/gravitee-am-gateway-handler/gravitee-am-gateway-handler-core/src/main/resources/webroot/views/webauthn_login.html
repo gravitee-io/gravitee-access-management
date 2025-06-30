@@ -119,8 +119,8 @@
     const deviceId = "[[${cookieDeviceIdentifier}]]" ;
 
     $(document).ready(function () {
-        $("#form").append('<input type="hidden" name="deviceId" value="' + deviceId + '"/>')
-        $("#form").append('<input type="hidden" name="deviceType" value="' + retrievePlatform(window.navigator) + '"/>');
+        $("#login").append('<input type="hidden" name="deviceId" value="' + deviceId + '"/>')
+        $("#login").append('<input type="hidden" name="deviceType" value="' + retrievePlatform(window.navigator) + '"/>');
     });
 </script>
 </body>
