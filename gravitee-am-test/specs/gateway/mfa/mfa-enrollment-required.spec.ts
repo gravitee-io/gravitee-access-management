@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { Domain, enableDomain, initClient, initDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { withRetry } from '@utils-commands/retry';
-import { followUpGet, get, postForm, processMfaEndToEnd, processMfaEnrollment } from './fixture/mfa-flow-fixture';
+import { followUpGet, get, postForm, processMfaEndToEnd } from './fixture/mfa-flow-fixture';
 import { extractCookieSessionValues, extractDomAttr, extractDomValue } from './fixture/mfa-extract-fixture';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { waitFor } from '@management-commands/domain-management-commands';

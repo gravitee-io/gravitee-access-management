@@ -1,12 +1,12 @@
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *         http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,14 @@
  */
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {
-    createDomain,
-    deleteDomain,
-    getDomainFlows,
-    patchDomain,
-    startDomain,
-    updateDomainFlows,
-    waitForDomainStart, waitForDomainSync,
+  createDomain,
+  deleteDomain,
+  getDomainFlows,
+  patchDomain,
+  startDomain,
+  updateDomainFlows,
+  waitForDomainStart,
+  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
@@ -185,14 +186,14 @@ beforeAll(async () => {
   // Create the same user
   await createUser(domainAccLinking.id, accessToken, domainUser);
 
-    //Start OIDC Domain
-    const domainOIDCStarted = await startDomain(domainOIDC.id, accessToken).then(() => waitForDomainStart(domainOIDC));
-    domainOIDC = domainOIDCStarted.domain;
+  //Start OIDC Domain
+  const domainOIDCStarted = await startDomain(domainOIDC.id, accessToken).then(() => waitForDomainStart(domainOIDC));
+  domainOIDC = domainOIDCStarted.domain;
 
-    //Start Master Domain
-    const masterDomainStarted = await startDomain(domainAccLinking.id, accessToken).then(() => waitForDomainStart(domainAccLinking));
-    domainAccLinking = masterDomainStarted.domain;
-    domainAccLinkingConfiguration = masterDomainStarted.oidcConfig;
+  //Start Master Domain
+  const masterDomainStarted = await startDomain(domainAccLinking.id, accessToken).then(() => waitForDomainStart(domainAccLinking));
+  domainAccLinking = masterDomainStarted.domain;
+  domainAccLinkingConfiguration = masterDomainStarted.oidcConfig;
 });
 
 describe('Account Linking - local IDP and OIDC', () => {
@@ -266,18 +267,18 @@ describe('Account Linking - local IDP and OIDC', () => {
   it('Should execute brute force not allow to login with domain user', async () => {
     //Attempt fail login
     for (let i = 0; i < 5; i++) {
-        const failResponse = await loginUserNameAndPassword(
-            localIdpApp.settings.oauth.clientId,
-            domainUser,
-            'Wrong123456Password!',
-            false,
-            domainAccLinkingConfiguration,
-            domainAccLinking,
-            'https://test.com',
-            'code',
-            false,
-        );
-        expect(failResponse.headers['location']).toContain('error=login_failed');
+      const failResponse = await loginUserNameAndPassword(
+        localIdpApp.settings.oauth.clientId,
+        domainUser,
+        'Wrong123456Password!',
+        false,
+        domainAccLinkingConfiguration,
+        domainAccLinking,
+        'https://test.com',
+        'code',
+        false,
+      );
+      expect(failResponse.headers['location']).toContain('error=login_failed');
     }
 
     // Check that the user is locked

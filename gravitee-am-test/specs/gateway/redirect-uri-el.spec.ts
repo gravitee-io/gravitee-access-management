@@ -16,13 +16,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {
-  createDomain,
-  deleteDomain,
-  patchDomain,
-  startDomain,
-  waitForDomainStart,
-} from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { Domain } from '@management-models/Domain';
 import { createJdbcIdp, createMongoIdp } from '@utils-commands/idps-commands';
 import { createUser } from '@management-commands/user-management-commands';

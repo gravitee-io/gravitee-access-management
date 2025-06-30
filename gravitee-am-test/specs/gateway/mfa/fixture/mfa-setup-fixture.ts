@@ -19,6 +19,7 @@ import { buildCreateAndTestUser } from '@management-commands/user-management-com
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { createDevice } from '@management-commands/device-management-commands';
+import { expect } from '@jest/globals';
 
 export interface Domain {
   admin: {
@@ -163,3 +164,73 @@ async function createApp(domain: Domain, client: Application) {
   await patchApplication(domain.domain.domainId, domain.admin.accessToken, enableIDPBody, app.id);
   return app.id;
 }
+
+export const createSMSFactor = async (domain, accessToken, sfrResource) => {
+  const smsFactor = await createFactor(domain.id, accessToken, {
+    name: 'sms-factor',
+    factorType: 'SMS',
+    type: 'sms-am-factor',
+    configuration: JSON.stringify({
+      countryCodes: 'fr',
+      graviteeResource: sfrResource.id,
+      messageBody: "{#context.attributes['code']}",
+      returnDigits: 6,
+      expiresAfter: 300,
+    }),
+  });
+  expect(smsFactor).toBeDefined();
+  expect(smsFactor).not.toBeNull();
+  expect(smsFactor.id).not.toBeNull();
+  return smsFactor;
+};
+
+export const createMockFactor = async (code, domain, accessToken) => {
+  const factor = await createFactor(domain.id, accessToken, {
+    type: 'mock-am-factor',
+    factorType: 'MOCK',
+    configuration: `{\"code\":\"${code}\"}`,
+    name: 'Mock Factor',
+  });
+
+  expect(factor).toBeDefined();
+  expect(factor).not.toBeNull();
+
+  return factor;
+};
+
+export const createRecoveryCodeFactor = async (domain, accessToken) => {
+  const factor = await createFactor(domain.id, accessToken, {
+    type: 'recovery-code-am-factor',
+    factorType: 'Recovery Code',
+    configuration: '{"digit":5,"count":6}',
+    name: 'Recovery Code',
+  });
+
+  expect(factor).toBeDefined();
+  expect(factor).not.toBeNull();
+
+  return factor;
+};
+
+export const createEmailFactor = async (smtpResource, domain, accessToken) => {
+  const factor = await createFactor(domain.id, accessToken, {
+    type: 'email-am-factor',
+    factorType: 'EMAIL',
+    configuration: `{\"graviteeResource\":\"${smtpResource.id}\",\"returnDigits\":6}`,
+    name: 'Email',
+  });
+
+  expect(factor).toBeDefined();
+  expect(factor).not.toBeNull();
+
+  return factor;
+};
+
+export const createOtpFactor = async (domain, accessToken) => {
+  return await createFactor(domain.id, accessToken, {
+    type: 'otp-am-factor',
+    factorType: 'TOTP',
+    configuration: '{"issuer":"Gravitee.io","algorithm":"HmacSHA1","timeStep":"30","returnDigits":"6"}',
+    name: 'totp Factor',
+  });
+};

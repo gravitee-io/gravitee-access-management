@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect, it, jest } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createApplication, updateApplication } from '@management-commands/application-management-commands';
+import {
+  createApplication,
+  getApplicationFlows,
+  updateApplication,
+  updateApplicationFlows,
+} from '@management-commands/application-management-commands';
 
 import fetch from 'cross-fetch';
 import { buildCreateAndTestUser, deleteUser } from '@management-commands/user-management-commands';
-import { createFactor } from '@management-commands/factor-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import {
   extractXsrfTokenAndActionResponse,
@@ -32,8 +36,19 @@ import {
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { TOTP } from 'otpauth';
 import * as faker from 'faker';
-import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
+import { initiateLoginFlow, login, loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { uniqueName } from '@utils-commands/misc';
+import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
+import { FlowEntityTypeEnum } from '../../../api/management/models';
+import { extractSharedSecret, extractSmsCode } from './fixture/mfa-extract-fixture';
+import {
+  createEmailFactor,
+  createMockFactor,
+  createOtpFactor,
+  createRecoveryCodeFactor,
+  createSMSFactor,
+} from './fixture/mfa-setup-fixture';
+
 const cheerio = require('cheerio');
 
 global.fetch = fetch;
@@ -43,17 +58,15 @@ let accessToken;
 let mockFactor;
 let emailFactor;
 let openIdConfiguration;
-let smsTestApp;
 let recoveryCodeFactor;
 let recoveryCodeTestApp;
-let bruteForceTestApp;
 let emailTestApp;
 let totpFactor;
 let totpApp;
 let smsSfrFactor;
 let smsSfrTestApp;
+let mfaFlowApp;
 
-const mfaChallengeAttemptsResetTime = 1;
 const validMFACode = '333333';
 const sharedSecret = 'K546JFR2PK5CGQLLUTFG4W46IKDFWWUE';
 const sfrUrl = 'http://localhost:8181';
@@ -66,132 +79,24 @@ beforeAll(async () => {
   domain = await createDomain(accessToken, uniqueName('mfa-test-domain'), 'mfa test domain');
 
   mockFactor = await createMockFactor(validMFACode, domain, accessToken);
-  const sfrResource = await createSFRResource(domain, accessToken);
-  smsSfrFactor = await createSMSFactor(domain, accessToken, sfrResource);
-
+  smsSfrFactor = await createSFRResource(domain, accessToken).then((sfrResource) => createSMSFactor(domain, accessToken, sfrResource));
   emailFactor = await createSMTPResource(domain, accessToken).then((smtpResource) => createEmailFactor(smtpResource, domain, accessToken));
-
   recoveryCodeFactor = await createRecoveryCodeFactor(domain, accessToken);
+  totpFactor = await createOtpFactor(domain, accessToken);
 
-  smsTestApp = await createMfaApp(domain, accessToken, [mockFactor.id]);
-  bruteForceTestApp = await createBruteForceTestApp(mockFactor, domain, accessToken, mfaChallengeAttemptsResetTime, [mockFactor.id]);
   emailTestApp = await createMfaApp(domain, accessToken, [emailFactor.id]);
   recoveryCodeTestApp = await createMfaApp(domain, accessToken, [mockFactor.id, recoveryCodeFactor.id]);
   smsSfrTestApp = await createMfaApp(domain, accessToken, [smsSfrFactor.id]);
-
-  totpFactor = await createOtpFactor();
+  mfaFlowApp = await createMfaFlowApp(domain, accessToken, emailFactor.id);
   totpApp = await createMfaApp(domain, accessToken, [totpFactor.id]);
 
-  /*
-   * it is intentional to call setTimeout after creating apps. Cannot avoid this timeout call.
-   * At this point I haven't found a function which is similar to retry until specific http code is returned.
-   * jest.retryTimes(numRetries, options) didn't applicable in this case.
-   * */
   let started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
   domain = started.domain;
   openIdConfiguration = started.oidcConfig;
 });
 
 describe('MFA', () => {
-  describe('MFA rate limit test', () => {
-    let user1;
-    //To run this test locally, change mfa_rate in gravitee.yml to 2 attempts in 1 minute.
-    it('throw mfa_request_limit_exceed after 2 request', async () => {
-      const clientId = smsTestApp.settings.oauth.clientId;
-
-      user1 = await buildCreateAndTestUser(domain.id, accessToken, 1);
-      expect(user1).toBeDefined();
-      const authorize = await loginUserNameAndPassword(clientId, user1, user1.password, false, openIdConfiguration, domain);
-
-      expect(authorize.headers['location']).toBeDefined();
-      expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
-
-      const enrollMFA = await enrollMockFactor(authorize, mockFactor, domain);
-      const authorize2 = await performGet(enrollMFA.headers['location'], '', {
-        Cookie: enrollMFA.headers['set-cookie'],
-      }).expect(302);
-
-      expect(authorize2.headers['location']).toBeDefined();
-      expect(authorize2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
-
-      /**
-       * The number of the get requests is based on the gateway gravtitee.yml 'mfa_rate' configuration
-       * These assertions will fail or need to be updated if 'mfa_rate' configuration is changed
-       */
-      const expectedCode = [200, 200, 302];
-
-      for (const responseCode of expectedCode) {
-        const rateLimitException = await performGet(authorize2.headers['location'], '', {
-          Cookie: authorize2.headers['set-cookie'],
-        });
-        expect(rateLimitException.status).toBe(responseCode);
-
-        if (responseCode === 302) {
-          expect(rateLimitException.headers['location']).toBeDefined();
-          expect(rateLimitException.headers['location']).toContain('request_limit_error=mfa_request_limit_exceed');
-        }
-      }
-    });
-
-    afterAll(async () => {
-      await deleteUser(domain.id, accessToken, user1.id);
-    });
-  });
-
-  describe('brute force test', () => {
-    let user2;
-
-    it('should throw brute force exception', async () => {
-      const clientId = bruteForceTestApp.settings.oauth.clientId;
-
-      user2 = await buildCreateAndTestUser(domain.id, accessToken, 1);
-      expect(user2).toBeDefined();
-
-      const authorize = await loginUserNameAndPassword(clientId, user2, user2.password, false, openIdConfiguration, domain);
-      expect(authorize.headers['location']).toBeDefined();
-      expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/enroll`);
-
-      const enrollMFA = await enrollMockFactor(authorize, mockFactor, domain);
-
-      const authorize2 = await performGet(enrollMFA.headers['location'], '', {
-        Cookie: enrollMFA.headers['set-cookie'],
-      }).expect(302);
-
-      expect(authorize2.headers['location']).toBeDefined();
-      expect(authorize2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
-
-      await performGet(authorize2.headers['location'], '', {
-        Cookie: authorize2.headers['set-cookie'],
-      }).expect(200);
-
-      const expectedErrorMessage = [
-        { expected: 'mfa_challenge_failed' },
-        { expected: 'mfa_challenge_failed' },
-        { expected: 'verify_attempt_error=maximum_verify_limit' },
-      ];
-
-      //mfa challenge post
-      const authResult2 = await extractXsrfTokenAndActionResponse(authorize2);
-      const invalidCode = 999;
-      for (let i = 0; i < expectedErrorMessage.length; i++) {
-        const failedVerification = await verifyMockFactor(authResult2, invalidCode);
-        expect(failedVerification.headers['location']).toBeDefined();
-        expect(failedVerification.headers['location']).toContain(expectedErrorMessage[i].expected);
-      }
-
-      //now wait 1 second as per the configuration
-      await waitFor(mfaChallengeAttemptsResetTime * 1000);
-
-      const successfulVerification = await verifyMockFactor(authResult2, validMFACode);
-      await logoutUser(openIdConfiguration.end_session_endpoint, successfulVerification);
-    });
-
-    afterAll(async () => {
-      await deleteUser(domain.id, accessToken, user2.id);
-    });
-  });
-
-  describe('TOTP authentication', () => {
+  describe('TOTP factor test', () => {
     let totpUser;
     let sharedSecret;
 
@@ -233,7 +138,7 @@ describe('MFA', () => {
     });
   });
 
-  describe('email factor test', () => {
+  describe('Email factor test', () => {
     let user3;
 
     it('should send email', async () => {
@@ -256,6 +161,7 @@ describe('MFA', () => {
       expect(authorize2.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
 
       const successfulVerification = await verifyFactorOnEmailEnrollment(authorize2, emailFactor);
+      expect(successfulVerification.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
       await logoutUser(openIdConfiguration.end_session_endpoint, successfulVerification);
     });
 
@@ -264,7 +170,7 @@ describe('MFA', () => {
     });
   });
 
-  describe('recovery code factor test', () => {
+  describe('Recovery code factor test', () => {
     let user4;
     let validRecoveryCode;
 
@@ -375,6 +281,43 @@ describe('MFA', () => {
       await performDelete(sfrUrl, '/__admin/requests', {});
     });
   });
+
+  describe('MFA flow test', () => {
+    let user6;
+    it('Should enroll and challenge MFA before WebAuthN - webApp', async () => {
+      const clientId = mfaFlowApp.settings.oauth.clientId;
+
+      user6 = await buildCreateAndTestUser(domain.id, accessToken, 6);
+      expect(user6).toBeDefined();
+
+      const authResponse = await initiateLoginFlow(clientId, openIdConfiguration, domain);
+      const postLogin = await login(authResponse, user6.username, clientId);
+      const authorize = await performGet(postLogin.headers['location'], '', {
+        Cookie: postLogin.headers['set-cookie'],
+      }).expect(302);
+
+      expect(authorize.headers['location']).toBeDefined();
+      expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/webauthn/register`);
+
+      const webauthn = await performGet(authorize.headers['location'], '', {
+        Cookie: authorize.headers['set-cookie'],
+      }).expect(302);
+      expect(webauthn.headers['location']).toContain('webauthn');
+      expect(webauthn.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
+
+      const successfulVerification = await verifyFactorOnEmailEnrollment(webauthn, emailFactor);
+      expect(successfulVerification.status).toBe(302);
+      expect(successfulVerification.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/webauthn/register`);
+      const webauthn2 = await performGet(successfulVerification.headers['location'], '', {
+        Cookie: successfulVerification.headers['set-cookie'],
+      });
+      expect(webauthn2.status).toBe(200);
+      await logoutUser(openIdConfiguration.end_session_endpoint, successfulVerification);
+    });
+    afterAll(async () => {
+      await deleteUser(domain.id, accessToken, user6.id);
+    });
+  });
 });
 
 afterAll(async () => {
@@ -417,20 +360,6 @@ const createSMTPResource = async (domain, accessToken) => {
   return smtp;
 };
 
-const createEmailFactor = async (smtpResource, domain, accessToken) => {
-  const factor = await createFactor(domain.id, accessToken, {
-    type: 'email-am-factor',
-    factorType: 'EMAIL',
-    configuration: `{\"graviteeResource\":\"${smtpResource.id}\",\"returnDigits\":6}`,
-    name: 'Email',
-  });
-
-  expect(factor).toBeDefined();
-  expect(factor).not.toBeNull();
-
-  return factor;
-};
-
 const enrollEmailFactor = async (user, authorize, emailFactor, domain) => {
   const authResult = await extractXsrfTokenAndActionResponse(authorize);
   const enrollMFA = await performPost(
@@ -455,39 +384,19 @@ const enrollEmailFactor = async (user, authorize, emailFactor, domain) => {
   return enrollMFA;
 };
 
-const createOtpFactor = async () => {
-  return await createFactor(domain.id, accessToken, {
-    type: 'otp-am-factor',
-    factorType: 'TOTP',
-    configuration: '{"issuer":"Gravitee.io","algorithm":"HmacSHA1","timeStep":"30","returnDigits":"6"}',
-    name: 'totp Factor',
-  });
-};
-
 const enrollOtpFactor = async (user, authResponse, otpFactor, domain) => {
   const headers = authResponse.headers['set-cookie'] ? { Cookie: authResponse.headers['set-cookie'] } : {};
   const result = await performGet(authResponse.headers['location'], '', headers).expect(200);
-  const dom = cheerio.load(result.text);
-  const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
-  const action = dom('form').attr('action');
-
-  expect(xsrfToken).toBeDefined();
-  expect(action).toBeDefined();
-
-  const factors = dom('script')
-    .text()
-    .split('\n')
-    .find((line) => line.trim().startsWith('const factors'));
-  const totpSharedSecret = JSON.parse(factors.substring(factors.indexOf('=') + 1).replaceAll(';', ''))[0].enrollment.key;
+  const extractedResult = extractSharedSecret(result);
 
   const enrollMfa = await performPost(
-    action,
+    extractedResult.action,
     '',
     {
       factorId: otpFactor.id,
-      sharedSecret: totpSharedSecret,
+      sharedSecret: extractedResult.sharedSecret,
       user_mfa_enrollment: true,
-      'X-XSRF-TOKEN': xsrfToken,
+      'X-XSRF-TOKEN': extractedResult.token,
     },
     {
       Cookie: result.headers['set-cookie'],
@@ -496,35 +405,22 @@ const enrollOtpFactor = async (user, authResponse, otpFactor, domain) => {
   );
   expect(enrollMfa.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
 
-  return { headers: enrollMfa.headers, sharedSecret: totpSharedSecret };
+  return { headers: enrollMfa.headers, sharedSecret: extractedResult.sharedSecret };
 };
 
 const enrollSmsFactor = async (authResponse, factor, domain) => {
   const result = await performGet(authResponse.headers['location'], '', { Cookie: authResponse.headers['set-cookie'] }).expect(200);
-  const dom = cheerio.load(result.text);
-  const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
-  const action = dom('form').attr('action');
-
-  expect(xsrfToken).toBeDefined();
-  expect(action).toBeDefined();
-
-  const factors = dom('script')
-    .text()
-    .split('\n')
-    .find((line) => line.trim().startsWith('const factors'));
-  const sharedSecret = JSON.parse(factors.substring(factors.indexOf('=') + 1).replaceAll(';', ''))[0].enrollment.key;
-  console.log(sharedSecret);
-  console.log(factor.id);
+  const extractedResult = extractSharedSecret(result);
 
   const enrollMfa = await performPost(
-    action,
+    extractedResult.action,
     '',
     {
       factorId: factor.id,
-      sharedSecret: sharedSecret,
+      sharedSecret: extractedResult.sharedSecret,
       user_mfa_enrollment: true,
       phone: '+33780763733',
-      'X-XSRF-TOKEN': xsrfToken,
+      'X-XSRF-TOKEN': extractedResult.token,
     },
     {
       Cookie: result.headers['set-cookie'],
@@ -558,37 +454,85 @@ const createSFRResource = async (domain, accessToken) => {
   return sfrResource;
 };
 
-const createSMSFactor = async (domain, accessToken, sfrResource) => {
-  const smsFactor = await createFactor(domain.id, accessToken, {
-    name: 'sms-factor',
-    factorType: 'SMS',
-    type: 'sms-am-factor',
-    configuration: JSON.stringify({
-      countryCodes: 'fr',
-      graviteeResource: sfrResource.id,
-      messageBody: "{#context.attributes['code']}",
-      returnDigits: 6,
-      expiresAfter: 300,
-    }),
-  });
-  expect(smsFactor).toBeDefined();
-  expect(smsFactor).not.toBeNull();
-  expect(smsFactor.id).not.toBeNull();
-  return smsFactor;
-};
+const createMfaFlowApp = async (domain, accessToken, factor) => {
+  const application = await createApplication(domain.id, accessToken, {
+    name: faker.company.bsBuzz(),
+    type: 'WEB',
+    clientId: faker.internet.domainWord(),
+    redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
+  }).then((app) =>
+    updateApplication(
+      domain.id,
+      accessToken,
+      {
+        settings: {
+          oauth: {
+            redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
+            scopeSettings: [
+              { scope: 'openid', defaultScope: true },
+              {
+                scope: 'openid',
+                defaultScope: true,
+              },
+            ],
+          },
+          mfa: {
+            factor: {
+              defaultFactorId: factor,
+              applicationFactors: [
+                {
+                  id: factor,
+                  selectionRule: '',
+                },
+              ],
+            },
+            enroll: {
+              active: true,
+              forceEnrollment: true,
+              type: 'REQUIRED',
+            },
+            challenge: {
+              active: true,
+              type: 'REQUIRED',
+            },
+          },
+          login: {
+            inherited: false,
+            passwordlessEnabled: true,
+          },
+          advanced: {
+            flowsInherited: false,
+          },
+        },
+        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
+      },
+      app.id,
+    ),
+  );
 
-const createMockFactor = async (code, domain, accessToken) => {
-  const factor = await createFactor(domain.id, accessToken, {
-    type: 'mock-am-factor',
-    factorType: 'MOCK',
-    configuration: `{\"code\":\"${code}\"}`,
-    name: 'Mock Factor',
-  });
-
-  expect(factor).toBeDefined();
-  expect(factor).not.toBeNull();
-
-  return factor;
+  const flows = await getApplicationFlows(domain.id, accessToken, application.id);
+  lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Login, 'post', [
+    {
+      name: 'MFA-enroll',
+      policy: 'policy-am-enroll-mfa',
+      description: '',
+      condition: '',
+      enabled: true,
+      configuration: JSON.stringify({ primary: false, refresh: false, factorId: factor, value: 'test@example.com' }),
+    },
+  ]);
+  lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.WebauthnRegister, 'pre', [
+    {
+      name: 'MFA-challenge',
+      policy: 'am-policy-mfa-challenge',
+      description: '',
+      condition: '',
+      enabled: true,
+      configuration: JSON.stringify({ forceEnrollFactor: true }),
+    },
+  ]);
+  await updateApplicationFlows(domain.id, accessToken, application.id, flows);
+  return application;
 };
 
 const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
@@ -634,105 +578,14 @@ const createMfaApp = async (domain, accessToken, factors: Array<number>) => {
             },
           },
         },
-        account: {
-          inherited: false,
-          mfaChallengeAttemptsDetectionEnabled: true,
-          mfaChallengeMaxAttempts: 2,
-          mfaChallengeAttemptsResetTime: mfaChallengeAttemptsResetTime,
-        },
         identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
         factors: factors,
       },
       app.id,
-    ).then((updatedApp) => {
-      // restore the clientSecret coming from the create order
-      updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-      return updatedApp;
-    }),
+    ),
   );
   expect(application.settings.oauth.clientId).toBeDefined();
   return application;
-};
-
-const createBruteForceTestApp = async (smsFactor, domain, accessToken, mfaChallengeAttemptsResetTime, factors: Array<number>) => {
-  const application = await createApplication(domain.id, accessToken, {
-    name: 'mfa-bruteforce-test',
-    type: 'WEB',
-    clientId: 'mfa-bruteforce-test-id',
-    redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
-  }).then((app) =>
-    updateApplication(
-      domain.id,
-      accessToken,
-      {
-        settings: {
-          oauth: {
-            redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
-            scopeSettings: [
-              { scope: 'openid', defaultScope: true },
-              {
-                scope: 'openid',
-                defaultScope: true,
-              },
-            ],
-          },
-          account: {
-            inherited: false,
-            mfaChallengeAttemptsDetectionEnabled: true,
-            mfaChallengeMaxAttempts: 2,
-            mfaChallengeAttemptsResetTime: mfaChallengeAttemptsResetTime,
-          },
-          mfa: {
-            factor: {
-              defaultFactorId: factors[0],
-              applicationFactors: factors.map((i) => {
-                return {
-                  id: i,
-                  selectionRule: '',
-                } as any;
-              }),
-            },
-            enroll: {
-              active: true,
-              forceEnrollment: true,
-              type: 'REQUIRED',
-            },
-            challenge: {
-              active: true,
-              type: 'REQUIRED',
-            },
-          },
-        },
-        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
-        factors: [smsFactor.id],
-      },
-      app.id,
-    ).then((updatedApp) => {
-      // restore the clientSecret coming from the create order
-      updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-      return updatedApp;
-    }),
-  );
-
-  await waitFor(1000);
-  expect(application).toBeDefined();
-  expect(application.settings.oauth.clientId).toBeDefined();
-
-  return application;
-};
-
-const createRecoveryCodeFactor = async (domain, accessToken) => {
-  const factor = await createFactor(domain.id, accessToken, {
-    type: 'recovery-code-am-factor',
-    factorType: 'Recovery Code',
-    configuration: '{"digit":5,"count":6}',
-    name: 'Recovery Code',
-  });
-
-  expect(factor).toBeDefined();
-  expect(factor).not.toBeNull();
-
-  return factor;
 };
 
 const getARecoveryCode = (text) => {
@@ -790,19 +643,7 @@ const postAlternativeMFAUrl = async (alternativeUrl, mfaChallenge, factor) => {
 
 const verifyFactor = async (challenge, code, factor) => {
   const challengeResponse = await extractXsrfTokenAndActionResponse(challenge);
-  const successfulVerification = await performPost(
-    challengeResponse.action,
-    '',
-    {
-      factorId: factor.id,
-      code: code,
-      'X-XSRF-TOKEN': challengeResponse.token,
-    },
-    {
-      Cookie: challengeResponse.headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
-  ).expect(302);
+  const successfulVerification = await postFactor(challengeResponse, factor, code);
 
   expect(successfulVerification.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
   return successfulVerification;
@@ -816,88 +657,35 @@ const verifyFactorOnEmailEnrollment = async (challenge, factor) => {
   const verificationCode = email.contents[0].data.match('.*class="otp-code".*<span[^>]*>.([0-9]{6}).<\\/span>')[1];
   expect(verificationCode).toBeDefined();
   await clearEmails();
-
-  const successfulVerification = await performPost(
-    challengeResponse.action,
-    '',
-    {
-      factorId: factor.id,
-      code: verificationCode,
-      'X-XSRF-TOKEN': challengeResponse.token,
-    },
-    {
-      Cookie: challengeResponse.headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
-  ).expect(302);
-
-  expect(successfulVerification.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
-  return successfulVerification;
+  return postFactor(challengeResponse, factor, verificationCode);
 };
 
 const verifyFactorFailure = async (challenge, factor) => {
   const challengeResponse = await extractXsrfTokenAndActionResponse(challenge);
-  const failedVerification = await performPost(
-    challengeResponse.action,
-    '',
-    {
-      factorId: factor.id,
-      code: 123456,
-      'X-XSRF-TOKEN': challengeResponse.token,
-    },
-    {
-      Cookie: challengeResponse.headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
-  ).expect(302);
+  const failedVerification = await postFactor(challengeResponse, factor, 'invalid-code');
 
   expect(failedVerification.headers['location']).toContain('error=mfa_challenge_failed');
   return failedVerification;
 };
 
-const verifyMockFactor = async (authResult, code) => {
-  return await performPost(
-    authResult.action,
-    '',
-    {
-      factorId: mockFactor.id,
-      code: code,
-      'X-XSRF-TOKEN': authResult.token,
-    },
-    {
-      Cookie: authResult.headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
-  ).expect(302);
-};
-
 const verifySmsSfrFactor = async (challenge, factor) => {
   const challengeResponse = await extractXsrfTokenAndActionResponse(challenge);
-  const code = getSMSCode();
+  const code = extractSmsCode(sfrUrl);
+  return await postFactor(challengeResponse, factor, code);
+};
+
+const postFactor = async (response, factor, code): Promise<any> => {
   return await performPost(
-    challengeResponse.action,
+    response.action,
     '',
     {
       factorId: factor.id,
       code: code,
-      'X-XSRF-TOKEN': challengeResponse.token,
+      'X-XSRF-TOKEN': response.token,
     },
     {
-      Cookie: challengeResponse.headers['set-cookie'],
+      Cookie: response.headers['set-cookie'],
       'Content-type': 'application/x-www-form-urlencoded',
     },
   ).expect(302);
-};
-
-const getSMSCode = async () => {
-  const requests = await performGet(sfrUrl, '/__admin/requests');
-  expect(requests.status).toBe(200);
-  const body = decodeURIComponent(requests.body.requests[0].request.body);
-  const params = new URLSearchParams(body);
-  const messageUnitaireRaw = params.get('messageUnitaire');
-  const messageUnitaireJson = JSON.parse(decodeURIComponent(messageUnitaireRaw));
-  const code = messageUnitaireJson.msgContent;
-
-  expect(code).toBeDefined();
-  return code;
 };

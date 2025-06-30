@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
+import { performFormPost, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { ResponseError } from '../../../../api/management/runtime';
 import { TestSuiteContext } from './mfa-setup-fixture';
 import { extractDomAttr, extractDomValue } from './mfa-extract-fixture';
@@ -130,4 +130,45 @@ export async function processMfaEndToEnd(ctx: TestSuiteContext, rememberDevice: 
   return {
     cookie: finalLocationResponse.headers['set-cookie'],
   };
+}
+
+export async function processLoginFromContext(ctx: TestSuiteContext) {
+  const authResponse = await get(ctx.clientAuthUrl, 302);
+  const loginPage = await followUpGet(authResponse, 200);
+
+  let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
+  let action = extractDomAttr(loginPage, 'form', 'action');
+
+  const loginPostResponse = await postForm(
+    action,
+    {
+      'X-XSRF-TOKEN': xsrf,
+      username: ctx.user.username,
+      password: ctx.user.password,
+      rememberMe: 'off',
+      client_id: ctx.client.clientId,
+    },
+    {
+      Cookie: loginPage.headers['set-cookie'],
+      'Content-type': 'application/x-www-form-urlencoded',
+    },
+    302,
+  );
+  return await followUpGet(loginPostResponse, 302);
+}
+
+export async function postMfaChallenge(ctx: TestSuiteContext, challengeResponse: any, code: any) {
+  return await performPost(
+    challengeResponse.action,
+    '',
+    {
+      factorId: ctx.domain.domain.factors[0].id,
+      code: code,
+      'X-XSRF-TOKEN': challengeResponse.token,
+    },
+    {
+      Cookie: challengeResponse.headers['set-cookie'],
+      'Content-type': 'application/x-www-form-urlencoded',
+    },
+  ).expect(302);
 }

@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, jest } from '@jest/globals';
+import { afterAll, beforeAll, expect, it, jest } from '@jest/globals';
 import { Domain, enableDomain, initClient, initDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { withRetry } from '@utils-commands/retry';
-import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
+import { extractXsrfTokenAndActionResponse, getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
 import fetch from 'cross-fetch';
-import { extractDomAttr, extractDomValue } from './fixture/mfa-extract-fixture';
-import { followUpGet, get, postForm, processMfaEndToEnd } from './fixture/mfa-flow-fixture';
+import { extractDomValue } from './fixture/mfa-extract-fixture';
+import {
+  followUpGet,
+  get,
+  postMfaChallenge,
+  processLoginFromContext,
+  processMfaEndToEnd,
+  processMfaEnrollment,
+} from './fixture/mfa-flow-fixture';
 import { waitFor } from '@management-commands/domain-management-commands';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
+const mfaChallengeAttemptsResetTime = 1;
 
 const domain: Domain = {
   admin: {
@@ -57,7 +65,7 @@ function defaultApplicationSettings() {
 }
 
 beforeAll(async () => {
-  await initDomain(domain, 7);
+  await initDomain(domain, 9);
 
   let settings;
 
@@ -142,6 +150,29 @@ beforeAll(async () => {
   };
   const enrollmentTrueClient = await initClient(domain, 'enrollment-true-1', settings);
 
+  settings = {
+    ...defaultApplicationSettings(),
+    settings: {
+      mfa: {
+        factor: {
+          defaultFactorId: domain.domain.factors[0].id,
+          applicationFactors: [{ id: domain.domain.factors[0].id, selectionRule: '{{ false }}' }],
+        },
+        enroll: { active: true, enrollmentSkipActive: false, forceEnrollment: true, type: 'required' },
+        challenge: { active: true, challengeRule: '', type: 'required' },
+      },
+      account: {
+        inherited: false,
+        mfaChallengeAttemptsDetectionEnabled: true,
+        mfaChallengeMaxAttempts: 2,
+        mfaChallengeAttemptsResetTime: mfaChallengeAttemptsResetTime,
+      },
+    },
+  };
+  const rateLimitClient = await initClient(domain, 'rate-limit-1', settings);
+
+  const bruteForceClient = await initClient(domain, 'brut-force-1', settings);
+
   settings = defaultApplicationSettings();
   settings.settings.mfa.factor = {
     defaultFactorId: domain.domain.factors[0].id,
@@ -167,6 +198,8 @@ beforeAll(async () => {
     domain.domain.users[6],
     oidc.body.authorization_endpoint,
   );
+  rateLimitCtx = new TestSuiteContext(domain, rateLimitClient, domain.domain.users[7], oidc.body.authorization_endpoint);
+  bruteForceCtx = new TestSuiteContext(domain, bruteForceClient, domain.domain.users[8], oidc.body.authorization_endpoint);
 });
 
 let noFactorsCtx: TestSuiteContext;
@@ -176,6 +209,8 @@ let stepUpPositiveCtx2: TestSuiteContext;
 let withFactorsCtx: TestSuiteContext;
 let enrollmentTrueCtx: TestSuiteContext;
 let stepUpPositiveChallengeDisabledCtx: TestSuiteContext;
+let rateLimitCtx: TestSuiteContext;
+let bruteForceCtx: TestSuiteContext;
 
 afterAll(async () => {
   await removeDomain(domain);
@@ -184,29 +219,8 @@ afterAll(async () => {
 describe('With disabled factors', () => {
   it('should omit MFA flow', async () => {
     const ctx = noFactorsCtx;
-    const authResponse = await get(ctx.clientAuthUrl, 302);
-    const loginPage = await followUpGet(authResponse, 200);
 
-    let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = extractDomAttr(loginPage, 'form', 'action');
-
-    const loginPostResponse = await postForm(
-      action,
-      {
-        'X-XSRF-TOKEN': xsrf,
-        username: ctx.user.username,
-        password: ctx.user.password,
-        rememberMe: 'off',
-        client_id: ctx.client.clientId,
-      },
-      {
-        Cookie: loginPage.headers['set-cookie'],
-        'Content-type': 'application/x-www-form-urlencoded',
-      },
-      302,
-    );
-
-    const authResponseFinal = await followUpGet(loginPostResponse, 302);
+    const authResponseFinal = await processLoginFromContext(ctx);
 
     expect(authResponseFinal.headers['location']).toBeDefined();
     expect(authResponseFinal.headers['location']).toContain(ctx.client.redirectUris[0]);
@@ -218,29 +232,7 @@ describe('With one enabled factor should omit MFA flow', () => {
   it('when stepUp=false', async () => {
     const ctx = stepUpNegativeCtx;
 
-    const authResponse = await get(ctx.clientAuthUrl, 302);
-    const loginPage = await followUpGet(authResponse, 200);
-
-    let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = extractDomAttr(loginPage, 'form', 'action');
-
-    const loginPostResponse = await postForm(
-      action,
-      {
-        'X-XSRF-TOKEN': xsrf,
-        username: ctx.user.username,
-        password: ctx.user.password,
-        rememberMe: 'off',
-        client_id: ctx.client.clientId,
-      },
-      {
-        Cookie: loginPage.headers['set-cookie'],
-        'Content-type': 'application/x-www-form-urlencoded',
-      },
-      302,
-    );
-
-    const authResponseFinal = await followUpGet(loginPostResponse, 302);
+    const authResponseFinal = await processLoginFromContext(ctx);
 
     expect(authResponseFinal.headers['location']).toBeDefined();
     expect(authResponseFinal.headers['location']).toContain(ctx.client.redirectUris[0]);
@@ -249,29 +241,7 @@ describe('With one enabled factor should omit MFA flow', () => {
 
   it('when stepUp is disabled', async () => {
     const ctx = stepUpOffCtx;
-    const authResponse = await get(ctx.clientAuthUrl, 302);
-    const loginPage = await followUpGet(authResponse, 200);
-
-    let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = extractDomAttr(loginPage, 'form', 'action');
-
-    const loginPostResponse = await postForm(
-      action,
-      {
-        'X-XSRF-TOKEN': xsrf,
-        username: ctx.user.username,
-        password: ctx.user.password,
-        rememberMe: 'off',
-        client_id: ctx.client.clientId,
-      },
-      {
-        Cookie: loginPage.headers['set-cookie'],
-        'Content-type': 'application/x-www-form-urlencoded',
-      },
-      302,
-    );
-
-    const authResponseFinal = await followUpGet(loginPostResponse, 302);
+    const authResponseFinal = await processLoginFromContext(ctx);
 
     expect(authResponseFinal.headers['location']).toBeDefined();
     expect(authResponseFinal.headers['location']).toContain(ctx.client.redirectUris[0]);
@@ -295,29 +265,7 @@ describe('With enabled factors and disabled enrollment and disabled challenge', 
   it('should stop MFA flow', async () => {
     const ctx = withFactorsCtx;
 
-    const authResponse = await get(ctx.clientAuthUrl, 302);
-    const loginPage = await followUpGet(authResponse, 200);
-
-    let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = extractDomAttr(loginPage, 'form', 'action');
-
-    const loginPostResponse = await postForm(
-      action,
-      {
-        'X-XSRF-TOKEN': xsrf,
-        username: ctx.user.username,
-        password: ctx.user.password,
-        rememberMe: 'off',
-        client_id: ctx.client.clientId,
-      },
-      {
-        Cookie: loginPage.headers['set-cookie'],
-        'Content-type': 'application/x-www-form-urlencoded',
-      },
-      302,
-    );
-
-    const finalLocationResponse = await followUpGet(loginPostResponse, 302);
+    const finalLocationResponse = await processLoginFromContext(ctx);
 
     expect(finalLocationResponse.headers['location']).toBeDefined();
     expect(finalLocationResponse.headers['location']).toContain(ctx.client.redirectUris[0]);
@@ -327,31 +275,7 @@ describe('With enabled factors and disabled enrollment and disabled challenge', 
 
 describe('With enabled factors and but failing selection rule', () => {
   it('only default factor should be visible', async () => {
-    const ctx = enrollmentTrueCtx;
-
-    const authResponse = await get(ctx.clientAuthUrl, 302);
-    const loginPage = await followUpGet(authResponse, 200);
-
-    let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-    let action = extractDomAttr(loginPage, 'form', 'action');
-
-    const loginPostResponse = await postForm(
-      action,
-      {
-        'X-XSRF-TOKEN': xsrf,
-        username: ctx.user.username,
-        password: ctx.user.password,
-        rememberMe: 'off',
-        client_id: ctx.client.clientId,
-      },
-      {
-        Cookie: loginPage.headers['set-cookie'],
-        'Content-type': 'application/x-www-form-urlencoded',
-      },
-      302,
-    );
-
-    const enrollLocationResponse = await followUpGet(loginPostResponse, 302);
+    const enrollLocationResponse = await processLoginFromContext(enrollmentTrueCtx);
     const enrollmentPage = await followUpGet(enrollLocationResponse, 200);
 
     const factorId = extractDomValue(enrollmentPage, '[name=factorId]');
@@ -368,5 +292,77 @@ describe('With active session, when stepUp is true, with challenge disabled, on 
     const authResponse = await get(ctx.clientAuthUrl, 302, { Cookie: session.cookie });
     expect(authResponse.headers['location']).toBeDefined();
     expect(authResponse.headers['location']).toContain('challenge');
+  });
+});
+
+describe('MFA rate limit test', () => {
+  //To run this test locally, change mfa_rate in gravitee.yml to 2 attempts in 1 minute.
+  it('Should throw mfa_request_limit_exceed after 2 request', async () => {
+    const ctx = rateLimitCtx;
+    const enrollMFA = await processMfaEnrollment(ctx);
+    const authorize2 = await performGet(enrollMFA.location, '', {
+      Cookie: enrollMFA.cookie,
+    }).expect(302);
+
+    expect(authorize2.headers['location']).toBeDefined();
+    expect(authorize2.headers['location']).toContain('/mfa/challenge');
+
+    /**
+     * The number of the get requests is based on the gateway gravtitee.yml 'mfa_rate' configuration
+     * These assertions will fail or need to be updated if 'mfa_rate' configuration is changed
+     */
+    const expectedCode = [200, 200, 302];
+
+    for (const responseCode of expectedCode) {
+      const rateLimitException = await performGet(authorize2.headers['location'], '', {
+        Cookie: authorize2.headers['set-cookie'],
+      });
+      expect(rateLimitException.status).toBe(responseCode);
+
+      if (responseCode === 302) {
+        expect(rateLimitException.headers['location']).toBeDefined();
+        expect(rateLimitException.headers['location']).toContain('request_limit_error=mfa_request_limit_exceed');
+      }
+    }
+  });
+});
+describe('Brute force test', () => {
+  it('Should throw brute force exception', async () => {
+    const ctx = bruteForceCtx;
+
+    const enrollMFA = await processMfaEnrollment(ctx);
+
+    const authorize2 = await performGet(enrollMFA.location, '', {
+      Cookie: enrollMFA.cookie,
+    }).expect(302);
+
+    expect(authorize2.headers['location']).toBeDefined();
+    expect(authorize2.headers['location']).toContain('/mfa/challenge');
+
+    await performGet(authorize2.headers['location'], '', {
+      Cookie: authorize2.headers['set-cookie'],
+    }).expect(200);
+
+    const expectedErrorMessage = [
+      { expected: 'mfa_challenge_failed' },
+      { expected: 'mfa_challenge_failed' },
+      { expected: 'verify_attempt_error=maximum_verify_limit' },
+    ];
+
+    //mfa challenge post
+    const authResult2 = await extractXsrfTokenAndActionResponse(authorize2);
+    const invalidCode = 999;
+    for (let i = 0; i < expectedErrorMessage.length; i++) {
+      const failedVerification = await postMfaChallenge(ctx, authResult2, invalidCode);
+      expect(failedVerification.headers['location']).toBeDefined();
+      expect(failedVerification.headers['location']).toContain(expectedErrorMessage[i].expected);
+    }
+
+    //now wait 1 second as per the configuration
+    await waitFor(mfaChallengeAttemptsResetTime * 1000);
+
+    const successfulVerification = await postMfaChallenge(ctx, authResult2, 1234);
+    expect(successfulVerification.headers['location']).toBeDefined();
+    expect(successfulVerification.headers['location']).not.toContain('error');
   });
 });

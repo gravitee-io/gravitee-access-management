@@ -37,9 +37,9 @@ import {
   updateApplication,
   updateApplicationFlows,
 } from '@management-commands/application-management-commands';
-import { getWellKnownOpenIdConfiguration, logoutUser, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
+import { logoutUser, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
 
-import { Domain, FlowEntity, FlowEntityTypeEnum } from '../../api/management/models';
+import { Domain, FlowEntityTypeEnum } from '../../api/management/models';
 import { assertGeneratedTokenAndGet } from '@gateway-commands/utils';
 import { decodeJwt } from '@utils-commands/jwt';
 import { clearEmails, getLastEmail, hasEmail } from '@utils-commands/email-commands';

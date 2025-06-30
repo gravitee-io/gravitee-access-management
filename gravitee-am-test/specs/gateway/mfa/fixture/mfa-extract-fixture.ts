@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import { expect } from '@jest/globals';
+import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 
 const cheerio = require('cheerio');
 
@@ -39,4 +40,37 @@ export function extractCookieSessionValues(cookie): any {
     .split('.')[1];
   const decoded = Buffer.from(jwt, 'base64').toString('binary');
   return JSON.parse(decoded);
+}
+
+export async function extractSmsCode(sfrUrl): Promise<string> {
+  const requests = await performGet(sfrUrl, '/__admin/requests');
+  expect(requests.status).toBe(200);
+  const body = decodeURIComponent(requests.body.requests[0].request.body);
+  const params = new URLSearchParams(body);
+  const messageUnitaireRaw = params.get('messageUnitaire');
+  const messageUnitaireJson = JSON.parse(decodeURIComponent(messageUnitaireRaw));
+  const code = messageUnitaireJson.msgContent;
+
+  expect(code).toBeDefined();
+  return code;
+}
+
+export function extractSharedSecret(result) {
+  const dom = cheerio.load(result.text);
+  const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
+  const action = dom('form').attr('action');
+
+  expect(xsrfToken).toBeDefined();
+  expect(action).toBeDefined();
+
+  const factors = dom('script')
+    .text()
+    .split('\n')
+    .find((line) => line.trim().startsWith('const factors'));
+  const sharedSecret = JSON.parse(factors.substring(factors.indexOf('=') + 1).replaceAll(';', ''))[0].enrollment.key;
+  return {
+    sharedSecret: sharedSecret,
+    action: action,
+    token: xsrfToken,
+  };
 }
