@@ -186,7 +186,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomai
 Basic simulation to authenticate users using password flow and generate access_token on domain which is randomly selected. Introspection on token is optional
 
 ```
-mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainLoginPasswordFlow  -Ddomain=perf -Dnumber_of_domains=3 -Dagents=5 
+    mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainLoginPasswordFlow  -Ddomain=perf -Dnumber_of_domains=3 -Dagents=5 
 ```
 
 #### Parameters
@@ -207,7 +207,7 @@ mvn gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomai
 
 A docker image that embeds all the simulations can be created.
 ```bash
-$ docker build -t am-gatling-runner .
+$ docker build --platform linux/amd64,linux/arm64 -t am-gatling-runner .
 ```
 
 Once the image is available, you can run a simulation by providing the simulation class as parameter and extra parameter to adapt the simulation behaviour 
@@ -218,7 +218,7 @@ docker run --rm am-gatling-runner "io.gravitee.am.performance.MultiDomainBasicLo
 You can also run it in interaction mode to execute gatling manually.
 ```bash
 docker run -it --rm am-gatling-runner 
-$> root@77f37ff72533:/opt/gatling# gatling.sh 
+$> root@77f37ff72533:/opt/gatling# mvnw gatling:test 
 GATLING_HOME is set to /opt/gatling
 Do you want to run the simulation locally, on Gatling Enterprise, or just package it?
 Type the number corresponding to your choice and press enter
@@ -231,5 +231,5 @@ Type the number corresponding to your choice and press enter
 
 ```bash
 docker run -it --rm am-gatling-runner 
-$> root@77f37ff72533:/opt/gatling# gatling.sh --run-mode local -s io.gravitee.am.performance.MultiDomainBasicLoginFlow -erjo "-Dnumber_of_domains=10 -Dagents=600 -Dgw_url=https://am-perf.gateway.4-2-x.team-am.gravitee.dev" 
+$> root@77f37ff72533:/opt/gatling# mvnw gatling:test -Dgatling.simulationClass=io.gravitee.am.performance.MultiDomainBasicLoginFlow -Dnumber_of_domains=10 -Dagents=600 -Dgw_url=https://am-perf.gateway.4-2-x.team-am.gravitee.dev
 ```

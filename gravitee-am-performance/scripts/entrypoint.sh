@@ -26,6 +26,6 @@ else
     # hack to be able to run the image in interactive mode on kubernetes
     sleep ${@}
   else
-    exec /opt/gatling/bin/gatling.sh --run-mode local -s $simulation -erjo "$@"
+    exec mvnw gatling:test -Dgatling.simulationClass=$simulation $@
   fi
 fi
