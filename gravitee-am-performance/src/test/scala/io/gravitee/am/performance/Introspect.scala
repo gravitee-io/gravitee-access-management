@@ -46,7 +46,7 @@ class Introspect extends Simulation {
         exec(http("Introspect Access Token")
           .post(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/oauth/introspect")
           .basicAuth(APP_NAME, APP_NAME)
-          .formParam("token", "${access_token}")
+          .formParam("token", "#{access_token}")
           .check(status.is(200))
           .check(jsonPath("$.active").is("true")))
     }

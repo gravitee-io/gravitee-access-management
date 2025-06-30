@@ -17,6 +17,7 @@ package io.gravitee.am.performance
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
+import scala.concurrent.duration._
 import io.gravitee.am.performance.utils.SimulationSettings._
 
 /**
@@ -36,6 +37,12 @@ class MultiDomainServiceIntrospect extends Simulation {
   val httpProtocol = http
     .userAgentHeader("Gatling - Multi Domain Introspect")
     .disableFollowRedirect
+    // share connection only for ServiceIntrospect usecase as we are simulating B2B interaction
+    // we are not in a browser app which will open new socket per agent
+    // without this parameter, we have some issue when running the simulation on kubernetes
+    // due to "Cannot assign requested address" error. This error doesn't happen if injector is running
+    // in local machine
+    .shareConnections
 
   val domainGenerator = multiDomainsFeeder(WORKLOAD)
   val introspect = introspectFeeder()
@@ -55,7 +62,7 @@ class MultiDomainServiceIntrospect extends Simulation {
         exec(http("Introspect Access Token")
           .post(GATEWAY_BASE_URL + "/#{domainName}/oauth/introspect")
           .basicAuth(APP_NAME, APP_NAME)
-          .formParam("token", "${access_token}")
+          .formParam("token", "#{access_token}")
           .check(status.is(200))
           .check(jsonPath("$.active").is("true")))
       }

@@ -16,32 +16,33 @@
 
 FROM openjdk:21-slim
 
-ENV GATLING_VERSION 3.9.5
+ENV GATLING_VERSION=3.14.3
 
 WORKDIR /opt
 
-RUN mkdir -p gatling
+# install gatling
+RUN apt-get update && apt-get install --no-install-recommends -y wget unzip lsof vim sysstat && \
+    wget -q -O gatling-$GATLING_VERSION.zip https://repo1.maven.org/maven2/io/gatling/highcharts/gatling-charts-highcharts-bundle/$GATLING_VERSION/gatling-charts-highcharts-bundle-$GATLING_VERSION-bundle.zip && \
+    unzip gatling-$GATLING_VERSION.zip && \
+    mv gatling-charts-highcharts-bundle-$GATLING_VERSION/ gatling && \
+    rm -rf gatling-$GATLING_VERSION.zip
 
 WORKDIR  /opt/gatling
 
-# install gatling
-RUN apt-get update && apt-get install -y wget unzip
-RUN wget -q -O gatling-$GATLING_VERSION.zip \
-  https://repo1.maven.org/maven2/io/gatling/highcharts/gatling-charts-highcharts-bundle/$GATLING_VERSION/gatling-charts-highcharts-bundle-$GATLING_VERSION-bundle.zip
-RUN unzip gatling-$GATLING_VERSION.zip
-RUN cp -R gatling-charts-highcharts-bundle-$GATLING_VERSION/* .
-RUN rm -rf gatling-$GATLING_VERSION.zip gatling-charts-highcharts-bundle-$GATLING_VERSION
-
 # set directories below to be mountable from host
-VOLUME ["/opt/gatling/conf", "/opt/gatling/results", "/opt/gatling/user-files"]
+VOLUME ["/opt/gatling/src/test/resources/", "/opt/gatling/target", "/opt/gatling/src/test/scala"]
 
 # set environment variables
-ENV PATH /opt/gatling/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV GATLING_HOME /opt/gatling
+ENV PATH=/opt/gatling:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV GATLING_HOME=/opt/gatling
 
-COPY scripts/entrypoint.sh /opt/gatling/bin
-RUN chmod +x /opt/gatling/bin/entrypoint.sh
+COPY scripts/entrypoint.sh /opt/gatling/
+RUN chmod +x /opt/gatling/entrypoint.sh
 
-COPY  src/test/scala/ user-files/simulations
+COPY  src/test/scala/ src/test/scala
+
+COPY pom.xml pom.xml
+
+RUN mvnw test-compile
 
 ENTRYPOINT ["entrypoint.sh"]
