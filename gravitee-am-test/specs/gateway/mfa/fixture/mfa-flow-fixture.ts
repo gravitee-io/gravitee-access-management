@@ -49,34 +49,14 @@ export async function postForm(uri: string, body: any, headers: any, expectedSta
   return response;
 }
 
-export async function processMfaEnrollment(ctx: TestSuiteContext) {
-  const authResponse = await get(ctx.clientAuthUrl, 302);
-  const loginPage = await followUpGet(authResponse, 200);
+export async function processMfaEnrollment(ctx: TestSuiteContext, rememberDevice: boolean = false, devId?) {
+  const enrollLocationResponse = await processLoginFromContext(ctx, rememberDevice, devId);
 
-  let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
-  let action = extractDomAttr(loginPage, 'form', 'action');
-
-  const loginPostResponse = await postForm(
-    action,
-    {
-      'X-XSRF-TOKEN': xsrf,
-      username: ctx.user.username,
-      password: ctx.user.password,
-      client_id: ctx.client.clientId,
-    },
-    {
-      Cookie: loginPage.headers['set-cookie'],
-      'Content-type': 'application/x-www-form-urlencoded',
-    },
-    302,
-  );
-
-  const enrollLocationResponse = await followUpGet(loginPostResponse, 302);
   const enrollmentPage = await followUpGet(enrollLocationResponse, 200);
 
-  xsrf = extractDomValue(enrollmentPage, '[name=X-XSRF-TOKEN]');
-  action = extractDomAttr(enrollmentPage, 'form', 'action');
-  let factorId = extractDomValue(enrollmentPage, '[name=factorId]');
+  const xsrf = extractDomValue(enrollmentPage, '[name=X-XSRF-TOKEN]');
+  const action = extractDomAttr(enrollmentPage, 'form', 'action');
+  const factorId = extractDomValue(enrollmentPage, '[name=factorId]');
 
   const enrollmentPostResponse = await postForm(
     action,
@@ -99,8 +79,8 @@ export async function processMfaEnrollment(ctx: TestSuiteContext) {
   };
 }
 
-export async function processMfaEndToEnd(ctx: TestSuiteContext, rememberDevice: boolean = false) {
-  const enrollmentPostResponse = await processMfaEnrollment(ctx);
+export async function processMfaEndToEnd(ctx: TestSuiteContext, rememberDevice: boolean = false, deviceId?) {
+  const enrollmentPostResponse = await processMfaEnrollment(ctx, rememberDevice, deviceId);
 
   const challengeLocationResponse = await get(enrollmentPostResponse.location, 302, { Cookie: enrollmentPostResponse.cookie });
   const challengePage = await followUpGet(challengeLocationResponse, 200);
@@ -129,16 +109,20 @@ export async function processMfaEndToEnd(ctx: TestSuiteContext, rememberDevice: 
 
   return {
     cookie: finalLocationResponse.headers['set-cookie'],
+    rememberDeviceCookie: challengePostResponse.headers['set-cookie'].find((cookie) => cookie.includes('GRAVITEE_IO_REMEMBER_DEVICE')),
   };
 }
 
-export async function processLoginFromContext(ctx: TestSuiteContext) {
-  const authResponse = await get(ctx.clientAuthUrl, 302);
+export async function processLoginFromContext(ctx: TestSuiteContext, rememberDevice: boolean = false, devId?) {
+  const authResponse = await get(ctx.clientAuthUrl, 302, ctx.session ? { Cookies: ctx.session } : {});
   const loginPage = await followUpGet(authResponse, 200);
 
   let xsrf = extractDomValue(loginPage, '[name=X-XSRF-TOKEN]');
   let action = extractDomAttr(loginPage, 'form', 'action');
-
+  let cookies = loginPage.headers['set-cookie'];
+  if (ctx.session?.rememberDeviceCookie) {
+    cookies.push(ctx.session.rememberDeviceCookie);
+  }
   const loginPostResponse = await postForm(
     action,
     {
@@ -147,9 +131,13 @@ export async function processLoginFromContext(ctx: TestSuiteContext) {
       password: ctx.user.password,
       rememberMe: 'off',
       client_id: ctx.client.clientId,
+      ...(rememberDevice && {
+        deviceId: devId,
+        deviceType: 'MacOS',
+      }),
     },
     {
-      Cookie: loginPage.headers['set-cookie'],
+      Cookie: cookies,
       'Content-type': 'application/x-www-form-urlencoded',
     },
     302,
