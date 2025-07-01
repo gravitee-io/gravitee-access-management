@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { Domain, enableDomain, initClient, initDomain, removeDomain, TestSuiteContext } from './fixture/mfa-setup-fixture';
 import { withRetry } from '@utils-commands/retry';
-import { followUpGet, get, postForm, processMfaEndToEnd, processMfaEnrollment } from './fixture/mfa-flow-fixture';
+import { followUpGet, get, postForm, processLoginFromContext, processMfaEndToEnd, processMfaEnrollment } from './fixture/mfa-flow-fixture';
 import { extractDomAttr, extractDomValue } from './fixture/mfa-extract-fixture';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { waitFor } from '@management-commands/domain-management-commands';
@@ -57,7 +57,7 @@ const domain = {
 } as Domain;
 
 beforeAll(async () => {
-  await initDomain(domain, 5);
+  await initDomain(domain, 7);
 
   const defaultClient1 = await initClient(domain, 'default-1', defaultApplicationSettings(domain));
   const defaultClient2 = await initClient(domain, 'default-2', defaultApplicationSettings(domain));
@@ -74,6 +74,17 @@ beforeAll(async () => {
   const rememberDeviceClient1 = await initClient(domain, 'remember-1', rememberDeviceClientSettings);
   const rememberDeviceClient2 = await initClient(domain, 'remember-2', rememberDeviceClientSettings);
 
+  const rememberDeviceCookieClientSettings = defaultApplicationSettings(domain);
+  rememberDeviceCookieClientSettings.settings.mfa.rememberDevice = {
+    active: true,
+    skipRememberDevice: false,
+    expirationTimeSeconds: 360000,
+    deviceIdentifierId: domain.domain.devices[1].id,
+  };
+
+  const rememberDeviceCookieClient1 = await initClient(domain, 'cookie-1', rememberDeviceCookieClientSettings);
+  const rememberDeviceCookieClient2 = await initClient(domain, 'cookie-2', rememberDeviceCookieClientSettings);
+
   const oidc = await enableDomain(domain)
     .then(() => waitFor(3000))
     .then(() => withRetry(() => getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200)));
@@ -83,6 +94,18 @@ beforeAll(async () => {
   defaultClientCtx3 = new TestSuiteContext(domain, defaultClient3, domain.domain.users[2], oidc.body.authorization_endpoint);
   rememberMeCtx1 = new TestSuiteContext(domain, rememberDeviceClient1, domain.domain.users[3], oidc.body.authorization_endpoint);
   rememberMeCtx2 = new TestSuiteContext(domain, rememberDeviceClient2, domain.domain.users[4], oidc.body.authorization_endpoint);
+  rememberMeCookieCtx1 = new TestSuiteContext(
+    domain,
+    rememberDeviceCookieClient1,
+    domain.domain.users[5],
+    oidc.body.authorization_endpoint,
+  );
+  rememberMeCookieCtx2 = new TestSuiteContext(
+    domain,
+    rememberDeviceCookieClient2,
+    domain.domain.users[6],
+    oidc.body.authorization_endpoint,
+  );
 });
 
 afterAll(async () => {
@@ -94,6 +117,8 @@ let defaultClientCtx2: TestSuiteContext;
 let defaultClientCtx3: TestSuiteContext;
 let rememberMeCtx1: TestSuiteContext;
 let rememberMeCtx2: TestSuiteContext;
+let rememberMeCookieCtx1: TestSuiteContext;
+let rememberMeCookieCtx2: TestSuiteContext;
 
 describe('When Challenge REQUIRED and factor not enrolled', () =>
   it('should Enroll', async () => {
@@ -148,23 +173,37 @@ describe('When Challenge REQUIRED and factor enrolled and no session issued usin
     expect(authResponse.headers['location']).toContain('challenge');
   }));
 
-describe('When Challenge REQUIRED and factor enrolled and no session issued using MFA and RememberDevice enabled and user has NOT associated device', () =>
-  it('should Challenge', async () => {
-    const ctx = rememberMeCtx1;
-
-    let session = await processMfaEnrollment(ctx);
-    const authResponse = await withRetry(() => get(ctx.clientAuthUrl, 302, { Cookie: session.cookie }, 'challenge'));
-
-    expect(authResponse.headers['location']).toBeDefined();
-    expect(authResponse.headers['location']).toContain('challenge');
-  }));
-
-describe('When Challenge REQUIRED and factor enrolled and no session issued using MFA and RememberDevice enabled and user associated device', () =>
+describe('When Challenge REQUIRED and factor enrolled and no session issued using MFA and RememberDevice enabled', () => {
   it('should End MFA flow', async () => {
-    const ctx = rememberMeCtx2;
-    let session = await processMfaEndToEnd(ctx, true);
-    const authResponse = await get(ctx.clientAuthUrl, 302, { Cookie: session.cookie });
+    let session = await processMfaEndToEnd(rememberMeCtx2, true, rememberMeCtx2.domain.domain.devices[0].id);
+    const authResponse = await get(rememberMeCtx2.clientAuthUrl, 302, { Cookie: session.cookie });
 
     expect(authResponse.headers['location']).toBeDefined();
     expect(authResponse.headers['location']).toContain('code=');
-  }));
+  });
+
+  it('Should Process Login without MFA', async () => {
+    const loginResponse = await processLoginFromContext(rememberMeCtx2, true, rememberMeCtx2.domain.domain.devices[0].id);
+    expect(loginResponse.headers['location']).toBeDefined();
+    expect(loginResponse.headers['location']).toContain('code=');
+  });
+});
+
+describe('When Challenge REQUIRED and factor enrolled and no session issued using MFA and RememberDevice cookie based enabled', () => {
+  it('Should Process MFA and remember user', async () => {
+    let session = await processMfaEndToEnd(rememberMeCookieCtx2, true, rememberMeCookieCtx2.domain.domain.devices[1].id);
+    expect(session.cookie).toBeDefined();
+    expect(session.rememberDeviceCookie).toBeDefined();
+    rememberMeCookieCtx2.session = session;
+
+    const authResponse = await get(rememberMeCookieCtx2.clientAuthUrl, 302, { Cookie: session.cookie });
+
+    expect(authResponse.headers['location']).toBeDefined();
+    expect(authResponse.headers['location']).toContain('code=');
+  });
+  it('Should Process Login without MFA', async () => {
+    const loginResponse = await processLoginFromContext(rememberMeCookieCtx2);
+    expect(loginResponse.headers['location']).toBeDefined();
+    expect(loginResponse.headers['location']).toContain('code=');
+  });
+});

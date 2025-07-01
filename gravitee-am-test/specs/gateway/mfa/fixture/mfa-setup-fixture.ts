@@ -56,11 +56,13 @@ export class TestSuiteContext {
   client: Application;
   user: User;
   clientAuthUrl: string;
-  constructor(domain: Domain, client: Application, user: User, authorizationEndpoint: string) {
+  session: any;
+  constructor(domain: Domain, client: Application, user: User, authorizationEndpoint: string, session = null) {
     this.domain = domain;
     this.client = client;
     this.user = user;
     this.clientAuthUrl = `${authorizationEndpoint}?response_type=code&client_id=${client.name}&redirect_uri=https://auth-nightly.gravitee.io/myApp/callback`;
+    this.session = session;
   }
 }
 
@@ -74,7 +76,7 @@ export async function initDomain(domain: Domain, usersCount: number) {
     domain.domain.users.push(await createTestUser(domain));
   }
   domain.domain.factors = await createMockFactors(domain);
-  domain.domain.devices = [await createMockDevice(domain)];
+  domain.domain.devices = [await createMockDevice(domain), await createCookieDevice(domain)];
 }
 
 export async function getAccessToken(domain: Domain): Promise<string> {
@@ -122,6 +124,16 @@ export async function createMockDevice(ctx: Domain) {
     configuration: '{}',
     name: 'device',
     type: 'fingerprintjs-v3-community-device-identifier',
+  };
+  const device = await createDevice(ctx.domain.domainId, ctx.admin.accessToken, body);
+  return { id: device.id };
+}
+
+export async function createCookieDevice(ctx: Domain) {
+  const body = {
+    configuration: '{}',
+    name: 'cookie',
+    type: 'cookie-device-identifier',
   };
   const device = await createDevice(ctx.domain.domainId, ctx.admin.accessToken, body);
   return { id: device.id };
