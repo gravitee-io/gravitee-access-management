@@ -36,9 +36,6 @@ import javax.inject.Named;
  */
 public abstract class AbstractUsersResource extends AbstractResource {
 
-    protected static final int MAX_USERS_SIZE_PER_PAGE = 30;
-    protected static final String MAX_USERS_SIZE_PER_PAGE_STRING = "30";
-
     @Autowired
     protected UserService userService;
 
@@ -61,12 +58,12 @@ public abstract class AbstractUsersResource extends AbstractResource {
 
     private Single<Page<User>> executeSearchUsers(CommonUserService service, ReferenceType referenceType, String referenceId, String query, String filter, int page, int size) {
         if (query != null) {
-            return service.search(referenceType, referenceId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+            return service.search(referenceType, referenceId, query, page, size);
         }
         if (filter != null) {
             return Single.defer(() -> {
                 FilterCriteria filterCriteria = FilterCriteria.convert(SCIMFilterParser.parse(filter));
-                return service.search(referenceType, referenceId, filterCriteria, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                return service.search(referenceType, referenceId, filterCriteria, page, size);
             }).onErrorResumeNext(ex -> {
                 if (ex instanceof IllegalArgumentException) {
                     return Single.error(new BadRequestException(ex.getMessage()));
@@ -74,7 +71,7 @@ public abstract class AbstractUsersResource extends AbstractResource {
                 return Single.error(ex);
             });
         }
-        return service.findAll(referenceType, referenceId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+        return service.findAll(referenceType, referenceId, page, size);
     }
 
 }
