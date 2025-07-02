@@ -53,6 +53,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
@@ -122,7 +123,7 @@ public class UsersResource extends AbstractResource {
             @QueryParam("q") String query,
             @QueryParam("filter") String filter,
             @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
+            @QueryParam("size") @Max(1000) @DefaultValue("30") int size,
             @Suspended final AsyncResponse response) {
 
         io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
@@ -214,12 +215,12 @@ public class UsersResource extends AbstractResource {
 
     protected Single<Page<User>> searchUsers(Domain domain, String query, String filter, int page, int size) {
         if (query != null) {
-            return userService.search(domain, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+            return userService.search(domain, query, page, size);
         }
         if (filter != null) {
             return Single.defer(() -> {
                 FilterCriteria filterCriteria = FilterCriteria.convert(SCIMFilterParser.parse(filter));
-                return userService.search(domain, filterCriteria, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                return userService.search(domain, filterCriteria, page, size);
             }).onErrorResumeNext(ex -> {
                 if (ex instanceof IllegalArgumentException) {
                     return Single.error(new BadRequestException(ex.getMessage()));
@@ -227,7 +228,7 @@ public class UsersResource extends AbstractResource {
                 return Single.error(ex);
             });
         }
-        return userService.findAll(domain, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+        return userService.findAll(domain, page, size);
     }
 
     private Single<?> processBulkRequest(BulkRequest.Generic bulkRequest, Domain domain, io.gravitee.am.identityprovider.api.User authenticatedUser) {
