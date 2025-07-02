@@ -108,6 +108,60 @@ public class UsersResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldNotGetUsers_exception_on_more_than_1000_user_page() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .queryParam("page", 0)
+                .queryParam("size", 1001)
+                .request()
+                .get();
+
+        Map<String, Object> body = response.readEntity(Map.class);
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertEquals("[1001: must be less than or equal to 1000]", body.get("message"));
+    }
+
+    @Test
+    public void shouldGetUsers_with_default_page_size_30() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        final User mockUser = new User();
+        mockUser.setId("user-id-1");
+        mockUser.setUsername("username-1");
+        mockUser.setReferenceType(ReferenceType.DOMAIN);
+        mockUser.setReferenceId(domainId);
+
+        final User mockUser2 = new User();
+        mockUser2.setId("domain-id-2");
+        mockUser2.setUsername(null);
+        mockUser2.setReferenceType(ReferenceType.DOMAIN);
+        mockUser2.setReferenceId(domainId);
+
+        final Set<User> users = new HashSet<>(Arrays.asList(mockUser, mockUser2));
+        final Page<User> pagedUsers = new Page<>(users, 0, 2);
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(pagedUsers)).when(userService).findAll(ReferenceType.DOMAIN, domainId, 0, 30);
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("users")
+                .queryParam("page", 0)
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @Test
     public void shouldGetUsersOneWithNoUsername() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
