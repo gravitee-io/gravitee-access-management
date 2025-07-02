@@ -53,6 +53,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
@@ -121,7 +122,7 @@ public class OrganizationUsersResource extends AbstractResource {
             @QueryParam("q") String query,
             @QueryParam("filter") String filter,
             @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @DefaultValue(MAX_USERS_SIZE_PER_PAGE_STRING) int size,
+            @QueryParam("size") @Max(1000) @DefaultValue("30") int size,
             @Suspended final AsyncResponse response) {
 
         io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
@@ -179,12 +180,12 @@ public class OrganizationUsersResource extends AbstractResource {
 
     private Single<Page<User>> executeSearchUsers(OrganizationUserService service, ReferenceType referenceType, String referenceId, String query, String filter, int page, int size) {
         if (query != null) {
-            return service.search(referenceType, referenceId, query, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+            return service.search(referenceType, referenceId, query, page, size);
         }
         if (filter != null) {
             return Single.defer(() -> {
                 FilterCriteria filterCriteria = FilterCriteria.convert(SCIMFilterParser.parse(filter));
-                return service.search(referenceType, referenceId, filterCriteria, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+                return service.search(referenceType, referenceId, filterCriteria, page, size);
             }).onErrorResumeNext(ex -> {
                 if (ex instanceof IllegalArgumentException) {
                     return Single.error(new BadRequestException(ex.getMessage()));
@@ -192,7 +193,7 @@ public class OrganizationUsersResource extends AbstractResource {
                 return Single.error(ex);
             });
         }
-        return service.findAll(referenceType, referenceId, page, Integer.min(size, MAX_USERS_SIZE_PER_PAGE));
+        return service.findAll(referenceType, referenceId, page, size);
     }
 
     @POST
