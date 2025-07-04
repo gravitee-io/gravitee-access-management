@@ -74,6 +74,16 @@ public class MySqlHelper extends AbstractDialectHelper {
         return search;
     }
 
+    @Override
+    public boolean supportsReturningOnDelete() {
+        return false;
+    }
+
+    @Override
+    public String buildAuthorizationCodeDeleteAndReturnQuery() {
+        throw new UnsupportedOperationException("MySQL doesn't support returning deleted");
+    }
+
     public String buildPagingClauseUsingOffset(String field, int offset, int size) {
         return " ORDER BY " + field + " LIMIT " + size + " OFFSET " + offset;
     }

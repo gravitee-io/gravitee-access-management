@@ -573,7 +573,7 @@ describe('OAuth2 - App version', () => {
 
         expect(badGrantResponse.body.error).toEqual('invalid_grant');
         expect(badGrantResponse.body.error_description).toEqual(
-          `The authorization code ${code} does not belong to the client ${application1.settings.oauth.clientId}.`,
+          `The authorization code ${code} is invalid.`,
         );
 
         await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
