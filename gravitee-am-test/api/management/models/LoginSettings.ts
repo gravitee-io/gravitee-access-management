@@ -104,6 +104,12 @@ export interface LoginSettings {
    * @memberof LoginSettings
    */
   enforcePasswordPolicyEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatePasswordPolicy
+   */
+  resetPasswordOnExpiration?: boolean;
 }
 
 export function LoginSettingsFromJSON(json: any): LoginSettings {
@@ -133,6 +139,7 @@ export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boole
     hideForm: !exists(json, 'hideForm') ? undefined : json['hideForm'],
     identifierFirstEnabled: !exists(json, 'identifierFirstEnabled') ? undefined : json['identifierFirstEnabled'],
     enforcePasswordPolicyEnabled: !exists(json, 'enforcePasswordPolicyEnabled') ? undefined : json['enforcePasswordPolicyEnabled'],
+    resetPasswordOnExpiration: !exists(json, 'resetPasswordOnExpiration') ? undefined : json['resetPasswordOnExpiration'],
   };
 }
 
@@ -156,5 +163,6 @@ export function LoginSettingsToJSON(value?: LoginSettings | null): any {
     hideForm: value.hideForm,
     identifierFirstEnabled: value.identifierFirstEnabled,
     enforcePasswordPolicyEnabled: value.enforcePasswordPolicyEnabled,
+    resetPasswordOnExpiration: value.resetPasswordOnExpiration,
   };
 }

@@ -74,6 +74,16 @@ export class LoginSettingsComponent implements OnChanges {
     return this.loginSettings?.forgotPasswordEnabled;
   }
 
+  enableResetPasswordOnExpiration(event) {
+    this.loginSettings.resetPasswordOnExpiration = event.checked;
+    this.formChanged = true;
+  }
+
+  isResetPasswordOnExpiration() {
+    return this.loginSettings?.resetPasswordOnExpiration;
+  }
+
+
   enablePasswordless(event) {
     this.loginSettings.passwordlessEnabled = event.checked;
     this.formChanged = true;
