@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl;
 
+import com.nimbusds.jwt.JWT;
+import com.nimbusds.jwt.JWTParser;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -38,6 +40,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -186,6 +189,8 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
 
     private void parseClientId(HttpServerRequest request, Handler<AsyncResult<String>> handler) {
         final String authorization = request.headers().get(HttpHeaders.AUTHORIZATION);
+        final String clientAssertion = request.getParam(Parameters.CLIENT_ASSERTION);
+        final String clientAssertionType = request.getParam(Parameters.CLIENT_ASSERTION_TYPE);
         String clientId;
         try {
             if (authorization != null) {
@@ -206,18 +211,20 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 } else {
                     clientId = clientAuthentication;
                 }
-                handler.handle(Future.succeededFuture(clientId));
+            } else if(clientAssertion != null && clientAssertionType != null) {
+                JWT jwt = JWTParser.parse(clientAssertion);
+                clientId = jwt.getJWTClaimsSet().getSubject();
             } else {
                 // if no authorization header found, check client_id via the query parameter
                 clientId = request.getParam(Parameters.CLIENT_ID);
-                // client_id can be null if client authentication method is private_jwt
-                if (clientId == null && request.getParam(Parameters.CLIENT_ASSERTION_TYPE) == null && request.getParam(Parameters.CLIENT_ASSERTION) == null) {
+                if (clientId == null) {
                     handler.handle(Future.failedFuture(new InvalidClientException(INVALID_CLIENT_MESSAGE)));
                     return;
                 }
-                handler.handle(Future.succeededFuture(clientId));
             }
-        } catch (RuntimeException e) {
+            handler.handle(Future.succeededFuture(clientId));
+
+        } catch (ParseException | RuntimeException e) {
             handler.handle(Future.failedFuture(new InvalidClientException(INVALID_CLIENT_MESSAGE)));
         }
     }
