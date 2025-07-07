@@ -34,15 +34,15 @@ object ManagementAPICalls {
   def retrieveDomainId(domainName: String) = {
     http("Get Domain")
       .get(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/")
-      .header("Authorization", "Bearer ${auth-token}")
+      .header("Authorization", "Bearer #{auth-token}")
       .check(status.is(200))
       .check(jsonPath("$.data[?(@.name==\"" + domainName + "\")].id").saveAs("domainId"))
   }
 
   def retrieveIdentityProviderId(idpName: String) = {
     http("Get Identity Providers")
-      .get(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/identities")
-      .header("Authorization", "Bearer ${auth-token}")
+      .get(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/#{domainId}/identities")
+      .header("Authorization", "Bearer #{auth-token}")
       .check(status.is(200))
       .check(jsonPath("$[?(@.name==\"" + idpName + "\")].id").saveAs("identityId"))
 
