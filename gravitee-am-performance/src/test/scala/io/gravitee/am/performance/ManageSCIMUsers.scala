@@ -85,8 +85,8 @@ class ManageSCIMUsers extends Simulation {
       .check(status.is(201))
       .check(jsonPath("$.id").saveAs("scim_user_id")))
     .exec(http("Patch SCIM USER")
-      .patch(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/scim/Users/" + "${scim_user_id}")
-      .header("Authorization", "Bearer ${scimAccessToken}")
+      .patch(GATEWAY_BASE_URL + s"/${DOMAIN_NAME}/scim/Users/" + "#{scim_user_id}")
+      .header("Authorization", "Bearer #{scimAccessToken}")
       .body(StringBody(
         """{
           |    "schemas": [

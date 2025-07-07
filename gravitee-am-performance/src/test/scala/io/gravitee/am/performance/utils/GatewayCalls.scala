@@ -44,9 +44,9 @@ object GatewayCalls {
   def submitLoginForm(domain: String = DOMAIN_NAME) = {
     http("Post Login Form")
       .post(GATEWAY_BASE_URL + s"/${domain}/login?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
-      .formParam("X-XSRF-TOKEN", "${XSRF-TOKEN}")
-      .formParam("username", "${username}")
-      .formParam("password", "${password}")
+      .formParam("X-XSRF-TOKEN", "#{XSRF-TOKEN}")
+      .formParam("username", "#{username}")
+      .formParam("password", "#{password}")
       .formParam("client_id", APP_NAME)
       .check(status.is(302))
       .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
@@ -55,7 +55,7 @@ object GatewayCalls {
 
   def callPostLoginRedirect = {
     http("Request Code after Login")
-      .get("${postLoginRedirect}")
+      .get("#{postLoginRedirect}")
       .check(status.is(302))
       .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
       .check(header(Location).transform(headerValue => headerValue.contains("code")).is(true))
@@ -79,8 +79,8 @@ object GatewayCalls {
   def submitMfaEnrollForm(domain: String = DOMAIN_NAME) = {
     http("Post Mfa Enroll Form")
             .post(GATEWAY_BASE_URL + s"/${domain}/mfa/enroll?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
-            .formParam("X-XSRF-TOKEN", "${XSRF-TOKEN}")
-            .formParam("factorId", "${factorId}")
+            .formParam("X-XSRF-TOKEN", "#{XSRF-TOKEN}")
+            .formParam("factorId", "#{factorId}")
             .formParam("user_mfa_enrollment", "true")
             .formParam("phone", "+33615492508")
             .formParam("client_id", APP_NAME)
@@ -101,9 +101,9 @@ object GatewayCalls {
   def submitMfaChallengeForm(domain: String = DOMAIN_NAME) = {
     http("Post Mfa Challenge Form")
             .post(GATEWAY_BASE_URL + s"/${domain}/mfa/challenge?client_id=${APP_NAME}&response_type=code&redirect_uri=https://callback-${APP_NAME}")
-            .formParam("X-XSRF-TOKEN", "${XSRF-TOKEN}")
+            .formParam("X-XSRF-TOKEN", "#{XSRF-TOKEN}")
             .formParam("code", "123456")
-            .formParam("factorId", "${factorId}")
+            .formParam("factorId", "#{factorId}")
             .formParam("client_id", APP_NAME)
             .check(status.is(302))
             .check(header(Location).transform(headerValue => headerValue.contains("error")).is(false))
@@ -114,7 +114,7 @@ object GatewayCalls {
     http("Ask Token")
       .post(GATEWAY_BASE_URL + s"/${domain}/oauth/token")
       .basicAuth(APP_NAME, APP_NAME)
-      .formParam("code", "${code}")
+      .formParam("code", "#{code}")
       .formParam("grant_type", "authorization_code")
       .formParam("redirect_uri", s"https://callback-${APP_NAME}")
       .formParam("client_id", APP_NAME)
@@ -129,8 +129,8 @@ object GatewayCalls {
       .formParam("grant_type", "password")
       .formParam("redirect_uri", s"https://callback-${APP_NAME}")
       .formParam("client_id", APP_NAME)
-      .formParam("username", "${username}")
-      .formParam("password", "${password}")
+      .formParam("username", "#{username}")
+      .formParam("password", "#{password}")
       .check(status.is(200))
       .check(jsonPath("$.access_token").saveAs("access_token"))
   }
@@ -145,7 +145,7 @@ object GatewayCalls {
     http("Introspect Access Token")
       .post(s"${GATEWAY_BASE_URL}/${domain}/oauth/introspect")
       .basicAuth(APP_NAME, APP_NAME)
-      .formParam("token", "${access_token}")
+      .formParam("token", "#{access_token}")
       .check(status.is(200))
       .check(jsonPath("$.active").is("true"))
   }
