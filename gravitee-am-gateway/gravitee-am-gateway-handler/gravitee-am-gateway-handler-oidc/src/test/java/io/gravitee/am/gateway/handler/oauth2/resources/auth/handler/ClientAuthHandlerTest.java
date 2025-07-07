@@ -31,15 +31,15 @@ import io.vertx.core.http.HttpMethod;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.mockito.ArgumentMatchers.any;
 import org.mockito.Mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -171,11 +171,11 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     @Test
     public void shouldInvoke_clientCredentials_privateJWT_privateJWTTokenAuthMethod() throws Exception {
         Client client = mock(Client.class);
-        when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
-
+        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client_id")).thenReturn(Maybe.just(client));
         testRequest(
                 HttpMethod.POST,
-                "/oauth/token?client_assertion_type=type&client_assertion=myToken",
+                "/oauth/token?client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw",
                 HttpStatusCode.OK_200, "OK");
     }
 
@@ -184,23 +184,24 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     public void shouldNotInvoke_clientCredentials_privateJWT_privateJWTTokenAuthMethod_MissingSSLCert() throws Exception {
         Client client = mock(Client.class);
         when(client.isTlsClientCertificateBoundAccessTokens()).thenReturn(true);
+        when(clientSyncService.findByClientId("client_id")).thenReturn(Maybe.just(client));
 
-        when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
+        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
 
         testRequest(
                 HttpMethod.POST,
-                "/oauth/token?client_assertion_type=type&client_assertion=myToken",
+                "/oauth/token?client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw",
                 HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
     }
 
     @Test
     public void shouldInvoke_clientCredentials_clientSecret_clientSecretJWTTokenAuthMethod() throws Exception {
         Client client = mock(Client.class);
-        when(clientAssertionService.assertClient(eq("type"), eq("myToken"), anyString())).thenReturn(Maybe.just(client));
-
+        when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
+        when(clientSyncService.findByClientId("client_id")).thenReturn(Maybe.just(client));
         testRequest(
                 HttpMethod.POST,
-                "/oauth/token?client_assertion_type=type&client_assertion=myToken",
+                "/oauth/token?client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw",
                 HttpStatusCode.OK_200, "OK");
     }
 
