@@ -50,6 +50,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
     private static final String FIELD_TRANSACTION_ID = "transactionId";
     private static final String FIELD_CODE = "code";
+    private static final String FIELD_CLIENT_ID = "client_id";
     private static final String FIELD_EXPIRE_AT = "expire_at";
     private MongoCollection<AuthorizationCodeMongo> authorizationCodeCollection;
 
@@ -87,6 +88,12 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
     public Maybe<AuthorizationCode> findByCode(String code) {
         return Observable.fromPublisher(authorizationCodeCollection.find((and(eq(FIELD_CODE, code),
                 or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null))))).first()).firstElement().map(this::convert);
+    }
+
+    @Override
+    public Maybe<AuthorizationCode> findAndRemoveByCodeAndClientId(String code, String clientId) {
+        return Observable.fromPublisher(authorizationCodeCollection.findOneAndDelete((and(eq(FIELD_CODE, code), eq(FIELD_CLIENT_ID, clientId),
+                or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))).firstElement().map(this::convert);
     }
 
     private AuthorizationCode convert(AuthorizationCodeMongo authorizationCodeMongo) {

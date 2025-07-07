@@ -33,6 +33,31 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
     private AuthorizationCodeRepository authorizationCodeRepository;
 
     @Test
+    public void shouldRetrieveAndRemoveAuthorizationCode() {
+        String code = "testCode123213213";
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setCode(code);
+        authorizationCode.setClientId("clientId");
+        authorizationCode.setContextVersion(1);
+
+        authorizationCodeRepository.create(authorizationCode).blockingGet();
+
+        authorizationCodeRepository.findAndRemoveByCodeAndClientId(code, "clientId")
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(authorizationCode1 -> authorizationCode1.getCode().equals(code) && authorizationCode1.getContextVersion() == 1);
+
+        authorizationCodeRepository.findAndRemoveByCodeAndClientId(code, "clientId")
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertNoValues();
+    }
+
+    @Test
     public void shouldStoreCode() {
         String code = "testCode";
         AuthorizationCode authorizationCode = new AuthorizationCode();
