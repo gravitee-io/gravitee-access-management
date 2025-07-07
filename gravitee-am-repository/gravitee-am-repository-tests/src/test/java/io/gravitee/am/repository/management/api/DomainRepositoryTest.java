@@ -64,7 +64,24 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         testObserver1.assertComplete();
         testObserver1.assertNoErrors();
-        testObserver1.assertValue(domains -> domains.size() == 1);
+        testObserver1.assertValue(domains -> compare(domains.getFirst(), domain));
+    }
+
+    private boolean compare(Domain domain1, Domain domain2) {
+        return domain1.getId().equals(domain2.getId()) &&
+                domain1.getName().equals(domain2.getName()) &&
+                domain1.getHrid().equals(domain2.getHrid()) &&
+                domain1.getCreatedAt().equals(domain2.getCreatedAt()) &&
+                domain1.getUpdatedAt().equals(domain2.getUpdatedAt()) &&
+                domain1.getDescription().equals(domain2.getDescription()) &&
+                domain1.isEnabled() == domain2.isEnabled() &&
+                domain1.getPath().equals(domain2.getPath()) &&
+                domain1.getReferenceId().equals(domain2.getReferenceId()) &&
+                domain1.getReferenceType().equals(domain2.getReferenceType()) &&
+                domain1.getVersion().equals(domain2.getVersion()) &&
+                domain1.getTags().equals(domain2.getTags()) &&
+                domain1.getIdentities().equals(domain2.getIdentities()) &&
+                domain1.getLoginSettings().getResetPasswordOnExpiration().equals(domain2.getLoginSettings().getResetPasswordOnExpiration());
     }
 
     private Domain initDomain() {
@@ -101,6 +118,7 @@ public class DomainRepositoryTest extends AbstractManagementTest {
 
         domain.setAccountSettings(new AccountSettings());
         domain.setLoginSettings(new LoginSettings());
+        domain.getLoginSettings().setResetPasswordOnExpiration(true);
         final OIDCSettings oidc = new OIDCSettings();
         final CIBASettings cibaSettings = new CIBASettings();
         cibaSettings.setEnabled(true);

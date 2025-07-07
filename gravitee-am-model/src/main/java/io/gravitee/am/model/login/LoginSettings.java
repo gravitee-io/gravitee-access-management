@@ -69,6 +69,11 @@ public class LoginSettings {
      */
     private boolean identifierFirstEnabled;
 
+    /**
+     * Force reset password when it expires
+     */
+    private Boolean resetPasswordOnExpiration;
+
     public LoginSettings() {
     }
 
@@ -84,6 +89,7 @@ public class LoginSettings {
         this.passwordlessDeviceNamingEnabled = other.passwordlessDeviceNamingEnabled;
         this.hideForm = !other.identifierFirstEnabled && other.hideForm;
         this.identifierFirstEnabled = other.identifierFirstEnabled;
+        this.resetPasswordOnExpiration = other.resetPasswordOnExpiration;
     }
 
     public boolean isInherited() {
@@ -172,6 +178,14 @@ public class LoginSettings {
 
     public void setIdentifierFirstEnabled(boolean identifierFirstEnabled) {
         this.identifierFirstEnabled = identifierFirstEnabled;
+    }
+
+    public Boolean getResetPasswordOnExpiration() {
+        return resetPasswordOnExpiration;
+    }
+
+    public void setResetPasswordOnExpiration(Boolean resetPasswordOnExpiration) {
+        this.resetPasswordOnExpiration = resetPasswordOnExpiration;
     }
 
     public boolean isEnforcePasswordPolicyEnabled() {

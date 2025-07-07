@@ -139,7 +139,6 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
         policy.setMaxLength(passwordPolicyMongo.getMaxLength());
         policy.setIncludeSpecialCharacters(passwordPolicyMongo.getIncludeSpecialCharacters());
         policy.setDefaultPolicy(passwordPolicyMongo.getDefaultPolicy());
-
         return policy;
     }
 

@@ -48,6 +48,14 @@
         >
       </div>
       <div fxLayout="column" style="margin-top: 10px">
+        <mat-slide-toggle (change)="enableResetPasswordOnExpiration($event)" [checked]="isResetPasswordOnExpiration()" [disabled]="readonly">
+          Force reset password on expiration
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%"
+        >After a successful login, the user is prompted to reset their password if it has expired.</mat-hint
+        >
+      </div>
+      <div fxLayout="column" style="margin-top: 10px">
         <mat-slide-toggle
           (change)="enableHideForm($event)"
           [checked]="isHideFormEnabled()"

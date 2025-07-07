@@ -35,6 +35,8 @@ public class LoginSettingsMongo {
     private boolean hideForm;
     private boolean identifierFirstLoginEnabled;
 
+    private Boolean resetPasswordOnExpiration;
+
     public boolean isInherited() {
         return inherited;
     }
@@ -123,6 +125,14 @@ public class LoginSettingsMongo {
         this.identifierFirstLoginEnabled = identifierFirstLoginEnabled;
     }
 
+    public Boolean getResetPasswordOnExpiration() {
+        return resetPasswordOnExpiration;
+    }
+
+    public void setResetPasswordOnExpiration(Boolean resetPasswordOnExpiration) {
+        this.resetPasswordOnExpiration = resetPasswordOnExpiration;
+    }
+
     public LoginSettings convert() {
         LoginSettings loginSettings = new LoginSettings();
         loginSettings.setInherited(isInherited());
@@ -136,6 +146,7 @@ public class LoginSettingsMongo {
         loginSettings.setPasswordlessDeviceNamingEnabled(isPasswordlessDeviceNamingEnabled());
         loginSettings.setHideForm(!isIdentifierFirstLoginEnabled() && isHideForm());
         loginSettings.setIdentifierFirstEnabled(isIdentifierFirstLoginEnabled());
+        loginSettings.setResetPasswordOnExpiration(getResetPasswordOnExpiration());
 
         return loginSettings;
     }
@@ -157,6 +168,7 @@ public class LoginSettingsMongo {
         loginSettingsMongo.setPasswordlessDeviceNamingEnabled(loginSettings.isPasswordlessDeviceNamingEnabled());
         loginSettingsMongo.setHideForm(!loginSettings.isIdentifierFirstEnabled() && loginSettings.isHideForm());
         loginSettingsMongo.setIdentifierFirstLoginEnabled(loginSettings.isIdentifierFirstEnabled());
+        loginSettingsMongo.setResetPasswordOnExpiration(loginSettings.getResetPasswordOnExpiration());
 
         return loginSettingsMongo;
     }
