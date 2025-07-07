@@ -104,6 +104,10 @@ export class DomainPasswordPolicyComponent implements OnInit {
     this.passwordPolicy.passwordHistoryEnabled = e.checked;
   }
 
+  setResetPasswordOnExpirationEnabled(e) {
+    this.passwordPolicy.resetPasswordOnExpiration = e.checked;
+  }
+
   save() {
     if (
       this.passwordPolicy.passwordHistoryEnabled &&

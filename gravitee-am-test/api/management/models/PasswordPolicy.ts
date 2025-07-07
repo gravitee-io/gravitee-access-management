@@ -146,6 +146,12 @@ export interface PasswordPolicy {
    * @memberof PasswordPolicy
    */
   defaultPolicy?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatePasswordPolicy
+   */
+  resetPasswordOnExpiration?: boolean;
 }
 
 /**
@@ -190,6 +196,7 @@ export function PasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: bool
     oldPasswords: !exists(json, 'oldPasswords') ? undefined : json['oldPasswords'],
     regex: !exists(json, 'regex') ? undefined : json['regex'],
     defaultPolicy: !exists(json, 'defaultPolicy') ? undefined : json['defaultPolicy'],
+    resetPasswordOnExpiration: !exists(json, 'resetPasswordOnExpiration') ? undefined : json['resetPasswordOnExpiration'],
   };
 }
 
@@ -220,5 +227,6 @@ export function PasswordPolicyToJSON(value?: PasswordPolicy | null): any {
     oldPasswords: value.oldPasswords,
     regex: value.regex,
     defaultPolicy: value.defaultPolicy,
+    resetPasswordOnExpiration: value.resetPasswordOnExpiration,
   };
 }

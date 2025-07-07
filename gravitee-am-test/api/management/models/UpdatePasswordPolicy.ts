@@ -26,6 +26,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
+
 /**
  *
  * @export
@@ -110,7 +111,13 @@ export interface UpdatePasswordPolicy {
    * @memberof UpdatePasswordPolicy
    */
   defaultPolicy?: boolean;
-}
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatePasswordPolicy
+   */
+  resetPasswordOnExpiration?: boolean;
+  }
 
 export function UpdatePasswordPolicyFromJSON(json: any): UpdatePasswordPolicy {
   return UpdatePasswordPolicyFromJSONTyped(json, false);
@@ -136,6 +143,7 @@ export function UpdatePasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator
     passwordHistoryEnabled: !exists(json, 'passwordHistoryEnabled') ? undefined : json['passwordHistoryEnabled'],
     oldPasswords: !exists(json, 'oldPasswords') ? undefined : json['oldPasswords'],
     defaultPolicy: !exists(json, 'defaultPolicy') ? undefined : json['defaultPolicy'],
+    resetPasswordOnExpiration: !exists(json, 'resetPasswordOnExpiration') ? undefined : json['resetPasswordOnExpiration'],
   };
 }
 
@@ -160,5 +168,6 @@ export function UpdatePasswordPolicyToJSON(value?: UpdatePasswordPolicy | null):
     passwordHistoryEnabled: value.passwordHistoryEnabled,
     oldPasswords: value.oldPasswords,
     defaultPolicy: value.defaultPolicy,
+    resetPasswordOnExpiration: value.resetPasswordOnExpiration,
   };
 }

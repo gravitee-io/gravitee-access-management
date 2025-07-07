@@ -213,6 +213,7 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         passwordPolicy.setMinLength((int) (Math.random() * 100));
         passwordPolicy.setMaxLength((int) (Math.random() * 100));
         passwordPolicy.setDefaultPolicy(Boolean.TRUE);
+        passwordPolicy.setResetPasswordOnExpiration(Boolean.TRUE);
         return passwordPolicy;
     }
 
@@ -221,6 +222,7 @@ public class PasswordPolicyRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(g -> g.getReferenceType().equals(expected.getReferenceType()));
         testObserver.assertValue(g -> g.getName().equals(expected.getName()));
         testObserver.assertValue(g -> g.getOldPasswords().equals(expected.getOldPasswords()));
+        testObserver.assertValue(g -> g.getResetPasswordOnExpiration().equals(expected.getResetPasswordOnExpiration()));
         testObserver.assertValue(g -> g.getExpiryDuration().equals(expected.getExpiryDuration()));
         testObserver.assertValue(g -> g.getExcludePasswordsInDictionary().equals(expected.getExcludePasswordsInDictionary()));
         testObserver.assertValue(g -> g.getExcludeUserProfileInfoInPassword().equals(expected.getExcludeUserProfileInfoInPassword()));

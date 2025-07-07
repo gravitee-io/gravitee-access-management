@@ -91,6 +91,11 @@ public class PasswordPolicy implements Resource {
     private Short oldPasswords;
 
     /**
+     * Force reset password when it expires
+     */
+    private Boolean resetPasswordOnExpiration;
+
+    /**
      * Regex the passwords should match. Only used for the "fake" policy implemented by DefaultPasswordValidator
      */
     private String regex;
@@ -120,5 +125,6 @@ public class PasswordPolicy implements Resource {
         this.passwordHistoryEnabled = other.passwordHistoryEnabled;
         this.oldPasswords = other.oldPasswords;
         this.defaultPolicy = other.defaultPolicy;
+        this.resetPasswordOnExpiration = other.resetPasswordOnExpiration;
     }
 }

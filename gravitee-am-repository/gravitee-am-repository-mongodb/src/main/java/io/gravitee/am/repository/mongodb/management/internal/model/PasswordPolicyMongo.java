@@ -43,4 +43,5 @@ public class PasswordPolicyMongo extends Auditable {
     private Boolean passwordHistoryEnabled;
     private Short oldPasswords;
     private Boolean defaultPolicy;
+    private Boolean resetPasswordOnExpiration;
 }
