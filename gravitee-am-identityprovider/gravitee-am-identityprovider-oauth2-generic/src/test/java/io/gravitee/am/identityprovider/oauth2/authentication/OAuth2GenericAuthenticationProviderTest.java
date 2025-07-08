@@ -16,6 +16,8 @@
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
@@ -31,6 +33,8 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -47,11 +51,17 @@ import static com.github.tomakehurst.wiremock.client.WireMock.containing;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.notFound;
+import static com.github.tomakehurst.wiremock.client.WireMock.okForContentType;
 import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.unauthorized;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -66,6 +76,8 @@ public class OAuth2GenericAuthenticationProviderTest {
 
     @Autowired
     private DefaultIdentityProviderRoleMapper roleMapper;
+
+    private JWTProcessor jwtProcessor = mock(JWTProcessor.class);
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(19999));
@@ -107,6 +119,51 @@ public class OAuth2GenericAuthenticationProviderTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+    }
+
+
+    @Test
+    public void shouldLoadUserByUsername_authentication_jwt() throws Exception {
+        stubFor(any(urlPathEqualTo("/oauth/token"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, containing(URLParametersUtils.CONTENT_TYPE))
+                .withRequestBody(matching(".*"))
+                .willReturn(okJson("{\"access_token\" : \"test_token\" }")));
+
+        stubFor(any(urlPathEqualTo("/profile"))
+                .withHeader(HttpHeaders.AUTHORIZATION, equalTo("Bearer test_token"))
+                .willReturn(okForContentType("application/JWT", "a.jwt.value")));
+
+        when(jwtProcessor.process(ArgumentMatchers.any(String.class), eq(null))).thenReturn(new JWTClaimsSet.Builder().subject("bob").build());
+
+        ((OAuth2GenericAuthenticationProvider) authenticationProvider).setJwtProcessor(jwtProcessor);
+
+        TestObserver<User> testObserver = authenticationProvider.loadUserByUsername(new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return "__social__";
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "__social__";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                DummyRequest dummyRequest = new DummyRequest();
+                dummyRequest.setParameters(Collections.singletonMap("code", Arrays.asList("test-code")));
+                final HashMap<String, Object> attributes = new HashMap<>();
+                attributes.put("redirect_uri", "http://redirect_uri");
+                return new DummyAuthenticationContext(attributes, dummyRequest);
+            }
+        }).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(u -> "bob".equals(u.getUsername()));
+        verify(jwtProcessor).process(anyString(), eq(null));
     }
 
     @Test

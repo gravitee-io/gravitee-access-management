@@ -59,7 +59,7 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     private String clientAuthenticationCertificate;
     private boolean storeOriginalTokens;
     private CodeChallengeMethod codeChallengeMethod;
-
+    private boolean userInfoAsJwt = false;
     @Override
     public String getResponseType() {
         return responseType.value();
@@ -101,5 +101,10 @@ public class OAuth2GenericIdentityProviderConfiguration implements OpenIDConnect
     @Override
     public String getClientAuthenticationMethod() {
         return clientAuthenticationMethod;
+    }
+
+    @Override
+    public boolean doesUserInfoProvideJwt() {
+        return this.userInfoAsJwt;
     }
 }
