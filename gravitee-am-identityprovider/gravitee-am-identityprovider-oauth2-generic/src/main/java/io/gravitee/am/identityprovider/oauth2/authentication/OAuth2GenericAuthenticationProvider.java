@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.identityprovider.oauth2.authentication;
 
+import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.identityprovider.api.IdentityProviderGroupMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderMapper;
 import io.gravitee.am.identityprovider.api.IdentityProviderRoleMapper;
@@ -178,4 +179,9 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
             });
         }
     }
+
+    void setJwtProcessor(JWTProcessor jwtProcessor) {
+        this.jwtProcessor = jwtProcessor;
+    }
+
 }
