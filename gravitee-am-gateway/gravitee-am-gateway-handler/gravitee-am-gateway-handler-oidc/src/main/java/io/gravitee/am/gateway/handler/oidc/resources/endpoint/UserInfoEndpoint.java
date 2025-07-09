@@ -118,7 +118,7 @@ public class UserInfoEndpoint implements Handler<RoutingContext> {
                                 jwt.setIss(openIDDiscoveryService.getIssuer(UriBuilderRequest.resolveProxyRequest(context)));
                                 jwt.setAud(accessToken.getAud());
                                 jwt.setIat(new Date().getTime() / 1000L);
-                                jwt.setExp(accessToken.getExp() / 1000L);
+                                jwt.setExp(accessToken.getExp());
 
                                 return jwtService.encodeUserinfo(jwt, client)//Sign if needed, else return unsigned JWT
                                         .flatMap(userinfo -> jweService.encryptUserinfo(userinfo, client));//Encrypt if needed, else return JWT
