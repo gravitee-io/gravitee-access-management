@@ -30,7 +30,7 @@
     <name>Gravitee IO - Access Management - Reporter Kafka</name>
 
     <properties>
-        <commons-validator.version>1.7</commons-validator.version>
+        <commons-validator.version>1.10.0</commons-validator.version>
     </properties>
 
     <dependencies>
