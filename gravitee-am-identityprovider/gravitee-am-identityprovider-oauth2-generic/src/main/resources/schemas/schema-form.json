@@ -88,6 +88,10 @@
       "type": "boolean",
       "title": "Use the ID Token to retrieve user information ? (response_type=id_token or UserInfo Endpoint is missing)"
     },
+    "userInfoAsJwt": {
+      "type": "boolean",
+      "title": "Does UserInfo endpoint provide user information signed using JWT ?"
+    },
     "signature": {
       "title": "Signature",
       "description": "Define how the ID Token has been signed.",

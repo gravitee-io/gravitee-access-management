@@ -30,6 +30,10 @@ public interface OpenIDConnectIdentityProviderConfiguration extends SocialIdenti
 
     boolean isUseIdTokenForUserInfo();
 
+    default boolean doesUserInfoProvideJwt() {
+        return false;
+    }
+
     KeyResolver getPublicKeyResolver();
 
     SignatureAlgorithm getSignatureAlgorithm();

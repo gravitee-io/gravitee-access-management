@@ -322,6 +322,18 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     if (httpClientResponse.statusCode() != 200) {
                         throw new BadCredentialsException(httpClientResponse.statusMessage());
                     }
+
+                    MediaType mediaType = MediaType.parseMediaType(httpClientResponse.getHeader("Content-Type"));
+                    if (MediaType.APPLICATION_JWT.equalsIgnoreCase(mediaType.toMediaString())) {
+                        try {
+                            final var jwtClaimsSet = this.jwtProcessor.process(httpClientResponse.bodyAsString(), null);
+                            return createUser(authentication.getContext(), jwtClaimsSet.getClaims());
+                        } catch (Exception ex) {
+                            LOGGER.debug("Unable to extract the user profile information", ex);
+                            throw new BadCredentialsException(ex.getMessage());
+                        }
+                    }
+
                     return createUser(authentication.getContext(), httpClientResponse.bodyAsJsonObject().getMap());
                 });
     }
@@ -349,7 +361,9 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     }
 
     protected void generateJWTProcessor() {
-        if (getConfiguration().isUseIdTokenForUserInfo() || ResponseType.ID_TOKEN.equals(getConfiguration().getResponseType())) {
+        if (getConfiguration().isUseIdTokenForUserInfo()
+                || getConfiguration().doesUserInfoProvideJwt()
+                || ResponseType.ID_TOKEN.equals(getConfiguration().getResponseType())) {
             if (getConfiguration().getPublicKeyResolver() == null || getConfiguration().getResolverParameter() == null) {
                 throw new IllegalStateException("An public key resolver must be supply to verify the ID Token");
             }
