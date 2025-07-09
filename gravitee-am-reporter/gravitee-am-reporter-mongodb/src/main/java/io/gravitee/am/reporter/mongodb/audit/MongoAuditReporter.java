@@ -314,7 +314,12 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             return Flowable.empty();
         }
 
-        return Flowable.fromPublisher(reportableCollection.bulkWrite(this.convert(audits)));
+        return Flowable.fromPublisher(reportableCollection.bulkWrite(this.convert(audits)))
+                .retry(10)
+                .onErrorResumeNext(throwable -> {
+                    logger.error("Reporter couldn't write to MongoDB after 10 attempts.", throwable);
+                    return Flowable.empty();
+                });
     }
 
     private Bson query(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {

@@ -453,7 +453,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         }
 
         return Flowable.fromPublisher(Flux.just(audits).concatMap(this::bulkInsertReport))
-                .doOnError(error -> LOGGER.error("Error during bulk loading", error));
+                .retry(10)
+                .onErrorResumeNext(throwable -> {
+                    LOGGER.error("Reporter couldn't write to JDBC after 10 attempts.", throwable);
+                    return Flowable.empty();
+                });
     }
 
 
