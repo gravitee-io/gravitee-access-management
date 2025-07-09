@@ -363,7 +363,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
     protected void generateJWTProcessor() {
         if (getConfiguration().isUseIdTokenForUserInfo()
                 || getConfiguration().doesUserInfoProvideJwt()
-                || ResponseType.ID_TOKEN.equals(getConfiguration().getResponseType())) {
+                || ProviderResponseType.ID_TOKEN.equals(getConfiguration().getProviderResponseType())) {
             if (getConfiguration().getPublicKeyResolver() == null || getConfiguration().getResolverParameter() == null) {
                 throw new IllegalStateException("An public key resolver must be supply to verify the ID Token");
             }
