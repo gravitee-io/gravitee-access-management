@@ -30,4 +30,5 @@ export interface DomainPasswordPolicy {
   expiryDuration?: number;
   passwordHistoryEnabled?: boolean;
   oldPasswords?: number;
+  resetPasswordOnExpiration?: boolean;
 }

@@ -96,6 +96,11 @@ public abstract class AbstractPasswordPolicy {
      */
     private Short oldPasswords;
 
+    /**
+     * Force reset password when it expires
+     */
+    private Boolean resetPasswordOnExpiration;
+
     public PasswordPolicy toPasswordPolicy(ReferenceType referenceType, String referenceId) {
         final var policy = new PasswordPolicy();
         final var now = new Date();
@@ -116,6 +121,7 @@ public abstract class AbstractPasswordPolicy {
         policy.setIncludeSpecialCharacters(this.getIncludeSpecialCharacters());
         policy.setExcludePasswordsInDictionary(this.getExcludePasswordsInDictionary());
         policy.setExcludeUserProfileInfoInPassword(this.getExcludeUserProfileInfoInPassword());
+        policy.setResetPasswordOnExpiration(this.getResetPasswordOnExpiration());
         return policy;
     }
 }

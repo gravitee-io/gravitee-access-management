@@ -68,15 +68,19 @@ describe('password policy management', () => {
     const updatedPasswordPolicy = await updatePasswordPolicy(domain.id, accessToken, oldPasswordPolicy.id, {
       name: updatedName,
       defaultPolicy: true,
+      resetPasswordOnExpiration: true
     });
     expect(updatedPasswordPolicy).toBeDefined();
     expect(updatedPasswordPolicy.name).toEqual(updatedName);
     expect(updatedPasswordPolicy.defaultPolicy).toBeTruthy();
+    expect(updatedPasswordPolicy.resetPasswordOnExpiration).toBeTruthy();
 
     const policy = await getPasswordPolicy(domain.id, accessToken, updatedPasswordPolicy.id);
     expect(policy).toBeDefined();
     expect(updatedPasswordPolicy.name).toEqual(updatedName);
     expect(policy.defaultPolicy).toBeTruthy();
+    expect(policy.resetPasswordOnExpiration).toBeTruthy();
+
   });
 
   it('must find all password policies', async () => {

@@ -104,6 +104,12 @@ export interface NewPasswordPolicy {
    * @memberof NewPasswordPolicy
    */
   oldPasswords?: number;
+  /**
+   *
+   * @type {boolean}
+   * @memberof UpdatePasswordPolicy
+   */
+  resetPasswordOnExpiration?: boolean;
 }
 
 export function NewPasswordPolicyFromJSON(json: any): NewPasswordPolicy {
@@ -129,6 +135,7 @@ export function NewPasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: b
     expiryDuration: !exists(json, 'expiryDuration') ? undefined : json['expiryDuration'],
     passwordHistoryEnabled: !exists(json, 'passwordHistoryEnabled') ? undefined : json['passwordHistoryEnabled'],
     oldPasswords: !exists(json, 'oldPasswords') ? undefined : json['oldPasswords'],
+    resetPasswordOnExpiration: !exists(json, 'resetPasswordOnExpiration') ? undefined : json['resetPasswordOnExpiration'],
   };
 }
 
@@ -152,5 +159,6 @@ export function NewPasswordPolicyToJSON(value?: NewPasswordPolicy | null): any {
     expiryDuration: value.expiryDuration,
     passwordHistoryEnabled: value.passwordHistoryEnabled,
     oldPasswords: value.oldPasswords,
+    resetPasswordOnExpiration: value.resetPasswordOnExpiration,
   };
 }

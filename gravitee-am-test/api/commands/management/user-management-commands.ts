@@ -136,7 +136,7 @@ export const deleteUser = (domainId, accessToken, userId) =>
     user: userId,
   });
 
-export function buildTestUser(i: number, options: { preRegistration?: boolean; password?: string; serviceAccount?: boolean } = {}) {
+export function buildTestUser(i: number, options: { preRegistration?: boolean; password?: string; serviceAccount?: boolean; lastPasswordReset?: Date } = {}) {
   const { preRegistration = false, password = 'SomeP@assw0rd', serviceAccount = false } = options;
   const firstName = 'firstName' + i;
   const lastName = 'lastName' + i;
@@ -148,6 +148,7 @@ export function buildTestUser(i: number, options: { preRegistration?: boolean; p
     password: serviceAccount ? undefined : password,
     preRegistration: preRegistration,
     serviceAccount: serviceAccount,
+    lastPasswordReset: options.lastPasswordReset
   };
 }
 
@@ -157,8 +158,9 @@ export async function buildCreateAndTestUser(
   i: number,
   preRegistration: boolean = false,
   password = 'SomeP@ssw0rd',
+  lastPasswordReset?: Date,
 ) {
-  const payload = buildTestUser(i, { preRegistration, password });
+  const payload = buildTestUser(i, { preRegistration, password, lastPasswordReset });
 
   const newUser = await createUser(domainId, accessToken, payload);
   expect(newUser).toBeDefined();
