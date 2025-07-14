@@ -61,6 +61,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEn
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFARecoveryCodeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
@@ -491,12 +492,23 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // MFA route
         Handler<RoutingContext> mfaChallengeUserHandler = new MFAChallengeUserHandler(userService);
-        rootRouter.route(PATH_MFA_ENROLL)
+
+        rootRouter.get(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(localeHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext, ruleEngine))
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_ENROLLMENT))
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, domain, applicationContext, ruleEngine))
+                .failureHandler(new MFAEnrollFailureHandler());
+
+        rootRouter.post(PATH_MFA_ENROLL)
+                .handler(clientRequestParseHandler)
+                .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
+                .handler(localeHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_MFA_ENROLLMENT))
+                .handler(new MFAEnrollPostEndpoint(factorManager, userService))
                 .failureHandler(new MFAEnrollFailureHandler());
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
