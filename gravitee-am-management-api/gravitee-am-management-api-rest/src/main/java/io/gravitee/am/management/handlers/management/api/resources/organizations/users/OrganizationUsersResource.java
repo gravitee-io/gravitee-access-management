@@ -54,6 +54,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.Consumes;
@@ -122,7 +123,7 @@ public class OrganizationUsersResource extends AbstractResource {
             @QueryParam("q") String query,
             @QueryParam("filter") String filter,
             @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("size") @Max(1000) @DefaultValue("30") int size,
+            @QueryParam("size") @Max(1000) @Min(1) @DefaultValue("30") int size,
             @Suspended final AsyncResponse response) {
 
         io.gravitee.am.identityprovider.api.User authenticatedUser = getAuthenticatedUser();
