@@ -66,17 +66,18 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
     private static final Map<Type, List<ExtensionPoint>> extensionPoints;
 
     static {
-        extensionPoints = Map.of(
-                Type.ROOT, List.of(ExtensionPoint.ROOT),
-                Type.LOGIN_IDENTIFIER, List.of(PRE_LOGIN_IDENTIFIER, POST_LOGIN_IDENTIFIER),
-                Type.CONSENT, List.of(PRE_CONSENT, POST_CONSENT),
-                Type.LOGIN, List.of(PRE_LOGIN, POST_LOGIN),
-                Type.REGISTER, List.of(PRE_REGISTER, POST_REGISTER),
-                Type.RESET_PASSWORD, List.of(PRE_RESET_PASSWORD, POST_RESET_PASSWORD),
-                Type.REGISTRATION_CONFIRMATION, List.of(PRE_REGISTRATION_CONFIRMATION, POST_REGISTRATION_CONFIRMATION),
-                Type.TOKEN, List.of(PRE_TOKEN, POST_TOKEN),
-                Type.WEBAUTHN_REGISTER, List.of(PRE_WEBAUTHN_REGISTER, POST_WEBAUTHN_REGISTER),
-                Type.MFA_ENROLLMENT, List.of(PRE_MFA_ENROLLMENT, POST_MFA_ENROLLMENT)
+        extensionPoints = Map.ofEntries(
+                Map.entry(Type.ROOT, List.of(ExtensionPoint.ROOT)),
+                Map.entry(Type.LOGIN_IDENTIFIER, List.of(PRE_LOGIN_IDENTIFIER, POST_LOGIN_IDENTIFIER)),
+                Map.entry(Type.CONSENT, List.of(PRE_CONSENT, POST_CONSENT)),
+                Map.entry(Type.LOGIN, List.of(PRE_LOGIN, POST_LOGIN)),
+                Map.entry(Type.REGISTER, List.of(PRE_REGISTER, POST_REGISTER)),
+                Map.entry(Type.RESET_PASSWORD, List.of(PRE_RESET_PASSWORD, POST_RESET_PASSWORD)),
+                Map.entry(Type.REGISTRATION_CONFIRMATION, List.of(PRE_REGISTRATION_CONFIRMATION, POST_REGISTRATION_CONFIRMATION)),
+                Map.entry(Type.TOKEN, List.of(PRE_TOKEN, POST_TOKEN)),
+                Map.entry(Type.WEBAUTHN_REGISTER, List.of(PRE_WEBAUTHN_REGISTER, POST_WEBAUTHN_REGISTER)),
+                Map.entry(Type.MFA_CHALLENGE, List.of(PRE_MFA_CHALLENGE, POST_MFA_CHALLENGE)),
+                Map.entry(Type.MFA_ENROLLMENT, List.of(PRE_MFA_ENROLLMENT, POST_MFA_ENROLLMENT))
         );
     }
 
@@ -253,6 +254,10 @@ public class FlowManagerImpl extends AbstractService implements FlowManager, Ini
             case WEBAUTHN_REGISTER -> {
                 addExecutionFlow(PRE_WEBAUTHN_REGISTER, flow, prePolicies);
                 addExecutionFlow(POST_WEBAUTHN_REGISTER, flow, postPolicies);
+            }
+            case MFA_CHALLENGE -> {
+                addExecutionFlow(PRE_MFA_CHALLENGE, flow, prePolicies);
+                addExecutionFlow(POST_MFA_CHALLENGE, flow, postPolicies);
             }
             case MFA_ENROLLMENT -> {
                 addExecutionFlow(PRE_MFA_ENROLLMENT, flow, prePolicies);
