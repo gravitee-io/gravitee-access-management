@@ -44,6 +44,8 @@ import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -163,6 +165,19 @@ public class UsersResourceTest extends JerseySpringTest {
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1})
+    public void shouldReturn400_invalidSize(int size) {
+        final Response response = target("domains")
+                .path("domainId")
+                .path("users")
+                .queryParam("size", size)
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
     @Test
