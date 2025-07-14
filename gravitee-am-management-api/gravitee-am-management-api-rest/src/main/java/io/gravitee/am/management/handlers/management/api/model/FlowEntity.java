@@ -142,29 +142,17 @@ public class FlowEntity {
             return "communication:shield-thunder";
         }
 
-        switch (type) {
-            case ROOT:
-                return "home:earth";
-            case LOGIN_IDENTIFIER:
-                return "code:right-circle";
-            case LOGIN:
-                return "finance:file";
-            case CONSENT:
-                return "general:shield-check";
-            case REGISTER:
-                return "communication:shield-user";
-            case RESET_PASSWORD:
-                return "finance:protected-file";
-            case REGISTRATION_CONFIRMATION:
-                return "communication:clipboard-check";
-            case TOKEN:
-                return "shopping:ticket";
-            case CONNECT:
-                return "general:scale";
-            case WEBAUTHN_REGISTER:
-                return "action:fingerprint";
-            default:
-                return "communication:shield-thunder";
-        }
+        return switch (type) {
+            case ROOT -> "home:earth";
+            case LOGIN_IDENTIFIER -> "code:right-circle";
+            case LOGIN -> "finance:file";
+            case CONSENT -> "general:shield-check";
+            case REGISTER, RESET_PASSWORD, MFA_ENROLLMENT -> "communication:shield-user";
+            case REGISTRATION_CONFIRMATION -> "communication:clipboard-check";
+            case TOKEN -> "shopping:ticket";
+            case CONNECT -> "general:scale";
+            case WEBAUTHN_REGISTER -> "action:fingerprint";
+            default -> "communication:shield-thunder";
+        };
     }
 }
