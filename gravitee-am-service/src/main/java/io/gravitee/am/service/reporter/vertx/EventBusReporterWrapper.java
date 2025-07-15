@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.vertx;
 
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.utils.GraviteeContextHolder;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
@@ -54,6 +55,7 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     private final Reporter<R,C> reporter;
     private MessageConsumer<Reportable> messageConsumer;
     private Set<Reference> referenceFilter;
+    private GraviteeContextHolder contextHolder;
 
 
     public EventBusReporterWrapper(Vertx vertx, Reporter<R,C> reporter) {
@@ -63,15 +65,16 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     }
 
 
-    public EventBusReporterWrapper(Vertx vertx,  Reporter<R,C> reporter, Reference reference) {
-        this(vertx, reporter, Set.of(reference));
+    public EventBusReporterWrapper(Vertx vertx,  Reporter<R,C> reporter, Reference reference, GraviteeContextHolder contextHolder) {
+        this(vertx, reporter, Set.of(reference), contextHolder);
     }
 
-    public EventBusReporterWrapper(Vertx vertx,  Reporter<R,C> reporter, Collection<Reference> references) {
+    public EventBusReporterWrapper(Vertx vertx, Reporter<R,C> reporter, Collection<Reference> references, GraviteeContextHolder contextHolder) {
         Objects.requireNonNull(references, "references");
         this.vertx = vertx;
         this.referenceFilter = new HashSet<>(Set.copyOf(references)); // we want to be able to use this
         this.reporter = reporter;
+        this.contextHolder = contextHolder;
     }
 
 
@@ -90,7 +93,10 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     }
 
     boolean canHandle(Reportable reportable) {
-        return (referenceFilter == null || referenceFilter.contains(reportable.getReference()))
+        return (referenceFilter == null ||
+                referenceFilter.contains(reportable.getReference()) ||
+                contextHolder.getContext(reportable.getReference().id())
+                        .map(ctx -> referenceFilter.contains(Reference.organization(ctx.getOrganizationId()))).orElse(false))
                 && reporter.canHandle(reportable);
     }
 
