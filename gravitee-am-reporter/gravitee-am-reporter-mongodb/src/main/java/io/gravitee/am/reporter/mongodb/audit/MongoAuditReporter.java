@@ -198,6 +198,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                 configuration.getBulkActions())
                 .flatMap(this::bulk)
                 .doOnError(throwable -> logger.error("An error occurs while indexing data into MongoDB", throwable))
+                .retry()
                 .subscribe();
     }
 
