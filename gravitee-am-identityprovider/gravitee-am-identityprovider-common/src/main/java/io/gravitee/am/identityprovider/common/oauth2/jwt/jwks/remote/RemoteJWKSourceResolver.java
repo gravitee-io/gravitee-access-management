@@ -16,9 +16,12 @@
 package io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote;
 
 import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.jwk.source.RemoteJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSourceBuilder;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jose.util.DefaultResourceRetriever;
+import com.nimbusds.jose.util.health.HealthStatus;
 import io.gravitee.am.identityprovider.api.oidc.jwt.JWKSourceResolver;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.URL;
 
@@ -26,18 +29,36 @@ import java.net.URL;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
 public class RemoteJWKSourceResolver<C extends SecurityContext> implements JWKSourceResolver<C> {
 
     private final String url;
+    private final int connectionTimeout;
+    private final int readTimeout;
 
-    public RemoteJWKSourceResolver(String url) {
+    public RemoteJWKSourceResolver(String url, int connectionTimeout, int readTimeout) {
         this.url = url;
+        this.connectionTimeout = connectionTimeout;
+        this.readTimeout = readTimeout;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public JWKSource<C> resolve() {
+        DefaultResourceRetriever retriever = new DefaultResourceRetriever(connectionTimeout, readTimeout);
         try {
-            return new RemoteJWKSet(new URL(url));
+            return (JWKSource<C>) JWKSourceBuilder.create(new URL(url), retriever)
+                    .outageTolerant(true)
+                    .retrying(true)
+                    .healthReporting((healthReport) -> {
+                        if (HealthStatus.HEALTHY.equals(healthReport.getHealthStatus())) {
+                            log.debug("JWK Source healthy at {}: {}", healthReport.getTimestamp(), healthReport.getHealthStatus());
+                            return;
+                        }
+                        log.warn("JWK Source degraded at {}: ", healthReport.getTimestamp(), healthReport.getException());
+                    })
+                    .build();
+
         } catch (Exception e) {
             throw new IllegalArgumentException(e);
         }
