@@ -49,7 +49,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.processors.PublishProcessor;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -72,7 +71,12 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -80,7 +84,10 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.reporter.jdbc.dialect.AbstractDialect.intervals;
 import static org.springframework.data.relational.core.query.Criteria.where;
-import static reactor.adapter.rxjava.RxJava3Adapter.*;
+import static reactor.adapter.rxjava.RxJava3Adapter.flowableToFlux;
+import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToMaybe;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -617,6 +624,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                     .doOnError(error -> LOGGER.error("An error occurs while indexing data into report_audits_{} table of {} database",
                             configuration.getTableSuffix(), configuration.getDatabase(), error))
                     .onErrorResumeNext(err -> bulkProcessor)
+                    .retry()
                     .subscribe();
 
             ready = true;
