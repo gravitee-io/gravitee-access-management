@@ -1,0 +1,40 @@
+{
+    "type": "object",
+    "id": "urn:jsonschema:io:gravitee:am:tokengranter:jwtbearer:OpenidJwtBearerTokenGranterConfiguration",
+    "description": "RFC 7523, Section 2.1, Using JWTs as a means for requesting an OAuth 2.0 access token.\nThe following example demonstrates an access token request with a JWT as an authorization grant :\n\nPOST /token HTTP/1.1\ngrant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=|signed-JWT-token|",
+    "properties": {
+        "grantType": {
+            "title": "Grant Type",
+            "description": "OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the \"grant_type\" parameter of the token endpoint.",
+            "default": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+            "readOnly": true
+        },
+        "jwksUri": {
+            "title": "JWKs uris",
+            "description": "JWKs uris",
+            "type": "string"
+        },
+        "claimsMapper": {
+            "title": "Claims mapper",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "assertion_claim": {
+                        "title": "Assertion claim",
+                        "description": "Assertion payload claim",
+                        "type": "string"
+                    },
+                    "token_claim": {
+                        "title": "Token claim",
+                        "description": "Claim that will be added to End-User claims",
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "jwksUri"
+    ]
+}
