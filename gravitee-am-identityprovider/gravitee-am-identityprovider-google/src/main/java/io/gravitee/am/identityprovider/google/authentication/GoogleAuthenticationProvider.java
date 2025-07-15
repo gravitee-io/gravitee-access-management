@@ -117,7 +117,7 @@ public class GoogleAuthenticationProvider extends AbstractOpenIDConnectAuthentic
     protected void generateJWTProcessor() {
         final SignatureAlgorithm signature = SignatureAlgorithm.RS256;
         JWKSKeyProcessor<SecurityContext> keyProcessor = new JWKSKeyProcessor<>();
-        keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver<>(configuration.getResolverParameter()));
+        keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver<>(configuration.getResolverParameter(), connectionTimeout, readTimeout));
         jwtProcessor = keyProcessor.create(signature);
     }
 }
