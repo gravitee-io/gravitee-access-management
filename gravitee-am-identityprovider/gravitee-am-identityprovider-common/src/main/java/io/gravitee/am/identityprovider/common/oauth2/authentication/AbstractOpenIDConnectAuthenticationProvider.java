@@ -59,6 +59,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
@@ -78,6 +79,12 @@ import static java.util.function.Predicate.not;
  * @author GraviteeSource Team
  */
 public abstract class AbstractOpenIDConnectAuthenticationProvider extends AbstractSocialAuthenticationProvider implements OpenIDConnectAuthenticationProvider, InitializingBean {
+
+    @Value("${httpClient.timeout:10000}")
+    protected int connectionTimeout;
+
+    @Value("${httpClient.readTimeout:5000}")
+    protected int readTimeout;
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
@@ -332,7 +339,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             // init JWT key source (Remote URL or from configuration file)
             if (KeyResolver.JWKS_URL.equals(getConfiguration().getPublicKeyResolver())) {
                 keyProcessor = new JWKSKeyProcessor();
-                keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver(getConfiguration().getResolverParameter()));
+                keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver(getConfiguration().getResolverParameter(), connectionTimeout, readTimeout));
             } else {
                 // get the corresponding key processor
                 final String resolverParameter = getConfiguration().getResolverParameter();

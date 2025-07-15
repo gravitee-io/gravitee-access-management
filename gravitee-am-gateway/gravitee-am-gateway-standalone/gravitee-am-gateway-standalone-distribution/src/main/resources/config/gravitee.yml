@@ -386,6 +386,7 @@ gateway:
 # global configuration of the http client
 #httpClient:
 #  timeout: 10000 # in milliseconds
+#  readTimeout: 5000 # in milliseconds
 #  proxy:
 #    enabled: false
 #    exclude-hosts: # list of hosts to exclude from proxy (wildcard hosts are supported)
