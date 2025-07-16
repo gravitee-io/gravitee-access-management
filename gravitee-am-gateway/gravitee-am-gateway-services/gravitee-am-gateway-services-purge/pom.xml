@@ -34,6 +34,7 @@
             <groupId>io.gravitee.am.plugins.handlers</groupId>
             <artifactId>gravitee-am-plugins-handlers-dataplane</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Spring dependencies -->
