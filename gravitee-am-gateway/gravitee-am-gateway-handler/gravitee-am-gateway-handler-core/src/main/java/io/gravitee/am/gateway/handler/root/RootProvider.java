@@ -47,6 +47,7 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
+import io.gravitee.am.gateway.handler.root.resources.handler.FinalRedirectLocationHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst.IdentifierFirstLoginEndpoint;
@@ -61,6 +62,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEn
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFARecoveryCodeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
@@ -79,6 +81,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.handler.PredicateRoutingHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
@@ -158,7 +161,10 @@ import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
+import static io.gravitee.am.gateway.handler.root.resources.handler.PredicateRoutingHandler.handleWhen;
 import static io.vertx.core.http.HttpMethod.GET;
+import static java.lang.Boolean.parseBoolean;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -491,13 +497,26 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // MFA route
         Handler<RoutingContext> mfaChallengeUserHandler = new MFAChallengeUserHandler(userService);
-        rootRouter.route(PATH_MFA_ENROLL)
+
+        rootRouter.get(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(localeHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext, ruleEngine))
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_ENROLLMENT))
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, domain, applicationContext, ruleEngine))
                 .failureHandler(new MFAEnrollFailureHandler());
+
+        rootRouter.post(PATH_MFA_ENROLL)
+                .handler(clientRequestParseHandler)
+                .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
+                .handler(localeHandler)
+                .handler(new MFAEnrollPostEndpoint(factorManager, userService))
+                .handler(handleWhen(ctx -> Boolean.TRUE.equals(ctx.session().get(MFA_ENROLLMENT_COMPLETED_KEY)), policyChainHandler.create(ExtensionPoint.POST_MFA_ENROLLMENT)))
+                .handler(new FinalRedirectLocationHandler())
+                .failureHandler(new MFAEnrollFailureHandler());
+
         rootRouter.route(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)

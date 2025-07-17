@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.endpoint;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.common.utils.RedirectUrlResolver;
 import io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest;
 import io.gravitee.am.gateway.handler.manager.form.FormManager;
 import io.gravitee.am.model.oidc.Client;
@@ -52,6 +53,7 @@ import static java.lang.Boolean.TRUE;
 public abstract class AbstractEndpoint {
 
     private final TemplateEngine templateEngine;
+    private final RedirectUrlResolver redirectUrlResolver = new RedirectUrlResolver();
 
     protected AbstractEndpoint() {
         templateEngine = null;
@@ -92,19 +94,9 @@ public abstract class AbstractEndpoint {
         return templateEngine.render(data, getTemplateFileName(client));
     }
 
-    protected final String getReturnUrl(RoutingContext context, MultiMap queryParams) {
-        // look into the session
-        if (context.session().get(ConstantKeys.RETURN_URL_KEY) != null) {
-            return context.session().get(ConstantKeys.RETURN_URL_KEY);
-        }
-        // look into the request parameters
-        if (context.request().getParam(ConstantKeys.RETURN_URL_KEY) != null) {
-            return context.request().getParam(ConstantKeys.RETURN_URL_KEY);
-        }
-        // fallback to the OAuth 2.0 authorize endpoint
-        return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
+    protected String getReturnUrl(RoutingContext context, MultiMap queryParams) {
+        return redirectUrlResolver.resolveRedirectUrl(context, queryParams);
     }
-
 
     protected void addUserActivityTemplateVariables(RoutingContext routingContext, UserActivityGatewayService userActivityService) {
         routingContext.put(USER_ACTIVITY_ENABLED, userActivityService.canSaveUserActivity());
