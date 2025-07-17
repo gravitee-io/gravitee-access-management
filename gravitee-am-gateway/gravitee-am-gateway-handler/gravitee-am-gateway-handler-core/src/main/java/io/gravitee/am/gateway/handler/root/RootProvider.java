@@ -59,8 +59,10 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpo
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengePostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFARecoveryCodeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.user.password.ForgotPasswordSubmissionEndpoint;
@@ -491,24 +493,49 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // MFA route
         Handler<RoutingContext> mfaChallengeUserHandler = new MFAChallengeUserHandler(userService);
-        rootRouter.route(PATH_MFA_ENROLL)
+
+        rootRouter.get(PATH_MFA_ENROLL)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(localeHandler)
-                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, userService, domain, applicationContext, ruleEngine))
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_ENROLLMENT))
+                .handler(new MFAEnrollEndpoint(factorManager, thymeleafTemplateEngine, domain, applicationContext, ruleEngine))
                 .failureHandler(new MFAEnrollFailureHandler());
-        rootRouter.route(PATH_MFA_CHALLENGE)
+
+        rootRouter.post(PATH_MFA_ENROLL)
+                .handler(clientRequestParseHandler)
+                .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
+                .handler(localeHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_MFA_ENROLLMENT))
+                .handler(new MFAEnrollPostEndpoint(factorManager, userService))
+                .failureHandler(new MFAEnrollFailureHandler());
+
+        rootRouter.get(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domainDataPlane,  credentialService, rateLimiterService, verifyAttemptService, emailService, auditService, deviceIdentifierManager,
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_CHALLENGE))
+                .handler(new MFAChallengeEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
+                        domainDataPlane,  rateLimiterService, auditService))
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+        rootRouter.post(PATH_MFA_CHALLENGE)
+                .handler(clientRequestParseHandler)
+                .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
+                .handler(rememberDeviceSettingsHandler)
+                .handler(localeHandler)
+                .handler(mfaChallengeUserHandler)
+                .handler(policyChainHandler.create(ExtensionPoint.POST_MFA_CHALLENGE))
+                .handler(new MFAChallengePostEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
+                        domainDataPlane,  credentialService, verifyAttemptService, emailService, auditService, deviceIdentifierManager,
                         jwtService, rememberDeviceCookieName))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
