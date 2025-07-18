@@ -33,7 +33,7 @@ object SimulationSettings {
   val MULTI_DOMAIN_NAMES = System.getProperty("multiDomains", "gatling-domain").split(",")
 
   val MIN_DOMAIN_INDEX = Integer.getInteger("min_domain_index", 1)
-  val NUMBER_OF_DOMAINS = Integer.getInteger("number_of_domains", 10)
+  val NUMBER_OF_DOMAINS = Integer.getInteger("number_of_domains", 1)
   val MAX_DOMAIN_INDEX = MIN_DOMAIN_INDEX + NUMBER_OF_DOMAINS
 
   val MIN_USER_INDEX = Integer.getInteger("min_user_index", 1)
@@ -45,6 +45,9 @@ object SimulationSettings {
   val MAX_USER_INDEX = MIN_USER_INDEX + NUMBER_OF_USERS
 
   val APP_NAME = System.getProperty("app", "appweb")
+
+
+  val SCOPES = System.getProperty("scopes", "").split(",")
 
   // ========================================
   // Injection topology

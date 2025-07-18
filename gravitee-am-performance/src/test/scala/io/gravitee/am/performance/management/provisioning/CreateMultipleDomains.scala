@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance
+package io.gravitee.am.performance.management.provisioning
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-import io.gravitee.am.performance.utils.ManagementAPICalls._
-import io.gravitee.am.performance.utils.ScopeSettings
+import io.gravitee.am.performance.actions.ProvisioningActions._
+import io.gravitee.am.performance.commands.ManagementAPICalls._
 import io.gravitee.am.performance.utils.SimulationSettings._
-
 /**
  * Purpose of this simulation is to create a bunch of domains with only the DefaultIdp and 3 applications (WEB, BROWSER/SPA, SERVICE)
  * For each domains, the simulation will create the same number of users.
@@ -31,12 +30,11 @@ import io.gravitee.am.performance.utils.SimulationSettings._
  * - mng_password: password to request an access token to the Management REST API (default: adminadmin)
  * - domain: the prefix for domain name targeted by the simulation on which a index will be added (default: gatling-domain)
  * - min_domain_index: first value of the index used to create domains (default: 1)
- * - number_of_domains: how many domains the simulation will create (default: 10)
+ * - number_of_domains: how many domains the simulation will create (default: 1)
  * - number_of_users: how many users the simulation will create (default: 2000)
  * - agents: number of agents for the simulation (default: 10)
  */
 class CreateMultipleDomains extends Simulation {
-
   val httpProtocol = http
     .userAgentHeader("Gatling - Create Multiple Domains")
     .disableFollowRedirect
@@ -49,17 +47,26 @@ class CreateMultipleDomains extends Simulation {
     .feed(domainGenerator)
     .doWhile("#{continueDomainCreation}") (
         exec(createDomain("#{domainName}"))
-        .exec(enableCurrentDomain)
         .exec(activateScimOnDomain)
         .exec(retrieveIdentityProviderId("Default Identity Provider"))
-        .exec(createApplication("appweb", "WEB"))
-        .exec(enableCurrentIDPToApp("appweb"))
-        .exec(addScopesToApp("appweb", Array(ScopeSettings("openid"))))
-        .exec(createApplication("appspa", "BROWSER"))
-        .exec(enableCurrentIDPToApp("appspa"))
-        .exec(addScopesToApp("appspa", Array(ScopeSettings("openid"))))
-        .exec(createApplication("appservice", "SERVICE"))
-        .exec(addScopesToApp("appservice", Array(ScopeSettings("scim"))))
+        .exec(createMockResource)
+        .exec(createMFAWithMockResource)
+        .exec(enableCurrentDomain)
+        .group("Create Web Application") {
+          createEndUserApplication(appName = "appweb", appType = "WEB", useMfa =  false)
+        }
+        .group("Create Web Application with MFA") {
+          createEndUserApplication(appName = "appwebmfa", appType = "WEB", useMfa =  true)
+        }
+        .group("Create SPA Application") {
+          createEndUserApplication(appName = "appspa", appType = "BROWSER", useMfa =  false)
+        }
+        .group("Create SPA Application with MFA") {
+          createEndUserApplication(appName = "appspamfa", appType = "BROWSER", useMfa =  true)
+        }
+        .group("Create Service Application") {
+          createServiceApplication(appName = "appservice", appType = "SERVICE")
+        }
         .feed(domainGenerator)
         .doWhile("#{continueUserCreation}", "userIndex") (
           exec { session =>
@@ -69,5 +76,7 @@ class CreateMultipleDomains extends Simulation {
           .exec(createUser)
         )
     )
+
+
   setUp(scn.inject(atOnceUsers(Math.min(AGENTS, NUMBER_OF_DOMAINS))).protocols(httpProtocol))
 }

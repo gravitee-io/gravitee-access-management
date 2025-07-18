@@ -13,56 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance
+package io.gravitee.am.performance.gateway
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-
+import io.gravitee.am.performance.actions.EndUserActions._
+import io.gravitee.am.performance.commands.GatewayCalls._
 import io.gravitee.am.performance.utils.SimulationSettings._
-import io.gravitee.am.performance.utils.GatewayCalls._
 
 /**
- * Purpose of this simulation is to create a amount of user in a IdentityProvider
+ * Purpose of this simulation is to sign in users only with login/password using the code flow
+ *
  * Possible arguments:
  * - gw_url: base URL of the Management REST API (default: http://localhost:8093)
- * - domain: the domain name targeted by the simulation (default: gatling-domain)
+ * - domain: the domain name prefix targeted by the simulation (default: gatling-domain)
+ * - min_domain_index: minimal value of the domain index
+ * - number_of_domains: size of the users range used to randomly select a domain between min_domain_index and (min_domain_index + number_of_domains) (default: 10)
  * - min_user_index: minimal value of the user index
  * - number_of_users: size of the users range used to randomly select a user between min_user_index and (min_user_index + number_of_users) (default: 2000)
  * - agents: number of agent loaded per seconds (default: 10)
  * - inject-during: duration (in sec) of the agents load (default: 300 => 5 minutes)
- * - requests: number of requests per seconds to reach (default: 100)
- * - req-ramp-during: ramp duration (in sec)  (default: 10)
- * - req-hold-during: duration (in sec) of the simulation at the given rate of requests (default: 1800 => 30 minutes)
+ * - app: the app name targeted by the simulation (default: appweb)
  */
-class LoginPasswordFlow extends Simulation {
+class MultiDomainBasicLoginFlow extends Simulation {
 
   val httpProtocol = http
     .userAgentHeader("Gatling - Basic Login Flow")
     .disableFollowRedirect
 
   val userGenerator = userFeeder(WORKLOAD)
+  val domainGenerator = multiDomainsFeeder(WORKLOAD)
 
-  val scnWithIntrospect = scenario("Password Login Flow")
+  val scn = scenario("Basic Login Flow")
+    .feed(domainGenerator)
     .feed(userGenerator)
-    .exec(requestAccessTokenWithUserCredentials())
+    .exec(initAuthFlow())
+    .group("Login") {
+      authenticateEndUser()
+    }
+    .exec(requestForAuthorizationCode)
+    .exec(requestAccessToken())
     .pause(1)
     .exec(introspectToken())
-    .pause(12)
-    .repeat(10) {
-      exec(introspectToken())
-    }
-
-  val scnWithoutIntrospect = scenario("Password Login Flow")
-    .feed(userGenerator)
-    .exec(requestAccessTokenWithUserCredentials())
-
-  val scn = scnWithoutIntrospect
+    .exec(logout())
 
   setUp(
     scn.inject(
-      rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
-      constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
-      rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
-    )
-  )
+    rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
+    constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
+    rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
+  ))
+    .protocols(httpProtocol)
+
 }
