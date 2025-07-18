@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance
+package io.gravitee.am.performance.management.provisioning
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-
+import io.gravitee.am.performance.commands.ManagementAPICalls._
 import io.gravitee.am.performance.utils.SimulationSettings._
-import io.gravitee.am.performance.utils.ManagementAPICalls._
 
 /**
  * Purpose of this simulation is to create a amount of user in a IdentityProvider

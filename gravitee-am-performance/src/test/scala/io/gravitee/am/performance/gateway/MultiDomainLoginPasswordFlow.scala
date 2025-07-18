@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance
+package io.gravitee.am.performance.gateway
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-import io.gravitee.am.performance.utils.GatewayCalls._
+import io.gravitee.am.performance.commands.GatewayCalls._
 import io.gravitee.am.performance.utils.SimulationSettings._
 
 /**
- * Purpose of this simulation is to create a amount of user in a IdentityProvider
+ * Purpose of this simulation is to sign in users only with login/password
+ *
  * Possible arguments:
  * - gw_url: base URL of the Management REST API (default: http://localhost:8093)
  * - domain: the domain name prefix targeted by the simulation (default: gatling-domain)
@@ -31,35 +32,39 @@ import io.gravitee.am.performance.utils.SimulationSettings._
  * - number_of_users: size of the users range used to randomly select a user between min_user_index and (min_user_index + number_of_users) (default: 2000)
  * - agents: number of agent loaded per seconds (default: 10)
  * - inject-during: duration (in sec) of the agents load (default: 300 => 5 minutes)
+ * - introspect: do we have to request token introspection (default: false)
+ * - number_of_introspections: number of token introspection (default: 10)
+ * - app: the app name targeted by the simulation (default: appweb)
  */
-class MultiDomainBasicLoginFlow extends Simulation {
+class MultiDomainLoginPasswordFlow extends Simulation {
 
   val httpProtocol = http
-    .userAgentHeader("Gatling - Basic Login Flow")
+    .userAgentHeader("Gatling - Multiple Domain Pwd Login Flow")
     .disableFollowRedirect
 
   val userGenerator = userFeeder(WORKLOAD)
   val domainGenerator = multiDomainsFeeder(WORKLOAD)
+  val introspect = introspectFeeder()
 
-  val scn = scenario("Basic Login Flow")
-    .feed(domainGenerator)
+  val scn = scenario("Multi Domain Password Login Flow")
+    .feed(introspect)
     .feed(userGenerator)
-    .exec(initCodeFlow("#{domainName}"))
-    .exec(renderLoginForm("#{domainName}"))
-    .pause(1)
-    .exec(submitLoginForm("#{domainName}"))
-    .exec(callPostLoginRedirect)
-    .exec(requestAccessToken("#{domainName}"))
-    .pause(1)
-    .exec(introspectToken("#{domainName}"))
-    .exec(logout("#{domainName}"))
+    .feed(domainGenerator)
+    .exec(requestAccessTokenWithUserCredentials())
+    .doIf("#{introspect_enabled}")(
+      pause(1)
+      .exec(introspectToken())
+      .pause(10)
+      .repeat("#{introspections}") {
+        exec(introspectToken())
+      }
+    )
 
   setUp(
     scn.inject(
-    rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
-    constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
-    rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
-  ))
-    .protocols(httpProtocol)
-
+      rampConcurrentUsers(1).to(AGENTS.intValue()).during(60),
+      constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
+      rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
+    )
+  )
 }

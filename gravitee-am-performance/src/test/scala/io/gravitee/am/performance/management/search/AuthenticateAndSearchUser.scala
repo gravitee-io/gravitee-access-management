@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance.search
+package io.gravitee.am.performance.management.search
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-import io.gravitee.am.performance.utils.ManagementAPICalls.{login, retrieveDomainId}
+import io.gravitee.am.performance.commands.ManagementAPICalls.{login, retrieveDomainId}
 import io.gravitee.am.performance.utils.SimulationSettings._
 
 import java.net.URLEncoder
@@ -39,7 +39,7 @@ import java.net.URLEncoder
  * - operator: SCIM 2.0 supported operator such as "eq", "ne", "co" etc.
  * - condition: logical condition such as "and" and "or"
  */
-class SearchUser extends Simulation {
+class AuthenticateAndSearchUser extends Simulation {
 
   def encode(query: String) = URLEncoder.encode(query, "UTF-8")
     .replace("+", "%20")
@@ -67,8 +67,8 @@ class SearchUser extends Simulation {
   }
 
   def search = http("Perform Search")
-    .get(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/users?filter=" + "${searchQuery}" + "&page=0&size=25")
-    .header("Authorization", "Bearer ${auth-token}")
+    .get(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/#{domainId}/users?filter=" + "#{searchQuery}" + "&page=0&size=25")
+    .header("Authorization", "Bearer #{auth-token}")
     .check(status.is(200))
     .check(jsonPath("$.totalCount").ofType[Int].gt(0))
 
@@ -82,7 +82,8 @@ class SearchUser extends Simulation {
     .exec(retrieveDomainId(DOMAIN_NAME))
     .feed(searchFeeder)
     .doWhile(session => session("index").as[Int] < MAX_USER_INDEX)(
-      exec(search)
+      exec(login)
+      .exec(search)
         .feed(searchFeeder)
     )
 
