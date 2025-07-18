@@ -13,42 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance
+package io.gravitee.am.performance.gateway
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-
+import io.gravitee.am.performance.actions.EndUserActions._
+import io.gravitee.am.performance.commands.GatewayCalls._
 import io.gravitee.am.performance.utils.SimulationSettings._
-import io.gravitee.am.performance.utils.GatewayCalls._
 
 /**
- * Purpose of this simulation is to create a amount of user in a IdentityProvider
+ * Purpose of this simulation is to sign in users with MFA step
+ *
  * Possible arguments:
  * - gw_url: base URL of the Management REST API (default: http://localhost:8093)
- * - domain: the domain name targeted by the simulation (default: gatling-domain)
+ * - domain: the domain name prefix targeted by the simulation (default: gatling-domain)
+ * - min_domain_index: minimal value of the domain index
+ * - number_of_domains: size of the users range used to randomly select a domain between min_domain_index and (min_domain_index + number_of_domains) (default: 10)
  * - min_user_index: minimal value of the user index
  * - number_of_users: size of the users range used to randomly select a user between min_user_index and (min_user_index + number_of_users) (default: 2000)
  * - agents: number of agent loaded per seconds (default: 10)
  * - inject-during: duration (in sec) of the agents load (default: 300 => 5 minutes)
- * - requests: number of requests per seconds to reach (default: 100)
- * - req-ramp-during: ramp duration (in sec)  (default: 10)
- * - req-hold-during: duration (in sec) of the simulation at the given rate of requests (default: 1800 => 30 minutes)
+ * - app: the app name targeted by the simulation (default: appweb)
  */
-class BasicLoginFlow extends Simulation {
+class MultiDomainMFALoginFlow extends Simulation {
 
   val httpProtocol = http
-    .userAgentHeader("Gatling - Basic Login Flow")
+    .userAgentHeader("Gatling - MFA Login Flow")
     .disableFollowRedirect
 
   val userGenerator = userFeeder(WORKLOAD)
+  val domainGenerator = multiDomainsFeeder(WORKLOAD)
 
-  val scn = scenario("Basic Login Flow")
+  val scn = scenario("MFA Login Flow")
+    .feed(domainGenerator)
     .feed(userGenerator)
-    .exec(initCodeFlow())
-    .exec(renderLoginForm())
-    .pause(1)
-    .exec(submitLoginForm())
-    .exec(callPostLoginRedirect)
+    .exec(initAuthFlow())
+    .group("Login") {
+      authenticateEndUser()
+    }
+    .exec(evaluateNextStep)
+    .doIfOrElse(session => session(NEXT_ACTION_KEY).as[String].contains("enroll"))(
+      enrollFactor
+    )(
+      challengeUser
+    )
+    .exec(requestForAuthorizationCode)
     .exec(requestAccessToken())
     .pause(1)
     .exec(introspectToken())
