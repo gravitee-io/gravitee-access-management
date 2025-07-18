@@ -76,6 +76,7 @@ public interface ConstantKeys {
     String _CSRF = "_csrf";
     String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
     String ERROR_HASH = "errorHash";
+    String STORE_ORIGINAL_TOKEN_KEY = "store_original_token";
 
 
     // enrich authentication flow keys
