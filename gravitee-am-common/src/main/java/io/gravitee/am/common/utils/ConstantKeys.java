@@ -77,6 +77,7 @@ public interface ConstantKeys {
     String SOCIAL_PROVIDER_CONTEXT_KEY = "socialProviders";
     String INTERNAL_PROVIDER_CONTEXT_KEY = "identityProviders";
     String ERROR_HASH = "errorHash";
+    String STORE_ORIGINAL_TOKEN_KEY = "store_original_token";
 
 
     // enrich authentication flow keys
