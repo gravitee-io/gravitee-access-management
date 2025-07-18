@@ -61,6 +61,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KE
 import static io.gravitee.am.common.utils.ConstantKeys.PASSWORD_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_ID_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.STORE_ORIGINAL_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveIp;
 import static io.gravitee.am.service.dataplane.user.activity.utils.ConsentUtils.canSaveUserAgent;
@@ -137,10 +138,10 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
                     var accessToken = ofNullable(endUserAuthentication.getContext().get(ACCESS_TOKEN_KEY));
                     var idToken = ofNullable(endUserAuthentication.getContext().get(ID_TOKEN_KEY));
-
-                    accessToken.ifPresentOrElse(at -> {
+                    var storeOriginalToken = ofNullable(endUserAuthentication.getContext().get(STORE_ORIGINAL_TOKEN_KEY));
+                    storeOriginalToken.ifPresentOrElse(__ -> {
                         // If isStoreOriginalToken, we add both the access_token and id_token in profile since they are present
-                        additionalInformation.put(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, at);
+                        accessToken.ifPresent(at -> additionalInformation.put(OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY, at));
                         idToken.ifPresent(it -> additionalInformation.put(OIDC_PROVIDER_ID_TOKEN_KEY, it));
                     }, () -> {
                         // We remove both otherwise

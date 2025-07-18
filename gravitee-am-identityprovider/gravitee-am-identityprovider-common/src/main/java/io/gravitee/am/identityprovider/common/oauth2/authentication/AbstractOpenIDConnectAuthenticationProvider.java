@@ -73,6 +73,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
+import static io.gravitee.am.common.utils.ConstantKeys.STORE_ORIGINAL_TOKEN_KEY;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static java.util.function.Predicate.not;
 
@@ -265,13 +266,21 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     if (!Strings.isNullOrEmpty(idToken)) {
                         storeInContext.accept(ID_TOKEN_PARAMETER, idToken);
                     }
+
+                    if (getConfiguration().isStoreOriginalTokens()) {
+                        // put this to context to inform about storing tokens in user profile
+                        storeInContext.accept(STORE_ORIGINAL_TOKEN_KEY, "true");
+                    }
                     return new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
                 });
     }
 
     private Maybe<Token> authenticateImplicitFlow(MultiValueMap<String, String> authorizationParams, ProviderResponseType providerResponseType,
                                                   BiConsumer<String, String> storeInContext) {
-
+        if (getConfiguration().isStoreOriginalTokens()) {
+            // put this to context to inform about storing tokens in user profile
+            storeInContext.accept(STORE_ORIGINAL_TOKEN_KEY, "true");
+        }
         // implicit flow was used with response_type=id_token token, access token is already fetched, continue
         if (providerResponseType.equals(ProviderResponseType.ID_TOKEN_TOKEN)) {
             String accessToken = authorizationParams.getFirst(ACCESS_TOKEN_PARAMETER);
@@ -286,7 +295,7 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         }
 
         // implicit flow was used with response_type=id_token, id token is already fetched, continue
-        if (ResponseType.ID_TOKEN.equals(getConfiguration().getResponseType())) {
+        if (ProviderResponseType.ID_TOKEN.equals(getConfiguration().getProviderResponseType())) {
             String idToken = authorizationParams.getFirst(ID_TOKEN_PARAMETER);
             // put the id_token in context for later use
             storeInContext.accept(ID_TOKEN_PARAMETER, idToken);
