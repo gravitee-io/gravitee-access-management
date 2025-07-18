@@ -71,6 +71,7 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.common.oidc.Scope.SCOPE_DELIMITER;
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_EXCLUDED_CLAIMS;
+import static io.gravitee.am.common.utils.ConstantKeys.STORE_ORIGINAL_TOKEN_KEY;
 import static io.gravitee.am.common.web.UriBuilder.encodeURIComponent;
 import static java.util.function.Predicate.not;
 
@@ -270,9 +271,13 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
                     if (!Strings.isNullOrEmpty(idToken)) {
                         authentication.getContext().set(ID_TOKEN_PARAMETER, idToken);
                     }
+
+                    if (getConfiguration().isStoreOriginalTokens()) {
+                        // put this to context to inform about storing tokens in user profile
+                        authentication.getContext().set(STORE_ORIGINAL_TOKEN_KEY, "true");
+                    }
                     return new Token(accessToken, TokenTypeHint.ACCESS_TOKEN);
                 });
-
     }
 
     protected Maybe<User> profile(Token token, Authentication authentication) {
