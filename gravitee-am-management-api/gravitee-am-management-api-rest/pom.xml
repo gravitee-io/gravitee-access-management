@@ -127,11 +127,6 @@
             <artifactId>swagger-jaxrs2-jakarta</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-        </dependency>
-
         <!-- Test dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>
