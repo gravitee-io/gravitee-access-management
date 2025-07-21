@@ -170,6 +170,8 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_7_0/4.7.8-memberships-reindex.yml
   - include:
+      - file: liquibase/changelogs/v4_7_10/4.7.10-devices-indexes.yml
+  - include:
       - file: liquibase/changelogs/v4_8_0/4.8.0-update-domain-table.yml
   - include:
       - file: liquibase/changelogs/v4_8_0/4.8.0-update-application-client-secrets-table.yml
