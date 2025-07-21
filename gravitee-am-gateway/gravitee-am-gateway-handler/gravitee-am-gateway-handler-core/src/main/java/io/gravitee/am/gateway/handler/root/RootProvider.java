@@ -60,6 +60,7 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.logout.LogoutEndpo
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeAlternativesEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengeFailureHandler;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAChallengePostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollFailureHandler;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.mfa.MFAEnrollPostEndpoint;
@@ -161,6 +162,7 @@ import org.springframework.core.env.Environment;
 
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME;
 import static io.gravitee.am.common.utils.ConstantKeys.DEFAULT_REMEMBER_ME_COOKIE_NAME;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.PredicateRoutingHandler.handleWhen;
 import static io.vertx.core.http.HttpMethod.GET;
@@ -517,17 +519,31 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(new FinalRedirectLocationHandler())
                 .failureHandler(new MFAEnrollFailureHandler());
 
-        rootRouter.route(PATH_MFA_CHALLENGE)
+        rootRouter.get(PATH_MFA_CHALLENGE)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(rememberDeviceSettingsHandler)
                 .handler(localeHandler)
                 .handler(mfaChallengeUserHandler)
-                .handler(new MFAChallengeEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
-                        domainDataPlane,  credentialService, rateLimiterService, verifyAttemptService, emailService, auditService, deviceIdentifierManager,
-                        jwtService, rememberDeviceCookieName))
+                .handler(policyChainHandler.create(ExtensionPoint.PRE_MFA_CHALLENGE))
+                .handler(new MFAChallengeEndpoint(factorManager, thymeleafTemplateEngine, applicationContext,
+                        domainDataPlane,  rateLimiterService, auditService))
                 .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+        rootRouter.post(PATH_MFA_CHALLENGE)
+                .handler(clientRequestParseHandler)
+                .handler(redirectUriValidationHandler)
+                .handler(returnUrlValidationHandler)
+                .handler(rememberDeviceSettingsHandler)
+                .handler(localeHandler)
+                .handler(mfaChallengeUserHandler)
+                .handler(new MFAChallengePostEndpoint(factorManager, userService, thymeleafTemplateEngine, deviceService, applicationContext,
+                        domainDataPlane,  credentialService, verifyAttemptService, emailService, auditService, deviceIdentifierManager,
+                        jwtService, rememberDeviceCookieName))
+                .handler(handleWhen(ctx -> Boolean.TRUE.equals(ctx.session().get(MFA_CHALLENGE_COMPLETED_KEY)), policyChainHandler.create(ExtensionPoint.POST_MFA_CHALLENGE)))
+                .handler(new FinalRedirectLocationHandler())
+                .failureHandler(new MFAChallengeFailureHandler(authenticationFlowContextService));
+
         rootRouter.route(PATH_MFA_CHALLENGE_ALTERNATIVES)
                 .handler(clientRequestParseHandler)
                 .handler(redirectUriValidationHandler)

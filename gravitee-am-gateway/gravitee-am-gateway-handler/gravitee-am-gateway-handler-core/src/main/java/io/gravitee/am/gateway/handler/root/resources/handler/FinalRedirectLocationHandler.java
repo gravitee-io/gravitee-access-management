@@ -18,9 +18,11 @@ package io.gravitee.am.gateway.handler.root.resources.handler;
 import io.gravitee.am.gateway.handler.common.utils.RedirectUrlResolver;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.gravitee.common.http.HttpHeaders.LOCATION;
 
+@Slf4j
 public class FinalRedirectLocationHandler implements Handler<RoutingContext> {
     private final RedirectUrlResolver redirectUrlResolver = new RedirectUrlResolver();
 
@@ -29,5 +31,4 @@ public class FinalRedirectLocationHandler implements Handler<RoutingContext> {
         final String url = redirectUrlResolver.resolveRedirectUrl(routingContext);
         routingContext.response().putHeader(LOCATION, url).setStatusCode(302).end();
     }
-
 }

@@ -87,7 +87,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(11);
+        testObserver.assertValueCount(12);
     }
 
     @Test
@@ -97,7 +97,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(11);
+        testObserver.assertValueCount(12);
     }
 
     @Test
@@ -109,7 +109,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(11);
+        testObserver.assertValueCount(12);
     }
 
     @Test
@@ -129,7 +129,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(12);
+        testObserver.assertValueCount(13);
     }
 
     @Test
@@ -139,7 +139,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(11);
+        testObserver.assertValueCount(12);
     }
 
     @Test
@@ -163,7 +163,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(13);
+        testObserver.assertValueCount(14);
     }
 
     @Test
@@ -186,7 +186,7 @@ public class FlowServiceTest {
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
-        testObserver.assertValueCount(12);
+        testObserver.assertValueCount(13);
     }
 
     @Test
