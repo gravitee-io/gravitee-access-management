@@ -157,3 +157,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_5_5/4.5.5-scope-approval-index.yml
   - include:
       - file: liquibase/changelogs/v4_5_11/4.5.11-dynamic-user-groups.yml
+  - include:
+      - file: liquibase/changelogs/v4_5_23/4.5.23-device-indexes.yml
