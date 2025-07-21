@@ -147,7 +147,8 @@ public class FlowEntity {
             case LOGIN_IDENTIFIER -> "code:right-circle";
             case LOGIN -> "finance:file";
             case CONSENT -> "general:shield-check";
-            case REGISTER, RESET_PASSWORD, MFA_ENROLLMENT -> "communication:shield-user";
+            case REGISTER, MFA_ENROLLMENT, MFA_CHALLENGE -> "communication:shield-user";
+            case RESET_PASSWORD -> "finance:protected-file";
             case REGISTRATION_CONFIRMATION -> "communication:clipboard-check";
             case TOKEN -> "shopping:ticket";
             case CONNECT -> "general:scale";

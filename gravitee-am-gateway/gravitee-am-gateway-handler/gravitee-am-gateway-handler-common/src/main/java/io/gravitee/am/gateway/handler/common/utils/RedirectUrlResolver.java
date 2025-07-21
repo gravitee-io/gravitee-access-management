@@ -42,4 +42,6 @@ public class RedirectUrlResolver {
         // fallback to the OAuth 2.0 authorize endpoint
         return UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + "/oauth/authorize", queryParams, true);
     }
+
+
 }
