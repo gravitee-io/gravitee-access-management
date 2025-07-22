@@ -26,6 +26,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <name>Gravitee IO - Access Management - Monitoring</name>
+
     <artifactId>gravitee-am-monitoring</artifactId>
 
     <properties>
