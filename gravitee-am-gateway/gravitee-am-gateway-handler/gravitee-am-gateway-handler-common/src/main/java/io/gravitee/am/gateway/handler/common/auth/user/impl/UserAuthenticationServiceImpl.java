@@ -346,12 +346,6 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                 existingUser.setDisplayName(buildDisplayName(existingUser));
             }
 
-            // set roles and groups
-            updateActions.updateDynamicRole(!Objects.equals(existingUser.getDynamicRoles(), preConnectedUser.getDynamicRoles()));
-            updateActions.updateDynamicGroup(!Objects.equals(existingUser.getDynamicGroups(), preConnectedUser.getDynamicGroups()));
-            existingUser.setDynamicRoles(preConnectedUser.getDynamicRoles());
-            existingUser.setDynamicGroups(preConnectedUser.getDynamicGroups());
-
             // set last password reset
             if (existingUser.getLastPasswordReset() == null) {
                 existingUser.setLastPasswordReset(existingUser.getUpdatedAt() == null ? new Date() : existingUser.getUpdatedAt());
@@ -362,6 +356,11 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
             extractAdditionalInformation(existingUser, additionalInformation);
         }
+        // set roles and groups
+        updateActions.updateDynamicRole(!Objects.equals(existingUser.getDynamicRoles(), preConnectedUser.getDynamicRoles()));
+        updateActions.updateDynamicGroup(!Objects.equals(existingUser.getDynamicGroups(), preConnectedUser.getDynamicGroups()));
+        existingUser.setDynamicRoles(preConnectedUser.getDynamicRoles());
+        existingUser.setDynamicGroups(preConnectedUser.getDynamicGroups());
 
         return userService.update(existingUser, updateActions);
     }
