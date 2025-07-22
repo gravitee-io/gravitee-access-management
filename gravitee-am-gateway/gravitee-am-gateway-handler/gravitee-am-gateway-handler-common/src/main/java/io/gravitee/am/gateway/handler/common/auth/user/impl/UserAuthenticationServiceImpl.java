@@ -443,7 +443,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         return ofNullable(existingUser.getIdentities())
                 .orElse(List.of())
                 .stream()
-                .anyMatch(u -> u.getUserId().equals(preConnectedUser.getExternalId()));
+                .anyMatch(u -> u.getUserId().equals(preConnectedUser.getExternalId()) && u.getProviderId().equals(preConnectedUser.getSource()));
     }
 
     private void upsertLinkedIdentities(User existingUser, User preConnectedUser) {
