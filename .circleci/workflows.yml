@@ -1483,11 +1483,14 @@ jobs:
             
             if [ "${DRY_RUN}" == "false" ]; then
               echo "# --->>> NO IT IS NOT A DRY RUN => deploy"
-            mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -DskipTests=true
+              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release deploy -X -DskipTests=true | tee /home/circleci/project/build.log
             else
               echo "# --->>> THIS IS A DRY RUN => install only"
-              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release install -DskipTests=true
+              mvn -s /tmp/.gravitee.settings.xml -B -U -P gravitee-release install -X -DskipTests=true | tee /home/circleci/project/build.log
             fi;
+
+      - store_artifacts:
+          path: /home/circleci/project/build.log
       - notify-on-failure
       - notify-on-success
 
