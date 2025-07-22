@@ -15,10 +15,15 @@
  */
 package io.gravitee.am.model.factor;
 
-import io.gravitee.am.model.safe.EnrolledFactorProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Enrolled factor for a specific user
@@ -124,6 +129,22 @@ public class EnrolledFactor {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public static Map<String, EnrolledFactor> asTypeMap(List<EnrolledFactor> factors) {
+        if(factors == null) {
+            return Map.of();
+        }
+        final Function<EnrolledFactor, String> keyFun = f -> Optional.ofNullable(f.getChannel()).map(EnrolledFactorChannel::getType).map(Objects::toString).orElse("OTHER");
+        return factors.stream()
+                .collect(Collectors.toMap(keyFun, f -> f, (f1, f2) -> f1));
+    }
+    public static Map<String, EnrolledFactor> asIdMap(List<EnrolledFactor> factors) {
+        if(factors == null) {
+            return Map.of();
+        }
+        return factors.stream()
+                .collect(Collectors.toMap(EnrolledFactor::getFactorId, f -> f, (f1, f2) -> f1));
     }
 
 }

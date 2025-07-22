@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.common.utils;
 
 import io.gravitee.am.common.utils.ConstantKeys;
-import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -55,11 +54,9 @@ public class RoutingContextUtils {
     public static Map<String, Object> getEvaluableAttributes(RoutingContext routingContext) {
         Map<String, Object> contextData = new HashMap<>(routingContext.data());
 
-        Object user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        var user = getUser(routingContext);
         if (user != null) {
             contextData.put(ConstantKeys.USER_CONTEXT_KEY, user);
-        } else if (routingContext.user() != null) {
-            contextData.put(ConstantKeys.USER_CONTEXT_KEY, ((User) routingContext.user().getDelegate()).getUser());
         }
 
         if (routingContext.session() != null) {
@@ -73,5 +70,17 @@ public class RoutingContextUtils {
         // remove technical attributes
         BLACKLIST_CONTEXT_ATTRIBUTES.forEach(contextData::remove);
         return contextData;
+    }
+
+    private static io.gravitee.am.model.User getUser(RoutingContext routingContext) {
+        Object user = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+        if (user != null) {
+            return new io.gravitee.am.model.User((io.gravitee.am.model.User) user);
+        } else if (routingContext.user() != null) {
+            var u = ((io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User) routingContext.user().getDelegate()).getUser();
+            return new io.gravitee.am.model.User(u);
+        } else {
+            return null;
+        }
     }
 }

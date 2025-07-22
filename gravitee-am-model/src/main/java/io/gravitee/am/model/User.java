@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model;
 
+import io.gravitee.am.common.el.ELFunction;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.model.factor.EnrolledFactor;
@@ -390,6 +391,7 @@ public class User implements IUser {
         return getAdditionalInformation();
     }
 
+    @ELFunction
     public Map<String, Object> getIdentitiesAsMap() {
         if (this.identities != null) {
             return this.identities.stream().collect(Collectors.toMap(UserIdentity::getProviderId, Function.identity()));
@@ -559,4 +561,15 @@ public class User implements IUser {
     public boolean isDisabled(){
         return Boolean.FALSE.equals(enabled);
     }
+
+    @ELFunction
+    public Map<String, EnrolledFactor> enrolledFactorsByType() {
+        return EnrolledFactor.asTypeMap(getFactors());
+    }
+
+    @ELFunction
+    public Map<String, EnrolledFactor> enrolledFactors() {
+        return EnrolledFactor.asIdMap(getFactors());
+    }
+
 }
