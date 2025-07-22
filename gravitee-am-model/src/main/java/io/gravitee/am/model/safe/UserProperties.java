@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.model.safe;
 
+import io.gravitee.am.common.el.ELFunction;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -22,6 +23,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.UserIdentity;
+import io.gravitee.am.model.factor.EnrolledFactor;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import lombok.Getter;
@@ -142,7 +144,7 @@ public class UserProperties {
         claimsToClean.remove(ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY);
     }
 
-    // do not remove this "unused" method, it has been developed to easy EL expressions
+    @ELFunction
     public Map<String, Object> getLastIdentityInformation() {
         if (this.lastIdentityUsed != null && this.identities != null) {
             return this.identities.stream()
@@ -154,7 +156,7 @@ public class UserProperties {
         return getAdditionalInformation();
     }
 
-    // do not remove this "unused" method, it has been developed to easy EL expressions
+    @ELFunction
     public Map<String, Object> getIdentitiesAsMap() {
         if (this.identities != null) {
             return this.identities.stream().collect(Collectors.toMap(UserIdentity::getProviderId, Function.identity()));
@@ -162,12 +164,22 @@ public class UserProperties {
         return Map.of();
     }
 
-    // do not remove this "unused" method, it has been developed to easy EL expressions
+    @ELFunction
     public Map<String, List<String>> getScopesByRole() {
         if (this.rolesPermissions != null) {
             return this.rolesPermissions.stream().collect(Collectors.toMap(RoleProperties::getName, RoleProperties::getOauthScopes));
         }
         return Map.of();
+    }
+
+    @ELFunction
+    public Map<String, EnrolledFactorProperties> enrolledFactorsByType() {
+        return EnrolledFactorProperties.asTypeMap(getFactors());
+    }
+
+    @ELFunction
+    public Map<String, EnrolledFactorProperties> enrolledFactors() {
+        return EnrolledFactorProperties.asIdMap(getFactors());
     }
 
     private String evaluatePreferredLanguage(User user) {
