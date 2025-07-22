@@ -592,6 +592,87 @@ public class UserAuthenticationServiceTest {
     }
 
     @Test
+    public void shouldConnect_accountLinking_sameSource() {
+        String domainId = "Domain";
+        String source = "SRC1";
+        String id = "id1";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        additionalInformation.put("newKey", "newValue");
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+        when(domain.getId()).thenReturn(domainId);
+
+        final UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId(id);
+        userIdentity.setProviderId(source);
+
+        final User foundUser = new User();
+        foundUser.setId(id);
+        foundUser.setAccountNonLocked(true);
+        foundUser.setIdentities(List.of(userIdentity));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, never()).create(any());
+        verify(userService, times(1)).update(argThat(u -> u.getIdentities() != null &&
+                u.getIdentities().size() == 1 &&
+                "newValue".equals(u.getIdentities().get(0).getAdditionalInformation().get("newKey"))), argThat(updateActions -> updateActions.updateIdentities()));
+    }
+
+
+    @Test
+    public void shouldNotConnect_accountLinking_differentSource() {
+        String domainId = "Domain";
+        String source = "SRC1";
+        String id = "id1";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        additionalInformation.put("newKey", "newValue");
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+        when(domain.getId()).thenReturn(domainId);
+
+        final UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId(id);
+        userIdentity.setProviderId("SRC");
+
+        final User foundUser = new User();
+        foundUser.setId(id);
+        foundUser.setAccountNonLocked(true);
+        foundUser.setIdentities(List.of(userIdentity));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, never()).create(any());
+        verify(userService, times(1)).update(any(), argThat(updateActions -> !updateActions.updateIdentities())); //
+    }
+
+    @Test
     public void shouldNotLoadPreAuthenticatedUser_subjectRequest_userDoesNotExist() {
         var request = mock(Request.class);
 
