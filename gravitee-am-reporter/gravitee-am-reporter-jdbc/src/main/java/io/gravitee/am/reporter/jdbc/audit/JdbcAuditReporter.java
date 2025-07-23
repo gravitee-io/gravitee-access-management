@@ -451,7 +451,7 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
         bulkProcessor.onNext((Audit) reportable);
     }
 
-    private Flowable bulk(List<Audit> audits) {
+    private Flowable<Long> bulk(List<Audit> audits) {
         if (audits == null || audits.isEmpty()) {
             return Flowable.empty();
         }
@@ -617,10 +617,11 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                     configuration.getFlushInterval(),
                     TimeUnit.SECONDS,
                     configuration.getBulkActions())
-                    .flatMap(JdbcAuditReporter.this::bulk)
-                    .doOnError(error -> LOGGER.error("An error occurs while indexing data into report_audits_{} table of {} database",
-                            configuration.getTableSuffix(), configuration.getDatabase(), error))
-                    .retry()
+                    .flatMap(list -> bulk(list)
+                            .doOnError(error -> LOGGER.error("An error occurred while inserting into report_audits_{} table of {} database",
+                                    configuration.getTableSuffix(), configuration.getDatabase(), error))
+                            .retry()
+                    )
                     .subscribe();
 
             ready = true;
