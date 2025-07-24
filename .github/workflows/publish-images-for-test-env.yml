@@ -21,7 +21,7 @@ on:
 jobs:
   publish-images-for-test-env:
     runs-on: ubuntu-latest
-    if: ${{ github.event.label.name == 'ready_to_test' }}
+    if: ${{ github.event.label.name == 'ready_to_test' || github.event.label.name == 'build-docker-image'}}
     steps:
       - name: "Trigger publish_docker_images CircleCI workflow"
         run: |
