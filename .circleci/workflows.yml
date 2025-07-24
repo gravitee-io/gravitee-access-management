@@ -2132,46 +2132,55 @@ workflows:
               jdbcType: ["postgres", "mysql", "mariadb", "mssql", "postgres-min", "mysql-min", "mariadb-min", "mssql-min"]
 
   build_branch:
+    on:
+      pull_request:
+        types:
+          - labeled
     when:
-      and:
-        - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+      or:
+        - and:
+            - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+            - or:
+                - equal: [ "<< pipeline.git.branch >>", "master" ]
+                - matches: { pattern: '^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$', value: "<< pipeline.git.branch >>" }
+        - equal: [ github.event.label.name, "build-docker-image" ]
     jobs:
       - setup:
           context:
             - cicd-orchestrator
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - build:
           requires:
             - setup
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
       - deploy-snapshot-on-nexus:
           context: cicd-orchestrator
           requires:
             - build
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
       - publish-images-azure-registry:
           context: cicd-orchestrator
           requires:
             - build
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
       - deploy-on-aks:
           context: cicd-orchestrator
@@ -2187,11 +2196,11 @@ workflows:
                 var-name: AZURE_APPLICATION_SECRET
           requires:
             - publish-images-azure-registry
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
       - aquasec/docker_image_scan:
           context: cicd-orchestrator
@@ -2237,11 +2246,11 @@ workflows:
           scanner_url: https://82fb8f75da.cloud.aquasec.com
           built_docker_image_file: /tmp/built-docker-images.txt
           skip_remote_docker_step: true
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
       - aquasec/register_artifact:
           context: cicd-orchestrator
@@ -2280,11 +2289,11 @@ workflows:
           requires:
             - publish-images-azure-registry
           built_docker_image_file: /tmp/built-docker-images.txt
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
   release:
     when:
