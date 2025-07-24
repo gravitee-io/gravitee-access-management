@@ -116,7 +116,7 @@
         <json-smart.version>2.4.10</json-smart.version>
         <reactor-netty.version>1.0.44</reactor-netty.version>
         <commons-io.version>2.11.0</commons-io.version>
-        <common-text.version>1.10.0</common-text.version>
+        <common-text.version>1.14.0</common-text.version>
         <ognl.version>3.3.4</ognl.version>
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
         <test-container.version>1.17.6</test-container.version>
