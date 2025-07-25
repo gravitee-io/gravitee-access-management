@@ -23,8 +23,10 @@ import com.mongodb.client.model.BsonField;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReplaceOptions;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -129,6 +131,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
     private final PublishProcessor<Audit> bulkProcessor = PublishProcessor.create();
 
+    private final static ReplaceOptions UPSERT_OPTIONS = new ReplaceOptions().upsert(true);
+
     private Disposable disposable;
 
     protected final <TResult> FindPublisher<TResult> withMaxTimeout(FindPublisher<TResult> query) {
@@ -197,12 +201,12 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
         // init bulk processor
         disposable = bulkProcessor.buffer(
-                        configuration.getFlushInterval(),
-                        TimeUnit.SECONDS,
-                        configuration.getBulkActions())
-                .flatMap(this::bulk)
-                .doOnError(throwable -> logger.error("An error occurs while indexing data into MongoDB", throwable))
-                .retry()
+                configuration.getFlushInterval(),
+                TimeUnit.SECONDS,
+                configuration.getBulkActions())
+                .flatMap(list -> bulk(list)
+                        .doOnError(throwable -> logger.error("An error occurred while inserting into the audit log.", throwable))
+                        .retry())
                 .subscribe();
     }
 
@@ -331,7 +335,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             return Flowable.empty();
         }
 
-        return Flowable.fromPublisher(reportableCollection.bulkWrite(this.convert(audits)));
+        return Flowable.fromPublisher(reportableCollection.bulkWrite(this.convertToBulkList(audits)));
     }
 
     private Bson query(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria) {
@@ -379,8 +383,10 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         return and(filters);
     }
 
-    private List<WriteModel<AuditMongo>> convert(List<Audit> audits) {
-        return audits.stream().map(audit -> new InsertOneModel<>(convert(audit))).collect(Collectors.toList());
+    private List<ReplaceOneModel<AuditMongo>> convertToBulkList(List<Audit> audits) {
+        return audits.stream()
+                .map(audit -> new ReplaceOneModel<>(new BasicDBObject("_id", audit.getId()), convert(audit), UPSERT_OPTIONS))
+                .collect(Collectors.toList());
     }
 
     private AuditMongo convert(Audit audit) {
