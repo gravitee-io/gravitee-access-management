@@ -33,8 +33,8 @@ import java.net.URL;
 public class RemoteJWKSourceResolver<C extends SecurityContext> implements JWKSourceResolver<C> {
 
     private final String url;
-    private final int connectionTimeout;
-    private final int readTimeout;
+    private int connectionTimeout;
+    private int readTimeout;
 
     public RemoteJWKSourceResolver(String url, int connectionTimeout, int readTimeout) {
         this.url = url;
@@ -42,10 +42,19 @@ public class RemoteJWKSourceResolver<C extends SecurityContext> implements JWKSo
         this.readTimeout = readTimeout;
     }
 
+    public RemoteJWKSourceResolver(String url) {
+        this.url = url;
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public JWKSource<C> resolve() {
-        DefaultResourceRetriever retriever = new DefaultResourceRetriever(connectionTimeout, readTimeout);
+        DefaultResourceRetriever retriever;
+        if (connectionTimeout == 0 || readTimeout == 0) {
+            retriever = new DefaultResourceRetriever();
+        } else {
+            retriever = new DefaultResourceRetriever(connectionTimeout, readTimeout);
+        }
         try {
             return (JWKSource<C>) JWKSourceBuilder.create(new URL(url), retriever)
                     .outageTolerant(true)
