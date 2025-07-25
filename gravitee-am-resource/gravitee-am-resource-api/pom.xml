@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee.am.resource</groupId>
         <artifactId>gravitee-am-resource</artifactId>
-        <version>4.1.36-hotfix.2</version>
+        <version>4.1.36-hotfix.3-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>

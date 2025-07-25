@@ -24,7 +24,7 @@
     <parent>
         <groupId>io.gravitee.am.gateway.standalone</groupId>
         <artifactId>gravitee-am-gateway-standalone</artifactId>
-        <version>4.1.36-hotfix.2</version>
+        <version>4.1.36-hotfix.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-standalone-container</artifactId>
