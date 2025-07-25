@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.7.10-dp-create-idx_devices_domain_user
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_devices_domain_user
+                tableName: devices
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_id
+              - column:
+                  name: reference_type
+              - column:
+                  name: user_id
+            indexName: idx_devices_domain_user
+            tableName: devices

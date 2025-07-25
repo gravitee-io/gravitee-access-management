@@ -45,6 +45,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_CLIENT;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENCE_TYPE;
+import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_USER_ID;
 import static io.gravitee.am.repository.mongodb.common.MongoUtils.userIdMatches;
 import static java.util.Optional.ofNullable;
 
@@ -57,8 +58,8 @@ public class MongoDeviceRepository extends AbstractDataPlaneMongoRepository impl
 
     private static final String COLLECTION_NAME = "devices";
     private static final String FIELD_EXPIRES_AT = "expires_at";
-    public static final String DEVICE_IDENTIFIER_ID = "deviceIdentifierId";
-    public static final String DEVICE_ID = "deviceId";
+    public static final String FIELD_DEVICE_IDENTIFIER_ID = "deviceIdentifierId";
+    public static final String FIELD_DEVICE_ID = "deviceId";
     private MongoCollection<DeviceMongo> rememberDeviceMongoCollection;
 
 
@@ -70,6 +71,9 @@ public class MongoDeviceRepository extends AbstractDataPlaneMongoRepository impl
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1), new IndexOptions().name("ri1rt1"));
         indexes.put(new Document(FIELD_EXPIRES_AT, 1), new IndexOptions().expireAfter(0L, TimeUnit.SECONDS).name("e1"));
+        indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("ri1rt1u1"));
+        indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1).append(FIELD_CLIENT, 1).append(FIELD_DEVICE_ID, 1), new IndexOptions().name("ri1rt1c1d1"));
+        indexes.put(new Document(FIELD_REFERENCE_ID, 1).append(FIELD_REFERENCE_TYPE, 1).append(FIELD_CLIENT, 1).append(FIELD_USER_ID, 1).append(FIELD_DEVICE_IDENTIFIER_ID, 1).append(FIELD_DEVICE_ID, 1), new IndexOptions().name("ri1rt1c1u1di1d1"));
 
         super.createIndex(rememberDeviceMongoCollection, indexes);
     }
@@ -87,7 +91,7 @@ public class MongoDeviceRepository extends AbstractDataPlaneMongoRepository impl
             ReferenceType referenceType, String referenceId, String client, UserId user, String deviceIdentifierId, String deviceId) {
         var query = and(
                 eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                eq(FIELD_CLIENT, client), userIdMatches(user, DEFAULT_USER_FIELDS), eq(DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(DEVICE_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()));
+                eq(FIELD_CLIENT, client), userIdMatches(user, DEFAULT_USER_FIELDS), eq(FIELD_DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(FIELD_DEVICE_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()));
         return Observable.fromPublisher(rememberDeviceMongoCollection.find(query).first()).firstElement().map(this::convert);
     }
 
