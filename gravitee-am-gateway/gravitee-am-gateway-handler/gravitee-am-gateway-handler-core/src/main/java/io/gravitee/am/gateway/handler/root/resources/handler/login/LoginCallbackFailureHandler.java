@@ -45,6 +45,7 @@ import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -235,7 +236,8 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
     private void closeRemoteSessionAndRedirect(RoutingContext context, Authentication authentication, String redirectUrl) {
         AuthenticationProvider authProvider = context.get(ConstantKeys.PROVIDER_CONTEXT_KEY);
         // the login process is done and we want to close the session after the authentication
-        if (authProvider instanceof SocialAuthenticationProvider socialIdp && socialIdp.closeSessionAfterSignIn() == CloseSessionMode.REDIRECT) {
+        String idToken = context.get(OIDC_PROVIDER_ID_TOKEN_KEY);
+        if (authProvider instanceof SocialAuthenticationProvider socialIdp && socialIdp.closeSessionAfterSignIn() == CloseSessionMode.REDIRECT && StringUtils.isNotEmpty(idToken)) {
             final var logoutRequest = socialIdp.signOutUrl(authentication);
 
             final var stateJwt = new JWT();
@@ -250,7 +252,7 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
                             logoutRequest.map(req -> {
                                 var callbackUri = UriBuilderRequest.resolveProxyRequest(context.request(), context.get(CONTEXT_PATH) + PATH_LOGIN_CALLBACK);
                                 return UriBuilder.fromHttpUrl(req.getUri())
-                                        .addParameter(io.gravitee.am.common.oidc.Parameters.ID_TOKEN_HINT, encodeURIComponent(context.get(OIDC_PROVIDER_ID_TOKEN_KEY)))
+                                        .addParameter(io.gravitee.am.common.oidc.Parameters.ID_TOKEN_HINT, encodeURIComponent(idToken))
                                         .addParameter(Parameters.STATE, encodeURIComponent(state))
                                         .addParameter(io.gravitee.am.common.oidc.Parameters.POST_LOGOUT_REDIRECT_URI, encodeURIComponent(callbackUri))
                                         .buildString();
