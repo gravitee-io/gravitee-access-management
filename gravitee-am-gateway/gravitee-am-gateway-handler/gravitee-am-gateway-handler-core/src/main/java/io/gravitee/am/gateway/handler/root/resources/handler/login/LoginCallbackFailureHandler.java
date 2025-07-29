@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLAIM_ISSUING_REASON;
@@ -164,16 +165,20 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
 
             // if client has activated hide login form and has only one active external IdP
             // redirect to the SP redirect_uri to avoid an infinite loop between AM and the external IdP
-            long externalIdentities = Optional.ofNullable(client.getIdentityProviders()).stream()
-                    .flatMap(Collection::stream)
+            long externalIdentities = Optional.ofNullable(client)
+                    .map(Client::getIdentityProviders)
+                    .orElse(Collections.emptySortedSet())
+                    .stream()
                     .map(idp -> identityProviderManager.getIdentityProvider(idp.getIdentity()))
                     .filter(idp -> idp != null && idp.isExternal())
                     .count();
 
             // if client hasn't activated hide login form but has external IdP with matching selection rule
             // redirect to the SP redirect_uri to avoid an infinite loop between AM and the external IdP
-            long selectedExternalIdp = Optional.ofNullable(client.getIdentityProviders()).stream()
-                    .flatMap(Collection::stream)
+            long selectedExternalIdp = Optional.ofNullable(client)
+                    .map(Client::getIdentityProviders)
+                    .orElse(Collections.emptySortedSet())
+                    .stream()
                     .filter(aidp -> evaluateIdPSelectionRule(aidp, identityProviderManager.getIdentityProvider(aidp.getIdentity()), templateEngine))
                     .map(aidp -> identityProviderManager.getIdentityProvider(aidp.getIdentity()))
                     .filter(idp -> idp != null && idp.isExternal())
@@ -286,7 +291,9 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
         if (originalParams != null) {
             params.setAll(originalParams);
         }
-        params.set(Parameters.CLIENT_ID, client.getClientId());
+        if (client != null) {
+            params.set(Parameters.CLIENT_ID, client.getClientId());
+        }
         params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
         String errorDescription = encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage());
         params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
