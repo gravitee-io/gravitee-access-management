@@ -39,6 +39,11 @@
             <artifactId>gravitee-am-model</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.jwt</groupId>
+            <artifactId>gravitee-am-jwt</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>io.gravitee.plugin</groupId>
