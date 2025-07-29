@@ -83,12 +83,12 @@ public class CertificateProviderManagerImpl implements CertificateProviderManage
             if (keyValue instanceof KeyPair) {
                 PrivateKey privateKey = ((KeyPair) keyValue).getPrivate();
                 PublicKey publicKey = ((KeyPair) keyValue).getPublic();
-                certificateProvider.setJwtBuilder(new DefaultJWTBuilder(privateKey, provider.signatureAlgorithm(), providerKey.getKeyId()));
-                certificateProvider.setJwtParser(new DefaultJWTParser(publicKey));
+                certificateProvider.setJwtBuilder(provider.jwtBuilder().orElse(new DefaultJWTBuilder(privateKey, provider.signatureAlgorithm(), providerKey.getKeyId())));
+                certificateProvider.setJwtParser(provider.jwtParser().orElse(new DefaultJWTParser(publicKey)));
             } else {
                 Key sharedKey = (Key) keyValue;
-                certificateProvider.setJwtBuilder(new DefaultJWTBuilder(sharedKey, provider.signatureAlgorithm(), providerKey.getKeyId()));
-                certificateProvider.setJwtParser(new DefaultJWTParser(sharedKey));
+                certificateProvider.setJwtBuilder(provider.jwtBuilder().orElse(new DefaultJWTBuilder(sharedKey, provider.signatureAlgorithm(), providerKey.getKeyId())));
+                certificateProvider.setJwtParser(provider.jwtParser().orElse(new DefaultJWTParser(sharedKey)));
             }
         } catch (UnsupportedOperationException ex) {
             // alg=none provider

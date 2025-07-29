@@ -15,11 +15,15 @@
  */
 package io.gravitee.am.certificate.api;
 
+import com.nimbusds.jose.JOSEException;
 import io.gravitee.am.common.plugin.AmPluginProvider;
+import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.model.jose.JWK;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
+import java.security.InvalidKeyException;
 import java.security.cert.Certificate;
 import java.util.Collections;
 import java.util.Date;
@@ -55,4 +59,11 @@ public interface CertificateProvider extends AmPluginProvider {
         return Single.just(Collections.emptyList());
     }
 
+    default Optional<JWTBuilder> jwtBuilder() throws InvalidKeyException, JOSEException {
+        return Optional.empty();
+    }
+
+    default Optional<JWTParser> jwtParser() throws InvalidKeyException, JOSEException  {
+        return Optional.empty();
+    }
 }
