@@ -85,7 +85,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
 
             // else check OpenID Connect flow validity
             final String hashValue = request.getParam(ConstantKeys.URL_HASH_PARAMETER);
-            if (hashValue == null) {
+            if (hashValue == null || hashValue.isEmpty()) {
                 context.fail(new InternalAuthenticationServiceException("No URL hash value found"));
                 return;
             }
