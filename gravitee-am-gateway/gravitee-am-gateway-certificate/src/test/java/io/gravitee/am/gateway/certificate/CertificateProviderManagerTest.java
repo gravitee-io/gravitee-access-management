@@ -15,22 +15,29 @@
  */
 package io.gravitee.am.gateway.certificate;
 
+import com.nimbusds.jose.JOSEException;
 import io.gravitee.am.certificate.api.CertificateMetadata;
 import io.gravitee.am.certificate.api.DefaultKey;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.gateway.certificate.impl.CertificateProviderManagerImpl;
+import io.gravitee.am.jwt.JWTBuilder;
+import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.model.jose.JWK;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import javax.crypto.spec.SecretKeySpec;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
@@ -58,10 +65,23 @@ public class CertificateProviderManagerTest {
     }
 
     @Test
-    public void noneAlgorithmCertificateProvider_accessToProviderProperty() {
+    public void noneAlgorithmCertificateProvider_accessToProviderProperty() throws Exception {
         CertificateProvider certificateProvider = certificateProviderManager.create(noneProvider());
         assertEquals("none", certificateProvider.getProvider().signatureAlgorithm());
         assertEquals("none", certificateProvider.getProvider().certificateMetadata().getMetadata().get("digestAlgorithmName"));
+        assertTrue(certificateProvider.getProvider().jwtBuilder().isEmpty());
+        assertTrue(certificateProvider.getProvider().jwtParser().isEmpty());
+    }
+
+    @Test
+    public void jwtProcessorCertificateProvider() throws Exception {
+        io.gravitee.am.certificate.api.CertificateProvider mockProvider = jwtProcessorProvider();
+
+        final var certProvider = certificateProviderManager.create(mockProvider);
+        assertEquals(mockProvider, certProvider.getProvider());
+
+        assertEquals(mockProvider.jwtBuilder().get(), certProvider.getJwtBuilder());
+        assertEquals(mockProvider.jwtParser().get(), certProvider.getJwtParser());
     }
 
     @Test
@@ -163,6 +183,66 @@ public class CertificateProviderManagerTest {
             public CertificateMetadata certificateMetadata() {
                 return certificateMetadata;
             }
+        };
+    }
+
+
+    private io.gravitee.am.certificate.api.CertificateProvider jwtProcessorProvider() {
+        // create default signing HMAC key
+        Key key = new SecretKeySpec(signingKeySecret.getBytes(), "HmacSHA256");
+        io.gravitee.am.certificate.api.Key certificateKey = new DefaultKey(signingKeyId, key);
+
+        CertificateMetadata certificateMetadata = new CertificateMetadata();
+        certificateMetadata.setMetadata(Collections.singletonMap(CertificateMetadata.DIGEST_ALGORITHM_NAME, defaultDigestAlgorithm));
+
+        return new io.gravitee.am.certificate.api.CertificateProvider() {
+            private final JWTBuilder jwtBuilder = Mockito.mock(JWTBuilder.class);
+            private final JWTParser jwtParser = Mockito.mock(JWTParser.class);
+            @Override
+            public Optional<Date> getExpirationDate() {
+                return Optional.empty();
+            }
+
+            @Override
+            public Flowable<JWK> privateKey() {
+                return null;
+            }
+
+            @Override
+            public Single<io.gravitee.am.certificate.api.Key> key() {
+                return Single.just(certificateKey);
+            }
+
+            @Override
+            public Single<String> publicKey() {
+                return null;
+            }
+
+            @Override
+            public Flowable<JWK> keys() {
+                return null;
+            }
+
+            @Override
+            public String signatureAlgorithm() {
+                return "HS256";
+            }
+
+            @Override
+            public CertificateMetadata certificateMetadata() {
+                return certificateMetadata;
+            }
+
+            @Override
+            public Optional<JWTBuilder> jwtBuilder() throws InvalidKeyException, JOSEException {
+                return Optional.of(jwtBuilder);
+            }
+
+            @Override
+            public Optional<JWTParser> jwtParser() throws InvalidKeyException, JOSEException  {
+                return Optional.of(jwtParser);
+            }
+
         };
     }
 }
