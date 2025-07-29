@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.services.purge;
 
+import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.common.service.AbstractService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,9 +52,6 @@ public class ScheduledPurgeService extends AbstractService implements Runnable {
     @Value("${services.purge.enabled:true}")
     private boolean enabled;
 
-    @Value("${management.type:mongodb}")
-    private String repositoryType;
-
     @Value("${services.purge.exclude:}")
     private String exclude;
 
@@ -63,16 +61,20 @@ public class ScheduledPurgeService extends AbstractService implements Runnable {
     @Lazy
     private PurgeManager purgeManager;
 
+    @Autowired
+    private RepositoriesEnvironment environment;
+
     @Override
     protected void doStart() throws Exception {
-        if (enabled && "jdbc".equalsIgnoreCase(repositoryType)) { // even if enabled, useless for Mongo implementation
+        String type = environment.getProperty("repositories.management.type", "mongodb");
+        if (enabled && "jdbc".equalsIgnoreCase(type)) { // even if enabled, useless for Mongo implementation
             super.doStart();
             logger.info("Purge service has been initialized with cron [{}]", cronTrigger);
             // Sync must start only when doStart() is invoked, that's the reason why we are not
             // using @Scheduled annotation on doSync() method.
             scheduler.schedule(this, new CronTrigger(cronTrigger));
         } else {
-            logger.warn("Purge service has been disabled");
+            logger.info("Purge service has been disabled, enabled={}, type={}", enabled, type);
         }
     }
 
