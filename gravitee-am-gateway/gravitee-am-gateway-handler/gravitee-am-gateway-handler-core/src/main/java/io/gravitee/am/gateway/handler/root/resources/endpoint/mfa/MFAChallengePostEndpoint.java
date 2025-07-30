@@ -272,6 +272,7 @@ public class MFAChallengePostEndpoint extends MFAEndpoint {
                         return;
                     }
 
+                    routingContext.put(ConstantKeys.USER_CONTEXT_KEY, fh.result());
                     cleanSession(routingContext);
                     updateStrongAuthStatus(routingContext);
                     updateAuditLog(routingContext, enrolling ? MFA_ENROLLMENT : MFA_CHALLENGE, endUser, client, factor, factorContext, null);
