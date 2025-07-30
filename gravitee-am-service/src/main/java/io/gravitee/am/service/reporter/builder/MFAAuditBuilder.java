@@ -45,7 +45,7 @@ public class MFAAuditBuilder extends GatewayAuditBuilder<MFAAuditBuilder> {
     }
 
     public MFAAuditBuilder application(Client client) {
-        if (client != null) {
+        if (client != null && client.getId() != null) {
             reference(Reference.domain(client.getDomain()));
             setTarget(client.getId(), EntityType.APPLICATION, null, client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
         }
