@@ -110,6 +110,8 @@ export const FlowEntityTypeEnum = {
   RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
   Token: 'TOKEN',
   WebauthnRegister: 'WEBAUTHN_REGISTER',
+  MfaEnroll: 'MFA_ENROLLMENT',
+  MfaChallenge: 'MFA_CHALLENGE',
 } as const;
 export type FlowEntityTypeEnum = typeof FlowEntityTypeEnum[keyof typeof FlowEntityTypeEnum];
 
