@@ -74,7 +74,7 @@ Gravitee.io AM also supports the following protocols to help our customers to co
 
 ## 📚 Documentation
 
-You can find Gravitee.io Access Management's documentation on the [dedicated website](https://documentation.gravitee.io/).
+You can find Gravitee.io Access Management's documentation [here](https://documentation.gravitee.io/am).
 
 ## 👥 Community
 
