@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { expect } from '@jest/globals';
-import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performGet } from '@gateway-commands/oauth-oidc-commands';
 
 const cheerio = require('cheerio');
 
@@ -43,7 +43,7 @@ export function extractCookieSessionValues(cookie): any {
 }
 
 export async function extractSmsCode(sfrUrl): Promise<string> {
-  const requests = await performGet(sfrUrl, '/__admin/requests');
+  const requests = await performGet(sfrUrl, '/__admin/requests?limit=1');
   expect(requests.status).toBe(200);
   const body = decodeURIComponent(requests.body.requests[0].request.body);
   const params = new URLSearchParams(body);
@@ -55,7 +55,7 @@ export async function extractSmsCode(sfrUrl): Promise<string> {
   return code;
 }
 
-export function extractSharedSecret(result) {
+export function extractSharedSecret(result, factorType: string = 'SMS'): any {
   const dom = cheerio.load(result.text);
   const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
   const action = dom('form').attr('action');
@@ -63,11 +63,15 @@ export function extractSharedSecret(result) {
   expect(xsrfToken).toBeDefined();
   expect(action).toBeDefined();
 
-  const factors = dom('script')
+  const codeString = dom('script')
     .text()
     .split('\n')
-    .find((line) => line.trim().startsWith('const factors'));
-  const sharedSecret = JSON.parse(factors.substring(factors.indexOf('=') + 1).replaceAll(';', ''))[0].enrollment.key;
+    .find((line: string) => line.trim().startsWith('const factors'));
+  const match = codeString.match(/\[.*]/);
+  if (!match) throw new Error('Cannot extract factors');
+  const factors = JSON.parse(match[0]);
+  const factor = factors.find((f) => f.factorType === factorType);
+  const sharedSecret = factor?.enrollment?.key || null;
   return {
     sharedSecret: sharedSecret,
     action: action,

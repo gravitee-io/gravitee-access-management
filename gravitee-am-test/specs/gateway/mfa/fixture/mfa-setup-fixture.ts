@@ -246,3 +246,18 @@ export const createOtpFactor = async (domain, accessToken) => {
     name: 'totp Factor',
   });
 };
+
+export const createCallFactor = async (domain, accessToken, twilioResource, name) => {
+  const callFactor = await createFactor(domain.id, accessToken, {
+    type: 'call-am-factor',
+    factorType: 'CALL',
+    name: name,
+    configuration: JSON.stringify({
+      countryCodes: 'fr',
+      graviteeResource: twilioResource.id,
+    }),
+  });
+  expect(callFactor).toBeDefined();
+  expect(callFactor.id).not.toBeNull();
+  return callFactor;
+};

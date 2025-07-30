@@ -24,7 +24,7 @@ import {
 } from '@management-commands/application-management-commands';
 
 import fetch from 'cross-fetch';
-import { buildCreateAndTestUser, deleteUser } from '@management-commands/user-management-commands';
+import { buildCreateAndTestUser, deleteUser, getUserFactors } from '@management-commands/user-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import {
   extractXsrfTokenAndActionResponse,
@@ -42,6 +42,7 @@ import { lookupFlowAndResetPolicies } from '@management-commands/flow-management
 import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { extractSharedSecret, extractSmsCode } from './fixture/mfa-extract-fixture';
 import {
+  createCallFactor,
   createEmailFactor,
   createMockFactor,
   createOtpFactor,
@@ -66,6 +67,9 @@ let totpApp;
 let smsSfrFactor;
 let smsSfrTestApp;
 let mfaFlowApp;
+let mfaEnrollFlowApp;
+let callFactor1;
+let callFactor2;
 
 const validMFACode = '333333';
 const sharedSecret = 'K546JFR2PK5CGQLLUTFG4W46IKDFWWUE';
@@ -81,6 +85,12 @@ beforeAll(async () => {
   mockFactor = await createMockFactor(validMFACode, domain, accessToken);
   smsSfrFactor = await createSFRResource(domain, accessToken).then((sfrResource) => createSMSFactor(domain, accessToken, sfrResource));
   emailFactor = await createSMTPResource(domain, accessToken).then((smtpResource) => createEmailFactor(smtpResource, domain, accessToken));
+  callFactor1 = await createTwilioResource(domain, accessToken).then((twilioResource) =>
+    createCallFactor(domain, accessToken, twilioResource, 'Call factor1'),
+  );
+    callFactor2 = await createTwilioResource(domain, accessToken).then((twilioResource) =>
+        createCallFactor(domain, accessToken, twilioResource, 'Call factor2'),
+    );
   recoveryCodeFactor = await createRecoveryCodeFactor(domain, accessToken);
   totpFactor = await createOtpFactor(domain, accessToken);
 
@@ -89,6 +99,7 @@ beforeAll(async () => {
   smsSfrTestApp = await createMfaApp(domain, accessToken, [smsSfrFactor.id]);
   mfaFlowApp = await createMfaFlowApp(domain, accessToken, emailFactor.id);
   totpApp = await createMfaApp(domain, accessToken, [totpFactor.id]);
+  mfaEnrollFlowApp = await createMfaEnrollFlowApp(domain, accessToken, smsSfrFactor.id, callFactor1.id, callFactor2.id);
 
   let started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
   domain = started.domain;
@@ -274,11 +285,10 @@ describe('MFA', () => {
       const verify = await verifySmsSfrFactor(authorize, smsSfrFactor);
 
       expect(verify.status).toBe(302);
-      expect(verify.headers['location']).toContain('code=');
+      expect(verify.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
     });
     afterAll(async () => {
       await deleteUser(domain.id, accessToken, user5.id);
-      await performDelete(sfrUrl, '/__admin/requests', {});
     });
   });
 
@@ -318,11 +328,47 @@ describe('MFA', () => {
       await deleteUser(domain.id, accessToken, user6.id);
     });
   });
+
+  describe('MFA enrollment flow test', () => {
+    let user7;
+    it('Should enroll factor from POST CHALLENGE and POST ENROLLMENT flow', async () => {
+      user7 = await buildCreateAndTestUser(domain.id, accessToken, 7);
+      expect(user7).toBeDefined();
+
+      const loginResponse = await loginUserNameAndPassword(
+        mfaEnrollFlowApp.settings.oauth.clientId,
+        user7,
+        user7.password,
+        false,
+        openIdConfiguration,
+        domain,
+      );
+      const enroll = await enrollSmsFactor(loginResponse, smsSfrFactor, domain);
+      const authorize = await performGet(enroll.headers['location'], '', {
+        Cookie: enroll.headers['set-cookie'],
+      }).expect(302);
+      expect(authorize.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/mfa/challenge`);
+
+      const verify = await verifySmsSfrFactor(authorize, smsSfrFactor);
+
+      expect(verify.status).toBe(302);
+      expect(verify.headers['location']).toContain(`${process.env.AM_GATEWAY_URL}/${domain.hrid}/oauth/authorize`);
+
+      const userFactors = await getUserFactors(domain.id, accessToken, user7.id);
+      expect(userFactors.some((f) => f.id === smsSfrFactor.id)).toBe(true);
+      expect(userFactors.some((f) => f.id === callFactor1.id)).toBe(true);
+      expect(userFactors.some((f) => f.id === callFactor2.id)).toBe(true);
+    });
+    afterAll(async () => {
+      await deleteUser(domain.id, accessToken, user7.id);
+    });
+  });
 });
 
 afterAll(async () => {
   if (domain && domain.id) {
     await deleteDomain(domain.id, accessToken);
+    await performDelete(sfrUrl, '/__admin/requests', {});
   }
 });
 
@@ -387,7 +433,7 @@ const enrollEmailFactor = async (user, authorize, emailFactor, domain) => {
 const enrollOtpFactor = async (user, authResponse, otpFactor, domain) => {
   const headers = authResponse.headers['set-cookie'] ? { Cookie: authResponse.headers['set-cookie'] } : {};
   const result = await performGet(authResponse.headers['location'], '', headers).expect(200);
-  const extractedResult = extractSharedSecret(result);
+  const extractedResult = extractSharedSecret(result, 'TOTP');
 
   const enrollMfa = await performPost(
     extractedResult.action,
@@ -452,6 +498,105 @@ const createSFRResource = async (domain, accessToken) => {
   expect(sfrResource).not.toBeNull();
   expect(sfrResource.id).not.toBeNull();
   return sfrResource;
+};
+
+const createTwilioResource = async (domain, accessToken) => {
+  const twilioResource = await createResource(domain.id, accessToken, {
+    name: 'twilio',
+    type: 'twilio-verify-am-resource',
+    configuration: JSON.stringify({
+      accountSid: 'test-account-sid',
+      sid: 'test-sid',
+      authToken: 'test-auth-token',
+      useSystemProxy: false,
+    }),
+  });
+  expect(twilioResource).toBeDefined();
+  expect(twilioResource.id).not.toBeNull();
+  return twilioResource;
+};
+
+const createMfaEnrollFlowApp = async (domain, accessToken, smsFactorId, callFactorId1, callFactorId2) => {
+  const application = await createApplication(domain.id, accessToken, {
+    name: 'mfaEnrollFlowApp',
+    type: 'WEB',
+    clientId: faker.internet.domainWord(),
+    redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
+  }).then((app) =>
+    updateApplication(
+      domain.id,
+      accessToken,
+      {
+        settings: {
+          oauth: {
+            redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
+            scopeSettings: [{ scope: 'openid', defaultScope: true }],
+          },
+          mfa: {
+            factor: {
+              defaultFactorId: smsFactorId,
+              applicationFactors: [
+                { id: smsFactorId, selectionRule: '' },
+                { id: callFactorId1, selectionRule: '' },
+                  { id: callFactorId2, selectionRule: '' },
+              ],
+            },
+            enroll: {
+              active: true,
+              forceEnrollment: true,
+              type: 'REQUIRED',
+            },
+            challenge: {
+              active: true,
+              type: 'REQUIRED',
+            },
+          },
+          advanced: {
+            flowsInherited: false,
+          },
+        },
+        identityProviders: [{ identity: `default-idp-${domain.id}`, priority: -1 }],
+      },
+      app.id,
+    ),
+  );
+
+  const flows = await getApplicationFlows(domain.id, accessToken, application.id);
+
+  lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.MfaEnroll, 'post', [
+    {
+      name: 'enrollMFAPostEnroll',
+      policy: 'policy-am-enroll-mfa',
+      description: 'Auto enroll call factor',
+      condition: '',
+      enabled: true,
+      configuration: JSON.stringify({
+        primary: false,
+        refresh: false,
+        factorId: callFactorId1,
+        value: '+33780763733',
+      }),
+    },
+  ]);
+
+    lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.MfaChallenge, 'post', [
+        {
+            name: 'enrollMFAPostChallenge',
+            policy: 'policy-am-enroll-mfa',
+            description: 'Auto enroll call factor',
+            condition: '',
+            enabled: true,
+            configuration: JSON.stringify({
+                primary: false,
+                refresh: false,
+                factorId: callFactorId2,
+                value: '+33780763733',
+            }),
+        },
+    ]);
+
+  await updateApplicationFlows(domain.id, accessToken, application.id, flows);
+  return application;
 };
 
 const createMfaFlowApp = async (domain, accessToken, factor) => {
@@ -670,7 +815,7 @@ const verifyFactorFailure = async (challenge, factor) => {
 
 const verifySmsSfrFactor = async (challenge, factor) => {
   const challengeResponse = await extractXsrfTokenAndActionResponse(challenge);
-  const code = extractSmsCode(sfrUrl);
+  const code = await extractSmsCode(sfrUrl);
   return await postFactor(challengeResponse, factor, code);
 };
 

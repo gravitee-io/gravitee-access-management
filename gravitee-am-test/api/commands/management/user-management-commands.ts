@@ -54,6 +54,14 @@ export const getUser = (domainId, accessToken, userId: string) =>
     user: userId,
   });
 
+export const getUserFactors = (domainId, accessToken, userId: string) =>
+  getUserApi(accessToken).getUsersEnrolledFactors({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+  });
+
 export const getAllUsers = (domainId, accessToken) => getUserPage(domainId, accessToken);
 
 export const getUserPage = (domainId, accessToken, page: number = null, size: number = null) => {
@@ -136,7 +144,10 @@ export const deleteUser = (domainId, accessToken, userId) =>
     user: userId,
   });
 
-export function buildTestUser(i: number, options: { preRegistration?: boolean; password?: string; serviceAccount?: boolean; lastPasswordReset?: Date } = {}) {
+export function buildTestUser(
+  i: number,
+  options: { preRegistration?: boolean; password?: string; serviceAccount?: boolean; lastPasswordReset?: Date } = {},
+) {
   const { preRegistration = false, password = 'SomeP@assw0rd', serviceAccount = false } = options;
   const firstName = 'firstName' + i;
   const lastName = 'lastName' + i;
@@ -148,7 +159,7 @@ export function buildTestUser(i: number, options: { preRegistration?: boolean; p
     password: serviceAccount ? undefined : password,
     preRegistration: preRegistration,
     serviceAccount: serviceAccount,
-    lastPasswordReset: options.lastPasswordReset
+    lastPasswordReset: options.lastPasswordReset,
   };
 }
 
