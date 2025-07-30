@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.endpoint.mfa;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.mfa.SendChallengeException;
 import io.gravitee.am.common.factor.FactorType;
 import io.gravitee.am.common.jwt.JWT;
@@ -41,6 +43,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.exception.MFAValidationAttemptException;
+import io.gravitee.am.service.reporter.builder.MFAAuditBuilder;
 import io.gravitee.am.service.reporter.builder.gateway.VerifyAttemptAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
 import io.gravitee.common.http.MediaType;
@@ -140,7 +143,7 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
         localSessionStore = LocalSessionStore.create(vertx);
         mfaChallengeEndpoint =
                 new MFAChallengePostEndpoint(factorManager, userService, templateEngine, deviceService, applicationContext,
-                        domainDataPlane,  credentialService, verifyAttemptService, emailService, auditService,
+                        domainDataPlane, credentialService, verifyAttemptService, emailService, auditService,
                         deviceIdentifierManager, jwtService, ConstantKeys.DEFAULT_REMEMBER_DEVICE_COOKIE_NAME);
 
         router.route("/mfa/challenge")
@@ -271,7 +274,7 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
                     assertEquals("1234", enrolledFactor.getChannel().getAdditionalData().get(ConstantKeys.MFA_ENROLLMENT_EXTENSION_PHONE_NUMBER));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
-   }
+    }
 
     @Test
     public void shouldVerify_withEmail_tidRemovedFromSession() throws Exception {
@@ -467,7 +470,7 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
         when(deviceService.deviceExists(any(), any(), any(), any(), any())).thenReturn(Single.just(true));
         when(deviceService.create(any(), any(), any(), any(), any(), any(), any())).thenReturn(Single.just(new Device()));
         when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just(UUID.randomUUID().toString()));
-       
+
         testRequest(HttpMethod.POST,
                 "/mfa/challenge",
                 req -> {
@@ -483,7 +486,11 @@ public class MFAChallengePostEndpointTest extends RxWebTestBase {
                 302,
                 "Found", null);
 
-        verify(auditService).report(any());
+        verify(auditService, times(1)).report(argThat(builder ->
+                builder.build(new ObjectMapper()).getType().equals(EventType.MFA_CHALLENGE)));
+        verify(auditService, times(1)).report(argThat(builder ->
+                builder.build(new ObjectMapper()).getType().equals(EventType.MFA_REMEMBER_DEVICE)));
+
         verify(userService, never()).addFactor(any(), any(), any());
         verify(deviceIdentifierManager).useCookieBasedDeviceIdentifier(any());
         verify(jwtService).encode(any(JWT.class), any(Client.class));
