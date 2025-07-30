@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ import io.gravitee.am.common.audit.EntityType;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.model.Factor;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.factor.EnrolledFactorChannel;
 import io.gravitee.am.model.oidc.Client;
@@ -39,6 +40,14 @@ public class MFAAuditBuilder extends GatewayAuditBuilder<MFAAuditBuilder> {
     public MFAAuditBuilder channel(EnrolledFactorChannel channel) {
         if (channel != null) {
             setNewValue(new ChanelData(channel.getType().toString(), channel.getTarget()));
+        }
+        return this;
+    }
+
+    public MFAAuditBuilder application(Client client) {
+        if (client != null) {
+            reference(Reference.domain(client.getDomain()));
+            setTarget(client.getId(), EntityType.APPLICATION, null, client.getClientName(), ReferenceType.DOMAIN, client.getDomain());
         }
         return this;
     }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -518,7 +518,7 @@ public class MFAChallengePostEndpoint extends MFAEndpoint {
         QueryStringDecoder queryStringDecoder = new QueryStringDecoder(req.uri());
         Map<String, String> parameters = new LinkedHashMap<>(queryStringDecoder.parameters().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get(0))));
         parameters.put(errorKey, errorValue);
-        if(context.session() != null){
+        if (context.session() != null) {
             context.session().put(ERROR_HASH, HashUtil.generateSHA256(errorValue));
         }
         String uri = UriBuilderRequest.resolveProxyRequest(req, req.path(), parameters, true);
@@ -583,8 +583,14 @@ public class MFAChallengePostEndpoint extends MFAEndpoint {
                             }
                             return Single.just(device);
                         })
-                        .doOnSuccess(device -> routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true))
-                        .doOnError(device -> routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false))
+                        .doOnSuccess(device -> {
+                            routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, true);
+                            auditRememberDevice(user, client, null);
+                        })
+                        .doOnError(throwable -> {
+                            routingContext.session().put(DEVICE_ALREADY_EXISTS_KEY, false);
+                            auditRememberDevice(user, client, throwable);
+                        })
                         .toMaybe();
             }).doFinally(() -> {
                         routingContext.session().remove(DEVICE_ID);
@@ -593,6 +599,7 @@ public class MFAChallengePostEndpoint extends MFAEndpoint {
             ).subscribe(d -> routingContext.next());
         }
     }
+
 
     private void updateCredential(HttpServerRequest request, String credentialId, String userId, Handler<AsyncResult<Credential>> handler) {
         final Credential credential = new Credential();
@@ -666,5 +673,16 @@ public class MFAChallengePostEndpoint extends MFAEndpoint {
                 .throwable(cause, channel);
 
         auditService.report(builder);
+    }
+
+    private void auditRememberDevice(User endUser, Client client, Throwable cause) {
+        final MFAAuditBuilder auditBuilder = AuditBuilder.builder(MFAAuditBuilder.class)
+                .user(endUser)
+                .client(client)
+                .type(EventType.MFA_REMEMBER_DEVICE)
+                .application(client)
+                .throwable(cause);
+
+        auditService.report(auditBuilder);
     }
 }
