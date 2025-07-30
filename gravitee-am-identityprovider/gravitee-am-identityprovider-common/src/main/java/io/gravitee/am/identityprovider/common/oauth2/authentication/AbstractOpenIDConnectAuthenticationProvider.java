@@ -197,6 +197,11 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
             final String hashValue = authentication.getContext().request().parameters().getFirst(HASH_VALUE_PARAMETER);
             Map<String, String> hashValues = getParams(hashValue.substring(1));
 
+            if (getConfiguration().isStoreOriginalTokens()) {
+                // put this to context to inform about storing tokens in user profile
+                authentication.getContext().set(STORE_ORIGINAL_TOKEN_KEY, "true");
+            }
+
             // implicit flow was used with response_type=id_token token, access token is already fetched, continue
             if (ResponseType.ID_TOKEN_TOKEN.equals(getConfiguration().getResponseType())) {
                 String accessToken = hashValues.get(ACCESS_TOKEN_PARAMETER);
