@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.springframework.util.StringUtils.hasLength;
+
 /**
  * Handle OpenID Connect response with response_type = id_token or id_token token.
  * For this kind of response, the OIDC provider redirects user to the OAuth 2.0 client with parameters as fragment instead of query.
@@ -85,7 +87,7 @@ public class LoginCallbackOpenIDConnectFlowHandler implements Handler<RoutingCon
 
             // else check OpenID Connect flow validity
             final String hashValue = request.getParam(ConstantKeys.URL_HASH_PARAMETER);
-            if (hashValue == null) {
+            if (!hasLength(hashValue)) {
                 context.fail(new InternalAuthenticationServiceException("No URL hash value found"));
                 return;
             }

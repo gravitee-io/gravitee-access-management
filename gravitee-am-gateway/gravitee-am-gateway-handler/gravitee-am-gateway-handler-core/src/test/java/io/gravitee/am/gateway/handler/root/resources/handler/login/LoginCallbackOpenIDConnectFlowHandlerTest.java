@@ -15,8 +15,10 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import io.gravitee.am.common.exception.authentication.InternalAuthenticationServiceException;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.rxjava3.ext.web.RoutingContext;
 import io.vertx.rxjava3.ext.web.templ.thymeleaf.ThymeleafTemplateEngine;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -97,5 +100,98 @@ public class LoginCallbackOpenIDConnectFlowHandlerTest extends RxWebTestBase {
         verify(engine, never()).render(any(Map.class), any());
     }
 
+    @Test
+    public void shouldContinue_authorizationOpenIDConnect_validHashValue() throws Exception {
+        router
+                .post("/login/callback")
+                .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(RoutingContext::end);
+
+        testRequest(
+                HttpMethod.POST, "/login/callback?urlHash=%23access_token%3Dtest%26token_type%3DBearer",
+                null,
+                null,
+                200, "OK", null);
+
+        verify(engine, never()).render(any(Map.class), any());
+    }
+
+    @Test
+    public void shouldFail_authorizationOpenIDConnect_noHashValue() throws Exception {
+        AtomicReference<Throwable> capturedException = new AtomicReference<>();
+        
+        router
+                .post("/login/callback")
+                .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(RoutingContext::end)
+                .failureHandler(rc -> {
+                    capturedException.set(rc.failure());
+                    rc.response().setStatusCode(400).end();
+                });
+
+        testRequest(
+                HttpMethod.POST, "/login/callback",
+                null,
+                null,
+                400, "Bad Request", null);
+
+        verify(engine, never()).render(any(Map.class), any());
+
+        assertNotNull(capturedException.get());
+        assertTrue(capturedException.get() instanceof InternalAuthenticationServiceException);
+        assertEquals("No URL hash value found", capturedException.get().getMessage());
+    }
+
+    @Test
+    public void shouldFail_authorizationOpenIDConnect_emptyHashValue() throws Exception {
+        AtomicReference<Throwable> capturedException = new AtomicReference<>();
+        
+        router
+                .post("/login/callback")
+                .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(RoutingContext::end)
+                .failureHandler(rc -> {
+                    capturedException.set(rc.failure());
+                    rc.response().setStatusCode(400).end();
+                });
+
+        testRequest(
+                HttpMethod.POST, "/login/callback?urlHash=",
+                null,
+                null,
+                400, "Bad Request", null);
+
+        verify(engine, never()).render(any(Map.class), any());
+
+        assertNotNull(capturedException.get());
+        assertTrue(capturedException.get() instanceof InternalAuthenticationServiceException);
+        assertEquals("No URL hash value found", capturedException.get().getMessage());
+    }
+
+    @Test
+    public void shouldFail_authorizationOpenIDConnect_nullHashValue() throws Exception {
+        AtomicReference<Throwable> capturedException = new AtomicReference<>();
+        
+        router
+                .post("/login/callback")
+                .handler(loginCallbackOpenIDConnectFlowHandler)
+                .handler(RoutingContext::end)
+                .failureHandler(rc -> {
+                    capturedException.set(rc.failure());
+                    rc.response().setStatusCode(400).end();
+                });
+
+        testRequest(
+                HttpMethod.POST, "/login/callback?urlHash",
+                null,
+                null,
+                400, "Bad Request", null);
+
+        verify(engine, never()).render(any(Map.class), any());
+
+        assertNotNull(capturedException.get());
+        assertTrue(capturedException.get() instanceof InternalAuthenticationServiceException);
+        assertEquals("No URL hash value found", capturedException.get().getMessage());
+    }
 
 }
