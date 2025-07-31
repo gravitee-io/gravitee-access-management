@@ -7,7 +7,6 @@ orbs:
   aws-cli: circleci/aws-cli@5.1.2
   aws-s3: circleci/aws-s3@4.1.0
   helm: circleci/helm@2.0.1
-  aquasec: gravitee-io/aquasec@1.0.5
 
 executors:
   ubuntu:
@@ -898,7 +897,7 @@ jobs:
             echo "export TAG=$TAG" >> $BASH_ENV
             echo $TAG > /tmp/docker-tag.txt
 
-            # create a latest tag for the given branch to avoid flooding AquaSec project
+            # create a latest tag for the given branch
             export TAG_LATEST=$(echo "${CIRCLE_BRANCH}-latest")
             
             echo "export TAG_LATEST=$TAG_LATEST" >> $BASH_ENV
@@ -1679,48 +1678,6 @@ jobs:
                     ]
                   }
 
-  add-docker-images-in-aqua:
-    docker:
-      - image: cimg/base:stable
-    resource_class: small
-    steps:
-      - keeper/env-export:
-          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-          var-name: AQUA_KEY
-      - keeper/env-export:
-          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-          var-name: AQUA_SECRET
-      - keeper/env-export:
-          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
-          var-name: AQUA_USERNAME
-      - keeper/env-export:
-          secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
-          var-name: AQUA_PASSWORD
-      - keeper/env-export:
-          secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
-          var-name: SCANNER_TOKEN
-      - keeper/env-export:
-          secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
-          var-name: GITHUB_TOKEN
-      - aquasec/install_billy
-      - aquasec/pull_aqua_scanner_image
-      - setup_remote_docker
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
-      - aquasec/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-gateway:<< pipeline.parameters.graviteeio_version >>
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
-      - aquasec/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-management-api:<< pipeline.parameters.graviteeio_version >>
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-      - aquasec/register_artifact:
-          artifact_to_register: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
-      - aquasec/scan_docker_image:
-          docker_image_to_scan: graviteeio/am-management-ui:<< pipeline.parameters.graviteeio_version >>
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-
   job-test-am-charts:
     docker:
       - image: cimg/base:stable
@@ -1820,11 +1777,6 @@ workflows:
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-aqua:
-          name: add docker images to AquaSec
-          context: cicd-orchestrator
-          requires:
-            - publish docker images
       - publish_am_rpms:
           name: publish RPM packages
           context: cicd-orchestrator
@@ -1879,11 +1831,6 @@ workflows:
           tag_latest_support: false
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-aqua:
-          name: add docker images to AquaSec
-          context: cicd-orchestrator
-          requires:
-            - publish docker images
       - publish_maven_packages_to_maven_central:
           name: publish maven packages
           context: cicd-orchestrator
@@ -1917,11 +1864,6 @@ workflows:
           tag_latest_support: false
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - add-docker-images-in-aqua:
-          name: add docker images to AquaSec
-          context: cicd-orchestrator
-          requires:
-            - publish docker images
       - publish_maven_packages_to_maven_central:
           name: publish maven packages
           context: cicd-orchestrator
@@ -1951,26 +1893,6 @@ workflows:
           name: Test Helm chart
           requires:
             - setup
-      - aquasec/fs_scan:
-          context:
-            - cicd-orchestrator
-          requires:
-            - setup
-          filters:
-            branches:
-              ignore:
-                - master
-                - /^[0-999].[0-999].x/
-          pre-steps:
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-                var-name: AQUA_KEY
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-                var-name: AQUA_SECRET
-            - keeper/env-export:
-                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
-                var-name: GITHUB_TOKEN
       - junit_tests:
           context: cicd-orchestrator
           requires:
@@ -2099,99 +2021,6 @@ workflows:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
 
-      - aquasec/docker_image_scan:
-          context: cicd-orchestrator
-          pre-steps:
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-                var-name: AQUA_KEY
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-                var-name: AQUA_SECRET
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
-                var-name: AQUA_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
-                var-name: AQUA_PASSWORD
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
-                var-name: SCANNER_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
-                var-name: AZURE_DOCKER_REGISTRY_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
-                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
-            - keeper/env-export:
-                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
-                var-name: GITHUB_TOKEN
-            - attach_workspace:
-                at: /tmp
-            - setup_remote_docker
-            - run:
-                name: Connect to Azure registry
-                command: |
-                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-                  while IFS="" read -r line || [ -n "$line" ]
-                  do
-                    echo "Pull ${line}"
-                    docker pull "${line}"
-                  done < /tmp/built-docker-images.txt
-          requires:
-            - publish-images-azure-registry
-          scanner_url: https://82fb8f75da.cloud.aquasec.com
-          built_docker_image_file: /tmp/built-docker-images.txt
-          skip_remote_docker_step: true
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-
-      - aquasec/register_artifact:
-          context: cicd-orchestrator
-          pre-steps:
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-                var-name: AQUA_KEY
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-                var-name: AQUA_SECRET
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/login
-                var-name: AQUA_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://LYg-wdlM5UDzSqFFH6Kyig/field/password
-                var-name: AQUA_PASSWORD
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/ScannerToken
-                var-name: SCANNER_TOKEN
-            - keeper/env-export:
-                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/login
-                var-name: AZURE_DOCKER_REGISTRY_USERNAME
-            - keeper/env-export:
-                secret-url: keeper://Q721P2LSOPJ9qiXLuf5AHQ/field/password
-                var-name: AZURE_DOCKER_REGISTRY_PASSWORD
-            - keeper/env-export:
-                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
-                var-name: GITHUB_TOKEN
-            - attach_workspace:
-                at: /tmp
-            - setup_remote_docker
-            - run:
-                name: Connect to Azure registry
-                command: |
-                  echo $AZURE_DOCKER_REGISTRY_PASSWORD | docker login --username $AZURE_DOCKER_REGISTRY_USERNAME --password-stdin graviteeio.azurecr.io
-          requires:
-            - publish-images-azure-registry
-          built_docker_image_file: /tmp/built-docker-images.txt
-          filters:
-            branches:
-              only:
-                - master
-                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
-
   release:
     when:
       and:
@@ -2242,10 +2071,6 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           tag_latest: << pipeline.parameters.tag_latest >>
           tag_latest_support: << pipeline.parameters.tag_latest_support >>
-      - add-docker-images-in-aqua:
-          context: cicd-orchestrator
-          requires:
-            - build_n_push_am_ce_job
 
   daily-purge-azure-registry:
     triggers:
