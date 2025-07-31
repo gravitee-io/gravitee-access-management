@@ -26,7 +26,7 @@ databaseChangeLog:
   - include:
       - file: liquibase/changelogs/v4_7_0/4.7.0-13-dataplane-dynamic_user_groups-init.yml
   - include:
-      - file: liquibase/changelogs/v4_7_10/4.7.10-devices-indexes.yml
+      - file: liquibase/changelogs/v4_7_10/4.7.10-dataplane-devices-indexes.yml
   - include:
       - file: liquibase/changelogs/v4_9_0/4.9.0-dataplane-sweep-redundant-indexes-scopes-approval.yml
   - include:
