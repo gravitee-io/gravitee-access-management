@@ -123,7 +123,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     @Value("${management.mongodb.ensureIndexOnStart:true}")
     private boolean ensureIndexOnStart;
 
-    @Value("${management.mongodb.readPreference:PRIMARY}")
+    @Value("${reporters.mongodb.readPreference:PRIMARY}")
     private String readPreference;
 
     @Value("${management.mongodb.cursorMaxTime:60000}")
