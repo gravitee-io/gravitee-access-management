@@ -116,6 +116,8 @@
 #  file:
 #    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/audit-logs/
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
+#  mongodb: # Configuration of read preference for querying audit records from mongodb, defaults to primary if not provided
+#    readPreference: secondary # primary, secondary, primaryPreferred, secondaryPreferred, nearest
 
 # Management API AM service configurations. Provided values are default values.
 # All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the
