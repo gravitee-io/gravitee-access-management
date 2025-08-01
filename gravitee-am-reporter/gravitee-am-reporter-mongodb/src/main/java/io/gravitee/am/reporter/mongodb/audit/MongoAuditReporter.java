@@ -16,6 +16,7 @@
 package io.gravitee.am.reporter.mongodb.audit;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.ReadPreference;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
@@ -25,8 +26,6 @@ import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -103,6 +102,7 @@ import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporter
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.MIN_READ_PREFERENCE_STALENESS;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.OLD_INDICES;
 import static java.util.stream.Collectors.toMap;
 
@@ -120,10 +120,16 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     private MongoReporterConfiguration configuration;
 
     @Value("${management.mongodb.ensureIndexOnStart:true}")
-
     private boolean ensureIndexOnStart;
+
     @Value("${management.mongodb.cursorMaxTime:60000}")
     private int cursorMaxTimeInMs;
+
+    @Value("${reporters.mongodb.readPreference:PRIMARY}")
+    private String readPreference = "PRIMARY";
+
+    @Value("${reporters.mongodb.readPreferenceMaxStaleness:90000}")
+    private Long readPreferenceMaxStalenessMs = MIN_READ_PREFERENCE_STALENESS;
 
     private ClientWrapper<MongoClient> clientWrapper;
 
@@ -154,8 +160,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         Bson query = query(referenceType, referenceId, criteria);
 
         // run search query
-        Single<Long> countOperation = Observable.fromPublisher(reportableCollection.countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l);
-        Single<List<Audit>> auditsOperation = Observable.fromPublisher(withMaxTimeout(reportableCollection.find(query))
+        Single<Long> countOperation = Observable.fromPublisher(withReadPreferenceCollection().countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l);
+        Single<List<Audit>> auditsOperation = Observable.fromPublisher(withMaxTimeout(withReadPreferenceCollection().find(query))
                         .sort(new BasicDBObject(FIELD_TIMESTAMP, -1))
                         .skip(size * page).limit(size))
                 .map(this::convert).collect(LinkedList::new, List::add);
@@ -180,7 +186,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
     @Override
     public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
-        return Observable.fromPublisher(reportableCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(withReadPreferenceCollection().find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
     }
 
     @Override
@@ -291,7 +297,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                 )
         ).toList();
 
-        return Observable.fromPublisher(withMaxTimeout(reportableCollection.aggregate(Arrays.asList(
+        return Observable.fromPublisher(withMaxTimeout(withReadPreferenceCollection().aggregate(Arrays.asList(
                         Aggregates.match(query),
                         Aggregates.group(
                                 new BasicDBObject("_id",
@@ -320,14 +326,14 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         if (criteria.size() != null && criteria.size() != 0) {
             aggregates.add(Aggregates.limit(criteria.size()));
         }
-        return Observable.fromPublisher(withMaxTimeout(reportableCollection.aggregate(aggregates, Document.class
+        return Observable.fromPublisher(withMaxTimeout(withReadPreferenceCollection().aggregate(aggregates, Document.class
                 )))
                 .toList()
                 .map(docs -> docs.stream().collect(toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
     }
 
     private Single<Map<Object, Object>> executeCount(Bson query) {
-        return Observable.fromPublisher(reportableCollection.countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l).map(data -> Collections.singletonMap("data", data));
+        return Observable.fromPublisher(withReadPreferenceCollection().countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l).map(data -> Collections.singletonMap("data", data));
     }
 
     private Flowable<BulkWriteResult> bulk(List<Audit> audits) {
@@ -534,5 +540,29 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         } else {
             return ChronoUnit.DAYS;
         }
+    }
+
+    private MongoCollection<AuditMongo> withReadPreferenceCollection() {
+        if (this.readPreference == null) {
+            return this.reportableCollection;
+        }
+
+        ReadPreference readPreferenceValue;
+        try {
+            readPreferenceValue = ReadPreference.valueOf(this.readPreference);
+        } catch (IllegalArgumentException ex) {
+            logger.error("Invalid read preference value: {}", this.readPreference, ex);
+            return this.reportableCollection;
+        }
+
+        // Max staleness is only compatible with NON-PRIMARY read preference
+        if (readPreferenceValue != ReadPreference.primary()) {
+            if (this.readPreferenceMaxStalenessMs < MIN_READ_PREFERENCE_STALENESS) {
+                this.readPreferenceMaxStalenessMs = MIN_READ_PREFERENCE_STALENESS;
+            }
+            readPreferenceValue = readPreferenceValue.withMaxStalenessMS(this.readPreferenceMaxStalenessMs, TimeUnit.MILLISECONDS);
+        }
+
+        return this.reportableCollection.withReadPreference(readPreferenceValue);
     }
 }
