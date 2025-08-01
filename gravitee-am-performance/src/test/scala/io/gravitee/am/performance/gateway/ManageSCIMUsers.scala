@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance
+package io.gravitee.am.performance.gateway
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-
 import io.gravitee.am.performance.utils.SimulationSettings._
-import io.gravitee.am.performance.utils.ManagementAPICalls._
 
 import scala.util.Random
 
 /**
  * Purpose of this simulation is to manager users via the SCIM protocol
+ *
  * Possible arguments:
  * - mng_url: base URL of the Management REST API (default: http://localhost:8093)
  * - mng_user: username to request an access token to the Management REST API (default: admin)

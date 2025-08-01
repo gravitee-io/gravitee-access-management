@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.performance.search
+package io.gravitee.am.performance.management.search
 
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
-import io.gravitee.am.performance.utils.ManagementAPICalls.{login, retrieveDomainId}
+import io.gravitee.am.performance.commands.ManagementAPICalls.{login, retrieveDomainId}
 import io.gravitee.am.performance.utils.SimulationSettings._
 
 /**
@@ -85,8 +85,8 @@ class SearchAuditLog extends Simulation {
   val feeder = getFeeder()
 
   def search = http("Perform Search")
-    .get(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/${domainId}/audits?page=0&size=25&" + "${searchQuery}")
-    .header("Authorization", "Bearer ${auth-token}")
+    .get(MANAGEMENT_BASE_URL + "/management/organizations/DEFAULT/environments/DEFAULT/domains/#{domainId}/audits?page=0&size=25&" + "#{searchQuery}")
+    .header("Authorization", "Bearer #{auth-token}")
     .check(status.is(200))
     .check(jsonPath("$.totalCount").ofType[Int].gt(0))
 
