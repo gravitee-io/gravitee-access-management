@@ -26,8 +26,6 @@ import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -104,6 +102,7 @@ import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporter
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_STATUS_SUCCESS_TIMESTAMP_NAME;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.INDEX_REFERENCE_TYPE_TIMESTAMP_NAME;
+import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.MIN_READ_PREFERENCE_STALENESS;
 import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporterConstants.OLD_INDICES;
 import static java.util.stream.Collectors.toMap;
 
@@ -123,11 +122,14 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     @Value("${management.mongodb.ensureIndexOnStart:true}")
     private boolean ensureIndexOnStart;
 
-    @Value("${reporters.mongodb.readPreference:PRIMARY}")
-    private String readPreference;
-
     @Value("${management.mongodb.cursorMaxTime:60000}")
     private int cursorMaxTimeInMs;
+
+    @Value("${reporters.mongodb.readPreference:PRIMARY}")
+    private String readPreference = "PRIMARY";
+
+    @Value("${reporters.mongodb.readPreferenceMaxStaleness:90000}")
+    private Long readPreferenceMaxStalenessMs = MIN_READ_PREFERENCE_STALENESS;
 
     private ClientWrapper<MongoClient> clientWrapper;
 
@@ -315,15 +317,6 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                     intervals.forEach((k, v) -> results.forEach((k1, v1) -> v1.putIfAbsent(k, v)));
                     return results.entrySet().stream().collect(toMap(Map.Entry::getKey, entry -> entry.getValue().entrySet().stream().sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue).collect(Collectors.toList())));
                 });
-    }
-
-    private MongoCollection<AuditMongo> withReadPreferenceCollection() {
-        if (this.readPreference == null) {
-            return this.reportableCollection;
-        }
-
-        ReadPreference ref = ReadPreference.valueOf(readPreference);
-        return this.reportableCollection.withReadPreference(ref);
     }
 
     private Single<Map<Object, Object>> executeGroupBy(AuditReportableCriteria criteria, Bson query) {
@@ -547,5 +540,23 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         } else {
             return ChronoUnit.DAYS;
         }
+    }
+
+    private MongoCollection<AuditMongo> withReadPreferenceCollection() {
+        if (this.readPreference == null) {
+            return this.reportableCollection;
+        }
+
+        ReadPreference readPreferenceValue = ReadPreference.valueOf(this.readPreference);
+
+        // Max staleness is only compatible with NON-PRIMARY read preference
+        if (readPreferenceValue != ReadPreference.primary()) {
+            if (this.readPreferenceMaxStalenessMs < MIN_READ_PREFERENCE_STALENESS) {
+                this.readPreferenceMaxStalenessMs = MIN_READ_PREFERENCE_STALENESS;
+            }
+            readPreferenceValue = readPreferenceValue.withMaxStalenessMS(this.readPreferenceMaxStalenessMs, TimeUnit.MILLISECONDS);
+        }
+
+        return this.reportableCollection.withReadPreference(readPreferenceValue);
     }
 }
