@@ -55,7 +55,9 @@ public class MongoAuditReporterConstants {
   private static final String OLDER_INDEX_REFERENCE_TARGET_TIMESTAMP_NAME = "referenceType_1_referenceId_1_target.alternativeId_1_timestamp_-1";
   private static final String OLDER_INDEX_REFERENCE_ACTOR_TARGET_TIMESTAMP_NAME = "referenceType_1_referenceId_1_actor.alternativeId_1_target.alternativeId_1_timestamp_-1";
 
-  public static final List<String> OLD_INDICES = List.of(
+    public static final Long MIN_READ_PREFERENCE_STALENESS = 90000l;
+
+    public static final List<String> OLD_INDICES = List.of(
       OLD_INDEX_REFERENCE_TIMESTAMP_NAME,
       OLD_INDEX_REFERENCE_TYPE_TIMESTAMP_NAME,
       OLD_INDEX_REFERENCE_ACTOR_TIMESTAMP_NAME,
