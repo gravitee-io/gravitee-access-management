@@ -24,14 +24,14 @@
     <parent>
         <artifactId>gravitee-am-parent</artifactId>
         <groupId>io.gravitee.am</groupId>
-        <version>4.5.23-SNAPSHOT</version>
+        <version>4.5.23</version>
     </parent>
 
     <groupId>io.gravitee.am.policy</groupId>
     <artifactId>gravitee-am-policy</artifactId>
     <packaging>pom</packaging>
 
-    <version>4.5.23-SNAPSHOT</version>
+    <version>4.5.23</version>
     <name>Gravitee IO - Access Management - Policy</name>
 
     <modules>
