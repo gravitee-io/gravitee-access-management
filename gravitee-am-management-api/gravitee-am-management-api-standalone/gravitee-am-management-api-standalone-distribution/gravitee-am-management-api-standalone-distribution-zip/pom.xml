@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.management.standalone</groupId>
         <artifactId>gravitee-am-management-api-standalone-distribution</artifactId>
-        <version>4.4.32</version>
+        <version>4.4.33-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
