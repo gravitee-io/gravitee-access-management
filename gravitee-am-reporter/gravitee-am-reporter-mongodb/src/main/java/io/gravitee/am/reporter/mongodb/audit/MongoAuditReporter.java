@@ -547,7 +547,13 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
             return this.reportableCollection;
         }
 
-        ReadPreference readPreferenceValue = ReadPreference.valueOf(this.readPreference);
+        // Default to primary
+        ReadPreference readPreferenceValue = ReadPreference.primary();
+        try {
+            readPreferenceValue = ReadPreference.valueOf(this.readPreference);
+        } catch (IllegalArgumentException ex){
+            logger.error("Invalid read preference value: {}, defaulting to PRIMARY", this.readPreference);
+        }
 
         // Max staleness is only compatible with NON-PRIMARY read preference
         if (readPreferenceValue != ReadPreference.primary()) {
