@@ -118,6 +118,7 @@
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
 #  mongodb: # Configuration of read preference for querying audit records from mongodb, defaults to primary if not provided
 #    readPreference: secondary # primary, secondary, primaryPreferred, secondaryPreferred, nearest
+#    readPreferenceMaxStaleness: 120000 # Milliseconds value, min 90000. Lets users specify a maximum replication lag, or "staleness", for reads from secondaries.
 
 # Management API AM service configurations. Provided values are default values.
 # All services are enabled by default. To stop one of them, you have to add the property 'enabled: false' (See the
