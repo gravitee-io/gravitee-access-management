@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
@@ -49,7 +50,8 @@ public class MongoSystemTaskRepository extends AbstractManagementMongoRepository
 
     @Override
     public Maybe<SystemTask> findById(String id) {
-        return Observable.fromPublisher(systemTaskCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(SystemTaskMongo::convert);
+        return Observable.fromPublisher(systemTaskCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(SystemTaskMongo::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -59,7 +61,8 @@ public class MongoSystemTaskRepository extends AbstractManagementMongoRepository
         return Single.fromPublisher(systemTaskCollection.insertOne(task)).flatMap(success -> {
             item.setId(task.getId());
             return Single.just(item);
-        });
+        })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -71,16 +74,19 @@ public class MongoSystemTaskRepository extends AbstractManagementMongoRepository
     public Single<SystemTask> updateIf(SystemTask item, String operationId) {
         SystemTaskMongo task = SystemTaskMongo.convert(item);
         return Single.fromPublisher(systemTaskCollection.replaceOne(and(eq(FIELD_ID, task.getId()), eq(FIELD_OPERATION_ID, operationId)), task))
-                .flatMap(updateResult -> updateResult.getModifiedCount() == 1 ? Single.just(item) : findById(task.getId()).toSingle());
+                .flatMap(updateResult -> updateResult.getModifiedCount() == 1 ? Single.just(item) : findById(task.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(systemTaskCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(systemTaskCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<SystemTask> findByType(String type) {
-        return Flowable.fromPublisher(systemTaskCollection.find(eq(FIELD_TYPE, type))).map(SystemTaskMongo::convert);
+        return Flowable.fromPublisher(systemTaskCollection.find(eq(FIELD_TYPE, type))).map(SystemTaskMongo::convert)
+                .observeOn(Schedulers.computation());
     }
 }

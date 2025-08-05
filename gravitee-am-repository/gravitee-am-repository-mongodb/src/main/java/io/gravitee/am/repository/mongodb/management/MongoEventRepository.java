@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -71,30 +72,35 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
         if (to > from) {
             filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
         }
-        return Flowable.fromPublisher(withMaxTime(eventsCollection.find(and(filters)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(eventsCollection.find(and(filters)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Event> findById(String id) {
-        return Observable.fromPublisher(eventsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert).firstElement();
+        return Observable.fromPublisher(eventsCollection.find(eq(FIELD_ID, id)).first()).map(this::convert).firstElement()
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Event> create(Event item) {
         EventMongo event = convert(item);
         event.setId(event.getId() == null ? RandomString.generate() : event.getId());
-        return Single.fromPublisher(eventsCollection.insertOne(event)).flatMap(success -> { item.setId(event.getId()); return Single.just(item); });
+        return Single.fromPublisher(eventsCollection.insertOne(event)).flatMap(success -> { item.setId(event.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Event> update(Event item) {
         EventMongo event = convert(item);
-        return Single.fromPublisher(eventsCollection.replaceOne(eq(FIELD_ID, event.getId()), event)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(eventsCollection.replaceOne(eq(FIELD_ID, event.getId()), event)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(eventsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(eventsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private EventMongo convert(Event event) {

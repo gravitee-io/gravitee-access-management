@@ -24,6 +24,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -63,19 +64,22 @@ public class MongoNodeMonitoringRepository extends AbstractManagementMongoReposi
     public Maybe<Monitoring> findByNodeIdAndType(String nodeId, String type) {
         return Observable.fromPublisher(collection.find(and(eq(FIELD_NODE_ID, nodeId), eq(FIELD_TYPE, type))).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Monitoring> create(Monitoring monitoring) {
         return Single.fromPublisher(collection.insertOne(convert(monitoring)))
-                .map(success -> monitoring);
+                .map(success -> monitoring)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Monitoring> update(Monitoring monitoring) {
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, monitoring.getId()), convert(monitoring)))
-                .map(updateResult -> monitoring);
+                .map(updateResult -> monitoring)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -88,7 +92,8 @@ public class MongoNodeMonitoringRepository extends AbstractManagementMongoReposi
             filters.add(lte(FIELD_UPDATED_AT, new Date(to)));
         }
 
-        return Flowable.fromPublisher(withMaxTime(collection.find(and(filters)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find(and(filters)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     private Monitoring convert(MonitoringMongo monitoringMongo) {

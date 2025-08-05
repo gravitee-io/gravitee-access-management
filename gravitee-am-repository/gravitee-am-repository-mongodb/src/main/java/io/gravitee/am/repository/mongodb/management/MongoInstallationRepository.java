@@ -24,6 +24,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
@@ -49,7 +50,8 @@ public class MongoInstallationRepository extends AbstractManagementMongoReposito
 
         return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -57,7 +59,8 @@ public class MongoInstallationRepository extends AbstractManagementMongoReposito
 
         return Observable.fromPublisher(collection.find().first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -65,18 +68,21 @@ public class MongoInstallationRepository extends AbstractManagementMongoReposito
         var installation = convert(item);
         installation.setId(item.getId() == null ? RandomString.generate() : item.getId());
         return Single.fromPublisher(collection.insertOne(installation))
-                .flatMap(success -> { item.setId(item.getId()); return Single.just(item); });
+                .flatMap(success -> { item.setId(item.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Installation> update(Installation item) {
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, item.getId()), convert(item)))
-                .flatMap(updateResult -> Single.just(item));
+                .flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Installation convert(InstallationMongo installationMongo) {

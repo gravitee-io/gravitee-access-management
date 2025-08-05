@@ -68,6 +68,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -134,7 +135,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Application> findAll() {
-        return Flowable.fromPublisher(applicationsCollection.find()).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(applicationsCollection.find()).map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -145,19 +147,22 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
                 .skip(size * page)
                 .limit(size))
                 .map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
-        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
+        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByDomain(String domain) {
-        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain)))).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain)))).map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<Application>> findByDomain(String domain, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain), countOptions())).first(0l);
         Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
-        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
+        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -178,45 +183,53 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
         Single<Long> countOperation = Observable.fromPublisher(applicationsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
         Single<Set<Application>> applicationsOperation = Observable.fromPublisher(withMaxTime(applicationsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(MongoApplicationRepository::convert).collect(HashSet::new, Set::add);
-        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
+        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByCertificate(String certificate) {
-        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_CERTIFICATE, certificate))).map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByIdentityProvider(String identityProvider) {
         final BsonDocument bsonDocument = new BsonDocument(FIELD_IDENTITY, new BsonString(identityProvider));
         final Bson query = elemMatch(FIELD_APPLICATION_IDENTITY_PROVIDERS, Document.parse(bsonDocument.toJson()));
-        return Flowable.fromPublisher(applicationsCollection.find(query)).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(applicationsCollection.find(query)).map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByFactor(String factor) {
-        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor))).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(applicationsCollection.find(eq(FIELD_FACTORS, factor))).map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Application> findById(String id) {
-        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(MongoApplicationRepository::convert);
+        return Observable.fromPublisher(applicationsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Application> findByDomainAndClientId(String domain, String clientId) {
         return Observable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId)))
-                .first()).firstElement().map(MongoApplicationRepository::convert);
+                .first()).firstElement().map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByDomainAndExtensionGrant(String domain, String extensionGrant) {
-        return Flowable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant)))).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(applicationsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_GRANT_TYPES, extensionGrant)))).map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Application> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(in(FIELD_ID, ids)))).map(MongoApplicationRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(in(FIELD_ID, ids)))).map(MongoApplicationRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -226,29 +239,34 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return Single.fromPublisher(applicationsCollection.insertOne(application)).flatMap(success -> {
             item.setId(application.getId());
             return Single.just(item);
-        });
+        })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Application> update(Application item) {
         ApplicationMongo application = convert(item);
         return Single.fromPublisher(applicationsCollection.replaceOne(eq(FIELD_ID, application.getId()), application))
-                .flatMap(success -> Single.just(item));
+                .flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(applicationsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(applicationsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> count() {
-        return Single.fromPublisher(applicationsCollection.countDocuments());
+        return Single.fromPublisher(applicationsCollection.countDocuments())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByDomain(String domain) {
-        return Single.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain), countOptions()));
+        return Single.fromPublisher(applicationsCollection.countDocuments(eq(FIELD_DOMAIN, domain), countOptions()))
+                .observeOn(Schedulers.computation());
     }
 
     private ApplicationMongo convert(Application other) {

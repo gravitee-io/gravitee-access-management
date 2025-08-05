@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -54,14 +55,16 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
     @Override
     public Flowable<Environment> findAll() {
 
-        return Flowable.fromPublisher(withMaxTime(collection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Environment> findAll(String organizationId) {
 
         return Flowable.fromPublisher(withMaxTime(collection.find(eq(FIELD_ORGANIZATION_ID, organizationId))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -69,7 +72,8 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
 
         return Observable.fromPublisher(collection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
 
@@ -78,7 +82,8 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
 
         return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -86,25 +91,29 @@ public class MongoEnvironmentRepository extends AbstractManagementMongoRepositor
         var environment = convert(item);
         environment.setId(item.getId() == null ? RandomString.generate() : item.getId());
         return Single.fromPublisher(collection.insertOne(environment))
-                .flatMap(success -> { item.setId(environment.getId()); return Single.just(item); });
+                .flatMap(success -> { item.setId(environment.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Environment> update(Environment item) {
 
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, item.getId()), convert(item)))
-                .flatMap(updateResult -> Single.just(item));
+                .flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> count() {
 
-        return Single.fromPublisher(collection.countDocuments());
+        return Single.fromPublisher(collection.countDocuments())
+                .observeOn(Schedulers.computation());
     }
 
     private Environment convert(EnvironmentMongo environmentMongo) {

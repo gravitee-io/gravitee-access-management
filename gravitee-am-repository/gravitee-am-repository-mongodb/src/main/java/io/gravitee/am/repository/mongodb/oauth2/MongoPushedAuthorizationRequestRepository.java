@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -67,7 +68,8 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
                 .fromPublisher(parCollection.find(and(eq(FIELD_ID, id),
                         or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).limit(1).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -76,12 +78,14 @@ public class MongoPushedAuthorizationRequestRepository extends AbstractOAuth2Mon
         par.setId(item.getId() == null ? RandomString.generate() : item.getId());
         return Single
                 .fromPublisher(parCollection.insertOne(par))
-                .flatMap(success -> { item.setId(par.getId()); return Single.just(item); });
+                .flatMap(success -> { item.setId(par.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(parCollection.findOneAndDelete(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(parCollection.findOneAndDelete(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private PushedAuthorizationRequestMongo convert(PushedAuthorizationRequest par) {

@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -58,35 +59,41 @@ public class MongoFactorRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Factor> findAll() {
-        return Flowable.fromPublisher(withMaxTime(factorsCollection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(factorsCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Factor> findByDomain(String domain) {
-        return Flowable.fromPublisher(factorsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert);
+        return Flowable.fromPublisher(factorsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Factor> findById(String factorId) {
-        return Observable.fromPublisher(factorsCollection.find(eq(FIELD_ID, factorId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(factorsCollection.find(eq(FIELD_ID, factorId)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Factor> create(Factor item) {
         FactorMongo authenticator = convert(item);
         authenticator.setId(authenticator.getId() == null ? RandomString.generate() : authenticator.getId());
-        return Single.fromPublisher(factorsCollection.insertOne(authenticator)).flatMap(success -> { item.setId(authenticator.getId()); return Single.just(item); });
+        return Single.fromPublisher(factorsCollection.insertOne(authenticator)).flatMap(success -> { item.setId(authenticator.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Factor> update(Factor item) {
         FactorMongo authenticator = convert(item);
-        return Single.fromPublisher(factorsCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(factorsCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(factorsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(factorsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Factor convert(FactorMongo factorMongo) {

@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -76,18 +77,21 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
 
         return Single
                 .fromPublisher(authorizationCodeCollection.insertOne(convert(authorizationCode)))
-                .flatMap(success -> Single.just(authorizationCode));
+                .flatMap(success -> Single.just(authorizationCode))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String code) {
-        return Completable.fromPublisher(authorizationCodeCollection.deleteOne(eq(FIELD_ID, code)));
+        return Completable.fromPublisher(authorizationCodeCollection.deleteOne(eq(FIELD_ID, code)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<AuthorizationCode> findByCode(String code) {
         return Observable.fromPublisher(authorizationCodeCollection.find((and(eq(FIELD_CODE, code),
-                or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null))))).first()).firstElement().map(this::convert);
+                or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null))))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override

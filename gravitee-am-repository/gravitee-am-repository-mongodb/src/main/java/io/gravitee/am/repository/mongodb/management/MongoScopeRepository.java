@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -66,25 +67,29 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Scope> findById(String id) {
-        return Observable.fromPublisher(scopesCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(scopesCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Scope> create(Scope item) {
         ScopeMongo scope = convert(item);
         scope.setId(scope.getId() == null ? RandomString.generate() : scope.getId());
-        return Single.fromPublisher(scopesCollection.insertOne(scope)).flatMap(success -> { item.setId(scope.getId()); return Single.just(item); });
+        return Single.fromPublisher(scopesCollection.insertOne(scope)).flatMap(success -> { item.setId(scope.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Scope> update(Scope item) {
         ScopeMongo scope = convert(item);
-        return Single.fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(scopesCollection.replaceOne(eq(FIELD_ID, scope.getId()), scope)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(scopesCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(scopesCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -92,7 +97,8 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
         Bson mongoQuery = eq(FIELD_DOMAIN, domain);
         Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery, countOptions())).first(0l);
         Single<List<Scope>> scopesOperation = Observable.fromPublisher(withMaxTime(scopesCollection.find(mongoQuery)).skip(size * page).limit(size)).map(this::convert).toList();
-        return Single.zip(countOperation, scopesOperation, (count, scope) -> new Page<Scope>(scope, page, count));
+        return Single.zip(countOperation, scopesOperation, (count, scope) -> new Page<Scope>(scope, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -112,17 +118,20 @@ public class MongoScopeRepository extends AbstractManagementMongoRepository impl
 
         Single<Long> countOperation = Observable.fromPublisher(scopesCollection.countDocuments(mongoQuery, countOptions())).first(0l);
         Single<List<Scope>> scopesOperation = Observable.fromPublisher(withMaxTime(scopesCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_KEY, 1)).skip(size * page).limit(size)).map(this::convert).toList();
-        return Single.zip(countOperation, scopesOperation, (count, scopes) -> new Page<>(scopes, page, count));
+        return Single.zip(countOperation, scopesOperation, (count, scopes) -> new Page<>(scopes, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Scope> findByDomainAndKey(String domain, String key) {
-        return Observable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_KEY, key))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_KEY, key))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Scope> findByDomainAndKeys(String domain, List<String> keys) {
-        return Flowable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), in(FIELD_KEY, keys)))).map(this::convert);
+        return Flowable.fromPublisher(scopesCollection.find(and(eq(FIELD_DOMAIN, domain), in(FIELD_KEY, keys)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     private Scope convert(ScopeMongo scopeMongo) {
