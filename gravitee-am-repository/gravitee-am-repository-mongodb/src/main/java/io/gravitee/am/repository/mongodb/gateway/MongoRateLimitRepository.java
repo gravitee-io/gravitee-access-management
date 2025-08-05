@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -73,12 +74,14 @@ public class MongoRateLimitRepository extends AbstractGatewayMongoRepository imp
 
     @Override
     public Maybe<RateLimit> findById(String id) {
-        return Observable.fromPublisher(rateLimitCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(rateLimitCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<RateLimit> findByCriteria(RateLimitCriteria criteria) {
-        return Observable.fromPublisher(rateLimitCollection.find(query(criteria)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(rateLimitCollection.find(query(criteria)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -87,33 +90,34 @@ public class MongoRateLimitRepository extends AbstractGatewayMongoRepository imp
         return Single.fromPublisher(rateLimitCollection.insertOne(rateLimitMongo)).flatMap(success -> {
             item.setId(rateLimitMongo.getId());
             return Single.just(item);
-        });
+        }).observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<RateLimit> update(RateLimit item) {
         RateLimitMongo rateLimitMongo = convert(item);
-        return Single.fromPublisher(rateLimitCollection.replaceOne(eq(FIELD_ID, rateLimitMongo.getId()), rateLimitMongo)).flatMap(success -> Single.just(item));
+        return Single.fromPublisher(rateLimitCollection.replaceOne(eq(FIELD_ID, rateLimitMongo.getId()), rateLimitMongo)).flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(rateLimitCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(rateLimitCollection.deleteOne(eq(FIELD_ID, id))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(RateLimitCriteria criteria) {
-        return Completable.fromPublisher(rateLimitCollection.deleteOne(query(criteria)));
+        return Completable.fromPublisher(rateLimitCollection.deleteOne(query(criteria))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByUser(String userId) {
-        return Completable.fromPublisher(rateLimitCollection.deleteMany(eq(FIELD_USER_ID, userId)));
+        return Completable.fromPublisher(rateLimitCollection.deleteMany(eq(FIELD_USER_ID, userId))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomain(String domainId, ReferenceType referenceType) {
-        return Completable.fromPublisher(rateLimitCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, domainId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))));
+        return Completable.fromPublisher(rateLimitCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, domainId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).observeOn(Schedulers.computation());
     }
 
     private Bson query(RateLimitCriteria criteria) {

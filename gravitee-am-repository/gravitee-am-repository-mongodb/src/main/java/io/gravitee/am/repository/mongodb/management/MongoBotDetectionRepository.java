@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -58,17 +59,20 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
 
     @Override
     public Flowable<BotDetection> findAll() {
-        return Flowable.fromPublisher(withMaxTime(botDetectionMongoCollection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(botDetectionMongoCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<BotDetection> findByReference(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(botDetectionMongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
+        return Flowable.fromPublisher(botDetectionMongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<BotDetection> findById(String botDetectionId) {
-        return Observable.fromPublisher(botDetectionMongoCollection.find(eq(FIELD_ID, botDetectionId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(botDetectionMongoCollection.find(eq(FIELD_ID, botDetectionId)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -79,19 +83,22 @@ public class MongoBotDetectionRepository extends AbstractManagementMongoReposito
                 .flatMap(success -> {
                     item.setId(entity.getId());
                     return Single.just(item);
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<BotDetection> update(BotDetection item) {
         BotDetectionMongo entity = convert(item);
         return Single.fromPublisher(botDetectionMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity))
-                .flatMap(updateResult -> Single.just(item));
+                .flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(botDetectionMongoCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(botDetectionMongoCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private BotDetection convert(BotDetectionMongo entity) {

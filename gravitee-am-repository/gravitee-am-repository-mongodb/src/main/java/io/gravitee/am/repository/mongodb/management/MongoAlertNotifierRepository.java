@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
@@ -61,7 +62,8 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
     public Maybe<AlertNotifier> findById(String id) {
         return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -69,7 +71,8 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
         Bson eqReference = and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId));
 
         return Flowable.fromPublisher(withMaxTime(collection.find(eqReference)))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -88,7 +91,8 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
         if (!filters.isEmpty()) {
             query = and(eqReference, criteria.isLogicalOR() ? or(filters) : and(filters));
         }
-        return Flowable.fromPublisher(withMaxTime(collection.find(and(eqReference, query)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find(and(eqReference, query)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -99,19 +103,22 @@ public class MongoAlertNotifierRepository extends AbstractManagementMongoReposit
                 .flatMap(success -> {
                     item.setId(alertNotifier.getId());
                     return Single.just(item);
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AlertNotifier> update(AlertNotifier alertNotifier) {
         AlertNotifierMongo alertNotifierMongo = convert(alertNotifier);
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, alertNotifierMongo.getId()), alertNotifierMongo))
-                .flatMap(updateResult -> Single.just(alertNotifier));
+                .flatMap(updateResult -> Single.just(alertNotifier))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private AlertNotifier convert(AlertNotifierMongo alertNotifierMongo) {

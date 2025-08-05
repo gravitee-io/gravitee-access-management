@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -76,19 +77,22 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
                 .fromPublisher(accessTokenCollection.find(and(eq(FIELD_TOKEN, token),
                         or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).limit(1).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AccessToken> create(AccessToken accessToken) {
         return Single
                 .fromPublisher(accessTokenCollection.insertOne(convert(accessToken)))
-                .flatMap(success -> Single.just(accessToken));
+                .flatMap(success -> Single.just(accessToken))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String token) {
-        return Completable.fromPublisher(accessTokenCollection.findOneAndDelete(eq(FIELD_TOKEN, token)));
+        return Completable.fromPublisher(accessTokenCollection.findOneAndDelete(eq(FIELD_TOKEN, token)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -96,7 +100,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         return Observable
                 .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, subject),
                         or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -104,7 +109,8 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         return Observable
                 .fromPublisher(accessTokenCollection.find(and(eq(FIELD_CLIENT, clientId),
                         or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -112,33 +118,39 @@ public class MongoAccessTokenRepository extends AbstractOAuth2MongoRepository im
         return Observable
                 .fromPublisher(accessTokenCollection.find(and(eq(FIELD_AUTHORIZATION_CODE, authorizationCode),
                         or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByClientId(String clientId) {
         return Single.fromPublisher(accessTokenCollection.countDocuments(and(eq(FIELD_CLIENT, clientId),
-                or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))));
+                or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByUserId(String userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)));
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id()))));
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainIdAndClientId(String domainId, String clientId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId))));
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
-        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id()))));
+        return Completable.fromPublisher(accessTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id()))))
+                .observeOn(Schedulers.computation());
     }
 
     private AccessTokenMongo convert(AccessToken accessToken) {
