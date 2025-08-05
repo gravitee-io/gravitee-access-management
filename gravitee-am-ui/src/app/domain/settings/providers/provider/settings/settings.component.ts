@@ -91,15 +91,6 @@ export class ProviderSettingsComponent implements OnInit {
       .pipe(map((schema) => enrichOIDCFormWithCerts(schema, this.certificates)))
       .subscribe((data) => {
         this.providerSchema = data;
-        if (data) {
-          // handle default null values
-          Object.keys(this.providerSchema['properties']).forEach((key) => {
-            if (this.providerSchema['properties'][key].default && this.providerConfiguration[key] == null) {
-              this.providerConfiguration[key] = this.providerSchema['properties'][key].default;
-            }
-            this.providerSchema['properties'][key].default = '';
-          });
-        }
       });
   }
 
