@@ -180,6 +180,10 @@ services:
 #  file:
 #    directory:  # directory where the files are created (this directory have to exist): default value = ${gravitee.home}/audit-logs/
 #    output: JSON # JSON, ELASTICSEARCH, MESSAGE_PACK, CSV
+#  mongodb: # Configuration of read preference for querying audit records from mongodb, defaults to primary if not provided
+#    readPreference: secondary # primary, secondary, primaryPreferred, secondaryPreferred, nearest
+#    readPreferenceMaxStaleness: 120000 # Milliseconds value, min 90000. Lets users specify a maximum replication lag, or "staleness", for reads from secondaries.
+
 
 # JWT used to generate signed token for OAuth 2.0/OpenID Connect protocols and to verify emails
 jwt:
