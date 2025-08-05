@@ -28,6 +28,7 @@ import io.gravitee.common.component.Lifecycle;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.Handler;
+import io.vertx.core.impl.ConcurrentHashSet;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.core.eventbus.Message;
 import io.vertx.rxjava3.core.eventbus.MessageConsumer;
@@ -70,7 +71,8 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     public EventBusReporterWrapper(Vertx vertx,  Reporter<R,C> reporter, Collection<Reference> references) {
         Objects.requireNonNull(references, "references");
         this.vertx = vertx;
-        this.referenceFilter = new HashSet<>(Set.copyOf(references)); // we want to be able to use this
+        this.referenceFilter = new ConcurrentHashSet<>();
+        this.referenceFilter.addAll(references);
         this.reporter = reporter;
     }
 

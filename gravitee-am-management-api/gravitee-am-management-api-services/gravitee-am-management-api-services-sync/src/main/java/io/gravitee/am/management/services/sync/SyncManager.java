@@ -18,6 +18,7 @@ package io.gravitee.am.management.services.sync;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.EventKey;
 import io.gravitee.am.monitoring.metrics.Constants;
 import io.gravitee.am.monitoring.metrics.GaugeHelper;
 import io.gravitee.am.service.EventService;
@@ -107,8 +108,10 @@ public class SyncManager implements InitializingBean {
                     .stream()
                     .collect(
                             toMap(
-                                    event -> new AbstractMap.SimpleEntry<>(event.getType(), event.getPayload().getId()),
-                                    event -> event, BinaryOperator.maxBy(comparing(Event::getCreatedAt)), LinkedHashMap::new));
+                                    EventKey::new,
+                                    event -> event,
+                                    BinaryOperator.maxBy(comparing(Event::getCreatedAt)),
+                                    LinkedHashMap::new));
             computeEvents(sortedEvents.values());
         } else {
             eventsGauge.updateValue(0);
