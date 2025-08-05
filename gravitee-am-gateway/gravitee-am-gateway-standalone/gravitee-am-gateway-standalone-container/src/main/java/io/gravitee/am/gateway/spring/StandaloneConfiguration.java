@@ -54,8 +54,10 @@ import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.api.cluster.ClusterManager;
 import io.gravitee.node.plugin.cluster.standalone.StandaloneClusterManager;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
+import io.reactivex.rxjava3.plugins.RxJavaPlugins;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.jackson.DatabindCodec;
+import io.vertx.rxjava3.RxHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,6 +110,13 @@ public class StandaloneConfiguration {
 
     @Bean
     public io.vertx.rxjava3.core.Vertx vertx(@Autowired Vertx vertx) {
+
+        // Reconfigure RxJava to use Vertx schedulers.
+        // Keep rxJava IO scheduler for now has relying in the vertx one limit the token throughput with HSM plugin
+        // // RxJavaPlugins.setIoSchedulerHandler(s -> RxHelper.blockingScheduler(vertx));
+        RxJavaPlugins.setComputationSchedulerHandler(s -> RxHelper.scheduler(vertx));
+        RxJavaPlugins.setNewThreadSchedulerHandler(s -> RxHelper.scheduler(vertx));
+
         return io.vertx.rxjava3.core.Vertx.newInstance(vertx);
     }
 
