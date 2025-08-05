@@ -88,4 +88,5 @@ public class Event {
                 "\"updatedAt\":" + (updatedAt == null ? "null" : updatedAt) +
                 "}";
     }
+
 }
