@@ -25,8 +25,6 @@ import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -58,6 +56,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.processors.PublishProcessor;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -159,7 +158,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                         .sort(new BasicDBObject(FIELD_TIMESTAMP, -1))
                         .skip(size * page).limit(size))
                 .map(this::convert).collect(LinkedList::new, List::add);
-        return Single.zip(countOperation, auditsOperation, (count, audits) -> new Page<>(audits, page, count));
+        return Single.zip(countOperation, auditsOperation, (count, audits) -> new Page<>(audits, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -168,11 +168,14 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         Bson query = query(referenceType, referenceId, criteria);
         switch (analyticsType) {
             case DATE_HISTO:
-                return executeHistogram(criteria, query);
+                return executeHistogram(criteria, query)
+                        .observeOn(Schedulers.computation());
             case GROUP_BY:
-                return executeGroupBy(criteria, query);
+                return executeGroupBy(criteria, query)
+                        .observeOn(Schedulers.computation());
             case COUNT:
-                return executeCount(query);
+                return executeCount(query)
+                        .observeOn(Schedulers.computation());
             default:
                 return Single.error(new IllegalArgumentException("Analytics [" + analyticsType + "] cannot be calculated"));
         }
@@ -180,7 +183,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
     @Override
     public Maybe<Audit> findById(ReferenceType referenceType, String referenceId, String id) {
-        return Observable.fromPublisher(reportableCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(reportableCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
