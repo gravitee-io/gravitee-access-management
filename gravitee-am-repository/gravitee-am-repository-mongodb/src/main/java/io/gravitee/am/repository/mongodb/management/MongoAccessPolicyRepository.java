@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -69,27 +70,32 @@ public class MongoAccessPolicyRepository extends AbstractManagementMongoReposito
     public Single<Page<AccessPolicy>> findByDomain(String domain, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(accessPoliciesCollection.countDocuments(eq(FIELD_DOMAIN, domain), countOptions())).first(0l);
         Single<List<AccessPolicy>> accessPoliciesOperation = Observable.fromPublisher(withMaxTime(accessPoliciesCollection.find(eq(FIELD_DOMAIN, domain))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
-        return Single.zip(countOperation, accessPoliciesOperation, (count, accessPolicies) -> new Page<>(accessPolicies, page, count));
+        return Single.zip(countOperation, accessPoliciesOperation, (count, accessPolicies) -> new Page<>(accessPolicies, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<AccessPolicy> findByDomainAndResource(String domain, String resource) {
-        return Flowable.fromPublisher(withMaxTime(accessPoliciesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_RESOURCE, resource))))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(accessPoliciesCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_RESOURCE, resource))))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<AccessPolicy> findByResources(List<String> resources) {
-        return Flowable.fromPublisher(withMaxTime(accessPoliciesCollection.find(in(FIELD_RESOURCE, resources)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(accessPoliciesCollection.find(in(FIELD_RESOURCE, resources)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByResource(String resource) {
-        return Observable.fromPublisher(accessPoliciesCollection.countDocuments(eq(FIELD_RESOURCE, resource), countOptions())).first(0l);
+        return Observable.fromPublisher(accessPoliciesCollection.countDocuments(eq(FIELD_RESOURCE, resource), countOptions())).first(0l)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<AccessPolicy> findById(String id) {
-        return Observable.fromPublisher(accessPoliciesCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(accessPoliciesCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -100,19 +106,19 @@ public class MongoAccessPolicyRepository extends AbstractManagementMongoReposito
                 .flatMap(success -> {
                     item.setId(accessPolicy.getId());
                     return Single.just(item);
-                });
+                }).observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AccessPolicy> update(AccessPolicy item) {
         AccessPolicyMongo accessPolicy = convert(item);
         return Single.fromPublisher(accessPoliciesCollection.replaceOne(eq(FIELD_ID, accessPolicy.getId()), accessPolicy))
-                .flatMap(success -> Single.just(item));
+                .flatMap(success -> Single.just(item)).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(accessPoliciesCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(accessPoliciesCollection.deleteOne(eq(FIELD_ID, id))).observeOn(Schedulers.computation());
     }
 
     private AccessPolicy convert(AccessPolicyMongo accessPolicyMongo) {

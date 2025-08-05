@@ -24,6 +24,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.stereotype.Component;
 
 /**
@@ -38,7 +39,8 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
     @Override
     public Flowable<Policy> findAll() {
         MongoCollection<PolicyMongo> policiesCollection = mongoOperations.getCollection(COLLECTION_NAME, PolicyMongo.class);
-        return Flowable.fromPublisher(withMaxTime(policiesCollection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(policiesCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -46,12 +48,14 @@ public class MongoPolicyRepository extends AbstractManagementMongoRepository imp
         return Observable.fromPublisher(mongoOperations.listCollectionNames())
                 .filter(collectionName -> collectionName.equalsIgnoreCase(COLLECTION_NAME))
                 .isEmpty()
-                .map(isEmpty -> !isEmpty);
+                .map(isEmpty -> !isEmpty)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteCollection() {
-        return Completable.fromPublisher(mongoOperations.getCollection(COLLECTION_NAME).drop());
+        return Completable.fromPublisher(mongoOperations.getCollection(COLLECTION_NAME).drop())
+                .observeOn(Schedulers.computation());
     }
 
     private Policy convert(PolicyMongo policyMongo) {

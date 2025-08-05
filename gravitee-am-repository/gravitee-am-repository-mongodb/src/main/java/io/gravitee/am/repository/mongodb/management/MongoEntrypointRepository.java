@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -53,35 +54,41 @@ public class MongoEntrypointRepository extends AbstractManagementMongoRepository
 
     @Override
     public Maybe<Entrypoint> findById(String id, String organizationId) {
-        return Observable.fromPublisher(collection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(collection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Entrypoint> findById(String id) {
-        return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(collection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Entrypoint> findAll(String organizationId) {
-        return Flowable.fromPublisher(withMaxTime(collection.find(eq("organizationId", organizationId)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(collection.find(eq("organizationId", organizationId)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Entrypoint> create(Entrypoint item) {
         EntrypointMongo entrypoint = convert(item);
         entrypoint.setId(entrypoint.getId() == null ? RandomString.generate() : entrypoint.getId());
-        return Single.fromPublisher(collection.insertOne(entrypoint)).flatMap(success -> { item.setId(entrypoint.getId()); return Single.just(item); });
+        return Single.fromPublisher(collection.insertOne(entrypoint)).flatMap(success -> { item.setId(entrypoint.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Entrypoint> update(Entrypoint item) {
         EntrypointMongo entrypoint = convert(item);
-        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, entrypoint.getId()), entrypoint)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, entrypoint.getId()), entrypoint)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Entrypoint convert(EntrypointMongo entrypointMongo) {

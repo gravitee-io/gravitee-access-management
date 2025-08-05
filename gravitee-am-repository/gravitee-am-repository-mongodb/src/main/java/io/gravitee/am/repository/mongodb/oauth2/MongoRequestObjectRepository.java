@@ -24,6 +24,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -61,19 +62,22 @@ public class MongoRequestObjectRepository extends AbstractOAuth2MongoRepository 
         return Observable
                 .fromPublisher(requestObjectCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).limit(1).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<RequestObject> create(RequestObject requestObject) {
         return Single
                 .fromPublisher(requestObjectCollection.insertOne(convert(requestObject)))
-                .flatMap(success -> Single.just(requestObject));
+                .flatMap(success -> Single.just(requestObject))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(requestObjectCollection.findOneAndDelete(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(requestObjectCollection.findOneAndDelete(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private RequestObjectMongo convert(RequestObject requestObject) {

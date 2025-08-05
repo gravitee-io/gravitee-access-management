@@ -28,11 +28,11 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -69,12 +69,14 @@ public class MongoVerifyAttemptRepository extends AbstractGatewayMongoRepository
 
     @Override
     public Maybe<VerifyAttempt> findById(String id) {
-        return Observable.fromPublisher(verifyAttemptCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(verifyAttemptCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<VerifyAttempt> findByCriteria(VerifyAttemptCriteria criteria) {
-        return Observable.fromPublisher(verifyAttemptCollection.find(query(criteria)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(verifyAttemptCollection.find(query(criteria)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -83,33 +85,35 @@ public class MongoVerifyAttemptRepository extends AbstractGatewayMongoRepository
         return Single.fromPublisher(verifyAttemptCollection.insertOne(verifyAttemptMongo)).flatMap(success -> {
             item.setId(verifyAttemptMongo.getId());
             return Single.just(item);
-        });
+        }).observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<VerifyAttempt> update(VerifyAttempt item) {
         VerifyAttemptMongo verifyAttemptMongo = convert(item);
-        return Single.fromPublisher(verifyAttemptCollection.replaceOne(eq(FIELD_ID, verifyAttemptMongo.getId()), verifyAttemptMongo)).flatMap(success -> Single.just(item));
+        return Single.fromPublisher(verifyAttemptCollection.replaceOne(eq(FIELD_ID, verifyAttemptMongo.getId()), verifyAttemptMongo)).flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(verifyAttemptCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(verifyAttemptCollection.deleteOne(eq(FIELD_ID, id))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(VerifyAttemptCriteria criteria) {
-        return Completable.fromPublisher(verifyAttemptCollection.deleteOne(query(criteria)));
+        return Completable.fromPublisher(verifyAttemptCollection.deleteOne(query(criteria))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByUser(String userId) {
-        return Completable.fromPublisher(verifyAttemptCollection.deleteMany(eq(FIELD_USER_ID, userId)));
+        return Completable.fromPublisher(verifyAttemptCollection.deleteMany(eq(FIELD_USER_ID, userId))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomain(String domainId, ReferenceType referenceType) {
-        return Completable.fromPublisher(verifyAttemptCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, domainId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))));
+        return Completable.fromPublisher(verifyAttemptCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, domainId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))
+                .observeOn(Schedulers.computation());
     }
 
     private Bson query(VerifyAttemptCriteria criteria) {
