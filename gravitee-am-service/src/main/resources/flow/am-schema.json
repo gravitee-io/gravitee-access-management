@@ -21,7 +21,9 @@
         "reset_password",
         "token",
         "connect",
-        "webauthn_register"
+        "webauthn_register",
+        "mfa_challenge",
+        "mfa_enrollment"
       ],
       "default": "root",
       "x-schema-form": {
@@ -35,7 +37,9 @@
           "reset_password": "RESET PASSWORD",
           "registration_confirmation": "REGISTRATION CONFIRMATION",
           "token": "TOKEN",
-          "webauthn_register": "WEBAUTHN_REGISTER"
+          "webauthn_register": "WEBAUTHN REGISTER",
+          "mfa_challenge":  "MFA CHALLENGE",
+          "mfa_enrollment": "MFA ENROLLMENT"
         },
         "disabled" : [
           {"$def":  "id"},
