@@ -35,6 +35,7 @@ import io.gravitee.am.identityprovider.mongo.authentication.spring.MongoAuthenti
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -89,6 +90,7 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
                     }
                     return Flowable.fromIterable(users);
                 })
+                .observeOn(Schedulers.computation())// switch to the computation thread as Password Encoding is CPU bounded
                 .map(user -> {
                     String password = user.getString(this.configuration.getPasswordField());
                     String presentedPassword = authentication.getCredentials().toString();
@@ -147,7 +149,8 @@ public class MongoAuthenticationProvider extends MongoAbstractProvider implement
     public Maybe<User> loadUserByUsername(String username) {
         final String encodedUsername = getSafeUsername(username);
         return findUserByUsername(encodedUsername)
-                .map(document -> createUser(new SimpleAuthenticationContext(), document));
+                .map(document -> createUser(new SimpleAuthenticationContext(), document))
+                .observeOn(Schedulers.computation());
     }
 
     private Maybe<Document> findUserByUsername(String encodedUsername) {
