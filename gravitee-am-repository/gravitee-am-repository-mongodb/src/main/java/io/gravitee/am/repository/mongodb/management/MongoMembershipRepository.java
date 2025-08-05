@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -76,13 +77,15 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
     @Override
     public Flowable<Membership> findByReference(String referenceId, ReferenceType referenceType) {
         return Flowable.fromPublisher(withMaxTime(membershipsCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Membership> findByMember(String memberId, MemberType memberType) {
         return Flowable.fromPublisher(withMaxTime(membershipsCollection.find(and(eq(FIELD_MEMBER_ID, memberId), eq(FIELD_MEMBER_TYPE, memberType.name())))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -116,7 +119,8 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         return toBsonFilter(criteria.isLogicalOR(), eqGroupId, eqUserId)
                 .map(filter -> and(eqReference, filter))
                 .switchIfEmpty(Single.just(eqReference))
-                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(membershipsCollection.find(filter)))).map(this::convert);
+                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(membershipsCollection.find(filter)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -124,30 +128,35 @@ public class MongoMembershipRepository extends AbstractManagementMongoRepository
         return Observable.fromPublisher(membershipsCollection.find(
                 and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
                         eq(FIELD_MEMBER_TYPE, memberType.name()), eq(FIELD_MEMBER_ID, memberId))).first())
-                .firstElement().map(this::convert);
+                .firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Membership> findById(String id) {
-        return Observable.fromPublisher(membershipsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(membershipsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Membership> create(Membership item) {
         MembershipMongo membership = convert(item);
         membership.setId(membership.getId() == null ? RandomString.generate() : membership.getId());
-        return Single.fromPublisher(membershipsCollection.insertOne(membership)).map(success -> convert(membership));
+        return Single.fromPublisher(membershipsCollection.insertOne(membership)).map(success -> convert(membership))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Membership> update(Membership item) {
         MembershipMongo membership = convert(item);
-        return Single.fromPublisher(membershipsCollection.replaceOne(eq(FIELD_ID, membership.getId()), membership)).map(success -> convert(membership));
+        return Single.fromPublisher(membershipsCollection.replaceOne(eq(FIELD_ID, membership.getId()), membership)).map(success -> convert(membership))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(membershipsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(membershipsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Membership convert(MembershipMongo membershipMongo) {
