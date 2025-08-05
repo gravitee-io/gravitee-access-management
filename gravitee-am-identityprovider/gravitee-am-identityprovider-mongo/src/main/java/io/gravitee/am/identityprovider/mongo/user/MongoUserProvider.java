@@ -33,6 +33,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -92,7 +93,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         String rawQuery = this.configuration.getFindUserByEmailQuery();
         String jsonQuery = convertToJsonString(rawQuery).replace("?", email);
         BsonDocument query = BsonDocument.parse(jsonQuery);
-        return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -102,7 +104,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
         String rawQuery = this.configuration.getFindUserByUsernameQuery();
         String jsonQuery = convertToJsonString(rawQuery).replace("?", encodedUsername);
         BsonDocument query = BsonDocument.parse(jsonQuery);
-        return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(usersCollection.find(query).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -139,7 +142,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
                         document.put(FIELD_UPDATED_AT, document.get(FIELD_CREATED_AT));
                         return Single.fromPublisher(usersCollection.insertOne(document)).flatMap(success -> findById(document.getString(FIELD_ID)).toSingle());
                     }
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -174,7 +178,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
                     document.put(FIELD_CREATED_AT, oldUser.getCreatedAt());
                     document.put(FIELD_UPDATED_AT, new Date());
                     return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, oldUser.getId()), document)).flatMap(updateResult -> findById(oldUser.getId()).toSingle());
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -191,7 +196,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
                             Updates.set(FIELD_UPDATED_AT, new Date()));
                     return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, user.getId()), updates))
                             .flatMap(updateResult -> findById(user.getId()).toSingle());
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -226,14 +232,16 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
                     return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, oldUser.getId()), updates))
                             .flatMap(updateResult -> findById(oldUser.getId()).toSingle());
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         return findById(id)
                 .switchIfEmpty(Maybe.error(new UserNotFoundException(id)))
-                .flatMapCompletable(idpUser -> Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id))));
+                .flatMapCompletable(idpUser -> Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id))))
+                .observeOn(Schedulers.computation());
     }
 
     private Maybe<User> findById(String userId) {
@@ -241,7 +249,8 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
     }
 
     private Maybe<User> findById(String userId, boolean filterSalt) {
-        return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first()).firstElement().map(u -> convert(u, filterSalt));
+        return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first()).firstElement().map(u -> convert(u, filterSalt))
+                .observeOn(Schedulers.computation());
     }
 
     private User convert(Document document) {
