@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.BsonArray;
 import org.bson.BsonString;
@@ -74,34 +75,40 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     @Override
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(withMaxTime(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType) {
         return Flowable.fromPublisher(withMaxTime(identitiesCollection.find(eq(FIELD_REFERENCE_TYPE, referenceType.name()))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<IdentityProvider> findAll() {
-        return Flowable.fromPublisher(withMaxTime(identitiesCollection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(identitiesCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<IdentityProvider> findById(String identityProviderId) {
-        return Observable.fromPublisher(identitiesCollection.find(eq(FIELD_ID, identityProviderId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(identitiesCollection.find(eq(FIELD_ID, identityProviderId)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String identityProviderId) {
-        return Observable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, identityProviderId))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, identityProviderId))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
         return Flowable.fromPublisher(withMaxTime(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_PASSWORD_POLICY, passwordPolicy)))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -113,7 +120,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
             return Single.fromPublisher(identitiesCollection.insertOne(identityProvider)).flatMap(success -> {
                 item.setId(identityProvider.getId());
                 return Single.just(item);
-            });
+            })
+                    .observeOn(Schedulers.computation());
         }
         return Single.error(new TechnicalException("Identity provider must be present for create"));
     }
@@ -123,14 +131,16 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
         Optional<IdentityProviderMongo> optionalIdp = convert(item);
         if (optionalIdp.isPresent()) {
             var identityProvider = optionalIdp.get();
-            return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> Single.just(item));
+            return Single.fromPublisher(identitiesCollection.replaceOne(eq(FIELD_ID, identityProvider.getId()), identityProvider)).flatMap(updateResult -> Single.just(item))
+                    .observeOn(Schedulers.computation());
         }
         return Single.error(new TechnicalException("Identity provider must be present for update"));
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(identitiesCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(identitiesCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private IdentityProvider convert(IdentityProviderMongo identityProviderMongo) {
