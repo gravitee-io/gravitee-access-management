@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -73,7 +74,8 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
     public Flowable<Device> findByReferenceAndUser(ReferenceType referenceType, String referenceId, UserId user) {
         var query = and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), userIdMatches(user), gte(FIELD_EXPIRES_AT, new Date()));
         var devicePublisher = rememberDeviceMongoCollection.find(query);
-        return Flowable.fromPublisher(devicePublisher).map(this::convert);
+        return Flowable.fromPublisher(devicePublisher).map(this::convert)
+                .observeOn(Schedulers.computation());
 
     }
 
@@ -83,12 +85,14 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
         var query = and(
                 eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                 eq(FIELD_CLIENT, client), userIdMatches(user), eq(FIELD_DEVICE_IDENTIFIER_ID, deviceIdentifierId), eq(FIELD_DEVICE_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()));
-        return Observable.fromPublisher(rememberDeviceMongoCollection.find(query).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(rememberDeviceMongoCollection.find(query).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Device> findById(String deviceId) {
-        return Observable.fromPublisher(rememberDeviceMongoCollection.find(and(eq(FIELD_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(rememberDeviceMongoCollection.find(and(eq(FIELD_ID, deviceId), gte(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -98,18 +102,21 @@ public class MongoDeviceRepository extends AbstractManagementMongoRepository imp
         return Single.fromPublisher(rememberDeviceMongoCollection.insertOne(entity)).flatMap(success -> {
             item.setId(entity.getId());
             return Single.just(item);
-        });
+        })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Device> update(Device item) {
         DeviceMongo entity = convert(item);
-        return Single.fromPublisher(rememberDeviceMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(rememberDeviceMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(rememberDeviceMongoCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(rememberDeviceMongoCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Device convert(DeviceMongo entity) {

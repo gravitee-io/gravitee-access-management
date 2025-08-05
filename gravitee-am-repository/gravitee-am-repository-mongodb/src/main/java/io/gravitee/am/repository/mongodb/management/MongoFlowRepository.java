@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -69,7 +70,8 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
                                 eq(FIELD_REFERENCE_ID, referenceId)
                         )
                 ))
-        ).map(this::convert);
+        ).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -82,7 +84,8 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
                                 eq(FIELD_APPLICATION, application)
                         )
                 ))
-        ).map(this::convert);
+        ).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -94,30 +97,35 @@ public class MongoFlowRepository extends AbstractManagementMongoRepository imple
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_ID, id)
                         )
-                ).first()).firstElement().map(this::convert);
+                ).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Flow> findById(String id) {
-        return Observable.fromPublisher(flowsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(flowsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Flow> create(Flow item) {
         FlowMongo flow = convert(item);
         flow.setId(flow.getId() == null ? RandomString.generate() : flow.getId());
-        return Single.fromPublisher(flowsCollection.insertOne(flow)).flatMap(success -> { item.setId(flow.getId()); return Single.just(item); });
+        return Single.fromPublisher(flowsCollection.insertOne(flow)).flatMap(success -> { item.setId(flow.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Flow> update(Flow item) {
         FlowMongo flow = convert(item);
-        return Single.fromPublisher(flowsCollection.replaceOne(eq(FIELD_ID, flow.getId()), flow)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(flowsCollection.replaceOne(eq(FIELD_ID, flow.getId()), flow)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(flowsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(flowsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private FlowMongo convert(Flow flow) {

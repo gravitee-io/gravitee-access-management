@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -71,7 +72,8 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
                 .fromPublisher(refreshTokenCollection.find(and(eq(FIELD_TOKEN, token),
                         or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -82,32 +84,38 @@ public class MongoRefreshTokenRepository extends AbstractOAuth2MongoRepository i
 
         return Single
                 .fromPublisher(refreshTokenCollection.insertOne(convert(refreshToken)))
-                .flatMap(success -> Single.just(refreshToken));
+                .flatMap(success -> Single.just(refreshToken))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String token) {
-        return Completable.fromPublisher(refreshTokenCollection.deleteOne(eq(FIELD_TOKEN, token)));
+        return Completable.fromPublisher(refreshTokenCollection.deleteOne(eq(FIELD_TOKEN, token)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByUserId(String userId) {
-        return Completable.fromPublisher(refreshTokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)));
+        return Completable.fromPublisher(refreshTokenCollection.deleteMany(eq(FIELD_SUBJECT, userId)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainIdClientIdAndUserId(String domainId, String clientId, UserId userId) {
-        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id()))));
+        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId), eq(FIELD_SUBJECT, userId.id()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainIdAndUserId(String domainId, UserId userId) {
-        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id()))));
+        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_SUBJECT, userId.id()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public CompletableSource deleteByDomainIdAndClientId(String domainId, String clientId) {
-        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId))));
+        return Completable.fromPublisher(refreshTokenCollection.deleteMany(and(eq(FIELD_DOMAIN, domainId), eq(FIELD_CLIENT, clientId))))
+                .observeOn(Schedulers.computation());
     }
 
     private RefreshTokenMongo convert(RefreshToken refreshToken) {

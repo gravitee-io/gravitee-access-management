@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -65,7 +66,8 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         return Observable
                 .fromPublisher(cibaAuthRequestCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).limit(1).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -73,7 +75,8 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         return Observable
                 .fromPublisher(cibaAuthRequestCollection.find(and(eq(FIELD_EXTERNAL_ID, externalId), gte(FIELD_EXPIRE_AT, new Date()))).limit(1).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -81,25 +84,29 @@ public class MongoCibaAuthRequestRepository extends AbstractOAuth2MongoRepositor
         authreq.setId(authreq.getId() == null ? SecureRandomString.generate() : authreq.getId());
         return Single
                 .fromPublisher(cibaAuthRequestCollection.insertOne(convert(authreq)))
-                .flatMap(success -> findById(authreq.getId()).toSingle());
+                .flatMap(success -> findById(authreq.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<CibaAuthRequest> update(CibaAuthRequest authreq) {
         return Single
                 .fromPublisher(cibaAuthRequestCollection.replaceOne(eq(FIELD_ID, authreq.getId()), convert(authreq)))
-                .flatMap(success -> findById(authreq.getId()).toSingle());
+                .flatMap(success -> findById(authreq.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<CibaAuthRequest> updateStatus(String authReqId, String status) {
         return Single.fromPublisher(cibaAuthRequestCollection.updateOne(and(eq(FIELD_ID, authReqId)), Updates.set("status", status)))
-                .flatMap(updateResult -> findById(authReqId).toSingle());
+                .flatMap(updateResult -> findById(authReqId).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(cibaAuthRequestCollection.findOneAndDelete(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(cibaAuthRequestCollection.findOneAndDelete(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private CibaAuthRequestMongo convert(CibaAuthRequest authReq) {
