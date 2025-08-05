@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -63,13 +64,15 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
 
     @Override
     public Flowable<Reporter> findAll() {
-        return Flowable.fromPublisher(withMaxTime(reportersCollection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(reportersCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Reporter> findByReference(Reference reference) {
         var query = referenceMatches(reference);
-        return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert);
+        return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     private static Bson referenceMatches(Reference reference) {
@@ -84,12 +87,14 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
     @Override
     public Flowable<Reporter> findInheritedFrom(Reference parentReference) {
         var query = and(referenceMatches(parentReference), eq(FIELD_INHERITED, true));
-        return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert);
+        return Flowable.fromPublisher(reportersCollection.find(query)).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Reporter> findById(String id) {
-        return Observable.fromPublisher(reportersCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(reportersCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -99,18 +104,21 @@ public class MongoReporterRepository extends AbstractManagementMongoRepository i
         return Single.fromPublisher(reportersCollection.insertOne(reporter)).flatMap(success -> {
             item.setId(reporter.getId());
             return Single.just(item);
-        });
+        })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Reporter> update(Reporter item) {
         ReporterMongo reporter = convert(item);
-        return Single.fromPublisher(reportersCollection.replaceOne(eq(FIELD_ID, reporter.getId()), reporter)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(reportersCollection.replaceOne(eq(FIELD_ID, reporter.getId()), reporter)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(reportersCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(reportersCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private ReporterMongo convert(Reporter reporter) {
