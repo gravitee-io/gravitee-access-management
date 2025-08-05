@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -72,57 +73,67 @@ public class MongoResourceRepository extends AbstractManagementMongoRepository i
     public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(resourceCollection.countDocuments(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client)), countOptions())).first(0L);
         Single<List<Resource>> resourcesOperation = Observable.fromPublisher(withMaxTime(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client)))).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).toList();
-        return Single.zip(countOperation, resourcesOperation, (count, resourceSets) -> new Page<>(resourceSets, page, count));
+        return Single.zip(countOperation, resourcesOperation, (count, resourceSets) -> new Page<>(resourceSets, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Resource> findById(String id) {
-        return Observable.fromPublisher(resourceCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(resourceCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Resource> create(Resource item) {
         ResourceMongo resource = convert(item);
         resource.setId(resource.getId() == null ? RandomString.generate() : resource.getId());
-        return Single.fromPublisher(resourceCollection.insertOne(resource)).flatMap(success -> { item.setId(resource.getId()); return Single.just(item); });
+        return Single.fromPublisher(resourceCollection.insertOne(resource)).flatMap(success -> { item.setId(resource.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Resource> update(Resource item) {
         ResourceMongo resourceMongo = convert(item);
-        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, resourceMongo.getId()), resourceMongo)).flatMap(success -> Single.just(item));
+        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, resourceMongo.getId()), resourceMongo)).flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(resourceCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(resourceCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Resource> findByDomainAndClientAndUser(String domain, String client, String user) {
-        return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), eq(FIELD_USER_ID, user)))).map(this::convert);
+        return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), eq(FIELD_USER_ID, user)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<Resource>> findByDomain(String domain, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(resourceCollection.countDocuments(eq(FIELD_DOMAIN, domain))).first(0l);
         Single<Set<Resource>> resourceSetOperation = Observable.fromPublisher(resourceCollection.find(eq(FIELD_DOMAIN, domain)).sort(new BasicDBObject(FIELD_UPDATED_AT, -1)).skip(size * page).limit(size)).map(this::convert).collect(HashSet::new, Set::add);
-        return Single.zip(countOperation, resourceSetOperation, (count, resourceSet) -> new Page<>(resourceSet, page, count));
+        return Single.zip(countOperation, resourceSetOperation, (count, resourceSet) -> new Page<>(resourceSet, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Resource> findByResources(List<String> resources) {
-        return Flowable.fromPublisher(resourceCollection.find(in(FIELD_ID, resources))).map(this::convert);
+        return Flowable.fromPublisher(resourceCollection.find(in(FIELD_ID, resources))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Resource> findByDomainAndClientAndResources(String domain, String client, List<String> resources) {
-        return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), in(FIELD_ID, resources)))).map(this::convert);
+        return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), in(FIELD_ID, resources)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String user, String resource) {
-        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), eq(FIELD_USER_ID, user), eq(FIELD_ID, resource))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(resourceCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, client), eq(FIELD_USER_ID, user), eq(FIELD_ID, resource))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     private Resource convert(ResourceMongo resourceMongo) {
