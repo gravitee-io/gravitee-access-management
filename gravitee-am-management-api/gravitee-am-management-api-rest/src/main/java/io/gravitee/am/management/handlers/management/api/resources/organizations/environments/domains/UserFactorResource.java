@@ -58,12 +58,14 @@ public class UserFactorResource extends AbstractResource {
 
     @DELETE
     @Operation(summary = "Revoke user factor",
+            operationId = "deleteUserFactor",
             description = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "User factor successfully revoked"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
+
     public void delete(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
