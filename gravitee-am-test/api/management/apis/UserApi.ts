@@ -847,7 +847,7 @@ export class UserApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
    * Revoke user factor
    */
-  async delete10Raw(
+  async deleteUserFactorRaw(
     requestParameters: Delete10Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
@@ -911,8 +911,8 @@ export class UserApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
    * Revoke user factor
    */
-  async delete10(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete10Raw(requestParameters, initOverrides);
+  async deleteUserFactor(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.deleteUserFactorRaw(requestParameters, initOverrides);
   }
 
   /**

@@ -88,9 +88,9 @@ beforeAll(async () => {
   callFactor1 = await createTwilioResource(domain, accessToken).then((twilioResource) =>
     createCallFactor(domain, accessToken, twilioResource, 'Call factor1'),
   );
-    callFactor2 = await createTwilioResource(domain, accessToken).then((twilioResource) =>
-        createCallFactor(domain, accessToken, twilioResource, 'Call factor2'),
-    );
+  callFactor2 = await createTwilioResource(domain, accessToken).then((twilioResource) =>
+    createCallFactor(domain, accessToken, twilioResource, 'Call factor2'),
+  );
   recoveryCodeFactor = await createRecoveryCodeFactor(domain, accessToken);
   totpFactor = await createOtpFactor(domain, accessToken);
 
@@ -538,7 +538,7 @@ const createMfaEnrollFlowApp = async (domain, accessToken, smsFactorId, callFact
               applicationFactors: [
                 { id: smsFactorId, selectionRule: '' },
                 { id: callFactorId1, selectionRule: '' },
-                  { id: callFactorId2, selectionRule: '' },
+                { id: callFactorId2, selectionRule: '' },
               ],
             },
             enroll: {
@@ -579,21 +579,21 @@ const createMfaEnrollFlowApp = async (domain, accessToken, smsFactorId, callFact
     },
   ]);
 
-    lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.MfaChallenge, 'post', [
-        {
-            name: 'enrollMFAPostChallenge',
-            policy: 'policy-am-enroll-mfa',
-            description: 'Auto enroll call factor',
-            condition: '',
-            enabled: true,
-            configuration: JSON.stringify({
-                primary: false,
-                refresh: false,
-                factorId: callFactorId2,
-                value: '+33780763733',
-            }),
-        },
-    ]);
+  lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.MfaChallenge, 'post', [
+    {
+      name: 'enrollMFAPostChallenge',
+      policy: 'policy-am-enroll-mfa',
+      description: 'Auto enroll call factor',
+      condition: '',
+      enabled: true,
+      configuration: JSON.stringify({
+        primary: false,
+        refresh: false,
+        factorId: callFactorId2,
+        value: '+33780763733',
+      }),
+    },
+  ]);
 
   await updateApplicationFlows(domain.id, accessToken, application.id, flows);
   return application;

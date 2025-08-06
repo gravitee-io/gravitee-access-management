@@ -97,6 +97,7 @@ public interface ConstantKeys {
     String ENROLLED_FACTOR_PHONE_NUMBER = "enrolledFactorPhoneNumber";
     String ENROLLED_FACTOR_EXTENSION_PHONE_NUMBER = "enrolledFactorExtensionPhoneNumber";
     String ENROLLED_FACTOR_EMAIL_ADDRESS = "enrolledFactorEmailAddress";
+    String ENROLLED_FACTOR_INIT_REGISTRATION = "enrolledFactorInit";
     String ALTERNATIVE_FACTOR_ID_KEY = "alternativeFactorId";
     String FACTORS_KEY = "factors";
     String FACTOR_KEY = "factor";

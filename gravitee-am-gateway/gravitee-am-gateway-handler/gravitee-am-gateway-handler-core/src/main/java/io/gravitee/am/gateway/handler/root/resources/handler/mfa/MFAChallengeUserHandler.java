@@ -22,6 +22,9 @@ import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ENROLLED_FACTOR_INIT_REGISTRATION;
+import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
+
 /**
  * Handler to retrieve the user from the context
  *
@@ -44,6 +47,9 @@ public class MFAChallengeUserHandler implements Handler<RoutingContext> {
 
     @Override
     public void handle(RoutingContext routingContext) {
+        Boolean enrollmentCompleted = routingContext.session().get(MFA_ENROLLMENT_COMPLETED_KEY);
+        routingContext.put(ENROLLED_FACTOR_INIT_REGISTRATION, Boolean.TRUE.equals(enrollmentCompleted));
+
         // user already signed in, continue
         if (routingContext.user() != null) {
             routingContext.next();

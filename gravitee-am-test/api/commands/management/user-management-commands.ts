@@ -62,6 +62,14 @@ export const getUserFactors = (domainId, accessToken, userId: string) =>
     user: userId,
   });
 
+export const deleteUserFactor = (domainId, accessToken, userId: string, factorId: string) =>
+  getUserApi(accessToken).deleteUserFactor({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    user: userId,
+    factor: factorId,
+  });
 export const getAllUsers = (domainId, accessToken) => getUserPage(domainId, accessToken);
 
 export const getUserPage = (domainId, accessToken, page: number = null, size: number = null) => {
