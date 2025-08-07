@@ -91,6 +91,20 @@ export class ProviderSettingsComponent implements OnInit {
       .pipe(map((schema) => enrichOIDCFormWithCerts(schema, this.certificates)))
       .subscribe((data) => {
         this.providerSchema = data;
+        if (data) {
+          Object.keys(this.providerSchema['properties']).forEach((key) => {
+            // Only apply default values for boolean properties to fix AM-686 and LDAP issues
+            // This prevents overriding null values for non-boolean properties while still providing defaults for booleans
+            if (
+              this.providerSchema['properties'][key].default &&
+              this.providerSchema['properties'][key].type === 'boolean' &&
+              this.providerConfiguration[key] == null
+            ) {
+              this.providerConfiguration[key] = this.providerSchema['properties'][key].default;
+            }
+            this.providerSchema['properties'][key].default = '';
+          });
+        }
       });
   }
 
