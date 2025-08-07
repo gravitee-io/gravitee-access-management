@@ -16,6 +16,8 @@
 package io.gravitee.am.extensiongrant.jwtbearer;
 
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
@@ -24,24 +26,18 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class JWTBearerExtensionGrantConfiguration implements ExtensionGrantConfiguration {
 
+    private KeyResolver publicKeyResolver;
     private String publicKey;
     private List<Map<String, String>> claimsMapper;
 
-    public String getPublicKey() {
-        return publicKey;
-    }
-
-    public void setPublicKey(String publicKey) {
-        this.publicKey = publicKey;
-    }
-
-    public List<Map<String, String>> getClaimsMapper() {
-        return claimsMapper;
-    }
-
-    public void setClaimsMapper(List<Map<String, String>> claimsMapper) {
-        this.claimsMapper = claimsMapper;
+    public enum KeyResolver {
+        GIVEN_KEY,
+        JWKS_URL
     }
 }
+
+

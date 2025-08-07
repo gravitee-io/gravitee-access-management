@@ -15,26 +15,35 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer.provider;
 
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.proc.JWTProcessor;
 import io.gravitee.am.common.exception.jwt.ExpiredJWTException;
 import io.gravitee.am.common.exception.jwt.MalformedJWTException;
 import io.gravitee.am.common.exception.jwt.PrematureJWTException;
 import io.gravitee.am.common.exception.jwt.SignatureException;
-import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.Claims;
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantProvider;
 import io.gravitee.am.extensiongrant.api.exceptions.InvalidGrantException;
 import io.gravitee.am.extensiongrant.jwtbearer.JWTBearerExtensionGrantConfiguration;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.jwt.DefaultJWTParser;
-import io.gravitee.am.jwt.JWTParser;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.ecdsa.ECDSAJWKSourceResolver;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.hmac.MACJWKSourceResolver;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.remote.RemoteJWKSourceResolver;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.rsa.RSAJWKSourceResolver;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.AbstractKeyProcessor;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.HMACKeyProcessor;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.JWKSKeyProcessor;
+import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcessor;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.Assert;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,7 +53,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
-import java.security.PublicKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.ECGenParameterSpec;
@@ -67,13 +75,22 @@ import static java.util.Objects.nonNull;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, InitializingBean {
+public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JWTBearerExtensionGrantProvider.class);
     private static final String ASSERTION_QUERY_PARAM = "assertion";
     static final Pattern SSH_PUB_KEY = Pattern.compile("((ecdsa)(.*)|ssh-(rsa|dsa)) ([A-Za-z0-9/+]+=*)( .*)?");
     private static final int OPENSSH_KEY_HEADER_LENGTH = 39;
-    private JWTParser jwtParser;
+    private static final SignatureAlgorithm[] ALLOWED_SIGNATURE_ALGORITHMS = new SignatureAlgorithm[]{
+            SignatureAlgorithm.RS256,
+            SignatureAlgorithm.RS384,
+            SignatureAlgorithm.RS512,
+            SignatureAlgorithm.ES256,
+            SignatureAlgorithm.ES384,
+            SignatureAlgorithm.ES512,
+            SignatureAlgorithm.HS256,
+            SignatureAlgorithm.HS384,
+            SignatureAlgorithm.HS512};
 
     private static final Map<Integer, String> OPENSSH_KEY_LENGHTS = Map.of(
             104, "secp256r1",
@@ -85,12 +102,6 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
     private JWTBearerExtensionGrantConfiguration jwtBearerTokenGranterConfiguration;
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        PublicKey publicKey = parsePublicKey(jwtBearerTokenGranterConfiguration.getPublicKey());
-        jwtParser = new DefaultJWTParser(publicKey);
-    }
-
-    @Override
     public Maybe<User> grant(TokenRequest tokenRequest) throws InvalidGrantException {
         String assertion = tokenRequest.getRequestParameters().get(ASSERTION_QUERY_PARAM);
 
@@ -98,10 +109,13 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
             throw new InvalidGrantException("Assertion value is missing");
         }
         return Observable.fromCallable(() -> {
+            JWTProcessor<?> processor;
             try {
-                JWT jwt = jwtParser.parse(assertion);
-                return createUser(jwt);
-            } catch (MalformedJWTException | ExpiredJWTException | PrematureJWTException | SignatureException ex) {
+                processor = generateJWTProcessor(assertion);
+                JWTClaimsSet claimsSet = processor.process(assertion, null);
+                return createUser(claimsSet);
+            } catch (MalformedJWTException | ExpiredJWTException | PrematureJWTException | SignatureException |
+                     com.nimbusds.jwt.proc.ExpiredJWTException ex) {
                 LOGGER.debug(ex.getMessage(), ex.getCause());
                 throw new InvalidGrantException(ex.getMessage(), ex);
             } catch (Exception ex) {
@@ -111,26 +125,27 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
         }).firstElement();
     }
 
-    public User createUser(JWT jwt) {
-        final String sub = jwt.getSub();
-        final String username = jwt.containsKey(StandardClaims.PREFERRED_USERNAME) ?
-                jwt.get(StandardClaims.PREFERRED_USERNAME).toString() : sub;
+    public User createUser(JWTClaimsSet claimsSet) {
+        final String sub = claimsSet.getSubject();
+
+        final String username = claimsSet.getClaims().containsKey(StandardClaims.PREFERRED_USERNAME) ?
+                claimsSet.getClaim((StandardClaims.PREFERRED_USERNAME)).toString() : sub;
         DefaultUser user = new DefaultUser(username);
         user.setId(sub);
         // set claims
         Map<String, Object> additionalInformation = new HashMap<>();
         // add sub required claim
         additionalInformation.put(SUB, sub);
-        if (jwt.getInternalSub() != null) {
-            additionalInformation.put(GIO_INTERNAL_SUB, jwt.getInternalSub());
+        if (claimsSet.getClaim(Claims.GIO_INTERNAL_SUB) != null) {
+            additionalInformation.put(GIO_INTERNAL_SUB, claimsSet.getClaim(Claims.GIO_INTERNAL_SUB));
         }
         List<Map<String, String>> claimsMapper = jwtBearerTokenGranterConfiguration.getClaimsMapper();
         if (claimsMapper != null && !claimsMapper.isEmpty()) {
             claimsMapper.forEach(claimMapper -> {
                 String assertionClaim = claimMapper.get("assertion_claim");
                 String tokenClaim = claimMapper.get("token_claim");
-                if (jwt.containsKey(assertionClaim)) {
-                    additionalInformation.put(tokenClaim, jwt.get(assertionClaim));
+                if (claimsSet.getClaims().containsKey(assertionClaim)) {
+                    additionalInformation.put(tokenClaim, claimsSet.getClaim(assertionClaim));
                 }
             });
         }
@@ -138,30 +153,78 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
         return user;
     }
 
-
-
-    /**
-     * Generate RSA Public Key from the ssh-(rsa|dsa) ([A-Za-z0-9/+]+=*) (.*) stored key.
-     * @param key String.
-     * @return RSAPublicKey
-     */
-    static PublicKey parsePublicKey(String key) {
-        Matcher m = SSH_PUB_KEY.matcher(key);
-
-        if (m.matches()) {
-            String alg = m.group(2) != null ? m.group(2) : m.group(4);
-            String encKey = m.group(5);
-
-            final boolean isRSA = "rsa".equalsIgnoreCase(alg);
-            final boolean isECDSA = "ecdsa".equalsIgnoreCase(alg);
-            if (!(isRSA || isECDSA)) {
-                throw new IllegalArgumentException("Only RSA or ECDSA is currently supported, but algorithm was " + alg);
+    private JWTProcessor<?> generateJWTProcessor(String assertion) {
+        SignatureAlgorithm signatureAlgorithm;
+        try {
+            signatureAlgorithm = SignatureAlgorithm.valueOf(extractAlgorithmFromJWT(assertion));
+            if(!Arrays.asList(ALLOWED_SIGNATURE_ALGORITHMS).contains(signatureAlgorithm)) {
+                LOGGER.warn("Algorithm [{}] is not supported. List of Supported Algorithms: {}", signatureAlgorithm, Arrays.asList(ALLOWED_SIGNATURE_ALGORITHMS));
+                throw new InvalidGrantException("Algorithm [" + signatureAlgorithm + "] is not supported");
             }
-
-            return isRSA ? parseSshRSAPublicKey(encKey) : parseEcPublicKey(encKey);
+        }catch (Exception e){
+            LOGGER.error("Error extracting signature algorithm", e);
+            throw new InvalidGrantException("Error extracting signature algorithm");
         }
 
-        return null;
+        AbstractKeyProcessor<?> keyProcessor = null;
+        if (JWTBearerExtensionGrantConfiguration.KeyResolver.JWKS_URL.equals(jwtBearerTokenGranterConfiguration.getPublicKeyResolver())) {
+            keyProcessor = new JWKSKeyProcessor<>();
+            keyProcessor.setJwkSourceResolver(new RemoteJWKSourceResolver<>(jwtBearerTokenGranterConfiguration.getPublicKey()));
+        } else {
+            // get the corresponding key processor
+            final String publicKey = jwtBearerTokenGranterConfiguration.getPublicKey();
+            switch (signatureAlgorithm) {
+                case RS256, RS384, RS512 -> {
+                    keyProcessor = new RSAKeyProcessor<>();
+                    RSAJWKSourceResolver resolver;
+                    if (publicKey.startsWith("ssh-rsa")) {
+                        resolver = new RSAJWKSourceResolver<>(parseSshRSAPublicKey(publicKey));
+                    } else {
+                        resolver = new RSAJWKSourceResolver<>(publicKey);
+                    }
+                    keyProcessor.setJwkSourceResolver(resolver);
+                }
+                case HS256, HS384, HS512 -> {
+                    keyProcessor = new HMACKeyProcessor<>();
+                    keyProcessor.setJwkSourceResolver(new MACJWKSourceResolver<>(publicKey));
+                }
+                case ES256, ES384, ES512 -> {
+                    keyProcessor = new RSAKeyProcessor<>();
+                    ECDSAJWKSourceResolver resolver;
+                    if (publicKey.startsWith("ecdsa")) {
+                        resolver = new ECDSAJWKSourceResolver<>(parseEcPublicKey(publicKey));
+                    } else {
+                        resolver = new ECDSAJWKSourceResolver<>(publicKey);
+                    }
+                    keyProcessor.setJwkSourceResolver(resolver);
+                }
+            }
+        }
+        Assert.notNull(keyProcessor, "A key processor must be set");
+        return keyProcessor.create(signatureAlgorithm);
+    }
+
+    /**
+     * Extracts the algorithm from JWT header
+     */
+    private String extractAlgorithmFromJWT(String jwt) {
+
+        String[] parts = jwt.split("\\.");
+        if (parts.length < 2) {
+            throw new IllegalArgumentException("Invalid JWT format");
+        }
+
+        String header = new String(Base64.getDecoder().decode(parts[0]), StandardCharsets.UTF_8);
+        String algPattern = "\"alg\"\\s*:\\s*\"([^\"]+)\"";
+        Pattern pattern = Pattern.compile(algPattern);
+        Matcher matcher = pattern.matcher(header);
+
+        if (matcher.find()) {
+            return matcher.group(1);
+        } else {
+            LOGGER.warn("Failed to extract algorithm from JWT header");
+            throw new IllegalArgumentException("Algorithm not found in JWT header");
+        }
     }
 
     /**
@@ -173,9 +236,12 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
      * @param encKey String
      * @return RSAPublicKey
      */
-    private static PublicKey parseSshRSAPublicKey(String encKey) {
+    private static RSAPublicKey parseSshRSAPublicKey(String encKey) {
         final byte[] PREFIX = new byte[]{0, 0, 0, 7, 's', 's', 'h', '-', 'r', 's', 'a'};
-        ByteArrayInputStream in = new ByteArrayInputStream(Base64.getDecoder().decode(StandardCharsets.UTF_8.encode(encKey)).array());
+
+        String[] parts = encKey.split(" ");
+        String encryptedKey = parts[1];
+        ByteArrayInputStream in = new ByteArrayInputStream(Base64.getDecoder().decode(StandardCharsets.UTF_8.encode(encryptedKey)).array());
 
         byte[] prefix = new byte[11];
 
@@ -219,7 +285,12 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
      * we switch the header size to obtain the desired public key.
      * */
     private static X509EncodedKeySpec getX509EncodedKeySpec(String publicKey) throws InvalidAlgorithmParameterException, NoSuchAlgorithmException {
-        final byte[] decodedPubKey = Base64.getDecoder().decode(publicKey);
+        String[] parts = publicKey.split(" ");
+        if (parts.length < 2) {
+            throw new IllegalArgumentException("Wrong SSH key format");
+        }
+        String base64 = parts[1];
+        final byte[] decodedPubKey = Base64.getDecoder().decode(base64);
         if (nonNull(resolveAlgorithm(decodedPubKey.length))) {
             return getOpenSSHX509EncodedKeySpec(decodedPubKey);
         }
@@ -240,7 +311,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
      * Each time you call this method, the buffer position will move, so result are differents...
      * @param in byte array of a public encryption key without 11 "xxxxssh-rsa" first byte.
      * @return BigInteger public exponent on first call, then modulus.
-     * @throws IOException
+     * @throws IOException exception
      */
     private static byte[] readBigInteger(ByteArrayInputStream in) throws IOException {
         byte[] b = new byte[4];
