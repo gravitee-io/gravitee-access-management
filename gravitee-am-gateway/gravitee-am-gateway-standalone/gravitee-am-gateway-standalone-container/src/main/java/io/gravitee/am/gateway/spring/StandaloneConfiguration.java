@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.configuration.ConfigurationChecker;
 import io.gravitee.am.gateway.core.upgrader.GatewayUpgraderConfiguration;
 import io.gravitee.am.gateway.event.EventManagerImpl;
@@ -55,6 +56,8 @@ import io.gravitee.node.plugin.cluster.standalone.StandaloneClusterManager;
 import io.gravitee.platform.repository.api.RepositoryScopeProvider;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.jackson.DatabindCodec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -88,6 +91,10 @@ import org.springframework.core.env.Environment;
         AuthenticationDeviceNotifierSpringConfiguration.class,
 })
 public class StandaloneConfiguration {
+
+    private static final Logger log = LoggerFactory.getLogger(StandaloneConfiguration.class);
+    public static final String GRAVITEE_JWT_EXECUTOR_THREADS = "gravitee.jwt.executor.threads";
+    public static final int DEFAULT_JWT_EXECUTOR_THREADS = 20;
 
     @Bean
     public Node node() {
@@ -163,5 +170,12 @@ public class StandaloneConfiguration {
     @Bean
     public SingleDataPlaneProvider singleDataPlaneProvider(DataPlaneRegistry dataPlaneRegistry){
         return new SingleDataPlaneProvider(dataPlaneRegistry);
+    }
+
+    @Bean
+    public JwtSignerExecutor ioExecutor(Environment environment) {
+        int ioThreads = environment.getProperty(GRAVITEE_JWT_EXECUTOR_THREADS, Integer.class, DEFAULT_JWT_EXECUTOR_THREADS);
+        log.info("Initializing IO executor for remote signature with {} threads", ioThreads);
+        return new JwtSignerExecutor(ioThreads);
     }
 }
