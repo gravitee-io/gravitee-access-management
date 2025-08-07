@@ -82,7 +82,7 @@ export class UsersComponent implements OnInit {
     let advancedSearchMode = false;
     if (searchQuery) {
       advancedSearchMode = this.isAdvancedSearch(searchQuery);
-      const searchTerm = !advancedSearchMode ? 'q=' + searchQuery + '*' : 'filter=' + searchQuery;
+      const searchTerm = !advancedSearchMode ? 'q=' + searchQuery + '*' : 'filter=' + encodeURIComponent(searchQuery);
       findUsers = this.userService.search(this.domainId, searchTerm, this.page.pageNumber, this.page.size, this.organizationContext);
     } else {
       findUsers = this.organizationContext

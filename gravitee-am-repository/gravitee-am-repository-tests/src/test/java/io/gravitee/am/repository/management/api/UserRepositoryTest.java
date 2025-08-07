@@ -981,6 +981,44 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testScimSearch_byEmail_withSpecialChars() {
+        final String domain = "domain";
+
+        final User user1 = CreateUser("testUsername1", "test+admin@email.com", domain);
+        userRepository.create(user1).blockingGet();
+
+        User user2 = CreateUser("testUsername2", "test.admin@email.com", domain);
+        userRepository.create(user2).blockingGet();
+
+        FilterCriteria criteriaEmailPlusChar = CreateFilter("email", "+admin@email.com", "ew");
+        TestObserver<Page<User>> testObserverP0 = userRepository.search(ReferenceType.DOMAIN, domain, criteriaEmailPlusChar, 0, 2).test();
+        testObserverP0.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserverP0.assertComplete();
+        testObserverP0.assertNoErrors();
+
+        testObserverP0.assertValue(users -> users.getData().size() == 1);
+        testObserverP0.assertValue(users -> {
+            Iterator<User> it = users.getData().iterator();
+            return it.next().getEmail().equals(user1.getEmail());
+        });
+
+        FilterCriteria criteriaEmailPlusPeriod = CreateFilter("email", ".admin@email.com", "ew");
+        TestObserver<Page<User>> testObserverP1 = userRepository.search(ReferenceType.DOMAIN, domain, criteriaEmailPlusPeriod, 0, 2).test();
+        testObserverP1.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserverP1.assertComplete();
+        testObserverP1.assertNoErrors();
+
+        testObserverP1.assertValue(users -> users.getData().size() == 1);
+        testObserverP1.assertValue(users -> {
+            Iterator<User> it = users.getData().iterator();
+            return it.next().getEmail().equals(user2.getEmail());
+        });
+
+    }
+
+    @Test
     public void testScimSearch_Field_created() {
         final String domain = "domain";
         final Date now = new Date();
@@ -1787,5 +1825,24 @@ public class UserRepositoryTest extends AbstractManagementTest {
         String uuid = UUID.randomUUID().toString().replace("-", "");
         user.setUsername("testUser" + uuid);
         return user;
+    }
+
+    private User CreateUser(String username, String email, String domain){
+        User user = new User();
+        user.setReferenceType(ReferenceType.DOMAIN);
+        user.setReferenceId(domain);
+        user.setUsername(username);
+        user.setEmail(email);
+        return user;
+    }
+
+    private FilterCriteria CreateFilter(String name, String value, String operator) {
+        FilterCriteria criteria = new FilterCriteria();
+        criteria.setFilterName(name);
+        criteria.setFilterValue(value);
+        criteria.setOperator(operator);
+        criteria.setQuoteFilterValue(true);
+
+        return criteria;
     }
 }
