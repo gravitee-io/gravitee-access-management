@@ -125,7 +125,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
 
         logger.info("Initializing certificates for domain {}", domain.getName());
         certificateRepository.findByDomain(domain.getId())
-                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
                 .subscribe(
                         certificate -> {
                             certificateProviderManager.create(certificate);
@@ -207,7 +207,7 @@ public class CertificateManagerImpl extends AbstractService implements Certifica
     private void deployCertificate(String certificateId) {
         logger.info("Deploying certificate {} for domain {}", certificateId, domain.getName());
         certificateRepository.findById(certificateId)
-                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
                 .subscribe(
                         certificate -> {
                             try {
