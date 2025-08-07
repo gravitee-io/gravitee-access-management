@@ -47,9 +47,31 @@ public final class FilterCriteriaParser {
             add("{");
             add("}");
             add("$");
+            add("^");
         }
     };
     public static final String FOUND_IN_THE_THE_SEARCH_QUERY = "] found in the the search query";
+    private static final List<String> REGEX_OPERATORS = new ArrayList<>(){
+        {
+            add("co");
+            add("sw");
+            add("ew");
+        }
+    };
+    public static final List<String> ALLOWED_REGEX_CHARACTERS = new ArrayList<>(){
+        {
+            add(".");
+            add("*");
+            add("+");
+            add("?");
+            add("[");
+            add("]");
+            add("|");
+            add("(");
+            add(")");
+        }
+        };
+
     private final boolean regexCaseInsensitive;
 
     public FilterCriteriaParser() {
@@ -156,6 +178,20 @@ public final class FilterCriteriaParser {
         };
     }
 
+    private static String escapeRegexCharacters(String value) {
+        // Iterate through the other regex characters and escape them.
+        // A character like '|' becomes '\|' in the regex, which then becomes '\\|' in JSON.
+        for (String ch : ALLOWED_REGEX_CHARACTERS) {
+            value = value.replace(ch, "\\\\" + ch);
+        }
+
+        return value;
+    }
+
+    private static boolean isRegexOperator (String operator){
+        return REGEX_OPERATORS.contains(operator);
+    }
+
     private static String convertFilterValue(FilterCriteria criteria, String filterName, String operator) {
         if (valueSpecialCharsList.stream().anyMatch(s -> criteria.getFilterValue().contains(s))) {
             throw new IllegalArgumentException("Invalid filter value [" + criteria.getFilterValue() + FOUND_IN_THE_THE_SEARCH_QUERY);
@@ -166,6 +202,9 @@ public final class FilterCriteriaParser {
         if (isDateInput(filterName)) {
             filterValue = "ISODate(\"" + filterValue + "\")";
             return filterValue;
+        }
+        if (isRegexOperator(operator)) {
+            filterValue = escapeRegexCharacters(filterValue);
         }
         if ("sw".equals(operator)) {
             filterValue = "^" + filterValue;
