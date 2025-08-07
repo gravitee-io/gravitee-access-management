@@ -15,11 +15,18 @@
  */
 package io.gravitee.am.repository.mongodb.common;
 
+import com.mongodb.BasicDBObject;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
+
+import static io.gravitee.am.repository.mongodb.common.FilterCriteriaParser.ALLOWED_REGEX_CHARACTERS;
 
 /**
  * @author Titouan COMPIEGNE (david.brassely at graviteesource.com)
@@ -131,6 +138,34 @@ public class FilterCriteriaParserTest {
 
         String query = filterCriteriaParser.parse(filterCriteria);
         Assert.assertEquals("{\"email\":{$eq:\"alice.o'brian@test.com\"}}", query);
+    }
+
+
+    // A static method to provide the list of special characters for the test
+    static Stream<String> regexCharactersProvider() {
+        return ALLOWED_REGEX_CHARACTERS.stream();
+    }
+
+    @ParameterizedTest
+    @MethodSource("regexCharactersProvider")
+    void shouldParse_regex_with_special_characters(String specialCharacter) {
+
+        FilterCriteria filterCriteria = new FilterCriteria();
+        filterCriteria.setOperator("co");
+        filterCriteria.setFilterName("email");
+        filterCriteria.setQuoteFilterValue(true);
+        filterCriteria.setFilterValue("test" + specialCharacter + "user@mail.com");
+
+        FilterCriteriaParser parser = new FilterCriteriaParser(true);
+        String query = parser.parse(filterCriteria);
+
+        String expectedRegexValue = "test\\\\" + specialCharacter + "user@mail\\\\.com";
+        String expectedQuery = String.format("{\"email\":{$regex:\"%s\",$options:\"i\"}}", expectedRegexValue);
+
+        Assertions.assertEquals(expectedQuery, query, "The parsed query string should match the expected format.");
+
+        BasicDBObject searchQuery = BasicDBObject.parse(query);
+        Assertions.assertNotNull(searchQuery);
     }
 
 }
