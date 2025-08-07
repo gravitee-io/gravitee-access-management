@@ -77,7 +77,7 @@ public enum SignatureAlgorithm {
     /**
      * JWA algorithm name for {@code ECDSA using P-521 and SHA-512}
      */
-    ES512("ES512", "ECDSA using P-521 and SHA-512", "ECDSA", "SHA512withECDSA", "SHA-512", true, 512, 521),
+    ES512("ES512", "ECDSA using P-512 and SHA-512", "ECDSA", "SHA512withECDSA", "SHA-512", true, 512, 521),
 
     /**
      * JWA algorithm name for {@code RSASSA-PSS using SHA-256 and MGF1 with SHA-256}.  <b>This algorithm requires
