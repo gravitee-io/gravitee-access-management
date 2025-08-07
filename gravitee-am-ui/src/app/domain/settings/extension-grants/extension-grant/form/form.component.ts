@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges, OnInit } from '@angular/core';
 
 @Component({
   selector: 'extension-grant-form',
@@ -21,7 +21,7 @@ import { Component, Input, EventEmitter, Output, OnChanges, SimpleChanges } from
   styleUrls: ['./form.component.scss'],
   standalone: false,
 })
-export class ExtensionGrantFormComponent implements OnChanges {
+export class ExtensionGrantFormComponent implements OnChanges, OnInit {
   // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('extensionGrantConfiguration') configuration: any = {};
   @Input() extensionGrantSchema: any;
@@ -29,6 +29,9 @@ export class ExtensionGrantFormComponent implements OnChanges {
   displayForm = false;
   data: any = {};
 
+  ngOnInit(): void {
+    this.data.publicKeyResolver ??= 'GIVEN_KEY';
+  }
   ngOnChanges(changes: SimpleChanges) {
     if (changes.extensionGrantSchema) {
       const _extensionGrantSchema = changes.extensionGrantSchema.currentValue;

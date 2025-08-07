@@ -1,21 +1,38 @@
 {
-  "type" : "object",
-  "id" : "urn:jsonschema:io:gravitee:am:tokengranter:jwtbearer:JwtBearerTokenGranterConfiguration",
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:tokengranter:jwtbearer:JwtBearerTokenGranterConfiguration",
   "description": "RFC 7523, Section 2.1, Using JWTs as a means for requesting an OAuth 2.0 access token.\nThe following example demonstrates an access token request with a JWT as an authorization grant :\n\nPOST /token HTTP/1.1\ngrant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=|signed-JWT-token|",
-  "properties" : {
+  "properties": {
     "grantType": {
       "title": "Grant Type",
       "description": "OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the \"grant_type\" parameter of the token endpoint.",
       "default": "urn:ietf:params:oauth:grant-type:jwt-bearer",
       "readOnly": true
     },
-    "publicKey" : {
-      "title": "Public key",
-      "description": "SSH public key (((ecdsa)(.*)|ssh-(rsa|dsa)) ([A-Za-z0-9/+]+=*)( .*)?) used to verify assertion payload integrity.",
-      "type" : "string",
-      "pattern": "((ecdsa.*)|ssh-(rsa|dsa)) ([A-Za-z0-9/+]+=*)( .*)?"
+    "publicKeyResolver": {
+      "title": "Public Key resolver",
+      "description": "Define how token (JWT) will be verify",
+      "type": "string",
+      "default": "GIVEN_KEY",
+      "enum": [
+        "GIVEN_KEY",
+        "JWKS_URL"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "GIVEN_KEY": "GIVEN_KEY: You must provide a signature key (PEM format or HMAC secret key)",
+          "JWKS_URL": "JWKS_URL: Retrieve JWKS from URL (Basically, URL ending with '/.well-known/jwks.json')"
+        }
+      }
     },
-    "claimsMapper" : {
+    "publicKey": {
+      "title": "Resolver parameter",
+      "description": "Set the signature key <i><b>(GIVEN_KEY)</b></i> or a JWKS URL <i><b>(JWKS_URL)</b></i> following selected resolver. If selected <i><b>(GIVEN_KEY)</b></i>, must start with key type (e.g. ssh-rsa).",
+      "type": "string",
+      "widget": "textarea"
+    },
+    "claimsMapper": {
       "title": "Claims mapper",
       "type": "array",
       "items": {
@@ -36,6 +53,7 @@
     }
   },
   "required": [
+    "publicKeyResolver",
     "publicKey"
   ]
 }
