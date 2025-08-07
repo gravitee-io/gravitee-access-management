@@ -191,6 +191,10 @@ jwt:
   #kid: default-gravitee-AM-key # kid (key ID) Header Parameter is a hint indicating which key was used to secure the JWT
   #expire-after: 604800 # the end of validity of the token in seconds (default 604800 = a week)
   #issuer: https://gravitee.am # the principal that issued the JWT (default https://gravitee.am)
+  ## Number of Threads available for Token signatures when
+  ## there are managed by a remote service like HSM
+  #executor:
+  #  threads: 20
 
 # SMTP configuration used to send mails
 email:
