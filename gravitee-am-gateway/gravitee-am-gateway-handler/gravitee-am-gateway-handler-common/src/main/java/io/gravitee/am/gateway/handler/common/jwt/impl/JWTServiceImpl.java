@@ -21,6 +21,7 @@ import io.gravitee.am.common.crypto.CryptoUtils;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
@@ -54,6 +55,9 @@ public class JWTServiceImpl implements JWTService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private JwtSignerExecutor executor;
 
     @Override
     public Single<String> encode(JWT jwt, CertificateProvider certificateProvider) {
@@ -173,7 +177,7 @@ public class JWTServiceImpl implements JWTService {
         });
 
         if (certificateProvider.getProvider().getClass().getSimpleName().equals(AWS_HSM_CERTIFICATE_PROVIDER)) {
-            return signer.subscribeOn(Schedulers.io());
+            return signer.subscribeOn(Schedulers.from(executor.getExecutor())).observeOn(Schedulers.computation());
         } else {
             return signer;
         }
@@ -191,7 +195,7 @@ public class JWTServiceImpl implements JWTService {
         });
 
         if (certificateProvider.getProvider().getClass().getSimpleName().equals(AWS_HSM_CERTIFICATE_PROVIDER)) {
-            return verifier.subscribeOn(Schedulers.io());
+            return verifier.subscribeOn(Schedulers.from(executor.getExecutor())).observeOn(Schedulers.computation());
         } else {
             return verifier;
         }
