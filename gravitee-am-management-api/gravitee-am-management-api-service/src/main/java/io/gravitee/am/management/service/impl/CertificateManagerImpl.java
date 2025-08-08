@@ -169,7 +169,11 @@ public class CertificateManagerImpl extends AbstractService<CertificateManager> 
                     }
                     certificate.setExpiresAt(expiresAt);
                 });
-                notifierService.registerCertificateExpiration(certificate);
+
+                // Only register the certificate for expiration notification if it has an end date
+                if (certificate.getExpiresAt() != null) {
+                    notifierService.registerCertificateExpiration(certificate);
+                }
             } else {
                 notifierService.unregisterCertificateExpiration(certificate.getDomain(), certificate.getId());
                 notifierService.deleteCertificateExpirationAcknowledgement(certificate.getId())
