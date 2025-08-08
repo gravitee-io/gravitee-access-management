@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -77,12 +78,14 @@ public class MongoLoginAttemptRepository extends AbstractGatewayMongoRepository 
 
     @Override
     public Maybe<LoginAttempt> findById(String id) {
-        return Observable.fromPublisher(loginAttemptsCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(loginAttemptsCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<LoginAttempt> findByCriteria(LoginAttemptCriteria criteria) {
-        return Observable.fromPublisher(withMaxTime(loginAttemptsCollection.find(and(query(criteria), gte(FIELD_EXPIRE_AT, new Date())))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(withMaxTime(loginAttemptsCollection.find(and(query(criteria), gte(FIELD_EXPIRE_AT, new Date())))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -92,23 +95,24 @@ public class MongoLoginAttemptRepository extends AbstractGatewayMongoRepository 
         return Single.fromPublisher(loginAttemptsCollection.insertOne(loginAttempt)).flatMap(success -> {
             item.setId(loginAttempt.getId());
             return Single.just(item);
-        });
+        }).observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<LoginAttempt> update(LoginAttempt item) {
         LoginAttemptMongo loginAttempt = convert(item);
-        return Single.fromPublisher(loginAttemptsCollection.replaceOne(eq(FIELD_ID, loginAttempt.getId()), loginAttempt)).flatMap(success -> Single.just(item));
+        return Single.fromPublisher(loginAttemptsCollection.replaceOne(eq(FIELD_ID, loginAttempt.getId()), loginAttempt)).flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(loginAttemptsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(loginAttemptsCollection.deleteOne(eq(FIELD_ID, id))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(LoginAttemptCriteria criteria) {
-        return Completable.fromPublisher(loginAttemptsCollection.deleteOne(query(criteria)));
+        return Completable.fromPublisher(loginAttemptsCollection.deleteOne(query(criteria))).observeOn(Schedulers.computation());
     }
 
     private Bson query(LoginAttemptCriteria criteria) {

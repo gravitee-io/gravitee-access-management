@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
@@ -63,7 +64,7 @@ public class MongoAccountAccessTokenRepository extends AbstractManagementMongoRe
         return Observable.fromPublisher(accountTokensCollection.find(eq(FIELD_ID, tokenId))
                         .first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert).observeOn(Schedulers.computation());
     }
 
     @Override
@@ -73,7 +74,7 @@ public class MongoAccountAccessTokenRepository extends AbstractManagementMongoRe
                         eq(FIELD_REFERENCE_ID, referenceId),
                         eq(FIELD_REFERENCE_TYPE, referenceType.name())
                 )))
-                .map(this::convert);
+                .map(this::convert).observeOn(Schedulers.computation());
     }
 
     @Override
@@ -82,26 +83,29 @@ public class MongoAccountAccessTokenRepository extends AbstractManagementMongoRe
                 eq(FIELD_USER_ID, userId),
                 eq(FIELD_REFERENCE_ID, referenceId),
                 eq(FIELD_REFERENCE_TYPE, referenceType.name())
-        )));
+        ))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AccountAccessToken> create(AccountAccessToken item) {
         var document = convert(item);
         return Single.fromPublisher(accountTokensCollection.insertOne(document))
-                .flatMap(success -> findById(document.getId()).toSingle());
+                .flatMap(success -> findById(document.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AccountAccessToken> update(AccountAccessToken item) {
         var document = convert(item);
         return Single.fromPublisher(accountTokensCollection.replaceOne(eq(FIELD_ID, document.getId()), document))
-                .flatMap(success -> findById(document.getId()).toSingle());
+                .flatMap(success -> findById(document.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String tokenId) {
-        return Completable.fromPublisher(accountTokensCollection.deleteOne(eq(FIELD_ID, tokenId)));
+        return Completable.fromPublisher(accountTokensCollection.deleteOne(eq(FIELD_ID, tokenId)))
+                .observeOn(Schedulers.computation());
     }
 
     private AccountAccessToken convert(AccountAccessTokenMongo mongo) {

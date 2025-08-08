@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -62,7 +63,8 @@ public class MongoPasswordHistoryRepository extends AbstractDataPlaneMongoReposi
     @Override
     public Maybe<PasswordHistory> findById(String id) {
         return Observable.fromPublisher(mongoCollection.find(eq(FIELD_ID, id)).first()).firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -73,7 +75,8 @@ public class MongoPasswordHistoryRepository extends AbstractDataPlaneMongoReposi
         return Single.fromPublisher(mongoCollection.insertOne(historyMongo)).flatMap(success -> {
             item.setId(historyMongo.getId());
             return Single.just(item);
-        });
+        })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -81,19 +84,22 @@ public class MongoPasswordHistoryRepository extends AbstractDataPlaneMongoReposi
         Objects.requireNonNull(item);
         var historyMongo = convert(item);
         return Single.fromPublisher(mongoCollection.replaceOne(eq(FIELD_ID, historyMongo.getId()), historyMongo))
-                .flatMap(success -> Single.just(item));
+                .flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(mongoCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(mongoCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<PasswordHistory> findByReference(Reference reference) {
         return Flowable.fromPublisher(mongoCollection.find(and(
                 eq(FIELD_REFERENCE_TYPE, reference.type().name()),
-                eq(FIELD_REFERENCE_ID, reference.id())))).map(this::convert);
+                eq(FIELD_REFERENCE_ID, reference.id())))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -102,17 +108,20 @@ public class MongoPasswordHistoryRepository extends AbstractDataPlaneMongoReposi
                 mongoCollection.find(and(
                         eq(FIELD_REFERENCE_TYPE, reference.type().name()),
                         eq(FIELD_REFERENCE_ID, reference.id()),
-                        eq(FIELD_USER_ID, userId)))).map(this::convert);
+                        eq(FIELD_USER_ID, userId)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByUserId(String userId) {
-        return Completable.fromPublisher(mongoCollection.deleteMany(eq(FIELD_USER_ID, userId)));
+        return Completable.fromPublisher(mongoCollection.deleteMany(eq(FIELD_USER_ID, userId)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByReference(Reference reference) {
-        return Completable.fromPublisher(mongoCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()))));
+        return Completable.fromPublisher(mongoCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()))))
+                .observeOn(Schedulers.computation());
     }
 
     private PasswordHistoryMongo convert(PasswordHistory passwordHistory) {

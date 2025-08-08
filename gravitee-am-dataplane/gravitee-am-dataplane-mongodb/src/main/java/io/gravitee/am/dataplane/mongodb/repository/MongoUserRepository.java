@@ -57,6 +57,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -150,14 +151,16 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     @Override
     public Flowable<User> findAll(Reference reference) {
         return Flowable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<User>> findAll(Reference reference, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())), countOptions())).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count));
+        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -191,7 +194,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
+        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -206,7 +210,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
             Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
             Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-            return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
+            return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count))
+                    .observeOn(Schedulers.computation());
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
@@ -227,7 +232,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                     eq(FIELD_REFERENCE_ID, reference.id()),
                     searchQuery);
 
-            return Flowable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1))).map(this::convert);
+            return Flowable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1))).map(this::convert)
+                    .observeOn(Schedulers.computation());
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Flowable.error(ex);
@@ -247,7 +253,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                         .first())
                 .firstElement()
                 .map(this::convert)
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -259,12 +266,14 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                         .first())
                 .firstElement()
                 .map(this::convert)
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<User> findByIdIn(Reference reference, List<String> ids) {
-        return Flowable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), in(FIELD_ID, ids))))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), in(FIELD_ID, ids))))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -272,7 +281,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), userIdMatches(userId, USER_ID_FIELDS))).first())
                 .firstElement()
                 .map(this::convert)
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -280,7 +290,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first())
                 .firstElement()
                 .map(this::convert)
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -291,7 +302,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                 .flatMap(success -> {
                     item.setId(user.getId());
                     return Single.just(item);
-                }).onErrorResumeNext(this::mapExceptionAsSingle);
+                }).onErrorResumeNext(this::mapExceptionAsSingle)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -299,7 +311,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         UserMongo user = convert(item);
         return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), user, new ReplaceOptions().upsert(acceptUpsert())))
                 .flatMap(checkUpdatedRows(item))
-                .onErrorResumeNext(this::mapExceptionAsSingle);
+                .onErrorResumeNext(this::mapExceptionAsSingle)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -308,7 +321,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         Bson updates = Updates.combine(updateFields);
         return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, item.getId()), updates, new UpdateOptions().upsert(acceptUpsert())))
                 .flatMap(checkUpdatedRows(item))
-                .onErrorResumeNext(this::mapExceptionAsSingle);
+                .onErrorResumeNext(this::mapExceptionAsSingle)
+                .observeOn(Schedulers.computation());
     }
 
     private Function<UpdateResult, SingleSource<? extends User>> checkUpdatedRows(User item) {
@@ -393,12 +407,14 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(usersCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByReference(Reference reference) {
-        return Completable.fromPublisher(usersCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()))));
+        return Completable.fromPublisher(usersCollection.deleteMany(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -410,29 +426,34 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                 eq(FIELD_REFERENCE_ID, domain),
                 or(emailQuery, emailClaimQuery));
 
-        return Flowable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert);
+        return Flowable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<User> findById(UserId id) {
-        return findOne(usersCollection, userIdMatches(id, USER_ID_FIELDS), this::convert);
+        return findOne(usersCollection, userIdMatches(id, USER_ID_FIELDS), this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<User> findByUsernameAndDomain(String domain, String username) {
         var query = and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_USERNAME, username));
-        return findOne(usersCollection, query, this::convert);
+        return findOne(usersCollection, query, this::convert)
+                .observeOn(Schedulers.computation());
 
     }
 
     @Override
     public Single<Long> countByReference(Reference reference) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())), countOptions())).first(0L);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())), countOptions())).first(0L)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByApplication(String domain, String application) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)), countOptions())).first(0L);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)), countOptions())).first(0L)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -448,14 +469,16 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
     @Override
     public Maybe<User> findByUsernameAndSource(Reference reference, String username, String source, boolean includeLinkedIdentities) {
         return findByUsernameAndSource(reference, username, source)
-                .switchIfEmpty(includeLinkedIdentities ? findByIdentityUsernameAndProviderId(reference, username, source) : Maybe.empty());
+                .switchIfEmpty(includeLinkedIdentities ? findByIdentityUsernameAndProviderId(reference, username, source) : Maybe.empty())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<User>> findAllScim(Reference reference, int startIndex, int count) {
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())), countOptions())).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id())))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(startIndex).limit(count)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-        return Single.zip(countOperation, usersOperation, (totalResults, users) -> new Page<>(users, count > 0 ? (startIndex / count) : 0, totalResults));
+        return Single.zip(countOperation, usersOperation, (totalResults, users) -> new Page<>(users, count > 0 ? (startIndex / count) : 0, totalResults))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -470,7 +493,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
 
             Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
             Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(startIndex).limit(count)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-            return Single.zip(countOperation, usersOperation, (totalCount, users) -> new Page<>(users, count > 0 ? (startIndex / count) : 0, totalCount));
+            return Single.zip(countOperation, usersOperation, (totalCount, users) -> new Page<>(users, count > 0 ? (startIndex / count) : 0, totalCount))
+                    .observeOn(Schedulers.computation());
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
@@ -486,7 +510,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                         .limit(1)
                         .first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
@@ -517,7 +542,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
                     return users;
                 })
-                .first(Collections.emptyMap());
+                .first(Collections.emptyMap())
+                .observeOn(Schedulers.computation());
     }
 
     private Single<Map<Object, Object>> registrationsStatusRepartition(AnalyticsQuery query) {
@@ -532,7 +558,8 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                         .stream()
                         .filter(e -> !"_id".equals(e.getKey()))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))))
-                .first(Collections.emptyMap());
+                .first(Collections.emptyMap())
+                .observeOn(Schedulers.computation());
     }
 
     private MaybeSource<? extends User> mapException(Throwable error) {
