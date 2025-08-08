@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -58,30 +59,35 @@ public class MongoDeviceIdentifierRepository extends AbstractManagementMongoRepo
 
     @Override
     public Flowable<DeviceIdentifier> findByReference(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(deviceIdentifierMongoMongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
+        return Flowable.fromPublisher(deviceIdentifierMongoMongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<DeviceIdentifier> findById(String botDetectionId) {
-        return Observable.fromPublisher(deviceIdentifierMongoMongoCollection.find(eq(FIELD_ID, botDetectionId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(deviceIdentifierMongoMongoCollection.find(eq(FIELD_ID, botDetectionId)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<DeviceIdentifier> create(DeviceIdentifier item) {
         DeviceIdentifierMongo entity = convert(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return Single.fromPublisher(deviceIdentifierMongoMongoCollection.insertOne(entity)).flatMap(success -> { item.setId(entity.getId()); return Single.just(item); });
+        return Single.fromPublisher(deviceIdentifierMongoMongoCollection.insertOne(entity)).flatMap(success -> { item.setId(entity.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<DeviceIdentifier> update(DeviceIdentifier item) {
         DeviceIdentifierMongo entity = convert(item);
-        return Single.fromPublisher(deviceIdentifierMongoMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(deviceIdentifierMongoMongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(deviceIdentifierMongoMongoCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(deviceIdentifierMongoMongoCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private DeviceIdentifier convert(DeviceIdentifierMongo entity) {

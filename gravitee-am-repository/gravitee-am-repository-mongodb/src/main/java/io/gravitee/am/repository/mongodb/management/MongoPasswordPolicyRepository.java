@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -58,7 +59,8 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
 
     @Override
     public Maybe<PasswordPolicy> findById(String id) {
-        return Observable.fromPublisher(mongoCollection.find(and(eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(mongoCollection.find(and(eq(FIELD_ID, id))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -69,34 +71,40 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
                 .flatMap(success -> {
                     policy.setId(policyMongo.getId());
                     return Single.just(policy);
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<PasswordPolicy> update(PasswordPolicy policy) {
         PasswordPolicyMongo policyMongo = convert(policy);
         return Single.fromPublisher(mongoCollection.replaceOne(eq(FIELD_ID, policyMongo.getId()), policyMongo))
-                .flatMap(success -> Single.just(policy));
+                .flatMap(success -> Single.just(policy))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(mongoCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(mongoCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<PasswordPolicy> findByReference(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(mongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
+        return Flowable.fromPublisher(mongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String id) {
-        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_ID, id), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
+        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_ID, id), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<PasswordPolicy> findByDefaultPolicy(ReferenceType referenceType, String referenceId) {
-        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_DEFAULT_POLICY, true)))).map(this::convert);
+        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_DEFAULT_POLICY, true)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -107,12 +115,14 @@ public class MongoPasswordPolicyRepository extends AbstractManagementMongoReposi
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name())
                         )
-                ));
+                ))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<PasswordPolicy> findByOldest(ReferenceType referenceType, String referenceId) {
-        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))).sort(ascending(CREATED_AT)).limit(1)).map(this::convert);
+        return Maybe.fromPublisher(mongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))).sort(ascending(CREATED_AT)).limit(1)).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     private PasswordPolicy convert(PasswordPolicyMongo passwordPolicyMongo) {

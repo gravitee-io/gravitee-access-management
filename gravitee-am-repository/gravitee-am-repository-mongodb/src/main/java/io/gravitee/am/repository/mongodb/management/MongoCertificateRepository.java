@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.types.Binary;
@@ -57,17 +58,20 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
 
     @Override
     public Flowable<Certificate> findByDomain(String domain) {
-        return Flowable.fromPublisher(withMaxTime(certificatesCollection.find(eq(FIELD_DOMAIN, domain)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(certificatesCollection.find(eq(FIELD_DOMAIN, domain)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Certificate> findAll() {
-        return Flowable.fromPublisher(withMaxTime(certificatesCollection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(certificatesCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Certificate> findById(String certificateId) {
-        return Observable.fromPublisher(certificatesCollection.find(eq(FIELD_ID, certificateId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(certificatesCollection.find(eq(FIELD_ID, certificateId)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -78,14 +82,16 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
                 .flatMap(success -> {
                     item.setId(certificate.getId());
                     return Single.just(item);
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Certificate> update(Certificate item) {
         CertificateMongo certificate = convert(item);
         return Single.fromPublisher(certificatesCollection.replaceOne(eq(FIELD_ID, certificate.getId()), certificate))
-                .flatMap(updateResult -> Single.just(item));
+                .flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -96,12 +102,14 @@ public class MongoCertificateRepository extends AbstractManagementMongoRepositor
         Document updateObject = new Document();
         updateObject.put("$set", expDocument);
 
-        return Completable.fromPublisher(certificatesCollection.updateOne(eq(FIELD_ID, certificateId), updateObject));
+        return Completable.fromPublisher(certificatesCollection.updateOne(eq(FIELD_ID, certificateId), updateObject))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(certificatesCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(certificatesCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Certificate convert(CertificateMongo certificateMongo) {

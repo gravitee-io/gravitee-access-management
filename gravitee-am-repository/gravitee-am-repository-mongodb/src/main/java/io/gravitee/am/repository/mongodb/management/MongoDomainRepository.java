@@ -58,6 +58,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -98,12 +99,14 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
     @Override
     public Flowable<Domain> findAll() {
-        return Flowable.fromPublisher(withMaxTime(domainsCollection.find())).map(MongoDomainRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(domainsCollection.find())).map(MongoDomainRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Domain> findById(String id) {
-        return Observable.fromPublisher(domainsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(MongoDomainRepository::convert);
+        return Observable.fromPublisher(domainsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(MongoDomainRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -115,12 +118,14 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_HRID, hrid)
                         )
-                )).firstElement().map(MongoDomainRepository::convert);
+                )).firstElement().map(MongoDomainRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Domain> findByIdIn(Collection<String> ids) {
-        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(in(FIELD_ID, ids)))).map(MongoDomainRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(in(FIELD_ID, ids)))).map(MongoDomainRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -128,7 +133,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
         Bson mongoQuery = and(
                 eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
                 eq(FIELD_REFERENCE_ID, environmentId));
-        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(mongoQuery))).map(MongoDomainRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(mongoQuery))).map(MongoDomainRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -147,7 +153,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
                 eq(FIELD_REFERENCE_TYPE, ReferenceType.ENVIRONMENT.name()),
                 eq(FIELD_REFERENCE_ID, environmentId), searchQuery);
 
-        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(mongoQuery))).map(MongoDomainRepository::convert);
+        return Flowable.fromPublisher(withMaxTime(domainsCollection.find(mongoQuery))).map(MongoDomainRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -157,25 +164,29 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
 
         return toBsonFilter(criteria.isLogicalOR(), eqAlertEnabled)
                 .switchIfEmpty(Single.just(new BsonDocument()))
-                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(domainsCollection.find(filter)))).map(MongoDomainRepository::convert);
+                .flatMapPublisher(filter -> Flowable.fromPublisher(withMaxTime(domainsCollection.find(filter)))).map(MongoDomainRepository::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Domain> create(Domain item) {
         DomainMongo domain = convert(item);
         domain.setId(domain.getId() == null ? RandomString.generate() : domain.getId());
-        return Single.fromPublisher(domainsCollection.insertOne(domain)).flatMap(success -> { item.setId(domain.getId()); return Single.just(item); });
+        return Single.fromPublisher(domainsCollection.insertOne(domain)).flatMap(success -> { item.setId(domain.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Domain> update(Domain item) {
         DomainMongo domain = convert(item);
-        return Single.fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(domainsCollection.replaceOne(eq(FIELD_ID, domain.getId()), domain)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(domainsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(domainsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private static Domain convert(DomainMongo domainMongo) {

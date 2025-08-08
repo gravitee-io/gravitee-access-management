@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -55,35 +56,41 @@ public class MongoAuthenticationDeviceNotifierRepository extends AbstractManagem
 
     @Override
     public Flowable<AuthenticationDeviceNotifier> findAll() {
-        return Flowable.fromPublisher(withMaxTime(authDeviceNotifierCollection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(authDeviceNotifierCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<AuthenticationDeviceNotifier> findByReference(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(withMaxTime(authDeviceNotifierCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(authDeviceNotifierCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name()))))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<AuthenticationDeviceNotifier> findById(String botDetectionId) {
-        return Observable.fromPublisher(authDeviceNotifierCollection.find(eq(FIELD_ID, botDetectionId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(authDeviceNotifierCollection.find(eq(FIELD_ID, botDetectionId)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AuthenticationDeviceNotifier> create(AuthenticationDeviceNotifier item) {
         AuthenticationDeviceNotifierMongo entity = convert(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return Single.fromPublisher(authDeviceNotifierCollection.insertOne(entity)).flatMap(success -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(authDeviceNotifierCollection.insertOne(entity)).flatMap(success -> findById(entity.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AuthenticationDeviceNotifier> update(AuthenticationDeviceNotifier item) {
         AuthenticationDeviceNotifierMongo entity = convert(item);
-        return Single.fromPublisher(authDeviceNotifierCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(authDeviceNotifierCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> findById(entity.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(authDeviceNotifierCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(authDeviceNotifierCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private AuthenticationDeviceNotifier convert(AuthenticationDeviceNotifierMongo entity) {

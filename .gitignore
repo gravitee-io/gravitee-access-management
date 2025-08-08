@@ -46,3 +46,4 @@ helm/charts/
 
 # docker compose local volume
 docker/compose/data/
+docker/compose/mongo/data/
