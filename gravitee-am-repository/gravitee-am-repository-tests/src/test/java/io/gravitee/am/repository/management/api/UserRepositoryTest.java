@@ -989,7 +989,6 @@ public class UserRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-<<<<<<< HEAD
     public void testScimSearch_byDate_paged_by_Offset() {
         final String domain = "domain";
         // create user
@@ -1062,7 +1061,9 @@ public class UserRepositoryTest extends AbstractManagementTest {
         testObserverOffset2.assertNoErrors();
         testObserverOffset2.assertValue(users -> users.getData().size() == 1);
         testObserverOffset2.assertValue(users -> users.getData().stream().toList().get(0).getId().equals(allValues.get(2).getId()));
-=======
+    }
+
+    @Test
     public void testScimSearch_byEmail_withSpecialChars() {
         final String domain = "domain";
 
@@ -1098,7 +1099,6 @@ public class UserRepositoryTest extends AbstractManagementTest {
             return it.next().getEmail().equals(user2.getEmail());
         });
 
->>>>>>> 927ca77b5 ([AM-4985] Add support for escaping regex special characters in FilterCriteriaParser (#6284))
     }
 
     @Test
