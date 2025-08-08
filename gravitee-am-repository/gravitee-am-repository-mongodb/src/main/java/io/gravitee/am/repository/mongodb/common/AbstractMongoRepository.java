@@ -50,6 +50,7 @@ public abstract class AbstractMongoRepository {
     protected static final String FIELD_DOMAIN = "domain";
     protected static final String FIELD_CLIENT = "client";
     protected static final String FIELD_UPDATED_AT = "updatedAt";
+    protected static final String FIELD_CREATED_AT = "createdAt";
     protected static final String FIELD_REFERENCE_TYPE = "referenceType";
     protected static final String FIELD_REFERENCE_ID = "referenceId";
     protected static final String FIELD_ORGANIZATION_ID = "organizationId";
