@@ -37,15 +37,19 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.gt;
 import static com.mongodb.client.model.Filters.gte;
 import static com.mongodb.client.model.Filters.lte;
 import static com.mongodb.client.model.Filters.or;
@@ -65,12 +69,21 @@ public class MongoEventRepository extends AbstractManagementMongoRepository impl
     public static final String DATA_PLANE_ID = "dataPlaneId";
     private MongoCollection<EventMongo> eventsCollection;
 
+    /**
+     * Event retention period in days. Events older than this period will be purged.
+     * Default: 90 days (3 months)
+     * Configuration: services.purge.events.retention.days
+     */
+    @Value("${services.purge.events.retention.days:90}")
+    private int eventsRetentionDays;
+
     @PostConstruct
     public void init() {
         eventsCollection = mongoOperations.getCollection("events", EventMongo.class);
         super.init(eventsCollection);
         super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1), new IndexOptions().name("u1")));
         super.createIndex(eventsCollection, Map.of(new Document(FIELD_UPDATED_AT, 1).append(DATA_PLANE_ID, 1), new IndexOptions().name("u1dp1")));
+        super.createIndex(eventsCollection, Map.of(new Document(FIELD_CREATED_AT, 1), new IndexOptions().name("e1").expireAfter((long) eventsRetentionDays, TimeUnit.DAYS)));
     }
 
     @Override
