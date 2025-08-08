@@ -20,6 +20,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneProvider;
 import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
+import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.PushedAuthorizationRequestRepository;
@@ -71,6 +72,9 @@ public class PurgeManager {
     @Lazy
     @Autowired
     protected SingleDataPlaneProvider singleDataPlaneProvider;
+    @Lazy
+    @Autowired
+    protected EventRepository eventRepository;
 
     protected List<TableName> tables = asList(TableName.values());
 
@@ -95,6 +99,7 @@ public class PurgeManager {
             case auth_flow_ctx -> authenticationFlowContextRepository;
             case pushed_authorization_requests -> pushedAuthRequestRepository;
             case ciba_auth_requests -> cibaAuthRequestRepository;
+            case events ->  eventRepository;
 
             case scope_approvals -> singleDataPlaneProvider.get().getScopeApprovalRepository();
             case login_attempts -> singleDataPlaneProvider.get().getLoginAttemptRepository();

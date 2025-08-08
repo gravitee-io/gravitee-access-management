@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
@@ -37,6 +38,9 @@ import java.util.List;
 
 import static java.time.ZoneOffset.UTC;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -65,6 +69,14 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
 
     private String INSERT_STATEMENT;
     private String UPDATE_STATEMENT;
+
+    /**
+     * Event retention period in days. Events older than this period will be purged.
+     * Default: 90 days (3 months)
+     * Configuration: services.purge.events.retention.days
+     */
+    @Value("${services.purge.events.retention.days:90}")
+    private int eventsRetentionDays;
 
     @Autowired
     private SpringEventRepository eventRepository;
@@ -150,5 +162,14 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return eventRepository.deleteById(id);
+    }
+
+    @Override
+    public Completable purgeExpiredData() {
+        LOGGER.debug("purgeExpiredData()");
+        LocalDateTime retentionThreshold = LocalDateTime.now(UTC).minusDays(eventsRetentionDays);
+        return monoToCompletable(getTemplate().delete(JdbcEvent.class)
+                .matching(query(where(COL_CREATED_AT).lessThan(retentionThreshold))).all())
+                .doOnError(error -> LOGGER.error("Unable to purge events", error));
     }
 }

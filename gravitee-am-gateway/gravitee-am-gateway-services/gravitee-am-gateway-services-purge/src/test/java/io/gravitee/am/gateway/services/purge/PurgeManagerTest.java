@@ -23,6 +23,7 @@ import io.gravitee.am.dataplane.api.repository.ScopeApprovalRepository;
 import io.gravitee.am.dataplane.api.repository.UserActivityRepository;
 import io.gravitee.am.plugins.dataplane.core.SingleDataPlaneProvider;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
+import io.gravitee.am.repository.management.api.EventRepository;
 import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
 import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.PushedAuthorizationRequestRepository;
@@ -94,6 +95,9 @@ public class PurgeManagerTest {
     @Mock
     protected SingleDataPlaneProvider singleDataPlaneProvider;
 
+    @Mock
+    protected EventRepository eventRepository;
+
     @Before
     public void prepare() {
         DataPlaneProvider dataPlaneProvider = Mockito.mock();
@@ -116,6 +120,7 @@ public class PurgeManagerTest {
         when(cibaAuthRequestRepository.purgeExpiredData()).thenReturn(Completable.complete());
         when(deviceRepository.purgeExpiredData()).thenReturn(Completable.complete());
         when(userActivityRepository.purgeExpiredData()).thenReturn(Completable.complete());
+        when(eventRepository.purgeExpiredData()).thenReturn(Completable.complete());
     }
 
     @Test
@@ -134,6 +139,7 @@ public class PurgeManagerTest {
         verify(cibaAuthRequestRepository).purgeExpiredData();
         verify(deviceRepository).purgeExpiredData();
         verify(userActivityRepository).purgeExpiredData();
+        verify(eventRepository).purgeExpiredData();
     }
 
     @Test
@@ -152,6 +158,7 @@ public class PurgeManagerTest {
         verify(cibaAuthRequestRepository).purgeExpiredData();
         verify(deviceRepository).purgeExpiredData();
         verify(userActivityRepository).purgeExpiredData();
+        verify(eventRepository).purgeExpiredData();
     }
 
     @Test
@@ -170,5 +177,6 @@ public class PurgeManagerTest {
         verify(cibaAuthRequestRepository).purgeExpiredData();
         verify(deviceRepository).purgeExpiredData();
         verify(userActivityRepository).purgeExpiredData();
+        verify(eventRepository).purgeExpiredData();
     }
 }
