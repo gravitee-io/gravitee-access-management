@@ -29,7 +29,6 @@ import io.gravitee.common.event.EventManager;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +37,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -80,73 +78,59 @@ class CertificateManagerImplTest {
     }
 
     @Test
-    void should_start_and_initialize_certificates() throws Exception {
-        // Given
+    void shouldStartAndInitializeCertificates() throws Exception {
         when(certificateService.findAll()).thenReturn(Flowable.just(certificate));
         when(certificatePluginManager.create(any(CertificateProviderConfiguration.class)))
                 .thenReturn(certificateProvider);
         when(certificateProvider.getExpirationDate()).thenReturn(Optional.empty());
 
-        // When
         certificateManager.doStart();
 
-        // Then
         verify(eventManager).subscribeForEvents(certificateManager, CertificateEvent.class);
         verify(certificateService).findAll();
         verify(certificatePluginManager).create(any(CertificateProviderConfiguration.class));
     }
 
     @Test
-    void should_get_certificate_provider_when_exists() {
-        // Given
+    void shouldGetCertificateProviderWhenExists() {
         when(certificateService.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
         when(certificatePluginManager.create(any(CertificateProviderConfiguration.class)))
                 .thenReturn(certificateProvider);
         when(certificateProvider.getExpirationDate()).thenReturn(Optional.empty());
 
-        // Load certificate first
         certificateManager.onEvent(createEvent(CertificateEvent.DEPLOY, CERTIFICATE_ID, DOMAIN_ID));
 
-        // When
         Maybe<CertificateProvider> result = certificateManager.getCertificateProvider(CERTIFICATE_ID);
 
-        // Then
         assertTrue(result.blockingGet() != null);
         assertEquals(certificateProvider, result.blockingGet());
     }
 
     @Test
-    void should_return_empty_when_certificate_provider_not_found_and_certificate_not_exists() {
-        // Given
+    void shouldReturnEmptyWhenCertificateProviderNotFoundAndCertificateNotExists() {
         when(certificateService.findById(CERTIFICATE_ID)).thenReturn(Maybe.empty());
 
-        // When
         Maybe<CertificateProvider> result = certificateManager.getCertificateProvider(CERTIFICATE_ID);
 
-        // Then
         assertTrue(result.isEmpty().blockingGet());
     }
 
     @Test
-    void should_handle_deploy_event() {
-        // Given
+    void shouldHandleDeployEvent() {
         Event<CertificateEvent, Payload> event = createEvent(CertificateEvent.DEPLOY, CERTIFICATE_ID, null);
         when(certificateService.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
         when(certificatePluginManager.create(any(CertificateProviderConfiguration.class)))
                 .thenReturn(certificateProvider);
         when(certificateProvider.getExpirationDate()).thenReturn(Optional.empty());
 
-        // When
         certificateManager.onEvent(event);
 
-        // Then
         verify(certificateService).findById(CERTIFICATE_ID);
         verify(certificatePluginManager).create(any(CertificateProviderConfiguration.class));
     }
 
     @Test
-    void should_handle_update_event() {
-        // Given
+    void shouldHandleUpdateEvent() {
         Event<CertificateEvent, Payload> event = createEvent(CertificateEvent.UPDATE, CERTIFICATE_ID, DOMAIN_ID);
         when(certificateService.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
         when(certificatePluginManager.create(any(CertificateProviderConfiguration.class)))
@@ -155,33 +139,27 @@ class CertificateManagerImplTest {
         when(notifierService.deleteCertificateExpirationAcknowledgement(CERTIFICATE_ID))
                 .thenReturn(Completable.complete());
 
-        // When
         certificateManager.onEvent(event);
 
-        // Then
         verify(notifierService).unregisterCertificateExpiration(DOMAIN_ID, CERTIFICATE_ID);
         verify(notifierService).deleteCertificateExpirationAcknowledgement(CERTIFICATE_ID);
         verify(certificateService).findById(CERTIFICATE_ID);
     }
 
     @Test
-    void should_handle_undeploy_event() {
-        // Given
+    void shouldHandleUndeployEvent() {
         Event<CertificateEvent, Payload> event = createEvent(CertificateEvent.UNDEPLOY, CERTIFICATE_ID, DOMAIN_ID);
         when(notifierService.deleteCertificateExpirationAcknowledgement(CERTIFICATE_ID))
                 .thenReturn(Completable.complete());
 
-        // When
         certificateManager.onEvent(event);
 
-        // Then
         verify(notifierService).unregisterCertificateExpiration(DOMAIN_ID, CERTIFICATE_ID);
         verify(notifierService).deleteCertificateExpirationAcknowledgement(CERTIFICATE_ID);
     }
 
     @Test
-    void should_load_certificate_and_register_expiration_notification() {
-        // Given
+    void shouldLoadCertificateAndRegisterExpirationNotification() {
         Date expirationDate = new Date();
         certificate.setExpiresAt(null);
         when(certificateService.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
@@ -192,19 +170,14 @@ class CertificateManagerImplTest {
                 .thenReturn(Completable.complete());
 
         certificateManager.onEvent(createEvent(CertificateEvent.DEPLOY, CERTIFICATE_ID, DOMAIN_ID));
-
-        // When
-        //certificateManager.loadCertificate(certificate);
-
-        // Then
+        
         verify(certificatePluginManager).create(any(CertificateProviderConfiguration.class));
         verify(certificateService).updateExpirationDate(CERTIFICATE_ID, expirationDate);
         verify(notifierService).registerCertificateExpiration(certificate);
     }
 
     @Test
-    void should_not_update_expiration_date_when_unchanged() {
-        // Given
+    void shouldNotUpdateExpirationDateWhenUnchanged() {
         Date expirationDate = new Date();
         certificate.setExpiresAt(expirationDate);
         when(certificateService.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
@@ -212,60 +185,49 @@ class CertificateManagerImplTest {
                 .thenReturn(certificateProvider);
         when(certificateProvider.getExpirationDate()).thenReturn(Optional.of(expirationDate));
 
-        // When
         certificateManager.onEvent(createEvent(CertificateEvent.DEPLOY, CERTIFICATE_ID, DOMAIN_ID));
 
-        // Then
         verify(certificateService, never()).updateExpirationDate(any(), any());
         verify(notifierService).registerCertificateExpiration(certificate);
     }
 
     @Test
-    void should_handle_certificate_provider_creation_failure() {
-        // Given
+    void shouldHandleCertificateProviderCreationFailure() {
         when(certificateService.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
         when(certificatePluginManager.create(any(CertificateProviderConfiguration.class)))
                 .thenReturn(null);
         when(notifierService.deleteCertificateExpirationAcknowledgement(CERTIFICATE_ID))
                 .thenReturn(Completable.complete());
 
-        // When
         certificateManager.onEvent(createEvent(CertificateEvent.DEPLOY, CERTIFICATE_ID, DOMAIN_ID));
 
-        // Then
         verify(notifierService).unregisterCertificateExpiration(DOMAIN_ID, CERTIFICATE_ID);
         verify(notifierService).deleteCertificateExpirationAcknowledgement(CERTIFICATE_ID);
     }
 
     @Test
-    void should_throw_illegal_state_exception_when_certificate_service_fails() {
-        // Given
+    void shouldThrowIllegalStateExceptionWhenCertificateServiceFails() {
         when(certificateService.findById(CERTIFICATE_ID))
                 .thenThrow(new RuntimeException("Database error"));
 
-        // When & Then
         assertThrows(IllegalStateException.class,
                 () -> certificateManager.getCertificateProvider(CERTIFICATE_ID).blockingGet());
     }
 
     @Test
-    void should_load_certificate_without_expiry_date_and_not_register_expiration_notification() {
-        // Given
+    void shouldLoadCertificateWithoutExpiryDateAndNotRegisterExpirationNotification() {
         certificate.setExpiresAt(null);
         when(certificateService.findById(CERTIFICATE_ID)).thenReturn(Maybe.just(certificate));
         when(certificatePluginManager.create(any(CertificateProviderConfiguration.class)))
                 .thenReturn(certificateProvider);
         when(certificateProvider.getExpirationDate()).thenReturn(Optional.empty());
 
-        // When
         certificateManager.onEvent(createEvent(CertificateEvent.DEPLOY, CERTIFICATE_ID, DOMAIN_ID));
 
-        // Then
         verify(certificatePluginManager).create(any(CertificateProviderConfiguration.class));
         verify(certificateService, never()).updateExpirationDate(any(), any());
         verify(notifierService, never()).registerCertificateExpiration(any());
         
-        // Verify certificate provider is available
         Maybe<CertificateProvider> result = certificateManager.getCertificateProvider(CERTIFICATE_ID);
         assertTrue(result.blockingGet() != null);
         assertEquals(certificateProvider, result.blockingGet());
