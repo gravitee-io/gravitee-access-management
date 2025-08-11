@@ -156,7 +156,7 @@ public class DomainNotificationServiceTest {
     }
 
     @Test
-    public void shouldNotNotify_NoExpiryCertificate() throws Exception {
+    public void shouldNotNotifyUser_NoExpiryCertificate() throws Exception {
         certificate.setExpiresAt(null);
 
         cut.registerCertificateExpiration(certificate);
