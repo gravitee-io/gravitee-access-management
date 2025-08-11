@@ -160,7 +160,6 @@ public class DomainNotificationServiceTest {
         certificate.setExpiresAt(null);
 
         cut.registerCertificateExpiration(certificate);
-
         verify(notifierService,never()).register(any(), any(), any());
     }
 
