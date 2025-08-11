@@ -93,7 +93,7 @@ import org.springframework.core.env.Environment;
 public class StandaloneConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(StandaloneConfiguration.class);
-    public static final String GRAVITEE_JWT_EXECUTOR_THREADS = "gravitee.jwt.executor.threads";
+    public static final String JWT_EXECUTOR_THREADS = "jwt.executor.threads";
     public static final int DEFAULT_JWT_EXECUTOR_THREADS = 20;
 
     @Bean
@@ -174,7 +174,7 @@ public class StandaloneConfiguration {
 
     @Bean
     public JwtSignerExecutor ioExecutor(Environment environment) {
-        int ioThreads = environment.getProperty(GRAVITEE_JWT_EXECUTOR_THREADS, Integer.class, DEFAULT_JWT_EXECUTOR_THREADS);
+        int ioThreads = environment.getProperty(JWT_EXECUTOR_THREADS, Integer.class, DEFAULT_JWT_EXECUTOR_THREADS);
         log.info("Initializing IO executor for remote signature with {} threads", ioThreads);
         return new JwtSignerExecutor(ioThreads);
     }
