@@ -292,10 +292,10 @@ public class ReporterServiceImpl implements ReporterService {
                 return Single.error(new ReporterConfigurationException("Filename is invalid"));
             }
 
-            // Need to ensure there are no negative values provided for the 'retainDays' attribute.
+            // Need to ensure there are no negative or 0 values provided for the 'retainDays' attribute.
             final String retainDaysValue = configuration.getString(REPORTER_CONFIG_RETAIN_DAYS);
             if (!Strings.isNullOrEmpty(retainDaysValue) && (!retainDaysPattern.matcher(retainDaysValue).matches())) {
-                return Single.error(new ReporterConfigurationException("Retain days cannot be a negative number"));
+                return Single.error(new ReporterConfigurationException("Retain days must be greater than 0"));
             }
 
             result = reporterRepository.findByReference(reporter.getReference())

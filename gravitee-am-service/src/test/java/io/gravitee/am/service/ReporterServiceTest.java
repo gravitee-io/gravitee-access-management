@@ -113,6 +113,17 @@ class ReporterServiceTest {
     }
 
     @Test
+    void shouldReject_ReportRetainDays_ZeroValue() {
+        final var reporter = testFileReporter("invalid", 0L);
+
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ex -> ex instanceof TechnicalManagementException && ex.getCause() instanceof ReporterConfigurationException);
+
+    }
+
+    @Test
     void shouldReject_ReportFileName() {
         final var reporter = testFileReporter("../9f4bdf97-5481-4420-8bdf-9754818420f3", 2L);
 
