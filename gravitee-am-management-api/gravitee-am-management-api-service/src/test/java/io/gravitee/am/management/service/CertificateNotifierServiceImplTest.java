@@ -40,6 +40,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -98,11 +102,19 @@ public class CertificateNotifierServiceImplTest {
 
         certificate = new Certificate();
         certificate.setDomain(domain.getId());
+        certificate.setExpiresAt(Date.from(Instant.now().plus(60, ChronoUnit.DAYS)));
 
         when(domainService.findById(certificate.getDomain())).thenReturn(Maybe.just(domain));
 
     }
 
+    @Test
+    public void shouldNotNotifyUser_NoExpiryCertificate() throws Exception {
+        certificate.setExpiresAt(null);
+
+        cut.registerCertificateExpiration(certificate);
+        verify(notifierService,never()).register(any(), any(), any());
+    }
 
     @Test
     public void shouldNotifyUser_EmailOnly() throws Exception {
