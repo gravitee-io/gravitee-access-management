@@ -98,6 +98,7 @@ public class CertificateNotifierServiceImplTest {
 
         certificate = new Certificate();
         certificate.setDomain(domain.getId());
+        certificate.setExpiresAt(Date.from(Instant.now().plus(60, ChronoUnit.DAYS)));
 
         when(domainService.findById(certificate.getDomain())).thenReturn(Maybe.just(domain));
 
