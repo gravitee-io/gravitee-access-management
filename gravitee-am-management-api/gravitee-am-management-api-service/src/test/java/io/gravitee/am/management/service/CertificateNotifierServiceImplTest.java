@@ -103,6 +103,13 @@ public class CertificateNotifierServiceImplTest {
 
     }
 
+    @Test
+    public void shouldNotNotifyUser_NoExpiryCertificate() throws Exception {
+        certificate.setExpiresAt(null);
+
+        cut.registerCertificateExpiration(certificate);
+        verify(notifierService,never()).register(any(), any(), any());
+    }
 
     @Test
     public void shouldNotifyUser_EmailOnly() throws Exception {
