@@ -64,7 +64,7 @@ public class CertificateNotifierServiceImpl implements CertificateNotifierServic
 
     @Override
     public void registerCertificateExpiration(Certificate certificate) {
-        if (certificateNotifierSettings.enabled()) {
+        if (certificateNotifierSettings.enabled() && certificate.getExpiresAt() != null) {
             findDomain(certificate.getDomain())
                     .flatMapPublisher(domain ->
                                     domainOwnersProvider.retrieveDomainOwners(domain)
