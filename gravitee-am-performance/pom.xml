@@ -28,7 +28,7 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <encoding>UTF-8</encoding>
 
-    <gatling.version>3.7.3</gatling.version>
+    <gatling.version>3.8.0</gatling.version>
     <gatling-maven-plugin.version>3.1.2</gatling-maven-plugin.version>
   </properties>
 
