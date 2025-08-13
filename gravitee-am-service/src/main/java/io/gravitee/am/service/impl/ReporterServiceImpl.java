@@ -80,13 +80,15 @@ public class ReporterServiceImpl implements ReporterService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     private static final int TABLE_SUFFIX_MAX_LENGTH = 30;
     private static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
-    private static final String REPORTER_AM_FILE = "reporter-am-file";
-    private static final String REPORTER_CONFIG_FILENAME = "filename";
+    public static final String REPORTER_AM_FILE = "reporter-am-file";
+    public static final String REPORTER_CONFIG_FILENAME = "filename";
+    public static final String REPORTER_CONFIG_RETAIN_DAYS = "retainDays";
     public static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
     public static final String MONGODB = "mongodb";
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
     // when a REST call is performed and not only check on the UI
     private final Pattern filenamePattern = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$");
+    private final Pattern retainDaysPattern = Pattern.compile("^[1-9]\\d*$");
 
     private RepositoriesEnvironment environment;
 
@@ -289,6 +291,13 @@ public class ReporterServiceImpl implements ReporterService {
             if (Strings.isNullOrEmpty(reportFilename) || !filenamePattern.matcher(reportFilename).matches()) {
                 return Single.error(new ReporterConfigurationException("Filename is invalid"));
             }
+
+            // Need to ensure there are no negative values provided for the 'retainDays' attribute.
+            final String retainDaysValue = configuration.getString(REPORTER_CONFIG_RETAIN_DAYS);
+            if (!Strings.isNullOrEmpty(retainDaysValue) && (!retainDaysPattern.matcher(retainDaysValue).matches())) {
+                return Single.error(new ReporterConfigurationException("Retain days cannot be a negative number"));
+            }
+
             result = reporterRepository.findByReference(reporter.getReference())
                     .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
                     .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
