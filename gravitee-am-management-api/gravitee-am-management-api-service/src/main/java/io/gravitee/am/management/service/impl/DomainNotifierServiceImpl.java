@@ -139,7 +139,7 @@ public class DomainNotifierServiceImpl implements DomainNotifierService, Initial
 
     @Override
     public void registerCertificateExpiration(Certificate certificate) {
-        if (this.certificateNotificationEnabled) {
+        if (this.certificateNotificationEnabled && certificate.getExpiresAt() != null) {
             findDomain(certificate.getDomain())
                     .flatMapPublisher(domain ->
                             retrieveDomainOwners(domain)

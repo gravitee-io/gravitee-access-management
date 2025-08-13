@@ -48,7 +48,10 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -131,6 +134,7 @@ public class DomainNotificationServiceTest {
 
         certificate = new Certificate();
         certificate.setDomain(domain.getId());
+        certificate.setExpiresAt(Date.from(Instant.now().plus(60, ChronoUnit.DAYS)));
 
         when(domainService.findById(certificate.getDomain())).thenReturn(Maybe.just(domain));
 
@@ -149,6 +153,14 @@ public class DomainNotificationServiceTest {
     @After
     public void cleanUp() {
         ReflectionTestUtils.setField(cut, "uiNotifierEnabled", false);
+    }
+
+    @Test
+    public void shouldNotNotifyUser_NoExpiryCertificate() throws Exception {
+        certificate.setExpiresAt(null);
+
+        cut.registerCertificateExpiration(certificate);
+        verify(notifierService,never()).register(any(), any(), any());
     }
 
     @Test
