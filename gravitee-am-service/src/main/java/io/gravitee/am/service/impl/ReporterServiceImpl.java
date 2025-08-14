@@ -88,7 +88,6 @@ public class ReporterServiceImpl implements ReporterService {
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
     // when a REST call is performed and not only check on the UI
     private final Pattern filenamePattern = Pattern.compile("^([A-Za-z0-9][A-Za-z0-9\\-_.]*)$");
-    private final Pattern retainDaysPattern = Pattern.compile("^[1-9]\\d*$");
 
     private RepositoriesEnvironment environment;
 
@@ -293,8 +292,8 @@ public class ReporterServiceImpl implements ReporterService {
             }
 
             // Need to ensure there are no negative or 0 values provided for the 'retainDays' attribute.
-            final String retainDaysValue = configuration.getString(REPORTER_CONFIG_RETAIN_DAYS);
-            if (!Strings.isNullOrEmpty(retainDaysValue) && (!retainDaysPattern.matcher(retainDaysValue).matches())) {
+            final Long retainDaysValue = configuration.getLong(REPORTER_CONFIG_RETAIN_DAYS);
+            if (retainDaysValue != null && retainDaysValue <= 0) {
                 return Single.error(new ReporterConfigurationException("Retain days must be greater than 0"));
             }
 

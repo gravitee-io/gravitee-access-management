@@ -309,7 +309,7 @@ class ReporterServiceTest {
         reporter.setEnabled(true);
         reporter.setName("Test");
         reporter.setType(REPORTER_AM_FILE);
-        reporter.setConfiguration("{\"" + REPORTER_CONFIG_FILENAME + "\":\"" + filename + "\",\"" + REPORTER_CONFIG_RETAIN_DAYS + "\":\"" + retainDays +  "\"}");
+        reporter.setConfiguration("{\"" + REPORTER_CONFIG_FILENAME + "\":\"" + filename + "\",\"" + REPORTER_CONFIG_RETAIN_DAYS + "\":" + retainDays +  "}");
 
         return reporter;
     }
