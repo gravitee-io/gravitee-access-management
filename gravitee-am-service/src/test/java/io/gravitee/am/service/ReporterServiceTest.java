@@ -102,6 +102,34 @@ class ReporterServiceTest {
     }
 
     @Test
+    void shouldAccept_ReportRetainDays_StringValue_NotApplied() {
+        final var reporter = testFileReporter( "valid", 2L);
+        reporter.setConfiguration("{\"" + REPORTER_CONFIG_FILENAME + "\":\"test\",\"" + REPORTER_CONFIG_RETAIN_DAYS + "\":\"fakevalue\"}");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
+
+    }
+
+    @Test
+    void shouldAccept_ReportRetainDays_StringValueValid_Applied() {
+        final var reporter = testFileReporter( "valid", 2L);
+        reporter.setConfiguration("{\"" + REPORTER_CONFIG_FILENAME + "\":\"test\",\"" + REPORTER_CONFIG_RETAIN_DAYS + "\":\"1\"}");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
+
+    }
+
+    @Test
     void shouldReject_ReportRetainDays_NegativeValue() {
         final var reporter = testFileReporter("invalid", -2L);
 

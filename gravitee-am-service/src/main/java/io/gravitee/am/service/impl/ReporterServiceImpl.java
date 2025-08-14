@@ -292,8 +292,8 @@ public class ReporterServiceImpl implements ReporterService {
             }
 
             // Need to ensure there are no negative or 0 values provided for the 'retainDays' attribute.
-            final Long retainDaysValue = configuration.getLong(REPORTER_CONFIG_RETAIN_DAYS);
-            if (retainDaysValue != null && retainDaysValue <= 0) {
+            final Optional<Long> retainDaysValue = getRetainDaysValue(configuration);
+            if (retainDaysValue.isPresent() && retainDaysValue.get() <= 0) {
                 return Single.error(new ReporterConfigurationException("Retain days must be greater than 0"));
             }
 
@@ -316,6 +316,24 @@ public class ReporterServiceImpl implements ReporterService {
         }
 
         return result;
+    }
+
+    private Optional<Long> getRetainDaysValue(JsonObject configuration) {
+        Object retainDaysObject = configuration.getValue(REPORTER_CONFIG_RETAIN_DAYS);
+
+        if (retainDaysObject instanceof String s) {
+            try {
+                return Optional.of(Long.parseLong(s));
+            } catch (NumberFormatException e) {
+                return Optional.empty();
+            }
+        }
+
+        if (retainDaysObject instanceof Number n) {
+            return Optional.of(n.longValue());
+        }
+
+        return Optional.empty();
     }
 
     private NewReporter createMongoReporter(Reference reference) {
