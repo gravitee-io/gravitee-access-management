@@ -82,7 +82,6 @@ public class ReporterServiceImpl implements ReporterService {
     private static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
     public static final String REPORTER_AM_FILE = "reporter-am-file";
     public static final String REPORTER_CONFIG_FILENAME = "filename";
-    public static final String REPORTER_CONFIG_RETAIN_DAYS = "retainDays";
     public static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
     public static final String MONGODB = "mongodb";
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
@@ -290,7 +289,6 @@ public class ReporterServiceImpl implements ReporterService {
             if (Strings.isNullOrEmpty(reportFilename) || !filenamePattern.matcher(reportFilename).matches()) {
                 return Single.error(new ReporterConfigurationException("Filename is invalid"));
             }
-
             result = reporterRepository.findByReference(reporter.getReference())
                     .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
                     .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
