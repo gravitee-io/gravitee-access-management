@@ -148,15 +148,17 @@ public class EventManagerImpl implements EventManager {
     }
 
     private <T extends Enum> List<EventListenerWrapper> getEventListeners(Class<T> eventType, String domain) {
-        List<EventListenerWrapper> listeners;
+        ComparableEventType key = eventType.equals(DomainEvent.class) ?
+                new ComparableEventType(eventType, null) :
+                new ComparableEventType(eventType, domain) ;
 
-        if (eventType.equals(DomainEvent.class)) {
-            listeners = this.listenersMap.get(new ComparableEventType(eventType, null));
-        } else {
-            listeners = this.listenersMap.get(new ComparableEventType(eventType, domain));
-        }
-
-        if (listeners == null) {
+        List<EventListenerWrapper> listeners = this.listenersMap.entrySet()
+                .stream()
+                .filter(e -> e.getKey().equals(key))
+                .map(Map.Entry::getValue)
+                .flatMap(List::stream)
+                .collect(Collectors.toCollection(() -> Collections.synchronizedList(new ArrayList<>())));
+        if (listeners == null || listeners.isEmpty()) {
             listeners = Collections.synchronizedList(new ArrayList<>());
             this.listenersMap.put(new ComparableEventType(eventType, domain), listeners);
         }
@@ -196,7 +198,7 @@ public class EventManagerImpl implements EventManager {
 
         @Override
         public int compareTo(ComparableEventType<T> o) {
-            if (domain != null) {
+            if (domain != null && o.domain != null) {
                 return (wrappedClass.getCanonicalName() + domain).compareTo(o.wrappedClass.getCanonicalName() + o.domain);
             }
 
