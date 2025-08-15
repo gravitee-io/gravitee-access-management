@@ -101,10 +101,14 @@ describe('SAML Authentication', () => {
 });
 
 describe('SAML Authentication Flow', () => {
-    it.skip('should successfully login with valid SAML credentials - SKIPPED: SAML SSO endpoint issue', async () => {
-        // This test is skipped due to server_error from SAML SSO endpoint
-        // The basic SAML configuration is working (4/4 config tests pass)
-        // This is a known issue with the SAML authentication flow setup
+    it('should successfully login with valid SAML credentials', async () => {
+        const loginResponse = await samlFixture.login(TEST_USER.username, TEST_USER.password);
+        
+        // Should get redirected back to client application
+        expect(loginResponse.status).toBe(302);
+        const authCode = await samlFixture.expectRedirectToClient(loginResponse);
+        expect(authCode).toBeDefined();
+        expect(authCode).toMatch(/^[a-zA-Z0-9_-]+$/);
     });
 
     it('should fail login with invalid SAML credentials', async () => {
@@ -117,12 +121,6 @@ describe('SAML Authentication Flow', () => {
             // Should not be our error message, but should be a legitimate auth failure
             expect(error.message).not.toBe('Login should have failed with invalid credentials');
         }
-    });
-
-    it.skip('should handle SAML SSO flow correctly - SKIPPED: SAML SSO endpoint issue', async () => {
-        // This test is skipped due to server_error from SAML SSO endpoint
-        // The basic SAML configuration is working (4/4 config tests pass)
-        // This is a known issue with the SAML authentication flow setup
     });
 });
 

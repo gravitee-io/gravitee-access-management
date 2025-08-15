@@ -69,6 +69,10 @@ export const getWellKnownOpenIdConfiguration = (domainHrid: string) =>
 export const extractXsrfTokenAndActionResponse = async (response) => {
   const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
   const result = await performGet(response.headers['location'], '', headers);
+  
+  console.log(`DEBUG: Requesting URL: ${result.request.url}`);
+  console.log(`DEBUG: Response status: ${result.status}`);
+  
   if (result.status == 302) {
     console.error(` Expected 200 from ${result.request.url}, got 302 location=${result.headers['location']}`);
     throw new Error('Expected 200, got 302');
@@ -78,6 +82,18 @@ export const extractXsrfTokenAndActionResponse = async (response) => {
   const dom = cheerio.load(result.text);
   const xsrfToken = dom('[name=X-XSRF-TOKEN]').val();
   const action = dom('form').attr('action');
+
+  // Check for access error page (common in SAML flows)
+  if (result.text.includes('Access error') && result.text.includes('server_error')) {
+    const errorDesc = dom('.error_description').text().trim();
+    const errorText = dom('.error').text().trim();
+    console.log(`DEBUG: SAML SSO Error Details:`);
+    console.log(`  URL: ${result.request.url}`);
+    console.log(`  Error: ${errorText}`);
+    console.log(`  Description: ${errorDesc}`);
+    console.log(`  Full HTML snippet: ${result.text.substring(0, 500)}`);
+    throw new Error(`SAML SSO failed: ${errorText} - ${errorDesc || 'Unknown error occurred'}`);
+  }
 
   expect(xsrfToken).toBeDefined();
   expect(action).toBeDefined();

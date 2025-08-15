@@ -25,6 +25,7 @@ import {
 import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
 import { createCertificate } from '@management-commands/certificate-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { createApplication, updateApplication, patchApplication } from '@management-commands/application-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { createTestApp } from '@utils-commands/application-commands';
@@ -101,7 +102,7 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
     })
   });
 
-  // Enable SAML protocol on provider domain
+  // Enable SAML 2.0 IdP support on provider domain
   await patchDomain(providerDomain.id, accessToken, {
     saml: {
       enabled: true,
@@ -109,19 +110,57 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
       certificate: certificate.id
     }
   });
+  
+  // Wait for SAML configuration to be applied and restart domain to activate SAML IdP service
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Restart provider domain to activate SAML IdP endpoints
+  console.log('DEBUG: Restarting provider domain to activate SAML IdP service...');
+  await doStartDomain(providerDomain, accessToken);
+  
+  // Verify SAML IdP metadata endpoint is available
+  let metadataRetries = 0;
+  const maxMetadataRetries = 5;
+  while (metadataRetries < maxMetadataRetries) {
+    try {
+      const metadataUrl = `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/metadata`;
+      console.log(`DEBUG: Checking SAML metadata endpoint (attempt ${metadataRetries + 1}): ${metadataUrl}`);
+      const metadataResponse = await performGet(metadataUrl);
+      console.log(`DEBUG: Metadata endpoint status: ${metadataResponse.status}`);
+      if (metadataResponse.status === 200) {
+        console.log('DEBUG: SAML IdP metadata endpoint is now available!');
+        break;
+      } else if (metadataRetries === maxMetadataRetries - 1) {
+        console.warn(`WARNING: SAML metadata endpoint returned ${metadataResponse.status}, SAML IdP may not be properly configured`);
+      }
+    } catch (error) {
+      if (metadataRetries === maxMetadataRetries - 1) {
+        console.error(`ERROR: SAML metadata endpoint check failed: ${error.message}`);
+      }
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    metadataRetries++;
+  }
 
-  // Create provider application
-  const providerApplication = await createApp(
+  // Create SAML identity provider in client domain first to get entity ID
+  const samlIdp = await createSamlProvider(clientDomain, providerDomain, accessToken, domainSuffix);
+  
+  // Create provider application with client ID that matches SAML entity ID
+  const samlEntityId = JSON.parse(samlIdp.configuration).entityId;
+  
+  const providerApplication = await createAppWithSpecificClientId(
     `saml-provider-app-${domainSuffix}`,
     providerDomain,
     accessToken,
     inlineIdp.id,
     process.env.AM_GATEWAY_URL + '/' + clientDomain.hrid + '/login/callback',
-    true  // This is a provider app that needs SAML settings
+    samlEntityId,  // Use SAML entity ID as client ID
+    true,  // This is a provider app that needs SAML settings
+    certificate.id  // Pass certificate ID for SAML configuration
   );
-
-  // Create SAML identity provider in client domain
-  const samlIdp = await createSamlProvider(clientDomain, providerDomain, accessToken, domainSuffix);
+  
+  // Wait for provider application to be available and verify client ID
+  await new Promise(resolve => setTimeout(resolve, 2000));
 
   // Create client application
   const clientApplication = await createApp(
@@ -190,6 +229,52 @@ async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, 
     expect(newIdp).toBeDefined();
     return newIdp;
   });
+}
+
+async function createAppWithSpecificClientId(name: string, domain: Domain, accessToken: string, idpId: string, redirectUri: string, clientId: string, isProviderApp: boolean = false, certificateId?: string): Promise<Application> {
+  // Create application directly without using createTestApp to avoid client ID override
+  const createAppSettings = {
+    name: name,
+    type: 'web',
+    clientId: clientId,  // This will be the exact client ID we want
+    redirectUris: [redirectUri]
+  };
+
+  const app = await createApplication(domain.id, accessToken, createAppSettings);
+  expect(app).toBeDefined();
+  
+  // Configure OAuth and SAML settings via update
+  const settings: any = {
+    oauth: {
+      redirectUris: [redirectUri],
+      grantTypes: ['authorization_code', 'refresh_token'],
+      responseTypes: ['code']
+    },
+  };
+
+  // Configure SAML settings for provider applications
+  if (isProviderApp && certificateId) {
+    settings.saml = {
+      entityId: clientId,  // Use the same entity ID as the client ID for SAML
+      wantResponseSigned: false,
+      wantAssertionsSigned: false,
+      responseBinding: 'HTTP-POST',
+      certificate: certificateId  // Reference the SAML certificate
+    };
+  }
+
+  const updateBody = {
+    settings,
+    identityProviders: new Set([{ identity: idpId, priority: -1 }]),
+  };
+
+  const updatedApp = await updateApplication(domain.id, accessToken, updateBody, app.id);
+  // Preserve the client secret from the original creation
+  updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+  
+  expect(updatedApp).toBeDefined();
+  expect(updatedApp.settings.oauth.clientId).toBe(clientId);  // Verify exact client ID match
+  return updatedApp;
 }
 
 async function createApp(name: string, domain: Domain, accessToken: string, idpId: string, redirectUri: string, isProviderApp: boolean = false): Promise<Application> {
@@ -307,7 +392,13 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
     },
     expectRedirectToClient,
     cleanup: async () => {
-      console.log(`Cleaning up SAML domains: ${domains.clientDomain.hrid}, ${domains.providerDomain.hrid}`);
+      console.log(`DEBUG: SAML setup complete with:`);
+  console.log(`  Provider domain: ${domains.providerDomain.hrid}`);
+  console.log(`  Client domain: ${domains.clientDomain.hrid}`);
+  console.log(`  Provider app client ID: ${domains.providerApplication.settings.oauth.clientId}`);
+  console.log(`  Client app client ID: ${domains.clientApplication.settings.oauth.clientId}`);
+  console.log(`  SAML IDP entity ID: ${JSON.parse(domains.samlIdp.configuration).entityId}`);
+  console.log(`Cleaning up SAML domains: ${domains.clientDomain.hrid}, ${domains.providerDomain.hrid}`);
       return Promise.all([
         deleteDomain(domains.clientDomain.id, accessToken), 
         deleteDomain(domains.providerDomain.id, accessToken)
