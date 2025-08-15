@@ -17,6 +17,7 @@ package io.gravitee.am.reporter.kafka.audit;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.am.reporter.kafka.AuditValueFactory;
 import io.gravitee.am.reporter.kafka.JUnitConfiguration;
 import io.gravitee.am.reporter.kafka.KafkaReporterConfiguration;
@@ -73,6 +74,9 @@ public class KafkaAuditReporterITests {
     protected Vertx vertx;
 
     @Autowired
+    private WriteStreamRegistry writeStreamRegistry;
+
+    @Autowired
     protected Node node;
 
     @Autowired
@@ -83,7 +87,7 @@ public class KafkaAuditReporterITests {
 
     @BeforeEach
     void init() throws Exception {
-        this.kafkaAuditReporter = new KafkaAuditReporter(configuration, vertx, graviteeContext, node);
+        this.kafkaAuditReporter = new KafkaAuditReporter(configuration, vertx, graviteeContext, writeStreamRegistry, node);
 
         context.getAutowireCapableBeanFactory().autowireBean(kafkaAuditReporter);
 
