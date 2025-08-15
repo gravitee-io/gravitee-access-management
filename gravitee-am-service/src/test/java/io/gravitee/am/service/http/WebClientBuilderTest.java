@@ -256,4 +256,86 @@ class WebClientBuilderTest {
         assertTrue(webClientOptions.isTrustAll());
         assertNull(webClientOptions.getProxyOptions());
     }
+
+    @Test
+    void shouldEnableHttp2WithDefaultSettings() {
+        WebClientOptions webClientOptions = new WebClientOptions();
+        when(environment.getProperty("httpClient.http2.enabled", Boolean.class, true)).thenReturn(true);
+        when(environment.getProperty("httpClient.http2.maxPoolSize", Integer.class, 10)).thenReturn(10);
+        when(environment.getProperty("httpClient.http2.connectionWindowSize", Integer.class, 65535)).thenReturn(65535);
+        when(environment.getProperty("httpClient.http2.keepAliveTimeout", Integer.class, 60)).thenReturn(60);
+
+        webClientBuilder.createWebClient(vertx, webClientOptions);
+
+        assertTrue(webClientOptions.isUseAlpn());
+        assertEquals(10, webClientOptions.getHttp2MaxPoolSize());
+        assertEquals(65535, webClientOptions.getHttp2ConnectionWindowSize());
+        assertEquals(60, webClientOptions.getHttp2KeepAliveTimeout());
+    }
+
+    @Test
+    void shouldDisableHttp2WhenExplicitlyDisabled() {
+        WebClientOptions webClientOptions = new WebClientOptions();
+        when(environment.getProperty("httpClient.http2.enabled", Boolean.class, true)).thenReturn(false);
+
+        webClientBuilder.createWebClient(vertx, webClientOptions);
+
+        assertFalse(webClientOptions.isUseAlpn());
+    }
+
+    @Test
+    void shouldApplyCustomHttp2MaxPoolSize() {
+        WebClientOptions webClientOptions = new WebClientOptions();
+        when(environment.getProperty("httpClient.http2.enabled", Boolean.class, true)).thenReturn(true);
+        when(environment.getProperty("httpClient.http2.maxPoolSize", Integer.class, 10)).thenReturn(50);
+        when(environment.getProperty("httpClient.http2.connectionWindowSize", Integer.class, 65535)).thenReturn(65535);
+        when(environment.getProperty("httpClient.http2.keepAliveTimeout", Integer.class, 60)).thenReturn(60);
+
+        webClientBuilder.createWebClient(vertx, webClientOptions);
+
+        assertTrue(webClientOptions.isUseAlpn());
+        assertEquals(50, webClientOptions.getHttp2MaxPoolSize());
+    }
+
+    @Test
+    void shouldApplyCustomHttp2ConnectionWindowSize() {
+        WebClientOptions webClientOptions = new WebClientOptions();
+        when(environment.getProperty("httpClient.http2.enabled", Boolean.class, true)).thenReturn(true);
+        when(environment.getProperty("httpClient.http2.maxPoolSize", Integer.class, 10)).thenReturn(10);
+        when(environment.getProperty("httpClient.http2.connectionWindowSize", Integer.class, 65535)).thenReturn(131072);
+        when(environment.getProperty("httpClient.http2.keepAliveTimeout", Integer.class, 60)).thenReturn(60);
+
+        webClientBuilder.createWebClient(vertx, webClientOptions);
+
+        assertTrue(webClientOptions.isUseAlpn());
+        assertEquals(131072, webClientOptions.getHttp2ConnectionWindowSize());
+    }
+
+    @Test
+    void shouldApplyCustomHttp2KeepAliveTimeout() {
+        WebClientOptions webClientOptions = new WebClientOptions();
+        when(environment.getProperty("httpClient.http2.enabled", Boolean.class, true)).thenReturn(true);
+        when(environment.getProperty("httpClient.http2.maxPoolSize", Integer.class, 10)).thenReturn(10);
+        when(environment.getProperty("httpClient.http2.connectionWindowSize", Integer.class, 65535)).thenReturn(65535);
+        when(environment.getProperty("httpClient.http2.keepAliveTimeout", Integer.class, 60)).thenReturn(200);
+
+        webClientBuilder.createWebClient(vertx, webClientOptions);
+
+        assertTrue(webClientOptions.isUseAlpn());
+        assertEquals(200, webClientOptions.getHttp2KeepAliveTimeout());
+    }
+
+    @Test
+    void shouldConfigureHttp2ForUrlBasedWebClient() throws Exception {
+        when(environment.getProperty("httpClient.timeout", Integer.class, 10000)).thenReturn(10000);
+        when(environment.getProperty("httpClient.maxPoolSize", Integer.class, 10)).thenReturn(10);
+        when(environment.getProperty("httpClient.http2.enabled", Boolean.class, true)).thenReturn(true);
+        when(environment.getProperty("httpClient.http2.maxPoolSize", Integer.class, 10)).thenReturn(10);
+        when(environment.getProperty("httpClient.http2.connectionWindowSize", Integer.class, 65535)).thenReturn(65535);
+        when(environment.getProperty("httpClient.http2.keepAliveTimeout", Integer.class, 60)).thenReturn(60);
+
+        var webClient = webClientBuilder.createWebClient(vertx, new java.net.URL("https://example.com"));
+
+        assertNotNull(webClient);
+    }
 }

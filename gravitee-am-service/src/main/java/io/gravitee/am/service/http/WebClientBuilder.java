@@ -17,6 +17,8 @@ package io.gravitee.am.service.http;
 
 import io.gravitee.am.model.Certificate;
 import io.gravitee.common.util.EnvironmentUtils;
+import io.vertx.core.http.Http2Settings;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -52,17 +54,19 @@ public class WebClientBuilder {
     }
 
     public WebClient createWebClient(Vertx vertx, URL url) {
-
-        final int port = url.getPort() != -1 ? url.getPort() : (HTTPS_SCHEME.equals(url.getProtocol()) ? 443 : 80);
+        final boolean isSsl = url.getProtocol().equals(HTTPS_SCHEME);
+        final int port = url.getPort() != -1 ? url.getPort() : (isSsl ? 443 : 80);
 
         WebClientOptions options = new WebClientOptions()
                 .setDefaultPort(port)
                 .setDefaultHost(url.getHost())
                 .setKeepAlive(true)
-                .setMaxPoolSize(10)
+                .setMaxPoolSize(httpClientMaxPoolSize())
                 .setTcpKeepAlive(true)
                 .setConnectTimeout(httpClientTimeout())
-                .setSsl(url.getProtocol().equals(HTTPS_SCHEME));
+                .setSsl(isSsl);
+
+        configureHttp2Settings(options);
 
         return createWebClient(vertx, options);
     }
@@ -77,6 +81,8 @@ public class WebClientBuilder {
             configurer.setProxySettings(options);
         }
         configurer.setSSLSettings(options);
+        configureHttp2Settings(options);
+        
         return WebClient.create(vertx, options);
     }
 
@@ -86,6 +92,8 @@ public class WebClientBuilder {
             configurer.setProxySettings(options);
         }
         configurer.setSSLSettings(options);
+        configureHttp2Settings(options);
+        
         return WebClient.create(vertx, options);
     }
 
@@ -95,7 +103,23 @@ public class WebClientBuilder {
             configurer.setProxySettings(options);
         }
         configurer.setMTLSSettings(options, clientCertificate);
+        configureHttp2Settings(options);
+        
         return WebClient.create(vertx, options);
+    }
+
+    private void configureHttp2Settings(WebClientOptions options) {
+        if (isHttp2Enabled()) {
+            options.setUseAlpn(true);
+            options.setHttp2MaxPoolSize(http2MaxPoolSize());
+            options.setHttp2ConnectionWindowSize(http2ConnectionWindowSize());
+            options.setHttp2KeepAliveTimeout(http2KeepAliveTimeout());
+            LOGGER.debug("HTTP/2 enabled with ALPN protocol negotiation");
+        } else {
+            options.setUseAlpn(false);
+            options.setHttp2ClearTextUpgrade(false);
+            LOGGER.debug("HTTP/1.1 mode with optimized connection pooling");
+        }
     }
 
     private boolean isExcludedHost(String url) {
@@ -135,5 +159,24 @@ public class WebClientBuilder {
         return environment.getProperty("httpClient.timeout", Integer.class, 10000);
     }
 
+    private Integer httpClientMaxPoolSize() {
+        return environment.getProperty("httpClient.maxPoolSize", Integer.class, 10);
+    }
+
+    private boolean isHttp2Enabled() {
+        return environment.getProperty("httpClient.http2.enabled", Boolean.class, true);
+    }
+
+    private Integer http2MaxPoolSize() {
+        return environment.getProperty("httpClient.http2.maxPoolSize", Integer.class, 10);
+    }
+
+    private Integer http2ConnectionWindowSize() {
+        return environment.getProperty("httpClient.http2.connectionWindowSize", Integer.class, Http2Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+    }
+
+    private Integer http2KeepAliveTimeout() {
+        return environment.getProperty("httpClient.http2.keepAliveTimeout", Integer.class, HttpClientOptions.DEFAULT_HTTP2_KEEP_ALIVE_TIMEOUT);
+    }
 
 }
