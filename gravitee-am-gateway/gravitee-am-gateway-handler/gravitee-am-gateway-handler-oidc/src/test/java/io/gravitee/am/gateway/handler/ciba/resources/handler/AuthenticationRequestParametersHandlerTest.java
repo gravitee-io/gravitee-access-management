@@ -500,6 +500,167 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
                 HttpStatusCode.OK_200, "OK", null);
     }
 
+    @Test
+    public void shouldStoreUserInContext_LoginHint() throws Exception {
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        user.setUsername("testuser");
+        user.setExternalId("ext123");
+        user.setEmail("test@example.com");
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHint("username");
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(List.of("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        cibaRequest.setUser(user); // Set the user in the request as the resolver would do
+
+        client.setBackchannelUserCodeParameter(false);
+
+        handlerUnderTest.setCibaRequest(cibaRequest);
+
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        // Add a handler after the main handler to verify user is in context
+        router.route().order(1).handler(routingContext -> {
+            User contextUser = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+            if (contextUser != null && user.getId().equals(contextUser.getId()) && "ext123".equals(contextUser.getExternalId())) {
+                routingContext.response().end("OK"); // Use simple OK response
+            } else {
+                routingContext.response().setStatusCode(500).end("User context test failed");
+            }
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                CIBAProvider.CIBA_PATH+CIBAProvider.AUTHENTICATION_ENDPOINT+"?request=fakejwt",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldStoreUserInContext_IdTokenHint() throws Exception {
+        final String userId = UUID.randomUUID().toString();
+        final JSONObject jwtBody = new JSONObject();
+        jwtBody.put("sub", userId);
+        jwtBody.put(Claims.EXP, Instant.now().plusSeconds(10).getEpochSecond());
+        JwtHintBuilder hint = new JwtHintBuilder(jwtBody);
+
+        final User user = new User();
+        user.setId(userId);
+        user.setUsername("testuser");
+        user.setExternalId("ext456");
+        user.setEmail("test2@example.com");
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setIdTokenHint(hint.generateHint());
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(List.of("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        cibaRequest.setUser(user); // Set the user in the request as the resolver would do
+
+        client.setBackchannelUserCodeParameter(false);
+
+        handlerUnderTest.setCibaRequest(cibaRequest);
+
+        final io.gravitee.am.model.jose.RSAKey jwk = new io.gravitee.am.model.jose.RSAKey();
+        jwk.setKid(KID);
+        final JWKSet jwks = new JWKSet();
+        jwks.setKeys(List.of(jwk));
+
+        when(jwkService.getKeys()).thenReturn(Single.just(jwks));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(jwk));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+        when(subjectManager.findUserBySub(any())).thenReturn(Maybe.just(user));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        // Add a handler after the main handler to verify user is in context
+        router.route().order(1).handler(routingContext -> {
+            User contextUser = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+            if (contextUser != null && user.getId().equals(contextUser.getId()) && "ext456".equals(contextUser.getExternalId())) {
+                routingContext.response().end("OK"); // Use simple OK response
+            } else {
+                routingContext.response().setStatusCode(500).end("User context test failed");
+            }
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                CIBAProvider.CIBA_PATH+CIBAProvider.AUTHENTICATION_ENDPOINT+"?request=fakejwt",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
+    @Test
+    public void shouldStoreUserInContext_LoginTokenHint() throws Exception {
+        final JSONObject jwtBody = new JSONObject();
+        final JSONObject subId = new JSONObject();
+        subId.put("format", "email");
+        subId.put("email", "user@email.com");
+        jwtBody.put("sub_id", subId);
+        JwtHintBuilder hint = new JwtHintBuilder(jwtBody);
+
+        final User user = new User();
+        user.setId(UUID.randomUUID().toString());
+        user.setUsername("testuser");
+        user.setExternalId("ext789");
+        user.setEmail("user@email.com");
+
+        CibaAuthenticationRequest cibaRequest = new CibaAuthenticationRequest();
+        cibaRequest.setLoginHintToken(hint.generateHint());
+        cibaRequest.setScopes(Set.of("openid"));
+        cibaRequest.setAcrValues(List.of("urn:mace:incommon:iap:bronze"));
+        cibaRequest.setBindingMessage("msg");
+        cibaRequest.setUser(user); // Set the user in the request as the resolver would do
+
+        client.setBackchannelUserCodeParameter(false);
+
+        handlerUnderTest.setCibaRequest(cibaRequest);
+
+        final io.gravitee.am.model.jose.RSAKey jwk = new io.gravitee.am.model.jose.RSAKey();
+        jwk.setKid(KID);
+        final JWKSet jwks = new JWKSet();
+        jwks.setKeys(List.of(jwk));
+
+        when(jwkService.getKeys(any(Client.class))).thenReturn(Maybe.just(jwks));
+        when(jwkService.getKey(any(), any())).thenReturn(Maybe.just(jwk));
+        when(jwsService.isValidSignature(any(), any())).thenReturn(true);
+        when(userService.findByCriteria(any())).thenReturn(Single.just(List.of(user)));
+
+        router.route().order(-1).handler(routingContext -> {
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY, openIDProviderMetadata);
+            routingContext.next();
+        });
+
+        // Add a handler after the main handler to verify user is in context
+        router.route().order(1).handler(routingContext -> {
+            User contextUser = routingContext.get(ConstantKeys.USER_CONTEXT_KEY);
+            if (contextUser != null && user.getId().equals(contextUser.getId()) && "ext789".equals(contextUser.getExternalId())) {
+                routingContext.response().end("OK"); // Use simple OK response
+            } else {
+                routingContext.response().setStatusCode(500).end("User context test failed");
+            }
+        });
+
+        testRequest(
+                HttpMethod.POST,
+                CIBAProvider.CIBA_PATH+CIBAProvider.AUTHENTICATION_ENDPOINT+"?request=fakejwt",
+                null,
+                HttpStatusCode.OK_200, "OK", null);
+    }
+
     /**
      * Simple class to allow to simply provide CibaAuthenticationRequest for testing
      */
