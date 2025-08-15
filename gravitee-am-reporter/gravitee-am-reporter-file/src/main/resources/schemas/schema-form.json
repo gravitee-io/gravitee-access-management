@@ -9,9 +9,9 @@
       "description": "Filename where the information are written."
     },
     "retainDays": {
-      "type": "number",
-      "default": -1,
+      "type": "integer",
       "title": "Backup retain days",
+      "minimum": 1,
       "description": "Specify the time, in days, after which the audit logs files are deleted (no retention by default)."
     }
   },
