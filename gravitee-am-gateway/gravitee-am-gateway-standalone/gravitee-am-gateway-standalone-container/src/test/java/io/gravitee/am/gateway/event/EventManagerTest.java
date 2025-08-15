@@ -58,7 +58,7 @@ public class EventManagerTest {
 
     @ParameterizedTest
     @MethodSource("params_that_must_publish_event")
-    public void must_publish_event(Enum type, Predicate<Object> expected) {
+    public void must_publish_event(Enum type, Predicate<Payload> expected) {
         var eventManager = new EventManagerImpl();
         final TestEventListener eventListener = new TestEventListener();
         var domainId = UUID.randomUUID().toString();
@@ -102,7 +102,7 @@ public class EventManagerTest {
 
     @ParameterizedTest
     @MethodSource("params_that_must_publish_event_or_not_without_donmain_id")
-    public void must_publish_event_or_not_without_donmain_id(Enum type, Predicate<Object> expected) {
+    public void must_publish_event_or_not_without_donmain_id(Enum type, Predicate<Payload> expected) {
         var eventManager = new EventManagerImpl();
         final TestEventListener eventListener = new TestEventListener();
         eventManager.subscribeForEvents(eventListener, type);
@@ -142,21 +142,21 @@ public class EventManagerTest {
                         stream(ThemeEvent.values())
                 )
                 .flatMap(Function.identity())
-                .map(event -> event instanceof DomainEvent ?
+                .map(event -> event instanceof DomainEvent || event instanceof ReporterEvent?
                         Arguments.of(event, predicateNonull) :
                         Arguments.of(event, predicateNull));
     }
 
-    public static class TestEventListener implements EventListener<Enum, Object> {
-        private Object content;
+    public static class TestEventListener implements EventListener<Enum, Payload> {
+        private Payload content;
 
 
-        public Object getContent() {
+        public Payload getContent() {
             return content;
         }
 
         @Override
-        public void onEvent(Event<Enum, Object> event) {
+        public void onEvent(Event<Enum, Payload> event) {
             this.content = event.content();
         }
     }

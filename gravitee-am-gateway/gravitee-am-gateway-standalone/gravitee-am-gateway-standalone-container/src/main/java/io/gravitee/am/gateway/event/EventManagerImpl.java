@@ -18,8 +18,9 @@ package io.gravitee.am.gateway.event;
 import com.google.common.collect.Lists;
 import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
-import io.gravitee.am.gateway.handler.common.service.mfa.DomainEventListener;
+import io.gravitee.am.gateway.handler.common.service.DomainAwareListener;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
@@ -114,18 +115,21 @@ public class EventManagerImpl implements EventManager {
 
     @Override
     public <T extends Enum> void unsubscribeForEvents(EventListener<T, ?> eventListener, Class<T> eventType, String domainId) {
-        if (eventType.equals(DomainEvent.class)) {
-            getEventListeners(DomainEvent.class, null)
-                    .removeIf(wrapper -> {
-                        if (wrapper.eventListener() instanceof DomainEventListener del) {
-                            return domainId.equals(del.getDomainId());
-                        } else {
-                            return false;
-                        }
-                    });
+        if (eventType.equals(DomainEvent.class) || eventType.equals(ReporterEvent.class)) {
+            unsubscribeForEvents(eventType, domainId);
         } else {
             this.listenersMap.remove(new ComparableEventType(eventType, domainId));
         }
+    }
+    private <T extends Enum> void unsubscribeForEvents(Class<T> eventType, String domainId) {
+        getEventListeners(eventType, null)
+                .removeIf(wrapper -> {
+                    if (wrapper.eventListener() instanceof DomainAwareListener del) {
+                        return domainId.equals(del.getDomainId());
+                    } else {
+                        return false;
+                    }
+                });
     }
 
     @Override
@@ -148,13 +152,11 @@ public class EventManagerImpl implements EventManager {
     }
 
     private <T extends Enum> List<EventListenerWrapper> getEventListeners(Class<T> eventType, String domain) {
-        List<EventListenerWrapper> listeners;
+        ComparableEventType key = eventType.equals(DomainEvent.class) || eventType.equals(ReporterEvent.class) ?
+                new ComparableEventType(eventType, null) :
+                new ComparableEventType(eventType, domain) ;
 
-        if (eventType.equals(DomainEvent.class)) {
-            listeners = this.listenersMap.get(new ComparableEventType(eventType, null));
-        } else {
-            listeners = this.listenersMap.get(new ComparableEventType(eventType, domain));
-        }
+        List<EventListenerWrapper> listeners = this.listenersMap.get(key);
 
         if (listeners == null) {
             listeners = Collections.synchronizedList(new ArrayList<>());
@@ -165,7 +167,6 @@ public class EventManagerImpl implements EventManager {
     }
 
     private class EventListenerWrapper<T extends Enum> {
-
         private final EventListener<T, ?> eventListener;
         private final Set<T> events;
 
