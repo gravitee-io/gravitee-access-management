@@ -545,10 +545,15 @@ jobs:
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/resources/gravitee-am-resource-sfr/gravitee-am-resource-sfr-1.0.2.zip -o gravitee-am-resource-sfr-1.0.2.zip
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/factors/gravitee-am-factor-sms/gravitee-am-factor-sms-1.0.1.zip -o gravitee-am-factor-sms-1.0.1.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/gateway/handlers/gravitee-am-gateway-handler-saml2-idp/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip -o gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
+            
             cp gravitee-am-resource-sfr-1.0.2.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-sfr-1.0.2.zip
-            cp gravitee-am-factor-sms-1.0.1.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip
+            cp gravitee-am-factor-sms-1.0.1.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip            
+            cp gravitee-am-gateway-handler-saml2-idp-4.0.0.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
+            
             mv gravitee-am-resource-sfr-1.0.2.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-resource-sfr-1.0.2.zip
             mv gravitee-am-factor-sms-1.0.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip
+            mv gravitee-am-gateway-handler-saml2-idp-4.0.0.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
       - run:
           name: Spin up AM
           command: |
@@ -719,10 +724,15 @@ jobs:
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/plugins/services/gravitee-service-geoip/gravitee-service-geoip-2.1.0.zip -o gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-service-geoip-2.1.0.zip
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/resources/gravitee-am-resource-sfr/gravitee-am-resource-sfr-1.0.2.zip -o gravitee-am-resource-sfr-1.0.2.zip
             curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/factors/gravitee-am-factor-sms/gravitee-am-factor-sms-1.0.1.zip -o gravitee-am-factor-sms-1.0.1.zip
+            curl --retry 4 --retry-delay 10 --retry-all-errors https://download.gravitee.io/graviteeio-ee/am/plugins/gateway/handlers/gravitee-am-gateway-handler-saml2-idp/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip -o gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
+
             cp gravitee-am-resource-sfr-1.0.2.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-resource-sfr-1.0.2.zip
             cp gravitee-am-factor-sms-1.0.1.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip
+            cp gravitee-am-gateway-handler-saml2-idp-4.0.0.zip gravitee-am-gateway-standalone-${AM_VERSION}/plugins/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
+            
             mv gravitee-am-resource-sfr-1.0.2.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-resource-sfr-1.0.2.zip
             mv gravitee-am-factor-sms-1.0.1.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-factor-sms-1.0.1.zip
+            mv gravitee-am-gateway-handler-saml2-idp-4.0.0.zip gravitee-am-management-api-standalone-${AM_VERSION}/plugins/gravitee-am-gateway-handler-saml2-idp-4.0.0.zip
       - run:
           name: Spin up AM
           command: |

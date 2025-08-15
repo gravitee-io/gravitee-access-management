@@ -40,6 +40,9 @@ import org.springframework.mock.env.MockEnvironment;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.service.impl.ReporterServiceImpl.REPORTER_AM_FILE;
+import static io.gravitee.am.service.impl.ReporterServiceImpl.REPORTER_CONFIG_FILENAME;
+import static io.gravitee.am.service.impl.ReporterServiceImpl.REPORTER_CONFIG_RETAIN_DAYS;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -74,11 +77,7 @@ class ReporterServiceTest {
 
     @Test
     void shouldAccept_ReportFileName() {
-        final var reporter = new NewReporter();
-        reporter.setEnabled(true);
-        reporter.setName("Test");
-        reporter.setType("reporter-am-file");
-        reporter.setConfiguration("{\"filename\":\"9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
+        final var reporter = randomTestFileReporter( "valid");
 
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -90,12 +89,71 @@ class ReporterServiceTest {
     }
 
     @Test
+    void shouldAccept_ReportRetainDays_PositiveValue() {
+        final var reporter = testFileReporter( "valid", 2L);
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
+
+    }
+
+    @Test
+    void shouldAccept_ReportRetainDays_StringValue_NotApplied() {
+        final var reporter = testFileReporter( "valid", 2L);
+        reporter.setConfiguration("{\"" + REPORTER_CONFIG_FILENAME + "\":\"test\",\"" + REPORTER_CONFIG_RETAIN_DAYS + "\":\"fakevalue\"}");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
+
+    }
+
+    @Test
+    void shouldAccept_ReportRetainDays_StringValueValid_Applied() {
+        final var reporter = testFileReporter( "valid", 2L);
+        reporter.setConfiguration("{\"" + REPORTER_CONFIG_FILENAME + "\":\"test\",\"" + REPORTER_CONFIG_RETAIN_DAYS + "\":\"1\"}");
+
+        when(eventService.create(any())).thenReturn(Single.just(new Event()));
+
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoErrors();
+
+    }
+
+    @Test
+    void shouldReject_ReportRetainDays_NegativeValue() {
+        final var reporter = testFileReporter("invalid", -2L);
+
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ex -> ex instanceof TechnicalManagementException && ex.getCause() instanceof ReporterConfigurationException);
+
+    }
+
+    @Test
+    void shouldReject_ReportRetainDays_ZeroValue() {
+        final var reporter = testFileReporter("invalid", 0L);
+
+        reporterService.create(Reference.domain("domain"), reporter)
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertError(ex -> ex instanceof TechnicalManagementException && ex.getCause() instanceof ReporterConfigurationException);
+
+    }
+
+    @Test
     void shouldReject_ReportFileName() {
-        final var reporter = new NewReporter();
-        reporter.setEnabled(true);
-        reporter.setName("Test");
-        reporter.setType("reporter-am-file");
-        reporter.setConfiguration("{\"filename\":\"../9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
+        final var reporter = testFileReporter("../9f4bdf97-5481-4420-8bdf-9754818420f3", 2L);
 
         reporterService.create(Reference.domain("domain"), reporter)
                 .test()
@@ -106,11 +164,7 @@ class ReporterServiceTest {
 
     @Test
     void should_validate_config_with_schema() throws Exception{
-        final var reporter = new NewReporter();
-        reporter.setEnabled(true);
-        reporter.setName("Test");
-        reporter.setType("reporter-am-file");
-        reporter.setConfiguration("{\"filename\":\"9f4bdf97-5481-4420-8bdf-9754818420f3\"}");
+        final var reporter = testFileReporter("9f4bdf97-5481-4420-8bdf-9754818420f3", 2L);
 
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
 
@@ -272,8 +326,18 @@ class ReporterServiceTest {
         var reporter = new NewReporter();
         reporter.setEnabled(true);
         reporter.setName(name);
-        reporter.setType("reporter-am-file");
-        reporter.setConfiguration("{\"filename\":\"" + randomStringGenerator.generate(12) + "\"}");
+        reporter.setType(REPORTER_AM_FILE);
+        reporter.setConfiguration("{\"" + REPORTER_CONFIG_FILENAME + "\":\"" + randomStringGenerator.generate(12) + "\"}");
+
+        return reporter;
+    }
+
+    private NewReporter testFileReporter(String filename, Long retainDays) {
+        var reporter = new NewReporter();
+        reporter.setEnabled(true);
+        reporter.setName("Test");
+        reporter.setType(REPORTER_AM_FILE);
+        reporter.setConfiguration("{\"" + REPORTER_CONFIG_FILENAME + "\":\"" + filename + "\",\"" + REPORTER_CONFIG_RETAIN_DAYS + "\":" + retainDays +  "}");
 
         return reporter;
     }
