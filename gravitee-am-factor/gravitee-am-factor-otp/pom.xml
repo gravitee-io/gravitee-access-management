@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-factor</artifactId>
         <groupId>io.gravitee.am.factor</groupId>
-        <version>4.7.11</version>
+        <version>4.7.12-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-factor-otp</artifactId>
