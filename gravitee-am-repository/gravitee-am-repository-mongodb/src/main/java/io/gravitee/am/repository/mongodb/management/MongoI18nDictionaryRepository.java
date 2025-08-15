@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -61,13 +62,15 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
     public Flowable<I18nDictionary> findAll(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(withMaxTime(
                 mongoCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<I18nDictionary> findById(String id) {
         return Observable.fromPublisher(mongoCollection.find(eq(FIELD_ID, id)).first()).firstElement()
-                         .map(this::convert);
+                         .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -78,7 +81,8 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
         return Single.fromPublisher(mongoCollection.insertOne(dictionaryMongo)).flatMap(success -> {
             item.setId(dictionaryMongo.getId());
             return Single.just(item);
-        });
+        })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -86,12 +90,14 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
         Objects.requireNonNull(item);
         var dictionaryMongo = convert(item);
         return Single.fromPublisher(mongoCollection.replaceOne(eq(FIELD_ID, dictionaryMongo.getId()), dictionaryMongo))
-                     .flatMap(success -> Single.just(item));
+                     .flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(mongoCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(mongoCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -102,7 +108,8 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
                                          .limit(1)
                                          .first())
                          .firstElement()
-                         .map(this::convert);
+                         .map(this::convert)
+                .observeOn(Schedulers.computation());
 
     }
 
@@ -110,7 +117,8 @@ public class MongoI18nDictionaryRepository extends AbstractManagementMongoReposi
     public Maybe<I18nDictionary> findById(ReferenceType referenceType, String referenceId, String id) {
         return Observable.fromPublisher(mongoCollection
                                                 .find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id)))
-                                                .first()).firstElement().map(this::convert);
+                                                .first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     private I18nDictionary convert(I18nDictionaryMongo dictionaryMongo) {

@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -85,7 +86,8 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_USER_ID, userId)
                         )
                 ))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -98,7 +100,8 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_USERNAME, username)
                         )
                 ))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -112,7 +115,8 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 )).sort(
                                     new Document(FIELD_CREATED_AT, -1))
                                 .limit(limit))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -125,30 +129,35 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_CREDENTIAL_ID, credentialId)
                         )
                 ))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Credential> findById(String id) {
-        return Observable.fromPublisher(credentialsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(credentialsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Credential> create(Credential item) {
         CredentialMongo credential = convert(item);
         credential.setId(credential.getId() == null ? RandomString.generate() : credential.getId());
-        return Single.fromPublisher(credentialsCollection.insertOne(credential)).flatMap(success -> { item.setId(credential.getId()); return Single.just(item); });
+        return Single.fromPublisher(credentialsCollection.insertOne(credential)).flatMap(success -> { item.setId(credential.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Credential> update(Credential item) {
         CredentialMongo credential = convert(item);
-        return Single.fromPublisher(credentialsCollection.replaceOne(eq(FIELD_ID, credential.getId()), credential)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(credentialsCollection.replaceOne(eq(FIELD_ID, credential.getId()), credential)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(credentialsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(credentialsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -160,7 +169,8 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_USER_ID, userId)
                         )
-                ));
+                ))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -171,7 +181,8 @@ public class MongoCredentialRepository extends AbstractManagementMongoRepository
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                 eq(FIELD_REFERENCE_ID, referenceId)
                         )
-                ));
+                ))
+                .observeOn(Schedulers.computation());
     }
 
     private Credential convert(CredentialMongo credentialMongo) {

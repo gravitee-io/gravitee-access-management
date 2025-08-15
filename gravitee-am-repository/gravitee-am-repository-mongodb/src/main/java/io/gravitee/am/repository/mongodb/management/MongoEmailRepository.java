@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -62,13 +63,15 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Flowable<Email> findAll() {
-        return Flowable.fromPublisher(withMaxTime(emailsCollection.find())).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(emailsCollection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Email> findAll(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -79,7 +82,8 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
                                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                                 eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_CLIENT, client))
-                )).map(this::convert);
+                )).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -92,12 +96,14 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
                                 eq(FIELD_TEMPLATE, template),
                                 exists(FIELD_CLIENT, false)))
                         .first())
-                .firstElement().map(this::convert);
+                .firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Email> findByDomainAndTemplate(String domain, String template) {
-        return findByTemplate(ReferenceType.DOMAIN, domain, template);
+        return findByTemplate(ReferenceType.DOMAIN, domain, template)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -110,7 +116,8 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
                                 eq(FIELD_CLIENT, client),
                                 eq(FIELD_TEMPLATE, template)))
                         .first())
-                .firstElement().map(this::convert);
+                .firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -120,30 +127,35 @@ public class MongoEmailRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Email> findById(ReferenceType referenceType, String referenceId, String id) {
-        return Observable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(emailsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Email> findById(String id) {
-        return Observable.fromPublisher(emailsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(emailsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Email> create(Email item) {
         EmailMongo email = convert(item);
         email.setId(email.getId() == null ? RandomString.generate() : email.getId());
-        return Single.fromPublisher(emailsCollection.insertOne(email)).flatMap(success -> { item.setId(email.getId()); return Single.just(item); });
+        return Single.fromPublisher(emailsCollection.insertOne(email)).flatMap(success -> { item.setId(email.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Email> update(Email item) {
         EmailMongo email = convert(item);
-        return Single.fromPublisher(emailsCollection.replaceOne(eq(FIELD_ID, email.getId()), email)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(emailsCollection.replaceOne(eq(FIELD_ID, email.getId()), email)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(emailsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(emailsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Email convert(EmailMongo emailMongo) {
