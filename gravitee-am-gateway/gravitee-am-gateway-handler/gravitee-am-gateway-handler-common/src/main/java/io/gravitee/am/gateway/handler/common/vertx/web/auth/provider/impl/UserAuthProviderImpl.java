@@ -81,6 +81,7 @@ public class UserAuthProviderImpl implements UserAuthProvider {
             authenticationContext.set(Claims.IP_ADDRESS, ipAddress);
             authenticationContext.set(Claims.USER_AGENT, userAgent);
             authenticationContext.set(Claims.DOMAIN, client.getDomain());
+            authenticationContext.set(ConstantKeys.CLIENT_CONTEXT_KEY, client);
             authenticationContext.set(ConstantKeys.DEVICE_ID, context.request().getParam(DEVICE_ID));
 
             userAuthenticationManager.authenticate(client, authentication)

@@ -114,6 +114,6 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
 
     @Override
     public AuthenticationContext copy() {
-       return new SimpleAuthenticationContext(request);
+       return new SimpleAuthenticationContext(request, attributes);
     }
 }
