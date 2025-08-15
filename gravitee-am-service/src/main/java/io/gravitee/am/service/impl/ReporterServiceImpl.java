@@ -319,21 +319,11 @@ public class ReporterServiceImpl implements ReporterService {
     }
 
     private Optional<Long> getRetainDaysValue(JsonObject configuration) {
-        Object retainDaysObject = configuration.getValue(REPORTER_CONFIG_RETAIN_DAYS);
-
-        if (retainDaysObject instanceof String s) {
-            try {
-                return Optional.of(Long.parseLong(s));
-            } catch (NumberFormatException e) {
-                return Optional.empty();
-            }
+        try {
+            return Optional.of(configuration.getLong(REPORTER_CONFIG_RETAIN_DAYS));
+        } catch(NullPointerException | ClassCastException e) {
+            return Optional.empty();
         }
-
-        if (retainDaysObject instanceof Number n) {
-            return Optional.of(n.longValue());
-        }
-
-        return Optional.empty();
     }
 
     private NewReporter createMongoReporter(Reference reference) {

@@ -10,7 +10,6 @@
     },
     "retainDays": {
       "type": "integer",
-      "default": -1,
       "title": "Backup retain days",
       "minimum": 1,
       "description": "Specify the time, in days, after which the audit logs files are deleted (no retention by default)."
