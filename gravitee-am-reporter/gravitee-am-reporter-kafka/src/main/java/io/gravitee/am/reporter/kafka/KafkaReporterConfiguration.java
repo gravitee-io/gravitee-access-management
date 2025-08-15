@@ -17,6 +17,7 @@ package io.gravitee.am.reporter.kafka;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -30,6 +31,7 @@ import java.util.Map;
 @Setter
 @Getter
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
+@EqualsAndHashCode
 public class KafkaReporterConfiguration implements ReporterConfiguration {
 
   private String bootstrapServers;
@@ -40,4 +42,8 @@ public class KafkaReporterConfiguration implements ReporterConfiguration {
   private String schemaRegistryUrl;
   private List<Map<String, String>> additionalProperties;
 
+
+  public String hash(){
+    return "hash-" + hashCode();
+  }
 }

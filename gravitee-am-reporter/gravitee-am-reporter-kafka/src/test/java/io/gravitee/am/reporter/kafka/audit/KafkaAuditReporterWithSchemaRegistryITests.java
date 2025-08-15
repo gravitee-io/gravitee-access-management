@@ -24,6 +24,7 @@ import io.confluent.kafka.schemaregistry.client.SchemaMetadata;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import io.confluent.kafka.serializers.json.KafkaJsonSchemaDeserializer;
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.am.reporter.kafka.AuditValueFactory;
 import io.gravitee.am.reporter.kafka.JUnitConfiguration;
 import io.gravitee.am.reporter.kafka.KafkaReporterConfiguration;
@@ -82,6 +83,9 @@ public class KafkaAuditReporterWithSchemaRegistryITests {
     protected SchemaRegistryContainer schemaRegistryContainer;
 
     @Autowired
+    private WriteStreamRegistry writeStreamRegistry;
+
+    @Autowired
     protected Vertx vertx;
 
     @Autowired
@@ -95,7 +99,7 @@ public class KafkaAuditReporterWithSchemaRegistryITests {
 
     @BeforeEach
     void init() throws Exception {
-        this.kafkaAuditReporter = new KafkaAuditReporter(configuration, vertx, graviteeContext, node);
+        this.kafkaAuditReporter = new KafkaAuditReporter(configuration, vertx, graviteeContext, writeStreamRegistry, node);
 
         context.getAutowireCapableBeanFactory().autowireBean(kafkaAuditReporter);
 
