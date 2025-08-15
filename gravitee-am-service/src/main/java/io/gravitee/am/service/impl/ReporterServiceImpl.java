@@ -80,8 +80,8 @@ public class ReporterServiceImpl implements ReporterService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReporterServiceImpl.class);
     private static final int TABLE_SUFFIX_MAX_LENGTH = 30;
     private static final String REPORTER_AM_JDBC = "reporter-am-jdbc";
-    public static final String REPORTER_AM_FILE = "reporter-am-file";
-    public static final String REPORTER_CONFIG_FILENAME = "filename";
+    private static final String REPORTER_AM_FILE = "reporter-am-file";
+    private static final String REPORTER_CONFIG_FILENAME = "filename";
     public static final String MANAGEMENT_TYPE = Scope.MANAGEMENT.getRepositoryPropertyKey() + ".type";
     public static final String MONGODB = "mongodb";
     // Regex as defined into the Reporter plugin schema in order to apply the same validation rule
