@@ -291,12 +291,6 @@ public class ReporterServiceImpl implements ReporterService {
                 return Single.error(new ReporterConfigurationException("Filename is invalid"));
             }
 
-            // Need to ensure there are no negative or 0 values provided for the 'retainDays' attribute.
-            final Optional<Long> retainDaysValue = getRetainDaysValue(configuration);
-            if (retainDaysValue.isPresent() && retainDaysValue.get() <= 0) {
-                return Single.error(new ReporterConfigurationException("Retain days must be greater than 0"));
-            }
-
             result = reporterRepository.findByReference(reporter.getReference())
                     .filter(r -> r.getType().equalsIgnoreCase(REPORTER_AM_FILE))
                     .filter(r -> reporterId == null || !r.getId().equals(reporterId)) // exclude 'self' in case of update
@@ -316,14 +310,6 @@ public class ReporterServiceImpl implements ReporterService {
         }
 
         return result;
-    }
-
-    private Optional<Long> getRetainDaysValue(JsonObject configuration) {
-        try {
-            return Optional.of(configuration.getLong(REPORTER_CONFIG_RETAIN_DAYS));
-        } catch(NullPointerException | ClassCastException e) {
-            return Optional.empty();
-        }
     }
 
     private NewReporter createMongoReporter(Reference reference) {
