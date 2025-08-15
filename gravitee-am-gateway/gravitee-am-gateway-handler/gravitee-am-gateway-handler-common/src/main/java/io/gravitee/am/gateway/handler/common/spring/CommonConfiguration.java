@@ -61,7 +61,6 @@ import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
 import io.gravitee.am.gateway.handler.common.service.impl.RevokeTokenGatewayServiceImpl;
-import io.gravitee.am.gateway.handler.common.service.mfa.DomainEventListener;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.UserEventListener;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
@@ -421,7 +420,7 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public DomainEventListener domainEventListener() {
+    public DomainEventListenerImpl domainEventListener() {
         return new DomainEventListenerImpl();
     }
 

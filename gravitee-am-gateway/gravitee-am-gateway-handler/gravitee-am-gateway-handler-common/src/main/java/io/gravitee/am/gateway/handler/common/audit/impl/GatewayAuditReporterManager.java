@@ -19,6 +19,7 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ReporterEvent;
 import io.gravitee.am.common.utils.GraviteeContext;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
+import io.gravitee.am.gateway.handler.common.service.DomainAwareListener;
 import io.gravitee.am.gateway.handler.common.utils.Tuple;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Environment;
@@ -33,7 +34,6 @@ import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.common.event.Event;
-import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -52,7 +52,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GatewayAuditReporterManager extends AbstractService<AuditReporterManager> implements AuditReporterManager, EventListener<ReporterEvent, Payload>, InitializingBean {
+public class GatewayAuditReporterManager extends AbstractService<AuditReporterManager> implements AuditReporterManager, DomainAwareListener<ReporterEvent, Payload>, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(GatewayAuditReporterManager.class);
     private String deploymentId;
@@ -97,9 +97,8 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                     .subscribe(tupleReportersContext -> {
                                 if (!tupleReportersContext.getT1().isEmpty()) {
                                     this.organizationId = tupleReportersContext.getT2().getOrganizationId();
-                                    tupleReportersContext.getT1().forEach(reporter -> {
-                                        startReporterProvider(reporter, tupleReportersContext.getT2());
-                                    });
+                                    tupleReportersContext.getT1().forEach(reporter -> startReporterProvider(reporter, tupleReportersContext.getT2()));
+
                                     logger.info("Reporters loaded for domain {}", domain.getName());
                                 } else {
                                     logger.info("\tThere is no reporter to start");
@@ -205,12 +204,12 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         tupleReporterContext -> {
-                            if (reporterPlugins.containsKey(reporterId)) {
-                                updateReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
-                            } else {
-                                startReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
+                            boolean loaded = reporterPlugins.containsKey(reporterId) ?
+                                    updateReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2()):
+                                    startReporterProvider(tupleReporterContext.getT1(), tupleReporterContext.getT2());
+                            if(loaded) {
+                                logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                             }
-                            logger.info("Reporter {} {}d for domain {}", reporterId, eventType, domain.getName());
                         },
                         error -> logger.error("Unable to {} reporter for domain {}", eventType, domain.getName(), error));
     }
@@ -222,18 +221,18 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         stopReporterProvider(reporterId, reporter);
     }
 
-    private void startReporterProvider(Reporter reporter, GraviteeContext context) {
+    private boolean startReporterProvider(Reporter reporter, GraviteeContext context) {
         if (!reporter.isEnabled()) {
             logger.info("\tReporter disabled: {} [{}]", reporter.getName(), reporter.getType());
-            return;
+            return false;
         }
         if (!needDeployment(reporter)) {
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
-            return;
+            return false;
         }
         if (reporter.getReference().type() == ReferenceType.ORGANIZATION && !reporter.isInherited()) {
             logger.info("Reporter {} [{}] is linked to the organization {} but is not inherited, won't be started", reporter.getId(), reporter.getType(), organizationId);
-            return;
+            return false;
         }
         logger.info("\tInitializing reporter: {} [{}]", reporter.getName(), reporter.getType());
         var providerConfiguration = new ReporterProviderConfiguration(reporter, context);
@@ -249,9 +248,11 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 AuditReporterVerticle.incrementActiveReporter();
             } catch (Exception ex) {
                 logger.error("Unexpected error while starting reporter", ex);
+                return false;
             }
 
         }
+        return true;
     }
 
     private void stopReporterProvider(String reporterId, io.gravitee.am.reporter.api.provider.Reporter reporter) {
@@ -265,12 +266,13 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         }
     }
 
-    private void updateReporterProvider(Reporter reporter, GraviteeContext context) {
+    private boolean updateReporterProvider(Reporter reporter, GraviteeContext context) {
         if (needDeployment(reporter)) {
             stopReporterProvider(reporter.getId(), reporterPlugins.get(reporter.getId()));
-            startReporterProvider(reporter, context);
+            return startReporterProvider(reporter, context);
         } else {
             logger.info("Reporter {} already up to date for Domain {}", reporter.getId(), domain.getName());
+            return false;
         }
     }
 
@@ -281,6 +283,11 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 .filter(io.gravitee.am.reporter.api.provider.Reporter::canSearch)
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Override
+    public String getDomainId() {
+        return domain.getId();
     }
 
     /**

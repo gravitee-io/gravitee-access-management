@@ -24,12 +24,11 @@ import io.gravitee.am.gateway.handler.common.client.ClientManager;
 import io.gravitee.am.gateway.handler.common.email.EmailManager;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
-import io.gravitee.am.gateway.handler.common.group.impl.InMemoryGroupManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManager;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
-import io.gravitee.am.gateway.handler.common.service.mfa.DomainEventListener;
 import io.gravitee.am.gateway.handler.common.service.mfa.UserEventListener;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.DomainEventListenerImpl;
 import io.gravitee.am.gateway.handler.common.utils.ConfigurationHelper;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
@@ -133,7 +132,7 @@ public class SecurityDomainRouterFactory {
         components.add(PasswordPolicyManager.class);
         components.add(RevokeTokenGatewayService.class);
         components.add(UserEventListener.class);
-        components.add(DomainEventListener.class);
+        components.add(DomainEventListenerImpl.class);
 
         if (ConfigurationHelper.useInMemoryRoleAndGroupManager(environment)) {
             components.add(InMemoryRoleManager.class);
