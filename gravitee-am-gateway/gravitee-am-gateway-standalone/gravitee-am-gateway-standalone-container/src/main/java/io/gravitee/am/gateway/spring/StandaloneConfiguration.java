@@ -20,7 +20,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.EventManager;
+import io.gravitee.am.common.utils.GraviteeContextHolder;
 import io.gravitee.am.gateway.configuration.ConfigurationChecker;
+import io.gravitee.am.gateway.core.reporter.GlobalReporterConfiguration;
 import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
 import io.gravitee.am.gateway.node.GatewayNodeMetadataResolver;
@@ -75,7 +77,7 @@ import org.springframework.core.env.Environment;
         BotDetectionSpringConfiguration.class,
         DeviceIdentifierSpringConfiguration.class,
         PasswordDictionaryConfiguration.class,
-        AuthenticationDeviceNotifierSpringConfiguration.class,
+        AuthenticationDeviceNotifierSpringConfiguration.class
 })
 public class StandaloneConfiguration {
 
@@ -138,5 +140,10 @@ public class StandaloneConfiguration {
     @Qualifier("EnvironmentWithFallback")
     public RepositoriesEnvironment repositoriesEnvironment(Environment environment){
         return new RepositoriesEnvironment(environment);
+    }
+
+    @Bean
+    public GraviteeContextHolder graviteeContextHolder() {
+        return new GraviteeContextHolder();
     }
 }
