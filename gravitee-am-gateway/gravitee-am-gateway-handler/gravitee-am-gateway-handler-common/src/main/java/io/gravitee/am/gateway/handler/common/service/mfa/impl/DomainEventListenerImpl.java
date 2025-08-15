@@ -19,13 +19,14 @@ package io.gravitee.am.gateway.handler.common.service.mfa.impl;
 
 import io.gravitee.am.common.event.DomainEvent;
 import io.gravitee.am.common.event.EventManager;
-import io.gravitee.am.gateway.handler.common.service.mfa.DomainEventListener;
+import io.gravitee.am.gateway.handler.common.service.DomainAwareListener;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.gateway.api.RateLimitRepository;
 import io.gravitee.am.repository.gateway.api.VerifyAttemptRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.service.AbstractService;
+import io.gravitee.common.service.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -34,7 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author GraviteeSource Team
  */
 @Slf4j
-public class DomainEventListenerImpl extends AbstractService implements DomainEventListener {
+public class DomainEventListenerImpl extends AbstractService implements DomainAwareListener<DomainEvent, Domain>, Service {
 
     @Autowired
     private RateLimitRepository rateLimitRepository;

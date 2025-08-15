@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.gateway.handler.common.service.mfa;
+package io.gravitee.am.gateway.handler.common.service;
 
 
-import io.gravitee.am.common.event.DomainEvent;
-import io.gravitee.am.model.Domain;
 import io.gravitee.common.event.EventListener;
-import io.gravitee.common.service.Service;
 
-public interface DomainEventListener extends EventListener<DomainEvent, Domain>, Service {
+public interface DomainAwareListener<T extends Enum, S> extends EventListener<T, S> {
     String getDomainId();
 
 }
