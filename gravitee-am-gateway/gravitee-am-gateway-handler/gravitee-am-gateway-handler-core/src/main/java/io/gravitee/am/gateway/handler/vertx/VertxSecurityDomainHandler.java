@@ -27,8 +27,8 @@ import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.flow.FlowManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.service.RevokeTokenGatewayService;
-import io.gravitee.am.gateway.handler.common.service.mfa.DomainEventListener;
 import io.gravitee.am.gateway.handler.common.service.mfa.UserEventListener;
+import io.gravitee.am.gateway.handler.common.service.mfa.impl.DomainEventListenerImpl;
 import io.gravitee.am.gateway.handler.manager.authdevice.notifier.AuthenticationDeviceNotifierManager;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
@@ -208,7 +208,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         components.add(PasswordPolicyManager.class);
         components.add(RevokeTokenGatewayService.class);
         components.add(UserEventListener.class);
-        components.add(DomainEventListener.class);
+        components.add(DomainEventListenerImpl.class);
 
 
         components.forEach(componentClass -> {

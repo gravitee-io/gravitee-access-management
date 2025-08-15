@@ -16,6 +16,7 @@
 package io.gravitee.am.reporter.kafka;
 
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.node.api.Node;
 import io.vertx.core.Vertx;
 import org.jetbrains.annotations.NotNull;
@@ -106,5 +107,10 @@ public class JUnitConfiguration implements ApplicationListener<ContextClosedEven
         when(node.hostname()).thenReturn("main.srv.local");
         when(node.id()).thenReturn("node-id");
         return node;
+    }
+
+    @Bean
+    public WriteStreamRegistry writeStreamRegistry(){
+        return new WriteStreamRegistry();
     }
 }
