@@ -40,7 +40,7 @@
 
         <dozer.version>6.5.2</dozer.version>
 
-        <liquibase.version>4.21.1</liquibase.version>
+        <liquibase.version>4.32.0</liquibase.version>
         <liquibase-slf4j.version>4.0.0</liquibase-slf4j.version>
 
         <skip-repositories-tests>true</skip-repositories-tests>
