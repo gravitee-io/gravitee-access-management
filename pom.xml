@@ -123,8 +123,8 @@
         <hazelcast.version>4.1.10</hazelcast.version>
         <!-- External plugins versions -->
         <gravitee-policy-callout-http.version>1.15.1</gravitee-policy-callout-http.version>
-        <gravitee-policy-groovy.version>2.3.0</gravitee-policy-groovy.version>
-        <gravitee-policy-ipfiltering.version>1.8.0</gravitee-policy-ipfiltering.version>
+        <gravitee-policy-groovy.version>3.0.3</gravitee-policy-groovy.version>
+        <gravitee-policy-ipfiltering.version>2.0.0</gravitee-policy-ipfiltering.version>
         <gravitee-policy-request-validation.version>1.12.0</gravitee-policy-request-validation.version>
         <gravitee-policy-latency.version>1.4.0</gravitee-policy-latency.version>
         <gravitee-cockpit-connectors.version>4.0.0</gravitee-cockpit-connectors.version>
