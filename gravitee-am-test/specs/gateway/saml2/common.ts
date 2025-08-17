@@ -125,7 +125,6 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
             const metadataUrl = `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/metadata`;
             const metadataResponse = await performGet(metadataUrl);
             if (metadataResponse.status === 200) {
-                console.log('DEBUG: SAML IdP metadata endpoint is now available!');
                 break;
             } else if (metadataRetries === maxMetadataRetries - 1) {
                 console.warn(`WARNING: SAML metadata endpoint returned ${metadataResponse.status}, SAML IdP may not be properly configured`);
