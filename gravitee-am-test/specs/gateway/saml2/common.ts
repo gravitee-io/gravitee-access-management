@@ -117,24 +117,8 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
     // Restart provider domain to activate SAML IdP endpoints
     await doStartDomain(providerDomain, accessToken);
 
-    // Verify SAML IdP metadata endpoint is available
-    let metadataRetries = 0;
-    const maxMetadataRetries = 5;
-    while (metadataRetries < maxMetadataRetries) {
-        try {
-            const metadataUrl = `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/metadata`;
-            const metadataResponse = await performGet(metadataUrl);
-            if (metadataResponse.status === 200) {
-                break;
-            } else if (metadataRetries === maxMetadataRetries - 1) {
-            }
-        } catch (error) {
-            if (metadataRetries === maxMetadataRetries - 1) {
-            }
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        metadataRetries++;
-    }
+    // Wait a bit for SAML IdP service to be fully ready after domain restart
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Create SAML identity provider in client domain first to get entity ID
     const samlIdp = await createSamlProvider(clientDomain, providerDomain, accessToken, domainSuffix);
