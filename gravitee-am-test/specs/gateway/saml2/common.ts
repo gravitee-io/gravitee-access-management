@@ -25,7 +25,7 @@ import {
 import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
 import { createCertificate } from '@management-commands/certificate-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createApplication, updateApplication, patchApplication } from '@management-commands/application-management-commands';
+import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { createTestApp } from '@utils-commands/application-commands';
@@ -127,11 +127,9 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
             if (metadataResponse.status === 200) {
                 break;
             } else if (metadataRetries === maxMetadataRetries - 1) {
-                console.warn(`WARNING: SAML metadata endpoint returned ${metadataResponse.status}, SAML IdP may not be properly configured`);
             }
         } catch (error) {
             if (metadataRetries === maxMetadataRetries - 1) {
-                console.error(`ERROR: SAML metadata endpoint check failed: ${error.message}`);
             }
         }
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -333,7 +331,6 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
                 break;
             }
         } catch (error) {
-            console.log(`OIDC config attempt ${retries + 1} failed:`, error.message);
         }
         retries++;
     }
@@ -368,8 +365,8 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
         .then((response) => login(response, TEST_USER.username, domains.providerApplication.settings.oauth.clientId, TEST_USER.password))
         .then(followRedirectTag('saml-1'))
         .then(followRedirectTag('saml-2'))
-        .then(() => console.debug('SAML user consents granted'))
-        .catch(() => console.debug('Consent flow may have been skipped'));
+        .then(() => {})
+        .catch(() => {});
 
     return {
         domains,
@@ -391,15 +388,14 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
             return Promise.all([
                 deleteDomain(domains.clientDomain.id, accessToken),
                 deleteDomain(domains.providerDomain.id, accessToken)
-            ]).then(() => console.log('SAML Cleanup complete'));
+            ]).then(() => {});
         }
     };
 }
 
 export async function cleanupSamlTestDomains(accessToken: string, domains: SamlTestDomains): Promise<void> {
-    console.log(`Cleaning up domains: ${domains.clientDomain.hrid}, ${domains.providerDomain.hrid}`);
     return Promise.all([
         deleteDomain(domains.clientDomain.id, accessToken),
         deleteDomain(domains.providerDomain.id, accessToken)
-    ]).then(() => console.log('Cleanup complete'));
+    ]).then(() => {});
 }
