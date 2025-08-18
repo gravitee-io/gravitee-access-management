@@ -99,7 +99,7 @@ public class PurgeManager {
             case auth_flow_ctx -> authenticationFlowContextRepository;
             case pushed_authorization_requests -> pushedAuthRequestRepository;
             case ciba_auth_requests -> cibaAuthRequestRepository;
-            case events ->  eventRepository;
+            case events -> eventRepository;
 
             case scope_approvals -> singleDataPlaneProvider.get().getScopeApprovalRepository();
             case login_attempts -> singleDataPlaneProvider.get().getLoginAttemptRepository();

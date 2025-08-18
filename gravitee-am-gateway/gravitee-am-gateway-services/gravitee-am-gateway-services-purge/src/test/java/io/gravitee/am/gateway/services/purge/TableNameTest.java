@@ -16,44 +16,43 @@
 package io.gravitee.am.gateway.services.purge;
 
 import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TableNameTest {
 
     @Test
-    public void shouldIncludeEventsTable() {
-        // Given: Get all table names
-        TableName[] allTables = TableName.values();
-        List<String> tableNames = Arrays.stream(allTables).map(TableName::name).toList();
+    public void shouldIncludeAllTableNames() {
+        TableName[] actual = TableName.values();
 
-        // Then: Verify events table is included
-        assertTrue(tableNames.contains("events"), "Events table should be included in TableName.values()");
-        
-        // Log all tables for debugging
-        System.out.println("All available tables: " + tableNames);
-        System.out.println("Total number of tables: " + allTables.length);
+        TableName[] expected = new TableName[] {
+            TableName.access_tokens,
+            TableName.authorization_codes,
+            TableName.refresh_tokens,
+            TableName.scope_approvals,
+            TableName.request_objects,
+            TableName.login_attempts,
+            TableName.uma_permission_ticket,
+            TableName.auth_flow_ctx,
+            TableName.pushed_authorization_requests,
+            TableName.ciba_auth_requests,
+            TableName.user_activities,
+            TableName.devices,
+            TableName.events
+        };
+        assertThat(actual).containsExactlyInAnyOrder(expected);
     }
 
     @Test
-    public void shouldFindEventsTableByName() {
-        // Given: Look for events table by name
-        var eventsTable = TableName.getValueOf("events");
-
-        // Then: Should find the events table
-        assertTrue(eventsTable.isPresent(), "Should find events table by name");
-        assertEquals(TableName.events, eventsTable.get(), "Should return correct events table enum");
+    public void getValueOf_shouldResolveEveryDeclaredEnum() {
+        for (TableName t : TableName.values()) {
+            assertThat(TableName.getValueOf(t.name()))
+                .as("getValueOf should resolve %s", t.name())
+                .hasValue(t);
+        }
     }
 
     @Test
-    public void shouldNotFindNonExistentTable() {
-        // Given: Look for non-existent table
-        var nonExistentTable = TableName.getValueOf("non_existent_table");
-
-        // Then: Should not find the table
-        assertFalse(nonExistentTable.isPresent(), "Should not find non-existent table");
+    public void getValueOf_shouldReturnEmptyForUnknown() {
+        assertThat(TableName.getValueOf("non_existent_table")).isEmpty();
     }
-} 
+}
