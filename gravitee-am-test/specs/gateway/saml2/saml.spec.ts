@@ -122,7 +122,7 @@ describe('SAML Single Logout (SLO)', () => {
 
 
     it('should support SLO initiation after successful authentication', async () => {
-        // First perform successful authentication to establish session
+        // First, perform successful authentication to establish the session
         const loginResponse = await samlFixture.login(TEST_USER.username, TEST_USER.password);
         expect(loginResponse.status).toBe(302);
         
@@ -134,9 +134,6 @@ describe('SAML Single Logout (SLO)', () => {
         expect(samlConfig.singleLogoutServiceUrl).toBeDefined();
         
         // Test SLO endpoint accessibility and basic SAML handling
-        // Note: Full SLO testing would require active session state, 
-        // but we can verify the endpoint handles SAML LogoutRequests properly
-        
         const logoutRequestXml = createSamlLogoutRequest(
             samlConfig.entityId,
             samlConfig.singleLogoutServiceUrl,
@@ -162,7 +159,7 @@ describe('SAML Single Logout (SLO)', () => {
                 expect(sloResponse.headers.location).toBeDefined();
             }
         } catch (error) {
-            // If SLO endpoint doesn't exist or isn't properly configured, 
+            // If the SLO endpoint doesn't exist or isn't properly configured,
             // at least verify the endpoint URL is properly constructed
             expect(samlConfig.singleLogoutServiceUrl).toContain(samlFixture.domains.providerDomain.hrid);
             expect(samlConfig.singleLogoutServiceUrl).toContain('/saml2/idp/SLO');
@@ -278,14 +275,6 @@ describe('SAML Security Configuration', () => {
         // Verify signature algorithm configuration
         expect(samlConfig.signatureAlgorithm).toBe('RSA_SHA256');
         expect(samlConfig.digestAlgorithm).toBe('SHA256');
-
-        // These are secure, modern algorithms
-        expect(['RSA_SHA256', 'RSA_SHA512']).toContain(samlConfig.signatureAlgorithm);
-        expect(['SHA256', 'SHA512']).toContain(samlConfig.digestAlgorithm);
-
-        // Validate algorithm format
-        expect(samlConfig.signatureAlgorithm).toMatch(/^[A-Z0-9_]+$/);
-        expect(samlConfig.digestAlgorithm).toMatch(/^[A-Z0-9_]+$/);
     });
 
     it('should validate SAML NameID format configuration', async () => {
@@ -381,19 +370,18 @@ async function interceptSamlResponse(fixture: SamlFixture, username: string, pas
     const formAction = $loginForm('form').attr('action');
     const fullFormAction = formAction?.startsWith('http') ? formAction : `${process.env.AM_GATEWAY_URL}${formAction}`;
     
-    const credentialResponse = await performFormPost(fullFormAction, '', {
+    let currentResponse = await performFormPost(fullFormAction, '', {
         username: username,
         password: password,
         client_id: fixture.domains.providerApplication.settings.oauth.clientId
     });
     
     // Follow the authentication flow redirects looking for SAMLResponse
-    let currentResponse = credentialResponse;
     let attempts = 0;
     const maxAttempts = 10;
     
     while (attempts < maxAttempts) {
-        // Check current response for SAMLResponse
+        // Check the current response for SAMLResponse
         if (currentResponse.headers.location && currentResponse.headers.location.includes('SAMLResponse=')) {
             const urlParams = new URLSearchParams(currentResponse.headers.location.split('?')[1]);
             const samlResponse = urlParams.get('SAMLResponse');
@@ -402,7 +390,7 @@ async function interceptSamlResponse(fixture: SamlFixture, username: string, pas
             }
         }
         
-        // Check response body for SAMLResponse form
+        // Check the response body for SAMLResponse form
         if (currentResponse.text && currentResponse.text.includes('SAMLResponse')) {
             const $responseForm = cheerio.load(currentResponse.text);
             const samlResponse = $responseForm('input[name="SAMLResponse"]').val() as string;
@@ -448,7 +436,7 @@ function createSamlLogoutRequest(issuer: string, destination: string, nameId: st
 </samlp:LogoutRequest>`;
 }
 
-// Add custom Jest matcher for testing multiple possible values
+// Add a custom Jest matcher for testing multiple possible values
 expect.extend({
     toBeOneOf(received, expected) {
         const pass = expected.includes(received);
