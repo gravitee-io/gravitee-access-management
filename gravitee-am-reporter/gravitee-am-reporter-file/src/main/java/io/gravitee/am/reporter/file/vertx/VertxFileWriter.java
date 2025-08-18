@@ -116,11 +116,15 @@ public class VertxFileWriter<T extends ReportEntry> {
     }
 
     public Future<Void> initialize() {
+        LOGGER.debug("Initializing file reporter, retainDays: {}", retainDays);
         // Calculate Today's Midnight, based on Configured TimeZone (will be in past, even if by a few milliseconds)
         ZonedDateTime now = ZonedDateTime.now(TimeZone.getDefault().toZoneId());
 
         // This will schedule the rollover event to the next midnight
         scheduleNextRollover(now);
+
+        // Clean up any old files since we started last
+        this.removeOldFiles();
 
         return setFile(now);
     }
@@ -219,6 +223,7 @@ public class VertxFileWriter<T extends ReportEntry> {
 
         // Get tomorrow's midnight based on Configured TimeZone
         ZonedDateTime midnight = toMidnight(now);
+        LOGGER.debug("Scheduling next rollover for {}", midnight);
 
         // Schedule next rollover event to occur, based on local machine's Unix Epoch milliseconds
         long delay = midnight.toInstant().toEpochMilli() - now.toInstant().toEpochMilli();
@@ -252,25 +257,40 @@ public class VertxFileWriter<T extends ReportEntry> {
     }
 
     protected void removeOldFiles() {
-        if (retainDays > 0) {
-            long now = System.currentTimeMillis();
-            File file = new File(this.filename);
+        if (retainDays <= 0) {
+            LOGGER.debug("No file retention configured");
+            return;
+        }
 
-            if (rolloverFiles != null) {
-                File dir = new File(file.getParent());
-                String[] logList = dir.list();
-                for (int i = 0; i < logList.length; i++) {
-                    String fn = logList[i];
-                    if (rolloverFiles.matcher(fn).matches()) {
-                        File f = new File(dir, fn);
-                        if (shouldDeleteFile(f, now)) {
-                            boolean fileDeleted = f.delete();
-                            if (!fileDeleted) {
-                                LOGGER.debug("File [{}] has not been removed", fn);
-                            }
-                        }
+        if (rolloverFiles == null) {
+            return;
+        }
+
+        long now = System.currentTimeMillis();
+        File file = new File(this.filename);
+
+
+        File dir = new File(file.getParent());
+        String[] logList = dir.list();
+        if (logList == null) {
+            return;
+        }
+
+        for (String fn : logList) {
+            LOGGER.debug("Checking file [{}]", fn);
+            if (rolloverFiles.matcher(fn).matches()) {
+                File f = new File(dir, fn);
+                if (shouldDeleteFile(f, now)) {
+                    LOGGER.debug("File [{}] should be removed", fn);
+                    boolean fileDeleted = f.delete();
+                    if (!fileDeleted) {
+                        LOGGER.warn("File [{}] has not been removed", fn);
                     }
+                } else {
+                    LOGGER.debug("File [{}] should not be removed", fn);
                 }
+            } else {
+                LOGGER.debug("File [{}] does not match the rollover pattern", fn);
             }
         }
     }
