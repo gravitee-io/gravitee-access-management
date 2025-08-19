@@ -15,10 +15,17 @@
  */
 package io.gravitee.am.repository.redis.ratelimit;
 
-import org.springframework.context.annotation.ComponentScan;
+import io.gravitee.am.repository.redis.common.RedisConnectionFactory;
+import io.gravitee.am.repository.redis.vertx.RedisClient;
+import io.gravitee.platform.repository.api.Scope;
+import io.vertx.core.Vertx;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
-import java.net.URI;
+import java.util.Map;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
@@ -26,7 +33,27 @@ import java.net.URI;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan({"io.gravitee.am.repository.redis.ratelimit", "io.gravitee.am.repository.redis.provider"})
 public class RateLimitRepositoryConfiguration {
 
+    public static final String SCRIPT_RATELIMIT_KEY = "ratelimit";
+    public static final String SCRIPTS_RATELIMIT_LUA = "scripts/ratelimit/ratelimit.lua";
+
+    @Bean("redisRateLimitClient")
+    public RedisClient redisRedisClient(Environment environment, Vertx vertx) {
+        return new RedisConnectionFactory(
+                environment,
+                vertx,
+                Scope.RATE_LIMIT.getName(),
+                Map.of(SCRIPT_RATELIMIT_KEY, SCRIPTS_RATELIMIT_LUA)
+        )
+                .createRedisClient();
+    }
+
+    @Bean
+    public RedisRateLimitRepository redisRateLimitRepository(
+            @Qualifier("redisRateLimitClient") RedisClient redisClient,
+            @Value("${ratelimit.redis.operation.timeout:10}") int operationTimeout
+    ) {
+        return new RedisRateLimitRepository(redisClient, operationTimeout);
+    }
 }
