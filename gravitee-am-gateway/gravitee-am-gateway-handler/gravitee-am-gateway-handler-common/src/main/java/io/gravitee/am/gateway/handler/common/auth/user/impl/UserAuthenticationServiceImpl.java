@@ -243,22 +243,28 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         final String source = preConnectedUser.getSource();
         final String externalId = preConnectedUser.getExternalId();
         final String username = preConnectedUser.getUsername();
+        LOGGER.debug("PreConnectedUser: {}", preConnectedUser);
         final String linkedAccount = (String) executionContext.getAttribute(ConstantKeys.LINKED_ACCOUNT_ID_CONTEXT_KEY);
         final boolean accountLinkingMode = linkedAccount != null;
+        LOGGER.debug("Account linking mode: {}", accountLinkingMode);
+        LOGGER.debug("Account linked with user {}", linkedAccount);
         final Maybe<User> findExistingUser =
                 accountLinkingMode ? userService.findById(linkedAccount) :
                         userService.findByExternalIdAndSource(externalId, source)
                                 .switchIfEmpty(Maybe.defer(() -> userService.findByUsernameAndSource(username, source)));
-
         return findExistingUser
                 .switchIfEmpty(Single.error(() -> new UserNotFoundException(username)))
                 .flatMap(user -> isIndefinitelyLocked(user) ?
                         Single.error(new AccountLockedException("User " + user.getUsername() + " is locked")) :
                         Single.just(user)
                 )
-                .flatMap(existingUser -> update(existingUser, preConnectedUser, afterAuthentication, accountLinkingMode))
+                .flatMap(existingUser -> {
+                    LOGGER.debug("Existing user: {}", existingUser);
+                    return update(existingUser, preConnectedUser, afterAuthentication, accountLinkingMode);
+                })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof UserNotFoundException) {
+                        LOGGER.debug("User not found, creating a new user");
                         return create(preConnectedUser);
                     }
                     return Single.error(ex);
@@ -325,10 +331,12 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         }
 
         // check if it's a linked account
+        LOGGER.debug("Evaluating account linking mode");
         if (isAccountLinked(accountLinking, existingUser, preConnectedUser)) {
             upsertLinkedIdentities(existingUser, preConnectedUser);
             updateActions.updateIdentities(true);
         } else {
+            LOGGER.debug("Account not linked");
             // set external id
             existingUser.setExternalId(preConnectedUser.getExternalId());
 
@@ -347,8 +355,11 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             }
 
             // set roles and groups
+            LOGGER.debug("Updating roles and groups of not linked account");
+            LOGGER.debug("Existing dynamic roles: {}, preconnected user roles: {}", existingUser.getDynamicRoles(), preConnectedUser.getDynamicRoles());
             updateActions.updateDynamicRole(!Objects.equals(existingUser.getDynamicRoles(), preConnectedUser.getDynamicRoles()));
             updateActions.updateDynamicGroup(!Objects.equals(existingUser.getDynamicGroups(), preConnectedUser.getDynamicGroups()));
+            LOGGER.debug("Existing roles: {}, preconnected user roles: {}", existingUser.getRoles(), preConnectedUser.getRoles());
             existingUser.setDynamicRoles(preConnectedUser.getDynamicRoles());
             existingUser.setDynamicGroups(preConnectedUser.getDynamicGroups());
 
@@ -362,6 +373,8 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
             extractAdditionalInformation(existingUser, additionalInformation);
         }
+
+        LOGGER.debug("All update Actions: {}", updateActions);
 
         return userService.update(existingUser, updateActions);
     }
@@ -437,13 +450,17 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                                     User existingUser,
                                     User preConnectedUser) {
         if (Boolean.TRUE.equals(accountLinking)) {
+            LOGGER.debug("Account linked from policy");
             return true;
         }
 
-        return ofNullable(existingUser.getIdentities())
+        final boolean isLinked = ofNullable(existingUser.getIdentities())
                 .orElse(List.of())
                 .stream()
                 .anyMatch(u -> u.getUserId().equals(preConnectedUser.getExternalId()) && u.getProviderId().equals(preConnectedUser.getSource()));
+        LOGGER.debug("Account linked from existing identities: {}", isLinked);
+
+        return isLinked;
     }
 
     private void upsertLinkedIdentities(User existingUser, User preConnectedUser) {
