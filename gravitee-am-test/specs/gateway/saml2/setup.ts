@@ -25,7 +25,6 @@ import {
 import {createIdp, deleteIdp, getAllIdps} from '@management-commands/idp-management-commands';
 import {createCertificate} from '@management-commands/certificate-management-commands';
 import {requestAdminAccessToken} from '@management-commands/token-management-commands';
-import {createApplication, updateApplication} from '@management-commands/application-management-commands';
 import {Domain} from '@management-models/Domain';
 import {Application} from '@management-models/Application';
 import {createTestApp} from '@utils-commands/application-commands';
@@ -112,9 +111,6 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
         }
     });
 
-    // Wait for SAML configuration to be applied and restart domain to activate SAML IdP service
-    await waitFor(1000);
-
     // Restart provider domain to activate SAML IdP endpoints
     await doStartDomain(providerDomain, accessToken);
 
@@ -124,28 +120,10 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
     // Create provider application with client ID that matches SAML entity ID
     const samlEntityId = JSON.parse(samlIdp.configuration).entityId;
 
-    const providerApplication = await createAppWithSpecificClientId(
-        `saml-provider-app-${domainSuffix}`,
-        providerDomain,
-        accessToken,
-        inlineIdp.id,
-        process.env.AM_GATEWAY_URL + '/' + clientDomain.hrid + '/login/callback',
-        samlEntityId,  // Use SAML entity ID as client ID
-        true,  // This is a provider app that needs SAML settings
-        certificate.id  // Pass certificate ID for SAML configuration
-    );
-
-    // Wait for the provider application to be available and verify client ID
-    await waitFor(2000);
+    const providerApplication = await createProviderApp(providerDomain, clientDomain, accessToken, inlineIdp.id, certificate.id, samlEntityId);
 
     // Create client application
-    const clientApplication = await createApp(
-        `saml-client-app-${domainSuffix}`,
-        clientDomain,
-        accessToken,
-        samlIdp.id,
-        'https://auth-nightly.gravitee.io/myApp/callback'
-    );
+    const clientApplication = await createClientApp(clientDomain, accessToken, samlIdp.id);
 
     // Start both domains
     const startedProviderDomain = await doStartDomain(providerDomain, accessToken);
@@ -207,80 +185,56 @@ async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, 
     });
 }
 
-async function createAppWithSpecificClientId(name: string, domain: Domain, accessToken: string, idpId: string, redirectUri: string, clientId: string, isProviderApp: boolean = false, certificateId?: string): Promise<Application> {
-    // Create application directly without using createTestApp to avoid client ID override
-    const createAppSettings = {
-        name: name,
-        type: 'web',
-        clientId: clientId,  // This will be the exact client ID we want
-        redirectUris: [redirectUri]
-    };
+// A new function specifically for SAML Provider apps
+async function createProviderApp(domain: Domain, clientDomain: Domain, accessToken: string, idpId: string, certificateId: string, clientId: string): Promise<Application> {
+    const appName = 'saml-provider-app-' + Math.random().toString(36).substring(7);
+     const redirectUri = process.env.AM_GATEWAY_URL + '/' + clientDomain.hrid + '/login/callback';
 
-    const app = await createApplication(domain.id, accessToken, createAppSettings);
-    expect(app).toBeDefined();
-
-    // Configure OAuth and SAML settings via update
-    const settings: any = {
+    // Define only the settings that are specific to a Provider
+    const providerSettings = {
         oauth: {
             redirectUris: [redirectUri],
+            singleSignOut: true,
             grantTypes: ['authorization_code', 'refresh_token'],
             responseTypes: ['code']
         },
-    };
-
-    // Configure SAML settings for provider applications
-    if (isProviderApp && certificateId) {
-        settings.saml = {
-            entityId: clientId,  // Use the same entity ID as the client ID for SAML
+        saml: {
+            attributeConsumeServiceUrl: `${process.env.AM_GATEWAY_URL}/${domain.hrid}/login/callback`,
+            singleLogoutServiceUrl: `${process.env.AM_GATEWAY_URL}/${domain.hrid}/logout`,
+            entityId: clientId,
             wantResponseSigned: false,
             wantAssertionsSigned: false,
             responseBinding: 'HTTP-POST',
-            certificate: certificateId  // Reference the SAML certificate
-        };
-        settings.oauth.singleSignOut = true;
-    }
+            certificate: certificateId,
 
-    const updateBody = {
-        settings,
-        identityProviders: new Set([{identity: idpId, priority: -1}]),
+        }
     };
 
-    const updatedApp = await updateApplication(domain.id, accessToken, updateBody, app.id);
-    // Preserve the client secret from the original creation
-    updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-
-    expect(updatedApp).toBeDefined();
-    expect(updatedApp.settings.oauth.clientId).toBe(clientId);  // Verify exact client ID match
-    return updatedApp;
+    // Call the common function with the specific settings
+    return createTestApp(appName, domain, accessToken, 'web', {
+        clientId: clientId, // Pass the specific client ID here
+        settings: providerSettings,
+        identityProviders: new Set([{identity: idpId, priority: -1}]),
+    });
 }
 
-async function createApp(name: string, domain: Domain, accessToken: string, idpId: string, redirectUri: string, isProviderApp: boolean = false): Promise<Application> {
-    const settings: any = {
+// A new function for SAML Client apps (which might just be createTestApp)
+async function createClientApp(domain: Domain, accessToken: string, idpId: string): Promise<Application> {
+    const appName = 'saml-client-app-' + Math.random().toString(36).substring(7);
+    const redirectUri = 'https://auth-nightly.gravitee.io/myApp/callback';
+
+    const clientSettings = {
         oauth: {
             redirectUris: [redirectUri],
             grantTypes: ['authorization_code', 'refresh_token'],
             responseTypes: ['code']
-        },
+        }
     };
 
-    // Configure SAML settings for provider applications
-    if (isProviderApp) {
-        settings.saml = {
-            attributeConsumeServiceUrl: `${process.env.AM_GATEWAY_URL}/${name}/login/callback`,
-            singleLogoutServiceUrl: `${process.env.AM_GATEWAY_URL}/${name}/logout`,
-            entityId: `${name}-entity`,
-            wantResponseSigned: false,
-            wantAssertionsSigned: false,
-            responseBinding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST'
-        };
-    }
-
-    const app = await createTestApp(name, domain, accessToken, 'web', {
-        settings,
+    return createTestApp(appName, domain, accessToken, 'web', {
+        settings: clientSettings,
         identityProviders: new Set([{identity: idpId, priority: -1}]),
     });
-    expect(app).toBeDefined();
-    return app;
 }
 
 async function ensureDefaultIdpIsDeleted(domain: Domain, accessToken: string) {
@@ -341,8 +295,6 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
         .then(followRedirectTag('saml-1'))
         .then(followRedirectTag('saml-2'))
         .then(() => {
-        })
-        .catch(() => {
         });
 
     return {
