@@ -20,19 +20,19 @@ import {
     deleteDomain,
     startDomain,
     waitForDomainStart,
-    patchDomain
+    patchDomain, waitFor
 } from '@management-commands/domain-management-commands';
-import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
-import { createCertificate } from '@management-commands/certificate-management-commands';
-import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { Domain } from '@management-models/Domain';
-import { Application } from '@management-models/Application';
-import { createTestApp } from '@utils-commands/application-commands';
-import { expect } from '@jest/globals';
-import { initiateLoginFlow, login } from '@gateway-commands/login-commands';
-import {  getWellKnownOpenIdConfiguration, performGet } from '@gateway-commands/oauth-oidc-commands';
-import { BasicResponse, followRedirect, followRedirectTag } from '@utils-commands/misc';
+import {createIdp, deleteIdp, getAllIdps} from '@management-commands/idp-management-commands';
+import {createCertificate} from '@management-commands/certificate-management-commands';
+import {requestAdminAccessToken} from '@management-commands/token-management-commands';
+import {createApplication, updateApplication} from '@management-commands/application-management-commands';
+import {Domain} from '@management-models/Domain';
+import {Application} from '@management-models/Application';
+import {createTestApp} from '@utils-commands/application-commands';
+import {expect} from '@jest/globals';
+import {initiateLoginFlow, login} from '@gateway-commands/login-commands';
+import {getWellKnownOpenIdConfiguration, performGet} from '@gateway-commands/oauth-oidc-commands';
+import {BasicResponse, followRedirect, followRedirectTag} from '@utils-commands/misc';
 import cheerio from 'cheerio';
 import faker from 'faker';
 
@@ -40,6 +40,7 @@ export const TEST_USER = {
     firstname: faker.name.firstName(),
     lastname: faker.name.lastName(),
     username: 'samluser',
+    email: 'samluser@test.com',
     password: '#CoMpL3X-SAML-P@SsW0Rd',
 };
 
@@ -112,13 +113,10 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
     });
 
     // Wait for SAML configuration to be applied and restart domain to activate SAML IdP service
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await waitFor(1000);
 
     // Restart provider domain to activate SAML IdP endpoints
     await doStartDomain(providerDomain, accessToken);
-
-    // Wait a bit for SAML IdP service to be fully ready after domain restart
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Create SAML identity provider in client domain first to get entity ID
     const samlIdp = await createSamlProvider(clientDomain, providerDomain, accessToken, domainSuffix);
@@ -137,8 +135,8 @@ export async function setupSamlTestDomains(domainSuffix: string): Promise<SamlTe
         certificate.id  // Pass certificate ID for SAML configuration
     );
 
-    // Wait for provider application to be available and verify client ID
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Wait for the provider application to be available and verify client ID
+    await waitFor(2000);
 
     // Create client application
     const clientApplication = await createApp(
@@ -185,12 +183,12 @@ async function createSamlProvider(clientDomain: Domain, providerDomain: Domain, 
         entityId: `saml-idp-${domainSuffix}`,
         signInUrl: `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/SSO`,
         singleSignOnServiceUrl: `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/SSO`,
-        singleLogoutServiceUrl: `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/SLO`,
+        singleLogoutServiceUrl: `${process.env.AM_GATEWAY_URL}/${providerDomain.hrid}/saml2/idp/logout`,
         wantAssertionsSigned: false,
         wantResponsesSigned: false,
         signatureAlgorithm: 'RSA_SHA256',
         digestAlgorithm: 'SHA256',
-        nameIDFormat: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+        nameIDFormat: 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
         attributeMapping: {
             'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress': 'email',
             'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname': 'firstname',
@@ -239,11 +237,12 @@ async function createAppWithSpecificClientId(name: string, domain: Domain, acces
             responseBinding: 'HTTP-POST',
             certificate: certificateId  // Reference the SAML certificate
         };
+        settings.oauth.singleSignOut = true;
     }
 
     const updateBody = {
         settings,
-        identityProviders: new Set([{ identity: idpId, priority: -1 }]),
+        identityProviders: new Set([{identity: idpId, priority: -1}]),
     };
 
     const updatedApp = await updateApplication(domain.id, accessToken, updateBody, app.id);
@@ -267,16 +266,18 @@ async function createApp(name: string, domain: Domain, accessToken: string, idpI
     // Configure SAML settings for provider applications
     if (isProviderApp) {
         settings.saml = {
+            attributeConsumeServiceUrl: `${process.env.AM_GATEWAY_URL}/${name}/login/callback`,
+            singleLogoutServiceUrl: `${process.env.AM_GATEWAY_URL}/${name}/logout`,
             entityId: `${name}-entity`,
             wantResponseSigned: false,
             wantAssertionsSigned: false,
-            responseBinding: 'HTTP-POST'
+            responseBinding: 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST'
         };
     }
 
     const app = await createTestApp(name, domain, accessToken, 'web', {
         settings,
-        identityProviders: new Set([{ identity: idpId, priority: -1 }]),
+        identityProviders: new Set([{identity: idpId, priority: -1}]),
     });
     expect(app).toBeDefined();
     return app;
@@ -303,27 +304,17 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
 
     // Wait for domains to be fully ready and get OIDC configuration
     let clientOpenIdConfiguration: any;
-    let retries = 0;
-    const maxRetries = 10;
 
-    while (!clientOpenIdConfiguration && retries < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        try {
-            const response = await getWellKnownOpenIdConfiguration(domains.clientDomain.hrid);
-            if (response && response.status === 200) {
-                clientOpenIdConfiguration = response.body;
-                break;
-            }
-        } catch (error) {
-        }
-        retries++;
+    const response = await getWellKnownOpenIdConfiguration(domains.clientDomain.hrid);
+    if (response && response.status === 200) {
+        clientOpenIdConfiguration = response.body;
     }
 
     expect(clientOpenIdConfiguration).toBeDefined();
     expect(clientOpenIdConfiguration.authorization_endpoint).toBeDefined();
 
     const navigateToSamlProviderLogin = async (response: BasicResponse) => {
-        const headers = response.headers['set-cookie'] ? { Cookie: response.headers['set-cookie'] } : {};
+        const headers = response.headers['set-cookie'] ? {Cookie: response.headers['set-cookie']} : {};
         const result = await performGet(response.headers['location'], '', headers).expect(200);
         const dom = cheerio.load(result.text);
 
@@ -349,8 +340,10 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
         .then((response) => login(response, TEST_USER.username, domains.providerApplication.settings.oauth.clientId, TEST_USER.password))
         .then(followRedirectTag('saml-1'))
         .then(followRedirectTag('saml-2'))
-        .then(() => {})
-        .catch(() => {});
+        .then(() => {
+        })
+        .catch(() => {
+        });
 
     return {
         domains,
@@ -372,7 +365,8 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
             return Promise.all([
                 deleteDomain(domains.clientDomain.id, accessToken),
                 deleteDomain(domains.providerDomain.id, accessToken)
-            ]).then(() => {});
+            ]).then(() => {
+            });
         }
     };
 }
@@ -381,5 +375,6 @@ export async function cleanupSamlTestDomains(accessToken: string, domains: SamlT
     return Promise.all([
         deleteDomain(domains.clientDomain.id, accessToken),
         deleteDomain(domains.providerDomain.id, accessToken)
-    ]).then(() => {});
+    ]).then(() => {
+    });
 }

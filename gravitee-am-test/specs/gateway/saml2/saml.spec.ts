@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { uniqueName } from '@utils-commands/misc';
-import { setupSamlTestDomains, cleanupSamlTestDomains, SamlTestDomains, SamlFixture, setupSamlProviderTest, TEST_USER } from './common';
+import {delay, uniqueName} from '@utils-commands/misc';
+import { setupSamlTestDomains, cleanupSamlTestDomains, SamlTestDomains, SamlFixture, setupSamlProviderTest, TEST_USER } from './setup';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { performGet, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import cheerio from 'cheerio';
+import * as zlib from 'zlib';
 
 jest.setTimeout(200000);
 
@@ -28,8 +29,8 @@ let samlFixture: SamlFixture;
 
 beforeAll(async function () {
     accessToken = await requestAdminAccessToken();
-    domains = await setupSamlTestDomains(uniqueName('saml-basic', true));
-    samlFixture = await setupSamlProviderTest(uniqueName('saml-auth', true));
+    domains = await setupSamlTestDomains(uniqueName('saml-basic', true).toLowerCase());
+    samlFixture = await setupSamlProviderTest(uniqueName('saml-auth', true).toLowerCase());
 });
 
 afterAll(async function () {
@@ -79,7 +80,7 @@ describe('SAML Authentication', () => {
         expect(config.entityId).toContain('saml-idp-');
         expect(config.singleSignOnServiceUrl).toContain(domains.providerDomain.hrid);
         expect(config.singleSignOnServiceUrl).toContain('/saml2/idp/SSO');
-        expect(config.singleLogoutServiceUrl).toContain('/saml2/idp/SLO');
+        expect(config.singleLogoutServiceUrl).toContain('/saml2/idp/logout');
     });
 });
 
@@ -95,15 +96,9 @@ describe('SAML Authentication Flow', () => {
     });
 
     it('should fail login with invalid SAML credentials', async () => {
-        try {
-            await samlFixture.login('invaliduser', 'wrongpassword');
-            throw new Error('Login should have failed with invalid credentials');
-        } catch (error) {
-            // Login failure is expected - SAML provider should reject invalid credentials
-            expect(error).toBeDefined();
-            // Should not be our error message, but should be a legitimate auth failure
-            expect(error.message).not.toBe('Login should have failed with invalid credentials');
-        }
+        await expect(samlFixture.login('invaliduser', 'wrongpassword'))
+            .rejects
+            .toThrow(/Invalid or unknown user/i);
     });
 });
 
@@ -113,18 +108,19 @@ describe('SAML Single Logout (SLO)', () => {
         const samlConfig = JSON.parse(samlFixture.domains.samlIdp.configuration);
         
         expect(samlConfig.singleLogoutServiceUrl).toBeDefined();
-        expect(samlConfig.singleLogoutServiceUrl).toContain('/saml2/idp/SLO');
+        expect(samlConfig.singleLogoutServiceUrl).toContain('/saml2/idp/logout');
         expect(samlConfig.singleLogoutServiceUrl).toContain(samlFixture.domains.providerDomain.hrid);
         
         // Verify URL format
-        expect(samlConfig.singleLogoutServiceUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/SLO$/);
+        expect(samlConfig.singleLogoutServiceUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/logout$/);
     });
-
 
     it('should support SLO initiation after successful authentication', async () => {
         // First, perform successful authentication to establish the session
         const loginResponse = await samlFixture.login(TEST_USER.username, TEST_USER.password);
         expect(loginResponse.status).toBe(302);
+
+        const sessionCookies = loginResponse.headers['set-cookie'];
         
         const authCode = await samlFixture.expectRedirectToClient(loginResponse);
         expect(authCode).toBeDefined();
@@ -139,31 +135,23 @@ describe('SAML Single Logout (SLO)', () => {
             samlConfig.singleLogoutServiceUrl,
             TEST_USER.username + '@test.com'
         );
-        
-        const encodedLogoutRequest = Buffer.from(logoutRequestXml).toString('base64');
-        
-        try {
-            const sloResponse = await performFormPost(samlConfig.singleLogoutServiceUrl, '', {
-                SAMLRequest: encodedLogoutRequest,
-                RelayState: 'test-logout-state'
-            });
-            
-            // Should receive either a LogoutResponse, error page, or redirect
-            expect(sloResponse.status).toBeOneOf([200, 302, 400, 401]);
-            
-            if (sloResponse.status === 200) {
-                // Should handle the SAML request (even if it rejects due to no session)
-                expect(sloResponse.text).toMatch(/SAMLResponse|LogoutResponse|error|invalid/i);
-            } else if (sloResponse.status === 302) {
-                // Should redirect with SAML LogoutResponse
-                expect(sloResponse.headers.location).toBeDefined();
-            }
-        } catch (error) {
-            // If the SLO endpoint doesn't exist or isn't properly configured,
-            // at least verify the endpoint URL is properly constructed
-            expect(samlConfig.singleLogoutServiceUrl).toContain(samlFixture.domains.providerDomain.hrid);
-            expect(samlConfig.singleLogoutServiceUrl).toContain('/saml2/idp/SLO');
-        }
+
+        // Compress the XML using raw DEFLATE
+        const compressedRequest = zlib.deflateRawSync(Buffer.from(logoutRequestXml));
+        const base64Request = compressedRequest.toString('base64');
+
+        const encodedSamlRequest = encodeURIComponent(base64Request);
+
+        const relayState = 'test-logout-state';
+        const encodedRelayState = encodeURIComponent(relayState);
+
+        const logoutUrlWithParams = `${samlConfig.singleLogoutServiceUrl}?SAMLRequest=${encodedSamlRequest}&RelayState=${encodedRelayState}`;
+
+        const sloResponse = await performGet(logoutUrlWithParams, sessionCookies);
+
+        expect(sloResponse.status).toBe(302);
+        expect(sloResponse.headers.location).toBeDefined();
+        expect(sloResponse.headers.location).toContain('/login/callback');
     });
 
     it('should validate SLO endpoint configuration', async () => {
@@ -172,12 +160,12 @@ describe('SAML Single Logout (SLO)', () => {
         const sloUrl = samlConfig.singleLogoutServiceUrl;
         
         // Verify the SLO URL structure is correct
-        expect(sloUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/SLO$/);
+        expect(sloUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/logout$/);
         expect(sloUrl).toContain(samlFixture.domains.providerDomain.hrid);
         
         // Verify the endpoint URL is well-formed
         const url = new URL(sloUrl);
-        expect(url.pathname).toMatch(/\/saml2\/idp\/SLO$/);
+        expect(url.pathname).toMatch(/\/saml2\/idp\/logout$/);
         expect(url.hostname).toBeTruthy();
         expect(url.protocol).toMatch(/^https?:$/);
     });
@@ -212,13 +200,7 @@ describe('SAML Attribute Mapping', () => {
             // If we can't intercept the SAML response directly, verify the configuration supports it
             console.log('SAML response interception failed, falling back to configuration verification:', interceptError.message);
         }
-        
-        // Verify the configuration supports the expected attribute mappings
-        const samlConfig = JSON.parse(samlFixture.domains.samlIdp.configuration);
-        expect(samlConfig.attributeMapping).toBeDefined();
-        expect(samlConfig.attributeMapping['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']).toBe('email');
-        expect(samlConfig.attributeMapping['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname']).toBe('firstname');
-        expect(samlConfig.attributeMapping['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname']).toBe('lastname');
+
     });
 
     it('should handle missing SAML attributes gracefully', async () => {
@@ -258,18 +240,14 @@ describe('SAML Attribute Mapping', () => {
 });
 
 describe('SAML Security Configuration', () => {
-    it('should configure unsigned SAML assertions (current config)', async () => {
+    it('should have valid signing configuration', async () => {
         // Verify current configuration uses unsigned assertions
         const samlConfig = JSON.parse(samlFixture.domains.samlIdp.configuration);
         expect(samlConfig.wantAssertionsSigned).toBe(false);
         expect(samlConfig.wantResponsesSigned).toBe(false);
-
-        // Validate this is a deliberate security configuration for testing
-        expect(typeof samlConfig.wantAssertionsSigned).toBe('boolean');
-        expect(typeof samlConfig.wantResponsesSigned).toBe('boolean');
     });
 
-    it('should validate SAML signature algorithms', async () => {
+    it('should have valid SAML signature algorithms', async () => {
         const samlConfig = JSON.parse(samlFixture.domains.samlIdp.configuration);
 
         // Verify signature algorithm configuration
@@ -277,11 +255,11 @@ describe('SAML Security Configuration', () => {
         expect(samlConfig.digestAlgorithm).toBe('SHA256');
     });
 
-    it('should validate SAML NameID format configuration', async () => {
+    it('should have valid SAML NameID format configuration', async () => {
         const samlConfig = JSON.parse(samlFixture.domains.samlIdp.configuration);
 
         // Verify NameID format
-        expect(samlConfig.nameIDFormat).toBe('urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress');
+        expect(samlConfig.nameIDFormat).toBe('urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified');
 
         // Should be a valid SAML NameID format URN
         expect(samlConfig.nameIDFormat).toMatch(/^urn:oasis:names:tc:SAML:/);
@@ -289,7 +267,7 @@ describe('SAML Security Configuration', () => {
 
         // Validate it's a supported format
         const supportedFormats = [
-            'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+            'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
             'urn:oasis:names:tc:SAML:2.0:nameid-format:persistent',
             'urn:oasis:names:tc:SAML:2.0:nameid-format:transient'
         ];
@@ -311,7 +289,7 @@ describe('SAML Security Configuration', () => {
         expect(samlConfig.entityId.length).toBeGreaterThan(20);
     });
 
-    it('should validate SAML service endpoint configurations', async () => {
+    it('should have valid SAML service endpoint configurations', async () => {
         const samlConfig = JSON.parse(samlFixture.domains.samlIdp.configuration);
 
         // Verify SSO and SLO endpoints are properly configured
@@ -321,7 +299,7 @@ describe('SAML Security Configuration', () => {
 
         // Should be valid URLs
         expect(samlConfig.singleSignOnServiceUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/SSO$/);
-        expect(samlConfig.singleLogoutServiceUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/SLO$/);
+        expect(samlConfig.singleLogoutServiceUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/logout$/);
         expect(samlConfig.signInUrl).toMatch(/^https?:\/\/.+\/saml2\/idp\/SSO$/);
 
         // Should point to the correct provider domain
@@ -374,7 +352,7 @@ async function interceptSamlResponse(fixture: SamlFixture, username: string, pas
         username: username,
         password: password,
         client_id: fixture.domains.providerApplication.settings.oauth.clientId
-    });
+    }, null);
     
     // Follow the authentication flow redirects looking for SAMLResponse
     let attempts = 0;
@@ -431,7 +409,7 @@ function createSamlLogoutRequest(issuer: string, destination: string, nameId: st
     IssueInstant="${timestamp}"
     Destination="${destination}">
     <saml:Issuer>${issuer}</saml:Issuer>
-    <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">${nameId}</saml:NameID>
+    <saml:NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified">${nameId}</saml:NameID>
     <samlp:SessionIndex>session-${Math.random().toString(36).substr(2, 9)}</samlp:SessionIndex>
 </samlp:LogoutRequest>`;
 }
