@@ -61,7 +61,7 @@ public class WebClientBuilder {
                 .setDefaultPort(port)
                 .setDefaultHost(url.getHost())
                 .setKeepAlive(true)
-                .setMaxPoolSize(httpClientMaxPoolSize())
+                .setMaxPoolSize(10)
                 .setTcpKeepAlive(true)
                 .setConnectTimeout(httpClientTimeout())
                 .setSsl(isSsl);
@@ -111,14 +111,14 @@ public class WebClientBuilder {
     private void configureHttp2Settings(WebClientOptions options) {
         if (isHttp2Enabled()) {
             options.setUseAlpn(true);
-            options.setHttp2MaxPoolSize(http2MaxPoolSize());
+            options.setHttp2MaxPoolSize(options.getMaxPoolSize());
             options.setHttp2ConnectionWindowSize(http2ConnectionWindowSize());
             options.setHttp2KeepAliveTimeout(http2KeepAliveTimeout());
             LOGGER.debug("HTTP/2 enabled with ALPN protocol negotiation");
         } else {
             options.setUseAlpn(false);
             options.setHttp2ClearTextUpgrade(false);
-            LOGGER.debug("HTTP/1.1 mode with optimized connection pooling");
+            LOGGER.debug("HTTP/1.1 enforced");
         }
     }
 
@@ -159,16 +159,8 @@ public class WebClientBuilder {
         return environment.getProperty("httpClient.timeout", Integer.class, 10000);
     }
 
-    private Integer httpClientMaxPoolSize() {
-        return environment.getProperty("httpClient.maxPoolSize", Integer.class, 10);
-    }
-
     private boolean isHttp2Enabled() {
         return environment.getProperty("httpClient.http2.enabled", Boolean.class, true);
-    }
-
-    private Integer http2MaxPoolSize() {
-        return environment.getProperty("httpClient.http2.maxPoolSize", Integer.class, 10);
     }
 
     private Integer http2ConnectionWindowSize() {
