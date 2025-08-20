@@ -190,6 +190,23 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/redis/**/*Test.java</include>
+                        <include>**/ratelimit/**/*Test.java</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/gateway/api/RateLimitRepositoryTest.java</exclude>
+                        <exclude>**/management/**/*Test.java</exclude>
+                        <exclude>**/oauth2/**/*Test.java</exclude>
+                        <exclude>**/oidc/**/*Test.java</exclude>
+                        <exclude>**/gateway/**/*Test.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
