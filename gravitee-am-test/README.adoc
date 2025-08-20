@@ -78,6 +78,7 @@ Add following plugins to your `plugin` directory:
 * gravitee-am-resource-sfr
 * gravitee-am-factor-sms
 * gravitee-service-geoip
+* gravitee-am-gateway-handler-saml2-idp
 
 ==== CIBA delegated service
 Build `gravitee-am-ciba-delegated-service`
