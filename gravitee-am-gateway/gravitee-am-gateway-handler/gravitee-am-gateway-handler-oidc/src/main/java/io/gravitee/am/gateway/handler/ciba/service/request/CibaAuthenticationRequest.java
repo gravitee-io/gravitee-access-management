@@ -20,7 +20,6 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.SecureRandomString;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpHeaders;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
-import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpMethod;
 import io.gravitee.common.http.HttpVersion;
@@ -28,8 +27,6 @@ import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.List;
 
@@ -41,8 +38,6 @@ import static io.gravitee.am.gateway.handler.root.resources.endpoint.ParamUtils.
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Getter
-@Setter
 public class CibaAuthenticationRequest extends OAuth2Request {
     String clientNotificationToken;
     List<String> acrValues;
@@ -52,7 +47,70 @@ public class CibaAuthenticationRequest extends OAuth2Request {
     String bindingMessage;
     String userCode;
     Integer requestedExpiry;
-    User user;
+
+    public String getClientNotificationToken() {
+        return clientNotificationToken;
+    }
+
+    public void setClientNotificationToken(String clientNotificationToken) {
+        this.clientNotificationToken = clientNotificationToken;
+    }
+
+    public String getLoginHintToken() {
+        return loginHintToken;
+    }
+
+    public void setLoginHintToken(String loginHintToken) {
+        this.loginHintToken = loginHintToken;
+    }
+
+    public String getIdTokenHint() {
+        return idTokenHint;
+    }
+
+    public void setIdTokenHint(String idTokenHint) {
+        this.idTokenHint = idTokenHint;
+    }
+
+    public String getLoginHint() {
+        return loginHint;
+    }
+
+    public void setLoginHint(String loginHint) {
+        this.loginHint = loginHint;
+    }
+
+    public String getBindingMessage() {
+        return bindingMessage;
+    }
+
+    public void setBindingMessage(String bindingMessage) {
+        this.bindingMessage = bindingMessage;
+    }
+
+    public String getUserCode() {
+        return userCode;
+    }
+
+    public void setUserCode(String userCode) {
+        this.userCode = userCode;
+    }
+
+    public Integer getRequestedExpiry() {
+        return requestedExpiry;
+    }
+
+    public void setRequestedExpiry(Integer requestedExpiry) {
+        this.requestedExpiry = requestedExpiry;
+    }
+
+    public List<String> getAcrValues() {
+        return acrValues;
+    }
+
+    public void setAcrValues(List<String> acrValues) {
+        this.acrValues = acrValues;
+    }
 
     public static CibaAuthenticationRequest createFrom(RoutingContext context) {
         final HttpServerRequest request = context.request();
