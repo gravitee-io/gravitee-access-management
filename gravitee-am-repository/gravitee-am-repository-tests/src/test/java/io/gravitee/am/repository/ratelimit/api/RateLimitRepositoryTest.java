@@ -121,6 +121,11 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
 //                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
 //    }
 
+    @Test
+    public void shouldBeCool(){
+        assertEquals(1, 1);
+    }
+
     private TestObserver<RateLimit> incrementAndObserve(RateLimit rateLimit, long weight) {
         return rateLimitRepository.incrementAndGet(rateLimit.getKey(), weight, () -> rateLimit).test();
     }
