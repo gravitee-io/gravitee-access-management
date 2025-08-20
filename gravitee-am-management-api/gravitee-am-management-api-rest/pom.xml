@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee.am.management</groupId>
         <artifactId>gravitee-am-management-api</artifactId>
-        <version>4.6.18</version>
+        <version>4.6.18-hotfix.1</version>
     </parent>
 
     <artifactId>gravitee-am-management-api-rest</artifactId>
