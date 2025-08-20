@@ -405,7 +405,6 @@ gateway:
 #httpClient:
 #  timeout: 10000 # in milliseconds
 #  readTimeout: 5000 # in milliseconds
-#  maxPoolSize: 10
 #  proxy:
 #    enabled: false
 #    exclude-hosts: # list of hosts to exclude from proxy (wildcard hosts are supported)
@@ -435,11 +434,10 @@ gateway:
 #      type: jks # Supports jks, pem, pkcs12
 #      path: ${gravitee.home}/security/truststore.jks
 #      password: secret
-#   http2:
-#     enabled: true
-#     maxPoolSize: 10
-#     connectionWindowSize: 65535
-#     keepAliveTimeout: 60 # in seconds
+#  http2:
+#    enabled: true
+#    connectionWindowSize: 65535
+#    keepAliveTimeout: 60 # in seconds
 
 # Organizations and Environments configuration
 # Associate this gateway to a list of environments and their organizations. Use hrids to define these values.
