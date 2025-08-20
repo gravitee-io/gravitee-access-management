@@ -144,7 +144,7 @@
         <gravitee-secretprovider-kubernetes.version>1.0.1</gravitee-secretprovider-kubernetes.version>
 
         <!-- EE plugin included in default bundle -->
-        <gravitee-am-idp-saml2.version>4.0.2</gravitee-am-idp-saml2.version>
+        <gravitee-am-idp-saml2.version>4.0.3</gravitee-am-idp-saml2.version>
         <gravitee-am-idp-ldap.version>2.1.4</gravitee-am-idp-ldap.version>
         <gravitee-am-idp-azure-ad.version>2.0.0</gravitee-am-idp-azure-ad.version>
         <gravitee-am-idp-franceconnect.version>3.1.1</gravitee-am-idp-franceconnect.version>
