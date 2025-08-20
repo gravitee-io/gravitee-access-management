@@ -96,7 +96,6 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                         LOGGER.warn("login_hint match multiple users or no one");
                         throw new InvalidRequestException("Invalid hint");
                     }
-                    authRequest.setUser(users.get(0));
                     authRequest.setSubject(users.get(0).getId());
                     return authRequest;
                 });
@@ -129,7 +128,6 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                             evaluateExp(expirationTime.toInstant().getEpochSecond(), Instant.now(), 0);
                         }
                         return subjectManager.findUserBySub(new io.gravitee.am.common.jwt.JWT(signedJwt.getJWTClaimsSet().getClaims())).map(user -> {
-                            authRequest.setUser(user);
                             authRequest.setSubject(user.getId());
                             return authRequest;
                         }).toSingle();
@@ -182,7 +180,6 @@ public class CibaAuthenticationRequestResolver extends AbstractRequestResolver<C
                     LOGGER.warn("login_hint_token match multiple users or no one");
                     return Single.error(new InvalidRequestException("Invalid hint"));
                 }
-                authRequest.setUser(users.get(0));
                 authRequest.setSubject(users.get(0).getId());
                 return Single.just(authRequest);
             });
