@@ -41,7 +41,6 @@ import java.util.stream.Stream;
 import static io.gravitee.am.common.utils.ConstantKeys.CIBA_AUTH_REQUEST_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.PROVIDER_METADATA_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -78,9 +77,6 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
                     .resolve(request, client)
                     .subscribe(requestValidated -> {
                         context.put(CIBA_AUTH_REQUEST_KEY, requestValidated);
-                        if (request.getUser() != null) {
-                            context.put(USER_CONTEXT_KEY, request.getUser());
-                        }
                         context.next();
                     }, context::fail);
 
