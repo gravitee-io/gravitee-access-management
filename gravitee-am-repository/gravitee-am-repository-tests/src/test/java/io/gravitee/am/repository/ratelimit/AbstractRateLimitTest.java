@@ -20,15 +20,17 @@ import static org.springframework.util.StringUtils.capitalize;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.gravitee.am.repository.RepositoriesTestInitializer;
 import io.gravitee.am.repository.exceptions.TechnicalException;
-import jakarta.inject.Inject;
 import java.io.File;
 import java.net.URL;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import io.gravitee.am.repository.oauth2.test.config.OAuthTestConfigurationLoader;
+import io.gravitee.am.repository.ratelimit.test.config.RateLimitTestConfigurationLoader;
+import jakarta.inject.Inject;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -37,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
@@ -45,19 +46,16 @@ import org.springframework.test.context.support.AnnotationConfigContextLoader;
 /**
  * @author GraviteeSource Team
  */
-@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(loader = AnnotationConfigContextLoader.class, initializers = { PropertySourceRepositoryInitializer.class })
-@ActiveProfiles("test")
-public abstract class AbstractRateLimitTest
-{
+@ContextConfiguration(classes = {RateLimitTestConfigurationLoader.class},
+        loader = AnnotationConfigContextLoader.class)
+public abstract class AbstractRateLimitTest {
 
     private static final String JSON_EXTENSION = "json";
     private static final ObjectMapper MAPPER = new ObjectMapper()
-            .registerModule(new JavaTimeModule())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    @Autowired
+    @Inject
     private RepositoriesTestInitializer testRepositoryInitializer;
 
     protected abstract String getTestCasesPath();
@@ -68,7 +66,7 @@ public abstract class AbstractRateLimitTest
 
     @Before
     public void setUp() throws Exception {
-        if(testRepositoryInitializer == null){
+        if (testRepositoryInitializer != null) {
             testRepositoryInitializer.before(this.getClass());
         }
 
@@ -93,7 +91,7 @@ public abstract class AbstractRateLimitTest
 
     @After
     public void tearDown() throws Exception {
-        if (testRepositoryInitializer == null) {
+        if (testRepositoryInitializer != null) {
             testRepositoryInitializer.after(this.getClass());
         }
     }
@@ -126,7 +124,10 @@ public abstract class AbstractRateLimitTest
     @Configuration
     @ComponentScan(
             value = "io.gravitee.am.repository",
-            includeFilters = @ComponentScan.Filter(pattern = ".*TestRepository.*", type = FilterType.REGEX),
+            includeFilters = {
+                @ComponentScan.Filter(pattern = ".*TestRepository.*", type = FilterType.REGEX),
+                @ComponentScan.Filter(pattern = ".*RepositoriesTestInitializer", type = FilterType.REGEX)
+            },
             useDefaultFilters = false
     )
     static class ContextConfiguration {}

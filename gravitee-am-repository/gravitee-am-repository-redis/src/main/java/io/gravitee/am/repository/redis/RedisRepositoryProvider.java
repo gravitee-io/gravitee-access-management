@@ -26,8 +26,7 @@ import io.vertx.core.impl.logging.LoggerFactory;
  * @author GraviteeSource Team
  */
 public class RedisRepositoryProvider implements RepositoryProvider {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisRepositoryProvider.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(RedisRepositoryProvider.class);
 
     @Override
     public String type() {
@@ -41,6 +40,7 @@ public class RedisRepositoryProvider implements RepositoryProvider {
 
     @Override
     public Class<?> configuration(Scope scope) {
+        LOGGER.info("Checking for Redis configuration for scope:");
         if (scope == Scope.RATE_LIMIT) {
             return RateLimitRepositoryConfiguration.class;
         }

@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.ratelimit.test.config;
 
+import io.gravitee.am.repository.redis.RedisTestRepositoryInitializer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -24,9 +26,10 @@ import org.springframework.context.annotation.Configuration;
  * @author GraviteeSource Team
  */
 @Configuration
-@ComponentScan({"io.gravitee.am.repository.redis.ratelimit",
+@ComponentScan({"io.gravitee.am.repository.redis",
         "io.gravitee.am.repository.redis.common"})
 public class RateLimitTestConfigurationLoader {
+
 
 
 }

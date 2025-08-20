@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.ratelimit;
+package io.gravitee.am.repository.ratelimit.api;
 
 import static org.junit.Assert.assertEquals;
 
-import io.gravitee.am.repository.ratelimit.api.RateLimitRepository;
+import io.gravitee.am.repository.ratelimit.AbstractRateLimitTest;
 import io.gravitee.am.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.functions.Predicate;
 import io.reactivex.rxjava3.observers.TestObserver;
