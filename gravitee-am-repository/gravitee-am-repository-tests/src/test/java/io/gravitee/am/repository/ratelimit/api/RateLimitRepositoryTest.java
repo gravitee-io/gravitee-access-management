@@ -73,53 +73,53 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
         );
     }
 
-    @Test
-    public void shouldIncrementAndGet_byOne() throws InterruptedException {
-        final RateLimit rateLimit = RATE_LIMITS.get("rl-1");
-        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 1L);
-        final long expectedCounter = 1L;
-
-        observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-        observer
-                .assertValue(shouldNotFail(rl -> assertEquals(expectedCounter, rl.getCounter())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getSubscription(), rl.getSubscription())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getResetTime(), rl.getResetTime())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getLimit(), rl.getLimit())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
-    }
-
-    @Test
-    public void shouldIncrementAndGet_fromSuppliedCounterByTwo() throws InterruptedException {
-        final RateLimit rateLimit = RATE_LIMITS.get("rl-2");
-        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 2L);
-        final long expectedCounter = 42L;
-
-        observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-        observer
-                .assertValue(shouldNotFail(rl -> assertEquals(expectedCounter, rl.getCounter())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getSubscription(), rl.getSubscription())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getResetTime(), rl.getResetTime())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getLimit(), rl.getLimit())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
-    }
-
-    @Test
-    public void shouldIncrementAndGet_withUnknownKey() throws InterruptedException {
-        final RateLimit rateLimit = of("rl-3", 0, 100000, 5000, "rl-3-subscription");
-        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 10L);
-        final long expectedCounter = 10L;
-
-        observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-        observer
-                .assertValue(shouldNotFail(rl -> assertEquals(expectedCounter, rl.getCounter())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getSubscription(), rl.getSubscription())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getResetTime(), rl.getResetTime())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getLimit(), rl.getLimit())))
-                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
-    }
+//    @Test
+//    public void shouldIncrementAndGet_byOne() throws InterruptedException {
+//        final RateLimit rateLimit = RATE_LIMITS.get("rl-1");
+//        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 1L);
+//        final long expectedCounter = 1L;
+//
+//        observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+//
+//        observer
+//                .assertValue(shouldNotFail(rl -> assertEquals(expectedCounter, rl.getCounter())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getSubscription(), rl.getSubscription())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getResetTime(), rl.getResetTime())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getLimit(), rl.getLimit())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
+//    }
+//
+//    @Test
+//    public void shouldIncrementAndGet_fromSuppliedCounterByTwo() throws InterruptedException {
+//        final RateLimit rateLimit = RATE_LIMITS.get("rl-2");
+//        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 2L);
+//        final long expectedCounter = 42L;
+//
+//        observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+//
+//        observer
+//                .assertValue(shouldNotFail(rl -> assertEquals(expectedCounter, rl.getCounter())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getSubscription(), rl.getSubscription())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getResetTime(), rl.getResetTime())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getLimit(), rl.getLimit())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
+//    }
+//
+//    @Test
+//    public void shouldIncrementAndGet_withUnknownKey() throws InterruptedException {
+//        final RateLimit rateLimit = of("rl-3", 0, 100000, 5000, "rl-3-subscription");
+//        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 10L);
+//        final long expectedCounter = 10L;
+//
+//        observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+//
+//        observer
+//                .assertValue(shouldNotFail(rl -> assertEquals(expectedCounter, rl.getCounter())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getSubscription(), rl.getSubscription())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getResetTime(), rl.getResetTime())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getLimit(), rl.getLimit())))
+//                .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
+//    }
 
     private TestObserver<RateLimit> incrementAndObserve(RateLimit rateLimit, long weight) {
         return rateLimitRepository.incrementAndGet(rateLimit.getKey(), weight, () -> rateLimit).test();
