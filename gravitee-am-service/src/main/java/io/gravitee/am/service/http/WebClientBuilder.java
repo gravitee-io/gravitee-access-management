@@ -19,6 +19,7 @@ import io.gravitee.am.model.Certificate;
 import io.gravitee.common.util.EnvironmentUtils;
 import io.vertx.core.http.Http2Settings;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpVersion;
 import io.vertx.ext.web.client.WebClientOptions;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.web.client.WebClient;
@@ -30,6 +31,7 @@ import org.springframework.core.env.Environment;
 
 import java.net.URI;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -111,6 +113,7 @@ public class WebClientBuilder {
     private void configureHttp2Settings(WebClientOptions options) {
         if (isHttp2Enabled()) {
             options.setUseAlpn(true);
+            options.setAlpnVersions(Arrays.asList(HttpVersion.HTTP_2, HttpVersion.HTTP_1_1));
             options.setHttp2MaxPoolSize(options.getMaxPoolSize());
             options.setHttp2ConnectionWindowSize(http2ConnectionWindowSize());
             options.setHttp2KeepAliveTimeout(http2KeepAliveTimeout());
