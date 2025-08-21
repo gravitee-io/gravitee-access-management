@@ -33,8 +33,6 @@ import org.springframework.data.r2dbc.dialect.R2dbcDialect;
 
 import java.util.Optional;
 
-import static io.gravitee.am.repository.Scope.GATEWAY;
-
 @Configuration
 @ComponentScan(basePackages = {"io.gravitee.am.repository.jdbc.ratelimit"})
 public class RateLimitRepositoryConfiguration extends AbstractRepositoryConfiguration {

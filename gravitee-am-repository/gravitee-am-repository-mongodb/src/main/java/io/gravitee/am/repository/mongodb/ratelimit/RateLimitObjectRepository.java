@@ -17,7 +17,8 @@
 package io.gravitee.am.repository.mongodb.ratelimit;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
-import io.gravitee.am.repository.mongodb.oauth2.AbstractOAuth2MongoRepository;
+import com.mongodb.reactivestreams.client.MongoDatabase;
+import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.gravitee.am.repository.mongodb.ratelimit.model.RateLimitMongo;
 import io.gravitee.am.repository.ratelimit.api.RateLimitRepository;
 import io.gravitee.am.repository.ratelimit.model.RateLimit;
@@ -26,19 +27,22 @@ import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.util.function.Supplier;
 
 import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Updates.inc;
-import static com.mongodb.client.model.Updates.set;
 
 @Component
-public class RateLimitObjectRepository extends AbstractOAuth2MongoRepository implements RateLimitRepository<RateLimit> {
+public class RateLimitObjectRepository extends AbstractMongoRepository implements RateLimitRepository<RateLimit> {
     
     private static final String RATE_LIMIT_API = "ratelimit_api";
     private MongoCollection<RateLimitMongo> rateLimitCollection;
+
+    @Autowired
+    @Qualifier("ratelimitMongoTemplate")
+    protected MongoDatabase mongoOperations;
 
     @Autowired
     private org.springframework.core.env.Environment environment;
