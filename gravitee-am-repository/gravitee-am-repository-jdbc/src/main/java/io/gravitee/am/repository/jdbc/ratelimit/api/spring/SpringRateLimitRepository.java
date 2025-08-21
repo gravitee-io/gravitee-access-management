@@ -13,23 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.ratelimit.test.config;
 
-import io.gravitee.am.repository.redis.RedisTestRepositoryInitializer;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Configuration;
+package io.gravitee.am.repository.jdbc.ratelimit.api.spring;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-@Configuration
-@ComponentScan({"io.gravitee.am.repository.redis",
-        "io.gravitee.am.repository.redis.common"})
-public class RateLimitTestConfigurationLoader {
+import io.gravitee.am.repository.jdbc.ratelimit.api.model.JdbcRateLimit;
+import org.springframework.data.repository.reactive.RxJava3CrudRepository;
+import org.springframework.stereotype.Repository;
 
-
-
+@Repository
+public interface SpringRateLimitRepository extends RxJava3CrudRepository<JdbcRateLimit, String> {
 }

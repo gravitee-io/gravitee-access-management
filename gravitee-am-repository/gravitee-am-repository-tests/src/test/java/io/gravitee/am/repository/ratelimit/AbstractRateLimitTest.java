@@ -55,7 +55,7 @@ public abstract class AbstractRateLimitTest {
     private static final ObjectMapper MAPPER = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-    @Inject
+    @Autowired
     private RepositoriesTestInitializer testRepositoryInitializer;
 
     protected abstract String getTestCasesPath();
