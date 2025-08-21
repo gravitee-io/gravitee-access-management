@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.function.Supplier;
 
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
+
 @Repository
 public class JdbcRateLimitRepository extends AbstractJdbcRepository implements RateLimitRepository<RateLimit> {
 
@@ -77,7 +79,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
                     RateLimit newRateLimit = supplier.get();
                     newRateLimit.setCounter(weight); // Start with the weight
                     JdbcRateLimit newJdbcRateLimit = toJdbcEntity(newRateLimit);
-                    return toEntity(requestObjectRepository.save(newJdbcRateLimit).blockingGet());
+                    return toEntity(monoToSingle(getTemplate().insert(newJdbcRateLimit)).blockingGet());
                 } else {
                     // Update the existing rate limit
                     JdbcRateLimit updatedJdbcRateLimit = toJdbcEntity(existingRateLimit);
@@ -88,7 +90,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
                 RateLimit newRateLimit = supplier.get();
                 newRateLimit.setCounter(weight); // Start with the weight
                 JdbcRateLimit newJdbcRateLimit = toJdbcEntity(newRateLimit);
-                return toEntity(requestObjectRepository.save(newJdbcRateLimit).blockingGet());
+                return toEntity(monoToSingle(getTemplate().insert(newJdbcRateLimit)).blockingGet());
             }
         });
     }
