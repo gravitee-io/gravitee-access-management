@@ -29,18 +29,18 @@ import org.springframework.stereotype.Service;
  * @author GraviteeSource Team
  */
 @Service
-public class RedisTestRepositoryInitializer implements RepositoriesTestInitializer {
+public class RedisRepositoryTestInitializer implements RepositoriesTestInitializer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisTestRepositoryInitializer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisRepositoryTestInitializer.class);
     private final List<RedisClient> redisClients;
 
     @Autowired
-    public RedisTestRepositoryInitializer(List<RedisClient> redisClients) {
+    public RedisRepositoryTestInitializer(List<RedisClient> redisClients) {
         this.redisClients = redisClients;
     }
 
     @Override
-    public void before(Class testClass   ) {
+    public void before(Class testClass) {
         LOGGER.info("Redis test repository initialization");
         // Wait for all RedisApi to be ready
         redisClients.forEach(redisClient -> {
