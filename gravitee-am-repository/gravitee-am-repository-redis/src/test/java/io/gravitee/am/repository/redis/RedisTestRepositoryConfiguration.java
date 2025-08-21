@@ -18,10 +18,10 @@ package io.gravitee.am.repository.redis;
 import static io.gravitee.am.repository.redis.ratelimit.RateLimitRepositoryConfiguration.SCRIPTS_RATELIMIT_LUA;
 import static io.gravitee.am.repository.redis.ratelimit.RateLimitRepositoryConfiguration.SCRIPT_RATELIMIT_KEY;
 
-import io.gravitee.platform.repository.api.Scope;
+import io.gravitee.am.repository.redis.common.RedisClient;
 import io.gravitee.am.repository.redis.common.RedisConnectionFactory;
+import io.gravitee.platform.repository.api.Scope;
 import io.gravitee.am.repository.redis.ratelimit.RedisRateLimitRepository;
-import io.gravitee.am.repository.redis.vertx.RedisClient;
 import io.vertx.core.Vertx;
 import java.util.Map;
 import org.slf4j.Logger;

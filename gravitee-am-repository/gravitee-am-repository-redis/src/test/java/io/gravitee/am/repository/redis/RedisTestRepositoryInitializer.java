@@ -16,7 +16,7 @@
 package io.gravitee.am.repository.redis;
 
 import io.gravitee.am.repository.RepositoriesTestInitializer;
-import io.gravitee.am.repository.redis.vertx.RedisClient;
+import io.gravitee.am.repository.redis.common.RedisClient;
 import io.vertx.redis.client.Command;
 import java.util.List;
 import java.util.concurrent.TimeUnit;

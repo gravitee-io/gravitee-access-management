@@ -15,8 +15,8 @@
  */
 package io.gravitee.am.repository.redis.ratelimit;
 
+import io.gravitee.am.repository.redis.common.RedisClient;
 import io.gravitee.am.repository.redis.common.RedisConnectionFactory;
-import io.gravitee.am.repository.redis.vertx.RedisClient;
 import io.gravitee.platform.repository.api.Scope;
 import io.vertx.core.Vertx;
 import io.vertx.core.impl.logging.Logger;
@@ -24,7 +24,6 @@ import io.vertx.core.impl.logging.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
 import java.util.Map;

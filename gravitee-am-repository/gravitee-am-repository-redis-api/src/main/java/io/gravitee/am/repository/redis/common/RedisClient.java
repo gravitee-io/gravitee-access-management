@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.redis.vertx;
+package io.gravitee.am.repository.redis.common;
 
-import io.gravitee.am.repository.redis.ratelimit.RedisRateLimitRepository;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.RedisAPI;
 import io.vertx.redis.client.RedisOptions;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -29,10 +30,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 
 /**
- * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Slf4j
@@ -124,7 +123,7 @@ public class RedisClient {
                                     .map(entry -> {
                                         String key = entry.getKey();
                                         String script = entry.getValue();
-                                        try (InputStream stream = RedisRateLimitRepository.class.getClassLoader().getResourceAsStream(script)) {
+                                        try (InputStream stream = this.getClass().getClassLoader().getResourceAsStream(script)) {
                                             return redisAPI
                                                     .script(Arrays.asList(SCRIPT_LOAD_COMMAND, new String(stream.readAllBytes(), StandardCharsets.UTF_8)))
                                                     .onSuccess(response -> {
