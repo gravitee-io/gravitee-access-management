@@ -9,7 +9,7 @@ databaseChangeLog:
         - createTable:
             tableName: ratelimit_api
             columns:
-              - column: { name: key, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: id, type: nvarchar(255), constraints: { nullable: false } }
               - column: { name: counter, type: bigint, constraints: { nullable: false, defaultValue: 0 } }
               - column: { name: reset_time, type: bigint, constraints: { nullable: false } }
               - column: { name: rate_limit, type: bigint, constraints: { nullable: false } }
@@ -17,7 +17,7 @@ databaseChangeLog:
 
         - addPrimaryKey:
             constraintName: pk_ratelimit_api
-            columnNames: key
+            columnNames: id
             tableName: ratelimit_api
 
         - createIndex:

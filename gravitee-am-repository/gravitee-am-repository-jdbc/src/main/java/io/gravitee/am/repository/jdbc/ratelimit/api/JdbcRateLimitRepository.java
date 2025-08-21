@@ -38,7 +38,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
 
     protected RateLimit toEntity(JdbcRateLimit entity) { 
         if (entity == null) return null;
-        RateLimit rateLimit = new RateLimit(entity.getKey());
+        RateLimit rateLimit = new RateLimit(entity.getId());
         rateLimit.setCounter(entity.getCounter());
         rateLimit.setResetTime(entity.getResetTime());
         rateLimit.setLimit(entity.getLimit());
@@ -49,7 +49,18 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
     protected JdbcRateLimit toJdbcEntity(RateLimit entity) {
         if (entity == null) return null;
         JdbcRateLimit jdbcRateLimit = new JdbcRateLimit();
-        jdbcRateLimit.setKey(entity.getKey());
+        jdbcRateLimit.setId(entity.getKey());
+        jdbcRateLimit.setCounter(entity.getCounter());
+        jdbcRateLimit.setResetTime(entity.getResetTime());
+        jdbcRateLimit.setLimit(entity.getLimit());
+        jdbcRateLimit.setSubscription(entity.getSubscription());
+        return jdbcRateLimit;
+    }
+    
+    protected JdbcRateLimit toJdbcEntity(RateLimit entity, String key) {
+        if (entity == null) return null;
+        JdbcRateLimit jdbcRateLimit = new JdbcRateLimit();
+        jdbcRateLimit.setId(key); // Use the provided key
         jdbcRateLimit.setCounter(entity.getCounter());
         jdbcRateLimit.setResetTime(entity.getResetTime());
         jdbcRateLimit.setLimit(entity.getLimit());
@@ -78,7 +89,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
                     // Rate limit has expired, create a new one using the supplier
                     RateLimit newRateLimit = supplier.get();
                     newRateLimit.setCounter(weight); // Start with the weight
-                    JdbcRateLimit newJdbcRateLimit = toJdbcEntity(newRateLimit);
+                    JdbcRateLimit newJdbcRateLimit = toJdbcEntity(newRateLimit, key);
                     return toEntity(monoToSingle(getTemplate().insert(newJdbcRateLimit)).blockingGet());
                 } else {
                     // Update the existing rate limit
@@ -89,7 +100,7 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
                 // Create a new rate limit using the supplier
                 RateLimit newRateLimit = supplier.get();
                 newRateLimit.setCounter(weight); // Start with the weight
-                JdbcRateLimit newJdbcRateLimit = toJdbcEntity(newRateLimit);
+                JdbcRateLimit newJdbcRateLimit = toJdbcEntity(newRateLimit, key);
                 return toEntity(monoToSingle(getTemplate().insert(newJdbcRateLimit)).blockingGet());
             }
         });

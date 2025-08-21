@@ -25,7 +25,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table("ratelimit_api")
 public class JdbcRateLimit {
     @Id
-    private String key;
+    private String id;
     
     private long counter = 0;
     
@@ -37,12 +37,12 @@ public class JdbcRateLimit {
     
     private String subscription;
 
-    public String getKey() {
-        return key;
+    public String getId() {
+        return id;
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public long getCounter() {
