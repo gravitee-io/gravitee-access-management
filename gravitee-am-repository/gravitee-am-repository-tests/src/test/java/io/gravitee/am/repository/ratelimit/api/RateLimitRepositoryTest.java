@@ -27,20 +27,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-/**
- * @author GraviteeSource Team
- */
+@Slf4j
 public class RateLimitRepositoryTest extends AbstractRateLimitTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(RateLimitRepositoryTest.class);
-
     private static final long OPERATION_TIMEOUT_SECONDS = 5L;
-
     private static final Map<String, RateLimit> RATE_LIMITS = new HashMap<>();
 
     @Autowired
@@ -66,7 +61,7 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
 
         RATE_LIMITS.put(updatedRateLimit.getKey(), updatedRateLimit);
 
-        LOG.debug("Created {}", updatedRateLimit);
+        log.debug("Created {}", updatedRateLimit);
         RATE_LIMITS.computeIfAbsent(
                 rateLimit.getKey(),
                 key -> rateLimitRepository.incrementAndGet(key, rateLimit.getCounter(), () -> initialize(rateLimit)).blockingGet()
@@ -119,11 +114,6 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
                 .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getResetTime(), rl.getResetTime())))
                 .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getLimit(), rl.getLimit())))
                 .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
-    }
-
-    @Test
-    public void shouldBeCool(){
-        assertEquals(1, 1);
     }
 
     private TestObserver<RateLimit> incrementAndObserve(RateLimit rateLimit, long weight) {

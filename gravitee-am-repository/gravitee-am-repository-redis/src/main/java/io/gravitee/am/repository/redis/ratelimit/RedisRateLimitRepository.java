@@ -35,10 +35,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Slf4j
 public class RedisRateLimitRepository implements RateLimitRepository<RateLimit> {
 

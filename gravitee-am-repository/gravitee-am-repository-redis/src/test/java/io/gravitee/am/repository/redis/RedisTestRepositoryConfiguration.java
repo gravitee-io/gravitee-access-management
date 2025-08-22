@@ -24,8 +24,8 @@ import io.gravitee.platform.repository.api.Scope;
 import io.gravitee.am.repository.redis.ratelimit.RedisRateLimitRepository;
 import io.vertx.core.Vertx;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -35,34 +35,30 @@ import org.springframework.mock.env.MockEnvironment;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
-/**
- * @author GraviteeSource Team
- */
 @Configuration
 @ComponentScan("io.gravitee.am.repository.redis")
+@Slf4j
 public class RedisTestRepositoryConfiguration {
-
-    private static final Logger LOG = LoggerFactory.getLogger(RedisTestRepositoryConfiguration.class);
 
     @Value("${redisStackVersion:6.2.6-v9}")
     private String redisStackVersion;
 
     @Bean(destroyMethod = "stop")
     public GenericContainer<?> redisContainer() {
-        LOG.info("Creating redis container...");
+        log.info("Creating redis container...");
         var redis = new GenericContainer<>(DockerImageName.parse("redis/redis-stack:" + redisStackVersion)).withExposedPorts(6379);
 
-        LOG.info("Starting redis container...");
+        log.info("Starting redis container...");
         redis.start();
 
-        LOG.info("Running tests with redis version: {}", redisStackVersion);
+        log.info("Running tests with redis version: {}", redisStackVersion);
 
         return redis;
     }
 
     @Bean(destroyMethod = "close")
     public Vertx vertx() {
-        LOG.info("Creating vertx instance...");
+        log.info("Creating vertx instance...");
         return Vertx.vertx();
     }
 
@@ -74,7 +70,7 @@ public class RedisTestRepositoryConfiguration {
         mockEnvironment.setProperty(propertyPrefix + "host", redisContainer.getHost());
         mockEnvironment.setProperty(propertyPrefix + "port", redisContainer.getFirstMappedPort().toString());
 
-        LOG.info("Creating redis rate limit client factory");
+        log.info("Creating redis rate limit client factory");
         RedisConnectionFactory redisConnectionFactory = new RedisConnectionFactory(
                 mockEnvironment,
                 vertx,
@@ -82,13 +78,13 @@ public class RedisTestRepositoryConfiguration {
                 Map.of(SCRIPT_RATELIMIT_KEY, SCRIPTS_RATELIMIT_LUA)
         );
 
-        LOG.info("Creating redis rate limit client");
+        log.info("Creating redis rate limit client");
         return redisConnectionFactory.createRedisClient();
     }
 
     @Bean
     public RedisRateLimitRepository redisRateLimitRepository(@Qualifier("redisRateLimitClient") RedisClient redisRateLimitClient) {
-        LOG.info("Creating redis rate limit repository");
+        log.info("Creating redis rate limit repository");
         return new RedisRateLimitRepository(redisRateLimitClient, 500);
     }
 }

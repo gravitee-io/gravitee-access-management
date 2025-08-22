@@ -28,11 +28,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.net.URI;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Configuration
 @ComponentScan({"io.gravitee.am.repository.mongodb.ratelimit"})
 public class RateLimitRepositoryConfiguration extends AbstractRepositoryConfiguration {

@@ -15,11 +15,12 @@
  */
 package io.gravitee.am.repository.mongodb.ratelimit.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.bson.codecs.pojo.annotations.BsonId;
 
-/**
- * @author GraviteeSource Team
- */
+@Setter
+@Getter
 public class RateLimitMongo {
     @BsonId
     private String key;
@@ -28,43 +29,4 @@ public class RateLimitMongo {
     private long limit;
     private String subscription;
 
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
-    }
-
-    public long getCounter() {
-        return counter;
-    }
-
-    public void setCounter(long counter) {
-        this.counter = counter;
-    }
-
-    public long getResetTime() {
-        return resetTime;
-    }
-
-    public void setResetTime(long resetTime) {
-        this.resetTime = resetTime;
-    }
-
-    public long getLimit() {
-        return limit;
-    }
-
-    public void setLimit(long limit) {
-        this.limit = limit;
-    }
-
-    public String getSubscription() {
-        return subscription;
-    }
-
-    public void setSubscription(String subscription) {
-        this.subscription = subscription;
-    }
 }

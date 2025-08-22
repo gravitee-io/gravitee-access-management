@@ -18,15 +18,6 @@ package io.gravitee.am.repository.ratelimit.test.config;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Configuration
-@ComponentScan({"io.gravitee.am.repository.redis",
-        "io.gravitee.am.repository.redis.common"})
-public class RateLimitTestConfigurationLoader {
-
-
-
-}
+@ComponentScan({"io.gravitee.am.repository.redis", "io.gravitee.am.repository.redis.common"})
+public class RateLimitTestConfigurationLoader { }

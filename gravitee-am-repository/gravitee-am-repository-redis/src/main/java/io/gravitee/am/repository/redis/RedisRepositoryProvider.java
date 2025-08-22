@@ -18,15 +18,10 @@ package io.gravitee.am.repository.redis;
 import io.gravitee.am.repository.redis.ratelimit.RateLimitRepositoryConfiguration;
 import io.gravitee.platform.repository.api.RepositoryProvider;
 import io.gravitee.platform.repository.api.Scope;
-import io.vertx.core.impl.logging.Logger;
-import io.vertx.core.impl.logging.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
-/**
- * @author Stuart CLARK (stuart.clark at graviteesource.com)
- * @author GraviteeSource Team
- */
+@Slf4j
 public class RedisRepositoryProvider implements RepositoryProvider {
-    private final Logger LOGGER = LoggerFactory.getLogger(RedisRepositoryProvider.class);
 
     @Override
     public String type() {
@@ -40,7 +35,7 @@ public class RedisRepositoryProvider implements RepositoryProvider {
 
     @Override
     public Class<?> configuration(Scope scope) {
-        LOGGER.info("Checking for Redis configuration for scope:");
+        log.info("Checking for Redis configuration for scope:");
         if (scope == Scope.RATE_LIMIT) {
             return RateLimitRepositoryConfiguration.class;
         }

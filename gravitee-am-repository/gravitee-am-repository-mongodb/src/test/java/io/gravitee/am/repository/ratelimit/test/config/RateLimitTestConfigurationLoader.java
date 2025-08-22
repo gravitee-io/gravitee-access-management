@@ -18,16 +18,11 @@ package io.gravitee.am.repository.ratelimit.test.config;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.MongodbProvider;
-import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Configuration
 @ComponentScan({"io.gravitee.am.repository.mongodb.ratelimit", "io.gravitee.am.repository.mongodb.common", "io.gravitee.am.repository.mongodb.provider"})
 public class RateLimitTestConfigurationLoader {
@@ -45,10 +40,5 @@ public class RateLimitTestConfigurationLoader {
     @Bean
     public RepositoriesEnvironment repositoriesEnvironment(Environment environment) {
         return new RepositoriesEnvironment(environment);
-    }
-
-    @Bean
-    public FilterCriteriaParser filterCriteriaParser(){
-        return new FilterCriteriaParser();
     }
 }

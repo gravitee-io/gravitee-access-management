@@ -20,10 +20,6 @@ import io.gravitee.am.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Single;
 import java.util.function.Supplier;
 
-/**
- * @author David BRASSELY (david.brassely at graviteesource.com)
- * @author GraviteeSource Team
- */
 public interface RateLimitRepository<T extends RateLimit> {
     Single<T> incrementAndGet(String key, long weight, Supplier<T> supplier);
 }

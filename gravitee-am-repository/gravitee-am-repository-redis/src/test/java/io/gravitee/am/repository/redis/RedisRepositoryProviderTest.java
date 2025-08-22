@@ -23,10 +23,6 @@ import io.gravitee.platform.repository.api.Scope;
 import io.gravitee.am.repository.redis.ratelimit.RateLimitRepositoryConfiguration;
 import org.junit.Test;
 
-
-/**
- * @author  GraviteeSource Team
- */
 public class RedisRepositoryProviderTest {
 
     private final RedisRepositoryProvider provider = new RedisRepositoryProvider();

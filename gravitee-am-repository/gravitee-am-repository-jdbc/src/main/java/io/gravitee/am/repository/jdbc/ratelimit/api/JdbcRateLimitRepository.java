@@ -36,38 +36,6 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
     @Autowired
     private SpringRateLimitRepository requestObjectRepository;
 
-    protected RateLimit toEntity(JdbcRateLimit entity) { 
-        if (entity == null) return null;
-        RateLimit rateLimit = new RateLimit(entity.getId());
-        rateLimit.setCounter(entity.getCounter());
-        rateLimit.setResetTime(entity.getResetTime());
-        rateLimit.setLimit(entity.getLimit());
-        rateLimit.setSubscription(entity.getSubscription());
-        return rateLimit;
-    }
-    
-    protected JdbcRateLimit toJdbcEntity(RateLimit entity) {
-        if (entity == null) return null;
-        JdbcRateLimit jdbcRateLimit = new JdbcRateLimit();
-        jdbcRateLimit.setId(entity.getKey());
-        jdbcRateLimit.setCounter(entity.getCounter());
-        jdbcRateLimit.setResetTime(entity.getResetTime());
-        jdbcRateLimit.setLimit(entity.getLimit());
-        jdbcRateLimit.setSubscription(entity.getSubscription());
-        return jdbcRateLimit;
-    }
-    
-    protected JdbcRateLimit toJdbcEntity(RateLimit entity, String key) {
-        if (entity == null) return null;
-        JdbcRateLimit jdbcRateLimit = new JdbcRateLimit();
-        jdbcRateLimit.setId(key); // Use the provided key
-        jdbcRateLimit.setCounter(entity.getCounter());
-        jdbcRateLimit.setResetTime(entity.getResetTime());
-        jdbcRateLimit.setLimit(entity.getLimit());
-        jdbcRateLimit.setSubscription(entity.getSubscription());
-        return jdbcRateLimit;
-    }
-
     @Override
     @Transactional
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
@@ -104,5 +72,37 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
                 return toEntity(monoToSingle(getTemplate().insert(newJdbcRateLimit)).blockingGet());
             }
         });
+    }
+
+    protected RateLimit toEntity(JdbcRateLimit entity) {
+        if (entity == null) return null;
+        RateLimit rateLimit = new RateLimit(entity.getId());
+        rateLimit.setCounter(entity.getCounter());
+        rateLimit.setResetTime(entity.getResetTime());
+        rateLimit.setLimit(entity.getLimit());
+        rateLimit.setSubscription(entity.getSubscription());
+        return rateLimit;
+    }
+
+    protected JdbcRateLimit toJdbcEntity(RateLimit entity) {
+        if (entity == null) return null;
+        JdbcRateLimit jdbcRateLimit = new JdbcRateLimit();
+        jdbcRateLimit.setId(entity.getKey());
+        jdbcRateLimit.setCounter(entity.getCounter());
+        jdbcRateLimit.setResetTime(entity.getResetTime());
+        jdbcRateLimit.setLimit(entity.getLimit());
+        jdbcRateLimit.setSubscription(entity.getSubscription());
+        return jdbcRateLimit;
+    }
+
+    protected JdbcRateLimit toJdbcEntity(RateLimit entity, String key) {
+        if (entity == null) return null;
+        JdbcRateLimit jdbcRateLimit = new JdbcRateLimit();
+        jdbcRateLimit.setId(key); // Use the provided key
+        jdbcRateLimit.setCounter(entity.getCounter());
+        jdbcRateLimit.setResetTime(entity.getResetTime());
+        jdbcRateLimit.setLimit(entity.getLimit());
+        jdbcRateLimit.setSubscription(entity.getSubscription());
+        return jdbcRateLimit;
     }
 }

@@ -17,10 +17,6 @@ package io.gravitee.am.repository.ratelimit.test.config;
 
 import org.springframework.context.annotation.Configuration;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
 @Configuration
 public class RateLimitTestConfigurationLoader {
     // empty class that will be excluded from the test-jar.

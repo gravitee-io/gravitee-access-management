@@ -60,6 +60,14 @@ public class RedisClient {
         return connected.get();
     }
 
+    public Future<RedisAPI> redisApi() {
+        return redisAPIFuture;
+    }
+
+    public String scriptSha1(final String key) {
+        return scriptsSha.get(key);
+    }
+
     private void connect(final int retry) {
         // Cleanup any already existing connection.
         if (redis != null) {
@@ -102,9 +110,6 @@ public class RedisClient {
         }
     }
 
-    /**
-     * Attempt to reconnect
-     */
     private void attemptReconnect(int retry) {
         connecting.set(false);
 
@@ -140,13 +145,5 @@ public class RedisClient {
                     .map(v -> redisAPI);
         }
         return Future.succeededFuture(redisAPI);
-    }
-
-    public Future<RedisAPI> redisApi() {
-        return redisAPIFuture;
-    }
-
-    public String scriptSha1(final String key) {
-        return scriptsSha.get(key);
     }
 }

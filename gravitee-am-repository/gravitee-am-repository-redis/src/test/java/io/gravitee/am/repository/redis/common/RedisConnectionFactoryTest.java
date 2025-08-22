@@ -33,9 +33,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.mock.env.MockEnvironment;
 
-/**
- * @author GraviteeSource Team
- */
 public class RedisConnectionFactoryTest {
 
     private static final String PROPERTY_PREFIX = "ratelimit";

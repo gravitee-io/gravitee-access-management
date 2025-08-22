@@ -20,18 +20,15 @@ import io.gravitee.am.repository.redis.common.RedisClient;
 import io.vertx.redis.client.Command;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-/**
- * @author GraviteeSource Team
- */
 @Service
+@Slf4j
 public class RedisRepositoryTestInitializer implements RepositoriesTestInitializer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RedisRepositoryTestInitializer.class);
     private final List<RedisClient> redisClients;
 
     @Autowired
@@ -41,14 +38,14 @@ public class RedisRepositoryTestInitializer implements RepositoriesTestInitializ
 
     @Override
     public void before(Class testClass) {
-        LOGGER.info("Redis test repository initialization");
+        log.info("Redis test repository initialization");
         // Wait for all RedisApi to be ready
         redisClients.forEach(redisClient -> {
             try {
-                LOGGER.info("Waiting for RedisApi to be ready");
+                log.info("Waiting for RedisApi to be ready");
                 redisClient.redisApi().toCompletionStage().toCompletableFuture().get(1500, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
-                LOGGER.error("Error while waiting for RedisApi to be ready", e);
+                log.error("Error while waiting for RedisApi to be ready", e);
                 Thread.currentThread().interrupt();
             }
         });
@@ -56,10 +53,10 @@ public class RedisRepositoryTestInitializer implements RepositoriesTestInitializ
 
     @Override
     public void after(Class testClass) {
-        LOGGER.info("Redis test repository cleanup");
+        log.info("Redis test repository cleanup");
         redisClients.forEach(redisClient -> {
             try {
-                LOGGER.info("Waiting for RedisApi to be cleaned");
+                log.info("Waiting for RedisApi to be cleaned");
                 redisClient
                         .redisApi()
                         .flatMap(redisAPI ->
@@ -71,7 +68,7 @@ public class RedisRepositoryTestInitializer implements RepositoriesTestInitializ
                                                         .forEachRemaining(key ->
                                                                 redisAPI
                                                                         .send(Command.DEL, key.toString())
-                                                                        .onFailure(t -> LOGGER.error("unable to delete key {}.", key, t))
+                                                                        .onFailure(t -> log.error("unable to delete key {}.", key, t))
                                                                         .result()
                                                         )
                                         )
@@ -80,7 +77,7 @@ public class RedisRepositoryTestInitializer implements RepositoriesTestInitializ
                         .toCompletableFuture()
                         .get(500, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
-                LOGGER.error("Error while waiting for RedisApi to be cleaned", e);
+                log.error("Error while waiting for RedisApi to be cleaned", e);
                 Thread.currentThread().interrupt();
             }
         });

@@ -43,12 +43,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
-/**
- * @author GraviteeSource Team
- */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {RateLimitTestConfigurationLoader.class},
-        loader = AnnotationConfigContextLoader.class)
+@ContextConfiguration(classes = {RateLimitTestConfigurationLoader.class}, loader = AnnotationConfigContextLoader.class)
 public abstract class AbstractRateLimitTest {
 
     private static final String JSON_EXTENSION = "json";
