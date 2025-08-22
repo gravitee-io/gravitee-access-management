@@ -144,11 +144,11 @@ services:
     prometheus:
       enabled: true
 
-  # Data purge service (JDBC only).
-  purge:
-    enabled: true                               # enable the JDBC purge task (default: true)
-    cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
-    #exclude: login_attemps, refresh_token      # coma separated list of table to exclude from the purge process
+  # Data purge.
+  # purge:
+  #   events:                                     # event retention period in days (default: 90 days) for MongoDB
+  #     retention:
+  #       days: 90
 
   # platform notifier service
   notifier:
