@@ -443,12 +443,12 @@ repositories:
       host: ${ds.mongodb.host}
       port: ${ds.mongodb.port}
   #    ensureIndexOnStart: true
-  ratelimit:
-    type: mongodb
-    mongodb:
-      dbname: ${ds.mongodb.dbname}
-      host: ${ds.mongodb.host}
-      port: ${ds.mongodb.port}
+#  ratelimit:
+#    type: redis
+#    redis:
+#      host: 'localhost'
+#      port: 6379
+#      password: 'mypassword'
 
 dataPlanes:
   - id: default
