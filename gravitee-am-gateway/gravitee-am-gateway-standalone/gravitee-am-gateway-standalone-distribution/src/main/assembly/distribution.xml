@@ -92,6 +92,7 @@
                 <exclude>io.gravitee.am.identityprovider:gravitee-am-identityprovider-ldap-common:jar</exclude>
                 <exclude>io.gravitee.am.repository:gravitee-am-repository-mongodb-api:jar</exclude>
                 <exclude>io.gravitee.am.repository:gravitee-am-repository-jdbc-api:jar</exclude>
+                <exclude>io.gravitee.am.repository:gravitee-am-repository-redis-api:jar</exclude>
             </excludes>
             <useProjectArtifact>false</useProjectArtifact>
         </dependencySet>
