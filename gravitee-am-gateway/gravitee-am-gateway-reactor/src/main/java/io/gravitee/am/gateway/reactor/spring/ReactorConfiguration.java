@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.reactor.spring;
 
 import io.gravitee.am.gateway.certificate.spring.CertificateConfiguration;
+import io.gravitee.am.gateway.core.reporter.GatewayGlobalReporterManager;
 import io.gravitee.am.gateway.handler.SecurityDomainRouterFactory;
 import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.reactor.SecurityDomainHandlerRegistry;
