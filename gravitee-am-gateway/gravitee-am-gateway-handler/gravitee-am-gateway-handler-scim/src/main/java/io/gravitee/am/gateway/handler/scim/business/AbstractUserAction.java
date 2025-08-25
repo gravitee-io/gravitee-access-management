@@ -66,10 +66,10 @@ public abstract class AbstractUserAction {
     }
 
     private User evaluateUser(List<String> schemas, Map<String, Object> payload) {
-        if (schemas.containsAll(EnterpriseUser.SCHEMAS)) {
+        if (EnterpriseUser.SCHEMAS.containsAll(schemas)) {
             return new JsonObject(payload).mapTo(EnterpriseUser.class);
         }
-        if (schemas.containsAll(GraviteeUser.SCHEMAS)) {
+        if (GraviteeUser.SCHEMAS.containsAll(schemas) || GraviteeUser.SCHEMAS_WITH_ENTERPRISE.containsAll(schemas)) {
             return new JsonObject(payload).mapTo(GraviteeUser.class);
         }
         return new JsonObject(payload).mapTo(User.class);

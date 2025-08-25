@@ -78,6 +78,7 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
         private boolean entitlements = true;
         private boolean addresses = true;
         private boolean identities = true;
+        private boolean manager = true;
 
         UpdateActions() {}
 
@@ -143,8 +144,17 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
             return this;
         }
 
+        public boolean updateManager() {
+            return manager;
+        }
+
+        public UpdateActions updateManager(boolean manager) {
+            this.manager = manager;
+            return this;
+        }
+
         public boolean updateRequire() {
-            return (addresses || attributes || entitlements || role || dynamicRole || dynamicGroup || identities);
+            return (addresses || attributes || entitlements || role || dynamicRole || dynamicGroup || identities || manager);
         }
 
         public static UpdateActions updateAll() {
@@ -159,7 +169,8 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
                     .updateEntitlements(false)
                     .updateAttributes(false)
                     .updateAddresses(false)
-                    .updateIdentities(false);
+                    .updateIdentities(false)
+                    .updateManager(false);
         }
 
         public static UpdateActions build(io.gravitee.am.model.User existingUser, io.gravitee.am.model.User updatedUser) {
@@ -176,6 +187,10 @@ public interface CommonUserRepository extends CrudRepository<User, String> {
             actions.updateDynamicRole(needUpdate(existingUser.getDynamicRoles(), updatedUser.getDynamicRoles()));
             actions.updateDynamicGroup(needUpdate(existingUser.getDynamicGroups(), updatedUser.getDynamicGroups()));
             actions.updateIdentities(needUpdate(existingUser.getIdentities(), updatedUser.getIdentities()));
+            actions.updateManager(
+                    needUpdate(
+                            existingUser.getManager() != null ? List.of(existingUser.getManager()) : null,
+                            updatedUser.getManager() != null ? List.of(updatedUser.getManager()) : null));
 
             return actions;
         }
