@@ -17,13 +17,14 @@ package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.gravitee.am.repository.common.ExpiredDataSweeper;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface EventRepository extends CrudRepository<Event, String> {
+public interface EventRepository extends CrudRepository<Event, String>, ExpiredDataSweeper {
 
     Flowable<Event> findByTimeFrame(long from, long to);
 

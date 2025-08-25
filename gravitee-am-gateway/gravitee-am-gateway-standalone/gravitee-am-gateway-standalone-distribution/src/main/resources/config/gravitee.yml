@@ -161,6 +161,15 @@ services:
     prometheus:
       enabled: true
 
+  # Data purge service (JDBC only).
+  # purge:
+    # enabled: true                               # enable the JDBC purge task (default: true)
+    # cron: 0 0 23 * * *                          # configure the frequency (default: every day at 11 PM)
+    # exclude: login_attempts, refresh_token      # comma separated list of table to exclude from the purge process
+    # events:                                     # event retention period in days (default: 90 days)
+    #   retention:
+    #     days: 90
+
   # Gateway monitoring service.
   # This service retrieves metrics like os / process / jvm metrics.
   monitoring:
