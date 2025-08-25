@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -53,25 +54,29 @@ public class MongoThemeRepository extends AbstractManagementMongoRepository impl
 
     @Override
     public Maybe<Theme> findById(String id) {
-        return Observable.fromPublisher(themesCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(themesCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Theme> create(Theme item) {
         ThemeMongo theme = convert(item);
         theme.setId(theme.getId() == null ? RandomString.generate() : theme.getId());
-        return Single.fromPublisher(themesCollection.insertOne(theme)).flatMap(success -> { item.setId(theme.getId()); return Single.just(item); });
+        return Single.fromPublisher(themesCollection.insertOne(theme)).flatMap(success -> { item.setId(theme.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Theme> update(Theme item) {
         ThemeMongo theme = convert(item);
-        return Single.fromPublisher(themesCollection.replaceOne(eq(FIELD_ID, theme.getId()), theme)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(themesCollection.replaceOne(eq(FIELD_ID, theme.getId()), theme)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(themesCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(themesCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
 
     }
 
@@ -79,7 +84,8 @@ public class MongoThemeRepository extends AbstractManagementMongoRepository impl
     public Maybe<Theme> findByReference(ReferenceType referenceType, String referenceId) {
         return Observable.fromPublisher(themesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))).first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
 
