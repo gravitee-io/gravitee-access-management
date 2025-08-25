@@ -24,7 +24,11 @@ RUN apk update \
     && unzip /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
     && rm /tmp/gravitee-am-management-api-standalone-${GRAVITEEAM_VERSION}.zip
 
+<<<<<<< HEAD
 FROM eclipse-temurin:17.0.13_11-jre-noble
+=======
+FROM eclipse-temurin:21.0.8_9-jre-noble
+>>>>>>> 662d0a9b8 (chore(deps): update eclipse-temurin docker tag to v21.0.8_9-jre-noble)
 LABEL maintainer="contact@graviteesource.com"
 
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-management-api
