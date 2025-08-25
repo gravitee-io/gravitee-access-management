@@ -27,6 +27,7 @@ import java.util.List;
 public class EnrichAuthFlowPolicyConfiguration implements PolicyConfiguration {
 
     private List<Property> properties = new ArrayList<>();
+    private boolean idempotent = false;
 
     public List<Property> getProperties() {
         return properties;
@@ -36,4 +37,11 @@ public class EnrichAuthFlowPolicyConfiguration implements PolicyConfiguration {
         this.properties = properties;
     }
 
+    public boolean isIdempotent() {
+        return idempotent;
+    }
+
+    public void setIdempotent(boolean idempotent) {
+        this.idempotent = idempotent;
+    }
 }

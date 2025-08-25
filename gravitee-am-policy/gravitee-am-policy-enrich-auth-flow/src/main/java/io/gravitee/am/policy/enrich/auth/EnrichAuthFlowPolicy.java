@@ -105,6 +105,10 @@ public class EnrichAuthFlowPolicy {
         authContext.setCreatedAt(new Date(now.toEpochMilli()));
         authContext.setExpireAt(new Date(now.plus(expiration, ChronoUnit.SECONDS).toEpochMilli()));
 
-        return authContextRepository.create(authContext);
+        if(configuration.isIdempotent()) {
+            return authContextRepository.replace(authContext);
+        } else {
+            return authContextRepository.create(authContext);
+        }
     }
 }
