@@ -1,0 +1,3 @@
+databaseChangeLog:
+  - include:
+      - file: liquibase/ratelimit/changelogs/4.9.0-add-ratelimit-api-table.yml

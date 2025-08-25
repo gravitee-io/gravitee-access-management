@@ -41,5 +41,7 @@
         <module>gravitee-am-repository-jdbc-api</module>
         <module>gravitee-am-repository-mongodb-api</module>
         <module>gravitee-am-repository-junit</module>
+        <module>gravitee-am-repository-redis</module>
+        <module>gravitee-am-repository-redis-api</module>
     </modules>
 </project>
