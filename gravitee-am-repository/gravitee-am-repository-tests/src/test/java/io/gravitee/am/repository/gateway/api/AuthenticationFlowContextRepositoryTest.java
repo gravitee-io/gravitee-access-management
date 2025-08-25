@@ -79,6 +79,34 @@ public class AuthenticationFlowContextRepositoryTest extends AbstractGatewayTest
         assertSameContext(entity, observer);
     }
 
+    @Test
+    public void shouldReplaceExisting() {
+        AuthenticationFlowContext entity = generateAuthContext();
+        AuthenticationFlowContext entity2 = generateAuthContext();
+
+        assertEquals(entity.identifier(), entity2.identifier());
+
+        TestObserver<AuthenticationFlowContext> observer = authenticationFlowContextRepository.create(entity)
+                .concatMap(ctx -> authenticationFlowContextRepository.replace(entity2))
+                .concatMapMaybe(ctx -> authenticationFlowContextRepository.findById(entity.identifier()))
+                .test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+        assertSameContext(entity, observer);
+    }
+
+    @Test
+    public void shouldSaveNewIfReplace() {
+        AuthenticationFlowContext entity = generateAuthContext();
+        TestObserver<AuthenticationFlowContext> observer = authenticationFlowContextRepository.replace(entity)
+                .test();
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+        assertSameContext(entity, observer);
+    }
+
     private void assertSameContext(AuthenticationFlowContext entity, TestObserver<AuthenticationFlowContext> observer) {
         observer.assertValue(ctx -> ctx.getTransactionId() != null && ctx.getTransactionId().equals(entity.getTransactionId()));
         observer.assertValue(ctx -> ctx.getVersion() == entity.getVersion());
