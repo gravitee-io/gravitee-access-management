@@ -130,7 +130,7 @@ public class CorsHandlerFactoryTest {
         final Set<String> allowedHeaders = (Set<String>) ReflectionTestUtils.getField(corsHandler, "allowedHeaders");
         assertEquals(corsSettings.getAllowedHeaders(), allowedHeaders);
 
-        final Set<Pattern> relativeOrigins = (Set<Pattern>) ReflectionTestUtils.getField(corsHandler, "relativeOrigins");
+        final Set<Pattern> relativeOrigins = (Set<Pattern>) ReflectionTestUtils.getField(corsHandler, "regexOrigins");
         // Note that regarding:
         // io/vertx/vertx-web/4.4.4/vertx-web-4.4.4-sources.jar!/io/vertx/ext/web/handler/impl/CorsHandlerImpl.java:104
         // default relative origin ".*" is like null (allow everything).
