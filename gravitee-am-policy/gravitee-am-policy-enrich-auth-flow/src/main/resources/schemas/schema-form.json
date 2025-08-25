@@ -1,22 +1,22 @@
 {
-  "type" : "object",
-  "id" : "urn:jsonschema:io:gravitee:policy:am:enrich:auth:EnrichAuthFlowPolicyConfiguration",
-  "properties" : {
-      "properties" : {
-      "type" : "array",
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:policy:am:enrich:auth:EnrichAuthFlowPolicyConfiguration",
+  "properties": {
+    "properties": {
+      "type": "array",
       "title": "Context properties",
-      "items" : {
-        "type" : "object",
-        "id" : "urn:jsonschema:io:gravitee:policy:am:enrich:auth:configuration:Property",
+      "items": {
+        "type": "object",
+        "id": "urn:jsonschema:io:gravitee:policy:am:enrich:auth:configuration:Property",
         "title": "Property",
-        "properties" : {
-          "key" : {
+        "properties": {
+          "key": {
             "title": "Key",
-            "type" : "string"
+            "type": "string"
           },
-          "value" : {
+          "value": {
             "title": "Value (Support EL)",
-            "type" : "string",
+            "type": "string",
             "x-schema-form": {
               "expression-language": true
             }
@@ -27,8 +27,14 @@
         "key",
         "value"
       ]
+    },
+    "idempotent": {
+      "title": "Mark operation as idempotent",
+      "type": "boolean",
+      "default": false
     }
-  },"required": [
-      "properties"
+  },
+  "required": [
+    "properties"
   ]
 }

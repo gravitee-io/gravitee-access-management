@@ -105,4 +105,8 @@ public class AuthenticationFlowContext {
     public int hashCode() {
         return Objects.hash(transactionId, version);
     }
+
+    public String identifier() {
+        return transactionId + "-" + version;
+    }
 }
