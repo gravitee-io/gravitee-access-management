@@ -168,6 +168,11 @@ public class DummyHttpResponse implements HttpServerResponse {
     }
 
     @Override
+    public Future<Void> writeHead() {
+        return null;
+    }
+
+    @Override
     public Future<Void> write(String chunk, String enc) {
         return null;
     }
