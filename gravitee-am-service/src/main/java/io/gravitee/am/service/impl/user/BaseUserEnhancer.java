@@ -46,6 +46,7 @@ public abstract class BaseUserEnhancer implements UserEnhancer {
     }
 
     public Single<User> enhance(User user) {
+        LOGGER.debug("Enhancing user {}", user);
         return collectGroups(user)
                 .toList()
                 .map(HashSet::new)
@@ -64,9 +65,11 @@ public abstract class BaseUserEnhancer implements UserEnhancer {
 
                     // get user roles
                     if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+                        LOGGER.debug("Adding roles to user: {}", user.getRoles());
                         roles.addAll(user.getRoles());
                     }
                     if (user.getDynamicRoles() != null && !user.getDynamicRoles().isEmpty()) {
+                        LOGGER.debug("Adding dynamic roles to user: {}", user.getDynamicRoles());
                         roles.addAll(user.getDynamicRoles());
                     }
 
