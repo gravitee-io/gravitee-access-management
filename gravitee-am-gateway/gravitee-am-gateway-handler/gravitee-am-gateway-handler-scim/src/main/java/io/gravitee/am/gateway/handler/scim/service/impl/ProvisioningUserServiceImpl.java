@@ -574,6 +574,7 @@ public class ProvisioningUserServiceImpl implements ProvisioningUserService, Ini
         userToUpdate.setCreatedAt(existingUser.getCreatedAt());
         userToUpdate.setUpdatedAt(new Date());
         userToUpdate.setFactors(existingUser.getFactors());
+        LOGGER.debug("Updating Dynamic roles: {} of user from {}", existingUser.getDynamicRoles(), existingUser.getSource());
         userToUpdate.setDynamicRoles(existingUser.getDynamicRoles());
         userToUpdate.setDynamicGroups(existingUser.getDynamicGroups());
         if (Objects.nonNull(existingUser.getAdditionalInformation())) {
