@@ -200,7 +200,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                         .flatMap(idpUser -> {
                             // retrieve information from the idp user and update the user
                             Map<String, Object> additionalInformation = idpUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(idpUser.getAdditionalInformation());
-                            additionalInformation.put(SOURCE_FIELD, user.getSource());
+                            additionalInformation.put(SOURCE_FIELD, user.getLastIdentityUsed());
                             additionalInformation.put(Parameters.CLIENT_ID, user.getClient());
                             ((DefaultUser) idpUser).setAdditionalInformation(additionalInformation);
                             final User preConnectedUser = create0(idpUser, false);
