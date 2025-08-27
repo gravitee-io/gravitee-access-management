@@ -18,7 +18,8 @@ package io.gravitee.am.repository.ratelimit.api;
 import static org.junit.Assert.assertEquals;
 
 import io.gravitee.am.repository.ratelimit.AbstractRateLimitTest;
-import io.gravitee.am.repository.ratelimit.model.RateLimit;
+import io.gravitee.repository.ratelimit.model.RateLimit;
+import io.gravitee.repository.ratelimit.api.RateLimitRepository;
 import io.reactivex.rxjava3.functions.Predicate;
 import io.reactivex.rxjava3.observers.TestObserver;
 import java.time.Duration;

@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.repository.ratelimit.api;
+package io.gravitee.repository.ratelimit.api;
 
-import io.gravitee.am.repository.ratelimit.model.RateLimit;
+import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Single;
 import java.util.function.Supplier;
 
-public interface RateLimitRepository<T extends RateLimit> {
-    Single<T> incrementAndGet(String key, long weight, Supplier<T> supplier);
+/**
+ * @author GraviteeSource Team
+ */
+public interface RateLimitService {
+    Single<RateLimit> incrementAndGet(String key, long weight, boolean async, Supplier<RateLimit> supplier);
+
+    default Single<RateLimit> incrementAndGet(String key, boolean async, Supplier<RateLimit> supplier) {
+        return incrementAndGet(key, 1, async, supplier);
+    }
 }
