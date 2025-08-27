@@ -25,7 +25,8 @@ public enum Scope {
 
     OAUTH2("oauth2"),
     MANAGEMENT("management"),
-    GATEWAY("gateway");
+    GATEWAY("gateway"),
+    RATE_LIMIT("ratelimit");
 
     private final String name;
 

@@ -179,6 +179,14 @@
         </dependency>
 
         <dependency>
+            <groupId>io.gravitee.am.repository</groupId>
+            <artifactId>gravitee-am-repository-redis</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
             <groupId>io.gravitee.am.extensiongrant</groupId>
             <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
             <version>${project.version}</version>
@@ -621,6 +629,13 @@
                                 <artifactItem>
                                     <groupId>io.gravitee.am.repository</groupId>
                                     <artifactId>gravitee-am-repository-jdbc</artifactId>
+                                    <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>io.gravitee.am.repository</groupId>
+                                    <artifactId>gravitee-am-repository-redis</artifactId>
                                     <version>${project.version}</version>
                                     <type>zip</type>
                                 </artifactItem>

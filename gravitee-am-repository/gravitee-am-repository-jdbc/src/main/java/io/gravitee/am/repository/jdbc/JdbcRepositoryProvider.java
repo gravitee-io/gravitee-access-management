@@ -18,6 +18,7 @@ package io.gravitee.am.repository.jdbc;
 import io.gravitee.am.repository.jdbc.gateway.GatewayRepositoryConfiguration;
 import io.gravitee.am.repository.jdbc.management.ManagementRepositoryConfiguration;
 import io.gravitee.am.repository.jdbc.oauth2.OAuth2RepositoryConfiguration;
+import io.gravitee.am.repository.jdbc.ratelimit.RateLimitRepositoryConfiguration;
 import io.gravitee.platform.repository.api.RepositoryProvider;
 import io.gravitee.platform.repository.api.Scope;
 
@@ -33,7 +34,7 @@ public class JdbcRepositoryProvider implements RepositoryProvider {
 
     @Override
     public Scope[] scopes() {
-        return new Scope [] {Scope.MANAGEMENT, Scope.OAUTH2, Scope.GATEWAY};
+        return new Scope [] {Scope.MANAGEMENT, Scope.OAUTH2, Scope.GATEWAY, Scope.RATE_LIMIT};
     }
 
     @Override
@@ -42,6 +43,7 @@ public class JdbcRepositoryProvider implements RepositoryProvider {
             case MANAGEMENT -> ManagementRepositoryConfiguration.class;
             case OAUTH2 -> OAuth2RepositoryConfiguration.class;
             case GATEWAY -> GatewayRepositoryConfiguration.class;
+            case RATE_LIMIT -> RateLimitRepositoryConfiguration.class;
             default -> null;
         };
     }

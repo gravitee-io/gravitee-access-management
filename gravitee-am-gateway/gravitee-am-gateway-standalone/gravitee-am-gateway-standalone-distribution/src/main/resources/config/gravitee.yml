@@ -405,6 +405,12 @@ repositories:
       host: ${ds.mongodb.host}
       port: ${ds.mongodb.port}
   #    ensureIndexOnStart: true
+#  ratelimit:
+#    type: redis
+#    redis:
+#      host: 'localhost'
+#      port: 6379
+#      password: 'mypassword'
 
 # Gateway entry point used in emails
 gateway:
