@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.mongodb.gateway;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.ErrorCategory;
+import com.mongodb.MongoWriteException;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -28,6 +30,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -48,6 +51,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
  * @author GraviteeSource Team
  */
 @Component
+@Slf4j
 public class MongoAuthenticationFlowContextRepository extends AbstractGatewayMongoRepository implements AuthenticationFlowContextRepository {
 
     private static final String FIELD_TRANSACTION_ID = "transactionId";
@@ -98,9 +102,18 @@ public class MongoAuthenticationFlowContextRepository extends AbstractGatewayMon
     public Single<AuthenticationFlowContext> replace(AuthenticationFlowContext context) {
         AuthenticationFlowContextMongo contextMongo = convert(context);
         contextMongo.setId(context.identifier());
-        return Single.fromPublisher(authContextCollection
-                        .replaceOne(eq(FIELD_ID, contextMongo.getId()), contextMongo, new ReplaceOptions().upsert(true)))
-                .flatMap(success -> Single.just(context));
+        return Single.fromPublisher(authContextCollection.insertOne(contextMongo))
+                .flatMap(success -> Single.just(context))
+                .onErrorResumeNext(th -> {
+                    if(th instanceof MongoWriteException ex && ErrorCategory.fromErrorCode(ex.getCode()).equals(ErrorCategory.DUPLICATE_KEY)) {
+                        return findById(contextMongo.getId())
+                                .doOnSuccess(c -> log.warn("Duplicate key for id={}, fallback to existing one", context.identifier()))
+                                .switchIfEmpty(Maybe.error(new IllegalStateException("Duplicate key for id=" + context.identifier() + ", but couldn't restore state from database")))
+                                .toSingle();
+                    } else {
+                        return Single.error(th);
+                    }
+                });
     }
 
 
