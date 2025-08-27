@@ -18,7 +18,7 @@ package io.gravitee.am.repository.jdbc;
 import io.gravitee.am.repository.jdbc.gateway.GatewayRepositoryConfiguration;
 import io.gravitee.am.repository.jdbc.management.ManagementRepositoryConfiguration;
 import io.gravitee.am.repository.jdbc.oauth2.OAuth2RepositoryConfiguration;
-import io.gravitee.am.repository.jdbc.ratelimit.RateLimitRepositoryConfiguration;
+import io.gravitee.repository.ratelimit.RateLimitRepositoryConfiguration;
 import io.gravitee.platform.repository.api.RepositoryProvider;
 import io.gravitee.platform.repository.api.Scope;
 
