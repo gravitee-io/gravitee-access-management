@@ -59,6 +59,9 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
     @Value("${authenticationFlow.expirationTimeOut:300}")
     private int contextExpiration;
 
+    @Value("${authenticationFlow.idempotency:false}")
+    private boolean idempotency;
+
     @Override
     public Completable clearContext(final String transactionId) {
         if (transactionId == null) {
@@ -104,7 +107,11 @@ public class AuthenticationFlowContextServiceImpl implements AuthenticationFlowC
         authContext.setCreatedAt(new Date(now.toEpochMilli()));
         authContext.setExpireAt(new Date(now.plus(this.contextExpiration, ChronoUnit.SECONDS).toEpochMilli()));
 
-        return authContextRepository.create(authContext);
+        if(idempotency) {
+            return authContextRepository.replace(authContext);
+        } else {
+            return authContextRepository.create(authContext);
+        }
     }
 
     /**
