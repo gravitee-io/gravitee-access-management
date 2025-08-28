@@ -701,7 +701,7 @@ public class UserAuthenticationServiceTest {
         foundUser.setIdentities(List.of(userIdentity));
 
         ExecutionContext executionContext = mock(ExecutionContext.class);
-        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
         when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
         when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
