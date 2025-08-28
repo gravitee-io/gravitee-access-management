@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.common.auth.user.impl;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.exception.authentication.AccountDisabledException;
 import io.gravitee.am.common.exception.authentication.AccountEnforcePasswordException;
@@ -82,6 +83,7 @@ import static java.util.Optional.ofNullable;
 public class UserAuthenticationServiceImpl implements UserAuthenticationService {
 
     private static final String SOURCE_FIELD = "source";
+    private static final String LAST_IDENTITY_FIELD = "last_identity";
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     @Autowired
@@ -201,6 +203,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                             // retrieve information from the idp user and update the user
                             Map<String, Object> additionalInformation = idpUser.getAdditionalInformation() == null ? new HashMap<>() : new HashMap<>(idpUser.getAdditionalInformation());
                             additionalInformation.put(SOURCE_FIELD, user.getSource());
+                            additionalInformation.put(LAST_IDENTITY_FIELD, user.getLastIdentityUsed());
                             additionalInformation.put(Parameters.CLIENT_ID, user.getClient());
                             ((DefaultUser) idpUser).setAdditionalInformation(additionalInformation);
                             final User preConnectedUser = create0(idpUser, false);
@@ -389,7 +392,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
         return userService.create(preConnectedUser);
     }
 
-    private User create0(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
+    protected User create0(io.gravitee.am.identityprovider.api.User principal, boolean afterAuthentication) {
         final User preConnectedUser = new User();
         preConnectedUser.setExternalId(principal.getId());
         preConnectedUser.setUsername(principal.getUsername());
@@ -405,6 +408,11 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             preConnectedUser.setLastLoginWithCredentials(preConnectedUser.getLoggedAt());
             preConnectedUser.setLoginsCount(1L);
         }
+
+        if (principal.getAdditionalInformation().get(LAST_IDENTITY_FIELD) != null) {
+           preConnectedUser.setLastIdentityUsed(principal.getAdditionalInformation().get(LAST_IDENTITY_FIELD).toString());
+        }
+
         preConnectedUser.setDynamicRoles(principal.getRoles());
         preConnectedUser.setDynamicGroups(principal.getGroups());
 
@@ -440,10 +448,15 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             return true;
         }
 
+        // If we have a last identity configured, use that for the link query
+        final String providerId = Strings.isNullOrEmpty(preConnectedUser.getLastIdentityUsed())
+                ? preConnectedUser.getSource()
+                : preConnectedUser.getLastIdentityUsed();
+
         return ofNullable(existingUser.getIdentities())
                 .orElse(List.of())
                 .stream()
-                .anyMatch(u -> u.getUserId().equals(preConnectedUser.getExternalId()) && u.getProviderId().equals(preConnectedUser.getSource()));
+                .anyMatch(u -> u.getUserId().equals(preConnectedUser.getExternalId()) && u.getProviderId().equals(providerId));
     }
 
     private void upsertLinkedIdentities(User existingUser, User preConnectedUser) {
