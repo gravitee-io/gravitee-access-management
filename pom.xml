@@ -31,7 +31,7 @@
     <artifactId>gravitee-am-parent</artifactId>
     <packaging>pom</packaging>
 
-    <version>4.7.12</version>
+    <version>4.7.12-hotfix.1</version>
     <name>Gravitee IO - Access Management</name>
 
     <scm>

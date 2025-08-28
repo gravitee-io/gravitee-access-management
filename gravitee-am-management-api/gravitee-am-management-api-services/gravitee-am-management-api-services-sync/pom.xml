@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-management-api-services</artifactId>
         <groupId>io.gravitee.am.management</groupId>
-        <version>4.7.12</version>
+        <version>4.7.12-hotfix.1</version>
     </parent>
 
     <artifactId>gravitee-am-management-api-services-sync</artifactId>
