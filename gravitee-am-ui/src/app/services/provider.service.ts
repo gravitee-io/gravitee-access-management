@@ -64,7 +64,6 @@ export class ProviderService {
       mappers: provider.mappers,
       roleMapper: provider.roleMapper,
       groupMapper: provider.groupMapper,
-      passwordPolicy: provider.passwordPolicy,
     });
   }
 
