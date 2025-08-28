@@ -19,11 +19,13 @@ package io.gravitee.repository.ratelimit.api;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
-import io.gravitee.repository.ratelimit.model.RateLimitMongo;
 import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,11 +35,12 @@ import java.util.function.Supplier;
 
 import static com.mongodb.client.model.Filters.eq;
 
+@Slf4j
 @Component
 public class RateLimitObjectRepository extends AbstractMongoRepository implements RateLimitRepository<RateLimit> {
-    
+
     private static final String RATE_LIMIT_API = "ratelimit_api";
-    private MongoCollection<RateLimitMongo> rateLimitCollection;
+    private MongoCollection<RateLimit> rateLimitCollection;
 
     @Autowired
     @Qualifier("ratelimitMongoTemplate")
@@ -48,7 +51,7 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
 
     @PostConstruct
     public void init() {
-        rateLimitCollection = mongoOperations.getCollection(RATE_LIMIT_API, RateLimitMongo.class);
+        rateLimitCollection = mongoOperations.getCollection(RATE_LIMIT_API, RateLimit.class);
         super.init(rateLimitCollection);
     }
 
@@ -67,8 +70,8 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
             // Rate limit doesn't exist, create a new one using the supplier
             RateLimit newRateLimit = supplier.get();
             newRateLimit.setCounter(weight); // Start with the weight
-            
-            RateLimitMongo newRateLimitMongo = toMongoEntity(newRateLimit);
+
+            RateLimit newRateLimitMongo = toMongoEntity(newRateLimit);
             return Observable.fromPublisher(rateLimitCollection.insertOne(newRateLimitMongo))
                     .flatMap(success -> Observable.just(newRateLimit))
                     .blockingFirst();
@@ -79,8 +82,8 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
                 // Rate limit has expired, create a new one using the supplier
                 RateLimit newRateLimit = supplier.get();
                 newRateLimit.setCounter(weight); // Start with the weight
-                
-                RateLimitMongo newRateLimitMongo = toMongoEntity(newRateLimit);
+
+                RateLimit newRateLimitMongo = toMongoEntity(newRateLimit);
                 return Observable.fromPublisher(rateLimitCollection.replaceOne(eq("_id", key), newRateLimitMongo))
                         .flatMap(success -> Observable.just(newRateLimit))
                         .firstOrError();
@@ -90,7 +93,7 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
         });
     }
 
-    private RateLimit toEntity(RateLimitMongo entity) {
+    private RateLimit toEntity(RateLimit entity) {
         if (entity == null) return null;
         RateLimit rateLimit = new RateLimit(entity.getKey());
         rateLimit.setCounter(entity.getCounter());
@@ -99,11 +102,11 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
         rateLimit.setSubscription(entity.getSubscription());
         return rateLimit;
     }
-    
-    private RateLimitMongo toMongoEntity(RateLimit entity) {
+
+    private RateLimit toMongoEntity(RateLimit entity) {
         if (entity == null) return null;
-        RateLimitMongo rateLimitMongo = new RateLimitMongo();
-        rateLimitMongo.setKey(entity.getKey());
+        RateLimit rateLimitMongo = new RateLimit(entity.getKey());
+//        rateLimitMongo.se(entity.getKey());
         rateLimitMongo.setCounter(entity.getCounter());
         rateLimitMongo.setResetTime(entity.getResetTime());
         rateLimitMongo.setLimit(entity.getLimit());
