@@ -110,6 +110,7 @@ export class OrganizationService {
       name: idp.name,
       type: idp.type,
       configuration: idp.configuration,
+      domainWhitelist: idp.domainWhitelist,
       mappers: idp.mappers,
       roleMapper: idp.roleMapper,
       groupMapper: idp.groupMapper,
