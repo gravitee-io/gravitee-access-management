@@ -109,6 +109,7 @@ export class OrganizationService {
     return this.http.put<any>(this.organizationURL + '/identities/' + id, {
       name: idp.name,
       configuration: idp.configuration,
+      domainWhitelist: idp.domainWhitelist,
       mappers: idp.mappers,
       roleMapper: idp.roleMapper,
       groupMapper: idp.groupMapper,
