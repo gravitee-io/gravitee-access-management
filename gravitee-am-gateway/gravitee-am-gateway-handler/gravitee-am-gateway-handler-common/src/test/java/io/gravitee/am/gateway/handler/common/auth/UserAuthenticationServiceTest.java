@@ -97,12 +97,14 @@ public class UserAuthenticationServiceTest {
         String domainId = "Domain";
         String username = "foo";
         String source = "SRC";
+        String idp = "LDAP_1";
         String id = "id";
         io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
         when(user.getUsername()).thenReturn(username);
         when(user.getId()).thenReturn(id);
         HashMap<String, Object> additionalInformation = new HashMap<>();
         additionalInformation.put("source", source);
+        additionalInformation.put("last_identity", idp);
         additionalInformation.put("op_id_token", "somevalue");
         when(user.getAdditionalInformation()).thenReturn(additionalInformation);
 
@@ -670,6 +672,47 @@ public class UserAuthenticationServiceTest {
         testObserver.assertNoErrors();
         verify(userService, never()).create(any());
         verify(userService, times(1)).update(any(), argThat(updateActions -> !updateActions.updateIdentities())); //
+    }
+
+    @Test
+    public void shouldConnect_accountLinking_differentProviderIdentity() {
+        String domainId = "Domain";
+        String source = "SRC1";
+        String lastIdentity = "LDAP_1";
+        String id = "id1";
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        additionalInformation.put("last_identity", lastIdentity);
+        additionalInformation.put("newKey", "newValue");
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+        when(domain.getId()).thenReturn(domainId);
+
+        final UserIdentity userIdentity = new UserIdentity();
+        userIdentity.setUserId(id);
+        userIdentity.setProviderId(lastIdentity);
+
+        final User foundUser = new User();
+        foundUser.setId(id);
+        foundUser.setAccountNonLocked(true);
+        foundUser.setIdentities(List.of(userIdentity));
+
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(userService.findByDomainAndExternalIdAndSource(domainId, id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        TestObserver testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, never()).create(any());
+        verify(userService, times(1)).update(any(), argThat(updateActions -> updateActions.updateIdentities())); //
     }
 
     @Test
