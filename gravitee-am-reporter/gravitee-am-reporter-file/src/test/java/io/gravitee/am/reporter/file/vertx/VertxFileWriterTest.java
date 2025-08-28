@@ -218,9 +218,9 @@ public class VertxFileWriterTest {
 
             vertxFileWriter.initialize().onComplete(initResult -> {
                 if (initResult.succeeded()) {
-                    firstFilename.set(getCurrentFilename(vertxFileWriter));
+                    firstFilename.set(vertxFileWriter.getCurrentFilename());
                     simulateRollover(vertxFileWriter);
-                    secondFilename.set(getCurrentFilename(vertxFileWriter));
+                    secondFilename.set(vertxFileWriter.getCurrentFilename());
                     testCompleted.set(true);
                 } else {
                     testCompleted.set(true);
@@ -233,7 +233,7 @@ public class VertxFileWriterTest {
             
             String first = firstFilename.get();
             String second = secondFilename.get();
-            
+
             // Validate that pattern replacement works and different files are created
             assertNotNull("First filename should not be null", first);
             assertNotNull("Second filename should not be null", second);
@@ -254,25 +254,9 @@ public class VertxFileWriterTest {
         }
     }
     
-    private String getCurrentFilename(VertxFileWriter<ReportEntry> writer) {
-        try {
-            java.lang.reflect.Field filenameField = VertxFileWriter.class.getDeclaredField("filename");
-            filenameField.setAccessible(true);
-            return (String) filenameField.get(writer);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to get filename", e);
-        }
-    }
-    
     private void simulateRollover(VertxFileWriter<ReportEntry> writer) {
-        try {
-            java.lang.reflect.Method setFileMethod = VertxFileWriter.class.getDeclaredMethod("setFile", ZonedDateTime.class);
-            setFileMethod.setAccessible(true);
-            ZonedDateTime nextDay = ZonedDateTime.now().plusDays(1);
-            setFileMethod.invoke(writer, nextDay);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to simulate rollover", e);
-        }
+        ZonedDateTime nextDay = ZonedDateTime.now().plusDays(1);
+        writer.setFileForTest(nextDay);
     }
 
 }

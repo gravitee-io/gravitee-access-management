@@ -194,6 +194,16 @@ public class VertxFileWriter<T extends ReportEntry> {
         return promise.future();
     }
 
+    // Visible for testing only.
+    String getCurrentFilename() {
+        return filename;
+    }
+
+    // Visible for testing only.
+    Future<Void> setFileForTest(ZonedDateTime dateTime) {
+        return setFile(dateTime);
+    }
+
     public void write(T data) {
         if (asyncFile != null) {
             Buffer payload = formatter.format(data);
