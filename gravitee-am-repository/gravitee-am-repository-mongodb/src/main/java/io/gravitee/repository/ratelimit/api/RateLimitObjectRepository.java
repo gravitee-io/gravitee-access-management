@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package io.gravitee.repository.ratelimit;
+package io.gravitee.repository.ratelimit.api;
 
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.gravitee.repository.ratelimit.model.RateLimitMongo;
-import io.gravitee.repository.ratelimit.api.RateLimitRepository;
 import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;

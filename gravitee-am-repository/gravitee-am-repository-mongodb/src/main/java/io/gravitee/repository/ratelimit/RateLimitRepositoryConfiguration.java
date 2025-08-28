@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import java.net.URI;
 
 @Configuration
-@ComponentScan({"io.gravitee.repository.mongodb.ratelimit"})
+@ComponentScan({"io.gravitee.repository.ratelimit.api"})
 public class RateLimitRepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     @Autowired
