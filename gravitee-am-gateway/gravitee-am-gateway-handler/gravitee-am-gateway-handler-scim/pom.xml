@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.gateway.handler</groupId>
         <artifactId>gravitee-am-gateway-handler</artifactId>
-        <version>4.7.12-hotfix.1</version>
+        <version>4.7.12-hotfix.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
