@@ -69,6 +69,7 @@ public class VertxFileWriter<T extends ReportEntry> {
     private final Vertx vertx;
 
     private String filename;
+    private String templateFilename;
 
     private final Formatter<T> formatter;
 
@@ -105,7 +106,9 @@ public class VertxFileWriter<T extends ReportEntry> {
 
         // calculate the rollover files pattern
         File file = new File(this.filename);
-        rolloverFiles = Pattern.compile(file.getName().replaceFirst(YYYY_MM_DD, "([0-9]{4}_[0-9]{2}_[0-9]{2})"));
+        templateFilename = file.getName();
+
+        rolloverFiles = Pattern.compile(templateFilename.replaceFirst(YYYY_MM_DD, "([0-9]{4}_[0-9]{2}_[0-9]{2})"));
 
         __rollover = new Timer(VertxFileWriter.class.getName(), true);
     }
@@ -146,14 +149,16 @@ public class VertxFileWriter<T extends ReportEntry> {
                     return promise.future();
                 }
 
-                String simpleFilename = file.getName();
-                int datePattern = simpleFilename.toLowerCase(Locale.ENGLISH).indexOf(YYYY_MM_DD);
+                // Use the template filename for pattern matching during rollover
+                // This ensures we can always find and replace the date pattern, even after
+                // the filename has been processed with an actual date
+                int datePattern = templateFilename.toLowerCase(Locale.ENGLISH).indexOf(YYYY_MM_DD);
                 if (datePattern >= 0) {
-                    filename = dir.getAbsolutePath() + File.separatorChar + simpleFilename.substring(0, datePattern) +
-                            fileDateFormat.format(new Date(now.toInstant().toEpochMilli())) +
-                            simpleFilename.substring(datePattern + YYYY_MM_DD.length());
+                    String newDate = fileDateFormat.format(new Date(now.toInstant().toEpochMilli()));
+                    filename = dir.getAbsolutePath() + File.separatorChar + templateFilename.substring(0, datePattern) +
+                            newDate + templateFilename.substring(datePattern + YYYY_MM_DD.length());
                 } else {
-                    filename = dir.getAbsolutePath() + File.separatorChar + simpleFilename;
+                    filename = dir.getAbsolutePath() + File.separatorChar + file.getName();
                 }
 
                 LOGGER.info("Initializing file reporter to write into file: {}", filename);
