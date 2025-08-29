@@ -38,7 +38,6 @@ import org.awaitility.Awaitility;
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -202,6 +201,12 @@ public class VertxFileWriterTest {
         File tempDir = Files.createTempDirectory(BASE_DIRECTORY).toFile();
         tempDir.deleteOnExit();
         
+        // Define expected dates and filenames early
+        LocalDate today = LocalDate.now();
+        LocalDate nextDay = today.plusDays(1);
+        String expectedFirst = "test-audit-logs-" + today.format(DateTimeFormatter.ofPattern("yyyy_MM_dd")) + ".json";
+        String expectedSecond = "test-audit-logs-" + nextDay.format(DateTimeFormatter.ofPattern("yyyy_MM_dd")) + ".json";
+        
         String templateFilename = tempDir.getAbsolutePath() + File.separatorChar + "test-audit-logs-yyyy_mm_dd.json";
         Vertx vertx = Vertx.vertx();
         
@@ -212,41 +217,32 @@ public class VertxFileWriterTest {
                     templateFilename,
                     1L);
 
-            AtomicReference<String> firstFilename = new AtomicReference<>();
-            AtomicReference<String> secondFilename = new AtomicReference<>();
-            AtomicReference<Boolean> testCompleted = new AtomicReference<>(false);
-
             vertxFileWriter.initialize().onComplete(initResult -> {
-                if (initResult.succeeded()) {
-                    firstFilename.set(vertxFileWriter.getCurrentFilename());
-                    simulateRollover(vertxFileWriter);
-                    secondFilename.set(vertxFileWriter.getCurrentFilename());
-                    testCompleted.set(true);
-                } else {
-                    testCompleted.set(true);
-                }
+                assertTrue("Initialization should succeed", initResult.succeeded());
+                simulateRollover(vertxFileWriter, nextDay);
             });
+            
+            // Wait for 2 files and capture their names
+            AtomicReference<String[]> filenames = new AtomicReference<>();
             
             Awaitility.await()
                     .atMost(5, TimeUnit.SECONDS)
-                    .until(testCompleted::get);
+                    .until(() -> {
+                        File[] files = tempDir.listFiles((dir, name) -> 
+                            name.matches("test-audit-logs-\\d{4}_\\d{2}_\\d{2}\\.json")
+                        );
+                        if (files != null && files.length == 2) {
+                            filenames.set(new String[]{files[0].getName(), files[1].getName()});
+                            return true;
+                        }
+                        return false;
+                    });
             
-            String first = firstFilename.get();
-            String second = secondFilename.get();
-
-            // Validate that pattern replacement works and different files are created
-            assertNotNull("First filename should not be null", first);
-            assertNotNull("Second filename should not be null", second);
-            assertFalse("First filename should not contain the pattern 'yyyy_mm_dd'", 
-                       first.contains("yyyy_mm_dd"));
-            assertFalse("Second filename should not contain the pattern 'yyyy_mm_dd'", 
-                       second.contains("yyyy_mm_dd"));
-            assertTrue("First filename should contain date format (YYYY_MM_DD)", 
-                      first.matches(".*\\d{4}_\\d{2}_\\d{2}.*"));
-            assertTrue("Second filename should contain date format (YYYY_MM_DD)", 
-                      second.matches(".*\\d{4}_\\d{2}_\\d{2}.*"));
-            assertFalse("Rollover should create different filenames - both files have same name: " + first, 
-                       first.equals(second));
+            // Verify exact expected filenames
+            assertTrue("Array should contain " + expectedFirst, 
+                      filenames.get()[0].equals(expectedFirst) || filenames.get()[1].equals(expectedFirst));
+            assertTrue("Array should contain " + expectedSecond, 
+                      filenames.get()[0].equals(expectedSecond) || filenames.get()[1].equals(expectedSecond));
             
         } finally {
             vertx.close();
@@ -254,9 +250,9 @@ public class VertxFileWriterTest {
         }
     }
     
-    private void simulateRollover(VertxFileWriter<ReportEntry> writer) {
-        ZonedDateTime nextDay = ZonedDateTime.now().plusDays(1);
-        writer.setFileForTest(nextDay);
+    private void simulateRollover(VertxFileWriter<ReportEntry> writer, LocalDate date) {
+        ZonedDateTime nextDay = date.atStartOfDay(ZoneOffset.UTC);
+        writer.setFile(nextDay);
     }
 
 }

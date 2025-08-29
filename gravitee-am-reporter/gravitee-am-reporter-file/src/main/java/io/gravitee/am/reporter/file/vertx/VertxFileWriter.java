@@ -32,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -132,7 +131,7 @@ public class VertxFileWriter<T extends ReportEntry> {
         return setFile(now);
     }
 
-    private Future<Void> setFile(ZonedDateTime now) {
+    protected Future<Void> setFile(ZonedDateTime now) {
         Promise<Void> promise = Promise.promise();
 
         synchronized (this) {
@@ -149,17 +148,9 @@ public class VertxFileWriter<T extends ReportEntry> {
                     return promise.future();
                 }
 
-                // Use the template filename for pattern matching during rollover
-                // This ensures we can always find and replace the date pattern, even after
-                // the filename has been processed with an actual date
-                int datePattern = templateFilename.toLowerCase(Locale.ENGLISH).indexOf(YYYY_MM_DD);
-                if (datePattern >= 0) {
-                    String newDate = fileDateFormat.format(new Date(now.toInstant().toEpochMilli()));
-                    filename = dir.getAbsolutePath() + File.separatorChar + templateFilename.substring(0, datePattern) +
-                            newDate + templateFilename.substring(datePattern + YYYY_MM_DD.length());
-                } else {
-                    filename = dir.getAbsolutePath() + File.separatorChar + file.getName();
-                }
+                String newDate = fileDateFormat.format(new Date(now.toInstant().toEpochMilli()));
+                filename = dir.getAbsolutePath() + File.separatorChar + 
+                          templateFilename.replaceFirst("(?i)" + YYYY_MM_DD, newDate);
 
                 LOGGER.info("Initializing file reporter to write into file: {}", filename);
 
@@ -192,16 +183,6 @@ public class VertxFileWriter<T extends ReportEntry> {
         }
 
         return promise.future();
-    }
-
-    // Visible for testing only.
-    String getCurrentFilename() {
-        return filename;
-    }
-
-    // Visible for testing only.
-    Future<Void> setFileForTest(ZonedDateTime dateTime) {
-        return setFile(dateTime);
     }
 
     public void write(T data) {
