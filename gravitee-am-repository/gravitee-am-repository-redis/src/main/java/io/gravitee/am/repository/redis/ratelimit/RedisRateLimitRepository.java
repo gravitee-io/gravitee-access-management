@@ -19,8 +19,8 @@ import static io.gravitee.am.repository.redis.ratelimit.RateLimitRepositoryConfi
 
 import io.gravitee.am.repository.exception.RedisNotConnectedException;
 import io.gravitee.am.repository.exception.RedisOperationTimeoutException;
-import io.gravitee.am.repository.ratelimit.api.RateLimitRepository;
-import io.gravitee.am.repository.ratelimit.model.RateLimit;
+import io.gravitee.repository.ratelimit.api.RateLimitRepository;
+import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.gravitee.am.repository.redis.common.RedisClient;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;

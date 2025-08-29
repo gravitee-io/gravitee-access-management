@@ -195,6 +195,8 @@
                             <includeArtifactIds>gravitee-am-repository-tests</includeArtifactIds>
                             <includeClassifiers>tests</includeClassifiers>
                             <outputDirectory>${project.build.directory}/test-classes</outputDirectory>
+                            <!-- Exclude RateLimit tests as they are redis only -->
+                            <excludes>**/gravitee/repository/ratelimit/**,**/RateLimitRepositoryTest.java</excludes>
                         </configuration>
                     </execution>
                 </executions>

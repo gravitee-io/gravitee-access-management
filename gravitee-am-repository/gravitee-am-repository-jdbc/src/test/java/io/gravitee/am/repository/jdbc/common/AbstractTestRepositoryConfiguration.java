@@ -73,7 +73,6 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
                 runLiquibase(connection, "liquibase/management-master.yml");
                 runLiquibase(connection, "liquibase/oauth-master.yml");
                 runLiquibase(connection, "liquibase/gateway-master.yml");
-                runLiquibase(connection, "liquibase/ratelimit-master.yml");
                 runLiquibase_addSpecificTestIndexes(connection);
             }
         }
