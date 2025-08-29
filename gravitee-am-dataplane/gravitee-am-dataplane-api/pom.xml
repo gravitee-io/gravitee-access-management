@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.gravitee.am.dataplane</groupId>
         <artifactId>gravitee-am-dataplane</artifactId>
-        <version>4.8.5-SNAPSHOT</version>
+        <version>4.8.5</version>
     </parent>
 
     <artifactId>gravitee-am-dataplane-api</artifactId>
