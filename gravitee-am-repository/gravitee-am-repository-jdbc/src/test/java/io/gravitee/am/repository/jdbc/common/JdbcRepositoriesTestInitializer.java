@@ -129,7 +129,6 @@ public class JdbcRepositoriesTestInitializer implements RepositoriesTestInitiali
                 "themes",
                 "password_histories",
                 "rate_limit",
-                "ratelimit_api",
                 "verify_attempt",
 
                 "password_policies",

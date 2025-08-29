@@ -607,13 +607,6 @@ if (listOfCollections.includes("rate_limit")) {
     }, {"name": "u1c1f1"}, "majority");
 }
 
-// "ratelimit_api" collection
-if (listOfCollections.includes("ratelimit_api")) {
-    console.log("Update ratelimit_api indexes");
-    db.ratelimit_api.dropIndexes();
-    db.ratelimit_api.createIndex({"_id": 1}, {"name": "_id1"}, "majority");
-    db.ratelimit_api.createIndex({"resetTime": 1}, {"name": "resetTime1"}, "majority");
-}
 
 // "verify_attempt" collection
 if (listOfCollections.includes("verify_attempt")) {
