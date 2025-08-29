@@ -102,5 +102,14 @@ public class AbstractUser {
     private String additionalInformation;
     @Column("force_reset_password")
     private Boolean forceResetPassword;
-
+    @Column("employee_number")
+    private String employeeNumber;
+    @Column("cost_center")
+    private String costCenter;
+    @Column("organization")
+    private String organization;
+    @Column("division")
+    private String division;
+    @Column("department")
+    private String department;
 }

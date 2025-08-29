@@ -185,3 +185,11 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-users.yml
   - include:
       - file: liquibase/changelogs/v4_9_0/4.9.0-sweep-redundant-indexes-webauth.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-update-users-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-update-organization-users-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-create-user-manager-table.yml
+  - include:
+      - file: liquibase/changelogs/v4_9_0/4.9.0-create-organization-user-manager-table.yml
