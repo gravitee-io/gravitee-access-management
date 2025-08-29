@@ -29,8 +29,11 @@ import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import org.awaitility.Awaitility;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.SECONDS;
@@ -191,6 +194,65 @@ public class VertxFileWriterTest {
         // Cleanup
         recentLog.delete();
         tempDir.delete();
+    }
+
+    @Test
+    public void shouldCreateNewFileOnRollover() throws IOException {
+        File tempDir = Files.createTempDirectory(BASE_DIRECTORY).toFile();
+        tempDir.deleteOnExit();
+        
+        // Define expected dates and filenames early
+        LocalDate today = LocalDate.now();
+        LocalDate nextDay = today.plusDays(1);
+        String expectedFirst = "test-audit-logs-" + today.format(DateTimeFormatter.ofPattern("yyyy_MM_dd")) + ".json";
+        String expectedSecond = "test-audit-logs-" + nextDay.format(DateTimeFormatter.ofPattern("yyyy_MM_dd")) + ".json";
+        
+        String templateFilename = tempDir.getAbsolutePath() + File.separatorChar + "test-audit-logs-yyyy_mm_dd.json";
+        Vertx vertx = Vertx.vertx();
+        
+        try {
+            vertxFileWriter = new VertxFileWriter<>(
+                    vertx,
+                    mock(Formatter.class),
+                    templateFilename,
+                    1L);
+
+            vertxFileWriter.initialize().onComplete(initResult -> {
+                assertTrue("Initialization should succeed", initResult.succeeded());
+                simulateRollover(vertxFileWriter, nextDay);
+            });
+            
+            // Wait for 2 files and capture their names
+            AtomicReference<String[]> filenames = new AtomicReference<>();
+            
+            Awaitility.await()
+                    .atMost(5, TimeUnit.SECONDS)
+                    .until(() -> {
+                        File[] files = tempDir.listFiles((dir, name) -> 
+                            name.matches("test-audit-logs-\\d{4}_\\d{2}_\\d{2}\\.json")
+                        );
+                        if (files != null && files.length == 2) {
+                            filenames.set(new String[]{files[0].getName(), files[1].getName()});
+                            return true;
+                        }
+                        return false;
+                    });
+            
+            // Verify exact expected filenames
+            assertTrue("Array should contain " + expectedFirst, 
+                      filenames.get()[0].equals(expectedFirst) || filenames.get()[1].equals(expectedFirst));
+            assertTrue("Array should contain " + expectedSecond, 
+                      filenames.get()[0].equals(expectedSecond) || filenames.get()[1].equals(expectedSecond));
+            
+        } finally {
+            vertx.close();
+            tempDir.delete();
+        }
+    }
+    
+    private void simulateRollover(VertxFileWriter<ReportEntry> writer, LocalDate date) {
+        ZonedDateTime nextDay = date.atStartOfDay(ZoneOffset.UTC);
+        writer.setFile(nextDay);
     }
 
 }

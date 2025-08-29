@@ -32,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -69,6 +68,7 @@ public class VertxFileWriter<T extends ReportEntry> {
     private final Vertx vertx;
 
     private String filename;
+    private String templateFilename;
 
     private final Formatter<T> formatter;
 
@@ -105,7 +105,9 @@ public class VertxFileWriter<T extends ReportEntry> {
 
         // calculate the rollover files pattern
         File file = new File(this.filename);
-        rolloverFiles = Pattern.compile(file.getName().replaceFirst(YYYY_MM_DD, "([0-9]{4}_[0-9]{2}_[0-9]{2})"));
+        templateFilename = file.getName();
+
+        rolloverFiles = Pattern.compile(templateFilename.replaceFirst(YYYY_MM_DD, "([0-9]{4}_[0-9]{2}_[0-9]{2})"));
 
         __rollover = new Timer(VertxFileWriter.class.getName(), true);
     }
@@ -129,7 +131,7 @@ public class VertxFileWriter<T extends ReportEntry> {
         return setFile(now);
     }
 
-    private Future<Void> setFile(ZonedDateTime now) {
+    protected Future<Void> setFile(ZonedDateTime now) {
         Promise<Void> promise = Promise.promise();
 
         synchronized (this) {
@@ -146,15 +148,9 @@ public class VertxFileWriter<T extends ReportEntry> {
                     return promise.future();
                 }
 
-                String simpleFilename = file.getName();
-                int datePattern = simpleFilename.toLowerCase(Locale.ENGLISH).indexOf(YYYY_MM_DD);
-                if (datePattern >= 0) {
-                    filename = dir.getAbsolutePath() + File.separatorChar + simpleFilename.substring(0, datePattern) +
-                            fileDateFormat.format(new Date(now.toInstant().toEpochMilli())) +
-                            simpleFilename.substring(datePattern + YYYY_MM_DD.length());
-                } else {
-                    filename = dir.getAbsolutePath() + File.separatorChar + simpleFilename;
-                }
+                String newDate = fileDateFormat.format(new Date(now.toInstant().toEpochMilli()));
+                filename = dir.getAbsolutePath() + File.separatorChar + 
+                          templateFilename.replaceFirst("(?i)" + YYYY_MM_DD, newDate);
 
                 LOGGER.info("Initializing file reporter to write into file: {}", filename);
 
