@@ -118,7 +118,7 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
 
     @Override
     public Single<AuthenticationFlowContext> create(AuthenticationFlowContext context) {
-       String id = context.getTransactionId() + "-" + context.getVersion();
+        String id = context.identifier();
         LOGGER.debug("Create AuthenticationContext with id {}", id);
 
         DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
@@ -133,6 +133,15 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         return monoToSingle(insertAction)
                 .flatMap(i -> this.findById(id).toSingle());
+    }
+
+    @Override
+    public Single<AuthenticationFlowContext> replace(AuthenticationFlowContext context) {
+        String id = context.identifier();
+        return create(context)
+                .onErrorResumeWith(findById(id)
+                        .doOnSuccess(x -> LOGGER.debug("AuthContext with id {} already exists", id))
+                        .switchIfEmpty(Single.error(new IllegalStateException("Couldn't store authFlowContext"))));
     }
 
     @Override

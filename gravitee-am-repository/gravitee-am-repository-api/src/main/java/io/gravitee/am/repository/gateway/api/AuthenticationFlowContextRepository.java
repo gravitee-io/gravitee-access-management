@@ -52,6 +52,13 @@ public interface AuthenticationFlowContextRepository extends ExpiredDataSweeper 
     Single<AuthenticationFlowContext> create(AuthenticationFlowContext context);
 
     /**
+     * Create authentication context
+     * @param
+     * @return
+     */
+    Single<AuthenticationFlowContext> replace(AuthenticationFlowContext context);
+
+    /**
      * Delete all context for given transactionId Id
      * @param transactionId
      * @return acknowledge of the operation

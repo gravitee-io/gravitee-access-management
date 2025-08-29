@@ -17,6 +17,7 @@ package io.gravitee.am.repository.mongodb.gateway;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.AuthenticationFlowContext;
 import io.gravitee.am.repository.gateway.api.AuthenticationFlowContextRepository;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.client.model.Filters.and;
@@ -76,21 +78,31 @@ public class MongoAuthenticationFlowContextRepository extends AbstractGatewayMon
 
     @Override
     public Maybe<AuthenticationFlowContext> findLastByTransactionId(String transactionId) {
-        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(FIELD_VERSION, -1)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(Map.of(FIELD_VERSION, -1, "createdAt", -1))).first()).firstElement().map(this::convert);
     }
 
     @Override
     public Flowable<AuthenticationFlowContext> findByTransactionId(String transactionId) {
-        return Flowable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(FIELD_VERSION, -1))).map(this::convert);
+        return Flowable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(Map.of(FIELD_VERSION, -1, "createdAt", -1)))).map(this::convert);
     }
 
     @Override
     public Single<AuthenticationFlowContext> create(AuthenticationFlowContext context) {
         AuthenticationFlowContextMongo contextMongo = convert(context);
-        contextMongo.setId(context.getTransactionId() + "-" + context.getVersion());
+        contextMongo.setId(context.identifier());
         return Single.fromPublisher(authContextCollection.insertOne(contextMongo))
                 .flatMap(success -> Single.just(context));
     }
+
+    @Override
+    public Single<AuthenticationFlowContext> replace(AuthenticationFlowContext context) {
+        AuthenticationFlowContextMongo contextMongo = convert(context);
+        contextMongo.setId(context.identifier());
+        return Single.fromPublisher(authContextCollection
+                        .replaceOne(eq(FIELD_ID, contextMongo.getId()), contextMongo, new ReplaceOptions().upsert(true)))
+                .flatMap(success -> Single.just(context));
+    }
+
 
     @Override
     public Completable delete(String transactionId) {
