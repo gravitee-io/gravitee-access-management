@@ -1,21 +1,69 @@
 {
-  "type" : "object",
-  "id" : "urn:jsonschema:io:gravitee:am:tokengranter:jwtbearer:JwtBearerTokenGranterConfiguration",
+  "type": "object",
+  "id": "urn:jsonschema:io:gravitee:am:tokengranter:jwtbearer:JwtBearerTokenGranterConfiguration",
   "description": "RFC 7523, Section 2.1, Using JWTs as a means for requesting an OAuth 2.0 access token.\nThe following example demonstrates an access token request with a JWT as an authorization grant :\n\nPOST /token HTTP/1.1\ngrant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=|signed-JWT-token|",
-  "properties" : {
+  "properties": {
     "grantType": {
       "title": "Grant Type",
       "description": "OAuth 2.0 grant type. The client uses an extension grant type by specifying the grant type value of the \"grant_type\" parameter of the token endpoint.",
       "default": "urn:ietf:params:oauth:grant-type:jwt-bearer",
       "readOnly": true
     },
-    "publicKey" : {
-      "title": "Public key",
-      "description": "SSH public key (((ecdsa)(.*)|ssh-(rsa|dsa)) ([A-Za-z0-9/+]+=*)( .*)?) used to verify assertion payload integrity.",
-      "type" : "string",
-      "pattern": "((ecdsa.*)|ssh-(rsa|dsa)) ([A-Za-z0-9/+]+=*)( .*)?"
+    "publicKeyResolver": {
+      "title": "Public Key resolver",
+      "description": "Define how token (JWT) will be verify",
+      "type": "string",
+      "default": "GIVEN_KEY",
+      "enum": [
+        "GIVEN_KEY",
+        "JWKS_URL"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "GIVEN_KEY": "GIVEN_KEY: You must provide a signature key (PEM format or HMAC secret key)",
+          "JWKS_URL": "JWKS_URL: Retrieve JWKS from URL (Basically, URL ending with '/.well-known/jwks.json')"
+        }
+      }
     },
-    "claimsMapper" : {
+    "signature": {
+      "title": "Signature",
+      "description": "Define how token has been signed.",
+      "type" : "string",
+      "default": "RS256",
+      "enum" : [
+        "RS256",
+        "RS384",
+        "RS512",
+        "HS256",
+        "HS384",
+        "HS512",
+        "ES256",
+        "ES384",
+        "ES512"
+      ],
+      "x-schema-form": {
+        "type": "select",
+        "titleMap": {
+          "RS256": "RS256 - RSA signature with SHA-256",
+          "RS384": "RS384 - RSA signature with SHA-384",
+          "RS512": "RS512 - RSA signature with SHA-512",
+          "HS256": "HS256 - HMAC with SHA-256, requires 256+ bit secret",
+          "HS384": "HS384 - HMAC with SHA-384, requires 384+ bit secret",
+          "HS512": "HS512 - HMAC with SHA-512, requires 512+ bit secret",
+          "ES256": "Elliptic Curves - ECDSA using P-256 and SHA-256",
+          "ES384": "Elliptic Curves - ECDSA using P-384 and SHA-384",
+          "ES512": "Elliptic Curves - ECDSA using P-512 and SHA-512"
+        }
+      }
+    },
+    "publicKey": {
+      "title": "Resolver parameter",
+      "description": "Set the signature key <i><b>(GIVEN_KEY)</b></i> or a JWKS URL <i><b>(JWKS_URL)</b></i> following selected resolver. If selected <i><b>(GIVEN_KEY)</b></i>, must start with key type (e.g. ssh-rsa).",
+      "type": "string",
+      "widget": "textarea"
+    },
+    "claimsMapper": {
       "title": "Claims mapper",
       "type": "array",
       "items": {
@@ -36,6 +84,7 @@
     }
   },
   "required": [
+    "publicKeyResolver",
     "publicKey"
   ]
 }

@@ -16,6 +16,8 @@
 package io.gravitee.am.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 
@@ -23,6 +25,8 @@ import java.util.Date;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Setter
+@Getter
 public class ExtensionGrant {
 
     private String id;
@@ -66,91 +70,4 @@ public class ExtensionGrant {
         this.updatedAt = other.updatedAt;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getIdentityProvider() {
-        return identityProvider;
-    }
-
-    public void setIdentityProvider(String identityProvider) {
-        this.identityProvider = identityProvider;
-    }
-
-    public String getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(String configuration) {
-        this.configuration = configuration;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
-    public String getGrantType() {
-        return grantType;
-    }
-
-    public boolean isCreateUser() {
-        return createUser;
-    }
-
-    public void setCreateUser(boolean createUser) {
-        this.createUser = createUser;
-    }
-
-    public void setGrantType(String grantType) {
-        this.grantType = grantType;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public boolean isUserExists() {
-        return userExists;
-    }
-
-    public void setUserExists(boolean userExists) {
-        this.userExists = userExists;
-    }
 }
