@@ -18,12 +18,10 @@ package io.gravitee.am.repository.mongodb;
 import io.gravitee.am.repository.mongodb.gateway.GatewayRepositoryConfiguration;
 import io.gravitee.am.repository.mongodb.management.ManagementRepositoryConfiguration;
 import io.gravitee.am.repository.mongodb.oauth2.OAuth2RepositoryConfiguration;
-import io.gravitee.repository.ratelimit.RateLimitRepositoryConfiguration;
 import io.gravitee.platform.repository.api.Scope;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertArrayEquals;
 
 /**
@@ -44,7 +42,7 @@ public class MongoRepositoryProviderTest {
     public void shouldReturnAllSupportedScopes() {
         Scope[] scopes = repositoryProvider.scopes();
 
-        Scope[] expectedScopes = {Scope.MANAGEMENT, Scope.OAUTH2, Scope.GATEWAY, Scope.RATE_LIMIT};
+        Scope[] expectedScopes = {Scope.MANAGEMENT, Scope.OAUTH2, Scope.GATEWAY};
         assertArrayEquals(expectedScopes, scopes);
     }
 
@@ -67,12 +65,5 @@ public class MongoRepositoryProviderTest {
         Class<?> configuration = repositoryProvider.configuration(Scope.GATEWAY);
 
         assertEquals(GatewayRepositoryConfiguration.class, configuration);
-    }
-
-    @Test
-    public void shouldReturnRateLimitConfigurationForRateLimitScope() {
-        Class<?> configuration = repositoryProvider.configuration(Scope.RATE_LIMIT);
-
-        assertEquals(RateLimitRepositoryConfiguration.class, configuration);
     }
 }
