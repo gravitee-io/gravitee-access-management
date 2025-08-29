@@ -17,15 +17,18 @@ package io.gravitee.am.reporter.file.audit;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.reporter.api.audit.model.AuditAccessPoint;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 import io.gravitee.am.reporter.api.audit.model.AuditOutcome;
 import io.gravitee.am.reporter.file.JUnitConfiguration;
 import lombok.Data;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -37,6 +40,8 @@ import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -99,6 +104,67 @@ public class ElasticFileAuditReporterTest extends FileAuditReporterTest {
         for (int i = 0; i < loop; ++i) {
             ElasticsearchAuditEntry readAudit = mapper.readValue(lines.get(i), ElasticsearchAuditEntry.class);
             assertReportEqualsTo(reportables.get(i), readAudit);
+            
+            // Also validate JSON structure to catch template issues
+            validateJsonStructure(lines.get(i), mapper);
+        }
+    }
+    
+    /**
+     * Test case specifically for outcome with missing status (to catch comma issue)
+     */
+    @Test
+    public void testOutcomeWithMissingStatus() throws Exception {
+        // Create an audit with outcome that has message but no status
+        Audit auditWithMessageOnly = buildRandomAudit(ReferenceType.DOMAIN, "testReporter");
+        AuditOutcome outcome = new AuditOutcome();
+        // Don't set status - this will test the template's handling of missing status
+        outcome.setMessage("Only message present");
+        auditWithMessageOnly.setOutcome(outcome);
+        
+        // Report the audit
+        auditReporter.report(auditWithMessageOnly);
+        waitBulkLoadFlush();
+        
+        // Read the generated JSON and validate it
+        List<String> lines = Files.readAllLines(Paths.get(buildAuditLogsFilename()));
+        String lastLine = lines.get(lines.size() - 1); // Get the last line (our test audit)
+        
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        
+        // This should not throw an exception if JSON is valid
+        JsonNode jsonNode = mapper.readTree(lastLine);
+        
+        // Validate the outcome structure
+        JsonNode outcomeNode = jsonNode.get("outcome");
+        assertEquals("Outcome should have message", "Only message present", outcomeNode.get("message").asText());
+        
+        // Validate no extra commas in outcome object
+        String outcomeJson = outcomeNode.toString();
+        assertFalse("Outcome should not start with comma", outcomeJson.trim().startsWith("{ ,"));
+        
+        // The status field should not be present
+        assertNull("Status should not be present", outcomeNode.get("status"));
+    }
+    
+    /**
+     * Validate JSON structure to catch template issues like extra commas
+     */
+    private void validateJsonStructure(String jsonLine, ObjectMapper mapper) throws IOException {
+        JsonNode jsonNode = mapper.readTree(jsonLine);
+        
+        // Check outcome structure for comma issues
+        if (jsonNode.has("outcome")) {
+            JsonNode outcome = jsonNode.get("outcome");
+            String outcomeJson = outcome.toString();
+            
+            // Check for leading comma in outcome object
+            assertFalse("Outcome should not start with comma", outcomeJson.trim().startsWith("{ ,"));
+            
+            // Check for trailing comma before closing brace
+            assertFalse("Outcome should not have trailing comma", outcomeJson.trim().endsWith(",}"));
         }
     }
     
