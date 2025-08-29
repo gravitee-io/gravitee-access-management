@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -58,35 +59,41 @@ public class MongoExtensionGrantRepository extends AbstractManagementMongoReposi
 
     @Override
     public Flowable<ExtensionGrant> findByDomain(String domain) {
-        return Flowable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert);
+        return Flowable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_DOMAIN, domain))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<ExtensionGrant> findByDomainAndName(String domain, String name) {
-        return Observable.fromPublisher(extensionGrantsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_NAME, name))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(extensionGrantsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_NAME, name))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<ExtensionGrant> findById(String tokenGranterId) {
-        return Observable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_ID, tokenGranterId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(extensionGrantsCollection.find(eq(FIELD_ID, tokenGranterId)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ExtensionGrant> create(ExtensionGrant item) {
         ExtensionGrantMongo extensionGrant = convert(item);
         extensionGrant.setId(extensionGrant.getId() == null ? RandomString.generate() : extensionGrant.getId());
-        return Single.fromPublisher(extensionGrantsCollection.insertOne(extensionGrant)).flatMap(success -> { item.setId(extensionGrant.getId()); return Single.just(item); });
+        return Single.fromPublisher(extensionGrantsCollection.insertOne(extensionGrant)).flatMap(success -> { item.setId(extensionGrant.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ExtensionGrant> update(ExtensionGrant item) {
         ExtensionGrantMongo extensionGrant = convert(item);
-        return Single.fromPublisher(extensionGrantsCollection.replaceOne(eq(FIELD_ID, extensionGrant.getId()), extensionGrant)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(extensionGrantsCollection.replaceOne(eq(FIELD_ID, extensionGrant.getId()), extensionGrant)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(extensionGrantsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(extensionGrantsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private ExtensionGrant convert(ExtensionGrantMongo extensionGrantMongo) {
