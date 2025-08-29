@@ -25,7 +25,7 @@
     <parent>
         <artifactId>gravitee-am-plugins-handlers</artifactId>
         <groupId>io.gravitee.am.plugins.handlers</groupId>
-        <version>4.7.13</version>
+        <version>4.7.14-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-plugins-handlers-api</artifactId>
