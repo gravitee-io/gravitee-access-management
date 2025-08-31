@@ -28,7 +28,7 @@
     "ansi-regex": "6.1.0",
     "babel-jest": "29.7.0",
     "btoa": "1.2.1",
-    "cheerio": "1.0.0-rc.12",
+    "cheerio": "1.1.2",
     "cypress": "8.7.0",
     "cypress-terminal-report": "3.4.1",
     "har-validator": "5.1.5",
