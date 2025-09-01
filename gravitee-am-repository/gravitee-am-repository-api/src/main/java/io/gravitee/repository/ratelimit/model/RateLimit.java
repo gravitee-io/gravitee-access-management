@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.repository.ratelimit.model;
+package io.gravitee.repository.ratelimit.model;
 
 import java.io.Serializable;
 import java.util.Objects;

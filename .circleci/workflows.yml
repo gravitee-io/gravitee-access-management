@@ -936,6 +936,22 @@ jobs:
             mvn install -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
       - save-maven-job-cache:
           jobName: run_testcontainer_tests_mongo
+  run_testcontainer_tests_redis:
+    executor:
+      name: ubuntu
+      class: "xlarge"
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - checkout
+      - restore-maven-job-cache:
+          jobName: run_testcontainer_tests_redis
+      - run:
+          name: Build
+          command: |
+            mvn install -pl \!gravitee-am-ui -P gio-artifactory-snapshot -Pcicd-redis -DskipTests -Dmaven.javadoc.skip=true -s /tmp/.gravitee.settings.xml
+      - save-maven-job-cache:
+          jobName: run_testcontainer_tests_redis
   run_testcontainer_tests_jdbc:
     executor:
       name: ubuntu
@@ -2122,6 +2138,15 @@ workflows:
                 - master
                 - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
       - run_testcontainer_tests_mongo:
+          context: cicd-orchestrator
+          requires:
+            - setup
+          filters:
+            branches:
+              ignore:
+                - master
+                - /^(\d|[1-9]\d*)\.(\d|[1-9]\d*)\.x$/
+      - run_testcontainer_tests_redis:
           context: cicd-orchestrator
           requires:
             - setup

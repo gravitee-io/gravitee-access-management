@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
@@ -23,6 +25,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 import io.vertx.core.Handler;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
@@ -79,6 +83,10 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             // preserve certificate thumbprint to add the information into the access token
             tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
         }
+
+        io.vertx.core.http.HttpServerRequest request = context.request().getDelegate();
+        Request serverRequest = new VertxHttpServerRequest(request);
+        Response serverResponse = new VertxHttpServerResponse(request, serverRequest.metrics());
 
         tokenGranter.grant(tokenRequest, client)
                 .subscribe(accessToken -> context.response()
