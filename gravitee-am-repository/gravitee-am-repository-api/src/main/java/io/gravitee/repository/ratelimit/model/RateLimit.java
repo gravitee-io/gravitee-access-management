@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class RateLimit implements Serializable {

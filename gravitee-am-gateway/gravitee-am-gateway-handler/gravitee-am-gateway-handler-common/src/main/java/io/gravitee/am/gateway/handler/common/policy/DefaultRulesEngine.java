@@ -44,7 +44,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -79,29 +78,23 @@ public class DefaultRulesEngine implements RulesEngine {
     }
 
     @Override
-    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint,
-                                         Request request,
-                                         Client client,
-                                         User user) {
-        return executeFire(extensionPoint, request, Optional.empty(), client, user);
+    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Client client, User user) {
+        return executeFire(extensionPoint, request, null, client, user);
     }
 
     @Override
-    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint,
-                                         Request request,
-                                         Response response,
-                                         Client client,
-                                         User user
-                                         ) {
-        return executeFire(extensionPoint, request, Optional.of(response), client, user);
+    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user) {
+        return executeFire(extensionPoint, request, response, client, user);
     }
 
-    private Single<ExecutionContext> prepareContext(Request request,
-                                                    Client client,
-                                                    User user,
-                                                    Optional<Response> response) {
+    private Single<ExecutionContext> prepareContext(Request request, Response response, Client client, User user) {
+        if (response == null){
+            response = new NoOpResponse();
+        }
+        final Response serverResponse = response;
+
         return Single.fromCallable(() -> {
-            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, response.orElseGet(NoOpResponse::new));
+            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, serverResponse);
             ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
             // add current context attributes
             executionContext.getAttributes().put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -115,10 +108,10 @@ public class DefaultRulesEngine implements RulesEngine {
 
     private Single<ExecutionContext> executeFire(ExtensionPoint extensionPoint,
                                                  Request request,
-                                                 Optional<Response> response1,
+                                                 Response response,
                                                  Client client,
                                                  User user){
-        return prepareContext(request, client, user, response1)
+        return prepareContext(request, client, user, response)
                 .flatMap(executionContext -> {
                     return flowManager.findByExtensionPoint(extensionPoint, client, ExecutionPredicate.from(executionContext))
                             .flatMap(policies -> {
