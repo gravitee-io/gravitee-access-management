@@ -17,12 +17,12 @@
   <#if audit.getReferenceType()??>
     "referenceType":"${audit.getReferenceType()?j_string}",
   </#if>
-  "referenceId":"${audit.getReferenceId()}",
-  "status":"${audit.getStatus()}"
+  "referenceId":"${audit.getReferenceId()}"
+  <#if audit.getStatus()??>,"status":"${audit.getStatus()}"</#if>
   <#if audit.getOutcome()??>
     ,"outcome": {
-      <#if audit.getOutcome().getStatus()??>, "status":"${audit.getOutcome().getStatus()}"</#if>
-      <#if audit.getOutcome().getMessage()??>, "message":"${audit.getOutcome().getMessage()}"</#if> 
+      <#if audit.getOutcome().getStatus()??>"status":"${audit.getOutcome().getStatus()}"<#if audit.getOutcome().getMessage()??>,</#if></#if>
+      <#if audit.getOutcome().getMessage()??>"message":"${audit.getOutcome().getMessage()}"</#if>
     }
   </#if>
   <#if audit.getAccessPoint()??>
