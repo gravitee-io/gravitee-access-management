@@ -50,7 +50,7 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
 
     @Override
     protected String getModelPackage() {
-        return "io.gravitee.am.repository.ratelimit.model.";
+        return "io.gravitee.repository.ratelimit.model.";
     }
 
     @Override
