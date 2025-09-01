@@ -111,7 +111,7 @@ public class DefaultRulesEngine implements RulesEngine {
                                                  Response response,
                                                  Client client,
                                                  User user){
-        return prepareContext(request, client, user, response)
+        return prepareContext(request, response, client, user)
                 .flatMap(executionContext -> {
                     return flowManager.findByExtensionPoint(extensionPoint, client, ExecutionPredicate.from(executionContext))
                             .flatMap(policies -> {
