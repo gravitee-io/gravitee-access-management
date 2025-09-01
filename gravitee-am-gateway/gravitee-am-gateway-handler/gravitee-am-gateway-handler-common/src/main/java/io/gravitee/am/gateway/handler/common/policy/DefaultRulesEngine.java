@@ -29,6 +29,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -43,6 +44,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -81,7 +83,42 @@ public class DefaultRulesEngine implements RulesEngine {
                                          Request request,
                                          Client client,
                                          User user) {
-        return prepareContext(request, client, user)
+        return executeFire(extensionPoint, request, Optional.empty(), client, user);
+    }
+
+    @Override
+    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint,
+                                         Request request,
+                                         Response response,
+                                         Client client,
+                                         User user
+                                         ) {
+        return executeFire(extensionPoint, request, Optional.of(response), client, user);
+    }
+
+    private Single<ExecutionContext> prepareContext(Request request,
+                                                    Client client,
+                                                    User user,
+                                                    Optional<Response> response) {
+        return Single.fromCallable(() -> {
+            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, response.orElseGet(NoOpResponse::new));
+            ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
+            // add current context attributes
+            executionContext.getAttributes().put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            // user can be null for flow such as client_credentials
+            if (user != null) {
+                executionContext.getAttributes().put(ConstantKeys.USER_CONTEXT_KEY, user);
+            }
+            return executionContext;
+        });
+    }
+
+    private Single<ExecutionContext> executeFire(ExtensionPoint extensionPoint,
+                                                 Request request,
+                                                 Optional<Response> response1,
+                                                 Client client,
+                                                 User user){
+        return prepareContext(request, client, user, response1)
                 .flatMap(executionContext -> {
                     return flowManager.findByExtensionPoint(extensionPoint, client, ExecutionPredicate.from(executionContext))
                             .flatMap(policies -> {
@@ -92,22 +129,6 @@ public class DefaultRulesEngine implements RulesEngine {
                                 return rxExecutePolicyChain(policies, executionContext);
                             });
                 });
-    }
-
-    private Single<ExecutionContext> prepareContext(Request request,
-                                                    Client client,
-                                                    User user) {
-        return Single.fromCallable(() -> {
-            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, new NoOpResponse());
-            ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
-            // add current context attributes
-            executionContext.getAttributes().put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
-            // user can be null for flow such as client_credentials
-            if (user != null) {
-                executionContext.getAttributes().put(ConstantKeys.USER_CONTEXT_KEY, user);
-            }
-            return executionContext;
-        });
     }
 
     private Single<ExecutionContext> rxExecutePolicyChain(List<Policy> policies, ExecutionContext executionContext) {
