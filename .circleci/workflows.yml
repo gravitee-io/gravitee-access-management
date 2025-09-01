@@ -1897,6 +1897,7 @@ workflows:
     when:
       and:
         - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
+    max_auto_reruns: 3
     jobs:
       - setup:
           context: cicd-orchestrator
