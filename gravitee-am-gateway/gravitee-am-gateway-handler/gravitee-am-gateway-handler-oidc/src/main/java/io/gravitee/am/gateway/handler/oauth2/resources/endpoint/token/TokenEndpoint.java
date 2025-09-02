@@ -88,7 +88,7 @@ public class TokenEndpoint implements Handler<RoutingContext> {
         Request serverRequest = new VertxHttpServerRequest(request);
         Response serverResponse = new VertxHttpServerResponse(request, serverRequest.metrics());
 
-        tokenGranter.grant(tokenRequest, client)
+        tokenGranter.grant(tokenRequest, serverResponse, client)
                 .subscribe(accessToken -> context.response()
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
