@@ -126,6 +126,10 @@ public class PasswordServiceImpl implements PasswordService {
             return false;
         }
 
+        if (user.getLastPasswordReset() == null) {
+            return true;
+        }
+
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(user.getLastPasswordReset());
         calendar.add(Calendar.DAY_OF_MONTH, passwordPolicy.getExpiryDuration());
