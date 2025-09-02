@@ -358,12 +358,25 @@ public class ReporterServiceImpl implements ReporterService {
             var collectionSuffix = (reference == null || reference.matches(ReferenceType.ORGANIZATION, Organization.DEFAULT))
                     ? ""
                     : ("_" + reference.id());
-            reporterConfig = "{\"uri\":\"" + mongoUri
-                    + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
-                    + ((mongoPort != null) ? "\",\"port\":" + Integer.parseInt(mongoPort) : "")
-                    + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName
-                    + "\",\"reportableCollection\":\"reporter_audits" + collectionSuffix
-                    + "\",\"bulkActions\":1000,\"flushInterval\":5}";
+
+            reporterConfig = """
+                        {
+                          "uri": "%s",
+                          %s
+                          %s
+                          "enableCredentials": false,
+                          "database": "%s",
+                          "reportableCollection": "reporter_audits%s",
+                          "bulkActions": 1000,
+                          "flushInterval": 5
+                        }
+                        """.formatted(
+                    mongoUri,
+                    (mongoHost != null) ? "\"host\":\"" + mongoHost + "\"," : "",
+                    (mongoPort != null) ? "\"port\":" + Integer.parseInt(mongoPort) + "," : "",
+                    mongoDBName,
+                    collectionSuffix
+            );
         } else if (useJdbcReporter()) {
             String jdbcHost = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.host");
             String jdbcPort = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.port");
@@ -371,20 +384,40 @@ public class ReporterServiceImpl implements ReporterService {
             String jdbcDriver = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.driver");
             String jdbcUser = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.username");
             String jdbcPwd = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.password");
+            String jdbcSchema = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.schema");
 
-            reporterConfig = "{\"host\":\"" + jdbcHost + "\"," +
-                    "\"port\":" + Integer.parseInt(jdbcPort) + "," +
-                    "\"database\":\"" + jdbcDatabase + "\"," +
-                    "\"driver\":\"" + jdbcDriver + "\"," +
-                    "\"username\":\"" + jdbcUser + "\"," +
-                    "\"password\":" + (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
-                    "\"tableSuffix\":\"" + getReporterTableSuffix(reference) + "\"," +
-                    "\"initialSize\":0," +
-                    "\"maxSize\":10," +
-                    "\"maxIdleTime\":30000," +
-                    "\"maxLifeTime\":30000," +
-                    "\"bulkActions\":1000," +
-                    "\"flushInterval\":5}";
+            String options = jdbcSchema == null || jdbcSchema.isEmpty() ? "[]" : """
+                    [{"option":"currentSchema","value":"%s"}]
+                    """.formatted(jdbcSchema);
+
+            reporterConfig = """
+                        {
+                          "host": "%s",
+                          "port": %d,
+                          "database": "%s",
+                          "driver": "%s",
+                          "username": "%s",
+                          "password": %s,
+                          "tableSuffix": "%s",
+                          "options": %s,
+                          "initialSize": 0,
+                          "maxSize": 10,
+                          "maxIdleTime": 30000,
+                          "maxLifeTime": 30000,
+                          "bulkActions": 1000,
+                          "flushInterval": 5
+                        }
+                        """.formatted(
+                    jdbcHost,
+                    Integer.parseInt(jdbcPort),
+                    jdbcDatabase,
+                    jdbcDriver,
+                    jdbcUser,
+                    jdbcPwd == null ? null : "\"" + jdbcPwd + "\"",
+                    getReporterTableSuffix(reference),
+                    options
+            );
+
         }
         return reporterConfig;
     }

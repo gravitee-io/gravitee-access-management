@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.provider.impl;
 
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
+import io.gravitee.am.repository.jdbc.provider.utils.SchemaSupport;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.r2dbc.pool.ConnectionPool;
 import io.r2dbc.spi.Connection;
@@ -25,7 +26,11 @@ import org.reactivestreams.Publisher;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static io.gravitee.am.repository.jdbc.provider.impl.ConnectionFactoryProvider.TAG_CURRENT_SCHEMA;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -119,4 +124,15 @@ public class R2DBCPoolWrapper implements ClientWrapper<ConnectionFactory>, Conne
     public String getJdbcPassword() {
         return this.connectionFactoryProvider != null ? this.connectionFactoryProvider.getJdbcPassword() : this.configuration.getPassword();
     }
+
+    public Optional<String> getJdbcSchema() {
+        Optional<String> schema = this.connectionFactoryProvider != null ? this.connectionFactoryProvider.getJdbcSchema() : this.configuration.getOption(TAG_CURRENT_SCHEMA);
+        return schema.map(String::trim).filter(s -> !s.isEmpty());
+    }
+
+    public boolean supportsSchema(){
+        return SchemaSupport.supportsSchema(getJdbcDriver());
+    }
+
+
 }
