@@ -146,7 +146,7 @@
 
     <profiles>
         <profile>
-            <id>cicd</id>
+            <id>cicd-redis</id>
             <build>
                 <plugins>
                     <plugin>

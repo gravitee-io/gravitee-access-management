@@ -51,6 +51,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -129,6 +130,15 @@ public class UMATokenGranter extends AbstractTokenGranter {
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
+        return parseRequest(tokenRequest, client)
+                .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest, client))
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty())
+                .flatMap(user -> handleRequest(tokenRequest, client, user.orElse(null)));
+    }
+
+    @Override
+    public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
         return parseRequest(tokenRequest, client)
                 .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest, client))
                 .map(Optional::of)
