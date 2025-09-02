@@ -52,8 +52,11 @@ public interface TokenGranter {
      * @return The authorization server authenticates the client and validates the authorization grant, and if valid, issues an access token.
      */
     Single<Token> grant(TokenRequest tokenRequest, Client client);
-    Single<Token> grant(TokenRequest tokenRequest, Response response, Client client);
 
+
+    default Single<Token> grant(TokenRequest tokenRequest, Response response, Client client){
+        return grant(tokenRequest, client);
+    }
 
     default boolean handle(String grantType) {
         return handle(grantType, null);

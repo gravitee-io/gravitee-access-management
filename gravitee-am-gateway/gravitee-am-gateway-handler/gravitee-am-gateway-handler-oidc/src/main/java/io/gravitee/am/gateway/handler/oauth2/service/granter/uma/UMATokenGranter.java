@@ -138,15 +138,6 @@ public class UMATokenGranter extends AbstractTokenGranter {
     }
 
     @Override
-    public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
-        return parseRequest(tokenRequest, client)
-                .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest, client))
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .flatMap(user -> handleRequest(tokenRequest, client, user.orElse(null)));
-    }
-
-    @Override
     protected Single<TokenRequest> parseRequest(TokenRequest tokenRequest, Client client) {
         MultiValueMap<String, String> parameters = tokenRequest.parameters();
         String ticket = parameters.getFirst(TICKET);
