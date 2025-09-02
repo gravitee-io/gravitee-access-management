@@ -73,6 +73,8 @@ public abstract class AbstractTestRepositoryConfiguration extends AbstractReposi
             try (Connection connection = DriverManager.getConnection(jdbcUrl,
                     (String) options.getValue(USER), options.getValue(PASSWORD).toString())) {
                 LOGGER.debug("Running Liquibase on {}", jdbcUrl);
+
+                setupLiquibase();
                 runLiquibase(connection);
                 runLiquibase_addSpecificTestIndexes(connection);
             }

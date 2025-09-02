@@ -65,3 +65,72 @@ tests:
                   maxLifeTime: -1
                   maxSize: 50
                   port: 3306
+
+  - it: Test jdbc schema property
+    template: gateway/gateway-configmap.yaml
+    set:
+      management:
+        type: jdbc
+      gateway:
+        type: jdbc
+      oauth2:
+        type: jdbc
+      jdbc:
+        schema: haha
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            gateway:
+              url: https://am.example.com/auth
+            
+            repositories:
+              management:
+                type: jdbc
+                jdbc:
+                  acquireRetry: 1
+                  database: graviteeam
+                  driver: mysql
+                  host: localhost
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
+                  port: 3306
+                  schema: haha
+              oauth2:
+                type: jdbc
+                jdbc:
+                  acquireRetry: 1
+                  database: graviteeam
+                  driver: mysql
+                  host: localhost
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
+                  port: 3306
+                  schema: haha
+              gateway:
+                type: jdbc
+                jdbc:
+                  acquireRetry: 1
+                  database: graviteeam
+                  driver: mysql
+                  host: localhost
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
+                  port: 3306
+                  schema: haha
