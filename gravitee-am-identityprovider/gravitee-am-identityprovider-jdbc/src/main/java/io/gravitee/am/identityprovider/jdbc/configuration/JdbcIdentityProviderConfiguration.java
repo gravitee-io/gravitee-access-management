@@ -103,6 +103,7 @@ public class JdbcIdentityProviderConfiguration implements IdentityProviderConfig
         this.database = database;
     }
 
+
     public String getUsersTable() {
         return usersTable;
     }

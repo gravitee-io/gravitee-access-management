@@ -15,17 +15,6 @@
  */
 package io.gravitee.am.management.service.impl;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-
-import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.BaseEncoding;
@@ -42,6 +31,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import static io.gravitee.am.service.utils.BackendConfigurationUtils.getMongoDatabaseName;
 
 @Component
 @Slf4j
@@ -60,6 +60,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             "PBKDF2-SHA256", "PBKDF2WithHmacSHA256",
             "PBKDF2-SHA512", "PBKDF2WithHmacSHA512"
     );
+
     private final IdentityProviderService identityProviderService;
 
     private final RepositoriesEnvironment environment;
@@ -165,6 +166,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             configMap.put("usernameAttribute", "username");
             configMap.put("passwordAttribute", PASSWORD);
             configMap.put("passwordEncoder", parsePasswordEncoder(encoder));
+            jdbcSchema().ifPresent(schema -> configMap.put("options", Map.of("option", "currentSchema", "value", schema)));
             updatePasswordEncoderOptions(configMap, encoder);
         }
         return configMap;
@@ -282,5 +284,9 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
     private boolean idpProvisioning() {
         return environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.identityProvider.provisioning", Boolean.class, true);
+    }
+
+    private Optional<String> jdbcSchema() {
+        return Optional.ofNullable(environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.schema", String.class));
     }
 }

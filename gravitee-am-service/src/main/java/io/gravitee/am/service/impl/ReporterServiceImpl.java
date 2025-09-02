@@ -371,6 +371,7 @@ public class ReporterServiceImpl implements ReporterService {
             String jdbcDriver = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.driver");
             String jdbcUser = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.username");
             String jdbcPwd = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.password");
+            String jdbcSchema = environment.getProperty(Scope.MANAGEMENT.getRepositoryPropertyKey() + ".jdbc.schema");
 
             reporterConfig = "{\"host\":\"" + jdbcHost + "\"," +
                     "\"port\":" + Integer.parseInt(jdbcPort) + "," +
@@ -378,6 +379,7 @@ public class ReporterServiceImpl implements ReporterService {
                     "\"driver\":\"" + jdbcDriver + "\"," +
                     "\"username\":\"" + jdbcUser + "\"," +
                     "\"password\":" + (jdbcPwd == null ? null : "\"" + jdbcPwd + "\"") + "," +
+                    (jdbcDriver.equalsIgnoreCase("postgres") && jdbcSchema == null ? "" : "\"schema\":\""  + jdbcSchema + "\",") +
                     "\"tableSuffix\":\"" + getReporterTableSuffix(reference) + "\"," +
                     "\"initialSize\":0," +
                     "\"maxSize\":10," +
