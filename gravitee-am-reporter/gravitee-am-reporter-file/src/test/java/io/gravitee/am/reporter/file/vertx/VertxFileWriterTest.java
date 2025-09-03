@@ -45,12 +45,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.time.ZoneId;
@@ -210,7 +208,7 @@ public class VertxFileWriterTest {
     }
 
     @Test
-    public void shouldActuallyExecuteScheduledTimerWithMockedTime() throws IOException, InterruptedException {
+    public void shouldActuallyExecuteScheduledTimerWithMockedTime() throws IOException {
         File tempDir = Files.createTempDirectory(BASE_DIRECTORY).toFile();
         tempDir.deleteOnExit();
         String filename = tempDir.getAbsolutePath() + File.separatorChar + "test-audit-logs-yyyy_mm_dd.json";
@@ -246,12 +244,12 @@ public class VertxFileWriterTest {
             
             Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
-                .until(() -> expectedRolloverFile.exists());
+                .until(expectedRolloverFile::exists);
            
             // Verify we have exactly the two expected files
             List<String> allFileNames = Arrays.stream(tempDir.listFiles())
                 .map(File::getName)
-                .collect(Collectors.toList());
+                .toList();
             
             assertEquals("Should contain exactly 2 files", 2, allFileNames.size());
             assertTrue("Should contain 08_01 file", allFileNames.contains("test-audit-logs-2025_08_01.json"));

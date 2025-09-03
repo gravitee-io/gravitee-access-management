@@ -28,6 +28,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -224,9 +227,9 @@ public class VertxFileWriter<T extends ReportEntry> {
     
     private void closeOldFileIfExists(AsyncFile oldAsyncFile) {
         if (oldAsyncFile != null) {
-            close(oldAsyncFile).onFailure(throwable -> {
-                LOGGER.error("An error occurs while closing file writer [{}]", filename, throwable);
-            });
+            close(oldAsyncFile).onFailure(throwable ->
+                LOGGER.error("An error occurs while closing file writer [{}]", filename, throwable)
+            );
         }
     }
 
@@ -312,11 +315,8 @@ public class VertxFileWriter<T extends ReportEntry> {
             return;
         }
 
-        File dir = getParentDirectory();
-        if (dir == null) {
-            return;
-        }
-
+        File file = new File(this.filename);
+        File dir = new File(file.getParent());
         String[] logFiles = dir.list();
         if (logFiles == null) {
             return;
@@ -326,29 +326,17 @@ public class VertxFileWriter<T extends ReportEntry> {
     }
     
     private boolean isFileRetentionEnabled() {
-        if (retainDays <= 0) {
-            LOGGER.debug("No file retention configured");
-            return false;
-        }
-        if (rolloverFiles == null) {
-            return false;
-        }
-        return true;
-    }
-    
-    private File getParentDirectory() {
-        File file = new File(this.filename);
-        return new File(file.getParent());
+        return retainDays > 0 && rolloverFiles != null;
     }
     
     private void processLogFilesForRetention(File dir, String[] logFiles) {
         long currentTime = timeProvider.now().toInstant().toEpochMilli();
         
-        for (String filename : logFiles) {
-            if (rolloverFiles.matcher(filename).matches()) {
-                processLogFile(dir, filename, currentTime);
+        for (String logfilename : logFiles) {
+            if (rolloverFiles.matcher(logfilename).matches()) {
+                processLogFile(dir, logfilename, currentTime);
             } else {
-                LOGGER.debug("File [{}] does not match the rollover pattern", filename);
+                LOGGER.debug("File [{}] does not match the rollover pattern", logfilename);
             }
         }
     }
@@ -364,9 +352,15 @@ public class VertxFileWriter<T extends ReportEntry> {
     
     private void deleteFile(String filename, File file) {
         LOGGER.debug("File [{}] should be removed", filename);
-        boolean fileDeleted = file.delete();
-        if (!fileDeleted) {
-            LOGGER.warn("File [{}] has not been removed", filename);
+        try {
+            Files.delete(file.toPath());
+            LOGGER.debug("File [{}] has been removed successfully", filename);
+        } catch (NoSuchFileException e) {
+            LOGGER.warn("File [{}] not found for deletion", filename);
+        } catch (DirectoryNotEmptyException e) {
+            LOGGER.warn("File [{}] is a non-empty directory and cannot be deleted", filename);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to delete file [{}]: {}", filename, e.getMessage());
         }
     }
 
