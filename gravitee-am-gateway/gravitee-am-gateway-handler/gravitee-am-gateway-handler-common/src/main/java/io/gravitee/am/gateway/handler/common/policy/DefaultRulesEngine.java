@@ -32,7 +32,9 @@ import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -117,7 +119,7 @@ public class DefaultRulesEngine implements RulesEngine {
                 executionContext.getAttributes().put(ConstantKeys.USER_CONTEXT_KEY, user);
             }
             return executionContext;
-        });
+        }).observeOn(Schedulers.computation());
     }
 
     private Single<ExecutionContext> rxExecutePolicyChain(List<Policy> policies, ExecutionContext executionContext) {
