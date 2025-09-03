@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.gravitee.am.repository.mongodb.ratelimit;
 
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.gravitee.am.repository.mongodb.ratelimit.model.RateLimitMongo;
 import io.gravitee.am.repository.ratelimit.api.RateLimitRepository;
 import io.gravitee.am.repository.ratelimit.model.RateLimit;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,19 +35,18 @@ import org.springframework.stereotype.Component;
 import java.util.function.Supplier;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.ReturnDocument.AFTER;
 
 @Component
+@Slf4j
 public class RateLimitObjectRepository extends AbstractMongoRepository implements RateLimitRepository<RateLimit> {
-    
+
     private static final String RATE_LIMIT_API = "ratelimit_api";
     private MongoCollection<RateLimitMongo> rateLimitCollection;
 
     @Autowired
     @Qualifier("ratelimitMongoTemplate")
     protected MongoDatabase mongoOperations;
-
-    @Autowired
-    private org.springframework.core.env.Environment environment;
 
     @PostConstruct
     public void init() {
@@ -55,40 +56,35 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
 
     @Override
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
-        return Observable.fromPublisher(
-                rateLimitCollection.findOneAndUpdate(
-                        eq("_id", key),
-                        new Document("$inc", new Document("counter", weight)),
-                        new com.mongodb.client.model.FindOneAndUpdateOptions().returnDocument(com.mongodb.client.model.ReturnDocument.AFTER)
+        return findNotExpiredById(key, weight)
+                .doOnSuccess(rl -> log.debug("Incrementing rate limit entry for key {} with weight {}", rl.getKey(), weight))
+                .switchIfEmpty(createNew(supplier, weight)
+                        .doOnSuccess(rl -> log.debug("Creating new rate limit entry for key {} with weight {}", rl.getKey(), weight))
+                );
+    }
+
+    private Maybe<RateLimit> findNotExpiredById(String key, long weight){
+        return Maybe.fromPublisher(
+                        rateLimitCollection.findOneAndUpdate(
+                                eq("_id", key),
+                                new Document("$inc", new Document("counter", weight)),
+                                new FindOneAndUpdateOptions().returnDocument(AFTER)
+                        )
                 )
-        )
-        .firstElement()
-        .map(this::toEntity)
-        .switchIfEmpty(Single.fromCallable(() -> {
-            // Rate limit doesn't exist, create a new one using the supplier
-            RateLimit newRateLimit = supplier.get();
-            newRateLimit.setCounter(weight); // Start with the weight
-            
-            RateLimitMongo newRateLimitMongo = toMongoEntity(newRateLimit);
-            return Observable.fromPublisher(rateLimitCollection.insertOne(newRateLimitMongo))
-                    .flatMap(success -> Observable.just(newRateLimit))
-                    .blockingFirst();
-        }))
-        .flatMap(rateLimit -> {
-            // Check if the rate limit has expired
-            if (System.currentTimeMillis() > rateLimit.getResetTime()) {
-                // Rate limit has expired, create a new one using the supplier
-                RateLimit newRateLimit = supplier.get();
-                newRateLimit.setCounter(weight); // Start with the weight
-                
-                RateLimitMongo newRateLimitMongo = toMongoEntity(newRateLimit);
-                return Observable.fromPublisher(rateLimitCollection.replaceOne(eq("_id", key), newRateLimitMongo))
-                        .flatMap(success -> Observable.just(newRateLimit))
-                        .firstOrError();
-            } else {
-                return Single.just(rateLimit);
-            }
-        });
+                .map(this::toEntity)
+                .filter(RateLimit::hasNotExpired);
+    }
+
+    private Single<RateLimit> createNew(Supplier<RateLimit> supplier, long weight) {
+        return Single.fromSupplier(supplier::get)
+                .flatMap(newRateLimit -> {
+                    // Rate limit doesn't exist, create a new one using the supplier
+                    newRateLimit.setCounter(weight); // Start with the weight
+
+                    RateLimitMongo newRateLimitMongo = toMongoEntity(newRateLimit);
+                    return Single.fromPublisher(rateLimitCollection.insertOne(newRateLimitMongo))
+                            .map(rl -> newRateLimit);
+                });
     }
 
     private RateLimit toEntity(RateLimitMongo entity) {
@@ -100,7 +96,7 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
         rateLimit.setSubscription(entity.getSubscription());
         return rateLimit;
     }
-    
+
     private RateLimitMongo toMongoEntity(RateLimit entity) {
         if (entity == null) return null;
         RateLimitMongo rateLimitMongo = new RateLimitMongo();
