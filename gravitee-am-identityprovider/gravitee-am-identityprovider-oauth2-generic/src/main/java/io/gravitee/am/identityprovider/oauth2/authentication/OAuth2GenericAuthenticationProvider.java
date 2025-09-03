@@ -27,6 +27,7 @@ import io.gravitee.am.identityprovider.api.social.ProviderResponseType;
 import io.gravitee.am.identityprovider.oauth2.authentication.spring.OAuth2GenericAuthenticationProviderConfiguration;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.functions.Function;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.reactivestreams.Publisher;
@@ -108,58 +109,60 @@ public class OAuth2GenericAuthenticationProvider extends AbstractOpenIDConnectAu
     protected Completable initializeAuthProvider() {
         // fetch OpenID Provider information
         final RetryWithDelay retryHandler = new RetryWithDelay();
-        return Completable.fromAction(() -> getOpenIDProviderConfiguration(configuration))
+        return getOpenIDProviderConfiguration(configuration)
                 .doOnError(error -> LOGGER.warn("Unable to load configuration from '{}' due to : {}", configuration.getWellKnownUri(), error.getMessage()))
                 .retryWhen(retryHandler)
                 .andThen(Completable.fromAction(this::generateJWTProcessor));
     }
 
-    private void getOpenIDProviderConfiguration(OAuth2GenericIdentityProviderConfiguration configuration) {
+    private Completable getOpenIDProviderConfiguration(OAuth2GenericIdentityProviderConfiguration configuration) {
         // fetch OpenID Provider information
         if (configuration.getWellKnownUri() == null || configuration.getWellKnownUri().isEmpty()) {
-            return;
+            return Completable.complete();
         }
-        try {
-            Map<String, Object> providerConfiguration = client.getAbs(configuration.getWellKnownUri())
-                    .rxSend()
-                    .map(httpClientResponse -> {
-                        if (httpClientResponse.statusCode() != 200) {
-                            throw new IllegalArgumentException("Invalid OIDC Well-Known Endpoint : " + httpClientResponse.statusMessage());
-                        }
-                        return httpClientResponse.bodyAsJsonObject().getMap();
-                    }).blockingGet();
+        return client.getAbs(configuration.getWellKnownUri())
+                        .rxSend()
+                        .map(httpClientResponse -> {
+                            if (httpClientResponse.statusCode() != 200) {
+                                throw new IllegalArgumentException("Invalid OIDC Well-Known Endpoint : " + httpClientResponse.statusMessage());
+                            }
+                            return httpClientResponse.bodyAsJsonObject().getMap();
+                        }).flatMap(providerConfiguration -> {
+                                    try {
+                                        if (providerConfiguration.containsKey(AUTHORIZATION_ENDPOINT)) {
+                                            configuration.setUserAuthorizationUri((String) providerConfiguration.get(AUTHORIZATION_ENDPOINT));
+                                        }
+                                        if (providerConfiguration.containsKey(TOKEN_ENDPOINT)) {
+                                            configuration.setAccessTokenUri((String) providerConfiguration.get(TOKEN_ENDPOINT));
+                                        }
+                                        if (providerConfiguration.containsKey(USERINFO_ENDPOINT)) {
+                                            configuration.setUserProfileUri((String) providerConfiguration.get(USERINFO_ENDPOINT));
+                                        }
+                                        if (providerConfiguration.containsKey(END_SESSION_ENDPOINT)) {
+                                            configuration.setLogoutUri((String) providerConfiguration.get(END_SESSION_ENDPOINT));
+                                        }
 
-            if (providerConfiguration.containsKey(AUTHORIZATION_ENDPOINT)) {
-                configuration.setUserAuthorizationUri((String) providerConfiguration.get(AUTHORIZATION_ENDPOINT));
-            }
-            if (providerConfiguration.containsKey(TOKEN_ENDPOINT)) {
-                configuration.setAccessTokenUri((String) providerConfiguration.get(TOKEN_ENDPOINT));
-            }
-            if (providerConfiguration.containsKey(USERINFO_ENDPOINT)) {
-                configuration.setUserProfileUri((String) providerConfiguration.get(USERINFO_ENDPOINT));
-            }
-            if (providerConfiguration.containsKey(END_SESSION_ENDPOINT)) {
-                configuration.setLogoutUri((String) providerConfiguration.get(END_SESSION_ENDPOINT));
-            }
+                                        // try to use the JWKS provided by the well-known endpoint if it is not specified into the configuration form
+                                        if (configuration.getPublicKeyResolver() == KeyResolver.JWKS_URL && ObjectUtils.isEmpty(configuration.getResolverParameter())) {
+                                            configuration.setResolverParameter((String) providerConfiguration.get(JWKS_ENDPOINT));
+                                        }
 
-            // try to use the JWKS provided by the well-known endpoint if it is not specified into the configuration form
-            if (configuration.getPublicKeyResolver() == KeyResolver.JWKS_URL && ObjectUtils.isEmpty(configuration.getResolverParameter())) {
-                configuration.setResolverParameter((String) providerConfiguration.get(JWKS_ENDPOINT));
-            }
+                                        // configuration verification
+                                        Assert.notNull(configuration.getUserAuthorizationUri(), "OAuth 2.0 Authorization endpoint is required");
 
-            // configuration verification
-            Assert.notNull(configuration.getUserAuthorizationUri(), "OAuth 2.0 Authorization endpoint is required");
+                                        if (configuration.getAccessTokenUri() == null && ProviderResponseType.CODE.equals(configuration.getProviderResponseType())) {
+                                            return Single.error(new IllegalStateException("OAuth 2.0 token endpoint is required for the Authorization code flow"));
+                                        }
 
-            if (configuration.getAccessTokenUri() == null && ProviderResponseType.CODE.equals(configuration.getProviderResponseType())) {
-                throw new IllegalStateException("OAuth 2.0 token endpoint is required for the Authorization code flow");
-            }
-
-            if (configuration.getUserProfileUri() == null && !configuration.isUseIdTokenForUserInfo()) {
-                throw new IllegalStateException("OpenID Connect UserInfo Endpoint is required to retrieve user information");
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException(e.getMessage());
-        }
+                                        if (configuration.getUserProfileUri() == null && !configuration.isUseIdTokenForUserInfo()) {
+                                            return Single.error(new IllegalStateException("OpenID Connect UserInfo Endpoint is required to retrieve user information"));
+                                        }
+                                    } catch (Exception e) {
+                                        return Single.error(new IllegalArgumentException("Invalid OIDC Well-Known Endpoint : " + e.getMessage()));
+                                    }
+                                    return Single.just(providerConfiguration);
+                                }
+                        ).ignoreElement();
     }
 
     /**
