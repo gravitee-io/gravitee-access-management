@@ -46,7 +46,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-@Slf4j
 public class TokenEndpoint implements Handler<RoutingContext> {
     private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
     private TokenGranter tokenGranter;
@@ -66,11 +65,6 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             throw new InvalidClientException();
         }
 
-        Context ctx = Vertx.currentContext();
-        if (ctx == null) {
-            log.warn("No current context found");
-        }
-
         TokenRequest tokenRequest = tokenRequestFactory.create(context);
         // Check that authenticated user is matching the client_id
         // client_id is not required in the token request since the client can be authenticated via a Basic Authentication
@@ -83,28 +77,14 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             tokenRequest.setClientId(client.getClientId());
         }
 
-        ctx = Vertx.currentContext();
-        if (ctx == null) {
-            log.warn("No current context found");
-        }
-
         // check if client has authorized grant types
         if (client.getAuthorizedGrantTypes() == null || client.getAuthorizedGrantTypes().isEmpty()) {
             throw new InvalidClientException("Invalid client: client must at least have one grant type configured");
         }
 
-        ctx = Vertx.currentContext();
-        if (ctx == null) {
-            log.warn("No current context found");
-        }
         if (context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT) != null) {
             // preserve certificate thumbprint to add the information into the access token
             tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
-        }
-
-        ctx = Vertx.currentContext();
-        if (ctx == null) {
-            log.warn("No current context found");
         }
 
         io.vertx.core.http.HttpServerRequest request = context.request().getDelegate();
