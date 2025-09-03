@@ -54,7 +54,7 @@ public interface TokenGranter {
     Single<Token> grant(TokenRequest tokenRequest, Client client);
 
 
-     Single<Token> grant(TokenRequest tokenRequest, Response response, Client client);
+    Single<Token> grant(TokenRequest tokenRequest, Response response, Client client);
 
     default boolean handle(String grantType) {
         return handle(grantType, null);
