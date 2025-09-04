@@ -62,15 +62,25 @@ public class AbstractTokenGranter implements TokenGranter {
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
-        return parseRequest(tokenRequest, client)
-                .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest1, client))
-                .map(Optional::of)
-                .defaultIfEmpty(Optional.empty())
-                .flatMap(user -> handleRequest(tokenRequest, client, user.orElse(null)));
+        return executeGrant(tokenRequest, null, client);
     }
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
+       return executeGrant(tokenRequest, response, client);
+    }
+
+    /**
+     * Executes the authorization grant flow, orchestrating the parsing of the request,
+     * resolving the resource owner, and handling the request. compo
+     * This method is used to implement specific grant types.
+     *
+     * @param tokenRequest the access token request containing client credentials and grant-specific parameters
+     * @param response the response object used to send back the token and handle errors
+     * @param client the OAuth2 client initiating the request
+     * @return a reactive single containing the issued access token or an exception in case of failure
+     */
+    private Single<Token> executeGrant(TokenRequest tokenRequest, Response response, Client client) {
         return parseRequest(tokenRequest, client)
                 .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest1, client))
                 .map(Optional::of)
@@ -152,25 +162,6 @@ public class AbstractTokenGranter implements TokenGranter {
 
     public void setRulesEngine(RulesEngine rulesEngine) {
         this.rulesEngine = rulesEngine;
-    }
-
-    private Single<Token> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
-        return resolveRequest(tokenRequest, client, endUser)
-                .flatMap(tokenRequest1 -> createOAuth2Request(tokenRequest1, client, endUser))
-                .flatMap(oAuth2Request -> {
-                    // fire PRE TOKEN flow
-                    return rulesEngine.fire(ExtensionPoint.PRE_TOKEN, oAuth2Request, client, endUser)
-                            // add the policy chain context values to the oauth2 request context
-                            .map(executionContext -> {
-                                oAuth2Request.getExecutionContext().putAll(executionContext.getAttributes());
-                                return oAuth2Request;
-                            })
-                            // create the access token
-                            .flatMap(oAuth2Request1 -> createAccessToken(oAuth2Request1, client, endUser))
-                            // fire POST TOKEN flow
-                            .flatMap(token -> rulesEngine.fire(ExtensionPoint.POST_TOKEN, oAuth2Request, client, endUser)
-                                    .map(executionContext -> token));
-                });
     }
 
     private Single<Token> handleRequest(TokenRequest tokenRequest, Response response, Client client, User endUser) {

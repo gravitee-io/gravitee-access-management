@@ -110,25 +110,26 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
-        return Observable
-                .fromIterable(tokenGranters.values())
-                .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
-                .firstElement()
-                .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
+        return findGranter(tokenRequest, client)
                 .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client))
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
     }
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
+        return findGranter(tokenRequest, client)
+                .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, response, client))
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+    }
+
+    private Single<TokenGranter> findGranter(TokenRequest tokenRequest, Client client) {
         return Observable
                 .fromIterable(tokenGranters.values())
                 .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
                 .firstElement()
-                .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
-                .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, response, client))
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+                .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())));
     }
+
 
     public void addTokenGranter(String tokenGranterId, TokenGranter tokenGranter) {
         Objects.requireNonNull(tokenGranterId);
