@@ -320,6 +320,16 @@ public class PasswordServiceImplTest {
     }
 
     @Test
+    public void checkAccountPasswordExpiry_nullLastPasswordReset_shouldReturnExpired() {
+        User user = new User();
+        user.setLastPasswordReset(null);
+        PasswordPolicy passwordSettings = new PasswordPolicy();
+        passwordSettings.setExpiryDuration(90);
+
+        Assertions.assertThat(passwordService.checkAccountPasswordExpiry(user, passwordSettings)).isTrue();
+    }
+
+    @Test
     public void checkAccountPasswordExpiry_shouldNotReturnExpired() {
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_MONTH, -6);
