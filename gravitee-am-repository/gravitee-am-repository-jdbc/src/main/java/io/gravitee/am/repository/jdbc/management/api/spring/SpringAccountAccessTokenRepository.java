@@ -27,6 +27,6 @@ public interface SpringAccountAccessTokenRepository extends RxJava3CrudRepositor
     @Query("select * from account_access_tokens a where a.user_id = :userId and a.reference_id = :refId and a.reference_type = :refType")
     Flowable<JdbcAccountAccessToken> findByUserId(@Param("refType") String refType, @Param("refId") String refId, @Param("userId") String userId);
 
-    @Query("delete from account_access_tokens a where a.user_id = :userId and a.reference_id = :refId and a.reference_type = :refType")
+    @Query("delete from account_access_tokens where user_id = :userId and reference_id = :refId and reference_type = :refType")
     Maybe<Long> deleteByUserId(@Param("refType") String refType, @Param("refId") String refId, @Param("userId") String userId);
 }
