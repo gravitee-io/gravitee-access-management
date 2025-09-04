@@ -22,6 +22,7 @@ import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.utils.JwtSignerExecutor;
 import io.gravitee.am.gateway.configuration.ConfigurationChecker;
+import io.gravitee.am.gateway.core.purge.GatewayPurgeServiceConfiguration;
 import io.gravitee.am.gateway.core.upgrader.GatewayUpgraderConfiguration;
 import io.gravitee.am.gateway.event.EventManagerImpl;
 import io.gravitee.am.gateway.node.GatewayNode;
@@ -79,6 +80,7 @@ import org.springframework.core.env.Environment;
         DataPlaneSpringConfiguration.class,
         GatewayUpgraderConfiguration.class,
         ServiceConfiguration.class,
+        GatewayPurgeServiceConfiguration.class,
         IdentityProviderSpringConfiguration.class,
         CertificateSpringConfiguration.class,
         ExtensionGrantSpringConfiguration.class,

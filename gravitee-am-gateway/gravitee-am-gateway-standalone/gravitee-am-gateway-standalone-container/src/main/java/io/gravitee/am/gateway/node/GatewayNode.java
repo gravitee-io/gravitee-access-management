@@ -19,6 +19,7 @@ import io.gravitee.am.gateway.reactor.Reactor;
 import io.gravitee.am.gateway.core.upgrader.GatewayUpgraderConfiguration;
 import io.gravitee.am.gateway.vertx.VertxEmbeddedContainer;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
+import io.gravitee.am.service.purge.ScheduledPurgeService;
 import io.gravitee.common.component.LifecycleComponent;
 import io.gravitee.node.api.NodeMetadataResolver;
 import io.gravitee.node.container.AbstractNode;
@@ -59,7 +60,7 @@ public class GatewayNode extends AbstractNode {
         components.add(Reactor.class);
         components.add(VertxEmbeddedContainer.class);
         components.add(AlertEventProducerManager.class);
-
+        components.add(ScheduledPurgeService.class);
         return components;
     }
 
