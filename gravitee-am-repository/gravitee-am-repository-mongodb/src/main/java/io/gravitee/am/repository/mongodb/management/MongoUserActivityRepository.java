@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Repository;
@@ -78,7 +79,8 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
 
     @Override
     public Maybe<UserActivity> findById(String id) {
-        return Observable.fromPublisher(userActivityCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(userActivityCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRE_AT, new Date()))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -88,7 +90,8 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
                 eq(FIELD_REFERENCE_ID, referenceId),
                 eq(FIELD_USER_ACTIVITY_TYPE, type.name()),
                 eq(FIELD_USER_ACTIVITY_KEY, key), gte(FIELD_EXPIRE_AT, new Date())))
-        ).sort(new Document(FIELD_CREATED_AT, -1)).limit(limit)).map(this::convert);
+        ).sort(new Document(FIELD_CREATED_AT, -1)).limit(limit)).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -98,19 +101,22 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
         return Single.fromPublisher(userActivityCollection.insertOne(userActivity)).flatMap(success -> {
             item.setId(userActivity.getId());
             return Single.just(item);
-        });
+        })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<UserActivity> update(UserActivity item) {
         var userActivity = convert(item);
         return Single.fromPublisher(userActivityCollection.replaceOne(eq(FIELD_ID, userActivity.getId()), userActivity))
-                .flatMap(updateResult -> Single.just(item));
+                .flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(userActivityCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(userActivityCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -118,14 +124,16 @@ public class MongoUserActivityRepository extends AbstractManagementMongoReposito
         return Completable.fromPublisher(userActivityCollection.deleteMany(and(
                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
                 eq(FIELD_REFERENCE_ID, referenceId),
-                eq(FIELD_USER_ACTIVITY_KEY, key))));
+                eq(FIELD_USER_ACTIVITY_KEY, key))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByReference(ReferenceType referenceType, String referenceId) {
         return Completable.fromPublisher(userActivityCollection.deleteMany(and(
                 eq(FIELD_REFERENCE_TYPE, referenceType.name()),
-                eq(FIELD_REFERENCE_ID, referenceId))));
+                eq(FIELD_REFERENCE_ID, referenceId))))
+                .observeOn(Schedulers.computation());
     }
 
     private UserActivity convert(UserActivityMongo userActivityMongo) {

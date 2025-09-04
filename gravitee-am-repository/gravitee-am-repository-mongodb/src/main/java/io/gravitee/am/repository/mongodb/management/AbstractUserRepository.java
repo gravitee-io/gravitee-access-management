@@ -34,7 +34,6 @@ import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.CommonUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AddressMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.scim.AttributeMongo;
@@ -46,6 +45,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.slf4j.Logger;
@@ -117,14 +117,16 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
     @Override
     public Flowable<User> findAll(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))))
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<User>> findAll(ReferenceType referenceType, String referenceId, int page, int size) {
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count));
+        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, page, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -158,7 +160,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
+        return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -173,7 +176,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
 
             Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
             Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(size * page).limit(size)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-            return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count));
+            return Single.zip(countOperation, usersOperation, (count, users) -> new Page<>(users, 0, count))
+                    .observeOn(Schedulers.computation());
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
@@ -194,7 +198,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                     eq(FIELD_REFERENCE_ID, referenceId),
                     searchQuery);
 
-            return Flowable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1))).map(this::convert);
+            return Flowable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1))).map(this::convert)
+                    .observeOn(Schedulers.computation());
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Flowable.error(ex);
@@ -213,7 +218,8 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                         .limit(1)
                         .first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -224,22 +230,26 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                         .limit(1)
                         .first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<User> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(withMaxTime(usersCollection.find(in(FIELD_ID, ids)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(usersCollection.find(in(FIELD_ID, ids)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<User> findById(Reference reference, UserId userId) {
-        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), userIdMatches(userId))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), userIdMatches(userId))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<User> findById(String userId) {
-        return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -250,14 +260,14 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
                 .flatMap(success -> {
                     item.setId(user.getId());
                     return Single.just(item);
-                });
+                }).observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<User> update(User item) {
         UserMongo user = convert(item);
         return Single.fromPublisher(usersCollection.replaceOne(eq(FIELD_ID, user.getId()), (T) user, new ReplaceOptions().upsert(acceptUpsert())))
-                .flatMap(checkUpdatedRows(item));
+                .flatMap(checkUpdatedRows(item)).observeOn(Schedulers.computation());
     }
 
     @Override
@@ -265,7 +275,7 @@ public abstract class AbstractUserRepository<T extends UserMongo> extends Abstra
         ArrayList<Bson> updateFields = generateUserUpdates(item, actions);
         Bson updates = Updates.combine(updateFields);
         return Single.fromPublisher(usersCollection.updateOne(eq(FIELD_ID, item.getId()), updates, new UpdateOptions().upsert(acceptUpsert())))
-                .flatMap(checkUpdatedRows(item));
+                .flatMap(checkUpdatedRows(item)).observeOn(Schedulers.computation());
     }
 
     protected abstract boolean acceptUpsert();

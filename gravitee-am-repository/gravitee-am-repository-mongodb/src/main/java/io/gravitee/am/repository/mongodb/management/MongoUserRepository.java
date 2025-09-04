@@ -33,7 +33,6 @@ import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
 import io.gravitee.am.repository.mongodb.management.internal.model.UserMongo;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -41,6 +40,7 @@ import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -105,29 +105,34 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                 eq(FIELD_REFERENCE_ID, domain),
                 or(emailQuery, emailClaimQuery));
 
-        return Flowable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert);
+        return Flowable.fromPublisher(usersCollection.find(mongoQuery)).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<User> findById(UserId id) {
-        return findOne(usersCollection, userIdMatches(id), this::convert);
+        return findOne(usersCollection, userIdMatches(id), this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<User> findByUsernameAndDomain(String domain, String username) {
         var query = and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_USERNAME, username));
-        return findOne(usersCollection, query, this::convert);
+        return findOne(usersCollection, query, this::convert)
+                .observeOn(Schedulers.computation());
 
     }
 
     @Override
     public Single<Long> countByReference(ReferenceType referenceType, String referenceId) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0L);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0L)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByApplication(String domain, String application) {
-        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)), countOptions())).first(0L);
+        return Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, DOMAIN.name()), eq(FIELD_REFERENCE_ID, domain), eq(FIELD_CLIENT, application)), countOptions())).first(0L)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -143,14 +148,16 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
     @Override
     public Maybe<User> findByUsernameAndSource(ReferenceType referenceType, String referenceId, String username, String source, boolean includeLinkedIdentities) {
         return findByUsernameAndSource(referenceType, referenceId, username, source)
-                .switchIfEmpty(includeLinkedIdentities ? findByIdentityUsernameAndProviderId(referenceType, referenceId, username, source) : Maybe.empty());
+                .switchIfEmpty(includeLinkedIdentities ? findByIdentityUsernameAndProviderId(referenceType, referenceId, username, source) : Maybe.empty())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<User>> findAllScim(ReferenceType referenceType, String referenceId, int startIndex, int count) {
         Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
         Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(startIndex).limit(count)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-        return Single.zip(countOperation, usersOperation, (totalResults, users) -> new Page<>(users, count > 0 ? (startIndex/count) : 0, totalResults));
+        return Single.zip(countOperation, usersOperation, (totalResults, users) -> new Page<>(users, count > 0 ? (startIndex/count) : 0, totalResults))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -165,7 +172,8 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
 
             Single<Long> countOperation = Observable.fromPublisher(usersCollection.countDocuments(mongoQuery, countOptions())).first(0l);
             Single<Set<User>> usersOperation = Observable.fromPublisher(withMaxTime(usersCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_USERNAME, 1)).skip(startIndex).limit(count)).map(this::convert).collect(LinkedHashSet::new, Set::add);
-            return Single.zip(countOperation, usersOperation, (totalCount, users) -> new Page<>(users, count > 0 ? (startIndex/count) : 0, totalCount));
+            return Single.zip(countOperation, usersOperation, (totalCount, users) -> new Page<>(users, count > 0 ? (startIndex/count) : 0, totalCount))
+                    .observeOn(Schedulers.computation());
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
@@ -182,7 +190,8 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                         .limit(1)
                         .first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     private Single<Map<Object, Object>> usersStatusRepartition(AnalyticsQuery query) {
@@ -213,7 +222,8 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
                     return users;
                 })
-                .first(Collections.emptyMap());
+                .first(Collections.emptyMap())
+                .observeOn(Schedulers.computation());
     }
 
     private Single<Map<Object, Object>> registrationsStatusRepartition(AnalyticsQuery query) {
@@ -228,7 +238,8 @@ public class MongoUserRepository extends AbstractUserRepository<UserMongo> imple
                         .stream()
                         .filter(e -> !"_id".equals(e.getKey()))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))))
-                .first(Collections.emptyMap());
+                .first(Collections.emptyMap())
+                .observeOn(Schedulers.computation());
     }
 
     @Override

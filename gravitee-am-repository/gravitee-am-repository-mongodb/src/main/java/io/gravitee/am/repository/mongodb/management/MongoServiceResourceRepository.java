@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -56,30 +57,35 @@ public class MongoServiceResourceRepository extends AbstractManagementMongoRepos
 
     @Override
     public Flowable<ServiceResource> findByReference(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert);
+        return Flowable.fromPublisher(resourceCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<ServiceResource> findById(String id) {
-        return Observable.fromPublisher(resourceCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(resourceCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ServiceResource> create(ServiceResource item) {
         ServiceResourceMongo res = convert(item);
         res.setId(res.getId() == null ? RandomString.generate() : res.getId());
-        return Single.fromPublisher(resourceCollection.insertOne(res)).flatMap(success -> { item.setId(res.getId()); return Single.just(item); });
+        return Single.fromPublisher(resourceCollection.insertOne(res)).flatMap(success -> { item.setId(res.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ServiceResource> update(ServiceResource item) {
         ServiceResourceMongo authenticator = convert(item);
-        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(resourceCollection.replaceOne(eq(FIELD_ID, authenticator.getId()), authenticator)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(resourceCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(resourceCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private ServiceResource convert(ServiceResourceMongo resMongo) {
