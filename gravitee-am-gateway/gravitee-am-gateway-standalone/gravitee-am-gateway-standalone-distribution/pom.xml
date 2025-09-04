@@ -203,14 +203,6 @@
         </dependency>
 
         <dependency>
-            <groupId>io.gravitee.am.gateway</groupId>
-            <artifactId>gravitee-am-gateway-services-purge</artifactId>
-            <version>${project.version}</version>
-            <type>zip</type>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
             <groupId>io.gravitee.am.reporter</groupId>
             <artifactId>gravitee-am-reporter-mongodb</artifactId>
             <version>${project.version}</version>
