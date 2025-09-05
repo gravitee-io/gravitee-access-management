@@ -15,7 +15,10 @@
  */
 package io.gravitee.am.extensiongrant.jwtbearer;
 
+import io.gravitee.am.common.jwt.SignatureAlgorithm;
 import io.gravitee.am.extensiongrant.api.ExtensionGrantConfiguration;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
@@ -24,24 +27,40 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class JWTBearerExtensionGrantConfiguration implements ExtensionGrantConfiguration {
 
+    private KeyResolver publicKeyResolver;
+    private Signature signature;
     private String publicKey;
     private List<Map<String, String>> claimsMapper;
 
-    public String getPublicKey() {
-        return publicKey;
+    public enum KeyResolver {
+        GIVEN_KEY,
+        JWKS_URL
     }
+    public enum Signature {
+        RS256(SignatureAlgorithm.RS256),
+        RS384(SignatureAlgorithm.RS384),
+        RS512(SignatureAlgorithm.RS512),
+        HS256(SignatureAlgorithm.HS256),
+        HS384(SignatureAlgorithm.HS384),
+        HS512(SignatureAlgorithm.HS512),
+        ES256(SignatureAlgorithm.ES256),
+        ES384(SignatureAlgorithm.ES384),
+        ES512(SignatureAlgorithm.ES512);
 
-    public void setPublicKey(String publicKey) {
-        this.publicKey = publicKey;
-    }
+        private SignatureAlgorithm alg;
 
-    public List<Map<String, String>> getClaimsMapper() {
-        return claimsMapper;
-    }
+        Signature(SignatureAlgorithm alg) {
+            this.alg = alg;
+        }
 
-    public void setClaimsMapper(List<Map<String, String>> claimsMapper) {
-        this.claimsMapper = claimsMapper;
+        public SignatureAlgorithm getAlg() {
+            return alg;
+        }
     }
 }
+
+

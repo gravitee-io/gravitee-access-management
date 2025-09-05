@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.rsa;
+package io.gravitee.am.identityprovider.common.oauth2.jwt.jwks.ecdsa;
 
+import com.nimbusds.jose.jwk.Curve;
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
-import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -31,26 +32,23 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
-import java.security.interfaces.RSAPublicKey;
+import java.security.interfaces.ECPublicKey;
 import java.util.Collections;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public class RSAJWKSourceResolver<C extends SecurityContext> implements JWKSourceResolver<C> {
+public class ECDSAJWKSourceResolver<C extends SecurityContext> implements JWKSourceResolver<C> {
 
     private final JWK jwk;
 
-    public RSAJWKSourceResolver(String publicKey) {
+    public ECDSAJWKSourceResolver(String publicKey) {
         X509Certificate cert = X509CertUtils.parse(publicKey);
         if(cert == null){
             throw new IllegalArgumentException("Invalid certificate");
         }
         jwk = parse(cert);
+
     }
 
-    public RSAJWKSourceResolver(RSAPublicKey publicKey) {
+    public ECDSAJWKSourceResolver(ECPublicKey publicKey) {
         jwk = parse(publicKey);
     }
 
@@ -59,31 +57,30 @@ public class RSAJWKSourceResolver<C extends SecurityContext> implements JWKSourc
         return new ImmutableJWKSet<>(new JWKSet(jwk));
     }
 
-    private static RSAKey parse(final X509Certificate cert) {
-        if (! (cert.getPublicKey() instanceof RSAPublicKey)) {
-            throw new IllegalStateException("The public key of the X.509 certificate is not RSA");
-        }
 
-        RSAPublicKey publicKey = (RSAPublicKey)cert.getPublicKey();
+    private static ECKey parse(final X509Certificate cert) {
+        if (!(cert.getPublicKey() instanceof ECPublicKey)) {
+            throw new IllegalStateException("The public key of the X.509 certificate is not EC");
+        }
+        ECPublicKey publicKey = (ECPublicKey) cert.getPublicKey();
 
         try {
             MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+            Curve curve = Curve.forECParameterSpec(publicKey.getParams());
 
-            return new RSAKey.Builder(publicKey)
+            return new ECKey.Builder(curve, publicKey)
                     .keyUse(KeyUse.SIGNATURE)
                     .x509CertChain(Collections.singletonList(Base64.encode(cert.getEncoded())))
                     .x509CertSHA256Thumbprint(Base64URL.encode(sha256.digest(cert.getEncoded())))
                     .build();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Couldn't encode x5t parameter: " + e.getMessage(), e);
-        } catch (CertificateEncodingException e) {
-            throw new IllegalStateException("Couldn't encode x5c parameter: " + e.getMessage(), e);
+        } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
+            throw new IllegalStateException("Couldn't encode EC key x5c/x5t parameter: " + e.getMessage(), e);
         }
     }
 
-
-    private static RSAKey parse(final RSAPublicKey publicKey) {
-        return new RSAKey.Builder(publicKey)
+    private static ECKey parse(final ECPublicKey publicKey) {
+        Curve curve = Curve.forECParameterSpec(publicKey.getParams());
+        return new ECKey.Builder(curve, publicKey)
                 .keyUse(KeyUse.SIGNATURE)
                 .build();
     }
