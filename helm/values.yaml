@@ -137,8 +137,13 @@ mongodb-replicaset:
   fullnameOverride: "mongo-mongodb-replicaset"
   replicaSetName: rs0
   image:
+<<<<<<< HEAD
     repository: bitnami/mongodb
     tag: 5.0.24-debian-11-r20
+=======
+    repository: bitnamilegacy/mongodb
+    tag: 5.0.9-debian-11-r11
+>>>>>>> 3f27d773c (chore: replace bitnami mongo image with legacy version (#6438))
   auth:
     enabled: false
   resources:
