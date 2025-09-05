@@ -47,11 +47,13 @@ public class DefaultReporterUpgrader implements SystemUpgrader {
     }
 
     private Single<Reporter> updateDefaultReporter(Reporter reporter) {
+        logger.info("Configuring updated default reporter: {} ({})", reporter.getName(), reporter.getId());
         UpdateReporter updateReporter = new UpdateReporter();
         updateReporter.setEnabled(reporter.isEnabled());
         updateReporter.setName(reporter.getName());
         updateReporter.setConfiguration(reporterService.createReporterConfig(reporter.getReference()));
 
+        logger.info("Executing update for default reporter: {} ({})", reporter.getName(), reporter.getId());
         return reporterService.update(reporter.getReference(), reporter.getId(), updateReporter, true);
     }
 
