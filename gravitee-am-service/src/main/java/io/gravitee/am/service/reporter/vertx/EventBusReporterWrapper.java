@@ -24,6 +24,7 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.reporter.api.provider.ReportableCriteria;
 import io.gravitee.am.reporter.api.provider.Reporter;
+import io.gravitee.am.service.reporter.impl.AuditReporterVerticle;
 import io.gravitee.common.component.Lifecycle;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -135,7 +136,8 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
                     }
                 })
                 .doOnSuccess(o -> messageConsumer = vertx.eventBus().consumer(EVENT_BUS_ADDRESS, EventBusReporterWrapper.this))
-                .doOnError(ex->logger.error("Error while starting reporter", ex))
+                .doOnSuccess(x -> AuditReporterVerticle.incrementActiveReporter())
+                .doOnError(ex -> logger.error("Error while starting reporter", ex))
                 .subscribe();
 
         return reporter;
@@ -145,6 +147,7 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     public Reporter<R,C> stop() throws Exception {
         if (messageConsumer != null) {
             messageConsumer.unregister();
+            AuditReporterVerticle.decrementActiveReporter();
         }
         return (Reporter<R, C>) reporter.stop();
     }
