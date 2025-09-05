@@ -1,3 +1,7 @@
+import 'jest-preset-angular/setup-jest';
+import 'zone.js';
+import 'zone.js/testing';
+
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
