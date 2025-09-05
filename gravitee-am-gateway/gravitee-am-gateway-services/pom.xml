@@ -32,6 +32,5 @@
     <packaging>pom</packaging>
     <modules>
         <module>gravitee-am-gateway-services-sync</module>
-        <module>gravitee-am-gateway-services-purge</module>
     </modules>
 </project>

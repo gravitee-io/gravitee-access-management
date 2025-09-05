@@ -30,7 +30,8 @@ import org.springframework.context.annotation.Import;
 @Import({FreemarkerConfiguration.class,
         PlatformNotifierConfiguration.class,
         EmailNotifierConfiguration.class,
-        ManagementUpgraderConfiguration.class})
+        ManagementUpgraderConfiguration.class,
+        ManagementPurgeServiceConfiguration.class})
 public class ManagementServiceConfiguration {
 
 }
