@@ -18,8 +18,10 @@ package io.gravitee.am.repository.jdbc.common;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.jdbc.common.dialect.DatabaseDialectHelper;
 import io.gravitee.am.repository.jdbc.exceptions.RepositoryInitializationException;
+import io.gravitee.am.repository.jdbc.provider.impl.ConnectionFactoryProvider;
 import io.gravitee.am.repository.jdbc.provider.impl.R2DBCPoolWrapper;
 import io.gravitee.am.repository.jdbc.provider.utils.TlsOptionsHelper;
+import io.micrometer.common.util.StringUtils;
 import io.r2dbc.spi.ConnectionFactory;
 import liquibase.Contexts;
 import liquibase.Liquibase;
@@ -42,6 +44,8 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Optional;
+
+import static io.gravitee.am.repository.jdbc.provider.impl.ConnectionFactoryProvider.TAG_CURRENT_SCHEMA;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -106,7 +110,8 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
         Boolean enabled = environment.getProperty("liquibase.enabled", Boolean.class, true);
         if (enabled) {
             final String jdbcPort = poolWrapper.getJdbcPort();
-            final String jdbcUrl = new StringBuilder("jdbc:")
+            var jdbcSchema = poolWrapper.getJdbcSchema();
+            String jdbcUrl = new StringBuilder("jdbc:")
                     .append(poolWrapper.getJdbcDriver())
                     .append("://")
                     .append(poolWrapper.getJdbcHostname())
@@ -115,19 +120,45 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
                     .append(poolWrapper.getJdbcDatabase())
                     .toString();
 
-            try (Connection connection = DriverManager.getConnection(TlsOptionsHelper.setSSLOptions(jdbcUrl, environment, prefix, poolWrapper.getJdbcDriver()),
-                    poolWrapper.getJdbcUsername(),
-                    poolWrapper.getJdbcPassword())) {
+            jdbcUrl = TlsOptionsHelper.setSSLOptions(jdbcUrl, environment, prefix, poolWrapper.getJdbcDriver());
+
+            if(jdbcSchema.isPresent()){
+                String currentSchema = jdbcSchema.get();
+                if(poolWrapper.supportsSchema()){
+                    jdbcUrl = appendJdbcParam(jdbcUrl, TAG_CURRENT_SCHEMA, currentSchema);
+                } else {
+                    String driver = getDriver();
+                    LOGGER.warn("Schema parameter '{}' detected for {} driver.. This will be ignored as {} does not support schemas.", currentSchema, driver, driver);
+                }
+            }
+
+            try (Connection connection = DriverManager.getConnection(jdbcUrl, poolWrapper.getJdbcUsername(), poolWrapper.getJdbcPassword())) {
                 LOGGER.debug("Running Liquibase on {}", jdbcUrl);
+                jdbcSchema.ifPresentOrElse(this::setupLiquibase, this::setupLiquibase);
                 runLiquibase(connection, liquibaseFile);
             }
         }
     }
 
-    protected final void runLiquibase(Connection connection, String liquibaseFile) {
+    private static String appendJdbcParam(String url, String key, String value) {
+        if (StringUtils.isBlank(value)) return url;
+        char sep = url.contains("?") ? '&' : '?';
+        return url + sep + key + "=" + value;
+    }
+
+    protected final void setupLiquibase() {
+        setupLiquibase(null);
+    }
+
+    protected final void setupLiquibase(String schema) {
         System.setProperty("liquibase.databaseChangeLogTableName", "databasechangelog");
         System.setProperty("liquibase.databaseChangeLogLockTableName", "databasechangeloglock");
+        if(schema != null) {
+            System.setProperty("liquibase.liquibaseSchemaName", schema);
+        }
+    }
 
+    protected final void runLiquibase(Connection connection, String liquibaseFile) {
         LOGGER.info("Start Liquibase execution...");
         try (ClassLoaderResourceAccessor resourceAccessor = new ClassLoaderResourceAccessor(this.getClass().getClassLoader())) {
             final Liquibase liquibase = new Liquibase(liquibaseFile, resourceAccessor, new JdbcConnection(connection));

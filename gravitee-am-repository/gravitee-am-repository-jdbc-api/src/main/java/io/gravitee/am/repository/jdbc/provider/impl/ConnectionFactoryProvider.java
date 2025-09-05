@@ -20,6 +20,7 @@ import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.jdbc.provider.R2DBCConnectionConfiguration;
 import io.gravitee.am.repository.jdbc.provider.metrics.R2DBCConnectionMetrics;
 import io.gravitee.am.repository.jdbc.provider.utils.ObjectUtils;
+import io.gravitee.am.repository.jdbc.provider.utils.SchemaSupport;
 import io.gravitee.am.repository.jdbc.provider.utils.TlsOptionsHelper;
 import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.Tag;
@@ -40,6 +41,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.r2dbc.spi.ConnectionFactoryOptions.DATABASE;
@@ -58,10 +60,10 @@ public class ConnectionFactoryProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionFactoryProvider.class);
     public static final String TAG_SOURCE = "pool";
     public static final String TAG_PREFER_CURSORED_EXECUTION = "preferCursoredExecution";
+    public static final String TAG_CURRENT_SCHEMA = "currentSchema";
     public static final String TAG_DRIVER = "r2dbc_driver";
     public static final String TAG_DATABASE = "r2dbc_db";
     public static final String TAG_SERVER = "r2dbc_server";
-
     public static final int DEFAULT_SETTINGS_ACQUIRE_RETRY = 1;
     public static final int DEFAULT_SETTINGS_INITIAL_SIZE = 1;
     public static final int DEFAULT_SETTINGS_MAX_SIZE = 50;
@@ -70,6 +72,9 @@ public class ConnectionFactoryProvider {
     public static final long DEFAULT_SETTINGS_MAX_ACQUIRE_TIME = 3000;
     public static final long DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME = 5000;
     public static final String DRIVER_SQLSERVER = "sqlserver";
+
+
+
 
     private final RepositoriesEnvironment environment;
     private final String prefix;
@@ -108,18 +113,15 @@ public class ConnectionFactoryProvider {
                 .option(PoolingConnectionFactoryProvider.MAX_CREATE_CONNECTION_TIME, Duration.of(DEFAULT_SETTINGS_MAX_CREATE_CNX_TIME, ChronoUnit.MILLIS))
                 .option(PoolingConnectionFactoryProvider.VALIDATION_DEPTH, ValidationDepth.LOCAL);
 
-        val referCursorExecutionOptionNotFound = new AtomicBoolean(true);
-        List<Map<String, String>> options = configuration.getOptions();
-        if (options != null && !options.isEmpty()) {
-            options.forEach(claimMapper -> {
-                String option = claimMapper.get("option");
-                String value = claimMapper.get("value");
-                builder.option(Option.valueOf(option), ObjectUtils.stringToValue(value));
-                if (TAG_PREFER_CURSORED_EXECUTION.equals(option)) {
-                    referCursorExecutionOptionNotFound.set(false);
-                }
-            });
-        }
+        var referCursorExecutionOptionNotFound = new AtomicBoolean(true);
+        configuration.optionsStream().forEach(entry -> {
+            String option = entry.getKey();
+            String value = entry.getValue();
+            builder.option(Option.valueOf(option), ObjectUtils.stringToValue(value));
+            if (TAG_PREFER_CURSORED_EXECUTION.equals(option)) {
+                referCursorExecutionOptionNotFound.set(false);
+            }
+        });
 
         if ( DRIVER_SQLSERVER.equalsIgnoreCase(configuration.getProtocol()) && referCursorExecutionOptionNotFound.get()) {
             // set default value for preferCurserExecution to false only for SQLServer if it is missing so
@@ -156,6 +158,7 @@ public class ConnectionFactoryProvider {
             String user = getJdbcUsername();
             String pwd = getJdbcPassword();
             String db = getJdbcDatabase();
+            var jdbcSchema = getJdbcSchema();
 
             if (driver == null || host == null) {
                 LOGGER.error("Missing one of connection parameters 'driver', 'host' or 'port' for {} database", prefix);
@@ -193,6 +196,16 @@ public class ConnectionFactoryProvider {
             }
 
             builder = TlsOptionsHelper.setSSLOptions(builder, environment, prefix, driver);
+
+            // Add schema support for postgres
+            if(jdbcSchema.isPresent()){
+                String currentSchema = jdbcSchema.get();
+                if(SchemaSupport.supportsSchema(driver)){
+                    builder.option(Option.valueOf(TAG_CURRENT_SCHEMA), currentSchema);
+                } else {
+                    LOGGER.warn("Schema parameter '{}' detected for {} driver. Note: {} does not support schemas. This parameter will be ignored.", currentSchema, driver, driver);
+                }
+            }
 
             final String preferCursorExecution = environment.getProperty(prefix + TAG_PREFER_CURSORED_EXECUTION);
             if ( DRIVER_SQLSERVER.equalsIgnoreCase(driver) ) {
@@ -244,4 +257,9 @@ public class ConnectionFactoryProvider {
     public String getJdbcPassword() {
         return environment.getProperty(prefix+"password");
     }
+
+    public Optional<String> getJdbcSchema() {
+        return Optional.ofNullable(environment.getProperty(prefix+"schema"));
+    }
+
 }

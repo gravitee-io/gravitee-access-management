@@ -19,6 +19,8 @@ import io.gravitee.am.repository.provider.ConnectionConfiguration;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -36,5 +38,23 @@ public interface R2DBCConnectionConfiguration extends ConnectionConfiguration {
     String getPassword();
 
     List<Map<String, String>> getOptions();
+
+    default Stream<Map.Entry<String, String>> optionsStream() {
+        List<Map<String, String>> options = getOptions();
+        if (options == null) {
+            return Stream.empty();
+        } else {
+            return options.stream()
+                    .map(map -> Map.entry(map.get("option"), map.get("value")));
+        }
+
+    }
+
+    default Optional<String> getOption(String key) {
+        return optionsStream()
+                .filter(entry -> entry.getKey().equals(key))
+                .map(Map.Entry::getValue)
+                .findFirst();
+    }
 
 }
