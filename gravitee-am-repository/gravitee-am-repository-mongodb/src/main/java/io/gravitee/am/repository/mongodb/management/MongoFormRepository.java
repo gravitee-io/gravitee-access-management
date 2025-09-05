@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -62,12 +63,14 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
 
     @Override
     public Flowable<Form> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(withMaxTime(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Form> findAll(ReferenceType referenceType) {
-        return Flowable.fromPublisher(withMaxTime(formsCollection.find(eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(formsCollection.find(eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -76,7 +79,8 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
                 formsCollection.find(
                         and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId),
                                 eq(FIELD_CLIENT, client))
-                )).map(this::convert);
+                )).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -87,7 +91,8 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
                                 eq(FIELD_TEMPLATE, template),
                                 exists(FIELD_CLIENT, false)))
                         .first())
-                .firstElement().map(this::convert);
+                .firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -98,35 +103,41 @@ public class MongoFormRepository extends AbstractManagementMongoRepository imple
                                 eq(FIELD_CLIENT, client),
                                 eq(FIELD_TEMPLATE, template)))
                         .first())
-                .firstElement().map(this::convert);
+                .firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Form> findById(ReferenceType referenceType, String referenceId, String id) {
-        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(formsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, id))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Form> findById(String id) {
-        return Observable.fromPublisher(formsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(formsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Form> create(Form item) {
         FormMongo page = convert(item);
         page.setId(page.getId() == null ? RandomString.generate() : page.getId());
-        return Single.fromPublisher(formsCollection.insertOne(page)).flatMap(success -> { item.setId(page.getId()); return Single.just(item); });
+        return Single.fromPublisher(formsCollection.insertOne(page)).flatMap(success -> { item.setId(page.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Form> update(Form item) {
         FormMongo page = convert(item);
-        return Single.fromPublisher(formsCollection.replaceOne(eq(FIELD_ID, page.getId()), page)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(formsCollection.replaceOne(eq(FIELD_ID, page.getId()), page)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(formsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(formsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Form convert(FormMongo pageMongo) {

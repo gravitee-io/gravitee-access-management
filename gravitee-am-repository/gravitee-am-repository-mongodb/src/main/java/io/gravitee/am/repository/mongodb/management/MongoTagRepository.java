@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -54,35 +55,41 @@ public class MongoTagRepository extends AbstractManagementMongoRepository implem
 
     @Override
     public Maybe<Tag> findById(String id, String organizationId) {
-        return Observable.fromPublisher(tagsCollection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(tagsCollection.find(and(eq(FIELD_ID, id), eq(FIELD_ORGANIZATION_ID, organizationId))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Tag> findById(String id) {
-        return Observable.fromPublisher(tagsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(tagsCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Tag> findAll(String organizationId) {
-        return Flowable.fromPublisher(withMaxTime(tagsCollection.find(eq(FIELD_ORGANIZATION_ID, organizationId)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(tagsCollection.find(eq(FIELD_ORGANIZATION_ID, organizationId)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Tag> create(Tag item) {
         TagMongo tag = convert(item);
         tag.setId(tag.getId() == null ? RandomString.generate() : tag.getId());
-        return Single.fromPublisher(tagsCollection.insertOne(tag)).flatMap(success -> { item.setId(tag.getId()); return Single.just(item); });
+        return Single.fromPublisher(tagsCollection.insertOne(tag)).flatMap(success -> { item.setId(tag.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Tag> update(Tag item) {
         TagMongo tag = convert(item);
-        return Single.fromPublisher(tagsCollection.replaceOne(eq(FIELD_ID, tag.getId()), tag)).flatMap(updateResult -> Single.just(item));
+        return Single.fromPublisher(tagsCollection.replaceOne(eq(FIELD_ID, tag.getId()), tag)).flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(tagsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(tagsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Tag convert(TagMongo tagMongo) {
