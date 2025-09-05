@@ -35,13 +35,16 @@ import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static io.gravitee.am.identityprovider.api.common.IdentityProviderConfigurationUtils.extractCertificateId;
 
@@ -75,6 +78,11 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
     private final ConcurrentMap<String, AuthenticationProvider> providers = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, IdentityProvider> identities = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, UserProvider> userProviders = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ReentrantLock> idLocks = new ConcurrentHashMap<>();
+
+    private ReentrantLock lockFor(String id) {
+        return idLocks.computeIfAbsent(id, k -> new ReentrantLock());
+    }
 
     @Override
     public Maybe<AuthenticationProvider> get(String id) {
@@ -171,45 +179,148 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
         if (needDeployment(identityProvider)) {
             return forceUpdateAuthenticationProvider(identityProvider);
         } else {
-            logger.debug("\tIdentity provider already initialized: {} [{}]", identityProvider.getName(), identityProvider.getType());
+            logger.debug("Identity provider already initialized: {} [{}]", identityProvider.getName(), identityProvider.getType());
             return Single.just(identityProvider);
         }
     }
 
     private Single<IdentityProvider> forceUpdateAuthenticationProvider(IdentityProvider identityProvider) {
-        return Single.fromCallable(() -> {
-            logger.info("\tInitializing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
-            // stop existing provider, if any
-            clearProvider(identityProvider.getId());
-            return identityProvider;
-        }).flatMap(idp -> {
-            var authProviderConfig = new AuthenticationProviderConfiguration(identityProvider, certificateManager);
-            var authenticationProvider = identityProviderPluginManager.create(authProviderConfig);
-            if (authenticationProvider != null) {
-                // init the user provider
-                return identityProviderPluginManager
-                        .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
-                        .map(userProviderOpt -> {
-                            providers.put(identityProvider.getId(), authenticationProvider);
-                            identities.put(identityProvider.getId(), identityProvider);
-                            if (userProviderOpt.isPresent()) {
-                                userProviders.put(identityProvider.getId(), userProviderOpt.get());
-                            } else {
-                                userProviders.remove(identityProvider.getId());
-                            }
-                            return idp;
-                        });
+        String identityProviderId = identityProvider.getId();
+        try {
+            if (hasExistingProvider(identityProviderId)) {
+                return redeployProvider(identityProvider).doOnError(error -> logger.error("An error occurs while redeploying the identity provider : {}", identityProvider.getName(), error));
             } else {
-                return Single.just(idp);
+                return deployProvider(identityProvider).doOnError(error -> logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), error));
             }
-        }).doOnError(error -> {
-            logger.error("An error occurs while initializing the identity provider : {}", identityProvider.getName(), error);
-            clearProvider(identityProvider.getId());
-        });
+        } catch (Exception ex) {
+            logger.error("An error occurs while initializing the identity provider: {}", identityProvider.getName(), ex);
+            return Single.error(ex);
+        }
+
     }
 
     private void clearProviders() {
         providers.keySet().forEach(this::clearProvider);
+    }
+
+    private Single<Providers> createProvider(IdentityProvider identityProvider) throws IOException {
+        var authProviderConfig = new AuthenticationProviderConfiguration(identityProvider, certificateManager);
+        try (var authenticationProvider = identityProviderPluginManager.create(authProviderConfig)) {
+            if (authenticationProvider == null) {
+                logger.error("Failed to create authentication provider for {}", identityProvider.getName());
+                return Single.error(new Exception("Failed to create authentication provider for " + identityProvider.getName()));
+
+            } else {
+                return identityProviderPluginManager
+                        .create(identityProvider.getType(), identityProvider.getConfiguration(), identityProvider)
+                        .map(userProviderOpt -> new Providers(identityProvider.getId(), authenticationProvider,
+                                userProviderOpt.orElse(null), identityProvider));
+            }
+        }
+    }
+
+    private Providers atomicReplaceProviders(String id, Providers newProviders) {
+        var old = Providers.fromCurrent(id, providers, userProviders, identities);
+
+        if (newProviders.authProvider != null) providers.put(id, newProviders.authProvider);
+        else providers.remove(id);
+
+        if (newProviders.userProvider != null) userProviders.put(id, newProviders.userProvider);
+        else userProviders.remove(id);
+
+        identities.put(id, newProviders.identity);
+        return old;
+    }
+
+    private Completable stopProviders(Providers oldProviders) {
+        return Completable.fromAction(() -> {
+            if (oldProviders.authProvider != null) {
+                try {
+                    oldProviders.authProvider.stop();
+                    logger.debug("Stopped old authentication provider after replacement");
+                } catch (Exception e) {
+                    logger.warn("Error stopping old authentication provider after replacement", e);
+                }
+            }
+            if (oldProviders.userProvider != null) {
+                try {
+                    oldProviders.userProvider.stop();
+                    logger.debug("Stopped old user provider after replacement");
+                } catch (Exception e) {
+                    logger.warn("Error stopping old user provider after replacement", e);
+                }
+            }
+        });
+    }
+
+    private boolean hasExistingProvider(String identityProviderId) {
+        return providers.containsKey(identityProviderId) ||
+                userProviders.containsKey(identityProviderId) ||
+                identities.containsKey(identityProviderId);
+    }
+
+    private Single<IdentityProvider> deployProvider(IdentityProvider identityProvider) {
+        logger.info("Deploying new identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+        final ReentrantLock lock = lockFor(identityProvider.getId());
+
+        try {
+            return createProvider(identityProvider)
+                    .map(newProviders -> {
+                        try {
+                            lock.lock();
+                            if (newProviders.authProvider != null) {
+                                providers.put(identityProvider.getId(), newProviders.authProvider);
+                            }
+                            identities.put(identityProvider.getId(), identityProvider);
+                            if (newProviders.userProvider != null) {
+                                userProviders.put(identityProvider.getId(), newProviders.userProvider);
+                            }
+                        } finally {
+                            lock.unlock();
+                        }
+                        logger.info("Successfully deployed new identity provider {} for domain {}", identityProvider.getId(), domain.getName());
+                        return identityProvider;
+                    });
+        } catch (IOException e) {
+            return Single.error(e);
+        }
+    }
+
+    private Single<IdentityProvider> redeployProvider(IdentityProvider identityProvider) throws IOException {
+        logger.info("Replacing existing identity provider: {} [{}]", identityProvider.getName(), identityProvider.getType());
+
+        final String id = identityProvider.getId();
+        final ReentrantLock lock = lockFor(id);
+
+        return createProvider(identityProvider)
+                .flatMap(newProviders -> {
+                    Providers old;
+                    lock.lock();
+                    try {
+                        old = atomicReplaceProviders(id, newProviders);
+                    } finally {
+                        lock.unlock();
+                    }
+                    return stopProviders(old)
+                            .subscribeOn(Schedulers.io())
+                            .onErrorComplete()
+                            .andThen(Single.just(identityProvider));
+                })
+                .doOnError(e -> logger.error("Failed to replace identity provider {}", id, e));
+    }
+
+    private record Providers(String id, AuthenticationProvider authProvider, UserProvider userProvider,
+                             IdentityProvider identity) {
+
+        static Providers fromCurrent(String identityProviderId,
+                                     ConcurrentMap<String, AuthenticationProvider> providers,
+                                     ConcurrentMap<String, UserProvider> userProviders,
+                                     ConcurrentMap<String, IdentityProvider> identities) {
+            return new Providers(identityProviderId,
+                    providers.get(identityProviderId),
+                    userProviders.get(identityProviderId),
+                    identities.get(identityProviderId));
+        }
     }
 
     private void clearProvider(String identityProviderId) {
