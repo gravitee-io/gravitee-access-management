@@ -29,9 +29,10 @@ import java.util.Map;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GraviteeUser extends User {
+public class GraviteeUser extends EnterpriseUser {
 
     public static final List<String> SCHEMAS = Arrays.asList(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_CUSTOM_USER);
+    public static final List<String> SCHEMAS_WITH_ENTERPRISE = Arrays.asList(Schema.SCHEMA_URI_USER, Schema.SCHEMA_URI_ENTERPRISE_USER, Schema.SCHEMA_URI_CUSTOM_USER);
     private static final List<String> FORBIDDEN_PROPERTIES = Arrays.asList("password");
 
     @JsonProperty(Schema.SCHEMA_URI_CUSTOM_USER)
