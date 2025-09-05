@@ -51,6 +51,7 @@ public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
 
     @Override
     public Completable upgrade() {
+        logger.info("Upgrading default identity provider");
         return Completable.fromPublisher(identityProviderService.findAll()
                 .filter(IdentityProvider::isSystem)
                 .flatMapSingle(this::updateDefaultIdp)
@@ -59,6 +60,7 @@ public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
     }
 
     private Single<IdentityProvider> updateDefaultIdp(IdentityProvider identityProvider) {
+        logger.info("Configuring update for default idp: {} ({})", identityProvider.getName(), identityProvider.getId());
 
         UpdateIdentityProvider updateIdentityProvider = new UpdateIdentityProvider();
         updateIdentityProvider.setDomainWhitelist(identityProvider.getDomainWhitelist());
@@ -76,6 +78,7 @@ public class DefaultIdentityProviderUpgrader implements SystemUpgrader {
             throw new IllegalStateException("Unable to serialize the default idp configuration for domain '" + identityProvider.getReferenceId() + "'", e);
         }
 
+        logger.info("Executing update for default idp: {} ({})", identityProvider.getName(), identityProvider.getId());
         return identityProviderService.update(identityProvider.getReferenceId(), identityProvider.getId(), updateIdentityProvider, true);
     }
 

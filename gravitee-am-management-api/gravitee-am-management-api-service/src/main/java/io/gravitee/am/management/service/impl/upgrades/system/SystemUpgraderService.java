@@ -55,8 +55,8 @@ public class SystemUpgraderService extends AbstractService<SystemUpgraderService
                     try {
                         log.info("Apply {} ...", upgrader.identifier());
                         upgrader.upgrade().blockingAwait();
-                    } catch (Exception e) {
-                        log.error("Unable to apply the system upgrader {}", upgrader.identifier());
+                    } catch (Exception ex) {
+                        log.error("Unable to apply the system upgrader: {}", upgrader.identifier(), ex);
                         stopUpgrade.set(true);
                     }
                 });
