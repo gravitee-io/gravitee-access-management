@@ -171,7 +171,7 @@ object GatewayCalls {
             .formParam("username", "#{username}")
             .formParam("password", "#{password}")
             .check(status.is(200))
-            .check(jsonPath("$." + ACCESS_TOKEN_KEY).saveAs(ACCESS_TOKEN_KEY))
+            .check(jsonPath("$.access_token").saveAs(ACCESS_TOKEN_KEY))
   }
 
   def requestTokenForServiceApp(): HttpRequestBuilder = {
