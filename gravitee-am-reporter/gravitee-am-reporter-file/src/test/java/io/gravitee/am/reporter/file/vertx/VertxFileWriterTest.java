@@ -32,17 +32,26 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.awaitility.Awaitility;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.TimeZone;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -60,6 +69,8 @@ public class VertxFileWriterTest {
 
     @Mock
     private File file;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(VertxFileWriterTest.class);
 
     @Test
     public void shouldDeleteFile_should_return_true_if_retainDays_configuration_exceeds_file_lastModified_time() throws IOException {
@@ -197,62 +208,136 @@ public class VertxFileWriterTest {
     }
 
     @Test
-    public void shouldCreateNewFileOnRollover() throws IOException {
+    public void shouldActuallyExecuteScheduledTimerWithMockedTime() throws IOException {
         File tempDir = Files.createTempDirectory(BASE_DIRECTORY).toFile();
         tempDir.deleteOnExit();
-        
-        // Define expected dates and filenames early
-        LocalDate today = LocalDate.now();
-        LocalDate nextDay = today.plusDays(1);
-        String expectedFirst = "test-audit-logs-" + today.format(DateTimeFormatter.ofPattern("yyyy_MM_dd")) + ".json";
-        String expectedSecond = "test-audit-logs-" + nextDay.format(DateTimeFormatter.ofPattern("yyyy_MM_dd")) + ".json";
-        
-        String templateFilename = tempDir.getAbsolutePath() + File.separatorChar + "test-audit-logs-yyyy_mm_dd.json";
+        String filename = tempDir.getAbsolutePath() + File.separatorChar + "test-audit-logs-yyyy_mm_dd.json";
         Vertx vertx = Vertx.vertx();
         
         try {
-            vertxFileWriter = new VertxFileWriter<>(
-                    vertx,
-                    mock(Formatter.class),
-                    templateFilename,
-                    1L);
-
-            vertxFileWriter.initialize().onComplete(initResult -> {
-                assertTrue("Initialization should succeed", initResult.succeeded());
-                simulateRollover(vertxFileWriter, nextDay);
-            });
+            // Mock time progression: first call returns just before midnight, second call returns midnight
+            ZonedDateTime justBeforeMidnight = ZonedDateTime.of(2025, 8, 1, 23, 59, 59, 0, TimeZone.getDefault().toZoneId());
+            ZonedDateTime midnight = ZonedDateTime.of(2025, 8, 2, 0, 0, 0, 0, TimeZone.getDefault().toZoneId());
             
-            // Wait for 2 files and capture their names
-            AtomicReference<String[]> filenames = new AtomicReference<>();
+            AtomicInteger nowCallCount = new AtomicInteger(0);
+            AtomicInteger nowWithTzCallCount = new AtomicInteger(0);
+            
+            VertxFileWriter.TimeProvider timeProvider = new VertxFileWriter.TimeProvider() {
+                @Override
+                public ZonedDateTime now() {
+                    int count = nowCallCount.getAndIncrement();
+                    if (count == 0) {
+                        LOGGER.info("TimeProvider.now() called - returning just before midnight: {}", justBeforeMidnight);
+                        return justBeforeMidnight;
+                    } else {
+                        LOGGER.info("TimeProvider.now() called - returning midnight: {}", midnight);
+                        return midnight;
+                    }
+                }
+                
+                @Override
+                public ZonedDateTime now(TimeZone timeZone) {
+                    int count = nowWithTzCallCount.getAndIncrement();
+                    if (count == 0) {
+                        ZonedDateTime adjustedTime = justBeforeMidnight.withZoneSameInstant(timeZone.toZoneId());
+                        LOGGER.info("TimeProvider.now(timeZone) called - returning just before midnight: {}", adjustedTime);
+                        return adjustedTime;
+                    } else {
+                        ZonedDateTime adjustedTime = midnight.withZoneSameInstant(timeZone.toZoneId());
+                        LOGGER.info("TimeProvider.now(timeZone) called - returning midnight: {}", adjustedTime);
+                        return adjustedTime;
+                    }
+                }
+            };
+            
+            // Create a writer with the mock time provider
+            VertxFileWriter<ReportEntry> writer = new VertxFileWriter<ReportEntry>(
+                    vertx, mock(Formatter.class), filename, 1L, timeProvider);
+            
+            // Initialize the writer - this schedules rollover for next midnight (1 second later)
+            writer.initialize();
+            
+            // Wait for the scheduled timer to create the 08_02 file
+            String expectedRolloverFileName = "test-audit-logs-2025_08_02.json";
+            File expectedRolloverFile = new File(tempDir, expectedRolloverFileName);
             
             Awaitility.await()
-                    .atMost(5, TimeUnit.SECONDS)
-                    .until(() -> {
-                        File[] files = tempDir.listFiles((dir, name) -> 
-                            name.matches("test-audit-logs-\\d{4}_\\d{2}_\\d{2}\\.json")
-                        );
-                        if (files != null && files.length == 2) {
-                            filenames.set(new String[]{files[0].getName(), files[1].getName()});
-                            return true;
-                        }
-                        return false;
-                    });
+                .atMost(10, TimeUnit.SECONDS)
+                .until(expectedRolloverFile::exists);
+           
+            // Verify we have exactly the two expected files
+            List<String> allFileNames = Arrays.stream(tempDir.listFiles())
+                .map(File::getName)
+                .toList();
             
-            // Verify exact expected filenames
-            assertTrue("Array should contain " + expectedFirst, 
-                      filenames.get()[0].equals(expectedFirst) || filenames.get()[1].equals(expectedFirst));
-            assertTrue("Array should contain " + expectedSecond, 
-                      filenames.get()[0].equals(expectedSecond) || filenames.get()[1].equals(expectedSecond));
+            assertEquals("Should contain exactly 2 files", 2, allFileNames.size());
+            assertTrue("Should contain 08_01 file", allFileNames.contains("test-audit-logs-2025_08_01.json"));
+            assertTrue("Should contain 08_02 file", allFileNames.contains("test-audit-logs-2025_08_02.json"));
+            
+            LOGGER.info("🎉 Test completed successfully - scheduled timer created the expected rollover file!");
+        } finally {
+            vertx.close();
+            tempDir.delete();
+        }
+    }
+
+    @Test
+    public void shouldHandleFileDeletionErrors() throws IOException {
+        File tempDir = Files.createTempDirectory(BASE_DIRECTORY).toFile();
+        tempDir.deleteOnExit();
+        String filename = tempDir.getAbsolutePath() + File.separatorChar + "test-audit-logs-yyyy_mm_dd.json";
+        Vertx vertx = Vertx.vertx();
+        
+        try {
+            VertxFileWriter<ReportEntry> writer = new VertxFileWriter<>(
+                    vertx, mock(Formatter.class), filename, 1L);
+            
+            // Initialize
+            writer.initialize();
+            
+            // Create a file that can't be deleted (by making it read-only)
+            File readOnlyFile = new File(tempDir, "readonly-file.json");
+            readOnlyFile.createNewFile();
+            readOnlyFile.setReadOnly();
+            
+            // This should not throw an exception due to error handling in deleteFile method
+            try {
+                writer.removeOldFiles();
+            } catch (Exception e) {
+                fail("removeOldFiles should not throw exception: " + e.getMessage());
+            }
+            
+            // Clean up
+            readOnlyFile.setWritable(true);
             
         } finally {
             vertx.close();
             tempDir.delete();
         }
     }
-    
-    private void simulateRollover(VertxFileWriter<ReportEntry> writer, LocalDate date) {
-        ZonedDateTime nextDay = date.atStartOfDay(ZoneOffset.UTC);
-        writer.setFile(nextDay);
+
+    @Test
+    public void shouldHandleNullFilename() {
+        // Test null filename validation - hits validateAndNormalizeFilename()
+        assertThrows("Should throw IllegalArgumentException for null filename", 
+                    IllegalArgumentException.class, 
+                    () -> new VertxFileWriter<>(mock(Vertx.class), mock(Formatter.class), null, 1L));
+    }
+
+    @Test
+    public void shouldHandleEmptyFilename() {
+        // Test empty filename validation
+        assertThrows("Should throw IllegalArgumentException for empty filename", 
+                    IllegalArgumentException.class, 
+                    () -> new VertxFileWriter<>(mock(Vertx.class), mock(Formatter.class), "", 1L));
+    }
+
+    @Test
+    public void shouldHandleWhitespaceFilename() {
+        // Test whitespace-only filename validation
+        assertThrows("Should throw IllegalArgumentException for whitespace-only filename", 
+                    IllegalArgumentException.class, 
+                    () -> new VertxFileWriter<>(mock(Vertx.class), mock(Formatter.class), "   ", 1L));
     }
 
 }
