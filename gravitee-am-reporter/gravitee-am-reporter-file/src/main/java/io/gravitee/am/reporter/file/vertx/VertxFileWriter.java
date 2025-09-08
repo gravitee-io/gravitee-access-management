@@ -91,7 +91,7 @@ public class VertxFileWriter<T extends ReportEntry> {
     /**
      * Interface to provide the current time and time in a specific time zone.
      */
-    interface TimeProvider {
+    protected interface TimeProvider {
         default ZonedDateTime now() {
             return ZonedDateTime.now();
         }
@@ -100,7 +100,7 @@ public class VertxFileWriter<T extends ReportEntry> {
         }
     }
 
-    public VertxFileWriter(Vertx vertx, Formatter<T> formatter, String filename, long retainDays, TimeProvider timeProvider) throws IOException {
+    protected VertxFileWriter(Vertx vertx, Formatter<T> formatter, String filename, long retainDays, TimeProvider timeProvider) throws IOException {
         this(vertx, formatter, filename, retainDays);
         this.timeProvider = timeProvider;
     }

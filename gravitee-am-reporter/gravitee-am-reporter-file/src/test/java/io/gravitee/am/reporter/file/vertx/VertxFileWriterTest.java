@@ -50,8 +50,6 @@ import static org.mockito.Mockito.when;
 import java.util.Arrays;
 import java.util.List;
 import java.util.TimeZone;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -69,8 +67,6 @@ public class VertxFileWriterTest {
 
     @Mock
     private File file;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(VertxFileWriterTest.class);
 
     @Test
     public void shouldDeleteFile_should_return_true_if_retainDays_configuration_exceeds_file_lastModified_time() throws IOException {
@@ -213,72 +209,67 @@ public class VertxFileWriterTest {
         tempDir.deleteOnExit();
         String filename = tempDir.getAbsolutePath() + File.separatorChar + "test-audit-logs-yyyy_mm_dd.json";
         Vertx vertx = Vertx.vertx();
+    
+        // Mock time progression: first call returns just before midnight, second call returns midnight
+        ZonedDateTime justBeforeMidnight = ZonedDateTime.of(2025, 8, 1, 23, 59, 59, 0, TimeZone.getDefault().toZoneId());
+        ZonedDateTime midnight = ZonedDateTime.of(2025, 8, 2, 0, 0, 0, 0, TimeZone.getDefault().toZoneId());
         
-        try {
-            // Mock time progression: first call returns just before midnight, second call returns midnight
-            ZonedDateTime justBeforeMidnight = ZonedDateTime.of(2025, 8, 1, 23, 59, 59, 0, TimeZone.getDefault().toZoneId());
-            ZonedDateTime midnight = ZonedDateTime.of(2025, 8, 2, 0, 0, 0, 0, TimeZone.getDefault().toZoneId());
-            
-            AtomicInteger nowCallCount = new AtomicInteger(0);
-            AtomicInteger nowWithTzCallCount = new AtomicInteger(0);
-            
-            VertxFileWriter.TimeProvider timeProvider = new VertxFileWriter.TimeProvider() {
-                @Override
-                public ZonedDateTime now() {
-                    int count = nowCallCount.getAndIncrement();
-                    if (count == 0) {
-                        LOGGER.info("TimeProvider.now() called - returning just before midnight: {}", justBeforeMidnight);
-                        return justBeforeMidnight;
-                    } else {
-                        LOGGER.info("TimeProvider.now() called - returning midnight: {}", midnight);
-                        return midnight;
-                    }
+        AtomicInteger nowCallCount = new AtomicInteger(0);
+        AtomicInteger nowWithTzCallCount = new AtomicInteger(0);
+        
+        VertxFileWriter.TimeProvider timeProvider = new VertxFileWriter.TimeProvider() {
+            @Override
+            public ZonedDateTime now() {
+                int count = nowCallCount.getAndIncrement();
+                if (count == 0) {
+                    return justBeforeMidnight;
+                } else {
+                    return midnight;
                 }
-                
-                @Override
-                public ZonedDateTime now(TimeZone timeZone) {
-                    int count = nowWithTzCallCount.getAndIncrement();
-                    if (count == 0) {
-                        ZonedDateTime adjustedTime = justBeforeMidnight.withZoneSameInstant(timeZone.toZoneId());
-                        LOGGER.info("TimeProvider.now(timeZone) called - returning just before midnight: {}", adjustedTime);
-                        return adjustedTime;
-                    } else {
-                        ZonedDateTime adjustedTime = midnight.withZoneSameInstant(timeZone.toZoneId());
-                        LOGGER.info("TimeProvider.now(timeZone) called - returning midnight: {}", adjustedTime);
-                        return adjustedTime;
-                    }
+            }
+            
+            @Override
+            public ZonedDateTime now(TimeZone timeZone) {
+                int count = nowWithTzCallCount.getAndIncrement();
+                if (count == 0) {
+                    ZonedDateTime adjustedTime = justBeforeMidnight.withZoneSameInstant(timeZone.toZoneId());
+                    return adjustedTime;
+                } else {
+                    ZonedDateTime adjustedTime = midnight.withZoneSameInstant(timeZone.toZoneId());
+                    return adjustedTime;
                 }
-            };
-            
-            // Create a writer with the mock time provider
-            VertxFileWriter<ReportEntry> writer = new VertxFileWriter<ReportEntry>(
-                    vertx, mock(Formatter.class), filename, 1L, timeProvider);
-            
-            // Initialize the writer - this schedules rollover for next midnight (1 second later)
-            writer.initialize();
-            
-            // Wait for the scheduled timer to create the 08_02 file
-            String expectedRolloverFileName = "test-audit-logs-2025_08_02.json";
-            File expectedRolloverFile = new File(tempDir, expectedRolloverFileName);
-            
-            Awaitility.await()
-                .atMost(10, TimeUnit.SECONDS)
-                .until(expectedRolloverFile::exists);
-           
-            // Verify we have exactly the two expected files
-            List<String> allFileNames = Arrays.stream(tempDir.listFiles())
-                .map(File::getName)
-                .toList();
-            
-            assertEquals("Should contain exactly 2 files", 2, allFileNames.size());
-            assertTrue("Should contain 08_01 file", allFileNames.contains("test-audit-logs-2025_08_01.json"));
-            assertTrue("Should contain 08_02 file", allFileNames.contains("test-audit-logs-2025_08_02.json"));
-            
-            LOGGER.info("🎉 Test completed successfully - scheduled timer created the expected rollover file!");
-        } finally {
-            vertx.close();
-            tempDir.delete();
-        }
+            }
+        };
+        
+        // Create a writer with the mock time provider
+        VertxFileWriter<ReportEntry> writer = new VertxFileWriter<ReportEntry>(
+                vertx, mock(Formatter.class), filename, 1L, timeProvider);
+        
+        // Initialize the writer - this schedules rollover for next midnight (1 second later)
+        writer.initialize();
+        
+        // Wait for the scheduled timer to create the 08_02 file
+        String expectedRolloverFileName = "test-audit-logs-2025_08_02.json";
+        File expectedRolloverFile = new File(tempDir, expectedRolloverFileName);
+        
+        Awaitility.await()
+            .atMost(10, TimeUnit.SECONDS)
+            .until(expectedRolloverFile::exists);
+        
+        // Verify we have exactly the two expected files
+        List<String> allFileNames = Arrays.stream(tempDir.listFiles())
+            .map(File::getName)
+            .toList();
+        
+        assertEquals("Should contain exactly 2 files", 2, allFileNames.size());
+        assertTrue("Should contain 08_01 file", allFileNames.contains("test-audit-logs-2025_08_01.json"));
+        assertTrue("Should contain 08_02 file", allFileNames.contains("test-audit-logs-2025_08_02.json"));
+
+        // Clean up
+        expectedRolloverFile.delete();
+        vertx.close();
+        tempDir.delete();
+
     }
 
     @Test
@@ -287,33 +278,29 @@ public class VertxFileWriterTest {
         tempDir.deleteOnExit();
         String filename = tempDir.getAbsolutePath() + File.separatorChar + "test-audit-logs-yyyy_mm_dd.json";
         Vertx vertx = Vertx.vertx();
+
+        VertxFileWriter<ReportEntry> writer = new VertxFileWriter<>(
+                vertx, mock(Formatter.class), filename, 1L);
         
+        // Initialize
+        writer.initialize();
+        
+        // Create a file that can't be deleted (by making it read-only)
+        File readOnlyFile = new File(tempDir, "readonly-file.json");
+        readOnlyFile.createNewFile();
+        readOnlyFile.setReadOnly();
+        
+        // This should not throw an exception due to error handling in deleteFile method
         try {
-            VertxFileWriter<ReportEntry> writer = new VertxFileWriter<>(
-                    vertx, mock(Formatter.class), filename, 1L);
-            
-            // Initialize
-            writer.initialize();
-            
-            // Create a file that can't be deleted (by making it read-only)
-            File readOnlyFile = new File(tempDir, "readonly-file.json");
-            readOnlyFile.createNewFile();
-            readOnlyFile.setReadOnly();
-            
-            // This should not throw an exception due to error handling in deleteFile method
-            try {
-                writer.removeOldFiles();
-            } catch (Exception e) {
-                fail("removeOldFiles should not throw exception: " + e.getMessage());
-            }
-            
-            // Clean up
-            readOnlyFile.setWritable(true);
-            
-        } finally {
-            vertx.close();
-            tempDir.delete();
+            writer.removeOldFiles();
+        } catch (Exception e) {
+            fail("removeOldFiles should not throw exception: " + e.getMessage());
         }
+        
+        // Clean up
+        readOnlyFile.setWritable(true);
+        vertx.close();
+        tempDir.delete();
     }
 
     @Test
