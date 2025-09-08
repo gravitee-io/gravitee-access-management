@@ -79,13 +79,31 @@ public class VertxFileWriter<T extends ReportEntry> {
     public static final String YYYY_MM_DD = "yyyy_mm_dd";
 
     private static Timer __rollover;
-    private RollTask _rollTask;
 
     private final SimpleDateFormat fileDateFormat = new SimpleDateFormat(ROLLOVER_FILE_DATE_FORMAT);
 
     private long retainDays = -1;
 
     private final Pattern rolloverFiles;
+
+    private TimeProvider timeProvider = new TimeProvider() {};
+
+    /**
+     * Interface to provide the current time and time in a specific time zone.
+     */
+    protected interface TimeProvider {
+        default ZonedDateTime now() {
+            return ZonedDateTime.now();
+        }
+        default ZonedDateTime now(TimeZone timeZone) {
+            return ZonedDateTime.now(timeZone.toZoneId());
+        }
+    }
+
+    protected VertxFileWriter(Vertx vertx, Formatter<T> formatter, String filename, long retainDays, TimeProvider timeProvider) throws IOException {
+        this(vertx, formatter, filename, retainDays);
+        this.timeProvider = timeProvider;
+    }
 
     public VertxFileWriter(Vertx vertx, Formatter<T> formatter, String filename) throws IOException {
         this.vertx = vertx;
@@ -120,7 +138,7 @@ public class VertxFileWriter<T extends ReportEntry> {
     public Future<Void> initialize() {
         LOGGER.debug("Initializing file reporter, retainDays: {}", retainDays);
         // Calculate Today's Midnight, based on Configured TimeZone (will be in past, even if by a few milliseconds)
-        ZonedDateTime now = ZonedDateTime.now(TimeZone.getDefault().toZoneId());
+        ZonedDateTime now = timeProvider.now(TimeZone.getDefault());
 
         // This will schedule the rollover event to the next midnight
         scheduleNextRollover(now);
@@ -215,16 +233,16 @@ public class VertxFileWriter<T extends ReportEntry> {
     }
 
     private void scheduleNextRollover(ZonedDateTime now) {
-        _rollTask = new RollTask();
+        RollTask rollTask = new RollTask();
 
         // Get tomorrow's midnight based on Configured TimeZone
         ZonedDateTime midnight = toMidnight(now);
-        LOGGER.debug("Scheduling next rollover for {}", midnight);
 
         // Schedule next rollover event to occur, based on local machine's Unix Epoch milliseconds
         long delay = midnight.toInstant().toEpochMilli() - now.toInstant().toEpochMilli();
+        LOGGER.debug("Scheduling next rollover for {} in {} milliseconds", midnight, delay);
         synchronized (VertxFileWriter.class) {
-            __rollover.schedule(_rollTask, delay);
+            __rollover.schedule(rollTask, delay);
         }
     }
 
@@ -242,7 +260,7 @@ public class VertxFileWriter<T extends ReportEntry> {
         @Override
         public void run() {
             try {
-                ZonedDateTime now = ZonedDateTime.now(fileDateFormat.getTimeZone().toZoneId());
+                ZonedDateTime now = timeProvider.now(fileDateFormat.getTimeZone());
                 VertxFileWriter.this.setFile(now);
                 VertxFileWriter.this.scheduleNextRollover(now);
                 VertxFileWriter.this.removeOldFiles();
