@@ -111,7 +111,7 @@
         <commons-io.version>2.18.0</commons-io.version>
         <common-text.version>1.13.0</common-text.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
-        <commons-cli.version>1.4</commons-cli.version>
+        <commons-cli.version>1.10.0</commons-cli.version>
         <ognl.version>3.3.4</ognl.version>
         <mockito-jupiter.version>4.4.0</mockito-jupiter.version>
         <liquibase.version>4.31.1</liquibase.version>
