@@ -198,4 +198,127 @@ public class AccountAccessTokenRepositoryTest extends AbstractManagementTest {
         testObserver.assertValueCount(2);
     }
 
+    @Test
+    public void testDeleteByUserId() {
+        var userId = UUID.randomUUID().toString();
+        var referenceId = UUID.randomUUID().toString();
+        var referenceType = ReferenceType.ORGANIZATION;
+
+        // Create multiple tokens for the same user
+        var accountToken1 = AccountAccessToken.builder()
+                .token(UUID.randomUUID().toString())
+                .tokenId(UUID.randomUUID().toString())
+                .createdAt(new Date())
+                .updatedAt(new Date())
+                .name(UUID.randomUUID().toString())
+                .issuerId(UUID.randomUUID().toString())
+                .userId(userId)
+                .referenceId(referenceId)
+                .referenceType(referenceType)
+                .build();
+
+        // Create a token for different reference id
+        var accountToken2 = AccountAccessToken.builder()
+                .token(UUID.randomUUID().toString())
+                .tokenId(UUID.randomUUID().toString())
+                .createdAt(new Date())
+                .updatedAt(new Date())
+                .name(UUID.randomUUID().toString())
+                .issuerId(UUID.randomUUID().toString())
+                .userId(userId)
+                .referenceId(UUID.randomUUID().toString())
+                .referenceType(referenceType)
+                .build();
+
+        // Create a token for different reference type
+        var accountToken3 = AccountAccessToken.builder()
+                .token(UUID.randomUUID().toString())
+                .tokenId(UUID.randomUUID().toString())
+                .createdAt(new Date())
+                .updatedAt(new Date())
+                .name(UUID.randomUUID().toString())
+                .issuerId(UUID.randomUUID().toString())
+                .userId(userId)
+                .referenceId(referenceId)
+                .referenceType(ReferenceType.DOMAIN)
+                .build();
+
+        // Create a token for a different user
+        var accountToken4 = AccountAccessToken.builder()
+                .token(UUID.randomUUID().toString())
+                .tokenId(UUID.randomUUID().toString())
+                .createdAt(new Date())
+                .updatedAt(new Date())
+                .name(UUID.randomUUID().toString())
+                .issuerId(UUID.randomUUID().toString())
+                .userId(UUID.randomUUID().toString())
+                .referenceId(referenceId)
+                .referenceType(referenceType)
+                .build();
+
+        repository.create(accountToken1).blockingGet();
+        repository.create(accountToken2).blockingGet();
+        repository.create(accountToken3).blockingGet();
+        repository.create(accountToken4).blockingGet();
+
+        // Verify tokens exist before deletion
+        verifyTokenExists(accountToken1.tokenId());
+        verifyTokenExists(accountToken2.tokenId());
+        verifyTokenExists(accountToken3.tokenId());
+        verifyTokenExists(accountToken4.tokenId());
+
+        // Delete token1 for the specific user
+        deleteTokenByUserId(accountToken1.referenceType(), accountToken1.referenceId(), accountToken1.userId());
+
+        // Verify tokens for the user are deleted
+        verifyTokenDoesNotExist(referenceId);
+        verifyTokenExists(accountToken2.tokenId());
+        verifyTokenExists(accountToken3.tokenId());
+        verifyTokenExists(accountToken4.tokenId());
+
+        // Delete token2 for the specific user
+        deleteTokenByUserId(accountToken2.referenceType(), accountToken2.referenceId(), accountToken2.userId());
+
+        // Verify tokens for the user are deleted
+        verifyTokenDoesNotExist(accountToken2.tokenId());
+        verifyTokenExists(accountToken3.tokenId());
+        verifyTokenExists(accountToken4.tokenId());
+
+        // Delete token3 for the specific user
+        deleteTokenByUserId(accountToken3.referenceType(), accountToken3.referenceId(), accountToken3.userId());
+
+        // Verify tokens for the user are deleted
+        verifyTokenDoesNotExist(accountToken3.tokenId());
+        verifyTokenExists(accountToken4.tokenId());
+
+        // Delete token4 for the specific user
+        deleteTokenByUserId(accountToken4.referenceType(), accountToken4.referenceId(), accountToken4.userId());
+
+        // Verify tokens for the user are deleted
+        verifyTokenDoesNotExist(accountToken4.tokenId());
+    }
+
+    private void verifyTokenExists(String tokenId) {
+        var testObserver = repository.findById(tokenId).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(1);
+    }
+
+    private void verifyTokenDoesNotExist(String tokenId) {
+        var testObserver = repository.findById(tokenId).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValueCount(0);
+    }
+
+    private void deleteTokenByUserId(ReferenceType referenceType, String referenceId, String userId) {
+        var deleteObserver = repository.deleteByUserId(referenceType, referenceId, userId).test();
+        deleteObserver.awaitDone(10, TimeUnit.SECONDS);
+        deleteObserver.assertComplete();
+        deleteObserver.assertNoErrors();
+    }
+
 }
