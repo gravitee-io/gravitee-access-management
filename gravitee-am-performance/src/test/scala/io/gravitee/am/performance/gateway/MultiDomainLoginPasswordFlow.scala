@@ -66,5 +66,5 @@ class MultiDomainLoginPasswordFlow extends Simulation {
       constantConcurrentUsers(AGENTS.intValue()).during(INJECTION_DURATION.seconds),
       rampConcurrentUsers(AGENTS.intValue()).to(1).during(60)
     )
-  )
+  ).protocols(httpProtocol)
 }
