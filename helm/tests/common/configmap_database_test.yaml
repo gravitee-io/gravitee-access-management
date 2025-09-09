@@ -1,0 +1,381 @@
+suite: test that database configuration from _configmap-default-database.tpl is mapped correctly
+templates:
+  - "api/api-configmap.yaml"
+tests:
+  - it: should render MongoDB configuration with default values when management type is mongodb
+    set:
+      management.type: mongodb
+      mongo.dbhost: "localhost"
+      mongo.dbport: 27017
+      mongo.dbname: "gravitee-am"
+      mongo.sslEnabled: false
+      mongo.socketKeepAlive: true
+      mongo.auth.enabled: false
+      mongo.rsEnabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: mongodb"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}host: localhost"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}port: 27017"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslEnabled: false"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}socketKeepAlive: true"
+
+  - it: should render MongoDB configuration with custom values and authentication
+    set:
+      management.type: mongodb
+      oauth2.type: mongodb
+      gateway.type: mongodb
+      mongo.dbhost: "mongo-cluster.example.com"
+      mongo.dbport: 27018
+      mongo.dbname: "gravitee_production"
+      mongo.sslEnabled: true
+      mongo.socketKeepAlive: false
+      mongo.auth.enabled: true
+      mongo.auth.username: "gravitee_user"
+      mongo.auth.password: "secure_password"
+      mongo.auth.source: "admin"
+      mongo.rsEnabled: true
+      mongo.rs: "gravitee-rs"
+      mongo.connectTimeoutMS: 5000
+      mongo.servers: |
+        - host: mongo1
+          port: 27017
+        - host: mongo2
+          port: 27017
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: mongodb"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}host: mongo-cluster.example.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}port: 27018"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslEnabled: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}socketKeepAlive: false"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}username: gravitee_user"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}password: secure_password"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}authSource: admin"
+
+  - it: should render MongoDB configuration with custom URI when provided
+    set:
+      management.type: mongodb
+      mongo.uri: "mongodb://user:pass@cluster.example.com:27017/gravitee?replicaSet=rs0&authSource=admin"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: mongodb"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}uri: mongodb://user:pass@cluster.example.com:27017/gravitee\\?replicaSet=rs0&authSource=admin"
+
+  - it: should render MongoDB configuration with servers list when provided
+    set:
+      management.type: mongodb
+      mongo.dbname: "gravitee"
+      mongo.servers: |
+        - host: mongo1.example.com
+          port: 27017
+        - host: mongo2.example.com
+          port: 27017
+        - host: mongo3.example.com
+          port: 27017
+      mongo.auth.enabled: true
+      mongo.auth.username: "gravitee"
+      mongo.auth.password: "password"
+      mongo.auth.source: "admin"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: mongodb"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}servers:"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}dbname: gravitee"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}username: gravitee"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}authSource: admin"
+
+  - it: should render MongoDB configuration with keystore and truststore
+    set:
+      management.type: mongodb
+      mongo.dbhost: "secure-mongo.example.com"
+      mongo.sslEnabled: true
+      mongo.keystore:
+        type: "pkcs12"
+        path: "/certs/mongo-keystore.p12"
+        password: "keystore_password"
+      mongo.truststore:
+        type: "jks"
+        path: "/certs/mongo-truststore.jks"
+        password: "truststore_password"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: mongodb"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslEnabled: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}keystore:"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}type: pkcs12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}path: /certs/mongo-keystore.p12"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}password: keystore_password"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}truststore:"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}type: jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}path: /certs/mongo-truststore.jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{6}password: truststore_password"
+
+  # JDBC Configuration Tests
+  - it: should render JDBC configuration with default values when management type is jdbc
+    set:
+      management.type: jdbc
+      jdbc.driver: "org.postgresql.Driver"
+      jdbc.host: "localhost"
+      jdbc.port: 5432
+      jdbc.database: "gravitee_am"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: jdbc"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}driver: org.postgresql.Driver"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}host: localhost"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}port: 5432"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}database: gravitee_am"
+
+  - it: should render JDBC configuration with authentication and custom values
+    set:
+      management.type: jdbc
+      oauth2.type: jdbc
+      gateway.type: jdbc
+      jdbc.driver: "com.mysql.cj.jdbc.Driver"
+      jdbc.host: "mysql-cluster.example.com"
+      jdbc.port: 3306
+      jdbc.database: "gravitee_production"
+      jdbc.username: "gravitee_user"
+      jdbc.password: "secure_db_password"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: jdbc"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}driver: com.mysql.cj.jdbc.Driver"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}host: mysql-cluster.example.com"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}port: 3306"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}database: gravitee_production"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}username: gravitee_user"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}password: secure_db_password"
+
+  - it: should render JDBC configuration with SSL settings
+    set:
+      management.type: jdbc
+      jdbc.driver: "org.postgresql.Driver"
+      jdbc.host: "secure-db.example.com"
+      jdbc.port: 5432
+      jdbc.database: "gravitee_secure"
+      jdbc.sslEnabled: true
+      jdbc.sslMode: "require"
+      jdbc.sslServerCert: "/certs/server.crt"
+      jdbc.trustServerCertificate: true
+      jdbc.disableSslHostnameVerification: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: jdbc"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslEnabled: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslMode: require"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}sslServerCert: /certs/server.crt"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}trustServerCertificate: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}disableSslHostnameVerification: false"
+
+  - it: should render JDBC configuration with connection pool and truststore
+    set:
+      management.type: jdbc
+      jdbc.driver: "org.postgresql.Driver"
+      jdbc.host: "pooled-db.example.com"
+      jdbc.port: 5432
+      jdbc.database: "gravitee_pooled"
+      jdbc.pool:
+        autoCommit: true
+        connectionTimeout: 10000
+        idleTimeout: 600000
+        maxLifetime: 1800000
+        minPoolSize: 5
+        maxPoolSize: 20
+      jdbc.trustStore:
+        type: "jks"
+        path: "/certs/db-truststore.jks"
+        password: "truststore_password"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}type: jdbc"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}autoCommit: true"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}connectionTimeout: 10000"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}idleTimeout: 600000"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}maxLifetime: 1800000"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}minPoolSize: 5"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}maxPoolSize: 20"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}trustStore:"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{8}type: jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{8}path: /certs/db-truststore.jks"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{8}password: truststore_password"
+
+  - it: should default to mongodb when management type is not specified
+    set:
+      mongo.dbhost: "default-mongo.example.com"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{2}management:[ ]*\n[ ]{4}type: mongodb"
+
+  - it: should handle conditional MongoDB URI generation
+    set:
+      management.type: mongodb
+      mongo.dbhost: "mongo.test.com"
+      mongo.dbport: 27017
+      mongo.dbname: "testdb"
+      mongo.auth.enabled: true
+      mongo.auth.username: "testuser"
+      mongo.auth.password: "testpass"
+      mongo.auth.source: "admin"
+      mongo.rsEnabled: true
+      mongo.rs: "testreplicaset"
+      mongo.connectTimeoutMS: 3000
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: "[ ]{4}uri: mongodb://testuser:testpass@mongo.test.com:27017/testdb\\?&replicaSet=testreplicaset&authSource=admin&connectTimeoutMS=3000"

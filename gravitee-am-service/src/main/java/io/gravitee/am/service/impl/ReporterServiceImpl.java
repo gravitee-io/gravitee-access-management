@@ -360,7 +360,7 @@ public class ReporterServiceImpl implements ReporterService {
                     : ("_" + reference.id());
             reporterConfig = "{\"uri\":\"" + mongoUri
                     + ((mongoHost != null) ? "\",\"host\":\"" + mongoHost : "")
-                    + "\",\"port\":" + Integer.parseInt(mongoPort)
+                    + ((mongoPort != null) ? "\",\"port\":" + Integer.parseInt(mongoPort) : "")
                     + ",\"enableCredentials\":false,\"database\":\"" + mongoDBName
                     + "\",\"reportableCollection\":\"reporter_audits" + collectionSuffix
                     + "\",\"bulkActions\":1000,\"flushInterval\":5}";
