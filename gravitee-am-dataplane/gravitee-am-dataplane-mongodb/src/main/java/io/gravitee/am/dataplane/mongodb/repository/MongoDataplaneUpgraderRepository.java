@@ -24,6 +24,7 @@ import io.gravitee.node.api.upgrader.UpgradeRecord;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -50,13 +51,15 @@ public class MongoDataplaneUpgraderRepository extends AbstractMongoRepository im
     @Override
     public Maybe<UpgradeRecord> findById(String id) {
         return Maybe.fromPublisher(upgraderCollection.find(eq(FIELD_ID, id)).first())
-                .map(UpgradeRecordMongo::from);
+                .map(UpgradeRecordMongo::from)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<UpgradeRecord> create(UpgradeRecord upgradeRecord) {
         return Single.fromPublisher(upgraderCollection.insertOne(UpgradeRecordMongo.from(upgradeRecord)))
                 .flatMapMaybe(result -> findById(upgradeRecord.getId()))
-                .toSingle();
+                .toSingle()
+                .observeOn(Schedulers.computation());
     }
 }

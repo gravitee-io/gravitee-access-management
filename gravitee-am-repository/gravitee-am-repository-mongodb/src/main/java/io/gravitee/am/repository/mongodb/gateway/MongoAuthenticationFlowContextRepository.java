@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -77,17 +78,20 @@ public class MongoAuthenticationFlowContextRepository extends AbstractGatewayMon
 
     @Override
     public Maybe<AuthenticationFlowContext> findById(String id) {
-        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_ID, id), gt(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_ID, id), gt(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<AuthenticationFlowContext> findLastByTransactionId(String transactionId) {
-        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(Map.of(FIELD_VERSION, -1, "createdAt", -1))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(Map.of(FIELD_VERSION, -1, "createdAt", -1))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<AuthenticationFlowContext> findByTransactionId(String transactionId) {
-        return Flowable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(Map.of(FIELD_VERSION, -1, "createdAt", -1)))).map(this::convert);
+        return Flowable.fromPublisher(authContextCollection.find(and(eq(FIELD_TRANSACTION_ID, transactionId), gt(FIELD_EXPIRES_AT, new Date()))).sort(new BasicDBObject(Map.of(FIELD_VERSION, -1, "createdAt", -1)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -95,7 +99,8 @@ public class MongoAuthenticationFlowContextRepository extends AbstractGatewayMon
         AuthenticationFlowContextMongo contextMongo = convert(context);
         contextMongo.setId(context.identifier());
         return Single.fromPublisher(authContextCollection.insertOne(contextMongo))
-                .flatMap(success -> Single.just(context));
+                .flatMap(success -> Single.just(context))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -119,12 +124,12 @@ public class MongoAuthenticationFlowContextRepository extends AbstractGatewayMon
 
     @Override
     public Completable delete(String transactionId) {
-        return Completable.fromPublisher(authContextCollection.deleteMany(eq(FIELD_TRANSACTION_ID, transactionId)));
+        return Completable.fromPublisher(authContextCollection.deleteMany(eq(FIELD_TRANSACTION_ID, transactionId))).observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String transactionId, int version) {
-        return Completable.fromPublisher(authContextCollection.deleteOne(and(eq(FIELD_TRANSACTION_ID, transactionId), eq(FIELD_VERSION, version))));
+        return Completable.fromPublisher(authContextCollection.deleteOne(and(eq(FIELD_TRANSACTION_ID, transactionId), eq(FIELD_VERSION, version)))).observeOn(Schedulers.computation());
     }
 
     private AuthenticationFlowContext convert(AuthenticationFlowContextMongo entity) {

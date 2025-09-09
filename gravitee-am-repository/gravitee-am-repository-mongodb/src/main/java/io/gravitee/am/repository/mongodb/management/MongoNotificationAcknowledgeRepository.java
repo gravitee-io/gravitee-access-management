@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -60,7 +61,8 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
         return Observable.fromPublisher(collection.find(eq(FIELD_ID, id))
                         .first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
 
     }
 
@@ -73,12 +75,14 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
                     eq(FIELD_AUDIENCE_ID, audience)))
                 .first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByResourceId(String id, String resourceType) {
-        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_RESOURCE_ID, id), eq(FIELD_RESOURCE_TYPE, resourceType))));
+        return Completable.fromPublisher(collection.deleteMany(and(eq(FIELD_RESOURCE_ID, id), eq(FIELD_RESOURCE_TYPE, resourceType))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -88,14 +92,16 @@ public class MongoNotificationAcknowledgeRepository extends AbstractManagementMo
         return Single.fromPublisher(collection.insertOne(entity)).map(success -> {
             notificationAcknowledge.setId(entity.getId());
             return notificationAcknowledge;
-        });
+        })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<NotificationAcknowledge> update(NotificationAcknowledge notificationAcknowledge) {
         NotificationAcknowledgeMongo entity = convert(notificationAcknowledge);
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, entity.getId()), entity))
-                .map(result -> notificationAcknowledge);
+                .map(result -> notificationAcknowledge)
+                .observeOn(Schedulers.computation());
     }
 
     private NotificationAcknowledge convert(NotificationAcknowledgeMongo entity) {

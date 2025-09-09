@@ -21,6 +21,8 @@ import io.gravitee.am.repository.jdbc.ratelimit.api.spring.SpringRateLimitReposi
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.repository.ratelimit.api.RateLimitRepository;
 import io.gravitee.repository.ratelimit.model.RateLimit;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeTransformer;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -37,45 +39,44 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
     private SpringRateLimitRepository requestObjectRepository;
 
     @Override
-    @Transactional
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
-        LOGGER.debug("Incrementing rate limit for key {} with weight {}", key, weight);
-        
-        return Single.fromCallable(() -> {
-            // Try to find existing rate limit
-            JdbcRateLimit existingJdbcRateLimit = requestObjectRepository.findById(key).blockingGet();
-            
-            if (existingJdbcRateLimit != null) {
-                // Convert to domain model
-                RateLimit existingRateLimit = toEntity(existingJdbcRateLimit);
-                
-                // Increment the counter
-                existingRateLimit.setCounter(existingRateLimit.getCounter() + weight);
-                
-                // Check if the rate limit has expired
-                if (System.currentTimeMillis() > existingRateLimit.getResetTime()) {
-                    // Rate limit has expired, create a new one using the supplier
-                    RateLimit newRateLimit = supplier.get();
-                    newRateLimit.setCounter(weight); // Start with the weight
-                    JdbcRateLimit newJdbcRateLimit = toJdbcEntity(newRateLimit, key);
-                    return toEntity(monoToSingle(getTemplate().insert(newJdbcRateLimit)).blockingGet());
-                } else {
-                    // Update the existing rate limit
-                    JdbcRateLimit updatedJdbcRateLimit = toJdbcEntity(existingRateLimit);
-                    return toEntity(requestObjectRepository.save(updatedJdbcRateLimit).blockingGet());
-                }
-            } else {
-                // Create a new rate limit using the supplier
-                RateLimit newRateLimit = supplier.get();
-                newRateLimit.setCounter(weight); // Start with the weight
-                JdbcRateLimit newJdbcRateLimit = toJdbcEntity(newRateLimit, key);
-                return toEntity(monoToSingle(getTemplate().insert(newJdbcRateLimit)).blockingGet());
-            }
-        });
+        return findNotExpiredById(key)
+                .doOnSuccess(rl ->  rl.setCounter(rl.getCounter() + weight))
+                .doOnSuccess(rl -> LOGGER.debug("Incrementing rate limit entry for key {} with weight {}", rl.getKey(), weight))
+                .compose(this::update)
+
+                .switchIfEmpty(createNew(weight, supplier)
+                        .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {}", rl.getKey(), weight))
+                        .compose(this::insert));
+    }
+
+    private Single<RateLimit> insert(Single<RateLimit> rateLimit) {
+        return rateLimit
+                .map(this::toJdbcEntity)
+                .flatMap(entity -> Single.fromPublisher(getTemplate().insert(entity)))
+                .map(this::toEntity);
+    }
+
+    private Maybe<RateLimit> update(Maybe<RateLimit> rateLimit) {
+        return rateLimit
+                .map(this::toJdbcEntity)
+                .flatMapSingle(requestObjectRepository::save)
+                .map(this::toEntity);
+    }
+
+    private Maybe<RateLimit> findNotExpiredById(String key){
+        return requestObjectRepository
+                .findById(key)
+                .map(this::toEntity)
+                .filter(RateLimit::hasNotExpired);
+    }
+
+    private Single<RateLimit> createNew(long weight, Supplier<RateLimit> supplier){
+        return Single.fromSupplier(supplier::get)
+                .doOnSuccess(rl -> rl.setCounter(weight));
     }
 
     protected RateLimit toEntity(JdbcRateLimit entity) {
-        if (entity == null) return null;
         RateLimit rateLimit = new RateLimit(entity.getId());
         rateLimit.setCounter(entity.getCounter());
         rateLimit.setResetTime(entity.getResetTime());
@@ -85,7 +86,6 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
     }
 
     protected JdbcRateLimit toJdbcEntity(RateLimit entity) {
-        if (entity == null) return null;
         JdbcRateLimit jdbcRateLimit = new JdbcRateLimit();
         jdbcRateLimit.setId(entity.getKey());
         jdbcRateLimit.setCounter(entity.getCounter());
@@ -95,14 +95,4 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
         return jdbcRateLimit;
     }
 
-    protected JdbcRateLimit toJdbcEntity(RateLimit entity, String key) {
-        if (entity == null) return null;
-        JdbcRateLimit jdbcRateLimit = new JdbcRateLimit();
-        jdbcRateLimit.setId(key); // Use the provided key
-        jdbcRateLimit.setCounter(entity.getCounter());
-        jdbcRateLimit.setResetTime(entity.getResetTime());
-        jdbcRateLimit.setLimit(entity.getLimit());
-        jdbcRateLimit.setSubscription(entity.getSubscription());
-        return jdbcRateLimit;
-    }
 }

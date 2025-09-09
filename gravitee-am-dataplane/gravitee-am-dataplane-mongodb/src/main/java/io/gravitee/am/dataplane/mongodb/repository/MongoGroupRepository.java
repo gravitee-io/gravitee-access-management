@@ -33,6 +33,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -89,19 +90,22 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
 
     @Override
     public Flowable<Group> findByMember(String memberId) {
-        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(eq(FIELD_MEMBERS, memberId)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(eq(FIELD_MEMBERS, memberId)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Group> findAll(ReferenceType referenceType, String referenceId) {
-        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId))))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Page<Group>> findAllScim(ReferenceType referenceType, String referenceId, int offset, int size) {
         Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)), countOptions())).first(0l);
         Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))).sort(new BasicDBObject(FIELD_NAME, 1)).skip(offset).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
-        return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, pageFromOffset(offset, size), count));
+        return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, pageFromOffset(offset, size), count))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -116,7 +120,8 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
                     searchQuery);
             Single<Long> countOperation = Observable.fromPublisher(groupsCollection.countDocuments(mongoQuery, countOptions())).first(0l);
             Single<List<Group>> groupsOperation = Observable.fromPublisher(withMaxTime(groupsCollection.find(mongoQuery)).sort(new BasicDBObject(FIELD_NAME, 1)).skip(offset).limit(size)).map(this::convert).collect(LinkedList::new, List::add);
-            return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, pageFromOffset(offset, size), count));
+            return Single.zip(countOperation, groupsOperation, (count, groups) -> new Page<>(groups, pageFromOffset(offset, size), count))
+                    .observeOn(Schedulers.computation());
         } catch (Exception ex) {
             if (ex instanceof IllegalArgumentException) {
                 return Single.error(ex);
@@ -128,7 +133,8 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
 
     @Override
     public Flowable<Group> findByIdIn(List<String> ids) {
-        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(in(FIELD_ID, ids)))).map(this::convert);
+        return Flowable.fromPublisher(withMaxTime(groupsCollection.find(in(FIELD_ID, ids)))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -139,35 +145,41 @@ public class MongoGroupRepository extends AbstractDataPlaneMongoRepository imple
                         .limit(1)
                         .first())
                 .firstElement()
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Group> findById(ReferenceType referenceType, String referenceId, String group) {
-        return Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, group))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(groupsCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_ID, group))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Group> findById(String group) {
-        return Observable.fromPublisher(groupsCollection.find(eq(FIELD_ID, group)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(groupsCollection.find(eq(FIELD_ID, group)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Group> create(Group item) {
         GroupMongo group = convert(item);
         group.setId(group.getId() == null ? RandomString.generate() : group.getId());
-        return Single.fromPublisher(groupsCollection.insertOne(group)).flatMap(success -> { item.setId(group.getId()); return Single.just(item); });
+        return Single.fromPublisher(groupsCollection.insertOne(group)).flatMap(success -> { item.setId(group.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Group> update(Group item) {
         GroupMongo group = convert(item);
-        return Single.fromPublisher(groupsCollection.replaceOne(eq(FIELD_ID, group.getId()), group)).flatMap(success -> Single.just(item));
+        return Single.fromPublisher(groupsCollection.replaceOne(eq(FIELD_ID, group.getId()), group)).flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(groupsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(groupsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private Group convert(GroupMongo groupMongo) {

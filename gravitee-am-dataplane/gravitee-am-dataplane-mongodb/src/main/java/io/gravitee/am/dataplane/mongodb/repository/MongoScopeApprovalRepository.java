@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -102,24 +103,28 @@ public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoReposito
 
     @Override
     public Flowable<ScopeApproval> findByDomainAndUserAndClient(String domain, UserId userId, String clientId) {
-        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert);
+        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), eq(FIELD_CLIENT_ID, clientId), userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<ScopeApproval> findByDomainAndUser(String domain, UserId userId) {
-        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert);
+        return Flowable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS), gte(FIELD_EXPIRES_AT, new Date())))).map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<ScopeApproval> findById(String id) {
-        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(scopeApprovalsCollection.find(and(eq(FIELD_ID, id), gte(FIELD_EXPIRES_AT, new Date()))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ScopeApproval> create(ScopeApproval scopeApproval) {
         ScopeApprovalMongo scopeApprovalMongo = convert(scopeApproval);
         scopeApprovalMongo.setId(scopeApprovalMongo.getId() == null ? RandomString.generate() : scopeApprovalMongo.getId());
-        return Single.fromPublisher(scopeApprovalsCollection.insertOne(scopeApprovalMongo)).flatMap(success -> Single.just(scopeApproval));
+        return Single.fromPublisher(scopeApprovalsCollection.insertOne(scopeApprovalMongo)).flatMap(success -> Single.just(scopeApproval))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -131,7 +136,8 @@ public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoReposito
                         eq(FIELD_CLIENT_ID, scopeApproval.getClientId()),
                         eq(FIELD_USER_ID, scopeApproval.getUserId()),
                         eq(FIELD_SCOPE, scopeApproval.getScope())),
-                scopeApprovalMongo)).flatMap(updateResult -> Single.just(scopeApproval));
+                scopeApprovalMongo)).flatMap(updateResult -> Single.just(scopeApproval))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -154,30 +160,35 @@ public class MongoScopeApprovalRepository extends AbstractDataPlaneMongoReposito
                         scopeApproval.setUpdatedAt(new Date());
                         return update(scopeApproval);
                     }
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainAndScopeKey(String domain, String scope) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
-                and(eq(FIELD_DOMAIN, domain), eq(FIELD_SCOPE, scope))));
+                and(eq(FIELD_DOMAIN, domain), eq(FIELD_SCOPE, scope))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(scopeApprovalsCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(scopeApprovalsCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainAndUserAndClient(String domain, UserId userId, String client) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
-                and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS), eq(FIELD_CLIENT_ID, client))));
+                and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS), eq(FIELD_CLIENT_ID, client))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByDomainAndUser(String domain, UserId userId) {
         return Completable.fromPublisher(scopeApprovalsCollection.deleteMany(
-                and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS))));
+                and(eq(FIELD_DOMAIN, domain), userIdMatches(userId, DEFAULT_USER_FIELDS))))
+                .observeOn(Schedulers.computation());
     }
 
     private ScopeApproval convert(ScopeApprovalMongo scopeApprovalMongo) {

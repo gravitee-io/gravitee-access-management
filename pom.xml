@@ -93,7 +93,7 @@
         <freemarker.version>2.3.34</freemarker.version>
         <jsoup.version>1.16.1</jsoup.version>
         <snakeyaml.version>2.0</snakeyaml.version>
-        <angus-mail.version>2.0.3</angus-mail.version>
+        <angus-mail.version>2.0.4</angus-mail.version>
         <angus-activation.version>2.0.2</angus-activation.version>
         <mongodb-driver-reactivestreams.version>4.11.5</mongodb-driver-reactivestreams.version>
         <embed.mongo.version>4.18.1</embed.mongo.version>

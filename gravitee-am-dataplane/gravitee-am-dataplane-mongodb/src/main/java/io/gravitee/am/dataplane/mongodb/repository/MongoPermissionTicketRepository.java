@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -66,25 +67,29 @@ public class MongoPermissionTicketRepository extends AbstractDataPlaneMongoRepos
 
     @Override
     public Maybe<PermissionTicket> findById(String id) {
-        return Observable.fromPublisher(permissionTicketCollection.find(and(eq(FIELD_ID, id), or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(permissionTicketCollection.find(and(eq(FIELD_ID, id), or(gt(FIELD_EXPIRE_AT, new Date()), eq(FIELD_EXPIRE_AT, null)))).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<PermissionTicket> create(PermissionTicket item) {
         PermissionTicketMongo permissionTicket = convert(item);
         permissionTicket.setId(permissionTicket.getId() == null ? RandomString.generate() : permissionTicket.getId());
-        return Single.fromPublisher(permissionTicketCollection.insertOne(permissionTicket)).flatMap(success -> { item.setId(permissionTicket.getId()); return Single.just(item); });
+        return Single.fromPublisher(permissionTicketCollection.insertOne(permissionTicket)).flatMap(success -> { item.setId(permissionTicket.getId()); return Single.just(item); })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<PermissionTicket> update(PermissionTicket item) {
         PermissionTicketMongo permissionTicket = convert(item);
-        return Single.fromPublisher(permissionTicketCollection.replaceOne(eq(FIELD_ID, permissionTicket.getId()), permissionTicket)).flatMap(success -> Single.just(item));
+        return Single.fromPublisher(permissionTicketCollection.replaceOne(eq(FIELD_ID, permissionTicket.getId()), permissionTicket)).flatMap(success -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(permissionTicketCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(permissionTicketCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     private PermissionTicketMongo convert(PermissionTicket permissionTicket) {

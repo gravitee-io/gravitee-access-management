@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
@@ -64,25 +65,29 @@ public class MongoUserNotificationRepository extends AbstractManagementMongoRepo
 
     @Override
     public Maybe<UserNotification> findById(String id) {
-        return Observable.fromPublisher(mongoCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert);
+        return Observable.fromPublisher(mongoCollection.find(eq(FIELD_ID, id)).first()).firstElement().map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<UserNotification> create(UserNotification item) {
         UserNotificationMongo entity = convert(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return Single.fromPublisher(mongoCollection.insertOne(entity)).flatMap(success -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(mongoCollection.insertOne(entity)).flatMap(success -> findById(entity.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<UserNotification> update(UserNotification item) {
         UserNotificationMongo entity = convert(item);
-        return Single.fromPublisher(mongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> findById(entity.getId()).toSingle());
+        return Single.fromPublisher(mongoCollection.replaceOne(eq(FIELD_ID, entity.getId()), entity)).flatMap(updateResult -> findById(entity.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
-        return Completable.fromPublisher(mongoCollection.deleteOne(eq(FIELD_ID, id)));
+        return Completable.fromPublisher(mongoCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -93,7 +98,8 @@ public class MongoUserNotificationRepository extends AbstractManagementMongoRepo
                         .limit(NOTIFICATION_LIMIT)
                         .sort(new Document(FIELD_CREATED_AT, 1))
                 )
-                .map(this::convert);
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -105,7 +111,8 @@ public class MongoUserNotificationRepository extends AbstractManagementMongoRepo
         Document updateObject = new Document();
         updateObject.put("$set", statusDocument);
 
-        return Completable.fromPublisher(mongoCollection.updateOne(eq(FIELD_ID, id), updateObject));
+        return Completable.fromPublisher(mongoCollection.updateOne(eq(FIELD_ID, id), updateObject))
+                .observeOn(Schedulers.computation());
     }
 
     private UserNotification convert(UserNotificationMongo entity) {
