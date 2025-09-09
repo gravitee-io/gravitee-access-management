@@ -22,8 +22,6 @@ import io.gravitee.am.repository.mongodb.common.AbstractMongoRepository;
 import io.gravitee.am.repository.mongodb.ratelimit.model.RateLimitMongo;
 import io.gravitee.repository.ratelimit.api.RateLimitRepository;
 import io.gravitee.repository.ratelimit.model.RateLimit;
-import io.gravitee.am.repository.ratelimit.api.RateLimitRepository;
-import io.gravitee.am.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
