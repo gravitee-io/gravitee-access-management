@@ -21,5 +21,5 @@ import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SpringRateLimitRepository extends RxJava3CrudRepository<JdbcRateLimit, String> {
+public interface SpringRateLimitApiRepository extends RxJava3CrudRepository<JdbcRateLimit, String> {
 }

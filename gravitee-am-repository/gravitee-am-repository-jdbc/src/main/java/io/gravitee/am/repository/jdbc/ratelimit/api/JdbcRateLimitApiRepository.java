@@ -17,26 +17,22 @@
 package io.gravitee.am.repository.jdbc.ratelimit.api;
 
 import io.gravitee.am.repository.jdbc.ratelimit.api.model.JdbcRateLimit;
-import io.gravitee.am.repository.jdbc.ratelimit.api.spring.SpringRateLimitRepository;
+import io.gravitee.am.repository.jdbc.ratelimit.api.spring.SpringRateLimitApiRepository;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.repository.ratelimit.api.RateLimitRepository;
 import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.MaybeTransformer;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.function.Supplier;
 
-import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
-
 @Repository
-public class JdbcRateLimitRepository extends AbstractJdbcRepository implements RateLimitRepository<RateLimit> {
+public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implements RateLimitRepository<RateLimit> {
 
     @Autowired
-    private SpringRateLimitRepository requestObjectRepository;
+    private SpringRateLimitApiRepository requestObjectRepository;
 
     @Override
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
