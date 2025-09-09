@@ -1,13 +1,19 @@
 {{ define "db.default.mongodb" }}
 mongodb:
+  {{- if .Values.mongo.dbhost}}
+  host: {{ .Values.mongo.dbhost }}
+  {{- end }}
+  {{- if .Values.mongo.dbport }}
+  port: {{ .Values.mongo.dbport }}
+  {{- end }}
   sslEnabled: {{ .Values.mongo.sslEnabled }}
   {{- if .Values.mongo.keystore }}
   keystore:
-    {{ toYaml .Values.mongo.keystore | nindent 2 | trim -}}
+    {{ toYaml .Values.mongo.keystore | nindent 4 }}
   {{- end }}
   {{- if .Values.mongo.truststore }}
   truststore:
-    {{ toYaml .Values.mongo.truststore | nindent 2 | trim -}}
+    {{ toYaml .Values.mongo.truststore | nindent 4 }}
   {{- end }}
   socketKeepAlive: {{ .Values.mongo.socketKeepAlive }}
   {{- if .Values.mongo.uri }}
@@ -57,7 +63,7 @@ jdbc:
   {{- if .Values.jdbc.trustServerCertificate }}
   trustServerCertificate: {{ .Values.jdbc.trustServerCertificate }}
   {{- end }}
-  {{- if .Values.jdbc.disableSslHostnameVerification }}
+  {{- if hasKey .Values.jdbc "disableSslHostnameVerification" }}
   disableSslHostnameVerification: {{ .Values.jdbc.disableSslHostnameVerification }}
   {{- end }}
   {{- if .Values.jdbc.trustStore }}
