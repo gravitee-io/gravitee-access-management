@@ -20,7 +20,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { UsersComponent } from './users.component';
 import { UserService } from '../../../services/user.service';
 import { OrganizationService } from '../../../services/organization.service';
 import { DialogService } from '../../../services/dialog.service';
@@ -28,6 +27,8 @@ import { SnackbarService } from '../../../services/snackbar.service';
 import { AuthService } from '../../../services/auth.service';
 import { ApplicationService } from '../../../services/application.service';
 import { ProviderService } from '../../../services/provider.service';
+
+import { UsersComponent } from './users.component';
 
 describe('UsersComponent', () => {
   let component: UsersComponent;
@@ -123,7 +124,7 @@ describe('UsersComponent', () => {
         'nickName ew ""',
         'name.familyName eq   "O\'Connor"',
       ];
-      expect(searchQueries.map(query => component['isAdvancedSearch'](query))).not.toContain(false);
+      expect(searchQueries.map((query) => component['isAdvancedSearch'](query))).not.toContain(false);
     });
 
     it('should return false if the search query is not an advanced search', () => {
@@ -142,7 +143,7 @@ describe('UsersComponent', () => {
         '"eq"',
         'sw "start"and',
       ];
-      expect(searchQueries.map(query => component['isAdvancedSearch'](query))).not.toContain(true);
+      expect(searchQueries.map((query) => component['isAdvancedSearch'](query))).not.toContain(true);
     });
   });
 });
