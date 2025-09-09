@@ -34,7 +34,7 @@ import { ProviderService } from '../../../services/provider.service';
 })
 export class UsersComponent implements OnInit {
   private readonly scimOperatorPattern = /"(?:\\.|[^"\\])*"|\b[\w.-]+\s+(?<op>pr|eq|ne|co|sw|ew|gt|ge|lt|le)\b/gi;
-  
+
   isLoading: boolean;
   searchValue: string;
   organizationContext: boolean;
