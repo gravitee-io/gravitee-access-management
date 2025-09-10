@@ -17,6 +17,7 @@ package io.gravitee.am.reporter.kafka.audit;
 
 import io.gravitee.am.common.analytics.Type;
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.reporter.api.audit.AuditReportableCriteria;
@@ -67,16 +68,22 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
 
     private final GraviteeContext context;
 
+    private final WriteStreamRegistry writeStreamRegistry;
 
     private final Node node;
 
     private KafkaProducer<String, AuditMessageValueDto> producer;
 
-    public KafkaAuditReporter(KafkaReporterConfiguration config, Vertx vertx, GraviteeContext context, Node node) {
+    public KafkaAuditReporter(KafkaReporterConfiguration config,
+                              Vertx vertx,
+                              GraviteeContext context,
+                              WriteStreamRegistry writeStreamRegistry,
+                              Node node) {
         this.config = config;
         this.vertx = vertx;
         this.context = context;
         this.node = node;
+        this.writeStreamRegistry = writeStreamRegistry;
     }
 
     @Override
@@ -106,11 +113,16 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
     }
 
     @Override
-    protected void doStart() {
+    protected void doStart() throws Exception{
+        super.doStart();
+        this.producer = (KafkaProducer) writeStreamRegistry.getOrCreate(config.hash(), this::createProducer);
+    }
+
+    private KafkaProducer createProducer() {
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
-            this.producer = KafkaProducer.create(vertx, getProperties());
+            return KafkaProducer.create(vertx, getProperties());
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassLoader);
         }
@@ -119,18 +131,17 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
     @Override
     protected void doStop() throws Exception {
         super.doStop();
-        if (this.producer != null) {
-            // Need to do unwrap producer because of bug in kafka vertx library: https://github.com/vert-x3/vertx-kafka-client/issues/271
-            Producer<String, AuditMessageValueDto> producer = this.producer.unwrap();
+        writeStreamRegistry.decreaseUsage(config.hash()).ifPresent(kafkaProducer -> {
+            Producer<String, AuditMessageValueDto> producer = ((KafkaProducer) kafkaProducer).unwrap();
             Context ctx = vertx.getOrCreateContext();
             ctx.executeBlocking(() -> {
                 producer.close();
+                log.info("Kafka producer closed");
                 return null;
             });
-        }
-        log.info("Kafka producer closed");
+        });
+        log.info("Kafka producer usage decreased");
     }
-
 
     @Override
     public boolean canSearch() {
