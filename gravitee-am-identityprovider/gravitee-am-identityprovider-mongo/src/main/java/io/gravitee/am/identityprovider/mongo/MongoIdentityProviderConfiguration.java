@@ -36,7 +36,7 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private static final String FIELD_PASSWORD = "password";
     private String uri;
     private String host;
-    private int port;
+    private Integer port;
     private boolean enableCredentials;
     private String databaseCredentials;
     private String usernameCredentials;
