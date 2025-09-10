@@ -47,5 +47,13 @@
             <artifactId>gravitee-plugin-core</artifactId>
             <scope>provided</scope>
         </dependency>
+
+
+        <!-- Its added in gravitee-node-api in 7.1.0 version -->
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

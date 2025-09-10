@@ -367,7 +367,6 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                     reporters.put(reporter.getId(), reporter);
                     try {
                         eventBusReporter.start();
-                        AuditReporterVerticle.incrementActiveReporter();
                     } catch (Exception e) {
                         logger.error("Unexpected error while loading reporter", e);
                     }
@@ -398,8 +397,6 @@ public class ManagementAuditReporterManager extends AbstractService<AuditReporte
                 optionalReporter.get().stop();
                 auditReporters.entrySet().removeIf(entry -> reporterId.equals(entry.getKey().getId()));
                 reporters.remove(reporterId);
-
-                AuditReporterVerticle.decrementActiveReporter();
             }
         } catch (Exception e) {
             logger.error("Unexpected error while removing reporter", e);

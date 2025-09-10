@@ -16,6 +16,7 @@
 package io.gravitee.am.plugins.reporter.core;
 
 import io.gravitee.am.common.utils.GraviteeContext;
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
@@ -45,13 +46,15 @@ public class ReporterPluginManager
     private final Logger logger = LoggerFactory.getLogger(ReporterPluginManager.class);
 
     private final ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory;
-
+    private final WriteStreamRegistry writeStreamRegistry;
     public ReporterPluginManager(
             PluginContextFactory pluginContextFactory,
-            ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory
+            ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory,
+            WriteStreamRegistry writeStreamRegistry
     ) {
         super(pluginContextFactory);
         this.reporterConfigurationFactory = reporterConfigurationFactory;
+        this.writeStreamRegistry = writeStreamRegistry;
     }
 
     @Override
@@ -66,7 +69,8 @@ public class ReporterPluginManager
         var context = providerConfig.getGraviteeContext();
         var postProcessors = ofNullable(context).map(ctx -> List.of(
                 new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration),
-                new GraviteeContextBeanFactoryPostProcessor(context)
+                new GraviteeContextBeanFactoryPostProcessor(context),
+                new WriteStreamRegistryBeanFactoryPostProcessor(writeStreamRegistry)
         )).orElse(List.of(new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration)));
 
         return createProvider(reporter, postProcessors);
@@ -84,5 +88,12 @@ public class ReporterPluginManager
             super("configuration", configuration);
         }
     }
+
+    private static class WriteStreamRegistryBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<WriteStreamRegistry> {
+        private WriteStreamRegistryBeanFactoryPostProcessor(WriteStreamRegistry registry) {
+            super("writeStreamRegistry", registry);
+        }
+    }
+
 
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.plugins.reporter.spring;
 
+import io.gravitee.am.common.utils.WriteStreamRegistry;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.impl.ConfigurationFactoryImpl;
 import io.gravitee.am.plugins.reporter.core.ReporterPluginManager;
@@ -33,13 +34,19 @@ public class ReporterSpringConfiguration {
     @Bean
     public ReporterPluginManager reporterPluginManager(
             PluginContextFactory pluginContextFactory,
-            ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory
+            ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory,
+            WriteStreamRegistry writeStreamRegistry
     ) {
-        return new ReporterPluginManager(pluginContextFactory, reporterConfigurationFactory);
+        return new ReporterPluginManager(pluginContextFactory, reporterConfigurationFactory, writeStreamRegistry);
     }
 
     @Bean
     public ConfigurationFactory<ReporterConfiguration> reporterConfigurationFactory() {
         return new ConfigurationFactoryImpl<>();
+    }
+
+    @Bean
+    public WriteStreamRegistry writeStreamRegistry(){
+        return new WriteStreamRegistry();
     }
 }
