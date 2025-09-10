@@ -11,12 +11,9 @@
     "pino-pretty": "10.2.0",
     "xml2json": "0.12.0",
     "zx": "7.2.3"
-<<<<<<< HEAD
-=======
   },
   "overrides": {
     "chalk": "5.3.0"
->>>>>>> 4372b6524 (chore: pin chalk version)
   },
   "scripts": {
     "prettier": "prettier --check \"**/*.{js,mjs,json}\"",
