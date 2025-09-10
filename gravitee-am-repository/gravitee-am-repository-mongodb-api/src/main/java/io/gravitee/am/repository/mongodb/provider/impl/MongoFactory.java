@@ -79,6 +79,11 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         this.propertyPrefix = propertyPrefix + ".mongodb.";
     }
 
+        public MongoFactory(RepositoriesEnvironment environment, String propertyPrefix, boolean ds) {
+                this.environment = environment;
+                this.propertyPrefix = "datasources.mongodb[0].settings.";
+            }
+
     public static MongoClient createClient(MongoConnectionConfiguration configuration) {
         MongoClient mongoClient;
 
