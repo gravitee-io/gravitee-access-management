@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
@@ -48,6 +50,8 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private ClientWrapper<MongoClient> oauthMongoClient;
     private ClientWrapper<MongoClient> gatewayMongoClient;
     private ClientWrapper<MongoClient> ratelimitMongoClient;
+
+    private Map<String, ClientWrapper<MongoClient>> dsClientWrappers = new ConcurrentHashMap<>();
 
     private boolean notUseMngSettingsForOauth2;
     private boolean notUseGwSettingsForOauth2;
@@ -121,6 +125,13 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
             return new MongoClientWrapper(new MongoFactory(environment, prefix).getObject(), getDatabaseName(prefix));
         }
     }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String prefix) {
+                // TODO make sure that client is rebuilt if the instance is closed....
+                       this.dsClientWrappers.computeIfAbsent(prefix, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject(), getDatabaseName(prefix)));
+                return this.dsClientWrappers.get(prefix);
+            }
 
     private String getDatabaseName(Scope scope) {
         boolean useManagementSettings = environment.getProperty(scope.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
