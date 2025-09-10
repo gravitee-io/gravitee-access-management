@@ -106,7 +106,7 @@
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.3.RELEASE</thymeleaf.version>
         <wiremock.version>3.0.4</wiremock.version>
-        <reactor-netty.version>1.0.39</reactor-netty.version>
+        <reactor-netty.version>1.2.10</reactor-netty.version>
         <json-path.version>2.9.0</json-path.version>
         <commons-io.version>2.18.0</commons-io.version>
         <common-text.version>1.13.0</common-text.version>
