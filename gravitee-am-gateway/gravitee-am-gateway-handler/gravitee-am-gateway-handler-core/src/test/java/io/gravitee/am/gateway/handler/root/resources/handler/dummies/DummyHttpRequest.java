@@ -166,6 +166,11 @@ public class DummyHttpRequest implements HttpServerRequest {
     }
 
     @Override
+    public @Nullable HostAndPort authority(boolean real) {
+        return null;
+    }
+
+    @Override
     public long bytesRead() {
         return 0;
     }
