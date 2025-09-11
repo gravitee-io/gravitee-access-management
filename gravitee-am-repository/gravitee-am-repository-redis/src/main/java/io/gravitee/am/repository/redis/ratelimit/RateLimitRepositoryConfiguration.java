@@ -17,7 +17,7 @@ package io.gravitee.am.repository.redis.ratelimit;
 
 import io.gravitee.am.repository.redis.common.RedisClient;
 import io.gravitee.am.repository.redis.common.RedisConnectionFactory;
-import io.gravitee.platform.repository.api.Scope;
+import io.gravitee.am.repository.Scope;
 import io.vertx.core.Vertx;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +36,7 @@ public class RateLimitRepositoryConfiguration {
         return new RedisConnectionFactory(
                 environment,
                 Vertx.vertx(),
-                Scope.RATE_LIMIT.getName(),
+                Scope.RATE_LIMIT.getRepositoryPropertyKey(),
                 Map.of(SCRIPT_RATELIMIT_KEY, SCRIPTS_RATELIMIT_LUA)
         ).createRedisClient();
     }
@@ -44,7 +44,7 @@ public class RateLimitRepositoryConfiguration {
     @Bean
     public RedisRateLimitRepository redisRateLimitRepository(
             @Qualifier("redisRateLimitClient") RedisClient redisClient,
-            @Value("${ratelimit.redis.operation.timeout:10}") int operationTimeout
+            @Value("${repositories.ratelimit.redis.operation.timeout:10}") int operationTimeout
     ) {
         return new RedisRateLimitRepository(redisClient, operationTimeout);
     }
