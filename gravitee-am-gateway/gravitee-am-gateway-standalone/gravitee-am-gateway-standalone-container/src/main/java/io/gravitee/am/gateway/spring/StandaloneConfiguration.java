@@ -112,13 +112,8 @@ public class StandaloneConfiguration {
 
     @Bean
     public io.vertx.rxjava3.core.Vertx vertx(@Autowired Vertx vertx) {
-
-        // Reconfigure RxJava to use Vertx schedulers.
-        // Keep rxJava IO scheduler for now has relying in the vertx one limit the token throughput with HSM plugin
-        // // RxJavaPlugins.setIoSchedulerHandler(s -> RxHelper.blockingScheduler(vertx));
         RxJavaPlugins.setComputationSchedulerHandler(s -> RxHelper.scheduler(vertx));
         RxJavaPlugins.setNewThreadSchedulerHandler(s -> RxHelper.scheduler(vertx));
-
         return io.vertx.rxjava3.core.Vertx.newInstance(vertx);
     }
 

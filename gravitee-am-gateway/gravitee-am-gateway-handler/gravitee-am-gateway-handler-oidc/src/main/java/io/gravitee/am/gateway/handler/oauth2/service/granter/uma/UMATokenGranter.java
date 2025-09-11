@@ -51,6 +51,7 @@ import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.service.exception.UserInvalidException;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
+import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -133,7 +134,16 @@ public class UMATokenGranter extends AbstractTokenGranter {
                 .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest, client))
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
-                .flatMap(user -> handleRequest(tokenRequest, client, user.orElse(null)));
+                .flatMap(user -> handleRequest(tokenRequest, tokenRequest.getHttpResponse(), client, user.orElse(null)));
+    }
+
+    @Override
+    public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
+        return parseRequest(tokenRequest, client)
+                .flatMapMaybe(tokenRequest1 -> resolveResourceOwner(tokenRequest, client))
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty())
+                .flatMap(user -> handleRequest(tokenRequest, response, client, user.orElse(null)));
     }
 
     @Override
@@ -211,11 +221,11 @@ public class UMATokenGranter extends AbstractTokenGranter {
                 });
     }
 
-    private Single<Token> handleRequest(TokenRequest tokenRequest, Client client, User endUser) {
+    private Single<Token> handleRequest(TokenRequest tokenRequest, Response response, Client client, User endUser) {
         return resolveRequestedScopes(tokenRequest, client)
                 .flatMap(tokenRequest1 -> this.resolvePermissions(tokenRequest1, client, endUser))
                 .flatMap(tokenRequest1 -> this.createOAuth2Request(tokenRequest1, client, endUser))
-                .flatMap(oAuth2Request -> this.executePolicies(oAuth2Request, client, endUser))
+                .flatMap(oAuth2Request -> this.executePolicies(oAuth2Request, response, client, endUser))
                 .flatMap(oAuth2Request -> getTokenService().create(oAuth2Request, client, endUser))
                 .map(token -> this.handleUpgradedToken(tokenRequest, token));
     }
@@ -393,7 +403,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
      * @param endUser       requesting party
      * @return
      */
-    private Single<OAuth2Request> executePolicies(OAuth2Request oAuth2Request, Client client, User endUser) {
+    private Single<OAuth2Request> executePolicies(OAuth2Request oAuth2Request, Response response, Client client, User endUser) {
         List<PermissionRequest> permissionRequests = oAuth2Request.getPermissions();
         if (permissionRequests == null || permissionRequests.isEmpty()) {
             return Single.just(oAuth2Request);
@@ -418,7 +428,7 @@ public class UMATokenGranter extends AbstractTokenGranter {
                         return Single.just(oAuth2Request);
                     }
                     // prepare the execution context
-                    ExecutionContext simpleExecutionContext = new SimpleExecutionContext(oAuth2Request, oAuth2Request.getHttpResponse());
+                    ExecutionContext simpleExecutionContext = new SimpleExecutionContext(oAuth2Request, response);
                     ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
                     executionContext.setAttribute(ConstantKeys.CLIENT_CONTEXT_KEY, new ClientProperties(client));
                     if (endUser != null) {

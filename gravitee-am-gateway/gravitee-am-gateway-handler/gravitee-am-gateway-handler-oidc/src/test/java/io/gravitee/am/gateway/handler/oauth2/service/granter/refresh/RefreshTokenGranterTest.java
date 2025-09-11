@@ -88,6 +88,9 @@ public class RefreshTokenGranterTest {
 
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.just(new RefreshToken(refreshToken)));
+        // PRE_TOKEN request expects response object
+        when(rulesEngine.fire(any(), any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+        // POST_TOKEN request does not
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();
@@ -149,6 +152,9 @@ public class RefreshTokenGranterTest {
         ArgumentCaptor<OAuth2Request> oAuth2RequestArgumentCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
         when(tokenService.create(oAuth2RequestArgumentCaptor.capture(), any(), any())).thenReturn(Single.just(accessToken));
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.just(new RefreshToken(refreshToken)));
+        // PRE_TOKEN request expects response object
+        when(rulesEngine.fire(any(), any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+        // POST_TOKEN request does not
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
 
         TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();

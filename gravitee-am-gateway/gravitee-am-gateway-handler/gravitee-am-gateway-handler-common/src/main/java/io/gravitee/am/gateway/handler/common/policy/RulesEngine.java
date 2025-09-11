@@ -20,6 +20,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 
@@ -34,4 +35,6 @@ public interface RulesEngine {
     Completable fire(List<Rule> rules, ExecutionContext executionContext);
 
     Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Client client, User user);
+
+    Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user);
 }
