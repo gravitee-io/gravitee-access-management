@@ -269,6 +269,7 @@ public class UserServiceImpl implements UserService {
 
     private Single<User> registerUser(User user, Optional<AccountSettings> accountSettings, String source, io.gravitee.am.identityprovider.api.User idpUser, MultiMap queryParams) {
         // AM 'users' collection is not made for authentication (but only management stuff)
+        var now = new Date();
         // clear password
         user.setPassword(null);
         // set external id
@@ -283,11 +284,11 @@ public class UserServiceImpl implements UserService {
         // additional information
         extractAdditionalInformation(user, idpUser.getAdditionalInformation());
         // set date information
-        user.setCreatedAt(new Date());
-        user.setUpdatedAt(user.getCreatedAt());
+        user.setCreatedAt(now);
+        user.setUpdatedAt(now);
         accountSettings.ifPresent(settings -> {
             if (settings.isAutoLoginAfterRegistration() && !settings.isSendVerifyRegistrationAccountEmail()) {
-                user.setLoggedAt(new Date());
+                user.setLoggedAt(now);
                 user.setLoginsCount(1L);
             }
             if (settings.isSendVerifyRegistrationAccountEmail()) {
@@ -297,6 +298,7 @@ public class UserServiceImpl implements UserService {
                 user.setRegistrationUserUri(domainService.buildUrl(domain, REGISTRATION_VERIFY.redirectUri(), queryParams));
             }
         });
+        user.setLastPasswordReset(now);
         return userService.create(user);
     }
 
