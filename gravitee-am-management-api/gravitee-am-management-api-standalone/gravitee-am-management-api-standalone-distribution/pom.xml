@@ -698,6 +698,20 @@
                                     <type>zip</type>
                                 </artifactItem>
 
+                                <!-- Shared Policies -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.policy</groupId>
+                                    <artifactId>gravitee-policy-ratelimit</artifactId>
+                                    <version>${gravitee-policy-ratelimit.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.policy</groupId>
+                                    <artifactId>gravitee-gateway-services-ratelimit</artifactId>
+                                    <version>${gravitee-gateway-services-ratelimit.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
                                 <!-- AM Resources -->
                                 <artifactItem>
                                     <groupId>io.gravitee.am.resource</groupId>
