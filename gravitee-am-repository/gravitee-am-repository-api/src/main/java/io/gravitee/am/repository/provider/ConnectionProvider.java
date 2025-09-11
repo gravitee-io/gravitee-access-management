@@ -43,7 +43,7 @@ public interface ConnectionProvider<T, C extends ConnectionConfiguration> extend
 
     ClientWrapper<T> getClientWrapperFromPrefix(String prefix);
 
-    default ClientWrapper<T> getClientWrapperFromDatasource(String prefix) { return null; };
+    default ClientWrapper<T> getClientWrapperFromDatasource(String datasourceId) { return null; };
 
     boolean canHandle(String backendType);
 }

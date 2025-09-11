@@ -77,7 +77,7 @@ public abstract class MongoAbstractProvider implements InitializingBean {
         // whatever are the values for the mongo connection settings or the useSystemCluster
         // if DataSource is present, it takes precedence on everything
         if (StringUtils.hasLength(this.configuration.getDatasource()) && this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-            this.clientWrapper = this.commonConnectionProvider.getClientWrapperFromDatasource("test");
+            this.clientWrapper = this.commonConnectionProvider.getClientWrapperFromDatasource(this.configuration.getDatasource());
             this.mongoClient = this.clientWrapper.getClient();
             return;
         }
