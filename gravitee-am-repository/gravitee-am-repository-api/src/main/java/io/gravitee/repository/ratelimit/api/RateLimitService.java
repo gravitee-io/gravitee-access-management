@@ -14,12 +14,19 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.repository.jdbc.ratelimit.api.spring;
+package io.gravitee.repository.ratelimit.api;
 
-import io.gravitee.am.repository.jdbc.ratelimit.api.model.JdbcRateLimit;
-import org.springframework.data.repository.reactive.RxJava3CrudRepository;
-import org.springframework.stereotype.Repository;
+import io.gravitee.repository.ratelimit.model.RateLimit;
+import io.reactivex.rxjava3.core.Single;
+import java.util.function.Supplier;
 
-@Repository
-public interface SpringRateLimitRepository extends RxJava3CrudRepository<JdbcRateLimit, String> {
+/**
+ * @author GraviteeSource Team
+ */
+public interface RateLimitService {
+    Single<RateLimit> incrementAndGet(String key, long weight, boolean async, Supplier<RateLimit> supplier);
+
+    default Single<RateLimit> incrementAndGet(String key, boolean async, Supplier<RateLimit> supplier) {
+        return incrementAndGet(key, 1, async, supplier);
+    }
 }

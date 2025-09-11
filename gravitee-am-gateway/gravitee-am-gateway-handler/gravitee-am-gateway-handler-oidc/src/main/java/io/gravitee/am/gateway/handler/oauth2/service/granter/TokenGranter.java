@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.gateway.api.Response;
 import io.reactivex.rxjava3.core.Single;
 
 /**
@@ -51,6 +52,9 @@ public interface TokenGranter {
      * @return The authorization server authenticates the client and validates the authorization grant, and if valid, issues an access token.
      */
     Single<Token> grant(TokenRequest tokenRequest, Client client);
+
+
+    Single<Token> grant(TokenRequest tokenRequest, Response response, Client client);
 
     default boolean handle(String grantType) {
         return handle(grantType, null);

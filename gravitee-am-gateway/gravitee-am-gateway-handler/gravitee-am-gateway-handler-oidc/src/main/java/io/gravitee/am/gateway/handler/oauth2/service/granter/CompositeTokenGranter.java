@@ -43,6 +43,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
+import io.gravitee.gateway.api.Response;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.InitializingBean;
@@ -109,13 +110,24 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
+        return findGranter(tokenRequest, client)
+                .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client))
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+    }
+
+    @Override
+    public Single<Token> grant(TokenRequest tokenRequest, Response response, Client client) {
+        return findGranter(tokenRequest, client)
+                .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, response, client))
+                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+    }
+
+    private Single<TokenGranter> findGranter(TokenRequest tokenRequest, Client client) {
         return Observable
                 .fromIterable(tokenGranters.values())
                 .filter(tokenGranter -> tokenGranter.handle(tokenRequest.getGrantType(), client))
                 .firstElement()
-                .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())))
-                .flatMap(tokenGranter -> tokenGranter.grant(tokenRequest, client))
-                .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).throwable(error)));
+                .switchIfEmpty(Single.error(() -> new UnsupportedGrantTypeException("Unsupported grant type: " + tokenRequest.getGrantType())));
     }
 
 

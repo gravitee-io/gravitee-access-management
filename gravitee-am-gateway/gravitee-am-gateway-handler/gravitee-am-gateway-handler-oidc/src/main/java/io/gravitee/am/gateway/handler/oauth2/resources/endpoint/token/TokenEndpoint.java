@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.endpoint.token;
 
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
+import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerResponse;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
@@ -23,9 +25,14 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
+import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
+import io.vertx.core.Context;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
@@ -80,7 +87,11 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
         }
 
-        tokenGranter.grant(tokenRequest, client)
+        io.vertx.core.http.HttpServerRequest request = context.request().getDelegate();
+        Request serverRequest = new VertxHttpServerRequest(request);
+        Response serverResponse = new VertxHttpServerResponse(request, serverRequest.metrics());
+
+        tokenGranter.grant(tokenRequest, serverResponse, client)
                 .subscribe(accessToken -> context.response()
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")

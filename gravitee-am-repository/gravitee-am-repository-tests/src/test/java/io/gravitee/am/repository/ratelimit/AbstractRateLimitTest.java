@@ -125,6 +125,13 @@ public abstract class AbstractRateLimitTest {
                 @ComponentScan.Filter(pattern = ".*RepositoriesTestInitializer", type = FilterType.REGEX)
             },
             useDefaultFilters = false
+    )@ComponentScan(
+            value = "io.gravitee.repository",
+            includeFilters = {
+                    @ComponentScan.Filter(pattern = ".*TestRepository.*", type = FilterType.REGEX),
+                    @ComponentScan.Filter(pattern = ".*RepositoriesTestInitializer", type = FilterType.REGEX)
+            },
+            useDefaultFilters = false
     )
     static class ContextConfiguration {}
 }

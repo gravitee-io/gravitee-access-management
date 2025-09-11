@@ -94,6 +94,9 @@ public class ResourceOwnerPasswordCredentialsTokenGranterTest {
         when(tokenRequestResolver.resolve(any(), any(), any())).thenReturn(Single.just(tokenRequest));
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
         when(userAuthenticationManager.authenticate(any(Client.class), any(Authentication.class))).thenReturn(Single.just(new User()));
+        // PRE_TOKEN request expects response object
+        when(rulesEngine.fire(any(), any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+        // POST_TOKEN request does not
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
         TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();
         testObserver.assertComplete();

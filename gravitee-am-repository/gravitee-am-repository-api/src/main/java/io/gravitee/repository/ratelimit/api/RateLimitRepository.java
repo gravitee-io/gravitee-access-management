@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package io.gravitee.am.repository.ratelimit.api;
+package io.gravitee.repository.ratelimit.api;
 
-import io.gravitee.am.repository.ratelimit.model.RateLimit;
+import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Single;
+
 import java.util.function.Supplier;
 
 public interface RateLimitRepository<T extends RateLimit> {
