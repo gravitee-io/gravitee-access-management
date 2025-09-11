@@ -56,9 +56,10 @@ public class PropertySourceFallbackConfigurer implements BeanFactoryPostProcesso
     }
 
     private PropertySource<?> gatewayTypePropertyFallback() {
+        final Map<String, Object> fallbacks = Map.of("gateway.type", "${management.type}", "ratelimit.type","${repositories.gateway.type:${management.type}}");
         return new GraviteeYamlPropertySource(
                 "gatewayTypeFallbackPropertySource",
-                Map.of("gateway.type", "${management.type}"),
+                fallbacks,
                 this.applicationContext);
     }
 }
