@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toMap;
 
@@ -149,19 +148,20 @@ public class UriBuilderRequest {
         String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
         
         if (forwardedHost != null && !forwardedHost.isEmpty()) {
-            // X-Forwarded-Host takes precedence
-            setHostAndPort(builder, forwardedHost, forwardedPort, scheme);
+            // X-Forwarded-Host takes precedence - always use new behavior (no legacy mode)
+            setHostAndPort(builder, forwardedHost, forwardedPort, scheme, false);
         } else {
-            // Fall back to request.host()
+            // Fall back to request.host() - apply legacy mode if enabled
             String requestHost = request.host();
-            setHostAndPort(builder, requestHost, forwardedPort, scheme);
+            boolean isLegacyMode = StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts();
+            setHostAndPort(builder, requestHost, forwardedPort, scheme, isLegacyMode);
         }
     }
 
     /**
      * Sets host and port on the builder, handling port precedence and default port omission
      */
-    private static void setHostAndPort(UriBuilder builder, String host, String forwardedPort, String scheme) {
+    private static void setHostAndPort(UriBuilder builder, String host, String forwardedPort, String scheme, boolean isLegacyMode) {
         if (host == null || host.isEmpty()) {
             return;
         }
@@ -173,19 +173,24 @@ public class UriBuilderRequest {
             
             // X-Forwarded-Port takes precedence over port in host
             String effectivePort = (forwardedPort != null) ? forwardedPort : parts[1];
-            setPortIfNotDefault(builder, effectivePort, scheme);
+            setPortIfNotDefault(builder, effectivePort, scheme, isLegacyMode);
         } else {
             // Host without port
             builder.host(host);
-            setPortIfNotDefault(builder, forwardedPort, scheme);
+            setPortIfNotDefault(builder, forwardedPort, scheme, isLegacyMode);
         }
     }
 
     /**
-     * Sets port on builder only if it's not a default port for the given scheme
+     * Sets port on builder only if it's not a default port for the given scheme (unless in legacy mode)
      */
-    private static void setPortIfNotDefault(UriBuilder builder, String port, String scheme) {
-        if (port == null || port.isEmpty() || isDefaultPort(port, scheme)) {
+    private static void setPortIfNotDefault(UriBuilder builder, String port, String scheme, boolean isLegacyMode) {
+        if (port == null || port.isEmpty()) {
+            return;
+        }
+
+        if (!isLegacyMode && isDefaultPort(port, scheme)) {
+            // Don't set port for default ports in new behavior
             return;
         }
 

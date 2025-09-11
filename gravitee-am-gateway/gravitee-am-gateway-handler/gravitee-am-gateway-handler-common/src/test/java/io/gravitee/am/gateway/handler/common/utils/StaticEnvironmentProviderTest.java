@@ -29,7 +29,7 @@ public class StaticEnvironmentProviderTest {
 
     @BeforeClass
     public static void setup() {
-        when(env.getProperty("legacy.openid.sanitizeParametersEncoding", boolean.class, true))
+        when(env.getProperty(StaticEnvironmentProvider.GATEWAY_ENDPOINT_SANITIZE_PARAMETERS_ENCODING, boolean.class, true))
                 .thenReturn(false)
                 .thenReturn(true);
         StaticEnvironmentProvider.setEnvironment(env);
@@ -41,6 +41,6 @@ public class StaticEnvironmentProviderTest {
 
         // Call method twice to test cached value is used
         assertFalse(StaticEnvironmentProvider.sanitizeParametersEncoding());
-        verify(env).getProperty("legacy.openid.sanitizeParametersEncoding", boolean.class, true);
+        verify(env).getProperty(StaticEnvironmentProvider.GATEWAY_ENDPOINT_SANITIZE_PARAMETERS_ENCODING, boolean.class, true);
     }
 }
