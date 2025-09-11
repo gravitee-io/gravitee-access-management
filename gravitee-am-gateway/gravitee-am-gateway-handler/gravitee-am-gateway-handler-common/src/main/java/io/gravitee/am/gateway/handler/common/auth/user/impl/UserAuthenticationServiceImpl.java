@@ -355,15 +355,15 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
             existingUser.setDynamicRoles(preConnectedUser.getDynamicRoles());
             existingUser.setDynamicGroups(preConnectedUser.getDynamicGroups());
 
-            // set last password reset
-            if (existingUser.getLastPasswordReset() == null) {
-                existingUser.setLastPasswordReset(existingUser.getUpdatedAt() == null ? new Date() : existingUser.getUpdatedAt());
-            }
-
             // set additional information
             Map<String, Object> additionalInformation = ofNullable(preConnectedUser.getAdditionalInformation()).orElse(Map.of());
             removeOriginalProviderOidcTokensIfNecessary(existingUser, afterAuthentication, additionalInformation);
             extractAdditionalInformation(existingUser, additionalInformation);
+        }
+
+        // populate last password reset if missing
+        if (existingUser.getLastPasswordReset() == null) {
+            existingUser.setLastPasswordReset(existingUser.getUpdatedAt() == null ? new Date() : existingUser.getUpdatedAt());
         }
 
         return userService.update(existingUser, updateActions);
