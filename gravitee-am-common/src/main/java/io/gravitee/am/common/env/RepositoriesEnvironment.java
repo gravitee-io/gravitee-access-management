@@ -68,11 +68,11 @@ public class RepositoriesEnvironment {
     }
 
     private boolean canFallback(String key) {
-        return key.matches("^repositories\\.(gateway|management|oauth2)\\..*");
+        return key.matches("^repositories\\.(gateway|management|oauth2|ratelimit)\\..*");
     }
 
     private String fallback(String key) {
-        if (key.startsWith("repositories.gateway.")) {
+         if (key.startsWith("repositories.gateway.")) {
             return key.replaceFirst("repositories\\.gateway\\.", "oauth2.");
         }
         if (key.startsWith("repositories.management.")) {
@@ -80,6 +80,9 @@ public class RepositoriesEnvironment {
         }
         if (key.startsWith("repositories.oauth2.")) {
             return key.replaceFirst("repositories\\.oauth2\\.", "oauth2.");
+        }
+        if (key.startsWith("repositories.ratelimit.")) {
+            return key.replaceFirst("repositories\\.ratelimit\\.", "gateway.");
         }
         return key;
     }
