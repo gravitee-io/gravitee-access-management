@@ -110,7 +110,6 @@ public class RepositoriesEnvironmentTest {
     @Test
     public void repositories_gateway_variable_and_fallback_is_missing_should_return_default(){
         Mockito.when(environment.getProperty("repositories.gateway.url")).thenReturn(null);
-        Mockito.when(environment.getProperty("oauth2.url", "default")).thenReturn("default");
         String value = repositoriesEnvironment.getProperty("repositories.gateway.url", "default");
         Assertions.assertEquals("default", value);
     }
@@ -118,7 +117,6 @@ public class RepositoriesEnvironmentTest {
     @Test
     public void repositories_management_variable_and_fallback_is_missing_should_return_default(){
         Mockito.when(environment.getProperty("repositories.management.url")).thenReturn(null);
-        Mockito.when(environment.getProperty("management.url", "default")).thenReturn("default");
         String value = repositoriesEnvironment.getProperty("repositories.management.url", "default");
         Assertions.assertEquals("default", value);
     }
@@ -126,7 +124,6 @@ public class RepositoriesEnvironmentTest {
     @Test
     public void repositories_oauth2_variable_and_fallback_is_missing_should_return_default(){
         Mockito.when(environment.getProperty("repositories.oauth2.url")).thenReturn(null);
-        Mockito.when(environment.getProperty("oauth2.url", "default")).thenReturn("default");
         String value = repositoriesEnvironment.getProperty("repositories.oauth2.url", "default");
         Assertions.assertEquals("default", value);
     }
@@ -134,7 +131,6 @@ public class RepositoriesEnvironmentTest {
     @Test
     public void repositories_ratelimit_variable_and_fallback_is_missing_should_return_default(){
         Mockito.when(environment.getProperty("repositories.ratelimit.url")).thenReturn(null);
-        Mockito.when(environment.getProperty("repositories.gateway.url", "default")).thenReturn("default");
         String value = repositoriesEnvironment.getProperty("repositories.ratelimit.url", "default");
         Assertions.assertEquals("default", value);
     }
