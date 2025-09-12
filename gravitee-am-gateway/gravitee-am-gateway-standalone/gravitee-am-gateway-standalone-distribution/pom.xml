@@ -648,13 +648,6 @@
                                     <type>zip</type>
                                 </artifactItem>
 
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.gateway</groupId>
-                                    <artifactId>gravitee-am-gateway-services-purge</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
                                 <!-- Reporters -->
                                 <artifactItem>
                                     <groupId>io.gravitee.am.reporter</groupId>
