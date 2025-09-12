@@ -44,16 +44,7 @@ public class RepositoriesEnvironment {
     }
 
     public String getProperty(String key, String defaultValue) {
-        String property = environment.getProperty(key);
-        if (property == null) {
-            if(canFallback(key)){
-                return Optional.ofNullable(getProperty(key)).orElse(defaultValue);
-            } else {
-                return defaultValue;
-            }
-        } else {
-            return property;
-        }
+        return Optional.ofNullable(getProperty(key)).orElse(defaultValue);
     }
 
     public <T> T getProperty(String key, Class<T> targetType) {
@@ -74,16 +65,7 @@ public class RepositoriesEnvironment {
     }
 
     public <T> T getProperty(String key, Class<T> targetType, T defaultValue) {
-        T property = environment.getProperty(key, targetType);
-        if (property == null) {
-            if(canFallback(key)){
-                return Optional.ofNullable(getProperty(key, targetType)).orElse(defaultValue);
-            } else {
-                return defaultValue;
-            }
-        } else {
-            return property;
-        }
+        return Optional.ofNullable(getProperty(key, targetType)).orElse(defaultValue);
     }
 
     private boolean canFallback(String key) {
