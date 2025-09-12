@@ -82,7 +82,7 @@ public class RepositoriesEnvironment {
             return key.replaceFirst("repositories\\.oauth2\\.", "oauth2.");
         }
         if (key.startsWith("repositories.ratelimit.")) {
-            return key.replaceFirst("repositories\\.ratelimit\\.", "gateway.");
+            return key.replaceFirst("repositories\\.ratelimit\\.", "repositories.gateway.");
         }
         return key;
     }
