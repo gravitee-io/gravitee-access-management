@@ -166,7 +166,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
             configMap.put("usernameAttribute", "username");
             configMap.put("passwordAttribute", PASSWORD);
             configMap.put("passwordEncoder", parsePasswordEncoder(encoder));
-            jdbcSchema().ifPresent(schema -> configMap.put("options", Map.of("option", "currentSchema", "value", schema)));
+            jdbcSchema().ifPresent(schema -> configMap.put("options", List.of(Map.of("option", "currentSchema", "value", schema))));
             updatePasswordEncoderOptions(configMap, encoder);
         }
         return configMap;
