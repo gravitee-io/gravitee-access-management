@@ -26,10 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
+import static java.util.Objects.isNull;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -46,6 +49,8 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private ClientWrapper<MongoClient> commonMongoClient;
     private ClientWrapper<MongoClient> oauthMongoClient;
     private ClientWrapper<MongoClient> gatewayMongoClient;
+
+    private Map<String, ClientWrapper<MongoClient>> dsClientWrappers = new ConcurrentHashMap<>();
 
     private boolean notUseMngSettingsForOauth2;
     private boolean notUseGwSettingsForOauth2;
@@ -102,6 +107,30 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         } else {
             return new MongoClientWrapper(new MongoFactory(environment, prefix).getObject(), getDatabaseName(prefix));
         }
+    }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId) {
+        // TODO make sure that client is rebuilt if the instance is closed....
+        String prefix = determinePrefixFromDataSourceId(datasourceId);
+       this.dsClientWrappers.computeIfAbsent(datasourceId, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject(), getDatabaseName(datasourceId)));
+        return this.dsClientWrappers.get(datasourceId);
+    }
+
+    private String determinePrefixFromDataSourceId(String datasourceId) {
+        for (int i = 0; true; i++) {
+            var propertyKey = String.format("datasources.mongodb[%d].id", i);
+            var value = environment.getProperty(propertyKey, String.class);
+            if (isNull(value)) {
+                break;
+            } else {
+                if (datasourceId.equals(value)) {
+                    return String.format("datasources.mongodb[%d].settings.", i);
+                }
+            }
+        }
+
+        return "";
     }
 
     private String getDatabaseName(Scope scope) {
