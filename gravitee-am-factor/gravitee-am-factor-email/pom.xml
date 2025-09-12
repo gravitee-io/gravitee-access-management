@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-factor</artifactId>
         <groupId>io.gravitee.am.factor</groupId>
-        <version>4.9.0-SNAPSHOT</version>
+        <version>4.9.0-alpha.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
