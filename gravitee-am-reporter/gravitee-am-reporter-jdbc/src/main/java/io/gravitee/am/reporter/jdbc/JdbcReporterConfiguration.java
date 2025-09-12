@@ -18,6 +18,9 @@ package io.gravitee.am.reporter.jdbc;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.gravitee.am.reporter.api.ReporterConfiguration;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -41,6 +44,7 @@ public class JdbcReporterConfiguration implements ReporterConfiguration {
     private String tableSuffix;
     private Integer bulkActions = 1000;
     private Integer flushInterval = 5;
+    private List<Map<String, String>> options;
 
     public String getDriver() {
         return driver;
@@ -176,5 +180,13 @@ public class JdbcReporterConfiguration implements ReporterConfiguration {
 
     public void setFlushInterval(Integer flushInterval) {
         this.flushInterval = flushInterval;
+    }
+
+    public List<Map<String, String>> getOptions() {
+        return options;
+    }
+
+    public void setOptions(List<Map<String, String>> options) {
+        this.options = options;
     }
 }

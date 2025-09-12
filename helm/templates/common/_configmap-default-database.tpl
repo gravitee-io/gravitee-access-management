@@ -48,6 +48,9 @@ jdbc:
   {{- if .Values.jdbc.password }}
   password: {{ .Values.jdbc.password }}
   {{- end }}
+  {{- if .Values.jdbc.schema }}
+  schema: {{ .Values.jdbc.schema }}
+  {{- end }}
   {{- if .Values.jdbc.pool }}
   {{ toYaml .Values.jdbc.pool | nindent 2 | trim -}}
   {{- end }}
