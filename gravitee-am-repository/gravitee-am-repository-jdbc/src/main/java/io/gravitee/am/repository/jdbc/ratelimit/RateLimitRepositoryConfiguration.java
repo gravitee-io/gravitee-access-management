@@ -36,8 +36,7 @@ import java.util.Optional;
 
 @Configuration
 @ComponentScan({
-        "io.gravitee.am.repository.jdbc.ratelimit.api",
-        "io.gravitee.am.repository.jdbc.common"})
+        "io.gravitee.am.repository.jdbc.ratelimit"})
 @EnableR2dbcRepositories
 public class RateLimitRepositoryConfiguration extends AbstractRepositoryConfiguration {
 

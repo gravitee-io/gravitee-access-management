@@ -18,61 +18,62 @@ package io.gravitee.am.common.env;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.env.Environment;
 
+import java.util.Optional;
+
 @RequiredArgsConstructor
 public class RepositoriesEnvironment {
     private final Environment environment;
+    private final int MAX_ATTEMPTS = 2;
 
     public String getProperty(String key) {
         String property = environment.getProperty(key);
-        if (property == null && canFallback(key)) {
-            return environment.getProperty(fallback(key));
-        } else {
+        if (property != null || !canFallback(key)) {
             return property;
         }
+
+        return this.getProperty(fallback(key), 1);
+    }
+
+    private String getProperty(String key, int attempt) {
+        String property = environment.getProperty(key);
+        if (property == null && attempt <= MAX_ATTEMPTS) {
+            return this.getProperty(fallback(key), attempt + 1);
+        }
+
+        return property;
     }
 
     public String getProperty(String key, String defaultValue) {
-        String property = environment.getProperty(key);
-        if (property == null) {
-            if(canFallback(key)){
-                return environment.getProperty(fallback(key), defaultValue);
-            } else {
-                return defaultValue;
-            }
-        } else {
-            return property;
-        }
+        return Optional.ofNullable(getProperty(key)).orElse(defaultValue);
     }
 
     public <T> T getProperty(String key, Class<T> targetType) {
         T property = environment.getProperty(key, targetType);
-        if (property == null && canFallback(key)) {
-            return environment.getProperty(fallback(key), targetType);
-        } else {
+        if (property != null || !canFallback(key)) {
             return property;
         }
+
+        return getProperty(fallback(key), targetType, 1);
+    }
+
+    private <T> T getProperty(String key, Class<T> targetType, int attempt) {
+        T property = environment.getProperty(key, targetType);
+        if (property == null && attempt <= MAX_ATTEMPTS) {
+            return getProperty(fallback(key), targetType, attempt + 1);
+        }
+        return property;
     }
 
     public <T> T getProperty(String key, Class<T> targetType, T defaultValue) {
-        T property = environment.getProperty(key, targetType);
-        if (property == null) {
-            if(canFallback(key)){
-                return environment.getProperty(fallback(key), targetType, defaultValue);
-            } else {
-                return defaultValue;
-            }
-        } else {
-            return property;
-        }
-
+        return Optional.ofNullable(getProperty(key, targetType)).orElse(defaultValue);
     }
 
     private boolean canFallback(String key) {
-        return key.matches("^repositories\\.(gateway|management|oauth2)\\..*");
+        return key.matches("^repositories\\.(gateway|management|oauth2|ratelimit)\\..*");
     }
 
     private String fallback(String key) {
-        if (key.startsWith("repositories.gateway.")) {
+         if (key.startsWith("repositories.gateway.")) {
             return key.replaceFirst("repositories\\.gateway\\.", "oauth2.");
         }
         if (key.startsWith("repositories.management.")) {
@@ -80,6 +81,9 @@ public class RepositoriesEnvironment {
         }
         if (key.startsWith("repositories.oauth2.")) {
             return key.replaceFirst("repositories\\.oauth2\\.", "oauth2.");
+        }
+        if (key.startsWith("repositories.ratelimit.")) {
+            return key.replaceFirst("repositories\\.ratelimit\\.", "repositories.gateway.");
         }
         return key;
     }

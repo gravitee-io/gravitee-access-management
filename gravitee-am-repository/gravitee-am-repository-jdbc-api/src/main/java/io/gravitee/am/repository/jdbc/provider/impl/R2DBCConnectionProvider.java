@@ -38,6 +38,7 @@ import org.springframework.transaction.ReactiveTransactionManager;
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
+import static io.gravitee.am.repository.Scope.RATE_LIMIT;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -57,6 +58,8 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     private ClientWrapper<ConnectionFactory> oauthConnectionFactory;
 
     private ClientWrapper<ConnectionFactory> gatewayConnectionFactory;
+
+    private ClientWrapper<ConnectionFactory> ratelimitConnectionFactory;
 
     @Autowired
     @Lazy
@@ -93,6 +96,9 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     private boolean notUseMngSettingsForOauth2;
     private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
+
+    private boolean notUseMngSettingsForRateLimit;
+    private boolean notUseGwSettingsForRateLimit;
 
     @Override
     public DatabaseClient databaseClient() {
@@ -143,6 +149,8 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
     public ClientWrapper getClientWrapper(String name) {
         if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
             return notUseGwSettingsForOauth2 ? oauthConnectionFactory : getClientWrapper(GATEWAY.getName());
+        } else if (RATE_LIMIT.getName().equals(name) && notUseMngSettingsForRateLimit) {
+            return notUseGwSettingsForRateLimit ? ratelimitConnectionFactory : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
             return gatewayConnectionFactory;
         } else {
@@ -179,6 +187,9 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
         if (gatewayConnectionFactory != null) {
             ((R2DBCPoolWrapper) gatewayConnectionFactory).shutdown();
         }
+        if (ratelimitConnectionFactory != null) {
+            ((R2DBCPoolWrapper) ratelimitConnectionFactory).shutdown();
+        }
         return this;
     }
 
@@ -187,9 +198,17 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
         final var useMngSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() +".use-management-settings", Boolean.class, true);
         final var useGwSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", Boolean.class, false);
         final var useMngSettingsForGateway = environment.getProperty(GATEWAY.getRepositoryPropertyKey() +".use-management-settings", Boolean.class, true);
+
+        final var useMngSettingsForRateLimit = environment.getProperty(RATE_LIMIT.getRepositoryPropertyKey() +".use-management-settings", Boolean.class, true);
+        final var useGwSettingsForRateLimit = environment.getProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-gateway-settings", Boolean.class, false);
+
         notUseGwSettingsForOauth2 = !useGwSettingsForOauth2;
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
         notUseMngSettingsForGateway = !useMngSettingsForGateway;
+
+        notUseGwSettingsForRateLimit = !useGwSettingsForRateLimit;
+        notUseMngSettingsForRateLimit = !useMngSettingsForRateLimit;
+
         // create the connection pool just after the bean Initialization to guaranty the uniqueness
         commonConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, MANAGEMENT.getRepositoryPropertyKey()));
         if (notUseMngSettingsForGateway) {
@@ -197,6 +216,9 @@ public class R2DBCConnectionProvider implements ConnectionProvider<ConnectionFac
         }
         if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
             oauthConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, OAUTH2.getRepositoryPropertyKey()));
+        }
+        if (notUseMngSettingsForRateLimit && notUseGwSettingsForRateLimit) {
+            ratelimitConnectionFactory = new R2DBCPoolWrapper(new ConnectionFactoryProvider(environment, RATE_LIMIT.getRepositoryPropertyKey()));
         }
     }
 
