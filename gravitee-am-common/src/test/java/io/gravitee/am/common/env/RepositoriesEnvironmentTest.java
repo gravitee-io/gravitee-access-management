@@ -130,4 +130,36 @@ public class RepositoriesEnvironmentTest {
         String value = repositoriesEnvironment.getProperty("repositories.oauth2.url", "default");
         Assertions.assertEquals("default", value);
     }
+
+    @Test
+    public void repositories_ratelimit_variable_and_fallback_is_missing_should_return_default(){
+        Mockito.when(environment.getProperty("repositories.ratelimit.url")).thenReturn(null);
+        Mockito.when(environment.getProperty("repositories.gateway.url", "default")).thenReturn("default");
+        String value = repositoriesEnvironment.getProperty("repositories.ratelimit.url", "default");
+        Assertions.assertEquals("default", value);
+    }
+
+    @Test
+    public void repositories_ratelimit_variable_should_be_retrieved_if_its_present(){
+        Mockito.when(environment.getProperty("repositories.ratelimit.url")).thenReturn("value");
+        String value = repositoriesEnvironment.getProperty("repositories.ratelimit.url");
+        Assertions.assertEquals("value", value);
+    }
+
+    @Test
+    public void repositories_ratelimit_variable_should_fallback_to_repositories_gateway_if_its_missing(){
+        Mockito.when(environment.getProperty("repositories.ratelimit.url")).thenReturn(null);
+        Mockito.when(environment.getProperty("repositories.gateway.url")).thenReturn("value");
+        String value = repositoriesEnvironment.getProperty("repositories.ratelimit.url");
+        Assertions.assertEquals("value", value);
+    }
+
+    @Test
+    public void repositories_ratelimit_variable_should_chain_to_oauth2_if_gateway_is_missing(){
+        Mockito.when(environment.getProperty("repositories.ratelimit.url")).thenReturn(null);
+        Mockito.when(environment.getProperty("repositories.gateway.url")).thenReturn(null);
+        Mockito.when(environment.getProperty("oauth2.url")).thenReturn("value");
+        String value = repositoriesEnvironment.getProperty("repositories.ratelimit.url");
+        Assertions.assertEquals("value", value);
+    }
 }
