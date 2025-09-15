@@ -28,6 +28,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toMap;
@@ -144,69 +146,51 @@ public class UriBuilderRequest {
      * Resolves host and port with proper precedence: X-Forwarded headers take precedence over Host header
      */
     private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
-        String forwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
-        String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
-        
-        // Check legacy mode once for both X-Forwarded-Host and Host header scenarios
-        boolean isLegacyMode = StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts();
-        
-        if (forwardedHost != null && !forwardedHost.isEmpty()) {
-            // X-Forwarded-Host takes precedence - apply legacy mode if enabled
-            setHostAndPort(builder, forwardedHost, forwardedPort, scheme, isLegacyMode);
-        } else {
-            // Fall back to request.host() - apply legacy mode if enabled
-            String requestHost = request.host();
-            setHostAndPort(builder, requestHost, forwardedPort, scheme, isLegacyMode);
-        }
+        String host = Optional.ofNullable(request.getHeader(HttpHeaders.X_FORWARDED_HOST))
+                .filter(Predicate.not(String::isEmpty))
+                .orElse(request.host());
+        String port = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
+        setHostAndPort(builder, host, port, scheme);
     }
 
     /**
      * Sets host and port on the builder, handling port precedence and default port omission
      */
-    private static void setHostAndPort(UriBuilder builder, String host, String forwardedPort, String scheme, boolean isLegacyMode) {
+    private static void setHostAndPort(UriBuilder builder, String host, String forwardedPort, String scheme) {
         if (host == null || host.isEmpty()) {
             return;
         }
 
-        if (host.contains(":")) {
-            // Host contains both hostname and port
-            String[] parts = host.split(":");
-            builder.host(parts[0]);
-            
-            if (forwardedPort != null) {
-                // X-Forwarded-Port takes precedence - always use new behavior (omit default ports)
-                setPortIfNotDefault(builder, forwardedPort, scheme, false);
-            } else {
-                // Use port from host - apply legacy mode
-                setPortIfNotDefault(builder, parts[1], scheme, isLegacyMode);
-            }
-        } else {
-            // Host without port
-            builder.host(host);
-            if (forwardedPort != null) {
-                // X-Forwarded-Port - always use new behavior (omit default ports)
-                setPortIfNotDefault(builder, forwardedPort, scheme, false);
-            }
+        // Extract hostname and port from host string
+        String hostname = host.contains(":") ? host.split(":")[0] : host;
+        String hostPort = host.contains(":") ? host.split(":")[1] : null;
+        
+        builder.host(hostname);
+        
+        // Determine which port to use and its legacy mode setting
+        String portToUse = forwardedPort != null ? forwardedPort : hostPort;
+        boolean useLegacyMode = forwardedPort == null ? StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts() : false;
+        
+        if (portToUse != null) {
+            setPortIfNotDefault(builder, portToUse, scheme, useLegacyMode);
         }
     }
 
     /**
-     * Sets port on builder only if it's not a default port for the given scheme (unless in legacy mode)
+     * Sets port on builder only if it should be set based on legacy mode and default port rules
      */
     private static void setPortIfNotDefault(UriBuilder builder, String port, String scheme, boolean isLegacyMode) {
         if (port == null || port.isEmpty()) {
             return;
         }
-
-        if (!isLegacyMode && isDefaultPort(port, scheme)) {
-            // Don't set port for default ports in new behavior
-            return;
-        }
-
-        try {
-            builder.port(Integer.parseInt(port));
-        } catch (NumberFormatException ex) {
-            LOGGER.warn("Invalid port value: {}", port);
+        
+        // In legacy mode, always set the port; otherwise, omit default ports
+        if (isLegacyMode || !isDefaultPort(port, scheme)) {
+            try {
+                builder.port(Integer.parseInt(port));
+            } catch (NumberFormatException ex) {
+                LOGGER.warn("Invalid port value: {}", port);
+            }
         }
     }
 
