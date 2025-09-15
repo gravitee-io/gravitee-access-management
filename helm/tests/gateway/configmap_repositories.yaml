@@ -65,6 +65,20 @@ tests:
                   maxLifeTime: -1
                   maxSize: 50
                   port: 3306
+              ratelimit:
+                type: jdbc
+                jdbc:
+                  acquireRetry: 1
+                  database: graviteeam
+                  driver: mysql
+                  host: localhost
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
+                  port: 3306
 
   - it: Test jdbc schema property
     template: gateway/gateway-configmap.yaml
@@ -120,6 +134,21 @@ tests:
                   port: 3306
                   schema: haha
               gateway:
+                type: jdbc
+                jdbc:
+                  acquireRetry: 1
+                  database: graviteeam
+                  driver: mysql
+                  host: localhost
+                  initialSize: 1
+                  maxAcquireTime: 3000
+                  maxCreateConnectionTime: 5000
+                  maxIdleTime: 30000
+                  maxLifeTime: -1
+                  maxSize: 50
+                  port: 3306
+                  schema: haha
+              ratelimit:
                 type: jdbc
                 jdbc:
                   acquireRetry: 1

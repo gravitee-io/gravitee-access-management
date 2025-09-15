@@ -29,5 +29,33 @@ repositories:
     type: jdbc
 {{- $defaultJdbc | toYaml | nindent 4 }}
 {{- end }}
+  ratelimit:
+{{- if or (not .Values.repositories) (not .Values.repositories.ratelimit) (not .Values.repositories.ratelimit.type) -}}
+{{- /* If repositories section is missing we initialize the ratelimit bloc using the legacy management block */ -}}
+{{- if or (eq .Values.management.type "mongodb") (kindIs "invalid" .Values.management.type) }}
+    type: mongodb
+{{- $defaultMongo | toYaml | nindent 4 }}
+{{- else if (eq .Values.management.type "jdbc") }}
+    type: jdbc
+{{- $defaultJdbc | toYaml | nindent 4 }}
+{{- end }}
+{{- else if or (not .Values.repositories.ratelimit) (not .Values.repositories.ratelimit.type) -}}
+{{- /* If repositories.ratelimit section is missing we initialize the ratelimit bloc using the repository.management block */ -}}
+{{- if or (eq .Values.repositories.management.type "mongodb") (kindIs "invalid" .Values.repositories.management.type) }}
+    type: mongodb
+{{- $defaultMongo | toYaml | nindent 4 }}
+{{- else if (eq .Values.management.type "jdbc") }}
+    type: jdbc
+{{- $defaultJdbc | toYaml | nindent 4 }}
+{{- end }}
+{{- /* else we are using the repositories.ratelimit bloc */ -}}
+{{- else if (eq .Values.repositories.ratelimit.type "mongodb") -}}
+    type: mongodb
+{{- $defaultMongo | toYaml | nindent 4 }}
+{{- else if (eq .Values.repositories.ratelimit.type "jdbc") -}}
+    type: jdbc
+{{- $defaultJdbc | toYaml | nindent 4 }}
+{{- end -}}
+
 {{- end }}
 {{- end }}
