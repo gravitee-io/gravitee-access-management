@@ -117,6 +117,64 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
                 .assertValue(shouldNotFail(rl -> assertEquals(rateLimit.getKey(), rl.getKey())));
     }
 
+    @Test
+    public void shouldResetCounterAndUpdateResetTimeWhenExpired() throws InterruptedException {
+        // Given an initial rate limit with a reset time that is already in the past
+        final RateLimit expiredRateLimit = of("rl-expired", 5, -1000, 10_000, "rl-expired-subscription");
+
+        // Insert into repository with expired reset time
+        RATE_LIMITS.put(expiredRateLimit.getKey(), expiredRateLimit);
+        rateLimitRepository.incrementAndGet(expiredRateLimit.getKey(), 1L, () -> initialize(expiredRateLimit)).blockingGet();
+
+        // When we increment again, since reset_time < now, the repo should reset the counter and push reset_time forward
+        final TestObserver<RateLimit> observer = incrementAndObserve(expiredRateLimit, 2L);
+
+        //observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+        observer.assertValue(shouldNotFail(rl -> {
+            // Counter should be reset to "weight", not old value + weight
+            assertEquals(2L, rl.getCounter());
+
+            // Reset time should now be in the future
+            long now = Instant.now().toEpochMilli();
+            assert(rl.getResetTime() > now) : "Expected reset time in the future, got " + rl.getResetTime();
+
+            // Limit and subscription should remain the same
+            assertEquals(expiredRateLimit.getLimit(), rl.getLimit());
+            assertEquals(expiredRateLimit.getSubscription(), rl.getSubscription());
+            assertEquals(expiredRateLimit.getKey(), rl.getKey());
+        }));
+    }
+
+    @Test
+    public void shouldIncrementWithoutResetWhenNotExpired() throws InterruptedException {
+        // Given an initial rate limit with a reset time far in the future
+        final RateLimit validRateLimit = of("rl-valid", 5, 10_000, 10_000, "rl-valid-subscription");
+
+        // Insert into repository with valid (non-expired) reset time
+        RATE_LIMITS.put(validRateLimit.getKey(), validRateLimit);
+        rateLimitRepository.incrementAndGet(validRateLimit.getKey(), 1L, () -> initialize(validRateLimit)).blockingGet();
+
+        // When we increment again, since reset_time > now, the repo should just increment counter
+        final TestObserver<RateLimit> observer = incrementAndObserve(validRateLimit, 3L);
+
+        //observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+        observer.assertValue(shouldNotFail(rl -> {
+            // Counter should be incremented, not reset
+            assertEquals(8L, rl.getCounter());
+
+            // Reset time should remain the same
+            assertEquals(validRateLimit.getResetTime(), rl.getResetTime());
+
+            // Limit and subscription should remain unchanged
+            assertEquals(validRateLimit.getLimit(), rl.getLimit());
+            assertEquals(validRateLimit.getSubscription(), rl.getSubscription());
+            assertEquals(validRateLimit.getKey(), rl.getKey());
+        }));
+    }
+
+
     private TestObserver<RateLimit> incrementAndObserve(RateLimit rateLimit, long weight) {
         return rateLimitRepository.incrementAndGet(rateLimit.getKey(), weight, () -> rateLimit).test();
     }

@@ -56,24 +56,50 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
 
     @Override
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
-        return findNotExpiredById(key, weight)
+        return findNotExpiredById(key, weight, supplier)
                 .doOnSuccess(rl -> log.debug("Incrementing rate limit entry for key {} with weight {}", rl.getKey(), weight))
                 .switchIfEmpty(createNew(supplier, weight)
                         .doOnSuccess(rl -> log.debug("Creating new rate limit entry for key {} with weight {}", rl.getKey(), weight))
                 );
     }
 
-    private Maybe<RateLimit> findNotExpiredById(String key, long weight){
-        return Maybe.fromPublisher(
-                        rateLimitCollection.findOneAndUpdate(
-                                eq("_id", key),
-                                new Document("$inc", new Document("counter", weight)),
-                                new FindOneAndUpdateOptions().returnDocument(AFTER)
-                        )
-                )
-                .map(this::toEntity)
-                .filter(RateLimit::hasNotExpired);
-    }
+private Maybe<RateLimit> findNotExpiredById(String key, long weight, Supplier<RateLimit> sup) {
+    return Maybe.fromPublisher(
+            rateLimitCollection.findOneAndUpdate(
+                    eq("_id", key),
+                    new Document("$inc", new Document("counter", weight)),
+                    new FindOneAndUpdateOptions().returnDocument(AFTER)
+            )
+    )
+    .map(this::toEntity)
+    .flatMap(rateLimit -> {
+        if (rateLimit.hasNotExpired()) {
+            // still valid → return as-is
+            return Maybe.just(rateLimit);
+        } else {
+            // expired → reset fields like in MongoRateLimitRepository
+            RateLimit newRateLimit = new RateLimit(rateLimit.getKey());
+            newRateLimit.setCounter(weight);
+            newRateLimit.setResetTime(sup.get().getResetTime());
+            newRateLimit.setLimit(rateLimit.getLimit());
+            newRateLimit.setSubscription(rateLimit.getSubscription());
+
+            RateLimitMongo newRateLimitMongo = toMongoEntity(newRateLimit);
+
+            return Maybe.fromPublisher(
+                    rateLimitCollection.findOneAndUpdate(
+                            eq("_id", key),
+                            new Document("$set", new Document("counter", newRateLimit.getCounter())
+                                .append("resetTime", newRateLimit.getResetTime())
+                                .append("limit", newRateLimit.getLimit())
+                                .append("subscription", newRateLimit.getSubscription())),
+                            new FindOneAndUpdateOptions().returnDocument(AFTER)
+                    )
+            ).map(this::toEntity);
+        }
+    });
+}
+
 
     private Single<RateLimit> createNew(Supplier<RateLimit> supplier, long weight) {
         return Single.fromSupplier(supplier::get)
