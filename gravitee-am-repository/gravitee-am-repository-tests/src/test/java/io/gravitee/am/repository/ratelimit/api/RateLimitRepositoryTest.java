@@ -122,20 +122,20 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
         // Given an initial rate limit with a reset time that is already in the past
         final RateLimit expiredRateLimit = of("rl-expired", 5, -1000, 10_000, "rl-expired-subscription");
 
-        // Insert into repository with expired reset time
+        // Insert into repository with expired reset time - use the expired rate limit directly as supplier
         RATE_LIMITS.put(expiredRateLimit.getKey(), expiredRateLimit);
-        rateLimitRepository.incrementAndGet(expiredRateLimit.getKey(), 1L, () -> initialize(expiredRateLimit)).blockingGet();
+        rateLimitRepository.incrementAndGet(expiredRateLimit.getKey(), 1L, () -> expiredRateLimit).blockingGet();
 
-        // When we increment again, since reset_time < now, the repo should reset the counter and push reset_time forward
+        // When we increment again, since the stored rate limit has expired, the repo should reset the counter and push reset_time forward
         final TestObserver<RateLimit> observer = incrementAndObserve(expiredRateLimit, 2L);
 
-        //observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         observer.assertValue(shouldNotFail(rl -> {
             // Counter should be reset to "weight", not old value + weight
             assertEquals(2L, rl.getCounter());
 
-            // Reset time should now be in the future
+            // Reset time should now be in the future (from the supplier)
             long now = Instant.now().toEpochMilli();
             assert(rl.getResetTime() > now) : "Expected reset time in the future, got " + rl.getResetTime();
 
@@ -153,16 +153,17 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
 
         // Insert into repository with valid (non-expired) reset time
         RATE_LIMITS.put(validRateLimit.getKey(), validRateLimit);
-        rateLimitRepository.incrementAndGet(validRateLimit.getKey(), 1L, () -> initialize(validRateLimit)).blockingGet();
+        rateLimitRepository.incrementAndGet(validRateLimit.getKey(), 1L, () -> validRateLimit).blockingGet();
 
         // When we increment again, since reset_time > now, the repo should just increment counter
         final TestObserver<RateLimit> observer = incrementAndObserve(validRateLimit, 3L);
 
-        //observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         observer.assertValue(shouldNotFail(rl -> {
             // Counter should be incremented, not reset
-            assertEquals(8L, rl.getCounter());
+            // First call: counter = 1 (weight), Second call: counter = 1 + 3 = 4
+            assertEquals(4L, rl.getCounter());
 
             // Reset time should remain the same
             assertEquals(validRateLimit.getResetTime(), rl.getResetTime());
@@ -176,7 +177,7 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
 
 
     private TestObserver<RateLimit> incrementAndObserve(RateLimit rateLimit, long weight) {
-        return rateLimitRepository.incrementAndGet(rateLimit.getKey(), weight, () -> rateLimit).test();
+        return rateLimitRepository.incrementAndGet(rateLimit.getKey(), weight, () -> initialize(rateLimit)).test();
     }
 
     /*
@@ -217,6 +218,12 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
      */
     private static RateLimit initialize(RateLimit rateLimit) {
         final long counter = 0;
-        return of(rateLimit.getKey(), counter, rateLimit.getResetTime(), rateLimit.getLimit(), rateLimit.getSubscription());
+        // If the rate limit is expired, create a new one with current time + some duration
+        if (!rateLimit.hasNotExpired()) {
+            return of(rateLimit.getKey(), counter, 10000, rateLimit.getLimit(), rateLimit.getSubscription());
+        }
+        // Calculate the duration from now to the reset time
+        long durationFromNow = rateLimit.getResetTime() - System.currentTimeMillis();
+        return of(rateLimit.getKey(), counter, durationFromNow, rateLimit.getLimit(), rateLimit.getSubscription());
     }
 }
