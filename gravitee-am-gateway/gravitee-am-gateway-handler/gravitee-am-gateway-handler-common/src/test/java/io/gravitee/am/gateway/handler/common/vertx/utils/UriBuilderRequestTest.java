@@ -51,6 +51,18 @@ public class UriBuilderRequestTest {
         StaticEnvironmentProvider.setEnvironment(originalEnvironment);
     }
 
+    /**
+     * Helper method to set up a mock environment with specific properties
+     */
+    private void setupMockEnvironment(boolean includeDefaultPorts, boolean sanitizeParameters) {
+        Environment mockEnv = mock(Environment.class);
+        when(mockEnv.getProperty(StaticEnvironmentProvider.GATEWAY_ENDPOINT_INCLUDE_DEFAULT_HOST_PORTS, boolean.class, false))
+                .thenReturn(includeDefaultPorts);
+        when(mockEnv.getProperty(StaticEnvironmentProvider.GATEWAY_ENDPOINT_SANITIZE_PARAMETERS_ENCODING, boolean.class, true))
+                .thenReturn(sanitizeParameters);
+        StaticEnvironmentProvider.setEnvironment(mockEnv);
+    }
+
     @Test
     public void shouldHandle_XForward_Headers() {
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
@@ -86,6 +98,86 @@ public class UriBuilderRequestTest {
         assertEquals("http://myhost:443/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
 
+    @Test
+    public void shouldHandle_XForward_HostHeadersHasDefaultHttpPort_NoXForwardPort() {
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:80");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
+
+        assertEquals("http://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+        // default https port with http scheme should keep the forwarded port
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:443");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
+        assertEquals("http://myhost:443/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+    }
+
+    @Test
+    public void shouldHandle_XForward_HostHeadersHasDefaultHttpsPort_NoXForwardPort() {
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:443");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
+
+        assertEquals("https://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+        // default http port with https scheme should keep the forwarded port
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:80");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
+        assertEquals("https://myhost:80/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+    }
+
+    @Test
+    public void shouldHandle_XForward_HostHeadersHasDefaultPorts_WithLegacyMode() {
+        // Set up legacy mode to include default ports
+        setupMockEnvironment(true, true);
+
+        // Test default HTTP port with legacy mode
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:80");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
+        assertEquals("http://myhost:80/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+        // Test default HTTPS port with legacy mode
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:443");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn(null);
+        assertEquals("https://myhost:443/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+    }
+
+    @Test
+    public void shouldHandle_XForward_HostHeadersHasPort_XForwardPortTakesPrecedence() {
+        // X-Forwarded-Host has port, but X-Forwarded-Port should take precedence
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:443");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("8080");
+
+        assertEquals("https://myhost:8080/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+        // Test with default port in X-Forwarded-Host but non-default in X-Forwarded-Port
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:80");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("9090");
+        assertEquals("http://myhost:9090/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+    }
+
+    @Test
+    public void shouldHandle_XForward_HostHeadersHasPort_XForwardPortIsDefault() {
+        // X-Forwarded-Host has non-default port, but X-Forwarded-Port is default (should be stripped)
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:8080");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
+
+        assertEquals("https://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+
+        // Test with HTTP
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:9090");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
+        assertEquals("http://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+    }
 
     @Test
     public void shouldHandle_XForward_Headers_DefaultHttpsPort() {
@@ -233,23 +325,16 @@ public class UriBuilderRequestTest {
 
     @Test
     public void shouldHandle_LegacyMode_IncludeDefaultPorts() {
-        // Test legacy mode where default ports should be included in URLs
-        // This simulates the legacy.openid.include_default_ports property being true
-        // IMPORTANT: Legacy mode only applies to Host header, NOT X-Forwarded headers
+        // Test legacy mode where default ports should be included in URLs        
+        setupMockEnvironment(true, false);
         
-        // Set up StaticEnvironmentProvider to enable legacy mode
-        Environment legacyEnvironment = mock(Environment.class);
-        when(legacyEnvironment.getProperty(StaticEnvironmentProvider.GATEWAY_ENDPOINT_INCLUDE_DEFAULT_HOST_PORTS, boolean.class, false)).thenReturn(true);
-        when(legacyEnvironment.getProperty(StaticEnvironmentProvider.GATEWAY_ENDPOINT_SANITIZE_PARAMETERS_ENCODING, boolean.class, true)).thenReturn(true);
-        StaticEnvironmentProvider.setEnvironment(legacyEnvironment);
-        
-        // Test X-Forwarded-Host with default HTTPS port (443) - should NOT be affected by legacy mode
+        // Test X-Forwarded-Host with default HTTPS port (443) - SHOULD be affected by legacy mode
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("am.gateway.master.gravitee.dev:443");
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
-        // X-Forwarded headers should always use new behavior (omit default ports) regardless of legacy mode
-        assertEquals("https://am.gateway.master.gravitee.dev/my/path?param1=value1", generatedUri);
+        // X-Forwarded headers should include default ports when legacy mode is enabled
+        assertEquals("https://am.gateway.master.gravitee.dev:443/my/path?param1=value1", generatedUri);
 
         // Test X-Forwarded-Port with default HTTPS port (443) - should NOT be affected by legacy mode
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");

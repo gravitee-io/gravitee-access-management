@@ -147,13 +147,15 @@ public class UriBuilderRequest {
         String forwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
         String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
         
+        // Check legacy mode once for both X-Forwarded-Host and Host header scenarios
+        boolean isLegacyMode = StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts();
+        
         if (forwardedHost != null && !forwardedHost.isEmpty()) {
-            // X-Forwarded-Host takes precedence - always use new behavior (no legacy mode)
-            setHostAndPort(builder, forwardedHost, forwardedPort, scheme, false);
+            // X-Forwarded-Host takes precedence - apply legacy mode if enabled
+            setHostAndPort(builder, forwardedHost, forwardedPort, scheme, isLegacyMode);
         } else {
             // Fall back to request.host() - apply legacy mode if enabled
             String requestHost = request.host();
-            boolean isLegacyMode = StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts();
             setHostAndPort(builder, requestHost, forwardedPort, scheme, isLegacyMode);
         }
     }
@@ -171,13 +173,20 @@ public class UriBuilderRequest {
             String[] parts = host.split(":");
             builder.host(parts[0]);
             
-            // X-Forwarded-Port takes precedence over port in host
-            String effectivePort = (forwardedPort != null) ? forwardedPort : parts[1];
-            setPortIfNotDefault(builder, effectivePort, scheme, isLegacyMode);
+            if (forwardedPort != null) {
+                // X-Forwarded-Port takes precedence - always use new behavior (omit default ports)
+                setPortIfNotDefault(builder, forwardedPort, scheme, false);
+            } else {
+                // Use port from host - apply legacy mode
+                setPortIfNotDefault(builder, parts[1], scheme, isLegacyMode);
+            }
         } else {
             // Host without port
             builder.host(host);
-            setPortIfNotDefault(builder, forwardedPort, scheme, isLegacyMode);
+            if (forwardedPort != null) {
+                // X-Forwarded-Port - always use new behavior (omit default ports)
+                setPortIfNotDefault(builder, forwardedPort, scheme, false);
+            }
         }
     }
 
