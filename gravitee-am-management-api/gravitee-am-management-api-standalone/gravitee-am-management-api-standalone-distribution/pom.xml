@@ -22,7 +22,7 @@
     <parent>
         <groupId>io.gravitee.am.management.standalone</groupId>
         <artifactId>gravitee-am-management-api-standalone</artifactId>
-        <version>4.9.0-SNAPSHOT</version>
+        <version>4.10.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -695,6 +695,14 @@
                                     <groupId>io.gravitee.am.policy</groupId>
                                     <artifactId>gravitee-am-policy-send-email</artifactId>
                                     <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Shared Policies -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.policy</groupId>
+                                    <artifactId>gravitee-policy-ratelimit</artifactId>
+                                    <version>${gravitee-policy-ratelimit.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 

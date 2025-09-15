@@ -30,6 +30,7 @@ import java.net.URI;
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
+import static io.gravitee.am.repository.Scope.RATE_LIMIT;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -46,19 +47,31 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private ClientWrapper<MongoClient> commonMongoClient;
     private ClientWrapper<MongoClient> oauthMongoClient;
     private ClientWrapper<MongoClient> gatewayMongoClient;
+    private ClientWrapper<MongoClient> ratelimitMongoClient;
 
     private boolean notUseMngSettingsForOauth2;
     private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
 
+    private boolean notUseMngSettingsForRateLimit;
+    private boolean notUseGwSettingsForRateLimit;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         final var useMngSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
         final var useGwSettingsForOauth2 = environment.getProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", Boolean.class, false);
-        final var useMngSettingsForGateway = environment.getProperty(Scope.GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+
+        final var useMngSettingsForRateLimit = environment.getProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
+        final var useGwSettingsForRateLimit = environment.getProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-gateway-settings", Boolean.class, false);
+
+        final var useMngSettingsForGateway = environment.getProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
         notUseGwSettingsForOauth2 = !useGwSettingsForOauth2;
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
         notUseMngSettingsForGateway = !useMngSettingsForGateway;
+
+        notUseGwSettingsForRateLimit = !useGwSettingsForRateLimit;
+        notUseMngSettingsForRateLimit = !useMngSettingsForRateLimit;
+
         // create the common client just after the bean Initialization to guaranty the uniqueness
         commonMongoClient =
                 new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getRepositoryPropertyKey()).getObject(), getDatabaseName(MANAGEMENT));
@@ -67,6 +80,9 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         }
         if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
             oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject(), getDatabaseName(OAUTH2));
+        }
+        if (notUseMngSettingsForRateLimit && notUseGwSettingsForRateLimit) {
+            ratelimitMongoClient = new MongoClientWrapper(new MongoFactory(environment, RATE_LIMIT.getRepositoryPropertyKey()).getObject(), getDatabaseName(Scope.RATE_LIMIT));
         }
     }
 
@@ -81,6 +97,8 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
             return notUseGwSettingsForOauth2 ? oauthMongoClient : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
             return gatewayMongoClient;
+        } else if (RATE_LIMIT.getName().equals(name) && notUseMngSettingsForRateLimit) {
+            return ratelimitMongoClient;
         } else {
             return commonMongoClient;
         }
@@ -131,6 +149,9 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         }
         if (gatewayMongoClient != null) {
             ((MongoClientWrapper) gatewayMongoClient).shutdown();
+        }
+        if (ratelimitMongoClient != null) {
+            ((MongoClientWrapper) ratelimitMongoClient).shutdown();
         }
         return this;
     }

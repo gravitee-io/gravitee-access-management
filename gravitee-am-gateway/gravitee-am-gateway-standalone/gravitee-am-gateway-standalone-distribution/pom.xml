@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-gateway-standalone</artifactId>
         <groupId>io.gravitee.am.gateway.standalone</groupId>
-        <version>4.9.0-SNAPSHOT</version>
+        <version>4.10.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-gateway-standalone-distribution</artifactId>
@@ -648,13 +648,6 @@
                                     <type>zip</type>
                                 </artifactItem>
 
-                                <artifactItem>
-                                    <groupId>io.gravitee.am.gateway</groupId>
-                                    <artifactId>gravitee-am-gateway-services-purge</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>zip</type>
-                                </artifactItem>
-
                                 <!-- Reporters -->
                                 <artifactItem>
                                     <groupId>io.gravitee.am.reporter</groupId>
@@ -767,6 +760,20 @@
                                     <groupId>io.gravitee.am.policy</groupId>
                                     <artifactId>gravitee-am-policy-send-email</artifactId>
                                     <version>${project.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+
+                                <!-- Shared Policies -->
+                                <artifactItem>
+                                    <groupId>io.gravitee.policy</groupId>
+                                    <artifactId>gravitee-policy-ratelimit</artifactId>
+                                    <version>${gravitee-policy-ratelimit.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>io.gravitee.policy</groupId>
+                                    <artifactId>gravitee-gateway-services-ratelimit</artifactId>
+                                    <version>${gravitee-gateway-services-ratelimit.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
 

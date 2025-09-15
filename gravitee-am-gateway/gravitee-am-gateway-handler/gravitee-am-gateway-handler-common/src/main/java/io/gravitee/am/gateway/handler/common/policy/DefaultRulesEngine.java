@@ -29,9 +29,12 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.plugins.policy.core.PolicyPluginManager;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.gravitee.gateway.api.Request;
+import io.gravitee.gateway.api.Response;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -77,11 +80,17 @@ public class DefaultRulesEngine implements RulesEngine {
     }
 
     @Override
-    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint,
-                                         Request request,
-                                         Client client,
-                                         User user) {
-        return prepareContext(request, client, user)
+    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Client client, User user) {
+        return executeFire(extensionPoint, request, null, client, user);
+    }
+
+    @Override
+    public Single<ExecutionContext> fire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user) {
+        return executeFire(extensionPoint, request, response, client, user);
+    }
+
+    private Single<ExecutionContext> executeFire(ExtensionPoint extensionPoint, Request request, Response response, Client client, User user){
+        return prepareContext(request, response, client, user)
                 .flatMap(executionContext -> {
                     return flowManager.findByExtensionPoint(extensionPoint, client, ExecutionPredicate.from(executionContext))
                             .flatMap(policies -> {
@@ -94,11 +103,14 @@ public class DefaultRulesEngine implements RulesEngine {
                 });
     }
 
-    private Single<ExecutionContext> prepareContext(Request request,
-                                                    Client client,
-                                                    User user) {
+    private Single<ExecutionContext> prepareContext(Request request, Response response, Client client, User user) {
+        if (response == null) {
+            response = new NoOpResponse();
+        }
+        final Response serverResponse = response;
+
         return Single.fromCallable(() -> {
-            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, new NoOpResponse());
+            ExecutionContext simpleExecutionContext = new SimpleExecutionContext(request, serverResponse);
             ExecutionContext executionContext = executionContextFactory.create(simpleExecutionContext);
             // add current context attributes
             executionContext.getAttributes().put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
@@ -107,7 +119,7 @@ public class DefaultRulesEngine implements RulesEngine {
                 executionContext.getAttributes().put(ConstantKeys.USER_CONTEXT_KEY, user);
             }
             return executionContext;
-        });
+        }).observeOn(Schedulers.computation());
     }
 
     private Single<ExecutionContext> rxExecutePolicyChain(List<Policy> policies, ExecutionContext executionContext) {

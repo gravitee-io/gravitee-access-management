@@ -21,7 +21,7 @@
       "x-schema-form": {
         "type": "select",
         "titleMap": {
-          "GIVEN_KEY": "GIVEN_KEY: You must provide a signature key (PEM format or HMAC secret key)",
+          "GIVEN_KEY": "GIVEN_KEY: You must provide a signature key (PEM format or SSH key format [ssh-rsa, ecdsa, ssh-dsa])",
           "JWKS_URL": "JWKS_URL: Retrieve JWKS from URL (Basically, URL ending with '/.well-known/jwks.json')"
         }
       }

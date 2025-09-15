@@ -36,7 +36,7 @@ public class PropertySourceFallbackConfigurer implements BeanFactoryPostProcesso
 
     @Override
     public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        registerSource(gatewayTypePropertyFallback());
+        registerSource(repositoryTypePropertyFallback());
     }
 
     private void registerSource(PropertySource<?> source) {
@@ -49,15 +49,18 @@ public class PropertySourceFallbackConfigurer implements BeanFactoryPostProcesso
         return Ordered.LOWEST_PRECEDENCE;
     }
 
-    // The purpose of adding this processor is to ensure compatibility between the Gateway and older versions of gravitee.yml.
-    // If repositories.gateway.type is not specified, then ${management.type} will be used as a fallback.
+    // Provides fallback configuration values to maintain compatibility.
+    // Examples:
+    // - If 'gateway.type' is not defined, '${management.type}' is used as a fallback.
+    // - If 'ratelimit.type' is not defined, '${repositories.gateway.type}' is used;
+    //   if that is also undefined, '${management.type}' is used instead.
 
-    private PropertySource<?> gatewayTypePropertyFallback(){
+    private PropertySource<?> repositoryTypePropertyFallback(){
+        final Map<String, Object> fallbacks = Map.of("gateway.type", "${management.type}", "ratelimit.type","${repositories.gateway.type:${management.type}}");
         return new GraviteeYamlPropertySource(
-                "gatewayTypeFallbackPropertySource",
-                Map.of("gateway.type", "${management.type}"),
+                "repositoryTypePropertyFallback",
+                fallbacks,
                 this.applicationContext);
     }
-
 
 }

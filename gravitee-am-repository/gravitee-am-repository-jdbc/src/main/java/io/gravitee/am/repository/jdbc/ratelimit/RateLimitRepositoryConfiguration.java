@@ -30,11 +30,14 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.r2dbc.dialect.R2dbcDialect;
+import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
 
 import java.util.Optional;
 
 @Configuration
-@ComponentScan(basePackages = {"io.gravitee.am.repository.jdbc.ratelimit"})
+@ComponentScan({
+        "io.gravitee.am.repository.jdbc.ratelimit"})
+@EnableR2dbcRepositories
 public class RateLimitRepositoryConfiguration extends AbstractRepositoryConfiguration {
 
     public static final String LIQUIBASE_FILE = "liquibase/ratelimit-master.yml";
