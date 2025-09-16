@@ -95,6 +95,77 @@
           </mat-form-field>
         </div>
       </div>
+      <div *ngIf="application.type === 'MCP' && application.settings?.mcp" class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>MCP Settings</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>MCP URL</mat-label>
+            <input
+              matInput
+              type="url"
+              placeholder="https://api.example.com/mcp"
+              name="mcpUrl"
+              [(ngModel)]="application.settings.mcp.url"
+              required
+            />
+            <mat-hint>The URL endpoint for the MCP (Model Context Protocol) service.</mat-hint>
+          </mat-form-field>
+        </div>
+        <div>
+          <h6>Tool Definitions</h6>
+          <p class="mat-caption">Define the tools available in your MCP application with their required scopes.</p>
+          <div *ngFor="let tool of application.settings.mcp.toolDefinitions; let i = index; trackBy: trackByIndex" class="tool-definition-item" style="margin-bottom: 16px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 4px;">
+            <div fxLayout="row" fxLayoutAlign="space-between center" style="margin-bottom: 8px;">
+              <h6 style="margin: 0;">Tool {{ i + 1 }}</h6>
+              <button mat-icon-button color="warn" (click)="removeTool(i)" type="button">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            <div fxLayout="row" fxLayoutGap="16px">
+                <mat-form-field appearance="outline" floatLabel="always" fxFlex="30">
+                  <mat-label>Tool Name</mat-label>
+                  <input
+                    matInput
+                    type="text"
+                    placeholder="e.g., filesystem"
+                    [(ngModel)]="tool.name"
+                    name="toolName{{i}}"
+                    required
+                  />
+                </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="30">
+                <mat-label>Description</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  placeholder="Tool description"
+                  [(ngModel)]="tool.description"
+                  name="toolDescription{{i}}"
+                />
+              </mat-form-field>
+              <mat-form-field appearance="outline" floatLabel="always" fxFlex="50">
+                <mat-label>Required Scopes</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  placeholder="e.g., filesystem:read, filesystem:write"
+                  [(ngModel)]="tool.requiredScopesText"
+                  name="toolScopes{{i}}"
+                  (ngModelChange)="updateRequiredScopes(tool, $event)"
+                />
+              </mat-form-field>
+
+            </div>
+          </div>
+          <button mat-stroked-button type="button" (click)="addTool()" style="margin-top: 8px;">
+            <mat-icon>add</mat-icon>
+            Add Tool Definition
+          </button>
+        </div>
+      </div>
     </form>
   </div>
 </div>

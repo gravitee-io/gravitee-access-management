@@ -1,0 +1,107 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column" class="gv-page-container">
+
+  <div>hello</div>
+  <!-- MCP Tools Section -->
+  <div *ngIf="isMCPApplication()" class="gv-form-section" style="margin-top: 24px;">
+    <div class="gv-form-section-title">
+      <h2>MCP Tools</h2>
+      <span>Available tools in your Model Context Protocol application.</span>
+    </div>
+
+    <!-- MCP URL -->
+    <div style="margin-bottom: 24px;">
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>MCP Service URL</mat-label>
+        <input matInput type="text" name="mcpServiceUrl" [value]="getMCPUrl()" readonly />
+        <mat-hint>The URL endpoint for the MCP (Model Context Protocol) service</mat-hint>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="getMCPUrl()"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <!-- Tools Grid -->
+    <div *ngIf="getMCPTools().length > 0; else noTools" class="tools-grid">
+      <mat-card *ngFor="let tool of getMCPTools(); let i = index" class="tool-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon class="tool-icon">build</mat-icon>
+            {{ tool.name || 'Unnamed Tool' }}
+          </mat-card-title>
+          <mat-card-subtitle>Tool {{ i + 1 }}</mat-card-subtitle>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div *ngIf="tool.description" class="tool-description">
+            <strong>Description:</strong>
+            <p>{{ tool.description }}</p>
+          </div>
+
+          <div *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0" class="tool-scopes">
+            <strong>Required Scopes:</strong>
+            <div class="scopes-container">
+              <mat-chip-list>
+                <mat-chip *ngFor="let scope of tool.requiredScopes" class="scope-chip">
+                  {{ scope }}
+                </mat-chip>
+              </mat-chip-list>
+            </div>
+          </div>
+
+          <div *ngIf="tool.inputSchema" class="tool-schema">
+            <strong>Input Schema:</strong>
+            <pre class="schema-display">{{ tool.inputSchema | json }}</pre>
+          </div>
+        </mat-card-content>
+
+        <mat-card-actions>
+          <button mat-button color="primary" (click)="copyToClipboard(tool.name, 'Tool name copied')">
+            <mat-icon>content_copy</mat-icon>
+            Copy Name
+          </button>
+          <button *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0"
+                  mat-button
+                  color="accent"
+                  (click)="copyToClipboard(tool.requiredScopes.join(', '), 'Scopes copied')">
+            <mat-icon>content_copy</mat-icon>
+            Copy Scopes
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+
+    <ng-template #noTools>
+      <div class="no-tools-message">
+        <mat-icon class="no-tools-icon">build</mat-icon>
+        <h3>No tools defined</h3>
+        <p>This MCP application doesn't have any tools configured yet.</p>
+        <p>Edit the application to add tool definitions.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

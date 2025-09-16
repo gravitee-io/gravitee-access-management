@@ -15,27 +15,21 @@
  */
 package io.gravitee.am.repository.mongodb.management.internal.model;
 
-import io.gravitee.am.repository.mongodb.management.internal.model.risk.RiskAssessmentSettingsMongo;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 /**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Getter
 @Setter
-public class ApplicationSettingsMongo {
+public class MCPToolDefinitionMongo {
 
-    private ApplicationOAuthSettingsMongo oauth;
-    private ApplicationSAMLSettingsMongo saml;
-    private AccountSettingsMongo account;
-    private LoginSettingsMongo login;
-    private ApplicationAdvancedSettingsMongo advanced;
-    private PasswordSettingsMongo passwordSettings;
-    private MFASettingsMongo mfa;
-    private CookieSettingsMongo cookieSettings;
-    private RiskAssessmentSettingsMongo riskAssessment;
-    private SecretSettingsMongo secretExpirationSettings;
-    private ApplicationMCPSettingsMongo mcp;
+    private String name;
+    private String description;
+    private List<String> requiredScopes;
+    private String inputSchema;
 }
+

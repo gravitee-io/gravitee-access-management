@@ -62,6 +62,13 @@ export class ApplicationCreationStep1Component implements OnInit {
       description: 'Resource Server apps',
       subDescription: 'e.g : APIs',
     },
+    {
+      name: 'MCP Server',
+      icon: 'folder_shared',
+      type: 'MCP',
+      description: 'Model Context Protocol Server apps',
+      subDescription: 'e.g : Jira/Stripe/GitHub',
+    },
   ];
 
   constructor(private route: ActivatedRoute) {}

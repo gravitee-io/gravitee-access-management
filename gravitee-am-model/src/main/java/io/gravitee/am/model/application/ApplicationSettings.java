@@ -89,6 +89,11 @@ public class ApplicationSettings {
      */
     private SecretExpirationSettings secretExpirationSettings;
 
+    /**
+     * MCP (Model Context Protocol) settings
+     */
+    private ApplicationMCPSettings mcp;
+
 
     public ApplicationAdvancedSettings getAdvanced() {
         return advanced != null ? advanced : new ApplicationAdvancedSettings();
@@ -105,6 +110,7 @@ public class ApplicationSettings {
         this.cookieSettings = other.cookieSettings != null ? new CookieSettings(other.cookieSettings) : null;
         this.riskAssessment = other.riskAssessment != null ? getRiskAssessment(other.riskAssessment) : null;
         this.secretExpirationSettings = other.secretExpirationSettings != null ? new SecretExpirationSettings(other.secretExpirationSettings) : null;
+        this.mcp = other.mcp != null ? new ApplicationMCPSettings(other.mcp) : null;
     }
 
     public void copyTo(Client client) {

@@ -125,6 +125,7 @@ import { ApplicationCreationComponent } from './domain/applications/creation/app
 import { ApplicationComponent } from './domain/applications/application/application.component';
 import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
 import { ApplicationEndpointsComponent } from './domain/applications/application/endpoints/endpoints.component';
+import { ApplicationToolsComponent } from './domain/applications/application/tools/tools.component';
 import { ApplicationResolver } from './resolvers/application.resolver';
 import { ApplicationPermissionsResolver } from './resolvers/application-permissions.resolver';
 import { ApplicationIdPComponent } from './domain/applications/application/idp/idp.component';
@@ -968,6 +969,24 @@ export const routes: Routes = [
                                 label: 'Endpoints',
                                 section: 'Endpoints',
                                 level: 'level2',
+                              },
+                            },
+                            resolve: {
+                              entrypoint: DomainEntrypointResolver,
+                            },
+                          },
+
+                          {
+                            path: 'tools',
+                            component: ApplicationToolsComponent,
+                            data: {
+                              menu: {
+                                label: 'Tools',
+                                section: 'Tools',
+                                level: 'level2',
+                              },
+                              types: {
+                                only: ['MCP'],
                               },
                             },
                             resolve: {
