@@ -30,6 +30,15 @@ public class GraviteeContext {
     private final String domainId;
 
     public static GraviteeContext defaultContext(String domain) {
-     return new GraviteeContext("DEFAULT", "DEFAULT", domain);
+        return new GraviteeContext("DEFAULT", "DEFAULT", domain);
+    }
+
+    @Override
+    public String toString() {
+        return "GraviteeContext{" +
+                "orgId='" + organizationId + '\'' +
+                ", envId='" + environmentId + '\'' +
+                ", domainId='" + domainId + '\'' +
+                '}';
     }
 }
