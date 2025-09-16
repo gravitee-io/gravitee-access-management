@@ -17,6 +17,7 @@ package io.gravitee.am.service.reporter.impl;
 
 import io.gravitee.am.reporter.api.Reportable;
 import io.gravitee.am.service.reporter.AuditReporterService;
+import io.gravitee.am.service.reporter.vertx.EventBusReporterWrapper;
 import io.gravitee.node.reporter.vertx.eventbus.ReportableMessageCodec;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.rxjava3.core.AbstractVerticle;
@@ -38,19 +39,6 @@ public class AuditReporterVerticle extends AbstractVerticle implements AuditRepo
     public static final String EVENT_BUS_ADDRESS = "node:audits";
     private MessageProducer<Reportable> producer;
 
-    private static AtomicInteger activeReporter = new AtomicInteger(0);
-
-    public static void incrementActiveReporter() {
-        activeReporter.incrementAndGet();
-    }
-
-    public static void decrementActiveReporter() {
-        final int remaingReporters = activeReporter.decrementAndGet();
-        if (remaingReporters < 0) {
-            activeReporter.compareAndSet(remaingReporters, 0);
-        }
-    }
-
     @Override
     public void start() throws Exception {
         producer = vertx.eventBus()
@@ -58,6 +46,8 @@ public class AuditReporterVerticle extends AbstractVerticle implements AuditRepo
                         EVENT_BUS_ADDRESS,
                         new DeliveryOptions()
                                 .setCodecName(ReportableMessageCodec.CODEC_NAME));
+
+        vertx.eventBus().consumer(EVENT_BUS_ADDRESS, new ReportableHandlerLogger<>());
     }
 
     @Override
@@ -68,7 +58,7 @@ public class AuditReporterVerticle extends AbstractVerticle implements AuditRepo
     }
 
     public void report(Reportable reportable) {
-        if (producer != null && activeReporter.get() > 0) {
+        if (producer != null) {
             producer.write(reportable)
                     .doOnError(throwable -> LOGGER.error("Unexpected error while sending a reportable element", throwable))
                     .subscribe();
