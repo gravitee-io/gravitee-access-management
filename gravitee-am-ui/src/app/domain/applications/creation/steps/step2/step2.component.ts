@@ -16,6 +16,7 @@
 import { Component, Input, OnInit, OnChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { find } from 'lodash';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'application-creation-step2',
@@ -54,7 +55,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     }
   ];
 
-  constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef) {}
+  constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {}
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
@@ -137,5 +138,187 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
 
   trackByIndex(index: number, item: any): number {
     return index;
+  }
+
+  // File import functionality
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.processFile(file);
+    }
+  }
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Check if files are being dragged
+    if (event.dataTransfer?.types.includes('Files')) {
+      // Add visual feedback for drag over
+      const dropZone = event.currentTarget as HTMLElement;
+      dropZone.style.backgroundColor = '#e3f2fd';
+      dropZone.style.borderColor = '#1976d2';
+      dropZone.style.borderStyle = 'solid';
+    }
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Only remove visual feedback if we're actually leaving the drop zone
+    const dropZone = event.currentTarget as HTMLElement;
+    const rect = dropZone.getBoundingClientRect();
+    const x = event.clientX;
+    const y = event.clientY;
+    
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+      dropZone.style.backgroundColor = '#fafafa';
+      dropZone.style.borderColor = '#ccc';
+      dropZone.style.borderStyle = 'dashed';
+    }
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Remove visual feedback
+    const dropZone = event.currentTarget as HTMLElement;
+    dropZone.style.backgroundColor = '#fafafa';
+    dropZone.style.borderColor = '#ccc';
+    dropZone.style.borderStyle = 'dashed';
+    
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.processFile(files[0]);
+    }
+  }
+
+  onDropZoneClick(event: MouseEvent): void {
+    // Only trigger file input if clicking on the drop zone itself, not on buttons
+    const target = event.target as HTMLElement;
+    if (target.closest('button')) {
+      return; // Don't trigger file input if clicking on a button
+    }
+    
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
+  }
+
+  private processFile(file: File): void {
+    if (!file.name.toLowerCase().endsWith('.json')) {
+      this.snackBar.open('Please select a JSON file', 'Close', { duration: 3000 });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const jsonData = JSON.parse(content);
+        this.importToolsFromJson(jsonData);
+      } catch (error) {
+        this.snackBar.open('Invalid JSON file format', 'Close', { duration: 3000 });
+        console.error('Error parsing JSON:', error);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  private importToolsFromJson(jsonData: any): void {
+    try {
+      // Validate JSON structure
+      if (!jsonData.tools || !Array.isArray(jsonData.tools)) {
+        this.snackBar.open('Invalid JSON format: "tools" array not found', 'Close', { duration: 3000 });
+        return;
+      }
+
+      // Ensure MCP settings exist
+      this.initializeMCPSettings();
+
+      // Clear existing tools if user confirms
+      if (this.application.settings.mcp.toolDefinitions.length > 0) {
+        if (!confirm('This will replace all existing tool definitions. Continue?')) {
+          return;
+        }
+      }
+
+      // Convert imported tools to our format
+      const importedTools = jsonData.tools.map((tool: any) => {
+        // Extract required scopes from parameters if available
+        const requiredScopes = this.extractScopesFromTool(tool);
+        
+        return {
+          name: tool.name || '',
+          description: tool.description || '',
+          requiredScopes: requiredScopes,
+          requiredScopesText: requiredScopes.join(', '),
+          inputSchema: tool.parameters ? JSON.stringify(tool.parameters, null, 2) : '{\n  "type": "object",\n  "properties": {}\n}'
+        };
+      });
+
+      // Replace existing tools with imported ones
+      this.application.settings.mcp.toolDefinitions = importedTools;
+      
+      this.snackBar.open(`Successfully imported ${importedTools.length} tool(s)`, 'Close', { duration: 3000 });
+      this.cdr.detectChanges();
+    } catch (error) {
+      this.snackBar.open('Error importing tools from JSON', 'Close', { duration: 3000 });
+      console.error('Error importing tools:', error);
+    }
+  }
+
+  private extractScopesFromTool(tool: any): string[] {
+    // Try to extract scopes from various possible locations
+    if (tool.requiredScopes && Array.isArray(tool.requiredScopes)) {
+      return tool.requiredScopes;
+    }
+    
+    if (tool.scopes && Array.isArray(tool.scopes)) {
+      return tool.scopes;
+    }
+
+    // Generate default scopes based on tool name
+    if (tool.name) {
+      const toolName = tool.name.toLowerCase();
+      return [`${toolName}:execute`];
+    }
+
+    return [];
+  }
+
+  downloadTemplate(): void {
+    const template = {
+      type: "list_tools",
+      tools: [
+        {
+          name: "example_tool",
+          description: "An example tool for demonstration purposes",
+          parameters: {
+            type: "object",
+            properties: {
+              param1: {
+                type: "string",
+                description: "Example parameter"
+              }
+            },
+            required: ["param1"]
+          }
+        }
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'mcp-tools-template.json';
+    link.click();
+    window.URL.revokeObjectURL(url);
+    
+    this.snackBar.open('Template downloaded', 'Close', { duration: 2000 });
   }
 }

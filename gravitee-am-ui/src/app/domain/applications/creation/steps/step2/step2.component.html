@@ -115,8 +115,45 @@
           </mat-form-field>
         </div>
         <div>
-          <h6>Tool Definitions</h6>
-          <p class="mat-caption">Define the tools available in your MCP application with their required scopes.</p>
+          <div fxLayout="row" fxLayoutAlign="space-between center" style="margin-bottom: 16px;">
+            <div>
+              <h5 style="margin: 0;">Tool Definitions</h5>
+              <p class="mat-caption" style="margin: 4px 0 0 0;">Define the tools available in your MCP application with their required scopes.</p>
+            </div>
+          </div>
+
+          <!-- File Import Section -->
+          <div 
+            class="file-import-section" 
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            (click)="onDropZoneClick($event)"
+            style="margin-bottom: 24px; padding: 24px; border: 2px dashed #ccc; border-radius: 8px; background-color: #fafafa; cursor: pointer; transition: all 0.3s ease;"
+          >
+            <div fxLayout="column" fxLayoutAlign="center center" style="text-align: center;">
+              <mat-icon style="font-size: 48px; color: #666; margin-bottom: 8px;">cloud_upload</mat-icon>
+              <h6 style="margin: 0 0 8px 0;">Import Tools from JSON File</h6>
+              <p class="mat-caption" style="margin: 0 0 16px 0; color: #666;">
+                Drag and drop a JSON file here or click to browse
+              </p>
+
+              <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="center center">
+                <input
+                  type="file"
+                  accept=".json"
+                  (change)="onFileSelected($event)"
+                  #fileInput
+                  style="display: none;"
+                />
+                <button mat-raised-button color="primary" (click)="fileInput.click(); $event.stopPropagation()">
+                  <mat-icon>folder_open</mat-icon>
+                  Browse Files
+                </button>
+              </div>
+              
+            </div>
+          </div>
           <div *ngFor="let tool of application.settings.mcp.toolDefinitions; let i = index; trackBy: trackByIndex" class="tool-definition-item" style="margin-bottom: 16px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 4px;">
             <div fxLayout="row" fxLayoutAlign="space-between center" style="margin-bottom: 8px;">
               <h6 style="margin: 0;">Tool {{ i + 1 }}</h6>

@@ -7,3 +7,30 @@ i {
   font-size: 55px;
   line-height: 130px;
 }
+
+// File Import Section Styles
+.file-import-section {
+  transition: all 0.3s ease;
+  position: relative;
+  
+  &:hover {
+    border-color: #1976d2 !important;
+    background-color: #f5f5f5 !important;
+  }
+  
+  // Drag over state
+  &.drag-over {
+    background-color: #e3f2fd !important;
+    border-color: #1976d2 !important;
+    border-style: solid !important;
+  }
+}
+
+// Tool Definition Item Styles
+.tool-definition-item {
+  transition: all 0.2s ease;
+  
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
