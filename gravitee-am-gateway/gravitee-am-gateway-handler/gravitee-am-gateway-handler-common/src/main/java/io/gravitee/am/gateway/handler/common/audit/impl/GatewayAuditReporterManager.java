@@ -245,7 +245,6 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
                 eventBusReporter.start();
                 reporters.put(reporter.getId(), reporter);
                 reporterPlugins.put(reporter.getId(), eventBusReporter);
-                AuditReporterVerticle.incrementActiveReporter();
             } catch (Exception ex) {
                 logger.error("Unexpected error while starting reporter", ex);
                 return false;
@@ -259,7 +258,6 @@ public class GatewayAuditReporterManager extends AbstractService<AuditReporterMa
         if (reporter != null) {
             try {
                 reporter.stop();
-                AuditReporterVerticle.decrementActiveReporter();
             } catch (Exception ex) {
                 logger.error("Unable to stop reporter: {}", reporterId, ex);
             }
