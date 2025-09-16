@@ -23,6 +23,7 @@ import lombok.Setter;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Florent Amaridon
@@ -42,8 +43,8 @@ public class KafkaReporterConfiguration implements ReporterConfiguration {
   private String schemaRegistryUrl;
   private List<Map<String, String>> additionalProperties;
 
-
   public String hash(){
-    return "hash-" + hashCode();
+    return "hash-" + Objects.hash(bootstrapServers, acks, username, password, schemaRegistryUrl, additionalProperties);
   }
+
 }
