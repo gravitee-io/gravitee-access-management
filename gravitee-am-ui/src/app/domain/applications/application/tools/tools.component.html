@@ -25,6 +25,20 @@
       <span>Available tools in your Model Context Protocol application.</span>
     </div>
 
+    <!-- View Mode Switcher -->
+    <div class="view-mode-switcher">
+      <mat-button-toggle-group [(value)]="viewMode" (change)="setViewMode($event.value)">
+        <mat-button-toggle value="table">
+          <mat-icon>view_module</mat-icon>
+          Table
+        </mat-button-toggle>
+        <mat-button-toggle value="cards">
+          <mat-icon>view_list</mat-icon>
+          Cards
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
     <!-- MCP URL -->
     <div style="margin-bottom: 24px;">
       <mat-form-field appearance="outline" floatLabel="always">
@@ -45,54 +59,126 @@
       </mat-form-field>
     </div>
 
-    <!-- Tools Grid -->
-    <div *ngIf="getMCPTools().length > 0; else noTools" class="tools-grid">
-      <mat-card *ngFor="let tool of getMCPTools(); let i = index" class="tool-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon class="tool-icon">build</mat-icon>
-            {{ tool.name || 'Unnamed Tool' }}
-          </mat-card-title>
-          <mat-card-subtitle>Tool {{ i + 1 }}</mat-card-subtitle>
-        </mat-card-header>
+    <!-- Tools Display -->
+    <div *ngIf="getMCPTools().length > 0; else noTools">
 
-        <mat-card-content>
-          <div *ngIf="tool.description" class="tool-description">
-            <strong>Description:</strong>
-            <p>{{ tool.description }}</p>
-          </div>
+      <!-- Card View -->
+      <div *ngIf="isCardMode()" class="tools-grid">
+        <mat-card *ngFor="let tool of getMCPTools(); let i = index" class="tool-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="tool-icon">build</mat-icon>
+              {{ tool.name || 'Unnamed Tool' }}
+            </mat-card-title>
+            <mat-card-subtitle>Tool {{ i + 1 }}</mat-card-subtitle>
+          </mat-card-header>
 
-          <div *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0" class="tool-scopes">
-            <strong>Required Scopes:</strong>
-            <div class="scopes-container">
-              <mat-chip-list>
-                <mat-chip *ngFor="let scope of tool.requiredScopes" class="scope-chip">
-                  {{ scope }}
-                </mat-chip>
-              </mat-chip-list>
+          <mat-card-content>
+            <div *ngIf="tool.description" class="tool-description">
+              <strong>Description:</strong>
+              <p>{{ tool.description }}</p>
             </div>
-          </div>
 
-          <div *ngIf="tool.inputSchema" class="tool-schema">
-            <strong>Input Schema:</strong>
-            <pre class="schema-display">{{ tool.inputSchema | json }}</pre>
-          </div>
-        </mat-card-content>
+            <div *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0" class="tool-scopes">
+              <strong>Required Scopes:</strong>
+              <div class="scopes-container">
+                <mat-chip-list>
+                  <mat-chip *ngFor="let scope of tool.requiredScopes" class="scope-chip">
+                    {{ scope }}
+                  </mat-chip>
+                </mat-chip-list>
+              </div>
+            </div>
 
-        <mat-card-actions>
-          <button mat-button color="primary" (click)="copyToClipboard(tool.name, 'Tool name copied')">
-            <mat-icon>content_copy</mat-icon>
-            Copy Name
-          </button>
-          <button *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0"
-                  mat-button
-                  color="accent"
-                  (click)="copyToClipboard(tool.requiredScopes.join(', '), 'Scopes copied')">
-            <mat-icon>content_copy</mat-icon>
-            Copy Scopes
-          </button>
-        </mat-card-actions>
-      </mat-card>
+          </mat-card-content>
+
+          <mat-card-actions>
+            <button mat-button color="primary" (click)="copyToClipboard(tool.name, 'Tool name copied')">
+              <mat-icon>content_copy</mat-icon>
+              Copy Name
+            </button>
+            <button *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0"
+                    mat-button
+                    color="accent"
+                    (click)="copyToClipboard(tool.requiredScopes.join(', '), 'Scopes copied')">
+              <mat-icon>content_copy</mat-icon>
+              Copy Scopes
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+
+      <!-- Table View -->
+      <div *ngIf="isTableMode()" class="tools-table-container">
+        <table mat-table [dataSource]="getMCPTools()" class="tools-table">
+
+          <!-- Tool Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Tool Name</th>
+            <td mat-cell *matCellDef="let tool; let i = index">
+              <div class="tool-name-cell">
+                <mat-icon class="tool-icon">build</mat-icon>
+                <span class="tool-name">{{ tool.name || 'Unnamed Tool' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Description Column -->
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let tool">
+              <div class="tool-description-cell">
+                {{ tool.description || 'No description available' }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Required Scopes Column -->
+          <ng-container matColumnDef="scopes">
+            <th mat-header-cell *matHeaderCellDef>Required Scopes</th>
+            <td mat-cell *matCellDef="let tool">
+              <div class="tool-scopes-cell">
+                <mat-chip-list *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0">
+                  <mat-chip *ngFor="let scope of tool.requiredScopes" class="scope-chip">
+                    {{ scope }}
+                  </mat-chip>
+                </mat-chip-list>
+                <span *ngIf="!tool.requiredScopes || tool.requiredScopes.length === 0" class="no-scopes">
+                  No scopes required
+                </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let tool">
+              <div class="tool-actions-cell">
+                <button mat-icon-button
+                        matTooltip="Copy tool name"
+                        (click)="copyToClipboard(tool.name, 'Tool name copied')">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0"
+                        mat-icon-button
+                        matTooltip="Copy scopes"
+                        (click)="copyToClipboard(tool.requiredScopes.join(', '), 'Scopes copied')">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button mat-icon-button
+                        matTooltip="View schema"
+                        (click)="viewSchema(tool)">
+                  <mat-icon>code</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['name', 'description', 'scopes', 'actions']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes', 'actions'];"></tr>
+        </table>
+      </div>
     </div>
 
     <ng-template #noTools>

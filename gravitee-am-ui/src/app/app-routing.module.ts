@@ -970,6 +970,9 @@ export const routes: Routes = [
                                 section: 'Endpoints',
                                 level: 'level2',
                               },
+                              types: {
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                              },
                             },
                             resolve: {
                               entrypoint: DomainEntrypointResolver,

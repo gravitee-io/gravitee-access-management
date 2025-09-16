@@ -2,6 +2,23 @@ mat-form-field {
   margin-top: 10px;
 }
 
+// View Mode Switcher
+.view-mode-switcher {
+  margin: 16px 0;
+  display: flex;
+  justify-content: flex-end;
+  
+  mat-button-toggle-group {
+    border-radius: 4px;
+  }
+  
+  mat-button-toggle {
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+}
+
 // MCP Tools Grid Styles
 .tools-grid {
   display: grid;
@@ -87,9 +104,96 @@ mat-form-field {
   }
 }
 
+// Table View Styles
+.tools-table-container {
+  margin-top: 16px;
+  overflow-x: auto;
+}
+
+.tools-table {
+  width: 100%;
+  min-width: 800px;
+  
+  .mat-header-cell {
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  
+  .mat-cell {
+    padding: 12px 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+}
+
+.tool-name-cell {
+  display: flex;
+  align-items: center;
+  
+  .tool-icon {
+    margin-right: 8px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+  
+  .tool-name {
+    font-weight: 500;
+  }
+}
+
+.tool-description-cell {
+  max-width: 300px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.tool-scopes-cell {
+  .scope-chip {
+    margin: 2px 4px 2px 0;
+    font-size: 0.75rem;
+  }
+  
+  .no-scopes {
+    color: rgba(0, 0, 0, 0.5);
+    font-style: italic;
+  }
+}
+
+.tool-actions-cell {
+  display: flex;
+  gap: 4px;
+  
+  button {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
 // Responsive adjustments
 @media (max-width: 768px) {
   .tools-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .tools-table-container {
+    .tools-table {
+      min-width: 600px;
+    }
+  }
+  
+  .tool-description-cell {
+    max-width: 200px;
   }
 }
