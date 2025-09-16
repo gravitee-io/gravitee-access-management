@@ -74,6 +74,8 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
 
     private KafkaProducer<String, AuditMessageValueDto> producer;
 
+    private boolean enabled;
+
     public KafkaAuditReporter(KafkaReporterConfiguration config,
                               Vertx vertx,
                               GraviteeContext context,
@@ -115,7 +117,10 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
     @Override
     protected void doStart() throws Exception{
         super.doStart();
-        this.producer = (KafkaProducer) writeStreamRegistry.getOrCreate(config.hash(), this::createProducer);
+        if(!enabled) {
+            this.producer = (KafkaProducer) writeStreamRegistry.getOrCreate(config.hash(), this::createProducer);
+            this.enabled = true;
+        }
     }
 
     private KafkaProducer createProducer() {
@@ -131,16 +136,19 @@ public class KafkaAuditReporter extends AbstractService<Reporter> implements Aud
     @Override
     protected void doStop() throws Exception {
         super.doStop();
-        writeStreamRegistry.decreaseUsage(config.hash()).ifPresent(kafkaProducer -> {
-            Producer<String, AuditMessageValueDto> producer = ((KafkaProducer) kafkaProducer).unwrap();
-            Context ctx = vertx.getOrCreateContext();
-            ctx.executeBlocking(() -> {
-                producer.close();
-                log.info("Kafka producer closed");
-                return null;
+        if(enabled) {
+            writeStreamRegistry.decreaseUsage(config.hash()).ifPresent(kafkaProducer -> {
+                Producer<String, AuditMessageValueDto> producer = ((KafkaProducer) kafkaProducer).unwrap();
+                Context ctx = vertx.getOrCreateContext();
+                ctx.executeBlocking(() -> {
+                    producer.close();
+                    log.info("Kafka producer closed");
+                    return null;
+                });
             });
-        });
-        log.info("Kafka producer usage decreased");
+            this.enabled = false;
+            log.info("Stopped KafkaAuditReporter, ctx={}", context);
+        }
     }
 
     @Override

@@ -136,7 +136,6 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
                     }
                 })
                 .doOnSuccess(o -> messageConsumer = vertx.eventBus().consumer(EVENT_BUS_ADDRESS, EventBusReporterWrapper.this))
-                .doOnSuccess(x -> AuditReporterVerticle.incrementActiveReporter())
                 .doOnError(ex -> logger.error("Error while starting reporter", ex))
                 .subscribe();
 
@@ -147,7 +146,6 @@ public class EventBusReporterWrapper<R extends Reportable,C extends ReportableCr
     public Reporter<R,C> stop() throws Exception {
         if (messageConsumer != null) {
             messageConsumer.unregister();
-            AuditReporterVerticle.decrementActiveReporter();
         }
         return (Reporter<R, C>) reporter.stop();
     }
