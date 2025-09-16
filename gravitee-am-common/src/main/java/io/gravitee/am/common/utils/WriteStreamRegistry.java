@@ -22,28 +22,50 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 
 public class WriteStreamRegistry {
     final ConcurrentMap<String, WriteStream> writeStreams = new ConcurrentHashMap<>();
-    final ConcurrentMap<String, AtomicInteger> writeStreamsUsage = new ConcurrentHashMap<>();
+    final ConcurrentMap<String, AtomicInteger> refCount = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ReentrantLock> locks = new ConcurrentHashMap<>();
+
+    private ReentrantLock getLock(String key) {
+        return locks.computeIfAbsent(key, k -> new ReentrantLock());
+    }
 
     public WriteStream getOrCreate(String streamId, Supplier<WriteStream> streamSupplier) {
-        WriteStream stream = writeStreams.computeIfAbsent(streamId, id -> streamSupplier.get());
-        AtomicInteger counter = writeStreamsUsage.computeIfAbsent(streamId, id -> new AtomicInteger(0));
-        counter.incrementAndGet();
-        return stream;
+        ReentrantLock lock = getLock(streamId);
+        try {
+            lock.lock();
+            WriteStream stream = writeStreams.computeIfAbsent(streamId, id -> streamSupplier.get());
+            AtomicInteger counter = refCount.computeIfAbsent(streamId, id -> new AtomicInteger(0));
+            counter.incrementAndGet();
+            return stream;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public Optional<WriteStream> decreaseUsage(String streamId) {
-        AtomicInteger counter = writeStreamsUsage.computeIfAbsent(streamId, id -> new AtomicInteger(0));
-        int value = counter.decrementAndGet();
-        if(value <= 0) {
-            writeStreamsUsage.remove(streamId);
-            return Optional.ofNullable(writeStreams.remove(streamId));
-        } else {
-            return Optional.empty();
+        ReentrantLock lock = getLock(streamId);
+        try {
+            lock.lock();
+            AtomicInteger counter = refCount.get(streamId);
+            if(counter == null || counter.get() <= 0) {
+                return Optional.empty();
+            }
+            int value = counter.decrementAndGet();
+            if(value <= 0) {
+                refCount.remove(streamId);
+                return Optional.ofNullable(writeStreams.remove(streamId));
+            } else {
+                return Optional.empty();
+            }
+        } finally {
+            lock.unlock();
         }
+
     }
 
 }
