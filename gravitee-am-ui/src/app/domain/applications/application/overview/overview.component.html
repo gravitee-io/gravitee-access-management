@@ -305,27 +305,11 @@ curl -X GET \
                   <mat-label>Server Name</mat-label>
                   <input matInput [value]="application.name" readonly />
                 </mat-form-field>
-                <mat-form-field appearance="outline" floatLabel="always">
-                  <mat-label>Server ID</mat-label>
-                  <input matInput [value]="application.id || 'mcp-server-001'" readonly />
-                </mat-form-field>
-                <mat-form-field appearance="outline" floatLabel="always">
-                  <mat-label>Version</mat-label>
-                  <input matInput value="1.0.0" readonly />
-                </mat-form-field>
               </div>
               <div fxFlex="50">
                 <mat-form-field appearance="outline" floatLabel="always">
-                  <mat-label>Protocol Version</mat-label>
-                  <input matInput value="2024-11-05" readonly />
-                </mat-form-field>
-                <mat-form-field appearance="outline" floatLabel="always">
-                  <mat-label>Status</mat-label>
-                  <input matInput value="Active" readonly />
-                </mat-form-field>
-                <mat-form-field appearance="outline" floatLabel="always">
                   <mat-label>Last Updated</mat-label>
-                  <input matInput [value]="application.updatedAt || '2024-01-15 10:30:00'" readonly />
+                  <input matInput [value]="getFormattedLastUpdated()" readonly />
                 </mat-form-field>
               </div>
             </div>
@@ -552,7 +536,7 @@ curl -X GET \
               <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(mcp_endpoint)">
                 <mat-icon>content_copy</mat-icon>
               </button>
-              <pre #mcp_endpoint>{{ application.settings?.mcp?.url || 'https://api.example.com/mcp' }}</pre>
+              <pre #mcp_endpoint>{{ getMcpUrl() }}</pre>
             </div>
             <blockquote>
               <p>Use this endpoint to establish MCP connections from your AI models and applications.</p>
@@ -580,9 +564,9 @@ curl -X GET \
     "servers": {{ '{' }}
       "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
         "command": "node",
-        "args": ["{{ application.settings?.mcp?.url || 'https://api.example.com/mcp' }}"],
+        "args": ["{{ getMcpUrl() }}"],
         "env": {{ '{' }}
-          "MCP_SERVER_URL": "{{ application.settings?.mcp?.url || 'https://api.example.com/mcp' }}",
+          "MCP_SERVER_URL": "{{ getMcpUrl() }}",
           "CLIENT_ID": "{{ clientId || 'mcp-client-12345' }}"
         {{ '}' }}
       {{ '}' }}
@@ -604,9 +588,9 @@ curl -X GET \
   "mcpServers": {{ '{' }}
     "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
       "command": "npx",
-      "args": ["&#64;modelcontextprotocol/server-gravitee", "{{ application.settings?.mcp?.url || 'https://api.example.com/mcp' }}"],
+      "args": ["&#64;modelcontextprotocol/server-gravitee", "{{ getMcpUrl() }}"],
       "env": {{ '{' }}
-        "GRAVITEE_MCP_URL": "{{ application.settings?.mcp?.url || 'https://api.example.com/mcp' }}",
+        "GRAVITEE_MCP_URL": "{{ getMcpUrl() }}",
         "GRAVITEE_CLIENT_ID": "{{ clientId || 'mcp-client-12345' }}",
         "GRAVITEE_CLIENT_SECRET": "your-client-secret-here"
       {{ '}' }}
@@ -628,16 +612,13 @@ curl -X GET \
   "mcp.servers": {{ '{' }}
     "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
       "type": "http",
-      "url": "{{ application.settings?.mcp?.url || 'https://api.example.com/mcp' }}",
+      "url": "{{ getMcpUrl() }}",
       "headers": {{ '{' }}
         "Authorization": "Bearer your-access-token",
         "Content-Type": "application/json"
       {{ '}' }},
       "tools": [
-        "filesystem",
-        "database", 
-        "web_search",
-        "api_client"
+        {{ getToolsListForJson() }}
       ]
     {{ '}' }}
   {{ '}' }}
@@ -657,7 +638,7 @@ curl -X GET \
   "server": {{ '{' }}
     "name": "{{ application.name || 'Gravitee MCP Server' }}",
     "version": "1.0.0",
-    "url": "{{ application.settings?.mcp?.url || 'https://api.example.com/mcp' }}",
+    "url": "{{ getMcpUrl() }}",
     "authentication": {{ '{' }}
       "type": "oauth2",
       "client_id": "{{ clientId || 'mcp-client-12345' }}",
@@ -671,26 +652,7 @@ curl -X GET \
       "prompts": false
     {{ '}' }},
     "tools": [
-      {{ '{' }}
-        "name": "filesystem",
-        "description": "File system operations",
-        "scopes": ["read", "write"]
-      {{ '}' }},
-      {{ '{' }}
-        "name": "database", 
-        "description": "Database operations",
-        "scopes": ["query", "update"]
-      {{ '}' }},
-      {{ '{' }}
-        "name": "web_search",
-        "description": "Web search capabilities", 
-        "scopes": ["search"]
-      {{ '}' }},
-      {{ '{' }}
-        "name": "api_client",
-        "description": "HTTP API operations",
-        "scopes": ["get", "post"]
-      {{ '}' }}
+      {{ getToolsDetailsForJson() }}
     ]
   {{ '}' }}
 {{ '}' }}</pre>

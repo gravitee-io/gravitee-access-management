@@ -17,6 +17,7 @@ import { Component, Input, OnInit, OnChanges, ViewChild, ChangeDetectorRef } fro
 import { ActivatedRoute } from '@angular/router';
 import { find } from 'lodash';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'application-creation-step2',
@@ -28,6 +29,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   @Input() application: any;
   @ViewChild('appForm') form: any;
   domain: any;
+  toolsDataSource = new MatTableDataSource<any>([]);
   applicationTypes: any[] = [
     {
       icon: 'language',
@@ -60,6 +62,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
     this.initializeMCPSettings();
+    this.updateToolsDataSource();
   }
 
   private initializeMCPSettings(): void {
@@ -97,6 +100,11 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     }
   }
 
+  private updateToolsDataSource(): void {
+    const tools = this.application?.settings?.mcp?.toolDefinitions || [];
+    this.toolsDataSource.data = [...tools]; // Create a new array reference
+  }
+
   icon(app) {
     return find(this.applicationTypes, function (a) {
       return a.type === app.type;
@@ -112,22 +120,13 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   }
 
   addTool(event?: Event): void {
-    console.log('addTool called - current array:', this.application.settings?.mcp?.toolDefinitions);
-    
     if (event) {
       event.preventDefault();
       event.stopPropagation();
     }
     
-    if (!this.application.settings) {
-      this.application.settings = {};
-    }
-    if (!this.application.settings.mcp) {
-      this.application.settings.mcp = {};
-    }
-    if (!this.application.settings.mcp.toolDefinitions) {
-      this.application.settings.mcp.toolDefinitions = [];
-    }
+    // Ensure MCP settings exist
+    this.ensureMCPSettingsExist();
     
     const newTool = {
       name: '',
@@ -137,15 +136,16 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       inputSchema: '{\n  "type": "object",\n  "properties": {}\n}'
     };
     
-    console.log('About to push to array:', this.application.settings.mcp.toolDefinitions);
     this.application.settings.mcp.toolDefinitions.push(newTool);
-    console.log('After push - array length:', this.application.settings.mcp.toolDefinitions.length);
-    console.log('After push - array:', this.application.settings.mcp.toolDefinitions);
+    this.updateToolsDataSource();
+    this.cdr.detectChanges();
   }
 
   removeTool(index: number): void {
     if (this.application.settings?.mcp?.toolDefinitions && index >= 0 && index < this.application.settings.mcp.toolDefinitions.length) {
       this.application.settings.mcp.toolDefinitions.splice(index, 1);
+      this.updateToolsDataSource();
+      this.cdr.detectChanges();
     }
   }
 
@@ -159,10 +159,20 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
 
   ngOnChanges(): void {
     this.initializeMCPSettings();
+    this.updateToolsDataSource();
   }
 
   trackByIndex(index: number, item: any): number {
     return index;
+  }
+
+  // Debug method to check current state
+  getCurrentToolCount(): number {
+    return this.application?.settings?.mcp?.toolDefinitions?.length || 0;
+  }
+
+  getCurrentTools(): any[] {
+    return this.application?.settings?.mcp?.toolDefinitions || [];
   }
 
 
@@ -265,10 +275,6 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       // Ensure MCP settings exist without recreating array references
       this.ensureMCPSettingsExist();
 
-      // Store the original array reference
-      const originalArray = this.application.settings.mcp.toolDefinitions;
-      console.log('Original array reference before import:', originalArray);
-
       // Clear existing tools if user confirms
       if (this.application.settings.mcp.toolDefinitions.length > 0) {
         if (!confirm('This will replace all existing tool definitions. Continue?')) {
@@ -294,9 +300,8 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       this.application.settings.mcp.toolDefinitions.length = 0; // Clear array
       this.application.settings.mcp.toolDefinitions.push(...importedTools); // Add new tools
       
-      console.log('Array reference after import:', this.application.settings.mcp.toolDefinitions);
-      console.log('Array reference preserved?', originalArray === this.application.settings.mcp.toolDefinitions);
-      
+      this.updateToolsDataSource();
+      this.cdr.detectChanges();
       this.snackBar.open(`Successfully imported ${importedTools.length} tool(s)`, 'Close', { duration: 3000 });
     } catch (error) {
       this.snackBar.open('Error importing tools from JSON', 'Close', { duration: 3000 });

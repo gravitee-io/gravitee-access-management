@@ -138,7 +138,7 @@
           </div>
           <!-- Tools Table -->
           <div *ngIf="application.settings?.mcp?.toolDefinitions?.length > 0" class="tools-table-container" style="margin-bottom: 16px;">
-            <table mat-table [dataSource]="application.settings.mcp.toolDefinitions" class="tools-table" [trackBy]="trackByIndex">
+            <table mat-table [dataSource]="toolsDataSource" class="tools-table" [trackBy]="trackByIndex">
               
               <!-- Tool Name Column -->
               <ng-container matColumnDef="name">
