@@ -54,6 +54,8 @@ public class MCPToolDefinition {
     @Schema(description = "List of required scopes for executing this tool")
     private List<String> requiredScopes;
 
+    private String requiredScopesText;
+
     /**
      * Input schema for the tool (JSON schema)
      */
@@ -65,5 +67,6 @@ public class MCPToolDefinition {
         this.description = other.description;
         this.requiredScopes = other.requiredScopes != null ? new ArrayList<>(other.requiredScopes) : null;
         this.inputSchema = other.inputSchema;
+        this.requiredScopesText = other.requiredScopesText;
     }
 }

@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.application.ApplicationMCPSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import jakarta.validation.constraints.NotNull;
 
@@ -42,6 +43,8 @@ public class NewApplication {
     private List<String> redirectUris;
 
     private Map<String, Object> metadata;
+
+    private ApplicationMCPSettings mcp;
 
     public String getName() {
         return name;
@@ -97,6 +100,14 @@ public class NewApplication {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    public ApplicationMCPSettings getMcp() {
+        return mcp;
+    }
+
+    public void setMcp(ApplicationMCPSettings mcp) {
+        this.mcp = mcp;
     }
 
     @Override

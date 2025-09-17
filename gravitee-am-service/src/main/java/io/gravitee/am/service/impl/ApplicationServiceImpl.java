@@ -330,6 +330,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         oAuthSettings.setRedirectUris(newApplication.getRedirectUris());
         applicationSettings.setOauth(oAuthSettings);
+        applicationSettings.setMcp(newApplication.getMcp());
 
         // apply default SAML 2.0 settings
         if (ApplicationType.SERVICE != application.getType() && !ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
