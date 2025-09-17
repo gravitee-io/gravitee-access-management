@@ -36,11 +36,21 @@ import java.util.Collections;
  * 
  * @author GraviteeSource Team
  */
-public class ApplicationMCPTemplate extends ApplicationBrowserTemplate {
+public class ApplicationMCPTemplate extends ApplicationAbstractTemplate {
 
     @Override
     public boolean canHandle(Application application) {
         return ApplicationType.MCP.equals(application.getType());
+    }
+
+    @Override
+    public void handle(Application application) {
+        update(application, false);
+    }
+
+    @Override
+    public void changeType(Application application) {
+        update(application, true);
     }
 
 
@@ -64,13 +74,15 @@ public class ApplicationMCPTemplate extends ApplicationBrowserTemplate {
         oAuthSettings.setClientType(ClientType.CONFIDENTIAL);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
         oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
-
+        oAuthSettings.setForcePKCE(true);
+        oAuthSettings.setForceS256CodeChallengeMethod(true);
 
         if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
             // MCP applications should have client_credentials flow for server-to-server communication
             oAuthSettings.setGrantTypes(Collections.singletonList(GrantType.CLIENT_CREDENTIALS));
             oAuthSettings.setTokenEndpointAuthMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         }
+
 
         // assign MCP values
         ApplicationMCPSettings mcpSettings = application.getSettings().getMcp();
@@ -82,13 +94,7 @@ public class ApplicationMCPTemplate extends ApplicationBrowserTemplate {
 
         // Set default tool definitions if not provided
         if (force || (mcpSettings.getToolDefinitions() == null || mcpSettings.getToolDefinitions().isEmpty())) {
-            mcpSettings.setToolDefinitions(createDefaultToolDefinitions());
+            mcpSettings.setToolDefinitions(new ArrayList<>());
         }
-    }
-
-    private ArrayList<MCPToolDefinition> createDefaultToolDefinitions() {
-        ArrayList<MCPToolDefinition> defaultTools = new ArrayList<>();
-
-        return defaultTools;
     }
 }

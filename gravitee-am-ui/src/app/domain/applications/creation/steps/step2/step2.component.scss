@@ -34,3 +34,97 @@ i {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 }
+
+// Tools Table Styles
+.tools-table-container {
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: white;
+}
+
+.tools-table {
+  width: 100%;
+  
+  .mat-mdc-header-cell {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    color: rgba(0, 0, 0, 0.87);
+    border-bottom: 1px solid #e0e0e0;
+  }
+  
+  .mat-mdc-cell {
+    padding: 8px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+  }
+  
+  .mat-mdc-row {
+    &:hover {
+      background-color: #fafafa;
+    }
+    
+    &:last-child .mat-mdc-cell {
+      border-bottom: none;
+    }
+  }
+  
+  // Compact form fields in table cells
+  .mat-mdc-form-field {
+    .mat-mdc-text-field-wrapper {
+      padding: 0;
+    }
+    
+    .mat-mdc-form-field-infix {
+      padding: 8px 0;
+      min-height: auto;
+    }
+    
+    .mat-mdc-form-field-outline {
+      display: none;
+    }
+    
+    .mat-mdc-input-element {
+      padding: 4px 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: white;
+      
+      &:focus {
+        border-color: #1976d2;
+        outline: none;
+      }
+    }
+  }
+  
+  // Actions column styling
+  .mat-column-actions {
+    width: 60px;
+    text-align: center;
+    
+    .mat-mdc-icon-button {
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      
+      .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+  
+  // Column widths
+  .mat-column-name {
+    width: 25%;
+  }
+  
+  .mat-column-description {
+    width: 40%;
+  }
+  
+  .mat-column-scopes {
+    width: 30%;
+  }
+}

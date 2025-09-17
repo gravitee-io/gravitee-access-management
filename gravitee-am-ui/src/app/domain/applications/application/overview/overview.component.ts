@@ -102,12 +102,17 @@ export class ApplicationOverviewComponent implements OnInit {
     return this.application.type.toLowerCase() === 'resource_server';
   }
 
+  isMcpApp(): boolean {
+    return this.application.type.toLowerCase() === 'mcp';
+  }
+
   valueCopied(message: string) {
     this.snackbarService.open(message);
   }
 
-  copyToClipboard(element: HTMLElement) {
-    this.copyText.nativeElement.value = element.textContent;
+  copyToClipboard(element: HTMLElement | EventTarget) {
+    const target = element as HTMLElement;
+    this.copyText.nativeElement.value = target.textContent;
     this.copyText.nativeElement.select();
     document.execCommand('copy');
     this.valueCopied('Copied to clipboard');
@@ -172,5 +177,34 @@ export class ApplicationOverviewComponent implements OnInit {
 
   getEncodedClientId() {
     return encodeURIComponent(this.clientId);
+  }
+
+  getToolsData(): any[] {
+    return [
+      {
+        name: 'Filesystem',
+        description: 'File operations',
+        scopes: ['read', 'write'],
+        status: 'Available'
+      },
+      {
+        name: 'Database',
+        description: 'Data operations',
+        scopes: ['query', 'update'],
+        status: 'Available'
+      },
+      {
+        name: 'Web Search',
+        description: 'Search operations',
+        scopes: ['search'],
+        status: 'Available'
+      },
+      {
+        name: 'API Client',
+        description: 'HTTP operations',
+        scopes: ['get', 'post'],
+        status: 'Disabled'
+      }
+    ];
   }
 }

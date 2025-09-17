@@ -47,4 +47,199 @@
       font-size: 13px;
     }
   }
+
+  // MCP Overview Styles
+  .gv-form-section {
+    margin-bottom: 24px;
+    
+    .gv-form-section-title {
+      margin-bottom: 16px;
+      
+      h3 {
+        margin: 0 0 8px 0;
+        color: #1b2733;
+        font-size: 1.2em;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .provider-card,
+  .factor-card,
+  .tool-card,
+  .action-card {
+    transition: box-shadow 0.2s ease;
+    
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    }
+    
+    mat-card-header {
+      padding-bottom: 8px;
+      
+      mat-card-title {
+        font-size: 1.1em;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+      
+      mat-card-subtitle {
+        font-size: 0.9em;
+        color: rgba(0, 0, 0, 0.6);
+      }
+    }
+    
+    mat-card-content {
+      padding-top: 0;
+      
+      p {
+        margin: 4px 0;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+    }
+  }
+
+  .status-active {
+    color: #4caf50;
+    font-weight: 500;
+  }
+
+  .status-inactive {
+    color: #f44336;
+    font-weight: 500;
+  }
+
+  .action-card {
+    mat-card-content {
+      p {
+        margin-bottom: 16px;
+        color: rgba(0, 0, 0, 0.7);
+      }
+      
+      button {
+        margin-top: 8px;
+      }
+    }
+  }
+
+  // AI Configuration Tabs
+  .ai-config-tabs {
+    margin-top: 16px;
+    
+    .mat-mdc-tab-group {
+      .mat-mdc-tab-header {
+        border-bottom: 1px solid #e0e0e0;
+      }
+      
+      .mat-mdc-tab {
+        min-width: 120px;
+        
+        .mat-mdc-tab-label {
+          font-weight: 500;
+        }
+      }
+    }
+    
+    .tab-content {
+      padding: 16px 0;
+      
+      p {
+        margin-bottom: 12px;
+        color: rgba(0, 0, 0, 0.7);
+        font-size: 14px;
+      }
+      
+      .code {
+        margin-top: 8px;
+      }
+    }
+  }
+
+  // Tools Table Styles
+  .tools-table-container {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    background: white;
+    margin-top: 16px;
+  }
+
+  .tools-table {
+    width: 100%;
+    
+    .mat-mdc-header-cell {
+      background-color: #f5f5f5;
+      font-weight: 600;
+      color: rgba(0, 0, 0, 0.87);
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .mat-mdc-cell {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+    
+    .mat-mdc-row {
+      &:hover {
+        background-color: #fafafa;
+      }
+      
+      &:last-child .mat-mdc-cell {
+        border-bottom: none;
+      }
+    }
+    
+    .tool-name-cell {
+      strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 500;
+        color: rgba(0, 0, 0, 0.87);
+        margin-bottom: 4px;
+      }
+      
+      .tool-description {
+        font-size: 12px;
+        color: rgba(0, 0, 0, 0.6);
+        font-style: italic;
+      }
+    }
+    
+    .scopes-cell {
+      .mat-mdc-chip-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+      
+      .scope-chip {
+        font-size: 11px;
+        height: 24px;
+        line-height: 24px;
+        background-color: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+        
+        .mat-mdc-chip-text {
+          padding: 0 8px;
+        }
+      }
+    }
+    
+    // Column widths
+    .mat-column-name {
+      width: 40%;
+    }
+    
+    .mat-column-scopes {
+      width: 45%;
+    }
+    
+    .mat-column-status {
+      width: 15%;
+      text-align: center;
+    }
+  }
 }

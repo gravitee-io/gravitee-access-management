@@ -79,6 +79,24 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     }
   }
 
+  private ensureMCPSettingsExist(): void {
+    if (this.application && this.application.type === 'MCP') {
+      if (!this.application.settings) {
+        this.application.settings = {};
+      }
+      if (!this.application.settings.mcp) {
+        this.application.settings.mcp = {
+          url: '',
+          toolDefinitions: []
+        };
+      }
+      // Don't recreate the array if it already exists - this preserves the reference
+      if (!this.application.settings.mcp.toolDefinitions) {
+        this.application.settings.mcp.toolDefinitions = [];
+      }
+    }
+  }
+
   icon(app) {
     return find(this.applicationTypes, function (a) {
       return a.type === app.type;
@@ -93,7 +111,14 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     return this.domain?.oidc?.clientRegistrationSettings?.allowRedirectUriParamsExpressionLanguage;
   }
 
-  addTool(): void {
+  addTool(event?: Event): void {
+    console.log('addTool called - current array:', this.application.settings?.mcp?.toolDefinitions);
+    
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     if (!this.application.settings) {
       this.application.settings = {};
     }
@@ -104,23 +129,23 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       this.application.settings.mcp.toolDefinitions = [];
     }
     
-    this.application.settings.mcp.toolDefinitions.push({
+    const newTool = {
       name: '',
       description: '',
       requiredScopes: [],
       requiredScopesText: '',
       inputSchema: '{\n  "type": "object",\n  "properties": {}\n}'
-    });
+    };
     
-    // Force change detection to update the UI
-    this.cdr.detectChanges();
+    console.log('About to push to array:', this.application.settings.mcp.toolDefinitions);
+    this.application.settings.mcp.toolDefinitions.push(newTool);
+    console.log('After push - array length:', this.application.settings.mcp.toolDefinitions.length);
+    console.log('After push - array:', this.application.settings.mcp.toolDefinitions);
   }
 
   removeTool(index: number): void {
-    if (this.application.settings?.mcp?.toolDefinitions) {
+    if (this.application.settings?.mcp?.toolDefinitions && index >= 0 && index < this.application.settings.mcp.toolDefinitions.length) {
       this.application.settings.mcp.toolDefinitions.splice(index, 1);
-      // Force change detection to update the UI
-      this.cdr.detectChanges();
     }
   }
 
@@ -139,6 +164,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   trackByIndex(index: number, item: any): number {
     return index;
   }
+
 
   // File import functionality
   onFileSelected(event: any): void {
@@ -236,8 +262,12 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
         return;
       }
 
-      // Ensure MCP settings exist
-      this.initializeMCPSettings();
+      // Ensure MCP settings exist without recreating array references
+      this.ensureMCPSettingsExist();
+
+      // Store the original array reference
+      const originalArray = this.application.settings.mcp.toolDefinitions;
+      console.log('Original array reference before import:', originalArray);
 
       // Clear existing tools if user confirms
       if (this.application.settings.mcp.toolDefinitions.length > 0) {
@@ -260,11 +290,14 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
         };
       });
 
-      // Replace existing tools with imported ones
-      this.application.settings.mcp.toolDefinitions = importedTools;
+      // Clear existing tools and add new ones using array methods
+      this.application.settings.mcp.toolDefinitions.length = 0; // Clear array
+      this.application.settings.mcp.toolDefinitions.push(...importedTools); // Add new tools
+      
+      console.log('Array reference after import:', this.application.settings.mcp.toolDefinitions);
+      console.log('Array reference preserved?', originalArray === this.application.settings.mcp.toolDefinitions);
       
       this.snackBar.open(`Successfully imported ${importedTools.length} tool(s)`, 'Close', { duration: 3000 });
-      this.cdr.detectChanges();
     } catch (error) {
       this.snackBar.open('Error importing tools from JSON', 'Close', { duration: 3000 });
       console.error('Error importing tools:', error);

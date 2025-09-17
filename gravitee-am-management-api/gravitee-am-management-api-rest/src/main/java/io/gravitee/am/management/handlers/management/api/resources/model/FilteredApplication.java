@@ -39,7 +39,6 @@ public record FilteredApplication(
             .map(mcp -> mcp.getToolDefinitions())
             .map(list -> (long) list.size())
             .orElse(0L);
-
         return new FilteredApplication(
                 application.getId(),
                 application.getName(),
