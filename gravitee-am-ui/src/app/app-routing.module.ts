@@ -1466,6 +1466,577 @@ export const routes: Routes = [
                     ],
                   },
                   {
+                    path: 'mcp',
+                    data: {
+                      menu: {
+                        label: 'MCP Servers',
+                        icon: 'gio:building',
+                        level: 'top',
+                      },
+                      perms: {
+                        only: ['application_list'],
+                      },
+                      filter: {
+                        only: ['MCP'],
+                      }
+                    },
+                    children: [
+                      {
+                        path: '',
+                        pathMatch: 'full',
+                        component: ApplicationsComponent,
+                        resolve: {
+                          applications: ApplicationsResolver,
+                        },
+                      },
+                      {
+                        path: 'new',
+                        component: ApplicationCreationComponent,
+                        canActivate: [AuthGuard],
+                        data: {
+                          perms: {
+                            only: ['application_create'],
+                          },
+                        },
+                      },
+                      {
+                        path: ':appId',
+                        component: ApplicationComponent,
+                        resolve: {
+                          application: ApplicationResolver,
+                          permissions: ApplicationPermissionsResolver,
+                        },
+                        runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
+                        data: {
+                          breadcrumb: {
+                            label: 'application.name',
+                          },
+                        },
+                        children: [
+                          {
+                            path: '',
+                            redirectTo: 'overview',
+                            pathMatch: 'full',
+                          },
+                          {
+                            path: 'overview',
+                            component: ApplicationOverviewComponent,
+                            data: {
+                              menu: {
+                                label: 'Overview',
+                                section: 'Overview',
+                                level: 'level2',
+                              },
+                            },
+                            resolve: {
+                              entrypoint: DomainEntrypointResolver,
+                            },
+                          },
+                          {
+                            path: 'endpoints',
+                            component: ApplicationEndpointsComponent,
+                            data: {
+                              menu: {
+                                label: 'Endpoints',
+                                section: 'Endpoints',
+                                level: 'level2',
+                              },
+                              types: {
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                              },
+                            },
+                            resolve: {
+                              entrypoint: DomainEntrypointResolver,
+                            },
+                          },
+
+                          {
+                            path: 'tools',
+                            component: ApplicationToolsComponent,
+                            data: {
+                              menu: {
+                                label: 'Tools',
+                                section: 'Tools',
+                                level: 'level2',
+                              },
+                              types: {
+                                only: ['MCP'],
+                              },
+                            },
+                            resolve: {
+                              entrypoint: DomainEntrypointResolver,
+                            },
+                          },
+                          {
+                            path: 'idp',
+                            component: ApplicationIdPComponent,
+                            canActivate: [AuthGuard],
+                            resolve: {
+                              identities: IdentitiesResolver,
+                            },
+                            data: {
+                              menu: {
+                                label: 'Identity Providers',
+                                section: 'Identity Providers',
+                                level: 'level2',
+                              },
+                              perms: {
+                                only: ['application_identity_provider_list'],
+                              },
+                              types: {
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                              },
+                            },
+                          },
+                          {
+                            path: 'design',
+                            component: ApplicationDesignComponent,
+                            data: {
+                              menu: {
+                                label: 'Design',
+                                section: 'Design',
+                                level: 'level2',
+                              },
+                              perms: {
+                                only: [
+                                  'application_email_template_list',
+                                  'application_email_template_read',
+                                  'application_form_list',
+                                  'application_form_read',
+                                ],
+                              },
+                              types: {
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                              },
+                            },
+                            children: [
+                              {
+                                path: 'forms',
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Forms',
+                                    section: 'Design',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_form_list', 'application_form_read'],
+                                  },
+                                },
+                                children: [
+                                  {
+                                    path: '',
+                                    pathMatch: 'full',
+                                    component: ApplicationFormsComponent,
+                                  },
+                                  {
+                                    path: 'form',
+                                    component: ApplicationFormComponent,
+                                    canActivate: [AuthGuard],
+                                    resolve: { form: FormResolver },
+                                    data: {
+                                      breadcrumb: {
+                                        label: 'form.template',
+                                        applyOnLabel: applyOnLabel,
+                                      },
+                                      perms: {
+                                        only: ['application_form_read'],
+                                      },
+                                    },
+                                  },
+                                ],
+                              },
+                              {
+                                path: 'emails',
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Emails',
+                                    section: 'Design',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_email_template_list', 'application_email_template_read'],
+                                  },
+                                },
+                                children: [
+                                  {
+                                    path: '',
+                                    pathMatch: 'full',
+                                    component: ApplicationEmailsComponent,
+                                    canActivate: [AuthGuard],
+                                  },
+                                  {
+                                    path: 'email',
+                                    component: ApplicationEmailComponent,
+                                    canActivate: [AuthGuard],
+                                    resolve: {
+                                      email: EmailResolver,
+                                    },
+                                    data: {
+                                      breadcrumb: {
+                                        label: 'email.template',
+                                        applyOnLabel: applyOnLabel,
+                                      },
+                                      perms: {
+                                        only: ['application_email_template_read'],
+                                      },
+                                    },
+                                  },
+                                ],
+                              },
+                              {
+                                path: 'flows',
+                                component: ApplicationFlowsComponent,
+                                canActivate: [AuthGuard],
+                                resolve: {
+                                  flows: ApplicationFlowsResolver,
+                                  policies: PluginPoliciesResolver,
+                                  flowSettingsForm: PlatformFlowSchemaResolver,
+                                  factors: FactorsResolver,
+                                },
+                                data: {
+                                  menu: {
+                                    label: 'Flows',
+                                    section: 'Design',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_flow_list', 'application_flow_read'],
+                                  },
+                                },
+                              },
+                            ],
+                          },
+                          {
+                            path: 'analytics',
+                            component: ApplicationAnalyticsComponent,
+                            canActivate: [AuthGuard],
+                            data: {
+                              menu: {
+                                label: 'Analytics',
+                                section: 'Analytics',
+                                level: 'level2',
+                              },
+                              perms: {
+                                only: ['application_analytics_list'],
+                              },
+                              types: {
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                              },
+                            },
+                          },
+                          {
+                            path: 'settings',
+                            component: ApplicationAdvancedComponent,
+                            data: {
+                              menu: {
+                                label: 'Settings',
+                                section: 'Settings',
+                                level: 'level2',
+                              },
+                              perms: {
+                                only: ['application_settings_read', 'application_oauth_read', 'application_certificate_list'],
+                              },
+                            },
+                            children: [
+                              {
+                                path: 'general',
+                                component: ApplicationGeneralComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'General',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'secrets-certificates',
+                                component: ApplicationSecretsCertificatesComponent,
+                                canActivate: [AuthGuard],
+                                resolve: { certificates: SignCertificatesResolver },
+                                data: {
+                                  menu: {
+                                    label: 'Secrets & Certificates',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read', 'application_certificate_list'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'metadata',
+                                component: ApplicationMetadataComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Application metadata',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'oauth2',
+                                component: ApplicationOAuth2Component,
+                                data: {
+                                  menu: {
+                                    label: 'OAuth 2.0 / OIDC',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_openid_read'],
+                                  },
+                                },
+                                children: [
+                                  {
+                                    path: 'grantFlows',
+                                    component: ApplicationGrantFlowsComponent,
+                                    canActivate: [AuthGuard],
+                                    resolve: {
+                                      domainGrantTypes: ExtensionGrantsResolver,
+                                    },
+                                    data: {
+                                      perms: {
+                                        only: ['application_openid_read'],
+                                      },
+                                    },
+                                  },
+                                  {
+                                    path: 'scopes',
+                                    component: ApplicationScopesComponent,
+                                    canActivate: [AuthGuard],
+                                    resolve: {
+                                      scopes: ScopesAllResolver,
+                                    },
+                                    data: {
+                                      perms: {
+                                        only: ['application_openid_read'],
+                                      },
+                                    },
+                                  },
+                                  {
+                                    path: 'tokens',
+                                    component: ApplicationTokensComponent,
+                                    canActivate: [AuthGuard],
+                                    data: {
+                                      perms: {
+                                        only: ['application_openid_read'],
+                                      },
+                                    },
+                                  },
+                                ],
+                              },
+                              {
+                                path: 'saml2',
+                                component: ApplicationSaml2Component,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'SAML 2.0',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_saml_read'],
+                                  },
+                                  types: {
+                                    only: ['WEB', 'NATIVE', 'BROWSER'],
+                                  },
+                                  protocol: 'SAML',
+                                },
+                                resolve: {
+                                  certificates: CertificatesResolver,
+                                },
+                              },
+                              {
+                                path: 'login',
+                                component: ApplicationLoginSettingsComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Login',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read'],
+                                  },
+                                  types: {
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'members',
+                                component: ApplicationMembershipsComponent,
+                                canActivate: [AuthGuard],
+                                resolve: {
+                                  members: MembershipsResolver,
+                                },
+                                data: {
+                                  menu: {
+                                    label: 'Administrative roles',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_member_list'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'factors',
+                                component: ApplicationFactorsComponent,
+                                canActivate: [AuthGuard],
+                                resolve: {
+                                  deviceIdentifiers: DeviceIdentifiersResolver,
+                                },
+                                data: {
+                                  menu: {
+                                    label: 'Multifactor Auth',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_factor_list'],
+                                  },
+                                  types: {
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'account',
+                                component: ApplicationAccountSettingsComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'User Accounts',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read'],
+                                  },
+                                  types: {
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'password-policy',
+                                component: PasswordPolicyComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Password policy',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'session',
+                                component: ApplicationCookieSettingsComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Session management',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'resources',
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Resources',
+                                    section: 'Security',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_resource_list'],
+                                  },
+                                  types: {
+                                    only: ['RESOURCE_SERVER'],
+                                  },
+                                },
+                                children: [
+                                  {
+                                    path: '',
+                                    pathMatch: 'full',
+                                    component: ApplicationResourcesComponent,
+                                    resolve: {
+                                      resources: ApplicationResourcesResolver,
+                                    },
+                                  },
+                                  {
+                                    path: ':resourceId',
+                                    canActivate: [AuthGuard],
+                                    resolve: {
+                                      resource: ApplicationResourceResolver,
+                                    },
+                                    data: {
+                                      breadcrumb: {
+                                        label: 'resource.name',
+                                      },
+                                      perms: {
+                                        only: ['application_resource_read'],
+                                      },
+                                    },
+                                    children: [
+                                      {
+                                        path: '',
+                                        pathMatch: 'full',
+                                        component: ApplicationResourceComponent,
+                                      },
+                                      {
+                                        path: 'policies/:policyId',
+                                        component: ApplicationResourcePolicyComponent,
+                                        canActivate: [AuthGuard],
+                                        resolve: {
+                                          policy: ApplicationResourcePolicyResolver,
+                                        },
+                                        data: {
+                                          breadcrumb: {
+                                            label: 'policy.name',
+                                          },
+                                          perms: {
+                                            only: ['application_resource_read'],
+                                          },
+                                        },
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
                     path: 'settings',
                     component: DomainSettingsComponent,
                     canActivate: [AuthGuard],

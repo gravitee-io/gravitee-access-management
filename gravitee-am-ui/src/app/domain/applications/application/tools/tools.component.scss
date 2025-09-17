@@ -149,6 +149,7 @@ mat-form-field {
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3;
+  line-clamp: 3;
   -webkit-box-orient: vertical;
 }
 
@@ -164,22 +165,6 @@ mat-form-field {
   }
 }
 
-.tool-actions-cell {
-  display: flex;
-  gap: 4px;
-  
-  button {
-    width: 32px;
-    height: 32px;
-    line-height: 32px;
-    
-    mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
-    }
-  }
-}
 
 // Responsive adjustments
 @media (max-width: 768px) {

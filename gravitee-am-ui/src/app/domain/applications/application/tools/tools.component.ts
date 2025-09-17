@@ -88,10 +88,6 @@ export class ApplicationToolsComponent implements OnInit {
     return this.application?.settings?.mcp?.url || 'No MCP URL configured';
   }
 
-  copyToClipboard(text: string, message: string): void {
-    this.snackbarService.open(message);
-    // The actual copying is handled by the ngxClipboard directive
-  }
 
   setViewMode(mode: 'cards' | 'table'): void {
     this.viewMode = mode;
@@ -105,10 +101,4 @@ export class ApplicationToolsComponent implements OnInit {
     return this.viewMode === 'table';
   }
 
-  viewSchema(tool: any): void {
-    if (tool.inputSchema) {
-      const schemaJson = JSON.stringify(tool.inputSchema, null, 2);
-      this.copyToClipboard(schemaJson, 'Schema copied to clipboard');
-    }
-  }
 }
