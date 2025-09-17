@@ -35,6 +35,8 @@ public class NewApplication {
 
     private String description;
 
+    private String agentCardUrl;
+
     private String clientId;
 
     private String clientSecret;
@@ -65,6 +67,14 @@ public class NewApplication {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAgentCardUrl() {
+        return agentCardUrl;
+    }
+
+    public void setAgentCardUrl(String agentCardUrl) {
+        this.agentCardUrl = agentCardUrl;
     }
 
     public String getClientId() {

@@ -10944,6 +10944,7 @@ components:
           - NATIVE
           - BROWSER
           - SERVICE
+          - AGENT
           - RESOURCE_SERVER
         description:
           type: string
@@ -12650,6 +12651,7 @@ components:
           - NATIVE
           - BROWSER
           - SERVICE
+          - AGENT
           - RESOURCE_SERVER
         description:
           type: string
@@ -13813,6 +13815,7 @@ components:
           - NATIVE
           - BROWSER
           - SERVICE
+          - AGENT
           - RESOURCE_SERVER
     PatchCIBASettings:
       type: object

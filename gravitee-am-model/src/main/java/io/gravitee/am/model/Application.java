@@ -66,6 +66,10 @@ public class Application implements Resource, PasswordSettingsAware {
      */
     private String description;
     /**
+     * Agent Card URL for AGENT type applications
+     */
+    private String agentCardUrl;
+    /**
      * Security domain associated to the application
      */
     private String domain;
@@ -120,6 +124,7 @@ public class Application implements Resource, PasswordSettingsAware {
         this.name = other.name;
         this.type = other.type;
         this.description = other.description;
+        this.agentCardUrl = other.agentCardUrl;
         this.domain = other.domain;
         this.enabled = other.enabled;
         this.template = other.template;

@@ -318,6 +318,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
         application.setDescription(newApplication.getDescription());
+        application.setAgentCardUrl(newApplication.getAgentCardUrl());
         application.setType(newApplication.getType());
         application.setDomain(domain.getId());
         application.setMetadata(newApplication.getMetadata());
@@ -332,7 +333,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationSettings.setOauth(oAuthSettings);
 
         // apply default SAML 2.0 settings
-        if (ApplicationType.SERVICE != application.getType() && !ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
+        if (ApplicationType.SERVICE != application.getType() && ApplicationType.AGENT != application.getType() && !ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
             try {
                 final String url = newApplication.getRedirectUris().get(0);
                 ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
@@ -824,7 +825,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 return Single.error(new InvalidRedirectUriException("Only one redirect URI with the same hostname and path is allowed."));
                             }
                         }
-                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
+                    } else if (application.getType() != ApplicationType.SERVICE && application.getType() != ApplicationType.AGENT && !updateTypeOnly) {
                         return Single.error(new InvalidRedirectUriException("At least one redirect_uri is required"));
                     }
                     return Single.just(application);
@@ -856,7 +857,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateTokenEndpointAuthMethod(Application application) {
         ApplicationOAuthSettings oauthSettings = application.getSettings().getOauth();
         String tokenEndpointAuthMethod = oauthSettings.getTokenEndpointAuthMethod();
-        if ((ApplicationType.SERVICE.equals(application.getType()) || (oauthSettings.getGrantTypes() != null && oauthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)))
+        if ((ApplicationType.SERVICE.equals(application.getType()) || ApplicationType.AGENT.equals(application.getType()) || (oauthSettings.getGrantTypes() != null && oauthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)))
                 && (tokenEndpointAuthMethod != null && ClientAuthenticationMethod.NONE.equals(tokenEndpointAuthMethod))) {
             return Single.error(new InvalidClientMetadataException("Invalid token_endpoint_auth_method for service application (client_credentials grant type)"));
         }
