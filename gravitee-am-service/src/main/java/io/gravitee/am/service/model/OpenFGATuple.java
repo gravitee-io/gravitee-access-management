@@ -34,6 +34,12 @@ public class OpenFGATuple {
     private String grantDuration;
     private String grantTime;
 
+    public OpenFGATuple(String user, String relation, String object) {
+        this.user = user;
+        this.relation = relation;
+        this.object = object;
+    }
+
     public static OpenFGATuple fromTupleKey(TupleKey tk) {
         OpenFGATuple openFGATuple = new OpenFGATuple();
         openFGATuple.setUser(tk.getUser());

@@ -234,6 +234,22 @@
                          placeholder="e.g., document:1">
                 </mat-form-field>
 
+                <mat-form-field appearance="outline">
+                  <mat-label>Grant Duration</mat-label>
+                  <input matInput
+                         [(ngModel)]="newTuple.grantDuration"
+                         placeholder="e.g., 1h, 30m, 1d (optional)">
+                  <mat-hint>Optional: Duration for time-limited grants</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Grant Time</mat-label>
+                  <input matInput
+                         [(ngModel)]="newTuple.grantTime"
+                         placeholder="e.g., 2024-01-01T00:00:00Z (optional)">
+                  <mat-hint>Optional: Specific time for grant expiration</mat-hint>
+                </mat-form-field>
+
                 <button mat-raised-button
                         color="primary"
                         (click)="addTuple()"
@@ -260,11 +276,25 @@
               <div class="tuples-container" *ngIf="tuples.length > 0">
                 <div class="tuple-item" *ngFor="let tuple of tuples; let i = index">
                   <div class="tuple-content">
-                    <span class="tuple-user">{{ tuple.user }}</span>
-                    <mat-icon class="tuple-arrow">arrow_forward</mat-icon>
-                    <span class="tuple-relation">{{ tuple.relation }}</span>
-                    <mat-icon class="tuple-arrow">arrow_forward</mat-icon>
-                    <span class="tuple-object">{{ tuple.object }}</span>
+                    <div>
+                      <span class="tuple-user">{{ tuple.user }}</span>
+                      <mat-icon class="tuple-arrow">arrow_forward</mat-icon>
+                      <span class="tuple-relation">{{ tuple.relation }}</span>
+                      <mat-icon class="tuple-arrow">arrow_forward</mat-icon>
+                      <span class="tuple-object">{{ tuple.object }}</span>
+                    </div>
+                    <div class="tuple-grants" *ngIf="tuple.grantDuration || tuple.grantTime">
+                      <div class="grant-info" *ngIf="tuple.grantDuration">
+                        <mat-icon class="grant-icon">schedule</mat-icon>
+                        <span class="grant-label">Duration:</span>
+                        <span class="grant-value">{{ tuple.grantDuration }}</span>
+                      </div>
+                      <div class="grant-info" *ngIf="tuple.grantTime">
+                        <mat-icon class="grant-icon">access_time</mat-icon>
+                        <span class="grant-label">Until:</span>
+                        <span class="grant-value">{{ tuple.grantTime }}</span>
+                      </div>
+                    </div>
                   </div>
                   <button mat-icon-button
                           color="warn"

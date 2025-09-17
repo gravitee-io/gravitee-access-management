@@ -75,14 +75,16 @@ export class OpenFGAComponent implements OnInit {
 
   // Tuples
   tuples = [
-    { user: 'alice', relation: 'owner', object: 'document:1' },
-    { user: 'bob', relation: 'reader', object: 'document:1' }
+    { user: 'alice', relation: 'owner', object: 'document:1', grantDuration: '', grantTime: '' },
+    { user: 'bob', relation: 'reader', object: 'document:1', grantDuration: '', grantTime: '' }
   ];
 
   newTuple = {
     user: '',
     relation: '',
-    object: ''
+    object: '',
+    grantDuration: '',
+    grantTime: ''
   };
 
   constructor(
@@ -240,7 +242,9 @@ export class OpenFGAComponent implements OnInit {
         this.newTuple = {
           user: '',
           relation: '',
-          object: ''
+          object: '',
+          grantDuration: '',
+          grantTime: ''
         };
         this.snackbarService.open('Tuple added successfully');
       },

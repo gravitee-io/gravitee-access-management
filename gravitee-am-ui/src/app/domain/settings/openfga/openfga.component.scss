@@ -260,7 +260,7 @@
 
     .tuple-form {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr auto;
+      grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto;
       gap: 16px;
       align-items: flex-start;
 
@@ -309,9 +309,16 @@
 
         .tuple-content {
           display: flex;
-          align-items: center;
-          gap: 12px;
+          flex-direction: column;
+          gap: 8px;
           font-family: 'Courier New', monospace;
+          flex: 1;
+
+          > div:first-child {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
 
           .tuple-user {
             color: #1976d2;
@@ -331,6 +338,41 @@
           .tuple-arrow {
             color: #666;
             font-size: 16px;
+          }
+
+          .tuple-grants {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+            padding-left: 16px;
+            border-left: 2px solid #e0e0e0;
+
+            .grant-info {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 12px;
+              color: #666;
+
+              .grant-icon {
+                font-size: 14px;
+                width: 14px;
+                height: 14px;
+                color: #757575;
+              }
+
+              .grant-label {
+                font-weight: 500;
+                color: #424242;
+              }
+
+              .grant-value {
+                color: #9c27b0;
+                font-weight: 500;
+                font-family: 'Courier New', monospace;
+              }
+            }
           }
         }
       }
