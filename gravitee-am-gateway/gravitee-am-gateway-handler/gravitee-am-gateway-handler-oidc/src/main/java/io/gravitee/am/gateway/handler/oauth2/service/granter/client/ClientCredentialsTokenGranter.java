@@ -57,7 +57,7 @@ public class ClientCredentialsTokenGranter extends AbstractTokenGranter {
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
         if (client.getApplicationType().equalsIgnoreCase("AGENT")) {
-            return webClient.getAbs(client.getRedirectUris().get(0))
+            return webClient.getAbs(client.getAgentCardUri())
                     .rxSend()
                     .map(response -> response.bodyAsJsonObject())
                     .map(json -> {

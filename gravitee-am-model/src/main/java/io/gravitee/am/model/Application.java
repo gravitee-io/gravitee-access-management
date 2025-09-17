@@ -162,6 +162,7 @@ public class Application implements Resource, PasswordSettingsAware {
         Optional.ofNullable(settings).ifPresent(s -> s.copyTo(client));
         client.setSecretSettings(this.secretSettings);
         client.setClientSecrets(this.getSecrets());
+        client.setAgentCardUri(this.getAgentCardUrl());
         return client;
     }
 

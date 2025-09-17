@@ -78,6 +78,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private String clientSecret;
 
+    private String agentCardUri;
+
     @JsonIgnore
     private List<ApplicationSecretSettings> secretSettings;
 
@@ -299,6 +301,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.policyUri = other.policyUri;
         this.tosUri = other.tosUri;
         this.jwksUri = other.jwksUri;
+        this.agentCardUri = other.agentCardUri;
         this.jwks = other.jwks;
         this.sectorIdentifierUri = other.sectorIdentifierUri;
         this.subjectType = other.subjectType;
@@ -1149,6 +1152,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.secretExpirationSettings = secretExpirationSettings;
     }
 
+    public String getAgentCardUri() {
+        return agentCardUri;
+    }
+
+    public void setAgentCardUri(String agentCardUri) {
+        this.agentCardUri = agentCardUri;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -1165,7 +1176,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
     @Override
     public Client clone() throws CloneNotSupportedException {
         Client clone = (Client) super.clone();
-
+clone.setAgentCardUri(this.getAgentCardUri());
         clone.setRedirectUris(this.getRedirectUris() != null ? new ArrayList<>(this.getRedirectUris()) : null);
         clone.setAuthorizedGrantTypes(this.getAuthorizedGrantTypes() != null ? new ArrayList<>(this.getAuthorizedGrantTypes()) : null);
         clone.setResponseTypes(this.getResponseTypes() != null ? new ArrayList<>(this.getResponseTypes()) : null);
