@@ -458,7 +458,7 @@ curl -X GET \
               <h3>Tools</h3>
               <mat-divider></mat-divider>
             </div>
-            <div class="tools-table-container">
+            <div class="tools-table-container" *ngIf="getToolsData().length > 0">
               <table mat-table [dataSource]="getToolsData()" class="tools-table">
                 
                 <!-- Tool Name Column -->
@@ -466,37 +466,44 @@ curl -X GET \
                   <th mat-header-cell *matHeaderCellDef>Tool Name</th>
                   <td mat-cell *matCellDef="let tool">
                     <div class="tool-name-cell">
-                      <strong>{{ tool.name }}</strong>
-                      <div class="tool-description">{{ tool.description }}</div>
+                      <mat-icon class="tool-icon">build</mat-icon>
+                      <span class="tool-name">{{ tool.name }}</span>
                     </div>
                   </td>
                 </ng-container>
 
-                <!-- Scopes Column -->
+                <!-- Description Column -->
+                <ng-container matColumnDef="description">
+                  <th mat-header-cell *matHeaderCellDef>Description</th>
+                  <td mat-cell *matCellDef="let tool">
+                    <div class="tool-description-cell">
+                      {{ tool.description }}
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Required Scopes Column -->
                 <ng-container matColumnDef="scopes">
-                  <th mat-header-cell *matHeaderCellDef>Scopes</th>
+                  <th mat-header-cell *matHeaderCellDef>Required Scopes</th>
                   <td mat-cell *matCellDef="let tool">
                     <div class="scopes-cell">
-                      <mat-chip-list>
-                        <mat-chip *ngFor="let scope of tool.scopes" class="scope-chip">{{ scope }}</mat-chip>
-                      </mat-chip-list>
+                      <ng-container *ngIf="tool.scopes && tool.scopes.length > 0">
+                        <span *ngFor="let scope of tool.scopes" class="scope-pill">{{ scope }}</span>
+                      </ng-container>
+                      <span *ngIf="!tool.scopes || tool.scopes.length === 0" class="no-scopes">No scopes required</span>
                     </div>
                   </td>
                 </ng-container>
 
-                <!-- Status Column -->
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef>Status</th>
-                  <td mat-cell *matCellDef="let tool">
-                    <span [class]="tool.status === 'Available' ? 'status-active' : 'status-inactive'">
-                      {{ tool.status }}
-                    </span>
-                  </td>
-                </ng-container>
-
-                <tr mat-header-row *matHeaderRowDef="['name', 'scopes', 'status']"></tr>
-                <tr mat-row *matRowDef="let row; columns: ['name', 'scopes', 'status'];"></tr>
+                <tr mat-header-row *matHeaderRowDef="['name', 'description', 'scopes']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes'];"></tr>
               </table>
+            </div>
+            
+            <!-- Empty state when no tools are available -->
+            <div class="no-tools-message" *ngIf="getToolsData().length === 0">
+              <p>No tools have been configured for this MCP server yet.</p>
+              <p>Go to the <a [routerLink]="['..', 'tools']">Tools</a> section to add tool definitions.</p>
             </div>
           </div>
 

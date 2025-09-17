@@ -180,31 +180,25 @@ export class ApplicationOverviewComponent implements OnInit {
   }
 
   getToolsData(): any[] {
-    return [
-      {
-        name: 'Filesystem',
-        description: 'File operations',
-        scopes: ['read', 'write'],
-        status: 'Available'
-      },
-      {
-        name: 'Database',
-        description: 'Data operations',
-        scopes: ['query', 'update'],
-        status: 'Available'
-      },
-      {
-        name: 'Web Search',
-        description: 'Search operations',
-        scopes: ['search'],
-        status: 'Available'
-      },
-      {
-        name: 'API Client',
-        description: 'HTTP operations',
-        scopes: ['get', 'post'],
-        status: 'Disabled'
+    if (!this.application?.settings?.mcp?.toolDefinitions) {
+      return [];
+    }
+
+    return this.application.settings.mcp.toolDefinitions.map((tool: any) => {
+      // Parse scopes from the tool definition
+      let scopes: string[] = [];
+      if (tool.requiredScopes && Array.isArray(tool.requiredScopes)) {
+        scopes = tool.requiredScopes;
+      } else if (tool.requiredScopes && typeof tool.requiredScopes === 'string') {
+        // Handle comma-separated scopes
+        scopes = tool.requiredScopes.split(',').map((scope: string) => scope.trim()).filter((scope: string) => scope.length > 0);
       }
-    ];
+
+      return {
+        name: tool.name || 'Unnamed Tool',
+        description: tool.description || 'No description available',
+        scopes: scopes
+      };
+    });
   }
 }
