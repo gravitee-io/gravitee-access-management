@@ -179,23 +179,37 @@
             <mat-card-subtitle>Define your authorization schema with types and relations</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            <mat-form-field appearance="outline" class="full-width">
-              <mat-label>Authorization Model JSON</mat-label>
-              <textarea matInput
-                        [(ngModel)]="authorizationModel"
-                        rows="12"
-                        placeholder="Enter your authorization model in OpenFGA JSON format">
-              </textarea>
-              <mat-hint>Define types, relations, and conditions using OpenFGA JSON syntax</mat-hint>
-            </mat-form-field>
+            <div class="model-loading" *ngIf="isLoadingModel">
+              <mat-icon>hourglass_empty</mat-icon>
+              <span>Loading authorization model...</span>
+            </div>
 
-            <div class="model-actions">
-              <button mat-raised-button
-                      color="primary"
-                      (click)="updateAuthorizationModel()">
-                <mat-icon>upload</mat-icon>
-                Update Model
-              </button>
+            <div *ngIf="!isLoadingModel">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Authorization Model JSON</mat-label>
+                <textarea matInput
+                          [(ngModel)]="authorizationModel"
+                          rows="12"
+                          placeholder="Enter your authorization model in OpenFGA JSON format">
+                </textarea>
+                <mat-hint>Define types, relations, and conditions using OpenFGA JSON syntax</mat-hint>
+              </mat-form-field>
+
+              <div class="model-actions">
+                <button mat-raised-button
+                        color="primary"
+                        (click)="updateAuthorizationModel()">
+                  <mat-icon>upload</mat-icon>
+                  Update Model
+                </button>
+                <button mat-button
+                        color="accent"
+                        (click)="loadAuthorizationModel()"
+                        [disabled]="!selectedStoreId">
+                  <mat-icon>refresh</mat-icon>
+                  Refresh Model
+                </button>
+              </div>
             </div>
           </mat-card-content>
         </mat-card>
@@ -232,22 +246,6 @@
                   <input matInput
                          [(ngModel)]="newTuple.object"
                          placeholder="e.g., document:1">
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Grant Duration</mat-label>
-                  <input matInput
-                         [(ngModel)]="newTuple.grantDuration"
-                         placeholder="e.g., 1h, 30m, 1d (optional)">
-                  <mat-hint>Optional: Duration for time-limited grants</mat-hint>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline">
-                  <mat-label>Grant Time</mat-label>
-                  <input matInput
-                         [(ngModel)]="newTuple.grantTime"
-                         placeholder="e.g., 2024-01-01T00:00:00Z (optional)">
-                  <mat-hint>Optional: Specific time for grant expiration</mat-hint>
                 </mat-form-field>
 
                 <button mat-raised-button

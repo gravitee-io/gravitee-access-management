@@ -72,19 +72,15 @@ export class OpenFGAComponent implements OnInit {
 
   // Authorization model
   authorizationModel = ``;
+  isLoadingModel = false;
 
   // Tuples
-  tuples = [
-    { user: 'alice', relation: 'owner', object: 'document:1', grantDuration: '', grantTime: '' },
-    { user: 'bob', relation: 'reader', object: 'document:1', grantDuration: '', grantTime: '' }
-  ];
+  tuples = [];
 
   newTuple = {
     user: '',
     relation: '',
-    object: '',
-    grantDuration: '',
-    grantTime: ''
+    object: ''
   };
 
   constructor(
@@ -178,6 +174,7 @@ export class OpenFGAComponent implements OnInit {
     if (selectedStore) {
       this.snackbarService.open(`Selected store: ${selectedStore.name}`);
       this.loadTuples();
+      this.loadAuthorizationModel();
     }
   }
 
@@ -193,6 +190,30 @@ export class OpenFGAComponent implements OnInit {
       error: (error) => {
         this.snackbarService.open('Failed to load tuples');
         console.error('Load tuples error:', error);
+      }
+    });
+  }
+
+  loadAuthorizationModel() {
+    if (!this.selectedStoreId) {
+      return;
+    }
+
+    this.isLoadingModel = true;
+    this.openFGAService.getAuthorizationModel(this.domainId, this.selectedStoreId).subscribe({
+      next: (response) => {
+        this.isLoadingModel = false;
+        if (response && response.authorizationModel) {
+          this.authorizationModel = JSON.stringify(response.authorizationModel, null, 2);
+        } else {
+          this.authorizationModel = '';
+        }
+      },
+      error: (error) => {
+        this.isLoadingModel = false;
+        this.snackbarService.open('Failed to load authorization model');
+        console.error('Load authorization model error:', error);
+        this.authorizationModel = '';
       }
     });
   }
@@ -237,14 +258,12 @@ export class OpenFGAComponent implements OnInit {
 
     this.openFGAService.addTuple(this.domainId, this.selectedStoreId, this.newTuple).subscribe({
       next: (response) => {
-        this.tuples.push({ ...this.newTuple });
+        this.tuples.push({ ...this.newTuple, grantDuration: '', grantTime: '' });
         // Reset form
         this.newTuple = {
           user: '',
           relation: '',
-          object: '',
-          grantDuration: '',
-          grantTime: ''
+          object: ''
         };
         this.snackbarService.open('Tuple added successfully');
       },

@@ -57,6 +57,10 @@ export class OpenFGAService {
     return this.http.put<any>(`${this.domainsURL}${domainId}/openfga/${storeId}/authorization-model`, { authorizationModel });
   }
 
+  getAuthorizationModel(domainId: string, storeId: string): Observable<any> {
+    return this.http.get<any>(`${this.domainsURL}${domainId}/openfga/${storeId}/authorization-model`);
+  }
+
   listTuples(domainId: string, storeId: string): Observable<any[]> {
     return this.http.get<any[]>(`${this.domainsURL}${domainId}/openfga/${storeId}/tuples`);
   }

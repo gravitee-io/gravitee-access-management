@@ -44,6 +44,8 @@ public interface OpenFGAService {
 
     Single<OpenFGAAuthenticationModel> setAuthenticationModel(String storeId, String model) throws JsonProcessingException, FgaInvalidParameterException;
 
+    Single<String> getAuthorizationModel(String storeId) throws FgaInvalidParameterException;
+
     Flowable<OpenFGATuple> getTuples(String storeId) throws FgaInvalidParameterException, ExecutionException, InterruptedException;
 
     Single<OpenFGATuple> createTuple(String storeId, OpenFGATuple tuple) throws FgaInvalidParameterException;

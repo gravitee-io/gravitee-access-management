@@ -220,6 +220,36 @@ public class OpenFGAResource extends AbstractDomainResource {
     }
 
     @GET
+    @Path("{storeId}/authorization-model")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(summary = "Get authorization model")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authorization model retrieved"),
+            @ApiResponse(responseCode = "404", description = "Store not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public void getAuthorizationModel(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("storeId") String storeId,
+            @Suspended final AsyncResponse response) {
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.READ)
+                .andThen(Single.defer(() -> {
+                    try {
+                        return openFGAService.getAuthorizationModel(storeId)
+                                .map(model -> Response.ok("{\"authorizationModel\": " + model + "}").build());
+                    } catch (FgaInvalidParameterException e) {
+                        return Single.just(Response.status(Response.Status.BAD_REQUEST)
+                                .entity("{\"error\": \"Invalid store parameters: " + e.getMessage() + "\"}")
+                                .build());
+                    }
+                }))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @GET
     @Path("{storeId}/tuples")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "List relationship tuples")

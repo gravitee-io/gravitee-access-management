@@ -229,8 +229,23 @@
 
 // Authorization model
 .model-card {
+  .model-loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    justify-content: center;
+    color: #666;
+
+    mat-icon {
+      animation: spin 2s linear infinite;
+    }
+  }
+
   .model-actions {
     margin-top: 16px;
+    display: flex;
+    gap: 16px;
 
     button {
       display: flex;
@@ -260,7 +275,7 @@
 
     .tuple-form {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 1fr 1fr auto;
+      grid-template-columns: 1fr 1fr 1fr auto;
       gap: 16px;
       align-items: flex-start;
 

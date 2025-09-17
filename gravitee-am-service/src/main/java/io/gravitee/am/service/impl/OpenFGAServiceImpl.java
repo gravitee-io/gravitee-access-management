@@ -132,6 +132,31 @@ public class OpenFGAServiceImpl implements OpenFGAService {
     }
 
     @Override
+    public Single<String> getAuthorizationModel(String storeId) throws FgaInvalidParameterException {
+        client.setStoreId(storeId);
+
+        return Single
+                .fromFuture(client.readAuthorizationModel())
+                .map(resp -> {
+                    if (resp.getAuthorizationModel() != null && resp.getAuthorizationModel().getTypeDefinitions() != null) {
+                        // Convert the authorization model to JSON string
+                        ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
+                        try {
+                            return mapper.writeValueAsString(resp.getAuthorizationModel());
+                        } catch (Exception e) {
+                            logger.error("Failed to serialize authorization model", e);
+                            return "{}";
+                        }
+                    }
+                    return "{}";
+                })
+                .onErrorResumeNext(err -> {
+                    logger.warn("Failed to read authorization model for store {}: {}", storeId, err.getMessage());
+                    return Single.just("{}");
+                });
+    }
+
+    @Override
     public Flowable<OpenFGATuple> getTuples(String storeId) throws FgaInvalidParameterException, ExecutionException, InterruptedException {
         client.setStoreId(storeId);
         var options = new ClientReadChangesOptions()
