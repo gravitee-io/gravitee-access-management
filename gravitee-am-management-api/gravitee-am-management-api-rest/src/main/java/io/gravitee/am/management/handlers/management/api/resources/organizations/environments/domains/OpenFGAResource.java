@@ -35,7 +35,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -171,28 +170,6 @@ public class OpenFGAResource extends AbstractDomainResource {
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.CREATE)
                 .andThen(openFGAService.createStore(request.getName()).map(s -> Response.ok(s).build()))
-                .subscribe(response::resume, response::resume);
-    }
-
-    @DELETE
-    @Path("stores/{storeId}")
-    @Operation(summary = "Delete OpenFGA store")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Store deleted"),
-            @ApiResponse(responseCode = "404", description = "Store not found"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public void deleteStore(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domainId,
-            @PathParam("storeId") String storeId,
-            @Suspended final AsyncResponse response) {
-
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.DELETE)
-                .andThen(Single.fromCallable(() -> {
-                    return Response.status(Response.Status.NOT_FOUND).build();
-                }))
                 .subscribe(response::resume, response::resume);
     }
 
