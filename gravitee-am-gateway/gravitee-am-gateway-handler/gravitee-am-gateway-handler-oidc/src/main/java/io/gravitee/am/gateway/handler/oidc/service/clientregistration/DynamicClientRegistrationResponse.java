@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.JWKSet;
 import io.gravitee.am.gateway.handler.oidc.model.jwk.converter.JWKConverter;
+import io.gravitee.am.model.application.ApplicationMCPSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
 
@@ -57,6 +58,9 @@ public class DynamicClientRegistrationResponse {
 
     @JsonProperty("contacts")
     private List<String> contacts;
+
+    @JsonProperty("x_mcp_settings")
+    private ApplicationMCPSettings mcp;
 
     @JsonProperty("client_name")
     private String clientName;
@@ -653,9 +657,18 @@ public class DynamicClientRegistrationResponse {
         this.backchannelUserCodeParameter = backchannelUserCodeParameter;
     }
 
+    public ApplicationMCPSettings getMcp() {
+        return mcp;
+    }
+
+    public void setMcp(ApplicationMCPSettings mcp) {
+        this.mcp = mcp;
+    }
+
     public static DynamicClientRegistrationResponse fromClient(Client client) {
         DynamicClientRegistrationResponse response = new DynamicClientRegistrationResponse();
 
+        response.setMcp(client.getMcp());
         response.setRedirectUris(client.getRedirectUris());
         response.setResponseTypes(client.getResponseTypes());
         response.setGrantTypes(client.getAuthorizedGrantTypes());
