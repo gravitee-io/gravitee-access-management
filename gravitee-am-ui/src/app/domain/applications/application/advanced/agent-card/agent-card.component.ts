@@ -46,9 +46,9 @@ export class ApplicationAgentCardComponent implements OnInit {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.application = structuredClone(this.route.snapshot.data['application']);
     
-    // Auto-fetch agent info if agentCardUrl is available
+    // Auto-fetch agent info if agentCardUrl is available (using backend proxy by default)
     if (this.application.agentCardUrl) {
-      this.fetchAgentInfo();
+      this.fetchViaBackend();
     }
   }
 
@@ -127,6 +127,6 @@ export class ApplicationAgentCardComponent implements OnInit {
   refreshAgentInfo(): void {
     this.agentInfo = null;
     this.error = null;
-    this.fetchAgentInfo();
+    this.fetchViaBackend();
   }
 }
