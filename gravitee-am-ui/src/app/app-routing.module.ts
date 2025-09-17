@@ -144,6 +144,7 @@ import { ApplicationTokensComponent } from './domain/applications/application/ad
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
+import { ApplicationAgentCardComponent } from './domain/applications/application/advanced/agent-card/agent-card.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
@@ -1190,6 +1191,24 @@ export const routes: Routes = [
                                   },
                                   perms: {
                                     only: ['application_settings_read'],
+                                  },
+                                },
+                              },
+                              {
+                                path: 'agent-card',
+                                component: ApplicationAgentCardComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'Agent Card',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['application_settings_read'],
+                                  },
+                                  types: {
+                                    only: ['AGENT'],
                                   },
                                 },
                               },

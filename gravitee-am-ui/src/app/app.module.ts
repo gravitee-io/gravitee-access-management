@@ -29,6 +29,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatNativeDateModule, MatRippleModule } from '@angular/material/core';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatIconModule } from '@angular/material/icon';
@@ -290,6 +291,7 @@ import {
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
+import { ApplicationAgentCardComponent } from './domain/applications/application/advanced/agent-card/agent-card.component';
 import {
   ApplicationMembershipsComponent,
   ApplicationMembershipsDialogComponent,
@@ -632,6 +634,7 @@ import { DomainStoreService } from './stores/domain.store';
     ApplicationGrantFlowsComponent,
     ApplicationSecretsCertificatesComponent,
     ApplicationMetadataComponent,
+    ApplicationAgentCardComponent,
     ApplicationMembershipsComponent,
     ApplicationFactorsComponent,
     ApplicationResourcesComponent,
@@ -725,6 +728,7 @@ import { DomainStoreService } from './stores/domain.store';
     MatChipsModule,
     MatDatepickerModule,
     MatDialogModule,
+    MatDividerModule,
     MatExpansionModule,
     MatGridListModule,
     MatIconModule,

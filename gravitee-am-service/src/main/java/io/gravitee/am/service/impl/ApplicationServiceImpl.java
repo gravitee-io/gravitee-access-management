@@ -1000,4 +1000,37 @@ public class ApplicationServiceImpl implements ApplicationService {
                     return Single.just(application);
                 });
     }
+
+    @Override
+    public Single<Object> fetchAgentCard(String agentCardUrl) {
+        return Single.fromCallable(() -> {
+            try {
+                // Create HTTP client to fetch agent card information
+                java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
+                        .connectTimeout(java.time.Duration.ofSeconds(10))
+                        .build();
+                
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(agentCardUrl))
+                        .timeout(java.time.Duration.ofSeconds(30))
+                        .header("Accept", "application/json")
+                        .header("User-Agent", "Gravitee-AM/1.0")
+                        .GET()
+                        .build();
+                
+                java.net.http.HttpResponse<String> response = client.send(request, 
+                        java.net.http.HttpResponse.BodyHandlers.ofString());
+                
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    // Parse JSON response
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    return mapper.readValue(response.body(), Object.class);
+                } else {
+                    throw new RuntimeException("HTTP " + response.statusCode() + ": " + response.body());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to fetch agent card: " + e.getMessage(), e);
+            }
+        });
+    }
 }
