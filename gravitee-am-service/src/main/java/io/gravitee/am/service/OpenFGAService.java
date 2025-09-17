@@ -24,6 +24,8 @@ import io.gravitee.am.service.model.OpenFGATuple;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
+import java.util.concurrent.ExecutionException;
+
 /**
  * @author GraviteeSource Team
  */
@@ -42,9 +44,9 @@ public interface OpenFGAService {
 
     Single<OpenFGAAuthenticationModel> setAuthenticationModel(String storeId, String model) throws JsonProcessingException, FgaInvalidParameterException;
 
-    Flowable<OpenFGATuple> getTuples() throws FgaInvalidParameterException;
+    Flowable<OpenFGATuple> getTuples(String storeId) throws FgaInvalidParameterException, ExecutionException, InterruptedException;
 
-    Single<OpenFGATuple> createTuple(OpenFGATuple tuple) throws FgaInvalidParameterException;
+    Single<OpenFGATuple> createTuple(String storeId, OpenFGATuple tuple) throws FgaInvalidParameterException;
 
 //    Single<OpenFGACheckResponse> check(OpenFGATuple tuple);
 

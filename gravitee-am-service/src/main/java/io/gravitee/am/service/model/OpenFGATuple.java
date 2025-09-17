@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,10 +15,13 @@
  */
 package io.gravitee.am.service.model;
 
+import dev.openfga.sdk.api.model.TupleKey;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.LinkedHashMap;
 
 @Getter
 @Setter
@@ -28,5 +31,19 @@ public class OpenFGATuple {
     private String user;
     private String relation;
     private String object;
+    private String grantDuration;
+    private String grantTime;
 
+    public static OpenFGATuple fromTupleKey(TupleKey tk) {
+        OpenFGATuple openFGATuple = new OpenFGATuple();
+        openFGATuple.setUser(tk.getUser());
+        openFGATuple.setRelation(tk.getRelation());
+        openFGATuple.setObject(tk.getObject());
+        if (tk.getCondition() != null) {
+            LinkedHashMap<String, String> context = (LinkedHashMap) tk.getCondition().getContext();
+            openFGATuple.setGrantDuration(context.get("grant_duration"));
+            openFGATuple.setGrantTime(context.get("grant_time"));
+        }
+        return openFGATuple;
+    }
 }

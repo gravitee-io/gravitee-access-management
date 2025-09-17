@@ -175,7 +175,24 @@ export class OpenFGAComponent implements OnInit {
     const selectedStore = this.stores.find(store => store.id === this.selectedStoreId);
     if (selectedStore) {
       this.snackbarService.open(`Selected store: ${selectedStore.name}`);
+      this.loadTuples();
     }
+  }
+
+  loadTuples() {
+    if (!this.selectedStoreId) {
+      return;
+    }
+
+    this.openFGAService.listTuples(this.domainId, this.selectedStoreId).subscribe({
+      next: (tuples) => {
+        this.tuples = tuples || [];
+      },
+      error: (error) => {
+        this.snackbarService.open('Failed to load tuples');
+        console.error('Load tuples error:', error);
+      }
+    });
   }
 
   // Check if we can proceed to authorization management
@@ -211,7 +228,12 @@ export class OpenFGAComponent implements OnInit {
       return;
     }
 
-    this.openFGAService.addTuple(this.domainId, this.newTuple).subscribe({
+    if (!this.selectedStoreId) {
+      this.snackbarService.open('Please select a store first');
+      return;
+    }
+
+    this.openFGAService.addTuple(this.domainId, this.selectedStoreId, this.newTuple).subscribe({
       next: (response) => {
         this.tuples.push({ ...this.newTuple });
         // Reset form
@@ -240,7 +262,12 @@ export class OpenFGAComponent implements OnInit {
       return;
     }
 
-    this.openFGAService.uploadTuples(this.domainId, this.tuples).subscribe({
+    if (!this.selectedStoreId) {
+      this.snackbarService.open('Please select a store first');
+      return;
+    }
+
+    this.openFGAService.uploadTuples(this.domainId, this.selectedStoreId, this.tuples).subscribe({
       next: (response) => {
         this.snackbarService.open(`${this.tuples.length} tuples uploaded successfully`);
       },

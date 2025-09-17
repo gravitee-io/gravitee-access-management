@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.openfga.sdk.api.client.OpenFgaClient;
 import dev.openfga.sdk.api.client.model.ClientReadChangesRequest;
-import dev.openfga.sdk.api.client.model.ClientReadRequest;
 import dev.openfga.sdk.api.client.model.ClientTupleKey;
 import dev.openfga.sdk.api.client.model.ClientWriteRequest;
 import dev.openfga.sdk.api.configuration.ClientConfiguration;
@@ -27,6 +26,7 @@ import dev.openfga.sdk.api.configuration.ClientListStoresOptions;
 import dev.openfga.sdk.api.configuration.ClientReadChangesOptions;
 import dev.openfga.sdk.api.model.CreateStoreRequest;
 import dev.openfga.sdk.api.model.ListStoresResponse;
+import dev.openfga.sdk.api.model.ReadChangesResponse;
 import dev.openfga.sdk.api.model.Tuple;
 import dev.openfga.sdk.api.model.WriteAuthorizationModelRequest;
 import dev.openfga.sdk.errors.FgaInvalidParameterException;
@@ -44,6 +44,7 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 /**
  * @author GraviteeSource Team
@@ -121,10 +122,6 @@ public class OpenFGAServiceImpl implements OpenFGAService {
 
         ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
-        // 1) DSL -> JSON (schema 1.1)
-//        ObjectNode authModelJson = OpenFgaDslConverter.toAuthorizationModelJson(modelDsl, mapper);
-
-        // 2) JSON -> WriteAuthorizationModelRequest
         WriteAuthorizationModelRequest req = mapper.readValue(modelDsl, WriteAuthorizationModelRequest.class);
 
         // 3) call client
@@ -135,39 +132,23 @@ public class OpenFGAServiceImpl implements OpenFGAService {
     }
 
     @Override
-    public Flowable<OpenFGATuple> getTuples() throws FgaInvalidParameterException {
+    public Flowable<OpenFGATuple> getTuples(String storeId) throws FgaInvalidParameterException, ExecutionException, InterruptedException {
+        client.setStoreId(storeId);
         var options = new ClientReadChangesOptions()
                 .pageSize(25);
 
         var body = new ClientReadChangesRequest();
-        var request = new ClientReadRequest();
-        client.read(request);
-        return Flowable.just(new OpenFGATuple());
-//
-//        var response = client.readChanges(body, options).get();
-//        return paginateTuples(null)
-//                .map(this::toDomainTuple)
-//                .onErrorResumeNext(err -> Flowable.error(wrap(err)));
+        return Flowable
+                .fromFuture(client.readChanges(body, options))
+                .flatMapIterable(ReadChangesResponse::getChanges)
+                .map(ch -> OpenFGATuple.fromTupleKey(ch.getTupleKey()));
     }
 
-//    private Flowable<Tuple> paginateTuples(String continuationToken) {
-//        ClientReadRequest req = new ReadRequest();
-//        if (continuationToken != null && !continuationToken.isEmpty()) {
-//            req.setContinuationToken(continuationToken);
-//        }
-//
-//        return Single.fromFuture(client.read(req))
-//                .toFlowable()
-//                .concatMap(resp -> {
-//                    Flowable<Tuple> current = Flowable.fromIterable(resp.getTuples());
-//                    String next = resp.getContinuationToken();
-//                    if (next == null || next.isEmpty()) return current;
-//                    return current.concatWith(Flowable.defer(() -> paginateTuples(next)));
-//                });
-//    }
 
     @Override
-    public Single<OpenFGATuple> createTuple(OpenFGATuple tuple) throws FgaInvalidParameterException {
+    public Single<OpenFGATuple> createTuple(String storeId, OpenFGATuple tuple) throws FgaInvalidParameterException {
+        client.setStoreId(storeId);
+
         ClientTupleKey tk = new ClientTupleKey()
                 .user(Objects.requireNonNull(tuple.getUser(), "tuple.user is required"))
                 .relation(Objects.requireNonNull(tuple.getRelation(), "tuple.relation is required"))
@@ -205,12 +186,12 @@ public class OpenFGAServiceImpl implements OpenFGAService {
 //                .onErrorResumeNext(err -> Single.error(wrap(err)));
 //    }
 
-//    // ===========================
-//    // HELPERY
-//    // ===========================
-//    private Date toDateSafe(OffsetDateTime odt) {
-//        return odt == null ? null : Date.from(odt.toInstant());
-//    }
+    // ===========================
+    // HELPERS
+    // ===========================
+    private Date toDateSafe(java.time.OffsetDateTime odt) {
+        return odt == null ? null : Date.from(odt.toInstant());
+    }
 
     private Throwable wrap(Throwable t) {
         return (t instanceof FgaInvalidParameterException) ? t : new RuntimeException(t);

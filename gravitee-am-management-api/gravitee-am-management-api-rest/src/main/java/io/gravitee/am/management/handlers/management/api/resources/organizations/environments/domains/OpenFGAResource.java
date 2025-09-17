@@ -220,7 +220,7 @@ public class OpenFGAResource extends AbstractDomainResource {
     }
 
     @GET
-    @Path("tuples")
+    @Path("{storeId}/tuples")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "List relationship tuples")
     @ApiResponses({
@@ -231,15 +231,24 @@ public class OpenFGAResource extends AbstractDomainResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @Suspended final AsyncResponse response) throws FgaInvalidParameterException {
+            @PathParam("storeId") String storeId,
+            @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.READ)
-                .andThen(openFGAService.getTuples().map(t -> Response.ok(t).build()))
+                .andThen(Single.defer(() -> {
+                    try {
+                        return openFGAService.getTuples(storeId).toList().map(tuples -> Response.ok(tuples).build());
+                    } catch (FgaInvalidParameterException e) {
+                        return Single.just(Response.status(Response.Status.BAD_REQUEST)
+                                .entity("{\"error\": \"Invalid store parameters: " + e.getMessage() + "\"}")
+                                .build());
+                    }
+                }))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
-    @Path("tuples")
+    @Path("{storeId}/tuples")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Add relationship tuple")
@@ -252,47 +261,81 @@ public class OpenFGAResource extends AbstractDomainResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
+            @PathParam("storeId") String storeId,
             @Parameter(name = "tuple") @Valid @NotNull final Map<String, String> tuple,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.CREATE)
-                .andThen(Single.fromCallable(() -> {
+                .andThen(Single.defer(() -> {
                     String user = tuple.get("user");
                     String relation = tuple.get("relation");
                     String object = tuple.get("object");
 
                     if (user == null || relation == null || object == null) {
-                        return Response.status(Response.Status.BAD_REQUEST)
+                        return Single.just(Response.status(Response.Status.BAD_REQUEST)
                                 .entity("{\"error\": \"User, relation, and object are required\"}")
-                                .build();
+                                .build());
                     }
 
-                    // Add tuple to domain
-                   return openFGAService.createTuple(new OpenFGATuple(user, relation, object)).map(t -> Response.ok(t).build());
+                    try {
+                        return openFGAService.createTuple(storeId, new OpenFGATuple(user, relation, object))
+                                .map(t -> Response.status(Response.Status.CREATED).entity(t).build());
+                    } catch (FgaInvalidParameterException e) {
+                        return Single.just(Response.status(Response.Status.BAD_REQUEST)
+                                .entity("{\"error\": \"Invalid tuple parameters: " + e.getMessage() + "\"}")
+                                .build());
+                    }
                 }))
                 .subscribe(response::resume, response::resume);
     }
 
     @POST
-    @Path("tuples/upload")
+    @Path("{storeId}/tuples/upload")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Upload multiple tuples")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Tuples uploaded"),
+            @ApiResponse(responseCode = "400", description = "Invalid tuples"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public void uploadTuples(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
+            @PathParam("storeId") String storeId,
             @Parameter(name = "tuples") @Valid @NotNull final List<Map<String, String>> tuples,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.CREATE)
-                .andThen(Single.fromCallable(() -> {
+                .andThen(Single.defer(() -> {
+                    if (tuples.isEmpty()) {
+                        return Single.just(Response.status(Response.Status.BAD_REQUEST)
+                                .entity("{\"error\": \"No tuples provided\"}")
+                                .build());
+                    }
 
-                    return Response.ok("{\"status\": \"success\", \"uploaded\": " + tuples.size() + "}").build();
+                    // Convert maps to OpenFGATuple objects and create them one by one
+                    return Single.fromCallable(() -> {
+                        try {
+                            for (Map<String, String> tupleMap : tuples) {
+                                String user = tupleMap.get("user");
+                                String relation = tupleMap.get("relation");
+                                String object = tupleMap.get("object");
+
+                                if (user == null || relation == null || object == null) {
+                                    throw new IllegalArgumentException("Invalid tuple: user, relation, and object are required");
+                                }
+
+                                openFGAService.createTuple(storeId, new OpenFGATuple(user, relation, object)).blockingGet();
+                            }
+                            return Response.ok("{\"status\": \"success\", \"uploaded\": " + tuples.size() + "}").build();
+                        } catch (Exception e) {
+                            return Response.status(Response.Status.BAD_REQUEST)
+                                    .entity("{\"error\": \"Failed to upload tuples: " + e.getMessage() + "\"}")
+                                    .build();
+                        }
+                    });
                 }))
                 .subscribe(response::resume, response::resume);
     }
