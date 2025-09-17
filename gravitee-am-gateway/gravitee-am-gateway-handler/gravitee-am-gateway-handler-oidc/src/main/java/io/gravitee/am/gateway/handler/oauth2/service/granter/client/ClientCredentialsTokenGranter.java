@@ -18,8 +18,13 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.client;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
+import io.reactivex.rxjava3.core.Maybe;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 
 /**
  * Implementation of the Client Credentials Grant Flow
@@ -30,19 +35,40 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
  */
 public class ClientCredentialsTokenGranter extends AbstractTokenGranter {
 
-    public ClientCredentialsTokenGranter() {
+    private WebClient webClient;
+
+    public ClientCredentialsTokenGranter(WebClient webClient) {
         super(GrantType.CLIENT_CREDENTIALS);
         // A refresh token SHOULD NOT be included for the client client credentials flow
         // See <a href="https://tools.ietf.org/html/rfc6749#section-4.4.3">4.4.3. Access Token Response</a>
         setSupportRefreshToken(false);
+        this.webClient = webClient;
     }
 
     public ClientCredentialsTokenGranter(TokenRequestResolver tokenRequestResolver,
                                          TokenService tokenService,
-                                         RulesEngine rulesEngine) {
-        this();
+                                         RulesEngine rulesEngine, WebClient webClient) {
+        this(webClient);
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
         setRulesEngine(rulesEngine);
+    }
+
+    @Override
+    protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
+        if (client.getApplicationType().equalsIgnoreCase("AGENT")) {
+            return webClient.getAbs(client.getRedirectUris().get(0))
+                    .rxSend()
+                    .map(response -> response.bodyAsJsonObject())
+                    .map(json -> {
+                        var agent = new User();
+                        agent.setId(client.getClientId());
+                        agent.setUsername(json.getString("id"));
+                        agent.setAdditionalInformation(json.getMap());
+                        return agent;
+                    })
+                    .toMaybe();
+        }
+        return super.resolveResourceOwner(tokenRequest, client);
     }
 }

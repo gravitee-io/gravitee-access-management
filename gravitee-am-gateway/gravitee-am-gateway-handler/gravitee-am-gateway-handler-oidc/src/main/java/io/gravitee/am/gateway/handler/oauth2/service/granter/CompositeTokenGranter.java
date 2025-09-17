@@ -46,6 +46,7 @@ import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.gateway.api.Response;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -108,6 +109,10 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private SubjectManager subjectManager;
 
+
+    @Autowired
+    private WebClient webClient;
+
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return findGranter(tokenRequest, client)
@@ -149,7 +154,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Override
     public void afterPropertiesSet() {
         this.tokenRequestResolver.setScopeManager(this.scopeManager);
-        addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService, rulesEngine));
+        addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService, rulesEngine, webClient));
         addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, rulesEngine));
         addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, environment, rulesEngine));
         addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, rulesEngine));

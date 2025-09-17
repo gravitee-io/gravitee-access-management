@@ -71,7 +71,7 @@ public class ApplicationAgentTemplate implements ApplicationTemplate {
         oAuthSettings.setClientSecret(oAuthSettings.getClientSecret() == null ? SecureRandomString.generate() : oAuthSettings.getClientSecret());
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.CONFIDENTIAL);
-        oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
+        oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.AGENT);
 
         if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
             // service applications must have client_credentials
