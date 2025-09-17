@@ -57,7 +57,7 @@ export class ApplicationCreationStep1Component implements OnInit {
     },
     {
       name: 'Agent',
-      icon: 'smart_toy',
+      icon: 'settings_applications',
       type: 'AGENT',
       description: 'Agent applications',
       subDescription: 'e.g : Monitoring agents, automation tools',

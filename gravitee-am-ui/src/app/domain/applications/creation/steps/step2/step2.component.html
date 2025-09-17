@@ -77,6 +77,70 @@
           </mat-form-field>
         </div>
       </div>
+      <!-- Agent-specific configuration section -->
+      <div class="gv-form-section" *ngIf="application.type === 'AGENT'">
+        <div class="gv-form-section-title">
+          <h5>Agent Configuration</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>Agent Card URL</mat-label>
+            <input 
+              matInput 
+              type="url" 
+              placeholder="https://example.com/.well-known/agent.json" 
+              name="agentCardUrl" 
+              [(ngModel)]="application.agentCardUrl" 
+              #agentCardUrl="ngModel"
+              required
+            />
+            <mat-hint>URL to the agent's .well-known/agent.json endpoint for fetching agent information</mat-hint>
+            <mat-error *ngIf="agentCardUrl.errors?.url">Please enter a valid URL</mat-error>
+            <mat-error *ngIf="agentCardUrl.errors?.required">Agent Card URL is required</mat-error>
+          </mat-form-field>
+          <div style="margin-top: 10px;">
+            <button 
+              mat-stroked-button 
+              type="button" 
+              (click)="fetchAgentInfo()" 
+              [disabled]="!application.agentCardUrl || agentCardUrl.errors"
+              color="primary">
+              <mat-icon>refresh</mat-icon>
+              Fetch Agent Information
+            </button>
+            <button 
+              mat-stroked-button 
+              type="button" 
+              (click)="testUrl()" 
+              [disabled]="!application.agentCardUrl || agentCardUrl.errors"
+              style="margin-left: 10px;">
+              <mat-icon>open_in_new</mat-icon>
+              Test URL
+            </button>
+            <mat-hint style="display: block; margin-top: 5px;">
+              Test the agent card URL and fetch agent details. If fetch fails, try "Test URL" to open in new tab.
+            </mat-hint>
+            <mat-hint style="display: block; margin-top: 5px; color: #ff9800;">
+              <strong>Note:</strong> If fetch fails, it's likely due to CORS restrictions. The agent server needs to allow cross-origin requests.
+            </mat-hint>
+          </div>
+          <div *ngIf="agentInfo" style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">
+            <h6>Agent Information:</h6>
+            <p><strong>Name:</strong> {{ agentInfo.name }}</p>
+            <p><strong>Description:</strong> {{ agentInfo.description }}</p>
+            <p><strong>Version:</strong> {{ agentInfo.version }}</p>
+            <p><strong>Protocol Version:</strong> {{ agentInfo.protocolVersion }}</p>
+            <div *ngIf="agentInfo.skills && agentInfo.skills.length > 0">
+              <p><strong>Skills:</strong></p>
+              <ul>
+                <li *ngFor="let skill of agentInfo.skills">{{ skill.name }} - {{ skill.description }}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <h5>OAuth 2.0 Settings (Optional)</h5>
