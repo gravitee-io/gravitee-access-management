@@ -56,6 +56,13 @@ export class ApplicationCreationStep1Component implements OnInit {
       subDescription: 'e.g : Shell script, daemon, CLI',
     },
     {
+      name: 'Agent',
+      icon: 'smart_toy',
+      type: 'AGENT',
+      description: 'Agent applications',
+      subDescription: 'e.g : Monitoring agents, automation tools',
+    },
+    {
       name: 'Resource Server',
       icon: 'folder_shared',
       type: 'RESOURCE_SERVER',

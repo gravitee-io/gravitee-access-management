@@ -45,6 +45,10 @@ export class ApplicationCreationStep2Component implements OnInit {
       type: 'SERVICE',
     },
     {
+      icon: 'smart_toy',
+      type: 'AGENT',
+    },
+    {
       icon: 'folder_shared',
       type: 'RESOURCE_SERVER',
     },
@@ -63,7 +67,7 @@ export class ApplicationCreationStep2Component implements OnInit {
   }
 
   displayRedirectUri(): boolean {
-    return this.application.type !== 'SERVICE';
+    return this.application.type !== 'SERVICE' && this.application.type !== 'AGENT';
   }
 
   elRedirectUriEnabled(): boolean {
