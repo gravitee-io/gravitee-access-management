@@ -1013,7 +1013,7 @@ export const routes: Routes = [
                                 only: ['application_identity_provider_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'MCP'],
                               },
                             },
                           },
@@ -1584,7 +1584,7 @@ export const routes: Routes = [
                                 only: ['application_identity_provider_list'],
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'MCP'],
                               },
                             },
                           },
