@@ -17,10 +17,10 @@ package io.gravitee.am.model.safe;
 
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.CookieSettings;
+import io.gravitee.am.model.application.ApplicationMCPSettings;
 import io.gravitee.am.model.oidc.Client;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,6 +35,7 @@ public class ClientProperties {
     private String name;
     private CookieSettings cookieSettings;
     private Map<String, Object> metadata;
+    private McpProperties mcp;
 
     public ClientProperties() {
     }
@@ -47,6 +48,23 @@ public class ClientProperties {
         this.name = client.getClientName();
         this.cookieSettings = client.getCookieSettings();
         this.metadata = client.getMetadata() == null ? new HashMap<>() : new HashMap<>(client.getMetadata());
+        this.mcp = mcpProperties(client.getMcp());
+    }
+
+    private McpProperties mcpProperties(ApplicationMCPSettings mcp) {
+        if(mcp == null) {
+            return null;
+        }
+        McpProperties mcpProperties = new McpProperties();
+        List<String> tools = new ArrayList<>();
+        Set<String> scopes = new HashSet<>();
+        mcp.getToolDefinitions().forEach(toolDefinition -> {
+            scopes.addAll(toolDefinition.getRequiredScopes());
+            tools.add(toolDefinition.getName());
+        });
+        mcpProperties.setTools(tools);
+        mcpProperties.setScopes(List.copyOf(scopes));
+        return mcpProperties;
     }
 
     public ClientProperties(Application app) {
@@ -107,5 +125,13 @@ public class ClientProperties {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    public McpProperties getMcp() {
+        return mcp;
+    }
+
+    public void setMcp(McpProperties mcp) {
+        this.mcp = mcp;
     }
 }

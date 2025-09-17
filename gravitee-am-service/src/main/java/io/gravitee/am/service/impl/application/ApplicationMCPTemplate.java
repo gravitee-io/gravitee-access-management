@@ -36,24 +36,13 @@ import java.util.Collections;
  * 
  * @author GraviteeSource Team
  */
-public class ApplicationMCPTemplate extends ApplicationAbstractTemplate {
+public class ApplicationMCPTemplate extends ApplicationBrowserTemplate {
 
     @Override
     public boolean canHandle(Application application) {
         return ApplicationType.MCP.equals(application.getType());
     }
 
-    @Override
-    public void handle(Application application) {
-        // assign values
-        update(application, false);
-    }
-
-    @Override
-    public void changeType(Application application) {
-        // force default values
-        update(application, true);
-    }
 
     private void update(Application application, boolean force) {
         // check for null values
@@ -74,6 +63,8 @@ public class ApplicationMCPTemplate extends ApplicationAbstractTemplate {
         oAuthSettings.setClientName(oAuthSettings.getClientName() == null ? application.getName() : oAuthSettings.getClientName());
         oAuthSettings.setClientType(ClientType.CONFIDENTIAL);
         oAuthSettings.setApplicationType(io.gravitee.am.common.oidc.ApplicationType.WEB);
+        oAuthSettings.setResponseTypes(new ArrayList<>(defaultAuthorizationCodeResponseTypes()));
+
 
         if (force || (oAuthSettings.getGrantTypes() == null || oAuthSettings.getGrantTypes().isEmpty())) {
             // MCP applications should have client_credentials flow for server-to-server communication
