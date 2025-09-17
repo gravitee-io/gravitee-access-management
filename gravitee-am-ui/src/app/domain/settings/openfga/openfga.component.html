@@ -1,0 +1,316 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <h1>OpenFGA Fine-Grained Authorization</h1>
+  <div class="gv-page-description">
+    Connect to your OpenFGA server, select a store, and manage authorization models and relationship tuples.
+  </div>
+
+  <!-- Step 1: Connection -->
+  <mat-card class="connection-card" [class.connected]="isConnected">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon [color]="isConnected ? 'primary' : 'warn'">
+          {{ isConnected ? 'link' : 'link_off' }}
+        </mat-icon>
+        Server Connection
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ isConnected ? 'Connected to OpenFGA server' : 'Connect to your OpenFGA server to get started' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="connection-form" *ngIf="!isConnected">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>OpenFGA Server URL</mat-label>
+          <input matInput
+                 [(ngModel)]="serverUrl"
+                 placeholder="http://localhost:8080"
+                 [disabled]="isConnecting">
+          <mat-hint>Enter the URL of your OpenFGA server</mat-hint>
+        </mat-form-field>
+
+        <div class="connection-actions">
+          <button mat-raised-button
+                  color="primary"
+                  (click)="connect()"
+                  [disabled]="isConnecting || !serverUrl">
+            <mat-icon *ngIf="isConnecting">hourglass_empty</mat-icon>
+            <mat-icon *ngIf="!isConnecting">power</mat-icon>
+            {{ isConnecting ? 'Connecting...' : 'Connect' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="connection-status" *ngIf="isConnected">
+        <div class="status-info">
+          <mat-icon color="primary">check_circle</mat-icon>
+          <span>Connected to: <strong>{{ serverUrl }}</strong></span>
+        </div>
+        <button mat-button color="warn" (click)="disconnect()">
+          <mat-icon>power_off</mat-icon>
+          Disconnect
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Step 2: Store Selection (Only shown when connected) -->
+  <mat-card class="store-card" *ngIf="isConnected" [class.store-selected]="selectedStoreId">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon [color]="selectedStoreId ? 'primary' : 'warn'">
+          {{ selectedStoreId ? 'storage' : 'storage' }}
+        </mat-icon>
+        Store Selection
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ selectedStoreId ? 'Store selected and ready for authorization management' : 'Select an existing store or create a new one' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="store-loading" *ngIf="isLoadingStores">
+        <mat-icon>hourglass_empty</mat-icon>
+        <span>Loading available stores...</span>
+      </div>
+
+      <div class="store-management" *ngIf="!isLoadingStores">
+        <!-- Store Selection Dropdown -->
+        <div class="store-selection" *ngIf="stores.length > 0">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Select Store</mat-label>
+            <mat-select [(ngModel)]="selectedStoreId" (selectionChange)="onStoreSelected()">
+              <mat-option value="">-- Select a store --</mat-option>
+              <mat-option *ngFor="let store of stores" [value]="store.id">
+                {{ store.name }} ({{ store.id }})
+              </mat-option>
+            </mat-select>
+            <mat-hint>Choose an existing store to manage authorization</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- No Stores Message -->
+        <div class="no-stores" *ngIf="stores.length === 0 && !showCreateStore">
+          <mat-icon>storage</mat-icon>
+          <p>No stores found on the server. Create your first store to get started.</p>
+        </div>
+
+        <!-- Create Store Option -->
+        <div class="create-store-section">
+          <div class="create-store-trigger" *ngIf="!showCreateStore">
+            <button mat-raised-button
+                    color="primary"
+                    (click)="showCreateStore = true">
+              <mat-icon>add</mat-icon>
+              Create New Store
+            </button>
+            <span *ngIf="stores.length > 0" class="or-divider">or select from existing stores above</span>
+          </div>
+
+          <div class="create-store-form" *ngIf="showCreateStore">
+            <h3>Create New Store</h3>
+            <div class="create-form-row">
+              <mat-form-field appearance="outline" class="store-name-field">
+                <mat-label>Store Name</mat-label>
+                <input matInput
+                       [(ngModel)]="newStoreName"
+                       placeholder="Enter store name"
+                       [disabled]="isCreatingStore"
+                       (keyup.enter)="createStore()">
+                <mat-hint>A descriptive name for your authorization store</mat-hint>
+              </mat-form-field>
+
+              <div class="create-actions">
+                <button mat-raised-button
+                        color="primary"
+                        (click)="createStore()"
+                        [disabled]="!newStoreName.trim() || isCreatingStore">
+                  <mat-icon *ngIf="isCreatingStore">hourglass_empty</mat-icon>
+                  <mat-icon *ngIf="!isCreatingStore">add</mat-icon>
+                  {{ isCreatingStore ? 'Creating...' : 'Create Store' }}
+                </button>
+                <button mat-button
+                        (click)="cancelCreateStore()"
+                        [disabled]="isCreatingStore">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Store Info -->
+        <div class="selected-store-info" *ngIf="selectedStoreId">
+          <div class="store-details">
+            <mat-icon color="primary">check_circle</mat-icon>
+            <div class="store-info">
+              <span class="store-name">{{ selectedStoreName }}</span>
+              <span class="store-id">ID: {{ selectedStoreId }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Step 3: Authorization Management (Only shown when store is selected) -->
+  <div class="authorization-section" *ngIf="canManageAuthorization">
+    <mat-tab-group>
+      <!-- Authorization Model Tab -->
+      <mat-tab label="Authorization Model">
+        <mat-card class="model-card">
+          <mat-card-header>
+            <mat-card-title>Authorization Model</mat-card-title>
+            <mat-card-subtitle>Define your authorization schema with types and relations</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Authorization Model JSON</mat-label>
+              <textarea matInput
+                        [(ngModel)]="authorizationModel"
+                        rows="12"
+                        placeholder="Enter your authorization model in OpenFGA JSON format">
+              </textarea>
+              <mat-hint>Define types, relations, and conditions using OpenFGA JSON syntax</mat-hint>
+            </mat-form-field>
+
+            <div class="model-actions">
+              <button mat-raised-button
+                      color="primary"
+                      (click)="updateAuthorizationModel()">
+                <mat-icon>upload</mat-icon>
+                Update Model
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+
+      <!-- Relationship Tuples Tab -->
+      <mat-tab label="Relationship Tuples">
+        <mat-card class="tuples-card">
+          <mat-card-header>
+            <mat-card-title>Relationship Tuples</mat-card-title>
+            <mat-card-subtitle>Manage the relationships between users and objects</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <!-- Add New Tuple -->
+            <div class="add-tuple-section">
+              <h3>Add New Tuple</h3>
+              <div class="tuple-form">
+                <mat-form-field appearance="outline">
+                  <mat-label>User</mat-label>
+                  <input matInput
+                         [(ngModel)]="newTuple.user"
+                         placeholder="e.g., alice">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Relation</mat-label>
+                  <input matInput
+                         [(ngModel)]="newTuple.relation"
+                         placeholder="e.g., reader">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Object</mat-label>
+                  <input matInput
+                         [(ngModel)]="newTuple.object"
+                         placeholder="e.g., document:1">
+                </mat-form-field>
+
+                <button mat-raised-button
+                        color="primary"
+                        (click)="addTuple()"
+                        [disabled]="!newTuple.user || !newTuple.relation || !newTuple.object">
+                  <mat-icon>add</mat-icon>
+                  Add Tuple
+                </button>
+              </div>
+            </div>
+
+            <!-- Existing Tuples -->
+            <div class="tuples-list">
+              <div class="tuples-header">
+                <h3>Current Tuples ({{ tuples.length }})</h3>
+                <button mat-raised-button
+                        color="accent"
+                        (click)="uploadTuples()"
+                        [disabled]="tuples.length === 0">
+                  <mat-icon>cloud_upload</mat-icon>
+                  Upload All Tuples
+                </button>
+              </div>
+
+              <div class="tuples-container" *ngIf="tuples.length > 0">
+                <div class="tuple-item" *ngFor="let tuple of tuples; let i = index">
+                  <div class="tuple-content">
+                    <span class="tuple-user">{{ tuple.user }}</span>
+                    <mat-icon class="tuple-arrow">arrow_forward</mat-icon>
+                    <span class="tuple-relation">{{ tuple.relation }}</span>
+                    <mat-icon class="tuple-arrow">arrow_forward</mat-icon>
+                    <span class="tuple-object">{{ tuple.object }}</span>
+                  </div>
+                  <button mat-icon-button
+                          color="warn"
+                          (click)="removeTuple(i)">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div class="no-tuples" *ngIf="tuples.length === 0">
+                <mat-icon>relationship</mat-icon>
+                <p>No tuples defined yet. Add your first relationship tuple above.</p>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+
+      <!-- Test Permissions Tab -->
+      <mat-tab label="Test Permissions">
+        <mat-card class="test-card">
+          <mat-card-header>
+            <mat-card-title>Permission Testing</mat-card-title>
+            <mat-card-subtitle>Test authorization decisions with your current model and tuples</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="test-section">
+              <p>Use this section to test permission checks against your authorization model.</p>
+
+              <div class="test-actions">
+                <button mat-raised-button
+                        color="accent"
+                        (click)="checkPermission()">
+                  <mat-icon>security</mat-icon>
+                  Test Random Permission
+                </button>
+              </div>
+
+              <div class="test-hint">
+                <mat-icon>info</mat-icon>
+                <span>This will simulate a permission check using your current authorization model and tuples.</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

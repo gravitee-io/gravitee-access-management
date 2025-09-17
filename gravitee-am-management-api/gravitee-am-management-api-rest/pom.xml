@@ -36,8 +36,20 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>io.gravitee.am.service</groupId>
+            <artifactId>gravitee-am-service</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
+        </dependency>
+
+        <!-- OpenFGA SDK -->
+        <dependency>
+            <groupId>dev.openfga</groupId>
+            <artifactId>openfga-sdk</artifactId>
+            <version>0.8.2</version>
         </dependency>
 
         <!-- Gravitee dependencies -->

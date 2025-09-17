@@ -1,0 +1,391 @@
+/*
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.full-width {
+  width: 100%;
+}
+
+// Connection section
+.connection-card {
+  margin-bottom: 24px;
+  transition: border-color 0.3s ease;
+
+  &.connected {
+    border-left: 4px solid #4caf50;
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+// Store section
+.store-card {
+  margin-bottom: 24px;
+  transition: border-color 0.3s ease;
+
+  &.store-selected {
+    border-left: 4px solid #2196f3;
+  }
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.store-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  justify-content: center;
+  color: #666;
+
+  mat-icon {
+    animation: spin 2s linear infinite;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.store-management {
+  .store-selection {
+    margin-bottom: 24px;
+  }
+
+  .no-stores {
+    text-align: center;
+    padding: 32px;
+    color: #666;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+      color: #ccc;
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+
+  .create-store-section {
+    .create-store-trigger {
+      text-align: center;
+      padding: 16px 0;
+
+      button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .or-divider {
+        display: block;
+        color: #666;
+        font-style: italic;
+        font-size: 14px;
+      }
+    }
+
+    .create-store-form {
+      background-color: #f8f9fa;
+      padding: 24px;
+      border-radius: 8px;
+      border: 2px dashed #ddd;
+
+      h3 {
+        margin: 0 0 16px 0;
+        color: #333;
+      }
+
+      .create-form-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 16px;
+        align-items: flex-start;
+
+        @media (max-width: 768px) {
+          grid-template-columns: 1fr;
+        }
+
+        .store-name-field {
+          min-width: 300px;
+        }
+
+        .create-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-top: 8px;
+
+          button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+        }
+      }
+    }
+  }
+
+  .selected-store-info {
+    margin-top: 24px;
+    padding: 16px;
+    background-color: #e8f5e8;
+    border-radius: 8px;
+    border-left: 4px solid #4caf50;
+
+    .store-details {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .store-info {
+        display: flex;
+        flex-direction: column;
+
+        .store-name {
+          font-weight: 500;
+          font-size: 16px;
+          color: #333;
+        }
+
+        .store-id {
+          font-size: 12px;
+          color: #666;
+          font-family: monospace;
+        }
+      }
+    }
+  }
+}
+
+.connection-form {
+  .connection-actions {
+    margin-top: 16px;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+}
+
+.connection-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .status-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+// Authorization section
+.authorization-section {
+  margin-top: 24px;
+
+  mat-tab-group {
+    mat-card {
+      margin-top: 16px;
+      border: none;
+      box-shadow: none;
+    }
+  }
+}
+
+// Authorization model
+.model-card {
+  .model-actions {
+    margin-top: 16px;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  }
+
+  textarea {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
+// Tuples management
+.tuples-card {
+  .add-tuple-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e0e0e0;
+
+    h3 {
+      margin: 0 0 16px 0;
+      color: #333;
+    }
+
+    .tuple-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr auto;
+      gap: 16px;
+      align-items: flex-start;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+  }
+
+  .tuples-list {
+    .tuples-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+
+      h3 {
+        margin: 0;
+        color: #333;
+      }
+
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    .tuples-container {
+      .tuple-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border-left: 3px solid #2196f3;
+
+        .tuple-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-family: 'Courier New', monospace;
+
+          .tuple-user {
+            color: #1976d2;
+            font-weight: 500;
+          }
+
+          .tuple-relation {
+            color: #388e3c;
+            font-weight: 500;
+          }
+
+          .tuple-object {
+            color: #f57c00;
+            font-weight: 500;
+          }
+
+          .tuple-arrow {
+            color: #666;
+            font-size: 16px;
+          }
+        }
+      }
+    }
+
+    .no-tuples {
+      text-align: center;
+      padding: 48px 24px;
+      color: #666;
+
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        margin-bottom: 16px;
+        color: #ccc;
+      }
+
+      p {
+        margin: 0;
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+// Test section
+.test-card {
+  .test-section {
+    text-align: center;
+    padding: 24px;
+
+    .test-actions {
+      margin: 24px 0;
+
+      button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+
+    .test-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #666;
+      font-style: italic;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
