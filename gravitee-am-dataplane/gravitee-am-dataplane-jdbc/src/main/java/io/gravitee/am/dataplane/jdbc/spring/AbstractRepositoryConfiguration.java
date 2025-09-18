@@ -127,7 +127,7 @@ public abstract class AbstractRepositoryConfiguration extends AbstractR2dbcConfi
                     jdbcUrl = appendJdbcParam(jdbcUrl, TAG_CURRENT_SCHEMA, currentSchema);
                 } else {
                     String driver = getDriver();
-                    LOGGER.warn("Schema parameter '{}' detected for {} driver.. This will be ignored as {} does not support schemas.", currentSchema, driver, driver);
+                    LOGGER.warn("Schema parameter '{}' detected for {} driver. This will be ignored as {} does not support schemas.", currentSchema, driver, driver);
                 }
             }
 
