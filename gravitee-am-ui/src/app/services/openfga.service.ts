@@ -69,11 +69,8 @@ export class OpenFGAService {
     return this.http.post<any>(`${this.domainsURL}${domainId}/openfga/${storeId}/tuples`, tuple);
   }
 
-  uploadTuples(domainId: string, storeId: string, tuples: any[]): Observable<any> {
-    return this.http.post<any>(`${this.domainsURL}${domainId}/openfga/${storeId}/tuples/upload`, tuples);
-  }
 
-  checkPermission(domainId: string, permissionRequest: any): Observable<any> {
-    return this.http.post<any>(`${this.domainsURL}${domainId}/openfga/check-permission`, permissionRequest);
+  checkPermission(domainId: string, storeId: string, permissionRequest: any): Observable<any> {
+    return this.http.post<any>(`${this.domainsURL}${domainId}/openfga/${storeId}/check-permission`, permissionRequest);
   }
 }

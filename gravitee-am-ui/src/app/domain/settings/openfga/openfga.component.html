@@ -262,13 +262,6 @@
             <div class="tuples-list">
               <div class="tuples-header">
                 <h3>Current Tuples ({{ tuples.length }})</h3>
-                <button mat-raised-button
-                        color="accent"
-                        (click)="uploadTuples()"
-                        [disabled]="tuples.length === 0">
-                  <mat-icon>cloud_upload</mat-icon>
-                  Upload All Tuples
-                </button>
               </div>
 
               <div class="tuples-container" *ngIf="tuples.length > 0">
@@ -319,21 +312,149 @@
             <mat-card-subtitle>Test authorization decisions with your current model and tuples</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            <div class="test-section">
-              <p>Use this section to test permission checks against your authorization model.</p>
+            <!-- Permission Test Form -->
+            <div class="permission-test-form">
+              <h3>Test a Permission</h3>
+              <div class="test-form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>User</mat-label>
+                  <input matInput
+                         [(ngModel)]="permissionTest.user"
+                         placeholder="e.g., alice"
+                         [disabled]="isCheckingPermission">
+                  <mat-hint>The user requesting access</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Relation</mat-label>
+                  <input matInput
+                         [(ngModel)]="permissionTest.relation"
+                         placeholder="e.g., reader"
+                         [disabled]="isCheckingPermission">
+                  <mat-hint>The relation/permission to check</mat-hint>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Object</mat-label>
+                  <input matInput
+                         [(ngModel)]="permissionTest.object"
+                         placeholder="e.g., document:1"
+                         [disabled]="isCheckingPermission">
+                  <mat-hint>The resource being accessed</mat-hint>
+                </mat-form-field>
+              </div>
 
               <div class="test-actions">
                 <button mat-raised-button
-                        color="accent"
-                        (click)="checkPermission()">
-                  <mat-icon>security</mat-icon>
-                  Test Random Permission
+                        color="primary"
+                        (click)="checkPermission()"
+                        [disabled]="!permissionTest.user || !permissionTest.relation || !permissionTest.object || isCheckingPermission || !selectedStoreId">
+                  <mat-icon *ngIf="isCheckingPermission">hourglass_empty</mat-icon>
+                  <mat-icon *ngIf="!isCheckingPermission">security</mat-icon>
+                  {{ isCheckingPermission ? 'Checking...' : 'Check Permission' }}
+                </button>
+                <button mat-button
+                        (click)="clearPermissionTest()"
+                        [disabled]="isCheckingPermission">
+                  <mat-icon>clear</mat-icon>
+                  Clear Form
                 </button>
               </div>
+            </div>
 
-              <div class="test-hint">
+            <!-- Permission Result -->
+            <div class="permission-result" *ngIf="permissionResult">
+              <h3>Result</h3>
+              <div class="result-card" [class.allowed]="permissionResult.allowed" [class.denied]="!permissionResult.allowed">
+                <div class="result-header">
+                  <mat-icon [color]="permissionResult.allowed ? 'primary' : 'warn'">
+                    {{ permissionResult.allowed ? 'check_circle' : 'cancel' }}
+                  </mat-icon>
+                  <span class="result-text">
+                    {{ permissionResult.allowed ? 'ALLOWED' : 'DENIED' }}
+                  </span>
+                </div>
+                <div class="result-details">
+                  <div class="detail-row">
+                    <span class="detail-label">User:</span>
+                    <span class="detail-value">{{ permissionResult.user }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Relation:</span>
+                    <span class="detail-value">{{ permissionResult.relation }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <span class="detail-label">Object:</span>
+                    <span class="detail-value">{{ permissionResult.object }}</span>
+                  </div>
+                  <div class="detail-row" *ngIf="permissionResult.resolution">
+                    <span class="detail-label">Resolution:</span>
+                    <span class="detail-value resolution">{{ permissionResult.resolution }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Test Options -->
+            <div class="quick-test-section" *ngIf="tuples.length > 0">
+              <h3>Quick Tests from Existing Tuples</h3>
+              <div class="quick-test-hint">
                 <mat-icon>info</mat-icon>
-                <span>This will simulate a permission check using your current authorization model and tuples.</span>
+                <span>Click on any tuple below to quickly test that permission:</span>
+              </div>
+              <div class="quick-test-tuples">
+                <div class="quick-tuple-item"
+                     *ngFor="let tuple of tuples.slice(0, 5)"
+                     (click)="useExistingTuple(tuple)">
+                  <div class="tuple-preview">
+                    <span class="tuple-user">{{ tuple.user }}</span>
+                    <mat-icon class="tuple-arrow">arrow_forward</mat-icon>
+                    <span class="tuple-relation">{{ tuple.relation }}</span>
+                    <mat-icon class="tuple-arrow">arrow_forward</mat-icon>
+                    <span class="tuple-object">{{ tuple.object }}</span>
+                  </div>
+                  <button mat-icon-button color="primary">
+                    <mat-icon>play_arrow</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Permission History -->
+            <div class="permission-history" *ngIf="permissionHistory.length > 0">
+              <div class="history-header">
+                <h3>Recent Permission Checks</h3>
+                <button mat-button
+                        color="warn"
+                        (click)="clearPermissionHistory()">
+                  <mat-icon>delete</mat-icon>
+                  Clear History
+                </button>
+              </div>
+              <div class="history-list">
+                <div class="history-item"
+                     *ngFor="let item of permissionHistory"
+                     [class.allowed]="item.result.allowed"
+                     [class.denied]="!item.result.allowed">
+                  <div class="history-content">
+                    <div class="history-check">
+                      <span class="check-user">{{ item.user }}</span>
+                      <mat-icon class="check-arrow">arrow_forward</mat-icon>
+                      <span class="check-relation">{{ item.relation }}</span>
+                      <mat-icon class="check-arrow">arrow_forward</mat-icon>
+                      <span class="check-object">{{ item.object }}</span>
+                    </div>
+                    <div class="history-meta">
+                      <span class="timestamp">{{ item.timestamp | date:'short' }}</span>
+                    </div>
+                  </div>
+                  <div class="history-result">
+                    <mat-icon [color]="item.result.allowed ? 'primary' : 'warn'">
+                      {{ item.result.allowed ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                    <span class="result-label">{{ item.result.allowed ? 'ALLOWED' : 'DENIED' }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </mat-card-content>

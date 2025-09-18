@@ -83,6 +83,17 @@ export class OpenFGAComponent implements OnInit {
     object: ''
   };
 
+  // Permission testing
+  permissionTest = {
+    user: '',
+    relation: '',
+    object: ''
+  };
+
+  permissionResult: any = null;
+  isCheckingPermission = false;
+  permissionHistory: any[] = [];
+
   constructor(
     private route: ActivatedRoute,
     private openFGAService: OpenFGAService,
@@ -279,9 +290,10 @@ export class OpenFGAComponent implements OnInit {
     this.snackbarService.open('Tuple removed successfully');
   }
 
-  uploadTuples() {
-    if (this.tuples.length === 0) {
-      this.snackbarService.open('No tuples to upload');
+
+  checkPermission() {
+    if (!this.permissionTest.user || !this.permissionTest.relation || !this.permissionTest.object) {
+      this.snackbarService.open('Please fill in all permission test fields');
       return;
     }
 
@@ -290,34 +302,64 @@ export class OpenFGAComponent implements OnInit {
       return;
     }
 
-    this.openFGAService.uploadTuples(this.domainId, this.selectedStoreId, this.tuples).subscribe({
-      next: (response) => {
-        this.snackbarService.open(`${this.tuples.length} tuples uploaded successfully`);
-      },
-      error: (error) => {
-        this.snackbarService.open('Failed to upload tuples');
-        console.error('Upload tuples error:', error);
-      }
-    });
-  }
+    this.isCheckingPermission = true;
+    this.permissionResult = null;
 
-  checkPermission() {
     const permissionRequest = {
-      user: 'alice',
-      relation: 'reader',
-      object: 'document:1'
+      user: this.permissionTest.user,
+      relation: this.permissionTest.relation,
+      object: this.permissionTest.object
     };
 
-    this.openFGAService.checkPermission(this.domainId, permissionRequest).subscribe({
+    this.openFGAService.checkPermission(this.domainId, this.selectedStoreId, permissionRequest).subscribe({
       next: (response) => {
+        this.isCheckingPermission = false;
+        this.permissionResult = response;
+
+        // Add to history
+        const historyItem = {
+          ...permissionRequest,
+          result: response,
+          timestamp: new Date()
+        };
+        this.permissionHistory.unshift(historyItem);
+
+        // Keep only last 10 results
+        if (this.permissionHistory.length > 10) {
+          this.permissionHistory = this.permissionHistory.slice(0, 10);
+        }
+
         const message = response.allowed ? 'Permission allowed' : 'Permission denied';
         this.snackbarService.open(message);
       },
       error: (error) => {
+        this.isCheckingPermission = false;
         this.snackbarService.open('Failed to check permission');
         console.error('Check permission error:', error);
       }
     });
+  }
+
+  clearPermissionTest() {
+    this.permissionTest = {
+      user: '',
+      relation: '',
+      object: ''
+    };
+    this.permissionResult = null;
+  }
+
+  clearPermissionHistory() {
+    this.permissionHistory = [];
+    this.snackbarService.open('Permission history cleared');
+  }
+
+  useExistingTuple(tuple: any) {
+    this.permissionTest = {
+      user: tuple.user,
+      relation: tuple.relation,
+      object: tuple.object
+    };
   }
 
   formatTuple(tuple: any): string {

@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.openfga.sdk.api.client.OpenFgaClient;
+import dev.openfga.sdk.api.client.model.ClientCheckRequest;
 import dev.openfga.sdk.api.client.model.ClientReadChangesRequest;
 import dev.openfga.sdk.api.client.model.ClientTupleKey;
 import dev.openfga.sdk.api.client.model.ClientWriteRequest;
@@ -31,6 +32,7 @@ import dev.openfga.sdk.api.model.WriteAuthorizationModelRequest;
 import dev.openfga.sdk.errors.FgaInvalidParameterException;
 import io.gravitee.am.service.OpenFGAService;
 import io.gravitee.am.service.model.OpenFGAAuthenticationModel;
+import io.gravitee.am.service.model.OpenFGACheckResponse;
 import io.gravitee.am.service.model.OpenFGAConnectResponse;
 import io.gravitee.am.service.model.OpenFGAStoreEntity;
 import io.gravitee.am.service.model.OpenFGATuple;
@@ -178,6 +180,29 @@ public class OpenFGAServiceImpl implements OpenFGAService {
         return Single
                 .fromFuture(client.write(req))
                 .map(ignore -> tuple)
+                .onErrorResumeNext(err -> Single.error(wrap(err)));
+    }
+
+    @Override
+    public Single<OpenFGACheckResponse> checkPermission(String storeId, OpenFGATuple tuple) throws FgaInvalidParameterException {
+        client.setStoreId(storeId);
+
+        ClientCheckRequest req = new ClientCheckRequest()
+                .user(Objects.requireNonNull(tuple.getUser(), "tuple.user is required"))
+                .relation(Objects.requireNonNull(tuple.getRelation(), "tuple.relation is required"))
+                ._object(Objects.requireNonNull(tuple.getObject(), "tuple.object is required"));
+
+        return Single
+                .fromFuture(client.check(req))
+                .map(resp -> {
+                    OpenFGACheckResponse checkResponse = new OpenFGACheckResponse();
+                    checkResponse.setAllowed(Boolean.TRUE.equals(resp.getAllowed()));
+                    checkResponse.setUser(tuple.getUser());
+                    checkResponse.setRelation(tuple.getRelation());
+                    checkResponse.setObject(tuple.getObject());
+                    checkResponse.setResolution(resp.getResolution() != null ? resp.getResolution().toString() : "");
+                    return checkResponse;
+                })
                 .onErrorResumeNext(err -> Single.error(wrap(err)));
     }
 

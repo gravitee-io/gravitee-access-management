@@ -18,6 +18,7 @@ package io.gravitee.am.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import dev.openfga.sdk.errors.FgaInvalidParameterException;
 import io.gravitee.am.service.model.OpenFGAAuthenticationModel;
+import io.gravitee.am.service.model.OpenFGACheckResponse;
 import io.gravitee.am.service.model.OpenFGAConnectResponse;
 import io.gravitee.am.service.model.OpenFGAStoreEntity;
 import io.gravitee.am.service.model.OpenFGATuple;
@@ -50,6 +51,6 @@ public interface OpenFGAService {
 
     Single<OpenFGATuple> createTuple(String storeId, OpenFGATuple tuple) throws FgaInvalidParameterException;
 
-//    Single<OpenFGACheckResponse> check(OpenFGATuple tuple);
+    Single<OpenFGACheckResponse> checkPermission(String storeId, OpenFGATuple tuple) throws FgaInvalidParameterException;
 
 }

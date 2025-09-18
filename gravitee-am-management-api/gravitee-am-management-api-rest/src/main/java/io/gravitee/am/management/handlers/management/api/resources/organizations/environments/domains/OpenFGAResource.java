@@ -51,7 +51,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * @author GraviteeSource Team
@@ -296,80 +295,45 @@ public class OpenFGAResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
-    @POST
-    @Path("{storeId}/tuples/upload")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Upload multiple tuples")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Tuples uploaded"),
-            @ApiResponse(responseCode = "400", description = "Invalid tuples"),
-            @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    public void uploadTuples(
-            @PathParam("organizationId") String organizationId,
-            @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domainId,
-            @PathParam("storeId") String storeId,
-            @Parameter(name = "tuples") @Valid @NotNull final List<Map<String, String>> tuples,
-            @Suspended final AsyncResponse response) {
-
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.CREATE)
-                .andThen(Single.defer(() -> {
-                    if (tuples.isEmpty()) {
-                        return Single.just(Response.status(Response.Status.BAD_REQUEST)
-                                .entity("{\"error\": \"No tuples provided\"}")
-                                .build());
-                    }
-
-                    // Convert maps to OpenFGATuple objects and create them one by one
-                    return Single.fromCallable(() -> {
-                        try {
-                            for (Map<String, String> tupleMap : tuples) {
-                                String user = tupleMap.get("user");
-                                String relation = tupleMap.get("relation");
-                                String object = tupleMap.get("object");
-
-                                if (user == null || relation == null || object == null) {
-                                    throw new IllegalArgumentException("Invalid tuple: user, relation, and object are required");
-                                }
-
-                                openFGAService.createTuple(storeId, new OpenFGATuple(user, relation, object)).blockingGet();
-                            }
-                            return Response.ok("{\"status\": \"success\", \"uploaded\": " + tuples.size() + "}").build();
-                        } catch (Exception e) {
-                            return Response.status(Response.Status.BAD_REQUEST)
-                                    .entity("{\"error\": \"Failed to upload tuples: " + e.getMessage() + "\"}")
-                                    .build();
-                        }
-                    });
-                }))
-                .subscribe(response::resume, response::resume);
-    }
 
     @POST
-    @Path("check-permission")
+    @Path("{storeId}/check-permission")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "Check permission")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Permission check result"),
+            @ApiResponse(responseCode = "400", description = "Invalid request"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public void checkPermission(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
+            @PathParam("storeId") String storeId,
             @Parameter(name = "permissionRequest") @Valid @NotNull final Map<String, String> permissionRequest,
             @Suspended final AsyncResponse response) {
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_SETTINGS, Acl.READ)
-                .andThen(Single.fromCallable(() -> {
-                    // Mock permission check with random result
-                    boolean allowed = new Random().nextBoolean();
-                    String result = allowed ? "allowed" : "denied";
+                .andThen(Single.defer(() -> {
+                    String user = permissionRequest.get("user");
+                    String relation = permissionRequest.get("relation");
+                    String object = permissionRequest.get("object");
 
-                    return Response.ok("{\"result\": \"" + result + "\", \"allowed\": " + allowed + "}").build();
+                    if (user == null || relation == null || object == null) {
+                        return Single.just(Response.status(Response.Status.BAD_REQUEST)
+                                .entity("{\"error\": \"User, relation, and object are required\"}")
+                                .build());
+                    }
+
+                    try {
+                        return openFGAService.checkPermission(storeId, new OpenFGATuple(user, relation, object))
+                                .map(checkResponse -> Response.ok(checkResponse).build());
+                    } catch (FgaInvalidParameterException e) {
+                        return Single.just(Response.status(Response.Status.BAD_REQUEST)
+                                .entity("{\"error\": \"Invalid parameters: " + e.getMessage() + "\"}")
+                                .build());
+                    }
                 }))
                 .subscribe(response::resume, response::resume);
     }
