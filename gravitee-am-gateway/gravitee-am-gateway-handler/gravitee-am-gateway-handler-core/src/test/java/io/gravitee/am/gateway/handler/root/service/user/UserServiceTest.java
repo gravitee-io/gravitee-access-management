@@ -66,6 +66,7 @@ import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -1485,5 +1486,48 @@ public class UserServiceTest {
 
         verify(emailService, times(1)).send(any(), any(), any(), any());
         verify(auditService, times(1)).report(any());
+    }
+
+    @Test
+    public void shouldInitializeUserWhenRegistered() {
+        when(userValidator.validate(any())).thenReturn(Completable.complete());
+        when(commonUserService.findByUsernameAndSource(anyString(), anyString()))
+                .thenReturn(Maybe.empty());
+
+        final DefaultUser idpUser = new DefaultUser("username");
+        idpUser.setId("external-idp-id");
+        UserProvider userProvider = mock(UserProvider.class);
+        when(userProvider.create(any())).thenReturn(Single.just(idpUser));
+        when(identityProviderManager.getUserProvider(anyString())).thenReturn(Maybe.just(userProvider));
+
+        final org.mockito.ArgumentCaptor<User> userCaptor = org.mockito.ArgumentCaptor.forClass(User.class);
+        when(commonUserService.create(userCaptor.capture())).thenAnswer(inv -> {
+            User toCreate = userCaptor.getValue();
+            return Single.just(toCreate);
+        });
+        when(commonUserService.enhance(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        final Client client = new Client();
+        client.setId("clientId");
+        final User input = new User();
+        input.setUsername("username");
+        input.setPassword("raw-password");
+
+        var testObserver = userService.register(client, input).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        final User user = userCaptor.getValue();
+        Assertions.assertNull(user.getPassword());
+        Assertions.assertEquals("external-idp-id", user.getExternalId());
+        Assertions.assertNotNull(user.getSource());
+        Assertions.assertEquals(ReferenceType.DOMAIN, user.getReferenceType());
+        Assertions.assertEquals("id", user.getReferenceId());
+        Assertions.assertTrue(user.isInternal());
+        Assertions.assertNotNull(user.getCreatedAt());
+        Assertions.assertNotNull(user.getUpdatedAt());
+        Assertions.assertEquals(user.getCreatedAt(), user.getUpdatedAt());
+        Assertions.assertNotNull(user.getLastPasswordReset());
     }
 }
