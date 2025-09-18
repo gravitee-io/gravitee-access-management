@@ -77,6 +77,134 @@
           </mat-form-field>
         </div>
       </div>
+      <div *ngIf="application.type === 'MCP' && application.settings?.mcp" class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>MCP Settings</h5>
+          <mat-divider></mat-divider>
+        </div>
+        <div>
+          <mat-form-field appearance="outline" floatLabel="always">
+            <mat-label>MCP URL</mat-label>
+            <input
+              matInput
+              type="url"
+              placeholder="https://api.example.com/mcp"
+              name="mcpUrl"
+              [(ngModel)]="application.settings.mcp.url"
+              required
+            />
+            <mat-hint>The URL endpoint for the MCP (Model Context Protocol) service.</mat-hint>
+          </mat-form-field>
+        </div>
+        <div>
+          <div fxLayout="row" fxLayoutAlign="space-between center" style="margin-bottom: 16px">
+            <div>
+              <h5 style="margin: 0">Tool Definitions</h5>
+              <p class="mat-caption" style="margin: 4px 0 0 0">
+                Define the tools available in your MCP application with their required scopes.
+              </p>
+            </div>
+          </div>
+
+          <!-- File Import Section -->
+          <div
+            class="file-import-section"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            (click)="onDropZoneClick($event)"
+            style="
+              margin-bottom: 24px;
+              padding: 24px;
+              border: 2px dashed #ccc;
+              border-radius: 8px;
+              background-color: #fafafa;
+              cursor: pointer;
+              transition: all 0.3s ease;
+            "
+          >
+            <div fxLayout="column" fxLayoutAlign="center center" style="text-align: center">
+              <mat-icon style="font-size: 48px; color: #666; margin-bottom: 8px">cloud_upload</mat-icon>
+              <h6 style="margin: 0 0 8px 0">Import Tools from JSON File</h6>
+              <p class="mat-caption" style="margin: 0 0 16px 0; color: #666">Drag and drop a JSON file here or click to browse</p>
+
+              <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="center center">
+                <input type="file" accept=".json" (change)="onFileSelected($event)" #fileInput style="display: none" />
+                <button mat-raised-button color="primary" (click)="fileInput.click(); $event.stopPropagation()">
+                  <mat-icon>folder_open</mat-icon>
+                  Browse Files
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Tools Table -->
+          <div *ngIf="application.settings?.mcp?.toolDefinitions?.length > 0" class="tools-table-container" style="margin-bottom: 16px">
+            <table mat-table [dataSource]="toolsDataSource" class="tools-table" [trackBy]="trackByIndex">
+              <!-- Tool Name Column -->
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>Tool Name</th>
+                <td mat-cell *matCellDef="let tool; let i = index">
+                  <mat-form-field appearance="outline" style="width: 100%">
+                    <input matInput type="text" placeholder="e.g., filesystem" [(ngModel)]="tool.name" name="toolName{{ i }}" required />
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Description Column -->
+              <ng-container matColumnDef="description">
+                <th mat-header-cell *matHeaderCellDef>Description</th>
+                <td mat-cell *matCellDef="let tool; let i = index">
+                  <mat-form-field appearance="outline" style="width: 100%">
+                    <input
+                      matInput
+                      type="text"
+                      placeholder="Tool description"
+                      [(ngModel)]="tool.description"
+                      name="toolDescription{{ i }}"
+                    />
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Required Scopes Column -->
+              <ng-container matColumnDef="scopes">
+                <th mat-header-cell *matHeaderCellDef>Required Scopes</th>
+                <td mat-cell *matCellDef="let tool; let i = index">
+                  <mat-form-field appearance="outline" style="width: 100%">
+                    <input
+                      matInput
+                      type="text"
+                      placeholder="e.g., filesystem:read, filesystem:write"
+                      [(ngModel)]="tool.requiredScopesText"
+                      name="toolScopes{{ i }}"
+                      (ngModelChange)="updateRequiredScopes(tool, $event)"
+                    />
+                  </mat-form-field>
+                </td>
+              </ng-container>
+
+              <!-- Actions Column -->
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let tool; let i = index">
+                  <button mat-icon-button color="warn" (click)="removeTool(i)" type="button" matTooltip="Remove tool">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['name', 'description', 'scopes', 'actions']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes', 'actions']"></tr>
+            </table>
+          </div>
+          <button mat-stroked-button type="button" (click)="addTool($event)" style="margin-top: 8px">
+            <mat-icon>add</mat-icon>
+            Add Tool Definition
+          </button>
+        </div>
+      </div>
+
+      <!-- OAuth 2.0 Settings -->
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <h5>OAuth 2.0 Settings (Optional)</h5>

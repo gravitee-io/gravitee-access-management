@@ -89,14 +89,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
       .subscribe();
 
     // read notifications on component initialization and then trigger a refresh in regular period
-    this.userNotificationsService
-      .listNotifications()
-      .pipe(
-        tap((data) => (this.notifications = data)),
-        switchMap(() => this.fetchListNotificationsInterval()),
-        takeUntil(this.unsubscribe$),
-      )
-      .subscribe();
+    // this.userNotificationsService
+    //   .listNotifications()
+    //   .pipe(
+    //     tap((data) => (this.notifications = data)),
+    //     switchMap(() => this.fetchListNotificationsInterval()),
+    //     takeUntil(this.unsubscribe$),
+    //   )
+    //   .subscribe();
   }
 
   private fetchListNotificationsInterval() {

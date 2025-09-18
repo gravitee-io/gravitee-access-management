@@ -1,0 +1,147 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="column" class="gv-page-container">
+  <!-- MCP Tools Section -->
+  <div *ngIf="isMCPApplication()" class="gv-form-section" style="margin-top: 24px">
+    <div class="gv-form-section-title">
+      <h2>MCP Tools</h2>
+      <span>Available tools in your Model Context Protocol application.</span>
+    </div>
+
+    <!-- View Mode Switcher -->
+    <div class="view-mode-switcher">
+      <mat-button-toggle-group [(value)]="viewMode" (change)="setViewMode($event.value)">
+        <mat-button-toggle value="table">
+          <mat-icon>view_module</mat-icon>
+          Table
+        </mat-button-toggle>
+        <mat-button-toggle value="cards">
+          <mat-icon>view_list</mat-icon>
+          Cards
+        </mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <!-- MCP URL -->
+    <div style="margin-bottom: 24px">
+      <mat-form-field appearance="outline" floatLabel="always">
+        <mat-label>MCP Service URL</mat-label>
+        <input matInput type="text" name="mcpServiceUrl" [value]="getMCPUrl()" readonly />
+        <mat-hint>The URL endpoint for the MCP (Model Context Protocol) service</mat-hint>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="getMCPUrl()"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <!-- Tools Display -->
+    <div *ngIf="getMCPTools().length > 0; else noTools">
+      <!-- Card View -->
+      <div *ngIf="isCardMode()" class="tools-grid">
+        <mat-card *ngFor="let tool of getMCPTools(); let i = index" class="tool-card">
+          <mat-card-header>
+            <mat-card-title>
+              <mat-icon class="tool-icon">build</mat-icon>
+              {{ tool.name || 'Unnamed Tool' }}
+            </mat-card-title>
+            <mat-card-subtitle>Tool {{ i + 1 }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div *ngIf="tool.description" class="tool-description">
+              <strong>Description:</strong>
+              <p>{{ tool.description }}</p>
+            </div>
+
+            <div *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0" class="tool-scopes">
+              <strong>Required Scopes:</strong>
+              <div class="scopes-container">
+                <mat-chip-list>
+                  <mat-chip *ngFor="let scope of tool.requiredScopes" class="scope-chip">
+                    {{ scope }}
+                  </mat-chip>
+                </mat-chip-list>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Table View -->
+      <div *ngIf="isTableMode()" class="tools-table-container">
+        <table mat-table [dataSource]="getMCPTools()" class="tools-table" [multiTemplateDataRows]="false">
+          <!-- Tool Name Column -->
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef>Tool Name</th>
+            <td mat-cell *matCellDef="let tool; let i = index">
+              <div class="tool-name-cell">
+                <mat-icon class="tool-icon">build</mat-icon>
+                <span class="tool-name">{{ tool.name || 'Unnamed Tool' }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Description Column -->
+          <ng-container matColumnDef="description">
+            <th mat-header-cell *matHeaderCellDef>Description</th>
+            <td mat-cell *matCellDef="let tool">
+              <div class="tool-description-cell">
+                {{ tool.description || 'No description available' }}
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Required Scopes Column -->
+          <ng-container matColumnDef="scopes">
+            <th mat-header-cell *matHeaderCellDef>Required Scopes</th>
+            <td mat-cell *matCellDef="let tool">
+              <div class="tool-scopes-cell">
+                <mat-chip-list *ngIf="tool.requiredScopes && tool.requiredScopes.length > 0">
+                  <mat-chip *ngFor="let scope of tool.requiredScopes" class="scope-chip">
+                    {{ scope }}
+                  </mat-chip>
+                </mat-chip-list>
+                <span *ngIf="!tool.requiredScopes || tool.requiredScopes.length === 0" class="no-scopes"> No scopes required </span>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['name', 'description', 'scopes']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes']"></tr>
+        </table>
+      </div>
+    </div>
+
+    <ng-template #noTools>
+      <div class="no-tools-message">
+        <mat-icon class="no-tools-icon">build</mat-icon>
+        <h3>No tools defined</h3>
+        <p>This MCP application doesn't have any tools configured yet.</p>
+        <p>Edit the application to add tool definitions.</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

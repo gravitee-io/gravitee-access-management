@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { DialogService } from '../../services/dialog.service';
 import { SnackbarService } from '../../services/snackbar.service';
@@ -31,12 +31,15 @@ export class ApplicationsComponent implements OnInit {
   private searchValue: string;
   domainId: string;
   page: any = {};
+  private filter: any;
+  isMcpRoute: boolean = false;
 
   constructor(
     private dialogService: DialogService,
     private snackbarService: SnackbarService,
     private applicationService: ApplicationService,
     private route: ActivatedRoute,
+    private router: Router,
   ) {
     this.page.pageNumber = 0;
     this.page.size = 10;
@@ -44,9 +47,13 @@ export class ApplicationsComponent implements OnInit {
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
+    this.filter = this.route.snapshot.data['filter'];
     const pagedApps = this.route.snapshot.data['applications'];
-    this.applications = pagedApps.data;
+    this.applications = this.applyFilter(pagedApps.data);
     this.page.totalElements = pagedApps.totalCount;
+    // Check if this is an MCP route
+    const currentUrl = this.router.url;
+    this.isMcpRoute = currentUrl.endsWith('/mcp') || currentUrl.endsWith('/mcp/');
   }
 
   onSearch(event) {
@@ -62,7 +69,7 @@ export class ApplicationsComponent implements OnInit {
 
     findApps.subscribe((pagedApps) => {
       this.page.totalElements = pagedApps.totalCount;
-      this.applications = pagedApps.data;
+      this.applications = this.applyFilter(pagedApps.data);
     });
   }
 
@@ -73,5 +80,37 @@ export class ApplicationsComponent implements OnInit {
 
   get isEmpty() {
     return !this.applications || (this.applications.length === 0 && !this.searchValue);
+  }
+
+  getToolCount(application: any): number {
+    console.log('application', application);
+    if (application?.toolCount) {
+      return application.toolCount;
+    }
+    return 0;
+  }
+
+  private applyFilter(applications: any[]): any[] {
+    // Check if the current URL ends with 'mcp'
+    const currentUrl = this.router.url;
+    const isMcpRoute = currentUrl.endsWith('/mcp') || currentUrl.endsWith('/mcp/');
+
+    if (isMcpRoute) {
+      // Filter to show only MCP applications
+      return applications.filter((app) => app.type === 'mcp');
+    } else {
+      // Filter out MCP applications when not on MCP route
+      return applications.filter((app) => app.type !== 'mcp');
+    }
+
+    // If there's a route data filter, apply it
+    if (this.filter && this.filter.only && Array.isArray(this.filter.only)) {
+      return applications.filter((app) => {
+        return this.filter.only.includes(app.type);
+      });
+    }
+
+    // No filtering, return all applications
+    return applications;
   }
 }

@@ -157,6 +157,9 @@ public class Application implements Resource, PasswordSettingsAware {
         Optional.ofNullable(settings).ifPresent(s -> s.copyTo(client));
         client.setSecretSettings(this.secretSettings);
         client.setClientSecrets(this.getSecrets());
+        if(this.settings != null && this.settings.getMcp() != null) {
+            client.setMcp(this.settings.getMcp());
+        }
         return client;
     }
 

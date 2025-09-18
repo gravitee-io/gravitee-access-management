@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.application;
+package io.gravitee.am.model.safe;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER, MCP
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class McpProperties {
+    private List<String> tools;
+    private List<String> scopes;
 }

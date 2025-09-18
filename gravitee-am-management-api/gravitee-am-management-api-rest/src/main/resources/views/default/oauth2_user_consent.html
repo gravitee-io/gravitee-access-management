@@ -32,6 +32,13 @@
     </div>
     <div class="section">
         <form class="form" role="form" th:id="confirmationForm" th:action="${action}" method="post">
+            <div th:if="${client.mcp}">
+                Access tools
+                <span class="grey" th:text="${client.mcp.tools}"></span>
+                which require
+                <span class="grey" th:text="${client.mcp.scopes}"></span>
+                scopes
+            </div>
             <div class="box center" th:each="scope : ${scopes}">
                 <div>
                     <span th:text="(${scope.name})

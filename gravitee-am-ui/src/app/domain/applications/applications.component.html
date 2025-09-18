@@ -16,11 +16,11 @@
 
 -->
 <div class="gv-page-container">
-  <h1 *ngIf="!isEmpty">Applications</h1>
+  <h1 *ngIf="!isEmpty">{{ isMcpRoute ? 'MCP Servers' : 'Applications' }}</h1>
   <div *ngIf="!isEmpty" class="applications-search">
     <mat-form-field appearance="fill" floatLabel="always">
       <mat-icon matPrefix>search</mat-icon>
-      <mat-label>Search for applications</mat-label>
+      <mat-label>Search for {{ isMcpRoute ? 'MCP servers' : 'applications' }}</mat-label>
       <input type="text" matInput placeholder="Search" (input)="onSearch($event)" />
     </mat-form-field>
   </div>
@@ -62,8 +62,15 @@
             </div>
             <div class="app-information" fxLayout="column">
               <a [routerLink]="[row.id]">{{ row.name }}</a>
-              <small>{{ row.type }}</small>
+              <small>{{ row.description }}</small>
             </div>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column *ngIf="isMcpRoute" name="Tools" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div class="tool-count">
+            <span>{{ getToolCount(row) }}</span>
           </div>
         </ng-template>
       </ngx-datatable-column>
@@ -77,7 +84,7 @@
 
   <app-emptystate
     *ngIf="isEmpty"
-    [message]="'Applications will appear here'"
+    [message]="isMcpRoute ? 'MCP Servers will appear here' : 'Applications will appear here'"
     [subMessage]="'No data to display'"
     [icon]="'devices'"
   ></app-emptystate>

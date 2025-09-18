@@ -30,9 +30,7 @@ import io.gravitee.am.model.Resource;
 import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
-import io.gravitee.am.model.application.ApplicationScopeSettings;
-import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.*;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.risk.assessment.api.assessment.settings.RiskAssessmentSettings;
@@ -281,6 +279,8 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
 
     private SecretExpirationSettings secretExpirationSettings;
 
+    private ApplicationMCPSettings mcp;
+
     public Client() {
     }
 
@@ -371,6 +371,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.responseBinding = other.responseBinding;
         this.disableRefreshTokenRotation = other.disableRefreshTokenRotation;
         this.secretExpirationSettings = other.secretExpirationSettings;
+        this.mcp = other.mcp;
     }
 
     public String getId() {
@@ -1149,6 +1150,14 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         this.secretExpirationSettings = secretExpirationSettings;
     }
 
+    public ApplicationMCPSettings getMcp() {
+        return mcp;
+    }
+
+    public void setMcp(ApplicationMCPSettings mcp) {
+        this.mcp = mcp;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -1181,6 +1190,7 @@ public class Client implements Cloneable, Resource, PasswordSettingsAware {
         clone.setSecretSettings(this.getSecretSettings() != null ? new ArrayList<>(this.getSecretSettings()) : new ArrayList<>());
         clone.setClientSecrets(this.getClientSecrets() != null ? this.getClientSecrets().stream().map(ClientSecret::new).collect(Collectors.toList()) : new ArrayList<>());
         clone.setSecretExpirationSettings(this.getSecretExpirationSettings() != null ? new SecretExpirationSettings(this.getSecretExpirationSettings()) : null);
+        clone.setMcp(this.getMcp());
         return clone;
     }
 

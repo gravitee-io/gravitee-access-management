@@ -64,3 +64,21 @@
   background: limegreen;
   color: white;
 }
+
+.tool-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .tool-icon {
+    width: 18px;
+    height: 18px;
+    color: #666;
+    font-size: 18px;
+  }
+
+  span {
+    color: #333;
+    font-weight: 500;
+  }
+}

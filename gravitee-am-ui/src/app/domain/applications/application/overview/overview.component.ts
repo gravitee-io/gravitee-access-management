@@ -102,12 +102,17 @@ export class ApplicationOverviewComponent implements OnInit {
     return this.application.type.toLowerCase() === 'resource_server';
   }
 
+  isMcpApp(): boolean {
+    return this.application.type.toLowerCase() === 'mcp';
+  }
+
   valueCopied(message: string) {
     this.snackbarService.open(message);
   }
 
-  copyToClipboard(element: HTMLElement) {
-    this.copyText.nativeElement.value = element.textContent;
+  copyToClipboard(element: HTMLElement | EventTarget) {
+    const target = element as HTMLElement;
+    this.copyText.nativeElement.value = target.textContent;
     this.copyText.nativeElement.select();
     document.execCommand('copy');
     this.valueCopied('Copied to clipboard');
@@ -172,5 +177,86 @@ export class ApplicationOverviewComponent implements OnInit {
 
   getEncodedClientId() {
     return encodeURIComponent(this.clientId);
+  }
+
+  getToolsData(): any[] {
+    if (!this.application?.settings?.mcp?.toolDefinitions) {
+      return [];
+    }
+
+    return this.application.settings.mcp.toolDefinitions.map((tool: any) => {
+      // Parse scopes from the tool definition
+      let scopes: string[] = [];
+      if (tool.requiredScopes && Array.isArray(tool.requiredScopes)) {
+        scopes = tool.requiredScopes;
+      } else if (tool.requiredScopes && typeof tool.requiredScopes === 'string') {
+        // Handle comma-separated scopes
+        scopes = tool.requiredScopes
+          .split(',')
+          .map((scope: string) => scope.trim())
+          .filter((scope: string) => scope.length > 0);
+      }
+
+      return {
+        name: tool.name || 'Unnamed Tool',
+        description: tool.description || 'No description available',
+        scopes: scopes,
+      };
+    });
+  }
+
+  getFormattedLastUpdated(): string {
+    if (!this.application?.updatedAt) {
+      return 'Never updated';
+    }
+
+    // Handle both timestamp and date string formats
+    let date: Date;
+    if (typeof this.application.updatedAt === 'number') {
+      // Unix timestamp (seconds or milliseconds)
+      date = new Date(this.application.updatedAt > 10000000000 ? this.application.updatedAt : this.application.updatedAt * 1000);
+    } else if (typeof this.application.updatedAt === 'string') {
+      date = new Date(this.application.updatedAt);
+    } else {
+      return 'Invalid date';
+    }
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return 'Invalid date';
+    }
+
+    // Format the date
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  }
+
+  getMcpUrl(): string {
+    return this.application?.settings?.mcp?.url || 'No MCP URL configured';
+  }
+
+  getToolsListForJson(): string {
+    const tools = this.getToolsData();
+    return tools.map((tool) => `"${tool.name}"`).join(',\n        ');
+  }
+
+  getToolsDetailsForJson(): string {
+    const tools = this.getToolsData();
+    return tools
+      .map((tool) => {
+        return `{
+          "name": "${tool.name}",
+          "description": "${tool.description}",
+          "scopes": ${JSON.stringify(tool.scopes)}
+        }`;
+      })
+      .join(',\n      ');
   }
 }

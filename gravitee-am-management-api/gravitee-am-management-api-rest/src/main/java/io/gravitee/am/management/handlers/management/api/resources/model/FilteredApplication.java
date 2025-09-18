@@ -19,6 +19,7 @@ import io.gravitee.am.model.Application;
 import io.gravitee.am.model.application.ApplicationType;
 
 import java.util.Date;
+import java.util.Optional;
 
 public record FilteredApplication(
         String id,
@@ -27,9 +28,17 @@ public record FilteredApplication(
         ApplicationType type,
         boolean enabled,
         boolean template,
-        Date updatedAt) {
+        Date updatedAt,
+        long toolCount) {
 
     public static FilteredApplication of(Application application) {
+        // This is terrible and hardcoded to the MCP type, but for demo, is fine.
+
+        long toolCount = Optional.ofNullable(application.getSettings())
+            .map(s -> s.getMcp())
+            .map(mcp -> mcp.getToolDefinitions())
+            .map(list -> (long) list.size())
+            .orElse(0L);
         return new FilteredApplication(
                 application.getId(),
                 application.getName(),
@@ -37,7 +46,9 @@ public record FilteredApplication(
                 application.getType(),
                 application.isEnabled(),
                 application.isTemplate(),
-                application.getUpdatedAt()
+                application.getUpdatedAt(),
+                toolCount
+
         );
     }
 }
