@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class MSSQLDialect extends AbstractDialect {
 
     @Override
-    public String tableExists(String table) {
+    public String tableExists(String table, String schema) {
         return "SELECT 1 FROM sysobjects WHERE name = '" + table + "' AND xtype = 'U'";
     }
 
