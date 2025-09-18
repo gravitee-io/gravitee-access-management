@@ -24,12 +24,12 @@
     <parent>
         <artifactId>gravitee-am-identityprovider</artifactId>
         <groupId>io.gravitee.am.identityprovider</groupId>
-        <version>4.8.6</version>
+        <version>4.8.7-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-identityprovider-http</artifactId>
 
-    <version>4.8.6</version>
+    <version>4.8.7-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Identity Provider - HTTP</name>
 
     <dependencies>
