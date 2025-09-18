@@ -971,7 +971,7 @@ export const routes: Routes = [
                                 level: 'level2',
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', "MCP"],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'MCP'],
                               },
                             },
                             resolve: {
@@ -2337,7 +2337,7 @@ export const routes: Routes = [
                       },
                       {
                         path: 'openfga',
-                        loadComponent: () => import('./domain/settings/openfga/openfga.component').then(m => m.OpenFGAComponent),
+                        loadComponent: () => import('./domain/settings/openfga/openfga.component').then((m) => m.OpenFGAComponent),
                         canActivate: [AuthGuard],
                         data: {
                           menu: {
