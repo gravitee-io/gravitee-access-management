@@ -53,4 +53,5 @@ public interface OpenFGAService {
 
     Single<OpenFGACheckResponse> checkPermission(String storeId, OpenFGATuple tuple) throws FgaInvalidParameterException;
 
+
 }
