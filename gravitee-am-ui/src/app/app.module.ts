@@ -90,6 +90,7 @@ import { LoginComponent } from './login/login.component';
 import { LoginCallbackComponent } from './login/callback/callback.component';
 import { DomainsComponent } from './settings/domains/domains.component';
 import { DomainService } from './services/domain.service';
+import { OpenFGAService } from './services/openfga.service';
 import { DomainComponent } from './domain/domain.component';
 import { SidenavService } from './components/sidenav/sidenav.service';
 import { NavbarService } from './components/navbar/navbar.service';
@@ -774,6 +775,7 @@ import { DomainStoreService } from './stores/domain.store';
   ],
   providers: [
     DomainService,
+    OpenFGAService,
     ProviderService,
     SidenavService,
     NavigationService,

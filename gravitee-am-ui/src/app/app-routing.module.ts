@@ -2336,6 +2336,21 @@ export const routes: Routes = [
                         },
                       },
                       {
+                        path: 'openfga',
+                        loadComponent: () => import('./domain/settings/openfga/openfga.component').then(m => m.OpenFGAComponent),
+                        canActivate: [AuthGuard],
+                        data: {
+                          menu: {
+                            label: 'OpenFGA',
+                            section: 'Security',
+                            level: 'level2',
+                          },
+                          perms: {
+                            only: ['domain_settings_read'],
+                          },
+                        },
+                      },
+                      {
                         path: 'secrets',
                         component: DomainSettingsSecretsComponent,
                         canActivate: [AuthGuard],
