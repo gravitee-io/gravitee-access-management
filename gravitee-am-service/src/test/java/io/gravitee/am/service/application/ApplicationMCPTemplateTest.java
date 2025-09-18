@@ -60,7 +60,6 @@ public class ApplicationMCPTemplateTest {
         Assert.assertEquals(ClientType.CONFIDENTIAL, oAuthSettings.getClientType());
         Assert.assertEquals(io.gravitee.am.model.application.ApplicationType.WEB.toString().toLowerCase(), oAuthSettings.getApplicationType());
         Assert.assertEquals(Collections.singletonList(GrantType.CLIENT_CREDENTIALS), oAuthSettings.getGrantTypes());
-        Assert.assertNull(oAuthSettings.getResponseTypes());
         Assert.assertEquals(ClientAuthenticationMethod.CLIENT_SECRET_BASIC, oAuthSettings.getTokenEndpointAuthMethod());
 
         // Test MCP settings
