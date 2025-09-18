@@ -128,6 +128,73 @@ public class UserAuthenticationServiceTest {
     }
 
     @Test
+    public void shouldConnect_knownUser_populateLastPasswordReset_fromUpdatedAt() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User foundUser = new User();
+        foundUser.setAccountNonLocked(true);
+        final Date updatedAt = new Date(1_725_000_000_000L);
+        foundUser.setUpdatedAt(updatedAt);
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, times(1)).update(argThat(u -> updatedAt.equals(u.getLastPasswordReset())), any());
+    }
+
+    @Test
+    public void shouldConnect_knownUser_populateLastPasswordReset_whenUpdatedAtNull() {
+        String domainId = "Domain";
+        String source = "SRC";
+        String id = "id";
+
+        io.gravitee.am.identityprovider.api.User user = mock(io.gravitee.am.identityprovider.api.User.class);
+        when(user.getId()).thenReturn(id);
+        HashMap<String, Object> additionalInformation = new HashMap<>();
+        additionalInformation.put("source", source);
+        when(user.getAdditionalInformation()).thenReturn(additionalInformation);
+
+        User updatedUser = mock(User.class);
+        when(updatedUser.isEnabled()).thenReturn(true);
+
+        when(domain.getId()).thenReturn(domainId);
+        final User foundUser = new User();
+        foundUser.setAccountNonLocked(true);
+        // updatedAt is intentionally left null
+        ExecutionContext executionContext = mock(ExecutionContext.class);
+        when(userService.findByExternalIdAndSource(id, source)).thenReturn(Maybe.just(foundUser));
+        when(userService.update(any(), any())).thenReturn(Single.just(updatedUser));
+        when(userService.enhance(updatedUser)).thenReturn(Single.just(updatedUser));
+        when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
+
+        TestObserver<User> testObserver = userAuthenticationService.connect(user).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        verify(userService, times(1)).update(argThat(u -> u.getLastPasswordReset() != null), any());
+    }
+
+    @Test
     public void shouldConnect_knownUser() {
         String domainId = "Domain";
         String source = "SRC";
