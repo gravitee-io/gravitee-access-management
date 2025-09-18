@@ -38,18 +38,18 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
         return findById(key)
                 .flatMapSingle(rateLimit -> {
-                    LOGGER.debug("Incrementing rate limit entry for key {} with weight {}", rateLimit.getKey(), weight);
-                    if (rateLimit.hasNotExpired()) {
-                        LOGGER.debug("Rate limit entry for key {} has not expired yet", rateLimit.getKey());
-                        rateLimit.setCounter(rateLimit.getCounter() + weight);
-                        return update(rateLimit);
-                    } else {
-                        LOGGER.debug("Rate limit entry for key {} has expired", rateLimit.getKey());
+                    final RateLimit effectiveRateLimit = rateLimit.hasNotExpired() ?
+                            rateLimit :
+                            supplier.get();
 
-                        RateLimit newRateLimit = supplier.get();
-                        newRateLimit.setCounter(weight);
-                        return update(newRateLimit);
-                    }
+                    final long count = rateLimit.hasNotExpired() ? rateLimit.getCounter() + weight : weight;
+
+                    final RateLimit updatedRateLimit = RateLimit.RateLimitBuilder
+                            .builder(effectiveRateLimit)
+                            .counter(count)
+                            .build();
+
+                    return update(updatedRateLimit);
                 })
                 .switchIfEmpty(createNew(weight, supplier)
                         .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {}", rl.getKey(), weight))
