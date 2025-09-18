@@ -16,8 +16,11 @@
 package io.gravitee.am.gateway.handler.root.resources.endpoint.agent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.agent.model.AccessCheckRequest;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.agent.model.AccessCheckResponse;
+import io.gravitee.am.model.User;
 import io.gravitee.am.service.OpenFGAService;
 import io.gravitee.am.service.model.OpenFGATuple;
 import io.gravitee.common.http.HttpHeaders;
@@ -37,10 +40,14 @@ public class CheckPermissionEndpoint implements Handler<RoutingContext> {
 
     private final ObjectMapper objectMapper;
     private final OpenFGAService openFGAService;
+    private final UserGatewayService userGatewayService;
+    private final SubjectManager subjectManager;
 
-    public CheckPermissionEndpoint(ObjectMapper objectMapper, OpenFGAService openFGAService) {
+    public CheckPermissionEndpoint(ObjectMapper objectMapper, OpenFGAService openFGAService, UserGatewayService userGatewayService, SubjectManager subjectManager) {
         this.objectMapper = objectMapper;
         this.openFGAService = openFGAService;
+        this.userGatewayService = userGatewayService;
+        this.subjectManager = subjectManager;
     }
 
     @Override
@@ -72,9 +79,21 @@ public class CheckPermissionEndpoint implements Handler<RoutingContext> {
                 sendResponse(routingContext, AccessCheckResponse.deny("resource_not_found"));
                 return;
             }
+            String username;
+            if(!request.getUser().contains("user:")){
+                String userId = subjectManager.extractUserId(request.getUser());
+                String source = subjectManager.extractSourceId(request.getUser());
+                User user = userGatewayService.findByExternalIdAndSource(userId, source).blockingGet();
+                if(user == null){
+                    sendError(routingContext, HttpStatusCode.BAD_REQUEST_400, "invalid user");
+                }
+                username = "user:" + user.getUsername();
+            }else{
+                username = request.getUser();
+            }
 
-           openFGAService.connect("http://localhost:8080").blockingGet();
-            openFGAService.checkPermission(null, new OpenFGATuple(request.getUser(), request.getRelation(), request.getObject())).map(result -> {
+            openFGAService.connect("http://localhost:8080").blockingGet();
+            openFGAService.checkPermission(null, new OpenFGATuple(username, request.getRelation(), request.getObject())).map(result -> {
                 if (result.isAllowed()) {
                     return AccessCheckResponse.ok();
                 } else {

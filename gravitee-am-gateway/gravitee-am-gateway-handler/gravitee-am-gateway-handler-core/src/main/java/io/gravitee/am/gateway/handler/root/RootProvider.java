@@ -27,6 +27,7 @@ import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.email.EmailService;
 import io.gravitee.am.gateway.handler.common.factor.FactorManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManager;
 import io.gravitee.am.gateway.handler.common.ruleengine.RuleEngine;
 import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
@@ -35,6 +36,7 @@ import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
 import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
+import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
@@ -49,7 +51,6 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
-import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.agent.CheckPermissionEndpoint;
@@ -345,10 +346,13 @@ public class RootProvider extends AbstractProtocolProvider {
     private PasswordPolicyManager passwordPolicyManager;
 
     @Autowired
-    private ResourceManager resourceManager;
+    private UserGatewayService userGatewayService;
 
     @Autowired
     private OpenFGAService openFgaService;
+
+    @Autowired
+    private SubjectManager subjectManager;
 
     @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
     private String rememberMeCookieName;
@@ -719,7 +723,7 @@ public class RootProvider extends AbstractProtocolProvider {
 
         // agent check permission route
         rootRouter.route(POST, PATH_AGENT_CHECK_PERMISSION)
-                  .handler(new CheckPermissionEndpoint(objectMapper, openFgaService));
+                  .handler(new CheckPermissionEndpoint(objectMapper, openFgaService, userGatewayService, subjectManager));
         rootRouter.route(POST, PATH_AGENT_RESOURCES).handler(new ResourcesEndpoint(objectMapper, openFgaService));
 
         // error route

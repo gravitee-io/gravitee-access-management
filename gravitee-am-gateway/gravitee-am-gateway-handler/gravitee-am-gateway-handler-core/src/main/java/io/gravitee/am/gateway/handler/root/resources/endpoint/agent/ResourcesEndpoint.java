@@ -74,7 +74,7 @@ public class ResourcesEndpoint implements Handler<RoutingContext> {
                 return;
             }
 
-           openFGAService.connect("http://localhost:8080").blockingGet();
+            openFGAService.connect("http://localhost:8080").blockingGet();
             openFGAService.checkPermission(null, new OpenFGATuple(request.getUser(), request.getRelation(), request.getObject())).map(result -> {
                 if (result.isAllowed()) {
                     return AccessCheckResponse.ok();
