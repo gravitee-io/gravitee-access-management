@@ -71,6 +71,7 @@ public class OpenFGAServiceImpl implements OpenFGAService {
 
                 // Test connection by trying to list stores
                 List<OpenFGAStoreEntity> stores = client.listStores().get().getStores().stream().map(OpenFGAStoreEntity::fromStore).toList();
+                client.setStoreId(stores.get(0).getId());
 
                 logger.info("Successfully connected to OpenFGA server: {}", serverUrl);
                 logger.info("Found {} stores", stores.size());
@@ -185,7 +186,7 @@ public class OpenFGAServiceImpl implements OpenFGAService {
 
     @Override
     public Single<OpenFGACheckResponse> checkPermission(String storeId, OpenFGATuple tuple) throws FgaInvalidParameterException {
-        client.setStoreId(storeId);
+//        client.setStoreId(storeId);
 
         ClientCheckRequest req = new ClientCheckRequest()
                 .user(Objects.requireNonNull(tuple.getUser(), "tuple.user is required"))

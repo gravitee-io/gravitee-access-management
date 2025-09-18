@@ -33,6 +33,8 @@ import io.gravitee.am.gateway.handler.common.service.CredentialGatewayService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.LoginAttemptGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
+import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
+import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.UserAuthProvider;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
 import io.gravitee.am.gateway.handler.common.vertx.web.handler.AuthenticationFlowContextHandler;
@@ -47,9 +49,11 @@ import io.gravitee.am.gateway.handler.common.webauthn.WebAuthnCookieService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.manager.botdetection.BotDetectionManager;
 import io.gravitee.am.gateway.handler.manager.deviceidentifiers.DeviceIdentifierManager;
-import io.gravitee.am.gateway.handler.root.resources.handler.FinalRedirectLocationHandler;
+import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.root.resources.auth.handler.SocialAuthHandler;
 import io.gravitee.am.gateway.handler.root.resources.auth.provider.SocialAuthenticationProvider;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.agent.CheckPermissionEndpoint;
+import io.gravitee.am.gateway.handler.root.resources.endpoint.agent.ResourcesEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.identifierfirst.IdentifierFirstLoginEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginCallbackEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.login.LoginEndpoint;
@@ -82,13 +86,13 @@ import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnR
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterPostEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnRegisterSuccessEndpoint;
 import io.gravitee.am.gateway.handler.root.resources.endpoint.webauthn.WebAuthnResponseEndpoint;
-import io.gravitee.am.gateway.handler.root.resources.handler.PredicateRoutingHandler;
-import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.ConditionalBodyHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.FinalRedirectLocationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.botdetection.BotDetectionHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.client.ClientRequestParseHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
+import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.consent.DataConsentHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.error.ErrorHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.geoip.GeoIpHandler;
@@ -140,13 +144,11 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationFlowContextService;
 import io.gravitee.am.service.DomainDataPlane;
 import io.gravitee.am.service.FactorService;
+import io.gravitee.am.service.OpenFGAService;
 import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.gateway.handler.common.service.mfa.RateLimiterService;
-import io.gravitee.am.gateway.handler.common.service.mfa.VerifyAttemptService;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.vertx.core.Handler;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.Vertx;
 import io.vertx.rxjava3.ext.auth.webauthn.WebAuthn;
 import io.vertx.rxjava3.ext.web.Router;
@@ -166,7 +168,7 @@ import static io.gravitee.am.common.utils.ConstantKeys.MFA_CHALLENGE_COMPLETED_K
 import static io.gravitee.am.common.utils.ConstantKeys.MFA_ENROLLMENT_COMPLETED_KEY;
 import static io.gravitee.am.gateway.handler.root.resources.handler.PredicateRoutingHandler.handleWhen;
 import static io.vertx.core.http.HttpMethod.GET;
-import static java.lang.Boolean.parseBoolean;
+import static io.vertx.core.http.HttpMethod.POST;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -197,6 +199,9 @@ public class RootProvider extends AbstractProtocolProvider {
     public static final String PATH_FORGOT_PASSWORD = "/forgotPassword";
     public static final String PATH_IDENTIFIER_FIRST_LOGIN = "/login/identifier";
     public static final String PATH_ERROR = "/error";
+    public static final String PATH_AGENT_CHECK_PERMISSION = "/agent/check-permission";
+    public static final String PATH_AGENT_RESOURCES = "/agent/resources";
+
     private static final String PASSWORD_HISTORY = "/passwordHistory";
 
     @Autowired
@@ -338,6 +343,12 @@ public class RootProvider extends AbstractProtocolProvider {
 
     @Autowired
     private PasswordPolicyManager passwordPolicyManager;
+
+    @Autowired
+    private ResourceManager resourceManager;
+
+    @Autowired
+    private OpenFGAService openFgaService;
 
     @Value("${http.cookie.rememberMe.name:"+ DEFAULT_REMEMBER_ME_COOKIE_NAME +"}")
     private String rememberMeCookieName;
@@ -629,7 +640,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTER))
                 .handler(localeHandler)
                 .handler(new RegisterEndpoint(thymeleafTemplateEngine, domain, botDetectionManager, passwordPolicyManager, identityProviderManager, deviceIdentifierManager));
-        rootRouter.route(HttpMethod.POST, PATH_REGISTER)
+        rootRouter.route(POST, PATH_REGISTER)
                 .handler(new RegisterSubmissionRequestParseHandler())
                 .handler(clientRequestParseHandlerOptional)
                 .handler(botDetectionHandler)
@@ -648,7 +659,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_REGISTRATION_CONFIRMATION))
                 .handler(localeHandler)
                 .handler(new RegisterConfirmationEndpoint(thymeleafTemplateEngine, domain, deviceIdentifierManager, passwordPolicyManager, identityProviderManager));
-        rootRouter.route(HttpMethod.POST, PATH_CONFIRM_REGISTRATION)
+        rootRouter.route(POST, PATH_CONFIRM_REGISTRATION)
                 .handler(new RegisterConfirmationSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(new PasswordPolicyRequestParseHandler(passwordService, passwordPolicyManager, identityProviderManager, domain, auditService, EventType.REGISTRATION_CONFIRMATION))
@@ -672,7 +683,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(forgotPasswordAccessHandler)
                 .handler(localeHandler)
                 .handler(new ForgotPasswordEndpoint(thymeleafTemplateEngine, domain, botDetectionManager));
-        rootRouter.route(HttpMethod.POST, PATH_FORGOT_PASSWORD)
+        rootRouter.route(POST, PATH_FORGOT_PASSWORD)
                 .handler(new ForgotPasswordSubmissionRequestParseHandler(domain))
                 .handler(clientRequestParseHandler)
                 .handler(botDetectionHandler)
@@ -689,7 +700,7 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(localeHandler)
                 .handler(policyChainHandler.create(ExtensionPoint.PRE_RESET_PASSWORD))
                 .handler(new ResetPasswordEndpoint(thymeleafTemplateEngine, domain, passwordPolicyManager, identityProviderManager, deviceIdentifierManager));
-        rootRouter.route(HttpMethod.POST, PATH_RESET_PASSWORD)
+        rootRouter.route(POST, PATH_RESET_PASSWORD)
                 .handler(new ResetPasswordSubmissionRequestParseHandler())
                 .handler(userTokenRequestParseHandler)
                 .handler(new ResetPasswordOneTimeTokenHandler())
@@ -698,13 +709,18 @@ public class RootProvider extends AbstractProtocolProvider {
                 .handler(policyChainHandler.create(ExtensionPoint.POST_RESET_PASSWORD))
                 .handler(new ResetPasswordSubmissionEndpoint(userService, environment));
 
-        rootRouter.route(HttpMethod.POST, PASSWORD_HISTORY)
+        rootRouter.route(POST, PASSWORD_HISTORY)
                   .handler(clientRequestParseHandlerOptional)
                   .handler(new PasswordHistoryHandler(passwordHistoryService, userService, domain, passwordPolicyManager, identityProviderManager));
 
-        rootRouter.route(HttpMethod.POST, "/passwordValidation")
+        rootRouter.route(POST, "/passwordValidation")
                   .handler(clientRequestParseHandlerOptional)
                   .handler(new PasswordValidationHandler(passwordService, userService, passwordPolicyManager, identityProviderManager));
+
+        // agent check permission route
+        rootRouter.route(POST, PATH_AGENT_CHECK_PERMISSION)
+                  .handler(new CheckPermissionEndpoint(objectMapper, openFgaService));
+        rootRouter.route(POST, PATH_AGENT_RESOURCES).handler(new ResourcesEndpoint(objectMapper, openFgaService));
 
         // error route
         rootRouter.route(GET, PATH_ERROR)
