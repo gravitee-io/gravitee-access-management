@@ -440,6 +440,13 @@ public class TokenServiceImpl implements TokenService {
             jwt.put("act",Map.of("sub", oAuth2Request.parameters().getFirst("requested_actor")) );
         }
 
+        if (oAuth2Request.parameters().containsKey("resource_uri") && user.getAdditionalInformation().containsKey("agentId")) {
+
+            jwt.put("act",Map.of("sub",user.getAdditionalInformation().get("agentId"), "act", user.getAdditionalInformation().get("act")) );
+        }
+
+
+
         return jwt;
     }
 
