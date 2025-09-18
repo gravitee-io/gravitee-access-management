@@ -71,4 +71,8 @@ export class ApplicationEndpointsComponent implements OnInit {
   samlEnabled(): boolean {
     return this.domain.saml?.enabled;
   }
+
+  mcpEnabled(): boolean {
+    return this.application?.type?.toLowerCase() === 'mcp';
+  }
 }

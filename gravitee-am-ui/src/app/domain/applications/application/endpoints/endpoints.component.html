@@ -158,6 +158,38 @@
           <mat-icon>content_copy</mat-icon>
         </button>
       </mat-form-field>
+      <mat-form-field *ngIf="mcpEnabled()" appearance="outline" floatLabel="always">
+        <mat-label>Agent Check Permission endpoint</mat-label>
+        <input matInput type="text" name="agentCheckPermissionEndpoint" [value]="endpoint('/agent/check-permission')" readonly />
+        <mat-hint>The agent check permission endpoint allows to verify permissions using OpenFGA</mat-hint>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/agent/check-permission')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </mat-form-field>
+      <mat-form-field *ngIf="mcpEnabled()" appearance="outline" floatLabel="always">
+        <mat-label>Agent Resources endpoint</mat-label>
+        <input matInput type="text" name="agentResourcesEndpoint" [value]="endpoint('/agent/resources')" readonly />
+        <mat-hint>The agent resources endpoint allows to retrieve available tools and resources using OpenFGA</mat-hint>
+        <button
+          mat-icon-button
+          matSuffix
+          matTooltip="Copy to clipboard"
+          ngxClipboard
+          [cbContent]="endpoint('/agent/resources')"
+          (cbOnSuccess)="valueCopied('Copied to clipboard')"
+          (click)="$event.preventDefault()"
+        >
+          <mat-icon>content_copy</mat-icon>
+        </button>
+      </mat-form-field>
       <mat-form-field *ngIf="scimEnabled()" appearance="outline" floatLabel="always">
         <mat-label>SCIM Configuration endpoint</mat-label>
         <input matInput type="text" name="scimConfigurationEndpoint" [value]="endpoint('/scim/ServiceProviderConfig')" readonly />
