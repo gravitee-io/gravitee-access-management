@@ -4,14 +4,14 @@ mat-form-field {
 
 // View Mode Switcher
 .view-mode-switcher {
-  margin: 16px 0;
   display: flex;
   justify-content: flex-end;
-  
+  margin: 16px 0;
+
   mat-button-toggle-group {
     border-radius: 4px;
   }
-  
+
   mat-button-toggle {
     mat-icon {
       margin-right: 4px;
@@ -22,17 +22,17 @@ mat-form-field {
 // MCP Tools Grid Styles
 .tools-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
   margin-top: 16px;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
 }
 
 .tool-card {
   height: fit-content;
   transition: box-shadow 0.3s ease;
-  
+
   &:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 4px 8px rgb(0 0 0 / 12%);
   }
 }
 
@@ -43,21 +43,21 @@ mat-form-field {
 
 .tool-description {
   margin-bottom: 16px;
-  
+
   p {
-    margin: 8px 0 0 0;
-    color: rgba(0, 0, 0, 0.6);
+    margin: 8px 0 0;
+    color: rgb(0 0 0 / 60%);
     line-height: 1.4;
   }
 }
 
 .tool-scopes {
   margin-bottom: 16px;
-  
+
   .scopes-container {
     margin-top: 8px;
   }
-  
+
   .scope-chip {
     margin: 2px 4px 2px 0;
     font-size: 0.75rem;
@@ -66,11 +66,11 @@ mat-form-field {
 
 .tool-schema {
   .schema-display {
-    background-color: #f5f5f5;
+    padding: 12px;
     border: 1px solid #e0e0e0;
     border-radius: 4px;
-    padding: 12px;
-    margin: 8px 0 0 0;
+    margin: 8px 0 0;
+    background-color: #f5f5f5;
     font-family: 'Courier New', monospace;
     font-size: 0.8rem;
     line-height: 1.4;
@@ -81,23 +81,23 @@ mat-form-field {
 }
 
 .no-tools-message {
-  text-align: center;
   padding: 40px 20px;
-  color: rgba(0, 0, 0, 0.6);
-  
+  color: rgb(0 0 0 / 60%);
+  text-align: center;
+
   .no-tools-icon {
-    font-size: 48px;
     width: 48px;
     height: 48px;
     margin-bottom: 16px;
+    font-size: 48px;
     opacity: 0.5;
   }
-  
+
   h3 {
-    margin: 0 0 8px 0;
-    color: rgba(0, 0, 0, 0.8);
+    margin: 0 0 8px;
+    color: rgb(0 0 0 / 80%);
   }
-  
+
   p {
     margin: 4px 0;
     line-height: 1.4;
@@ -113,44 +113,44 @@ mat-form-field {
 .tools-table {
   width: 100%;
   min-width: 800px;
-  
+
   .mat-header-cell {
+    color: rgb(0 0 0 / 87%);
     font-weight: 600;
-    color: rgba(0, 0, 0, 0.87);
   }
-  
+
   .mat-cell {
     padding: 12px 8px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    border-bottom: 1px solid rgb(0 0 0 / 12%);
   }
 }
 
 .tool-name-cell {
   display: flex;
   align-items: center;
-  
+
   .tool-icon {
-    margin-right: 8px;
-    font-size: 18px;
     width: 18px;
     height: 18px;
+    margin-right: 8px;
+    font-size: 18px;
   }
-  
+
   .tool-name {
     font-weight: 500;
   }
 }
 
 .tool-description-cell {
-  max-width: 300px;
-  line-height: 1.4;
-  color: rgba(0, 0, 0, 0.6);
-  overflow: hidden;
-  text-overflow: ellipsis;
   display: -webkit-box;
+  overflow: hidden;
+  max-width: 300px;
+  -webkit-box-orient: vertical;
+  color: rgb(0 0 0 / 60%);
   -webkit-line-clamp: 3;
   line-clamp: 3;
-  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  text-overflow: ellipsis;
 }
 
 .tool-scopes-cell {
@@ -158,26 +158,25 @@ mat-form-field {
     margin: 2px 4px 2px 0;
     font-size: 0.75rem;
   }
-  
+
   .no-scopes {
-    color: rgba(0, 0, 0, 0.5);
+    color: rgb(0 0 0 / 50%);
     font-style: italic;
   }
 }
 
-
 // Responsive adjustments
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .tools-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .tools-table-container {
     .tools-table {
       min-width: 600px;
     }
   }
-  
+
   .tool-description-cell {
     max-width: 200px;
   }

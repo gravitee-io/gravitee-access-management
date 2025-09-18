@@ -289,12 +289,12 @@ curl -X GET \
         <div *ngIf="isMcpApp()">
           <h1>MCP Server Overview</h1>
           <p>
-            This MCP (Model Context Protocol) server provides tools and capabilities for AI model interactions. 
-            Configure and manage your MCP server settings below.
+            This MCP (Model Context Protocol) server provides tools and capabilities for AI model interactions. Configure and manage your
+            MCP server settings below.
           </p>
 
           <!-- Overview Metadata Section -->
-          <div class="gv-form-section" style="margin-bottom: 24px;">
+          <div class="gv-form-section" style="margin-bottom: 24px">
             <div class="gv-form-section-title">
               <h3>Overview Metadata</h3>
               <mat-divider></mat-divider>
@@ -316,19 +316,24 @@ curl -X GET \
           </div>
 
           <!-- Description Section -->
-          <div class="gv-form-section" style="margin-bottom: 24px;">
+          <div class="gv-form-section" style="margin-bottom: 24px">
             <div class="gv-form-section-title">
               <h3>Description</h3>
               <mat-divider></mat-divider>
             </div>
-            <mat-form-field appearance="outline" floatLabel="always" style="width: 100%;">
+            <mat-form-field appearance="outline" floatLabel="always" style="width: 100%">
               <mat-label>Server Description</mat-label>
-              <textarea matInput rows="3" [value]="application.description || 'MCP server for AI model interactions and tool management'" readonly></textarea>
+              <textarea
+                matInput
+                rows="3"
+                [value]="application.description || 'MCP server for AI model interactions and tool management'"
+                readonly
+              ></textarea>
             </mat-form-field>
           </div>
 
           <!-- OAuth Client Details Section -->
-          <div class="gv-form-section" style="margin-bottom: 24px;">
+          <div class="gv-form-section" style="margin-bottom: 24px">
             <div class="gv-form-section-title">
               <h3>OAuth Client Details</h3>
               <mat-divider></mat-divider>
@@ -367,7 +372,7 @@ curl -X GET \
           </div>
 
           <!-- Providers Section -->
-          <div class="gv-form-section" style="margin-bottom: 24px;">
+          <div class="gv-form-section" style="margin-bottom: 24px">
             <div class="gv-form-section-title">
               <h3>Providers</h3>
               <mat-divider></mat-divider>
@@ -407,7 +412,7 @@ curl -X GET \
           </div>
 
           <!-- Factors Section -->
-          <div class="gv-form-section" style="margin-bottom: 24px;">
+          <div class="gv-form-section" style="margin-bottom: 24px">
             <div class="gv-form-section-title">
               <h3>Factors</h3>
               <mat-divider></mat-divider>
@@ -437,14 +442,13 @@ curl -X GET \
           </div>
 
           <!-- Tools Section -->
-          <div class="gv-form-section" style="margin-bottom: 24px;">
+          <div class="gv-form-section" style="margin-bottom: 24px">
             <div class="gv-form-section-title">
               <h3>Tools</h3>
               <mat-divider></mat-divider>
             </div>
             <div class="tools-table-container" *ngIf="getToolsData().length > 0">
               <table mat-table [dataSource]="getToolsData()" class="tools-table">
-                
                 <!-- Tool Name Column -->
                 <ng-container matColumnDef="name">
                   <th mat-header-cell *matHeaderCellDef>Tool Name</th>
@@ -480,10 +484,10 @@ curl -X GET \
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="['name', 'description', 'scopes']"></tr>
-                <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes'];"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes']"></tr>
               </table>
             </div>
-            
+
             <!-- Empty state when no tools are available -->
             <div class="no-tools-message" *ngIf="getToolsData().length === 0">
               <p>No tools have been configured for this MCP server yet.</p>
@@ -492,7 +496,7 @@ curl -X GET \
           </div>
 
           <!-- Bottom Row: Configure Rules & View Usage -->
-          <div fxLayout="row" fxLayoutGap="24px" style="margin-bottom: 24px;">
+          <div fxLayout="row" fxLayoutGap="24px" style="margin-bottom: 24px">
             <div fxFlex="50">
               <mat-card class="action-card">
                 <mat-card-header>
@@ -550,7 +554,7 @@ curl -X GET \
               <mat-divider></mat-divider>
             </div>
             <p>Configure your AI tools to connect to this MCP server using the following JSON configurations:</p>
-            
+
             <mat-tab-group class="ai-config-tabs">
               <mat-tab label="Cursor IDE">
                 <div class="tab-content">
@@ -559,7 +563,8 @@ curl -X GET \
                     <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
                       <mat-icon>content_copy</mat-icon>
                     </button>
-                    <pre #cursor_config class="multiline">{{ '{' }}
+                    <pre #cursor_config class="multiline"
+                      >{{ '{' }}
   "mcp": {{ '{' }}
     "servers": {{ '{' }}
       "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
@@ -572,7 +577,8 @@ curl -X GET \
       {{ '}' }}
     {{ '}' }}
   {{ '}' }}
-{{ '}' }}</pre>
+{{ '}' }}</pre
+                    >
                   </div>
                 </div>
               </mat-tab>
@@ -584,7 +590,8 @@ curl -X GET \
                     <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
                       <mat-icon>content_copy</mat-icon>
                     </button>
-                    <pre #claude_config class="multiline">{{ '{' }}
+                    <pre #claude_config class="multiline"
+                      >{{ '{' }}
   "mcpServers": {{ '{' }}
     "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
       "command": "npx",
@@ -596,7 +603,8 @@ curl -X GET \
       {{ '}' }}
     {{ '}' }}
   {{ '}' }}
-{{ '}' }}</pre>
+{{ '}' }}</pre
+                    >
                   </div>
                 </div>
               </mat-tab>
@@ -608,7 +616,8 @@ curl -X GET \
                     <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
                       <mat-icon>content_copy</mat-icon>
                     </button>
-                    <pre #vscode_config class="multiline">{{ '{' }}
+                    <pre #vscode_config class="multiline"
+                      >{{ '{' }}
   "mcp.servers": {{ '{' }}
     "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
       "type": "http",
@@ -622,7 +631,8 @@ curl -X GET \
       ]
     {{ '}' }}
   {{ '}' }}
-{{ '}' }}</pre>
+{{ '}' }}</pre
+                    >
                   </div>
                 </div>
               </mat-tab>
@@ -634,7 +644,8 @@ curl -X GET \
                     <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
                       <mat-icon>content_copy</mat-icon>
                     </button>
-                    <pre #generic_config class="multiline">{{ '{' }}
+                    <pre #generic_config class="multiline"
+                      >{{ '{' }}
   "server": {{ '{' }}
     "name": "{{ application.name || 'Gravitee MCP Server' }}",
     "version": "1.0.0",
@@ -655,14 +666,18 @@ curl -X GET \
       {{ getToolsDetailsForJson() }}
     ]
   {{ '}' }}
-{{ '}' }}</pre>
+{{ '}' }}</pre
+                    >
                   </div>
                 </div>
               </mat-tab>
             </mat-tab-group>
 
             <blockquote>
-              <p><strong>Note:</strong> Replace <code>your-client-secret-here</code> and <code>your-access-token</code> with your actual credentials. Make sure to keep these secure and never commit them to version control.</p>
+              <p>
+                <strong>Note:</strong> Replace <code>your-client-secret-here</code> and <code>your-access-token</code> with your actual
+                credentials. Make sure to keep these secure and never commit them to version control.
+              </p>
             </blockquote>
           </div>
         </div>

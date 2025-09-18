@@ -17,7 +17,7 @@
 -->
 <div fxLayout="column" class="gv-page-container">
   <!-- MCP Tools Section -->
-  <div *ngIf="isMCPApplication()" class="gv-form-section" style="margin-top: 24px;">
+  <div *ngIf="isMCPApplication()" class="gv-form-section" style="margin-top: 24px">
     <div class="gv-form-section-title">
       <h2>MCP Tools</h2>
       <span>Available tools in your Model Context Protocol application.</span>
@@ -38,7 +38,7 @@
     </div>
 
     <!-- MCP URL -->
-    <div style="margin-bottom: 24px;">
+    <div style="margin-bottom: 24px">
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>MCP Service URL</mat-label>
         <input matInput type="text" name="mcpServiceUrl" [value]="getMCPUrl()" readonly />
@@ -59,7 +59,6 @@
 
     <!-- Tools Display -->
     <div *ngIf="getMCPTools().length > 0; else noTools">
-
       <!-- Card View -->
       <div *ngIf="isCardMode()" class="tools-grid">
         <mat-card *ngFor="let tool of getMCPTools(); let i = index" class="tool-card">
@@ -87,16 +86,13 @@
                 </mat-chip-list>
               </div>
             </div>
-
           </mat-card-content>
-
         </mat-card>
       </div>
 
       <!-- Table View -->
       <div *ngIf="isTableMode()" class="tools-table-container">
         <table mat-table [dataSource]="getMCPTools()" class="tools-table" [multiTemplateDataRows]="false">
-
           <!-- Tool Name Column -->
           <ng-container matColumnDef="name">
             <th mat-header-cell *matHeaderCellDef>Tool Name</th>
@@ -128,16 +124,13 @@
                     {{ scope }}
                   </mat-chip>
                 </mat-chip-list>
-                <span *ngIf="!tool.requiredScopes || tool.requiredScopes.length === 0" class="no-scopes">
-                  No scopes required
-                </span>
+                <span *ngIf="!tool.requiredScopes || tool.requiredScopes.length === 0" class="no-scopes"> No scopes required </span>
               </div>
             </td>
           </ng-container>
 
-
           <tr mat-header-row *matHeaderRowDef="['name', 'description', 'scopes']"></tr>
-          <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes'];"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes']"></tr>
         </table>
       </div>
     </div>
