@@ -971,7 +971,7 @@ export const routes: Routes = [
                                 level: 'level2',
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', "MCP"],
                               },
                             },
                             resolve: {
@@ -1542,7 +1542,7 @@ export const routes: Routes = [
                                 level: 'level2',
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'MCP'],
                               },
                             },
                             resolve: {
