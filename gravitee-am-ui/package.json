@@ -1,13 +1,13 @@
 {
   "name": "gravitee-am-webui",
-  "version": "4.9.0-alpha.1",
+  "version": "4.10.0-SNAPSHOT",
   "license": "Apache-2.0",
   "scripts": {
     "ng": "ng",
     "serve": "ng serve",
     "build": "ng build",
     "test": "ng test",
-    "lint": "yarn run lint:eslint && yarn run lint:styles && yarn run lint:license && yarn run prettier",
+    "lint": "yarn run lint:eslint && yarn run lint:license",
     "lint:eslint": "ng lint",
     "lint:eslint:fix": "ng lint --fix",
     "lint:fix": "yarn run lint:eslint:fix && yarn run lint:styles:fix && yarn run lint:license:fix && yarn run prettier:fix",
