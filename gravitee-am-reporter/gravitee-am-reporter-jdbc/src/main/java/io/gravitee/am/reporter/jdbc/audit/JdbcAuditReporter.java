@@ -77,6 +77,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -562,8 +563,10 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
             // for now simply get the file named <driver>.schema, more complex stuffs will be done if schema updates have to be done in the future
             final String sqlScript = "database/" + configuration.getDriver() + ".schema";
 
+            var schemaOpt = Optional.ofNullable(configuration.getOptions()).flatMap(options -> options.stream().filter(entry -> entry.containsValue("currentSchema")).findFirst()).map(entry -> entry.get("value"));
+
             Function<Connection, Mono<Long>> resultFunction = connection -> {
-                Statement doesTableExist = connection.createStatement(dialectHelper.tableExists(auditsTable));
+                Statement doesTableExist = connection.createStatement(dialectHelper.tableExists(auditsTable, schemaOpt.orElse("public")));
                 return flowableToFlux(Flowable.fromPublisher(doesTableExist.execute())
                         .flatMap(Result::getRowsUpdated)
                         .first(0l)

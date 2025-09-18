@@ -37,7 +37,7 @@ public interface DialectHelper {
 
     SearchQuery buildSearchQuery(ReferenceType referenceType, String referenceId, AuditReportableCriteria criteria);
 
-    String tableExists(String table);
+    String tableExists(String table, String schema);
 
     String buildPagingClause(int page, int size);
 
