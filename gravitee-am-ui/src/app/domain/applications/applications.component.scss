@@ -69,16 +69,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   .tool-icon {
-    font-size: 18px;
     width: 18px;
     height: 18px;
+    font-size: 18px;
     color: #666;
   }
-  
+
   span {
-    font-weight: 500;
     color: #333;
+    font-weight: 500;
   }
 }

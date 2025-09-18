@@ -1478,7 +1478,7 @@ export const routes: Routes = [
                       },
                       filter: {
                         only: ['MCP'],
-                      }
+                      },
                     },
                     children: [
                       {

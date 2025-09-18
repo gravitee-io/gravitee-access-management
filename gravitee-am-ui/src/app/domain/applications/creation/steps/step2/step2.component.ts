@@ -54,10 +54,14 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     {
       icon: 'folder_shared',
       type: 'MCP',
-    }
+    },
   ];
 
-  constructor(private route: ActivatedRoute, private cdr: ChangeDetectorRef, private snackBar: MatSnackBar) {}
+  constructor(
+    private route: ActivatedRoute,
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
@@ -73,7 +77,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       if (!this.application.settings.mcp) {
         this.application.settings.mcp = {
           url: '',
-          toolDefinitions: []
+          toolDefinitions: [],
         };
       }
       if (!this.application.settings.mcp.toolDefinitions) {
@@ -90,7 +94,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       if (!this.application.settings.mcp) {
         this.application.settings.mcp = {
           url: '',
-          toolDefinitions: []
+          toolDefinitions: [],
         };
       }
       // Don't recreate the array if it already exists - this preserves the reference
@@ -124,18 +128,18 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       event.preventDefault();
       event.stopPropagation();
     }
-    
+
     // Ensure MCP settings exist
     this.ensureMCPSettingsExist();
-    
+
     const newTool = {
       name: '',
       description: '',
       requiredScopes: [],
       requiredScopesText: '',
-      inputSchema: '{\n  "type": "object",\n  "properties": {}\n}'
+      inputSchema: '{\n  "type": "object",\n  "properties": {}\n}',
     };
-    
+
     this.application.settings.mcp.toolDefinitions.push(newTool);
     this.updateToolsDataSource();
     this.cdr.detectChanges();
@@ -151,7 +155,10 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
 
   updateRequiredScopes(tool: any, scopesText: string): void {
     if (scopesText && scopesText.trim()) {
-      tool.requiredScopes = scopesText.split(',').map((scope: string) => scope.trim()).filter((scope: string) => scope.length > 0);
+      tool.requiredScopes = scopesText
+        .split(',')
+        .map((scope: string) => scope.trim())
+        .filter((scope: string) => scope.length > 0);
     } else {
       tool.requiredScopes = [];
     }
@@ -162,19 +169,9 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     this.updateToolsDataSource();
   }
 
-  trackByIndex(index: number, item: any): number {
+  trackByIndex(index: number, _item: any): number {
     return index;
   }
-
-  // Debug method to check current state
-  getCurrentToolCount(): number {
-    return this.application?.settings?.mcp?.toolDefinitions?.length || 0;
-  }
-
-  getCurrentTools(): any[] {
-    return this.application?.settings?.mcp?.toolDefinitions || [];
-  }
-
 
   // File import functionality
   onFileSelected(event: any): void {
@@ -187,7 +184,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    
+
     // Check if files are being dragged
     if (event.dataTransfer?.types.includes('Files')) {
       // Add visual feedback for drag over
@@ -201,13 +198,13 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   onDragLeave(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    
+
     // Only remove visual feedback if we're actually leaving the drop zone
     const dropZone = event.currentTarget as HTMLElement;
     const rect = dropZone.getBoundingClientRect();
     const x = event.clientX;
     const y = event.clientY;
-    
+
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
       dropZone.style.backgroundColor = '#fafafa';
       dropZone.style.borderColor = '#ccc';
@@ -218,13 +215,13 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    
+
     // Remove visual feedback
     const dropZone = event.currentTarget as HTMLElement;
     dropZone.style.backgroundColor = '#fafafa';
     dropZone.style.borderColor = '#ccc';
     dropZone.style.borderStyle = 'dashed';
-    
+
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
       this.processFile(files[0]);
@@ -237,7 +234,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     if (target.closest('button')) {
       return; // Don't trigger file input if clicking on a button
     }
-    
+
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     if (fileInput) {
       fileInput.click();
@@ -286,20 +283,20 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       const importedTools = jsonData.tools.map((tool: any) => {
         // Extract required scopes from parameters if available
         const requiredScopes = this.extractScopesFromTool(tool);
-        
+
         return {
           name: tool.name || '',
           description: tool.description || '',
           requiredScopes: requiredScopes,
           requiredScopesText: requiredScopes.join(', '),
-          inputSchema: tool.parameters ? JSON.stringify(tool.parameters, null, 2) : '{\n  "type": "object",\n  "properties": {}\n}'
+          inputSchema: tool.parameters ? JSON.stringify(tool.parameters, null, 2) : '{\n  "type": "object",\n  "properties": {}\n}',
         };
       });
 
       // Clear existing tools and add new ones using array methods
       this.application.settings.mcp.toolDefinitions.length = 0; // Clear array
       this.application.settings.mcp.toolDefinitions.push(...importedTools); // Add new tools
-      
+
       this.updateToolsDataSource();
       this.cdr.detectChanges();
       this.snackBar.open(`Successfully imported ${importedTools.length} tool(s)`, 'Close', { duration: 3000 });
@@ -314,7 +311,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     if (tool.requiredScopes && Array.isArray(tool.requiredScopes)) {
       return tool.requiredScopes;
     }
-    
+
     if (tool.scopes && Array.isArray(tool.scopes)) {
       return tool.scopes;
     }
@@ -326,37 +323,5 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
     }
 
     return [];
-  }
-
-  downloadTemplate(): void {
-    const template = {
-      type: "list_tools",
-      tools: [
-        {
-          name: "example_tool",
-          description: "An example tool for demonstration purposes",
-          parameters: {
-            type: "object",
-            properties: {
-              param1: {
-                type: "string",
-                description: "Example parameter"
-              }
-            },
-            required: ["param1"]
-          }
-        }
-      ]
-    };
-
-    const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'mcp-tools-template.json';
-    link.click();
-    window.URL.revokeObjectURL(url);
-    
-    this.snackBar.open('Template downloaded', 'Close', { duration: 2000 });
   }
 }

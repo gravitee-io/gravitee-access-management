@@ -51,7 +51,6 @@ export class ApplicationsComponent implements OnInit {
     const pagedApps = this.route.snapshot.data['applications'];
     this.applications = this.applyFilter(pagedApps.data);
     this.page.totalElements = pagedApps.totalCount;
-    
     // Check if this is an MCP route
     const currentUrl = this.router.url;
     this.isMcpRoute = currentUrl.endsWith('/mcp') || currentUrl.endsWith('/mcp/');
@@ -95,19 +94,18 @@ export class ApplicationsComponent implements OnInit {
     // Check if the current URL ends with 'mcp'
     const currentUrl = this.router.url;
     const isMcpRoute = currentUrl.endsWith('/mcp') || currentUrl.endsWith('/mcp/');
-    
 
     if (isMcpRoute) {
       // Filter to show only MCP applications
-      return applications.filter(app => app.type === 'mcp');
+      return applications.filter((app) => app.type === 'mcp');
     } else {
       // Filter out MCP applications when not on MCP route
-      return applications.filter(app => app.type !== 'mcp');
+      return applications.filter((app) => app.type !== 'mcp');
     }
 
     // If there's a route data filter, apply it
     if (this.filter && this.filter.only && Array.isArray(this.filter.only)) {
-      return applications.filter(app => {
+      return applications.filter((app) => {
         return this.filter.only.includes(app.type);
       });
     }

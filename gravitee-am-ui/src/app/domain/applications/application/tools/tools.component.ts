@@ -33,7 +33,6 @@ export class ApplicationToolsComponent implements OnInit {
   private baseUrl: string;
   private domain: any;
   @ViewChild('copyText', { read: ElementRef }) copyText: ElementRef;
-  
   // View mode switcher
   viewMode: 'cards' | 'table' = 'table';
 
@@ -55,7 +54,6 @@ export class ApplicationToolsComponent implements OnInit {
     this.snackbarService.open(message);
   }
 
-
   isMCPApplication(): boolean {
     return this.application?.type === 'MCP' || this.application?.settings?.mcp != null;
   }
@@ -63,7 +61,7 @@ export class ApplicationToolsComponent implements OnInit {
   getMCPTools(): any[] {
     // Return tools from application MCP settings
     if (this.application?.settings?.mcp?.toolDefinitions) {
-      return this.application.settings.mcp.toolDefinitions.map(tool => {
+      return this.application.settings.mcp.toolDefinitions.map((tool) => {
         let inputSchema = null;
         if (tool.inputSchema) {
           try {
@@ -72,12 +70,11 @@ export class ApplicationToolsComponent implements OnInit {
             console.warn('Failed to parse input schema for tool:', tool.name, error);
           }
         }
-        
         return {
           name: tool.name,
           description: tool.description,
           requiredScopes: tool.requiredScopes || [],
-          inputSchema: inputSchema
+          inputSchema: inputSchema,
         };
       });
     }
@@ -87,7 +84,6 @@ export class ApplicationToolsComponent implements OnInit {
   getMCPUrl(): string {
     return this.application?.settings?.mcp?.url || 'No MCP URL configured';
   }
-
 
   setViewMode(mode: 'cards' | 'table'): void {
     this.viewMode = mode;
@@ -100,5 +96,4 @@ export class ApplicationToolsComponent implements OnInit {
   isTableMode(): boolean {
     return this.viewMode === 'table';
   }
-
 }

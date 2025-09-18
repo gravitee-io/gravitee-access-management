@@ -191,13 +191,16 @@ export class ApplicationOverviewComponent implements OnInit {
         scopes = tool.requiredScopes;
       } else if (tool.requiredScopes && typeof tool.requiredScopes === 'string') {
         // Handle comma-separated scopes
-        scopes = tool.requiredScopes.split(',').map((scope: string) => scope.trim()).filter((scope: string) => scope.length > 0);
+        scopes = tool.requiredScopes
+          .split(',')
+          .map((scope: string) => scope.trim())
+          .filter((scope: string) => scope.length > 0);
       }
 
       return {
         name: tool.name || 'Unnamed Tool',
         description: tool.description || 'No description available',
-        scopes: scopes
+        scopes: scopes,
       };
     });
   }
@@ -231,7 +234,7 @@ export class ApplicationOverviewComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: false,
     });
   }
 
@@ -239,29 +242,21 @@ export class ApplicationOverviewComponent implements OnInit {
     return this.application?.settings?.mcp?.url || 'No MCP URL configured';
   }
 
-  getToolCount(): number {
-    return this.application?.settings?.mcp?.toolDefinitions?.length || 0;
-  }
-
-  getApplicationStatus(): string {
-    // You could implement logic here based on application state
-    // For now, return a simple status
-    return this.application?.enabled ? 'Active' : 'Inactive';
-  }
-
   getToolsListForJson(): string {
     const tools = this.getToolsData();
-    return tools.map(tool => `"${tool.name}"`).join(',\n        ');
+    return tools.map((tool) => `"${tool.name}"`).join(',\n        ');
   }
 
   getToolsDetailsForJson(): string {
     const tools = this.getToolsData();
-    return tools.map(tool => {
-      return `{
-        "name": "${tool.name}",
-        "description": "${tool.description}",
-        "scopes": ${JSON.stringify(tool.scopes)}
-      }`;
-    }).join(',\n      ');
+    return tools
+      .map((tool) => {
+        return `{
+          "name": "${tool.name}",
+          "description": "${tool.description}",
+          "scopes": ${JSON.stringify(tool.scopes)}
+        }`;
+      })
+      .join(',\n      ');
   }
 }
