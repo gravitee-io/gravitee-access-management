@@ -89,8 +89,8 @@ public abstract class AbstractDialect implements DialectHelper {
     }
 
     @Override
-    public String tableExists(String table) {
-        return "select 1 from information_schema.tables where table_name = '"+table+"'";
+    public String tableExists(String table, String schema) {
+            return "select 1 from information_schema.tables where table_name = '"+table+"'";
     }
 
     @Override
