@@ -28,6 +28,7 @@ import io.gravitee.am.model.SecretExpirationSettings;
 import io.gravitee.am.model.TokenClaim;
 import io.gravitee.am.model.account.AccountSettings;
 import io.gravitee.am.model.application.ApplicationAdvancedSettings;
+import io.gravitee.am.model.application.ApplicationMCPSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSAMLSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
@@ -35,6 +36,7 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.MCPToolDefinition;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.jose.ECKey;
@@ -49,6 +51,7 @@ import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.AccountSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationAdvancedSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationIdentityProviderMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMCPSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationOAuthSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSAMLSettingsMongo;
@@ -57,6 +60,7 @@ import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSe
 import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ClientSecretMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.CookieSettingsMongo;
+import io.gravitee.am.repository.mongodb.management.internal.model.MCPToolDefinitionMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.JWKMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.MFASettingsMongo;
@@ -87,8 +91,8 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.regex.Pattern;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.elemMatch;
@@ -443,6 +447,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettingsMongo.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettingsMongo.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettingsMongo.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
+        applicationSettingsMongo.setMcp(convertMcpSettings(other.getMcp()));
         return applicationSettingsMongo;
     }
 
@@ -462,6 +467,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationSettings.setCookieSettings(convert(other.getCookieSettings()));
         applicationSettings.setRiskAssessment(convert(other.getRiskAssessment()));
         applicationSettings.setSecretExpirationSettings(convert(other.getSecretExpirationSettings()));
+        applicationSettings.setMcp(convertMcpSettings(other.getMcp()));
         return applicationSettings;
     }
 
@@ -999,5 +1005,73 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
 
     private static SecretSettingsMongo convert(SecretExpirationSettings secretExpirationSettings) {
         return SecretSettingsMongo.fromModel(secretExpirationSettings);
+    }
+
+    private static ApplicationMCPSettingsMongo convertMcpSettings(ApplicationMCPSettings mcpSettings) {
+        if (mcpSettings == null) {
+            return null;
+        }
+
+        ApplicationMCPSettingsMongo mongo = new ApplicationMCPSettingsMongo();
+        mongo.setUrl(mcpSettings.getUrl());
+        mongo.setToolDefinitions(convertTools(mcpSettings.getToolDefinitions()));
+        return mongo;
+    }
+
+    private static ApplicationMCPSettings convertMcpSettings(ApplicationMCPSettingsMongo mongo) {
+        if (mongo == null) {
+            return null;
+        }
+
+        ApplicationMCPSettings settings = new ApplicationMCPSettings();
+        settings.setUrl(mongo.getUrl());
+        settings.setToolDefinitions(convertToolsMongo(mongo.getToolDefinitions()));
+        return settings;
+    }
+
+    private static List<MCPToolDefinitionMongo> convertTools(List<MCPToolDefinition> toolDefinitions) {
+        if (toolDefinitions == null) {
+            return null;
+        }
+
+        return toolDefinitions.stream()
+                .map(MongoApplicationRepository::convert)
+                .collect(Collectors.toList());
+    }
+
+    private static List<MCPToolDefinition> convertToolsMongo(List<MCPToolDefinitionMongo> mongoToolDefinitions) {
+        if (mongoToolDefinitions == null) {
+            return null;
+        }
+
+        return mongoToolDefinitions.stream()
+                .map(MongoApplicationRepository::convert)
+                .collect(Collectors.toList());
+    }
+
+    private static MCPToolDefinitionMongo convert(MCPToolDefinition toolDefinition) {
+        if (toolDefinition == null) {
+            return null;
+        }
+
+        MCPToolDefinitionMongo mongo = new MCPToolDefinitionMongo();
+        mongo.setName(toolDefinition.getName());
+        mongo.setDescription(toolDefinition.getDescription());
+        mongo.setRequiredScopes(toolDefinition.getRequiredScopes());
+        mongo.setInputSchema(toolDefinition.getInputSchema());
+        return mongo;
+    }
+
+    private static MCPToolDefinition convert(MCPToolDefinitionMongo mongo) {
+        if (mongo == null) {
+            return null;
+        }
+
+        MCPToolDefinition toolDefinition = new MCPToolDefinition();
+        toolDefinition.setName(mongo.getName());
+        toolDefinition.setDescription(mongo.getDescription());
+        toolDefinition.setRequiredScopes(mongo.getRequiredScopes());
+        toolDefinition.setInputSchema(mongo.getInputSchema());
+        return toolDefinition;
     }
 }

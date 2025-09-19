@@ -19,7 +19,7 @@
   <div>
     <div fxFlex="70">
       <div class="application-doc-content">
-        <div *ngIf="!isServiceApp() && !isUmaApp()">
+        <div *ngIf="!isServiceApp() && !isUmaApp() && !isMcpApp()">
           <h1>Integrate authentication to your application</h1>
           <h2>Get your Application Information</h2>
           <p>
@@ -244,7 +244,7 @@ curl -X GET \
             </p>
           </blockquote>
         </div>
-        <div *ngIf="isServiceApp()">
+        <div *ngIf="isServiceApp() && !isMcpApp()">
           <h1>Machine to machine interaction</h1>
           <p>A Service application represents a program that interacts with APIs where there is no user involved.</p>
 
@@ -286,7 +286,402 @@ curl -X GET \
             </pre>
           </div>
         </div>
-        <div *ngIf="isUmaApp()">
+        <div *ngIf="isMcpApp()">
+          <h1>MCP Server Overview</h1>
+          <p>
+            This MCP (Model Context Protocol) server provides tools and capabilities for AI model interactions. Configure and manage your
+            MCP server settings below.
+          </p>
+
+          <!-- Overview Metadata Section -->
+          <div class="gv-form-section" style="margin-bottom: 24px">
+            <div class="gv-form-section-title">
+              <h3>Overview Metadata</h3>
+              <mat-divider></mat-divider>
+            </div>
+            <div fxLayout="row" fxLayoutGap="24px">
+              <div fxFlex="50">
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Server Name</mat-label>
+                  <input matInput [value]="application.name" readonly />
+                </mat-form-field>
+              </div>
+              <div fxFlex="50">
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Last Updated</mat-label>
+                  <input matInput [value]="getFormattedLastUpdated()" readonly />
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description Section -->
+          <div class="gv-form-section" style="margin-bottom: 24px">
+            <div class="gv-form-section-title">
+              <h3>Description</h3>
+              <mat-divider></mat-divider>
+            </div>
+            <mat-form-field appearance="outline" floatLabel="always" style="width: 100%">
+              <mat-label>Server Description</mat-label>
+              <textarea
+                matInput
+                rows="3"
+                [value]="application.description || 'MCP server for AI model interactions and tool management'"
+                readonly
+              ></textarea>
+            </mat-form-field>
+          </div>
+
+          <!-- OAuth Client Details Section -->
+          <div class="gv-form-section" style="margin-bottom: 24px">
+            <div class="gv-form-section-title">
+              <h3>OAuth Client Details</h3>
+              <mat-divider></mat-divider>
+            </div>
+            <div fxLayout="row" fxLayoutGap="24px">
+              <div fxFlex="50">
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Client ID</mat-label>
+                  <input matInput [value]="clientId || 'mcp-client-12345'" readonly />
+                  <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                </mat-form-field>
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Client Secret</mat-label>
+                  <input matInput type="password" value="••••••••••••••••" readonly />
+                  <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                </mat-form-field>
+              </div>
+              <div fxFlex="50">
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>Well-known URL</mat-label>
+                  <input matInput [value]="baseUrl + '/.well-known/oauth-authorization-server'" readonly />
+                  <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                </mat-form-field>
+                <mat-form-field appearance="outline" floatLabel="always">
+                  <mat-label>OAuth Metadata</mat-label>
+                  <input matInput value="OpenID Connect 1.0, OAuth 2.0" readonly />
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <!-- Providers Section -->
+          <div class="gv-form-section" style="margin-bottom: 24px">
+            <div class="gv-form-section-title">
+              <h3>Providers</h3>
+              <mat-divider></mat-divider>
+            </div>
+            <div fxLayout="row" fxLayoutGap="16px">
+              <mat-card fxFlex="33" class="provider-card">
+                <mat-card-header>
+                  <mat-card-title>Default Provider</mat-card-title>
+                  <mat-card-subtitle>Primary authentication</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Status: <span class="status-active">Active</span></p>
+                  <p>Type: Database</p>
+                </mat-card-content>
+              </mat-card>
+              <mat-card fxFlex="33" class="provider-card">
+                <mat-card-header>
+                  <mat-card-title>LDAP Provider</mat-card-title>
+                  <mat-card-subtitle>Corporate directory</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Status: <span class="status-inactive">Inactive</span></p>
+                  <p>Type: LDAP</p>
+                </mat-card-content>
+              </mat-card>
+              <mat-card fxFlex="33" class="provider-card">
+                <mat-card-header>
+                  <mat-card-title>OAuth Provider</mat-card-title>
+                  <mat-card-subtitle>External OAuth</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Status: <span class="status-active">Active</span></p>
+                  <p>Type: OAuth 2.0</p>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+
+          <!-- Factors Section -->
+          <div class="gv-form-section" style="margin-bottom: 24px">
+            <div class="gv-form-section-title">
+              <h3>Factors</h3>
+              <mat-divider></mat-divider>
+            </div>
+            <div fxLayout="row" fxLayoutGap="16px">
+              <mat-card fxFlex="50" class="factor-card">
+                <mat-card-header>
+                  <mat-card-title>Email Factor</mat-card-title>
+                  <mat-card-subtitle>Email verification</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Status: <span class="status-active">Enabled</span></p>
+                  <p>Type: Email OTP</p>
+                </mat-card-content>
+              </mat-card>
+              <mat-card fxFlex="50" class="factor-card">
+                <mat-card-header>
+                  <mat-card-title>TOTP Factor</mat-card-title>
+                  <mat-card-subtitle>Time-based OTP</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Status: <span class="status-active">Enabled</span></p>
+                  <p>Type: TOTP</p>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+
+          <!-- Tools Section -->
+          <div class="gv-form-section" style="margin-bottom: 24px">
+            <div class="gv-form-section-title">
+              <h3>Tools</h3>
+              <mat-divider></mat-divider>
+            </div>
+            <div class="tools-table-container" *ngIf="getToolsData().length > 0">
+              <table mat-table [dataSource]="getToolsData()" class="tools-table">
+                <!-- Tool Name Column -->
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell *matHeaderCellDef>Tool Name</th>
+                  <td mat-cell *matCellDef="let tool">
+                    <div class="tool-name-cell">
+                      <mat-icon class="tool-icon">build</mat-icon>
+                      <span class="tool-name">{{ tool.name }}</span>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Description Column -->
+                <ng-container matColumnDef="description">
+                  <th mat-header-cell *matHeaderCellDef>Description</th>
+                  <td mat-cell *matCellDef="let tool">
+                    <div class="tool-description-cell">
+                      {{ tool.description }}
+                    </div>
+                  </td>
+                </ng-container>
+
+                <!-- Required Scopes Column -->
+                <ng-container matColumnDef="scopes">
+                  <th mat-header-cell *matHeaderCellDef>Required Scopes</th>
+                  <td mat-cell *matCellDef="let tool">
+                    <div class="scopes-cell">
+                      <ng-container *ngIf="tool.scopes && tool.scopes.length > 0">
+                        <span *ngFor="let scope of tool.scopes" class="scope-pill">{{ scope }}</span>
+                      </ng-container>
+                      <span *ngIf="!tool.scopes || tool.scopes.length === 0" class="no-scopes">No scopes required</span>
+                    </div>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="['name', 'description', 'scopes']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['name', 'description', 'scopes']"></tr>
+              </table>
+            </div>
+
+            <!-- Empty state when no tools are available -->
+            <div class="no-tools-message" *ngIf="getToolsData().length === 0">
+              <p>No tools have been configured for this MCP server yet.</p>
+              <p>Go to the <a [routerLink]="['..', 'tools']">Tools</a> section to add tool definitions.</p>
+            </div>
+          </div>
+
+          <!-- Bottom Row: Configure Rules & View Usage -->
+          <div fxLayout="row" fxLayoutGap="24px" style="margin-bottom: 24px">
+            <div fxFlex="50">
+              <mat-card class="action-card">
+                <mat-card-header>
+                  <mat-card-title>Configure Rules</mat-card-title>
+                  <mat-card-subtitle>Access control policies</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Define access rules and policies for your MCP server tools and resources.</p>
+                  <button mat-raised-button color="primary" [routerLink]="['..', 'policies']">
+                    <mat-icon>security</mat-icon>
+                    Configure Rules
+                  </button>
+                </mat-card-content>
+              </mat-card>
+            </div>
+            <div fxFlex="50">
+              <mat-card class="action-card">
+                <mat-card-header>
+                  <mat-card-title>View Usage / Traffic</mat-card-title>
+                  <mat-card-subtitle>Analytics and monitoring</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <p>Monitor usage patterns, traffic statistics, and performance metrics.</p>
+                  <button mat-raised-button color="accent" [routerLink]="['..', 'analytics']">
+                    <mat-icon>analytics</mat-icon>
+                    View Analytics
+                  </button>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+
+          <!-- MCP Connection Information -->
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h3>MCP Connection Information</h3>
+              <mat-divider></mat-divider>
+            </div>
+            <p>Connect to this MCP server using the following endpoint:</p>
+            <div class="code">
+              <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(mcp_endpoint)">
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <pre #mcp_endpoint>{{ getMcpUrl() }}</pre>
+            </div>
+            <blockquote>
+              <p>Use this endpoint to establish MCP connections from your AI models and applications.</p>
+            </blockquote>
+          </div>
+
+          <!-- AI Tool Configuration -->
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h3>AI Tool Configuration</h3>
+              <mat-divider></mat-divider>
+            </div>
+            <p>Configure your AI tools to connect to this MCP server using the following JSON configurations:</p>
+
+            <mat-tab-group class="ai-config-tabs">
+              <mat-tab label="Cursor IDE">
+                <div class="tab-content">
+                  <p>Add this to your Cursor settings or <code>.cursorrules</code> file:</p>
+                  <div class="code">
+                    <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
+                      <mat-icon>content_copy</mat-icon>
+                    </button>
+                    <pre #cursor_config class="multiline"
+                      >{{ '{' }}
+  "mcp": {{ '{' }}
+    "servers": {{ '{' }}
+      "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
+        "command": "node",
+        "args": ["{{ getMcpUrl() }}"],
+        "env": {{ '{' }}
+          "MCP_SERVER_URL": "{{ getMcpUrl() }}",
+          "CLIENT_ID": "{{ clientId || 'mcp-client-12345' }}"
+        {{ '}' }}
+      {{ '}' }}
+    {{ '}' }}
+  {{ '}' }}
+{{ '}' }}</pre
+                    >
+                  </div>
+                </div>
+              </mat-tab>
+
+              <mat-tab label="Claude Desktop">
+                <div class="tab-content">
+                  <p>Add this to your Claude Desktop configuration file:</p>
+                  <div class="code">
+                    <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
+                      <mat-icon>content_copy</mat-icon>
+                    </button>
+                    <pre #claude_config class="multiline"
+                      >{{ '{' }}
+  "mcpServers": {{ '{' }}
+    "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
+      "command": "npx",
+      "args": ["&#64;modelcontextprotocol/server-gravitee", "{{ getMcpUrl() }}"],
+      "env": {{ '{' }}
+        "GRAVITEE_MCP_URL": "{{ getMcpUrl() }}",
+        "GRAVITEE_CLIENT_ID": "{{ clientId || 'mcp-client-12345' }}",
+        "GRAVITEE_CLIENT_SECRET": "your-client-secret-here"
+      {{ '}' }}
+    {{ '}' }}
+  {{ '}' }}
+{{ '}' }}</pre
+                    >
+                  </div>
+                </div>
+              </mat-tab>
+
+              <mat-tab label="VS Code">
+                <div class="tab-content">
+                  <p>Add this to your VS Code settings.json:</p>
+                  <div class="code">
+                    <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
+                      <mat-icon>content_copy</mat-icon>
+                    </button>
+                    <pre #vscode_config class="multiline"
+                      >{{ '{' }}
+  "mcp.servers": {{ '{' }}
+    "{{ application.name || 'gravitee-mcp' }}": {{ '{' }}
+      "type": "http",
+      "url": "{{ getMcpUrl() }}",
+      "headers": {{ '{' }}
+        "Authorization": "Bearer your-access-token",
+        "Content-Type": "application/json"
+      {{ '}' }},
+      "tools": [
+        {{ getToolsListForJson() }}
+      ]
+    {{ '}' }}
+  {{ '}' }}
+{{ '}' }}</pre
+                    >
+                  </div>
+                </div>
+              </mat-tab>
+
+              <mat-tab label="Generic MCP">
+                <div class="tab-content">
+                  <p>For other MCP-compatible tools, use this generic configuration:</p>
+                  <div class="code">
+                    <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard($event.target)">
+                      <mat-icon>content_copy</mat-icon>
+                    </button>
+                    <pre #generic_config class="multiline"
+                      >{{ '{' }}
+  "server": {{ '{' }}
+    "name": "{{ application.name || 'Gravitee MCP Server' }}",
+    "version": "1.0.0",
+    "url": "{{ getMcpUrl() }}",
+    "authentication": {{ '{' }}
+      "type": "oauth2",
+      "client_id": "{{ clientId || 'mcp-client-12345' }}",
+      "client_secret": "your-client-secret-here",
+      "token_url": "{{ baseUrl }}/oauth/token",
+      "scope": "mcp:tools mcp:resources"
+    {{ '}' }},
+    "capabilities": {{ '{' }}
+      "tools": true,
+      "resources": true,
+      "prompts": false
+    {{ '}' }},
+    "tools": [
+      {{ getToolsDetailsForJson() }}
+    ]
+  {{ '}' }}
+{{ '}' }}</pre
+                    >
+                  </div>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+
+            <blockquote>
+              <p>
+                <strong>Note:</strong> Replace <code>your-client-secret-here</code> and <code>your-access-token</code> with your actual
+                credentials. Make sure to keep these secure and never commit them to version control.
+              </p>
+            </blockquote>
+          </div>
+        </div>
+        <div *ngIf="isUmaApp() && !isMcpApp()">
           <h1>Control access to your Resources</h1>
           <p>
             A UMA 2.0 Resource Server allows for an end user to manage access to their data by defining a set of policies to govern access
