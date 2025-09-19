@@ -36,11 +36,21 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
 
     @Override
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
-        return findNotExpiredById(key)
-                .doOnSuccess(rl ->  rl.setCounter(rl.getCounter() + weight))
-                .doOnSuccess(rl -> LOGGER.debug("Incrementing rate limit entry for key {} with weight {}", rl.getKey(), weight))
-                .compose(this::update)
+        return findById(key)
+                .flatMapSingle(rateLimit -> {
+                    final RateLimit effectiveRateLimit = rateLimit.hasNotExpired() ?
+                            rateLimit :
+                            supplier.get();
 
+                    final long count = rateLimit.hasNotExpired() ? rateLimit.getCounter() + weight : weight;
+
+                    final RateLimit updatedRateLimit = RateLimit.RateLimitBuilder
+                            .builder(effectiveRateLimit)
+                            .counter(count)
+                            .build();
+
+                    return update(updatedRateLimit);
+                })
                 .switchIfEmpty(createNew(weight, supplier)
                         .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {}", rl.getKey(), weight))
                         .compose(this::insert));
@@ -53,18 +63,17 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
                 .map(this::toEntity);
     }
 
-    private Maybe<RateLimit> update(Maybe<RateLimit> rateLimit) {
-        return rateLimit
+    private Single<RateLimit> update(RateLimit rateLimit) {
+        return Single.just(rateLimit)
                 .map(this::toJdbcEntity)
-                .flatMapSingle(requestObjectRepository::save)
+                .flatMap(requestObjectRepository::save)
                 .map(this::toEntity);
     }
 
-    private Maybe<RateLimit> findNotExpiredById(String key){
+    private Maybe<RateLimit> findById(String key){
         return requestObjectRepository
                 .findById(key)
-                .map(this::toEntity)
-                .filter(RateLimit::hasNotExpired);
+                .map(this::toEntity);
     }
 
     private Single<RateLimit> createNew(long weight, Supplier<RateLimit> supplier){

@@ -51,6 +51,7 @@ public class RateLimit implements Serializable {
         this.setCounter(rateLimit.getCounter());
         this.setLimit(rateLimit.getLimit());
         this.setResetTime(rateLimit.getResetTime());
+        this.setSubscription(rateLimit.getSubscription());
     }
 
     public long getCounter() {
@@ -109,5 +110,25 @@ public class RateLimit implements Serializable {
 
     public boolean hasNotExpired() {
         return System.currentTimeMillis() <= resetTime;
+    }
+
+    public static class RateLimitBuilder {
+        private RateLimit rateLimit;
+        private RateLimitBuilder() {}
+
+        public static RateLimitBuilder builder(RateLimit rateLimit) {
+            RateLimitBuilder builder = new RateLimitBuilder();
+            builder.rateLimit = new RateLimit(rateLimit);
+            return builder;
+        }
+
+        public RateLimitBuilder counter(long counter) {
+            rateLimit.counter = counter;
+            return this;
+        }
+
+        public RateLimit build() {
+            return rateLimit;
+        }
     }
 }
