@@ -28,8 +28,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.function.Predicate;
 
-import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.util.Objects.nonNull;
 import static java.util.stream.Collectors.toMap;
 
@@ -93,22 +94,12 @@ public class UriBuilderRequest {
     private static String resolve(final HttpServerRequest request, final String path, final MultiMap parameters, boolean encoded) {
         UriBuilder builder = UriBuilder.newInstance();
 
-        // scheme
-        String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
-        if (scheme != null && !scheme.isEmpty()) {
-            builder.scheme(scheme);
-        } else {
-            builder.scheme(request.scheme());
-        }
+        // Resolve scheme first - needed for default port checks
+        String scheme = resolveScheme(request);
+        builder.scheme(scheme);
 
-        // host + port
-        String host = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
-        String port = useNonStandardPort(request, scheme) ? request.getHeader(HttpHeaders.X_FORWARDED_PORT) : null;
-        if (host != null && !host.isEmpty()) {
-            handleHost(builder, host, port);
-        } else {
-            handleHost(builder, request.host(), port);
-        }
+        // Resolve host and port with proper precedence
+        resolveHostAndPort(builder, request, scheme);
 
         // handle forwarded path for redirect_uri query param
         String forwardedPath = request.getHeader(X_FORWARDED_PREFIX);
@@ -143,40 +134,71 @@ public class UriBuilderRequest {
                 .collect(toMap(Entry::getKey, Entry::getValue));
     }
 
-    private static boolean useNonStandardPort(HttpServerRequest request, String scheme) {
-        return ("http".equals(scheme) && !"80".equals(request.getHeader(HttpHeaders.X_FORWARDED_PORT))) || ("https".equals(scheme) && !"443".equals(request.getHeader(HttpHeaders.X_FORWARDED_PORT)));
+    /**
+     * Resolves the scheme from X-Forwarded-Proto header or falls back to request scheme
+     */
+    private static String resolveScheme(HttpServerRequest request) {
+        String scheme = request.getHeader(HttpHeaders.X_FORWARDED_PROTO);
+        return (scheme != null && !scheme.isEmpty()) ? scheme : request.scheme();
     }
 
-    private static void handleHost(UriBuilder builder, String host, String port) {
-        if (host != null) {
-            if (host.contains(":")) {
-                // host contains both host and port
-                String[] parts = host.split(":");
-                builder.host(parts[0]);
-                handlePort(builder, port, parts[1]);
-            } else {
-                builder.host(host);
-                handlePort(builder, port, null);
-            }
+    /**
+     * Resolves host and port with proper precedence: X-Forwarded headers take precedence over Host header
+     */
+    private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
+        String host = Optional.ofNullable(request.getHeader(HttpHeaders.X_FORWARDED_HOST))
+                .filter(Predicate.not(String::isEmpty))
+                .orElse(request.host());
+        String port = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
+        setHostAndPort(builder, host, port, scheme);
+    }
+
+    /**
+     * Sets host and port on the builder, handling port precedence and default port omission
+     */
+    private static void setHostAndPort(UriBuilder builder, String host, String forwardedPort, String scheme) {
+        if (host == null || host.isEmpty()) {
+            return;
+        }
+
+        // Extract hostname and port from host string
+        String hostname = host.contains(":") ? host.split(":")[0] : host;
+        String hostPort = host.contains(":") ? host.split(":")[1] : null;
+        
+        builder.host(hostname);
+        
+        // Determine which port to use and its legacy mode setting
+        String portToUse = forwardedPort != null ? forwardedPort : hostPort;
+        boolean useLegacyMode = forwardedPort == null ? StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts() : false;
+        
+        if (portToUse != null) {
+            setPortIfNotDefault(builder, portToUse, scheme, useLegacyMode);
         }
     }
 
-    private static void handlePort(UriBuilder builder, String port, String defaultPort) {
-        if (!isNullOrEmpty(port)) {
+    /**
+     * Sets port on builder only if it should be set based on legacy mode and default port rules
+     */
+    private static void setPortIfNotDefault(UriBuilder builder, String port, String scheme, boolean isLegacyMode) {
+        if (port == null || port.isEmpty()) {
+            return;
+        }
+        
+        // In legacy mode, always set the port; otherwise, omit default ports
+        if (isLegacyMode || !isDefaultPort(port, scheme)) {
             try {
                 builder.port(Integer.parseInt(port));
-                return;
             } catch (NumberFormatException ex) {
-                LOGGER.warn("X-Forward-Port contains a invalid port value : {}", port);
+                LOGGER.warn("Invalid port value: {}", port);
             }
         }
+    }
 
-        if (!isNullOrEmpty(defaultPort)) {
-            try {
-                builder.port(Integer.parseInt(defaultPort));
-            } catch (NumberFormatException ex) {
-                LOGGER.warn("X-Forwarded-Host contains a invalid port value : {}", defaultPort);
-            }
-        }
+    /**
+     * Checks if a port is the default port for the given scheme
+     */
+    private static boolean isDefaultPort(String port, String scheme) {
+        return ("http".equals(scheme) && "80".equals(port)) || 
+               ("https".equals(scheme) && "443".equals(port));
     }
 }

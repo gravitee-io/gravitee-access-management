@@ -21,21 +21,36 @@ import org.springframework.core.env.Environment;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class StaticEnvironmentProvider {
+    public static final String GATEWAY_ENDPOINT_SANITIZE_PARAMETERS_ENCODING = "legacy.openid.sanitizeParametersEncoding";
+    public static final String GATEWAY_ENDPOINT_INCLUDE_DEFAULT_HOST_PORTS = "legacy.http.includeDefaultHostPorts";
 
     private static Environment env = null;
     private static Boolean sanitizeParametersEncoding = null;
+    private static Boolean includeDefaultPorts = null;
 
     public static void setEnvironment(Environment environment) {
         env = environment;
         // reset cached values
         sanitizeParametersEncoding = null;
+        includeDefaultPorts = null;
+    }
+
+    public static Environment getEnvironment() {
+        return env;
     }
 
     public static boolean sanitizeParametersEncoding() {
         if (sanitizeParametersEncoding == null) {
-            sanitizeParametersEncoding = getEnvironmentProperty("legacy.openid.sanitizeParametersEncoding", boolean.class, true);
+            sanitizeParametersEncoding = getEnvironmentProperty(GATEWAY_ENDPOINT_SANITIZE_PARAMETERS_ENCODING, boolean.class, true);
         }
         return sanitizeParametersEncoding;
+    }
+
+    public static boolean includeDefaultHttpHostHeaderPorts() {
+        if (includeDefaultPorts == null) {
+            includeDefaultPorts = getEnvironmentProperty(GATEWAY_ENDPOINT_INCLUDE_DEFAULT_HOST_PORTS, boolean.class, false);
+        }
+        return includeDefaultPorts;
     }
 
     private static <T> T getEnvironmentProperty(String property, Class<T> type, T defaultValue) {
