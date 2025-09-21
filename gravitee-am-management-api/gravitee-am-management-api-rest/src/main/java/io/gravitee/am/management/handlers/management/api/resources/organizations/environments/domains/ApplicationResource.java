@@ -33,6 +33,7 @@ import io.gravitee.am.service.model.PatchApplicationType;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -48,6 +49,7 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.container.AsyncResponse;
@@ -293,6 +295,7 @@ public class ApplicationResource extends AbstractResource {
             filteredApplication.setName(application.getName());
             filteredApplication.setType(application.getType());
             filteredApplication.setDescription(application.getDescription());
+            filteredApplication.setAgentCardUrl(application.getAgentCardUrl());
             filteredApplication.setDomain(application.getDomain());
             filteredApplication.setEnabled(application.isEnabled());
             filteredApplication.setTemplate(application.isTemplate());
@@ -344,5 +347,55 @@ public class ApplicationResource extends AbstractResource {
         filteredApplication.setSecretSettings(application.getSecretSettings());
 
         return filteredApplication;
+    }
+
+    @GET
+    @Path("agent-card")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "fetchAgentCard",
+            summary = "Fetch agent card information",
+            description = "User must have the APPLICATION[READ] permission on the specified application " +
+                    "or APPLICATION[READ] permission on the specified domain " +
+                    "or APPLICATION[READ] permission on the specified environment " +
+                    "or APPLICATION[READ] permission on the specified organization. " +
+                    "This endpoint proxies requests to the agent's .well-known/agent.json endpoint to bypass CORS restrictions.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Agent card information",
+                    content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "Bad request - invalid URL or application not found"),
+            @ApiResponse(responseCode = "404", description = "Agent card URL not found"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void fetchAgentCard(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domain,
+            @PathParam("application") String application,
+            @Suspended final AsyncResponse response) {
+
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domain, Permission.APPLICATION, Acl.READ)
+                .andThen(domainService.findById(domain)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
+                        .flatMap(irrelevant -> applicationService.findById(application)
+                                .switchIfEmpty(Maybe.error(new ApplicationNotFoundException(application))))
+                        .flatMapSingle(app -> {
+                            // Validate that this is an AGENT application
+                            if (app.getType() != io.gravitee.am.model.application.ApplicationType.AGENT) {
+                                return Single.error(new BadRequestException("Agent card endpoint is only available for AGENT applications"));
+                            }
+                            
+                            // Use the application's saved agentCardUrl
+                            if (app.getAgentCardUrl() == null || app.getAgentCardUrl().trim().isEmpty()) {
+                                return Single.error(new BadRequestException("No Agent Card URL configured for this application"));
+                            }
+                            
+                            return applicationService.fetchAgentCard(app.getAgentCardUrl());
+                        }))
+                .subscribe(
+                        response::resume,
+                        error -> response.resume(error)
+                );
     }
 }

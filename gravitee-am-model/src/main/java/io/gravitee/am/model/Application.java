@@ -66,6 +66,10 @@ public class Application implements Resource, PasswordSettingsAware {
      */
     private String description;
     /**
+     * Agent Card URL for AGENT type applications
+     */
+    private String agentCardUrl;
+    /**
      * Security domain associated to the application
      */
     private String domain;
@@ -120,6 +124,7 @@ public class Application implements Resource, PasswordSettingsAware {
         this.name = other.name;
         this.type = other.type;
         this.description = other.description;
+        this.agentCardUrl = other.agentCardUrl;
         this.domain = other.domain;
         this.enabled = other.enabled;
         this.template = other.template;
@@ -157,6 +162,7 @@ public class Application implements Resource, PasswordSettingsAware {
         Optional.ofNullable(settings).ifPresent(s -> s.copyTo(client));
         client.setSecretSettings(this.secretSettings);
         client.setClientSecrets(this.getSecrets());
+        client.setAgentCardUri(this.getAgentCardUrl());
         if(this.settings != null && this.settings.getMcp() != null) {
             client.setMcp(this.settings.getMcp());
         }

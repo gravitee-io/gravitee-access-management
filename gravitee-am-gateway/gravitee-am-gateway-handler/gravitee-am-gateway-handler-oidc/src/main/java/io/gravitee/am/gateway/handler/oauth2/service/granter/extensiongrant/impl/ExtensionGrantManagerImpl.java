@@ -43,6 +43,7 @@ import io.gravitee.am.repository.management.api.ExtensionGrantRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -101,6 +102,9 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
 
     @Autowired
     private SubjectManager subjectManager;
+
+    @Autowired
+    private WebClient webClient;
 
     @Override
     public void afterPropertiesSet() {
@@ -216,7 +220,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                             tokenRequestResolver,
                             identityProviderManager,
                             userService,
-                            rulesEngine);
+                            rulesEngine, webClient);
         } else {
             return new ExtensionGrantGranterV2(
                     extensionGrantProvider,
@@ -227,7 +231,7 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     identityProviderManager,
                     userService,
                     rulesEngine,
-                    subjectManager);
+                    subjectManager, webClient);
         }
     }
 

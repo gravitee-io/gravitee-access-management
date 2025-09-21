@@ -61,6 +61,11 @@ export class ApplicationCreationComponent implements OnInit {
     app.redirectUris = this.application.redirectUri ? [this.application.redirectUri] : null;
     app.mcp = this.application?.settings?.mcp;
 
+    // Agent-specific configuration
+    if (this.application.type === 'AGENT') {
+      app.agentCardUrl = this.application.agentCardUrl;
+    }
+
     this.applicationService
       .create(this.application.domain, app)
       .pipe(
@@ -92,11 +97,18 @@ export class ApplicationCreationComponent implements OnInit {
   }
 
   stepperValid(): boolean {
-    return (
+    const basicValidation = (
       this.application?.type &&
       this.application.domain &&
       this.application.name &&
-      (this.application.type !== 'SERVICE' ? this.application.redirectUri : true)
+      (this.application.type !== 'SERVICE' && this.application.type !== 'AGENT' ? this.application.redirectUri : true)
     );
+    
+    // Agent-specific validation
+    if (this.application?.type === 'AGENT') {
+      return basicValidation && this.application.agentCardUrl;
+    }
+    
+    return basicValidation;
   }
 }

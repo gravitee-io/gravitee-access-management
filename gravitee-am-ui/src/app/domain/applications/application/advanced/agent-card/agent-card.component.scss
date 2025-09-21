@@ -13,12 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.model.application;
 
-/**
- * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
- * @author GraviteeSource Team
- */
-public enum ApplicationType {
-    WEB, NATIVE, BROWSER, SERVICE, RESOURCE_SERVER, AGENT, MCP
+.gv-form-section {
+  margin-bottom: 20px;
+}
+
+.gv-form-section-title {
+  margin-bottom: 20px;
+}
+
+.gv-form-section-title h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-weight: 500;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+mat-chip-list {
+  display: block;
+}
+
+mat-chip {
+  margin: 2px;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.gv-page-description {
+  padding-left: 20px;
+}
+
+.gv-page-description h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.gv-page-description-content p {
+  margin: 0 0 10px 0;
+  color: #666;
+  line-height: 1.5;
+}
+
+.gv-page-description-content p:last-child {
+  margin-bottom: 0;
 }

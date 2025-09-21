@@ -326,6 +326,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         applicationMongo.setName(other.getName());
         applicationMongo.setType(other.getType() != null ? other.getType().toString() : null);
         applicationMongo.setDescription(other.getDescription());
+        applicationMongo.setAgentCardUrl(other.getAgentCardUrl());
         applicationMongo.setDomain(other.getDomain());
         applicationMongo.setEnabled(other.isEnabled());
         applicationMongo.setTemplate(other.isTemplate());
@@ -350,6 +351,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         application.setName(other.getName());
         application.setType(other.getType() != null ? ApplicationType.valueOf(other.getType()) : null);
         application.setDescription(other.getDescription());
+        application.setAgentCardUrl(other.getAgentCardUrl());
         application.setDomain(other.getDomain());
         application.setEnabled(other.isEnabled());
         application.setTemplate(other.isTemplate());

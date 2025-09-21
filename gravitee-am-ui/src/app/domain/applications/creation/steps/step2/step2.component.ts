@@ -16,6 +16,8 @@
 import { Component, Input, OnInit, OnChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { find } from 'lodash';
+import { HttpClient } from '@angular/common/http';
+import { SnackbarService } from '../../../../../services/snackbar.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource } from '@angular/material/table';
 
@@ -29,6 +31,7 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   @Input() application: any;
   @ViewChild('appForm') form: any;
   domain: any;
+  agentInfo: any = null;
   toolsDataSource = new MatTableDataSource<any>([]);
   applicationTypes: any[] = [
     {
@@ -48,6 +51,10 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
       type: 'SERVICE',
     },
     {
+      icon: 'settings_applications',
+      type: 'AGENT',
+    },
+    {
       icon: 'folder_shared',
       type: 'RESOURCE_SERVER',
     },
@@ -58,7 +65,10 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   ];
 
   constructor(
+    
     private route: ActivatedRoute,
+    private http: HttpClient,
+    private snackbarService: SnackbarService,
     private cdr: ChangeDetectorRef,
     private snackBar: MatSnackBar,
   ) {}
@@ -116,11 +126,76 @@ export class ApplicationCreationStep2Component implements OnInit, OnChanges {
   }
 
   displayRedirectUri(): boolean {
-    return this.application.type !== 'SERVICE';
+    return this.application.type !== 'SERVICE' && this.application.type !== 'AGENT';
   }
 
   elRedirectUriEnabled(): boolean {
     return this.domain?.oidc?.clientRegistrationSettings?.allowRedirectUriParamsExpressionLanguage;
+  }
+
+  fetchAgentInfo(): void {
+    if (!this.application.agentCardUrl) {
+      this.snackbarService.open('Please enter an Agent Card URL first');
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(this.application.agentCardUrl);
+    } catch {
+      this.snackbarService.open('Please enter a valid URL');
+      return;
+    }
+
+    // Show loading state
+    this.snackbarService.open('Fetching agent information...');
+
+    this.http.get(this.application.agentCardUrl).subscribe({
+      next: (data: any) => {
+        this.agentInfo = data;
+        this.snackbarService.open('Agent information fetched successfully');
+      },
+      error: (error) => {
+        console.error('Error fetching agent info:', error);
+        this.agentInfo = null;
+        
+        // Provide more specific error messages
+        let errorMessage = 'Failed to fetch agent information. ';
+        
+        if (error.status === 0) {
+          errorMessage += 'This is likely a CORS issue. The agent server needs to allow cross-origin requests.';
+        } else if (error.status === 404) {
+          errorMessage += 'Agent card not found at the provided URL.';
+        } else if (error.status >= 500) {
+          errorMessage += 'Server error. Please try again later.';
+        } else if (error.status === 403) {
+          errorMessage += 'Access forbidden. Check if the URL is publicly accessible.';
+        } else {
+          errorMessage += `HTTP ${error.status}: ${error.statusText || 'Unknown error'}`;
+        }
+        
+        this.snackbarService.open(errorMessage);
+      }
+    });
+  }
+
+  testUrl(): void {
+    if (!this.application.agentCardUrl) {
+      this.snackbarService.open('Please enter an Agent Card URL first');
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(this.application.agentCardUrl);
+    } catch {
+      this.snackbarService.open('Please enter a valid URL');
+      return;
+    }
+
+    // Open URL in new tab
+    window.open(this.application.agentCardUrl, '_blank');
+    this.snackbarService.open('Opened URL in new tab for testing');
   }
 
   addTool(event?: Event): void {

@@ -39,6 +39,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -68,6 +69,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     @Setter
     private Date minDate;
     private final UserGatewayService userService;
+    private final WebClient webClient;
 
     public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
                                  ExtensionGrant extensionGrant,
@@ -76,7 +78,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                  TokenRequestResolver tokenRequestResolver,
                                  IdentityProviderManager identityProviderManager,
                                  UserGatewayService userService,
-                                 RulesEngine rulesEngine) {
+                                 RulesEngine rulesEngine, WebClient webClient) {
         super(extensionGrant.getGrantType());
         setTokenService(tokenService);
         setTokenRequestResolver(tokenRequestResolver);
@@ -87,6 +89,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         this.userAuthenticationManager = userAuthenticationManager;
         this.identityProviderManager = identityProviderManager;
         this.userService = userService;
+        this.webClient = webClient;
     }
 
     @Override
@@ -112,6 +115,32 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
 
     @Override
     protected Maybe<User> resolveResourceOwner(TokenRequest tokenRequest, Client client) {
+        if (tokenRequest.parameters().containsKey("resource_uri")) {
+            return webClient.getAbs(tokenRequest.parameters().getFirst("resource_uri"))
+                    .rxSend()
+                    .map(x -> x.bodyAsJsonObject())
+                    .map(json -> json.getString("name"))
+                    .flatMapMaybe(agentId -> extensionGrantProvider.grant(convert(tokenRequest))
+                            .flatMap(endUser -> {
+                                if (extensionGrant.isCreateUser()) {
+                                    return manageUserConnect(client, endUser, tokenRequest);
+                                } else {
+                                    // Check that the user is existing from the identity provider
+                                    if (extensionGrant.isUserExists()) {
+                                        if (extensionGrant.getIdentityProvider() == null) {
+                                            return Maybe.error(new InvalidGrantException("No identity_provider provided"));
+                                        }
+                                        return manageUserValidation(tokenRequest, endUser, client);
+                                    } else {
+                                        return forgeUserProfile(endUser).map(u -> u.putAdditionalInformation("agentId", agentId));
+                                    }
+                                }
+                            })
+                            .onErrorResumeNext(ex -> {
+                                String msg = StringUtils.isBlank(ex.getMessage()) ? "Unknown error" : ex.getMessage();
+                                return Maybe.error(new InvalidGrantException(msg));
+                            }));
+        }
         return extensionGrantProvider.grant(convert(tokenRequest))
                 .flatMap(endUser -> {
                     if (extensionGrant.isCreateUser()) {

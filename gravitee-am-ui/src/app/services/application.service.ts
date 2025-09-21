@@ -156,4 +156,8 @@ export class ApplicationService {
   updateFlows(domainId, id, flows): Observable<any> {
     return this.http.put<any>(this.appsURL + domainId + '/applications/' + id + '/flows', flows);
   }
+
+  fetchAgentCard(domainId, applicationId): Observable<any> {
+    return this.http.get<any>(this.appsURL + domainId + '/applications/' + applicationId + '/agent-card');
+  }
 }

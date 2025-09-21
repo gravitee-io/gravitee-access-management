@@ -318,6 +318,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         application.setId(RandomString.generate());
         application.setName(newApplication.getName());
         application.setDescription(newApplication.getDescription());
+        application.setAgentCardUrl(newApplication.getAgentCardUrl());
         application.setType(newApplication.getType());
         application.setDomain(domain.getId());
         application.setMetadata(newApplication.getMetadata());
@@ -333,7 +334,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationSettings.setMcp(newApplication.getMcp());
 
         // apply default SAML 2.0 settings
-        if (ApplicationType.SERVICE != application.getType() && !ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
+        if (ApplicationType.SERVICE != application.getType() && ApplicationType.AGENT != application.getType() && !ObjectUtils.isEmpty(newApplication.getRedirectUris())) {
             try {
                 final String url = newApplication.getRedirectUris().get(0);
                 ApplicationSAMLSettings samlSettings = new ApplicationSAMLSettings();
@@ -825,7 +826,7 @@ public class ApplicationServiceImpl implements ApplicationService {
                                 return Single.error(new InvalidRedirectUriException("Only one redirect URI with the same hostname and path is allowed."));
                             }
                         }
-                    } else if (application.getType() != ApplicationType.SERVICE && !updateTypeOnly) {
+                    } else if (application.getType() != ApplicationType.SERVICE && application.getType() != ApplicationType.AGENT && !updateTypeOnly) {
                         return Single.error(new InvalidRedirectUriException("At least one redirect_uri is required"));
                     }
                     return Single.just(application);
@@ -857,7 +858,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private Single<Application> validateTokenEndpointAuthMethod(Application application) {
         ApplicationOAuthSettings oauthSettings = application.getSettings().getOauth();
         String tokenEndpointAuthMethod = oauthSettings.getTokenEndpointAuthMethod();
-        if ((ApplicationType.SERVICE.equals(application.getType()) || (oauthSettings.getGrantTypes() != null && oauthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)))
+        if ((ApplicationType.SERVICE.equals(application.getType()) || ApplicationType.AGENT.equals(application.getType()) || (oauthSettings.getGrantTypes() != null && oauthSettings.getGrantTypes().contains(GrantType.CLIENT_CREDENTIALS)))
                 && (tokenEndpointAuthMethod != null && ClientAuthenticationMethod.NONE.equals(tokenEndpointAuthMethod))) {
             return Single.error(new InvalidClientMetadataException("Invalid token_endpoint_auth_method for service application (client_credentials grant type)"));
         }
@@ -999,5 +1000,38 @@ public class ApplicationServiceImpl implements ApplicationService {
                     }
                     return Single.just(application);
                 });
+    }
+
+    @Override
+    public Single<Object> fetchAgentCard(String agentCardUrl) {
+        return Single.fromCallable(() -> {
+            try {
+                // Create HTTP client to fetch agent card information
+                java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
+                        .connectTimeout(java.time.Duration.ofSeconds(10))
+                        .build();
+                
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(agentCardUrl))
+                        .timeout(java.time.Duration.ofSeconds(30))
+                        .header("Accept", "application/json")
+                        .header("User-Agent", "Gravitee-AM/1.0")
+                        .GET()
+                        .build();
+                
+                java.net.http.HttpResponse<String> response = client.send(request, 
+                        java.net.http.HttpResponse.BodyHandlers.ofString());
+                
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    // Parse JSON response
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    return mapper.readValue(response.body(), Object.class);
+                } else {
+                    throw new RuntimeException("HTTP " + response.statusCode() + ": " + response.body());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to fetch agent card: " + e.getMessage(), e);
+            }
+        });
     }
 }

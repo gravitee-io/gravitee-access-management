@@ -145,6 +145,7 @@ import { ApplicationTokensComponent } from './domain/applications/application/ad
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
+import { ApplicationAgentCardComponent } from './domain/applications/application/advanced/agent-card/agent-card.component';
 import { ApplicationMembershipsComponent } from './domain/applications/application/advanced/memberships/memberships.component';
 import { ApplicationFactorsComponent } from './domain/applications/application/advanced/factors/factors.component';
 import { ApplicationFlowsComponent } from './domain/applications/application/design/flows/flows.component';
@@ -971,14 +972,30 @@ export const routes: Routes = [
                                 level: 'level2',
                               },
                               types: {
-                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'MCP'],
+                                only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'MCP', 'AGENT'],
                               },
                             },
                             resolve: {
                               entrypoint: DomainEntrypointResolver,
                             },
                           },
-
+                          {
+                            path: 'agent-card',
+                            component: ApplicationAgentCardComponent,
+                            data: {
+                              menu: {
+                                label: 'Agent Card',
+                                section: 'Agent Card',
+                                level: 'level2',
+                              },
+                              types: {
+                                only: ['AGENT'],
+                              },
+                            },
+                            resolve: {
+                              entrypoint: DomainEntrypointResolver,
+                            },
+                          },
                           {
                             path: 'tools',
                             component: ApplicationToolsComponent,
@@ -1184,7 +1201,7 @@ export const routes: Routes = [
                                   },
                                 },
                               },
-                              {
+                             {
                                 path: 'secrets-certificates',
                                 component: ApplicationSecretsCertificatesComponent,
                                 canActivate: [AuthGuard],
@@ -1303,7 +1320,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },
@@ -1342,7 +1359,7 @@ export const routes: Routes = [
                                     only: ['application_factor_list'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },
@@ -1360,7 +1377,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },
@@ -1931,7 +1948,7 @@ export const routes: Routes = [
                                     only: ['application_settings_read'],
                                   },
                                   types: {
-                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER'],
+                                    only: ['WEB', 'NATIVE', 'BROWSER', 'RESOURCE_SERVER', 'AGENT'],
                                   },
                                 },
                               },

@@ -102,6 +102,10 @@ export class ApplicationOverviewComponent implements OnInit {
     return this.application.type.toLowerCase() === 'resource_server';
   }
 
+  isAgentApp(): boolean {
+    return this.application.type.toLowerCase() === 'agent';
+  }
+
   isMcpApp(): boolean {
     return this.application.type.toLowerCase() === 'mcp';
   }

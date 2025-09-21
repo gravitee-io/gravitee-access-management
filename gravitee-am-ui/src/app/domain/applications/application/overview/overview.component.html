@@ -19,7 +19,7 @@
   <div>
     <div fxFlex="70">
       <div class="application-doc-content">
-        <div *ngIf="!isServiceApp() && !isUmaApp() && !isMcpApp()">
+        <div *ngIf="!isServiceApp() && !isUmaApp() && !isAgentApp() && !isMcpApp()">
           <h1>Integrate authentication to your application</h1>
           <h2>Get your Application Information</h2>
           <p>
@@ -798,6 +798,116 @@ curl -X POST \
             <p>
               Use the PT Token previously acquired when calling the resource server the first time and the ID Token acquired during the
               requesting party authentication flow (OpenID Connect flow).
+            </p>
+          </blockquote>
+        </div>
+        <div *ngIf="isAgentApp()">
+          <h1>Agent Application Integration</h1>
+          <p>An Agent application represents an automated system or monitoring tool that interacts with APIs and services in a backend-to-backend manner.</p>
+
+          <h2>Get your Application Information</h2>
+          <p>To integrate your agent with the Access Management server, you will need the following information:</p>
+          <ul>
+            <li>
+              The application's domain : <b>{{ domain.path }}</b>
+            </li>
+            <li>
+              The application's client ID (OAuth 2.0) : <b>{{ clientId }}</b>
+            </li>
+            <li *ngIf="application.agentCardUrl">
+              The agent's card URL : <b>{{ application.agentCardUrl }}</b>
+            </li>
+          </ul>
+          <blockquote>
+            <p>You can also get these details from the <a [routerLink]="['..', 'settings']">Application Settings</a> section.</p>
+          </blockquote>
+
+          <h2>Agent Card Information</h2>
+          <p *ngIf="application.agentCardUrl">
+            Your agent exposes its capabilities and metadata through an agent card endpoint. This information is automatically fetched and displayed in the <a [routerLink]="['..', 'agent-card']">Agent Card</a> section.
+          </p>
+          <p *ngIf="!application.agentCardUrl">
+            <strong>Note:</strong> No Agent Card URL is configured for this application. Configure the Agent Card URL in the application settings to enable agent information display.
+          </p>
+
+          <h2>Getting an Access Token</h2>
+          <p>Agent applications use the OAuth 2.0 client credentials grant type for machine-to-machine authentication.</p>
+          <p><b>Note:</b> Remember to use the client secret you copied during the application creation</p>
+          
+          <div class="code" *ngIf="displayAuthBasicExample()">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_agent_auth_basic_token)">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pre_agent_auth_basic_token class="multiline">
+curl -X POST \
+              {{ baseUrl }}/oauth/token \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+              -u '{{ clientId }}:|client_secret|' \
+  -d 'grant_type=client_credentials'</pre
+            >
+          </div>
+          <div class="code" *ngIf="!displayAuthBasicExample()">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_agent_post_token)">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pre_agent_post_token class="multiline">
+curl -X POST \
+              {{ baseUrl }}/oauth/token \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=client_credentials&client_id={{ clientId }}&client_secret=|client_secret|'</pre
+            >
+          </div>
+          <p>If the request is valid, the authorization server will issue an access token for your agent to make authorized API calls.</p>
+
+          <h2>Agent Capabilities and Skills</h2>
+          <p>Agent applications can expose their capabilities through the agent card endpoint. Common agent capabilities include:</p>
+          <ul>
+            <li><strong>Monitoring:</strong> System health checks, performance metrics, log analysis</li>
+            <li><strong>Automation:</strong> Automated tasks, scheduled operations, workflow execution</li>
+            <li><strong>Data Processing:</strong> Data collection, transformation, and analysis</li>
+            <li><strong>Integration:</strong> API integrations, service orchestration, data synchronization</li>
+          </ul>
+
+          <h2>Call Protected APIs</h2>
+          <p>Use your access token in the Authorization HTTP header to access protected APIs and services.</p>
+          <div class="code">
+            <button mat-icon-button matSuffix matTooltip="Copy to clipboard" (click)="copyToClipboard(pre_agent_api_call)">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <pre #pre_agent_api_call class="multiline">
+curl -X GET \
+  https://api.example.com/v1/data \
+  -H 'Authorization: Bearer access_token'</pre
+            >
+          </div>
+
+          <h2>Agent Health and Status</h2>
+          <p>Implement health check endpoints in your agent to monitor its status and capabilities:</p>
+          <div class="code">
+            <pre class="multiline">
+# Example health check endpoint
+GET /health
+{{ '{' }}
+  "status": "healthy",
+  "version": "1.0.0",
+  "capabilities": ["monitoring", "automation"],
+  "last_heartbeat": "2024-01-15T10:30:00Z"
+{{ '}' }}</pre
+            >
+          </div>
+
+          <h2>Best Practices for Agent Applications</h2>
+          <ul>
+            <li><strong>Token Management:</strong> Implement proper token refresh and caching mechanisms</li>
+            <li><strong>Error Handling:</strong> Handle authentication failures gracefully with retry logic</li>
+            <li><strong>Security:</strong> Store client secrets securely and rotate them regularly</li>
+            <li><strong>Monitoring:</strong> Implement comprehensive logging and monitoring for agent operations</li>
+            <li><strong>Rate Limiting:</strong> Respect API rate limits and implement backoff strategies</li>
+          </ul>
+
+          <blockquote>
+            <p>
+              For more detailed agent configuration and management, visit the <a [routerLink]="['..', 'agent-card']">Agent Card</a> section to view and manage your agent's capabilities and metadata.
             </p>
           </blockquote>
         </div>
