@@ -143,33 +143,42 @@ public class UriBuilderRequest {
     }
 
     /**
-     * Resolves host and port with proper precedence: X-Forwarded headers take precedence over Host header
+     * Resolves host and port with proper precedence: Host header port takes precedence over X-Forwarded headers
      */
     private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
         String host = Optional.ofNullable(request.getHeader(HttpHeaders.X_FORWARDED_HOST))
                 .filter(Predicate.not(String::isEmpty))
                 .orElse(request.host());
-        String port = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
-        setHostAndPort(builder, host, port, scheme);
+        String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
+        String hostHeaderPort = request.host() != null && request.host().contains(":") 
+            ? request.host().split(":")[1] 
+            : null;
+        setHostAndPort(builder, host, forwardedPort, hostHeaderPort, scheme);
     }
 
     /**
      * Sets host and port on the builder, handling port precedence and default port omission
+     * Port precedence: Host header port > X-Forwarded-Port > Port in X-Forwarded-Host
      */
-    private static void setHostAndPort(UriBuilder builder, String host, String forwardedPort, String scheme) {
+    private static void setHostAndPort(UriBuilder builder, String host, String forwardedPort, String hostHeaderPort, String scheme) {
         if (host == null || host.isEmpty()) {
             return;
         }
 
         // Extract hostname and port from host string
         String hostname = host.contains(":") ? host.split(":")[0] : host;
-        String hostPort = host.contains(":") ? host.split(":")[1] : null;
+        String xForwardedHostPort = host.contains(":") ? host.split(":")[1] : null;
         
         builder.host(hostname);
         
-        // Determine which port to use and its legacy mode setting
-        String portToUse = forwardedPort != null ? forwardedPort : hostPort;
-        boolean useLegacyMode = forwardedPort == null ? StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts() : false;
+        // Simple precedence: Host header port > X-Forwarded-Port > X-Forwarded-Host port
+        String portToUse = hostHeaderPort != null ? hostHeaderPort : 
+                           (forwardedPort != null ? forwardedPort : xForwardedHostPort);
+        
+        // Legacy mode applies to Host header port and X-Forwarded-Host port, but not X-Forwarded-Port
+        boolean useLegacyMode = (hostHeaderPort != null || (forwardedPort == null && xForwardedHostPort != null)) 
+            ? StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts() 
+            : false;
         
         if (portToUse != null) {
             setPortIfNotDefault(builder, portToUse, scheme, useLegacyMode);
