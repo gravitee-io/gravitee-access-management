@@ -32,6 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
+import static java.util.Objects.isNull;
 import static io.gravitee.am.repository.Scope.RATE_LIMIT;
 
 /**
@@ -127,11 +128,28 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     }
 
     @Override
-    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String prefix) {
-                // TODO make sure that client is rebuilt if the instance is closed....
-                       this.dsClientWrappers.computeIfAbsent(prefix, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject(), getDatabaseName(prefix)));
-                return this.dsClientWrappers.get(prefix);
+    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId) {
+        // TODO make sure that client is rebuilt if the instance is closed....
+        String prefix = determinePrefixFromDataSourceId(datasourceId);
+       this.dsClientWrappers.computeIfAbsent(datasourceId, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject(), getDatabaseName(datasourceId)));
+        return this.dsClientWrappers.get(datasourceId);
+    }
+
+    private String determinePrefixFromDataSourceId(String datasourceId) {
+        for (int i = 0; true; i++) {
+            var propertyKey = String.format("datasources.mongodb[%d].id", i);
+            var value = environment.getProperty(propertyKey, String.class);
+            if (isNull(value)) {
+                break;
+            } else {
+                if (datasourceId.equals(value)) {
+                    return String.format("datasources.mongodb[%d].settings.", i);
+                }
             }
+        }
+
+        return "";
+    }
 
     private String getDatabaseName(Scope scope) {
         boolean useManagementSettings = environment.getProperty(scope.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);

@@ -461,6 +461,20 @@ dataPlanes:
       host: ${ds.mongodb.host}
       port: ${ds.mongodb.port}
 
+# Data sources for MongoIDP connection pooling
+# datasources:
+#   mongodb:
+#     - id: idp-connection-pool-1
+#       settings:
+#         dbname: gw-db
+#         host: gw.db.host
+#         port: 27016
+#     - id: idp-connection-pool-2
+#       settings:
+#         dbname: mgmt-db
+#         host: mgmt.db.host
+#         port: 27017
+
 # Gateway entry point used in emails
 gateway:
   url: http://localhost:8092
