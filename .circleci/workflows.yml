@@ -1850,7 +1850,7 @@ jobs:
     steps:
       - checkout
       - helm/install-helm-client:
-          version: v3.7.1
+          version: v3.18.2
       - run:
           name: install helm-unittest plugin
           command: helm plugin install https://github.com/quintush/helm-unittest --version 0.2.11
