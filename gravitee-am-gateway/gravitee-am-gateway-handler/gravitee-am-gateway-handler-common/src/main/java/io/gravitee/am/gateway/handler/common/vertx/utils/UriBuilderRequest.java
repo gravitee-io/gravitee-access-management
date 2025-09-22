@@ -146,60 +146,32 @@ public class UriBuilderRequest {
      * Resolves host and port with proper precedence: Host header port takes precedence over X-Forwarded headers
      */
     private static void resolveHostAndPort(UriBuilder builder, HttpServerRequest request, String scheme) {
-        String host = Optional.ofNullable(request.getHeader(HttpHeaders.X_FORWARDED_HOST))
+        String requestHost = request.host();
+        String xForwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
+        String hostname = Optional.ofNullable(xForwardedHost)
                 .filter(Predicate.not(String::isEmpty))
-                .orElse(request.host());
-        String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
-        String hostHeaderPort = request.host() != null && request.host().contains(":") 
-            ? request.host().split(":")[1] 
-            : null;
-        setHostAndPort(builder, host, forwardedPort, hostHeaderPort, scheme);
-    }
-
-    /**
-     * Sets host and port on the builder, handling port precedence and default port omission
-     * Port precedence: Host header port > X-Forwarded-Port > Port in X-Forwarded-Host
-     */
-    private static void setHostAndPort(UriBuilder builder, String host, String forwardedPort, String hostHeaderPort, String scheme) {
-        if (host == null || host.isEmpty()) {
-            return;
-        }
-
-        // Extract hostname and port from host string
-        String hostname = host.contains(":") ? host.split(":")[0] : host;
-        String xForwardedHostPort = host.contains(":") ? host.split(":")[1] : null;
-        
+                .orElse(requestHost)
+                .split(":")[0];
         builder.host(hostname);
-        
-        // Simple precedence: Host header port > X-Forwarded-Port > X-Forwarded-Host port
-        String portToUse = hostHeaderPort != null ? hostHeaderPort : 
-                           (forwardedPort != null ? forwardedPort : xForwardedHostPort);
-        
-        // Legacy mode applies to Host header port and X-Forwarded-Host port, but not X-Forwarded-Port
-        boolean useLegacyMode = (hostHeaderPort != null || (forwardedPort == null && xForwardedHostPort != null)) 
-            ? StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts() 
-            : false;
-        
-        if (portToUse != null) {
-            setPortIfNotDefault(builder, portToUse, scheme, useLegacyMode);
-        }
-    }
 
-    /**
-     * Sets port on builder only if it should be set based on legacy mode and default port rules
-     */
-    private static void setPortIfNotDefault(UriBuilder builder, String port, String scheme, boolean isLegacyMode) {
-        if (port == null || port.isEmpty()) {
+        String hostHeaderPort = requestHost != null && requestHost.contains(":") ? requestHost.split(":")[1] : null;
+        String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
+        String xForwardedHostPort = xForwardedHost != null && xForwardedHost.contains(":") ? xForwardedHost.split(":")[1] : null;
+
+        // Simple precedence: Host header port > X-Forwarded-Port > X-Forwarded-Host port
+        String port = Optional.ofNullable(hostHeaderPort)
+                .orElse(Optional.ofNullable(forwardedPort).orElse(xForwardedHostPort));
+
+        // In legacy mode, always set the port; otherwise, omit default ports
+        boolean isXForwardedPort = hostHeaderPort != null || forwardedPort == null;
+        if (port == null || isDefaultPort(port, scheme) && !(isXForwardedPort && StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts())) {
             return;
         }
         
-        // In legacy mode, always set the port; otherwise, omit default ports
-        if (isLegacyMode || !isDefaultPort(port, scheme)) {
-            try {
-                builder.port(Integer.parseInt(port));
-            } catch (NumberFormatException ex) {
-                LOGGER.warn("Invalid port value: {}", port);
-            }
+        try {
+            builder.port(Integer.parseInt(port));
+        } catch (NumberFormatException ex) {
+            LOGGER.warn("Invalid port value: {}", port);
         }
     }
 
