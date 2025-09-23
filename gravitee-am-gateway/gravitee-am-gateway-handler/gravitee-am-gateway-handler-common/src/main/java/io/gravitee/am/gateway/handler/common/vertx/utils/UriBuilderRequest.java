@@ -154,13 +154,14 @@ public class UriBuilderRequest {
                 .split(":")[0];
         builder.host(hostname);
 
-        String hostHeaderPort = requestHost != null && requestHost.contains(":") ? requestHost.split(":")[1] : null;
+        Boolean hasXForwardedHost = xForwardedHost != null && !xForwardedHost.isEmpty();
+        String hostHeaderPort = !hasXForwardedHost && requestHost != null && requestHost.contains(":") ? requestHost.split(":")[1] : null;
         String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
         String xForwardedHostPort = xForwardedHost != null && xForwardedHost.contains(":") ? xForwardedHost.split(":")[1] : null;
 
         // Simple precedence: Host header port > X-Forwarded-Port > X-Forwarded-Host port
-        String port = Optional.ofNullable(hostHeaderPort)
-                .orElse(Optional.ofNullable(forwardedPort).orElse(xForwardedHostPort));
+        String port = Optional.ofNullable(forwardedPort)
+                .orElse(Optional.ofNullable(xForwardedHostPort).orElse(hostHeaderPort));
 
         // In legacy mode, always set the port; otherwise, omit default ports
         boolean isXForwardedPort = hostHeaderPort != null || forwardedPort == null;

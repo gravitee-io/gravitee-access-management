@@ -240,8 +240,8 @@ public class UriBuilderRequestTest {
     // ===== ORGANIZED SCENARIO 3 TESTS (Both Headers Provided) =====
     
     @Test
-    public void shouldHandle_BothHeaders_HostPortTakesPrecedence_NonDefaultPorts() {
-        // Test that Host header port takes precedence over X-Forwarded ports
+    public void shouldHandle_BothHeaders_XForwardedPortTakesPrecedence_NonDefaultPorts() {
+        // Test that X-Forwarded-Port takes precedence over X-Forwarded-Host port and Host port
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("forwarded-host:8888");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("9999");
@@ -249,12 +249,12 @@ public class UriBuilderRequestTest {
         when(request.host()).thenReturn("original-host:8080");
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
-        assertEquals("https://forwarded-host:8080/my/path?param1=value1", generatedUri);
+        assertEquals("https://forwarded-host:9999/my/path?param1=value1", generatedUri);
     }
 
     @Test
-    public void shouldHandle_BothHeaders_HostPortTakesPrecedence_DefaultPorts_NonLegacy() {
-        // Test Host header default port omission in non-legacy mode
+    public void shouldHandle_BothHeaders_XForwardedHostPortTakesPrecedence_DefaultPorts_NonLegacy() {
+        // Test X-Forwarded-Host port takes precedence over Host port in non-legacy mode
         setupMockEnvironment(false, false); // Disable legacy mode
         
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
@@ -264,12 +264,12 @@ public class UriBuilderRequestTest {
         when(request.host()).thenReturn("original-host:80");
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
-        assertEquals("http://forwarded-host/my/path?param1=value1", generatedUri);
+        assertEquals("http://forwarded-host:443/my/path?param1=value1", generatedUri);
     }
 
     @Test
-    public void shouldHandle_BothHeaders_HostPortTakesPrecedence_DefaultPorts_Legacy() {
-        // Test Host header default port inclusion in legacy mode
+    public void shouldHandle_BothHeaders_XForwardedHostPortTakesPrecedence_DefaultPorts_Legacy() {
+        // Test X-Forwarded-Host port takes precedence over Host port in legacy mode
         setupMockEnvironment(true, true); // Enable legacy mode
         
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
@@ -279,12 +279,12 @@ public class UriBuilderRequestTest {
         when(request.host()).thenReturn("original-host:80");
 
         final var generatedUri = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
-        assertEquals("http://forwarded-host:80/my/path?param1=value1", generatedUri);
+        assertEquals("http://forwarded-host:443/my/path?param1=value1", generatedUri);
     }
 
     @Test
-    public void shouldHandle_BothHeaders_NoHostPort_FallbackToXForwarded_NonLegacy() {
-        // Test fallback to X-Forwarded logic when Host header has no port
+    public void shouldHandle_BothHeaders_NoHostPort_UsesXForwardedHostPort_NonLegacy() {
+        // Test that X-Forwarded-Host port is used when Host header has no port (non-legacy mode omits default port)
         setupMockEnvironment(false, false); // Disable legacy mode
         
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
@@ -298,8 +298,8 @@ public class UriBuilderRequestTest {
     }
 
     @Test
-    public void shouldHandle_BothHeaders_NoHostPort_FallbackToXForwarded_Legacy() {
-        // Test fallback to X-Forwarded logic with legacy mode when Host header has no port
+    public void shouldHandle_BothHeaders_NoHostPort_UsesXForwardedHostPort_Legacy() {
+        // Test that X-Forwarded-Host port is used when Host header has no port (legacy mode includes default port)
         setupMockEnvironment(true, true); // Enable legacy mode
         
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
