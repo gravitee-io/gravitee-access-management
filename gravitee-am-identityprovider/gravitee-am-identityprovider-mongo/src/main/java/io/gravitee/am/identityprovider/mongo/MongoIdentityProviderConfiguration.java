@@ -62,7 +62,7 @@ public class MongoIdentityProviderConfiguration implements IdentityProviderConfi
     private PasswordEncoderOptions passwordEncoderOptions;
 
     private boolean useSystemCluster;
-    private String datasource;
+    private String datasourceId;
 
     @Override
     public boolean userProvider() {

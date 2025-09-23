@@ -22,7 +22,7 @@
       "title": "MongoDB connection port",
       "description": "Not required if the MongoDB connection URI is set."
     },
-    "datasource": {
+    "datasourceId": {
       "type": "string",
       "title": "Data source ID",
       "description": "Data source identifier used to connect to MongoDB."

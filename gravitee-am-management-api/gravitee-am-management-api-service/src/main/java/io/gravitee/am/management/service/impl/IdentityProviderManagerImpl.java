@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl;
 
+import com.nimbusds.jose.util.JSONObjectUtils;
 import io.gravitee.am.common.event.IdentityProviderEvent;
 import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.management.service.IdentityProviderManager;
@@ -27,11 +28,13 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.InvalidDataSourceException;
 import io.gravitee.am.service.exception.PluginNotDeployedException;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.event.EventManager;
 import io.gravitee.common.service.AbstractService;
+import io.gravitee.common.util.EnvironmentUtils;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -39,13 +42,18 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import java.text.ParseException;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.management.service.impl.utils.InlineOrganizationProviderConfiguration.MEMORY_TYPE;
 import static java.util.Optional.ofNullable;
@@ -238,5 +246,49 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
             return Completable.error(PluginNotDeployedException.forType(type));
         }
         return Completable.complete();
+    }
+
+    public Completable validateDatasource(String configuration) {
+        if (configuration == null) {
+            return Completable.complete();
+        }
+
+        try {
+            Map<String, Object> cfg = JSONObjectUtils.parse(configuration);
+            String datasourceId = (String) cfg.getOrDefault("datasourceId", "");
+
+            if (datasourceId.isEmpty()) {
+                return Completable.complete();
+            }
+            
+            return validateDatasourceId(datasourceId) ?
+                Completable.complete() : 
+                Completable.error(new InvalidDataSourceException(String.format("Datasource with ID %s not found", datasourceId)));
+
+        } catch (ParseException e) {
+            logger.warn("Unable to parse configuration for identity provider", e);
+            return Completable.complete();
+        }
+    }
+
+    private boolean validateDatasourceId(String datasourceId) {
+        for (String key : getDatasourceIdentifierKeys()) {
+            String foundDatasourceId = environment.getProperty(key, String.class);
+
+            if (datasourceId.equals(foundDatasourceId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private List<String> getDatasourceIdentifierKeys() {
+        return EnvironmentUtils
+                .getPropertiesStartingWith((ConfigurableEnvironment) environment, "datasources.")
+                .keySet()
+                .stream()
+                .map(String::valueOf)
+                .filter(value -> value.contains(".id"))
+                .collect(Collectors.toList());
     }
 }
