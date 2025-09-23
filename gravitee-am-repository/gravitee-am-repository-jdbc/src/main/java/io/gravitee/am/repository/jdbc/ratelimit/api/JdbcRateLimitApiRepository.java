@@ -21,6 +21,7 @@ import io.gravitee.am.repository.jdbc.ratelimit.api.spring.SpringRateLimitApiRep
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.repository.ratelimit.api.RateLimitRepository;
 import io.gravitee.repository.ratelimit.model.RateLimit;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,18 +39,20 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
         return findById(key)
                 .flatMapSingle(rateLimit -> {
-                    final RateLimit effectiveRateLimit = rateLimit.hasNotExpired() ?
-                            rateLimit :
-                            supplier.get();
-
-                    final long count = rateLimit.hasNotExpired() ? rateLimit.getCounter() + weight : weight;
-
-                    final RateLimit updatedRateLimit = RateLimit.RateLimitBuilder
-                            .builder(effectiveRateLimit)
-                            .counter(count)
-                            .build();
-
-                    return update(updatedRateLimit);
+                    if (rateLimit.hasNotExpired()) {
+                        // Rate limit is still valid, increment counter
+                        final RateLimit updatedRateLimit = RateLimit.RateLimitBuilder
+                                .builder(rateLimit)
+                                .counter(rateLimit.getCounter() + weight)
+                                .build();
+                        return update(updatedRateLimit);
+                    } else {
+                        // Rate limit has expired, delete it and create a new one
+                        return deleteById(key)
+                                .andThen(createNew(weight, supplier))
+                                .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {} after deleting expired entry", rl.getKey(), weight))
+                                .compose(this::insert);
+                    }
                 })
                 .switchIfEmpty(createNew(weight, supplier)
                         .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {}", rl.getKey(), weight))
@@ -79,6 +82,10 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
     private Single<RateLimit> createNew(long weight, Supplier<RateLimit> supplier){
         return Single.fromSupplier(supplier::get)
                 .doOnSuccess(rl -> rl.setCounter(weight));
+    }
+
+    private Completable deleteById(String key) {
+        return requestObjectRepository.deleteById(key);
     }
 
     protected RateLimit toEntity(JdbcRateLimit entity) {
