@@ -165,18 +165,18 @@ public class UriBuilderRequestTest {
 
     @Test
     public void shouldHandle_XForward_HostHeadersHasPort_XForwardPortIsDefault() {
-        // X-Forwarded-Host has non-default port, but X-Forwarded-Port is default (should be stripped)
+        // X-Forwarded-Host has non-default port, but X-Forwarded-Port is default (should use X-Forwarded-Host port)
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:8080");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
 
-        assertEquals("https://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+        assertEquals("https://myhost:8080/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
 
         // Test with HTTP
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:9090");
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
-        assertEquals("http://myhost/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+        assertEquals("http://myhost:9090/my/path?param1=value1", UriBuilderRequest.resolveProxyRequest(request, path, params, true));
     }
 
     @Test
@@ -555,9 +555,9 @@ public class UriBuilderRequestTest {
         assertEquals("http://myhost:443/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
-        // Default HTTP port (80) in X-Forwarded-Port - should be omitted
+        // Default HTTP port (80) in X-Forwarded-Port - should use X-Forwarded-Host port instead
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
-        assertEquals("http://myhost/my/path?param1=value1", 
+        assertEquals("http://myhost:443/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
         // Non-default X-Forwarded-Port - should take precedence
@@ -574,9 +574,9 @@ public class UriBuilderRequestTest {
         assertEquals("https://myhost:80/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
-        // Default HTTPS port (443) in X-Forwarded-Port - should be omitted
+        // Default HTTPS port (443) in X-Forwarded-Port - should use X-Forwarded-Host port instead
         when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
-        assertEquals("https://myhost/my/path?param1=value1", 
+        assertEquals("https://myhost:80/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
         
         // Non-default X-Forwarded-Port - should take precedence
@@ -613,6 +613,32 @@ public class UriBuilderRequestTest {
         
         assertEquals("https://myhost:8888/my/path?param1=value1", 
             UriBuilderRequest.resolveProxyRequest(request, path, params, true));
+    }
+
+    @Test
+    public void shouldHandle_XForwardedHeaders_DefaultPortInXForwardedPort_NonDefaultPortInXForwardedHost() {
+        // Test that when X-Forwarded-Port is default (80/443) but X-Forwarded-Host has non-default port,
+        // the port from X-Forwarded-Host should be used instead of the default port from X-Forwarded-Port
+        
+        // Test case 1: HTTP scheme, X-Forwarded-Port=80, X-Forwarded-Host=myhost:8080
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("http");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:8080");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("80");
+        when(request.scheme()).thenReturn("https");
+        when(request.host()).thenReturn("original-host:8888");
+
+        final var generatedUri1 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
+        assertEquals("http://myhost:8080/my/path?param1=value1", generatedUri1);
+
+        // Test case 2: HTTPS scheme, X-Forwarded-Port=443, X-Forwarded-Host=myhost:8888
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PROTO))).thenReturn("https");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_HOST))).thenReturn("myhost:8888");
+        when(request.getHeader(eq(HttpHeaders.X_FORWARDED_PORT))).thenReturn("443");
+        when(request.scheme()).thenReturn("http");
+        when(request.host()).thenReturn("original-host:8080");
+
+        final var generatedUri2 = UriBuilderRequest.resolveProxyRequest(request, path, params, true);
+        assertEquals("https://myhost:8888/my/path?param1=value1", generatedUri2);
     }
 }
 

@@ -150,8 +150,10 @@ public class UriBuilderRequest {
         String xForwardedHost = request.getHeader(HttpHeaders.X_FORWARDED_HOST);
         String hostname = Optional.ofNullable(xForwardedHost)
                 .filter(Predicate.not(String::isEmpty))
-                .orElse(requestHost)
-                .split(":")[0];
+                .orElse(requestHost);
+        hostname = Optional.ofNullable(hostname)
+                .map(h -> h.split(":", 2)[0])
+                .orElse(null);
         builder.host(hostname);
 
         Boolean hasXForwardedHost = xForwardedHost != null && !xForwardedHost.isEmpty();
@@ -159,9 +161,15 @@ public class UriBuilderRequest {
         String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
         String xForwardedHostPort = xForwardedHost != null && xForwardedHost.contains(":") ? xForwardedHost.split(":")[1] : null;
 
-        // Simple precedence: Host header port > X-Forwarded-Port > X-Forwarded-Host port
-        String port = Optional.ofNullable(forwardedPort)
-                .orElse(Optional.ofNullable(xForwardedHostPort).orElse(hostHeaderPort));
+        // Precedence: X-Forwarded-Port (if non-default) > X-Forwarded-Host port > Host header port
+        String port;
+        if (forwardedPort != null && !isDefaultPort(forwardedPort, scheme)) {
+            port = forwardedPort;
+        } else if (xForwardedHostPort != null) {
+            port = xForwardedHostPort;
+        } else {
+            port = hostHeaderPort;
+        }
 
         // In legacy mode, always set the port; otherwise, omit default ports
         boolean isXForwardedPort = hostHeaderPort != null || forwardedPort == null;
