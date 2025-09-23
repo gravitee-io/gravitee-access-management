@@ -16,8 +16,7 @@
 
 package io.gravitee.am.repository.mongodb.common;
 
-
-import com.mongodb.MongoTimeoutException;
+import com.mongodb.MongoCommandException;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -133,12 +132,37 @@ public final class MongoUtils {
     }
 
     public static Completable dropIndexes(MongoCollection<?> collection, Predicate<String> nameMatcher) {
+        logger.debug("Dropping indexes for collection {}", collection.getNamespace().getCollectionName());
         return Observable.fromPublisher(collection.listIndexes())
                 .map(document -> document.getString("name"))
                 .filter(nameMatcher)
+                .doOnNext(indexName -> logger.debug("Found index to drop: {}", indexName))
                 .flatMapCompletable(indexName -> Completable
                         .fromPublisher(collection.dropIndex(indexName))
-                        .doOnError(e -> logger.error("An error has occurred while deleting index {}", indexName, e)));
+                        .onErrorResumeNext(error -> {
+                            if (error instanceof MongoCommandException mongoError && mongoError.getErrorCode() == 27) {
+                                logger.debug("Index {} was already deleted by another process", indexName);
+                                return Completable.complete();
+                            }
+                            return Completable.error(error);
+                        })
+                        .retryWhen(th -> th
+                                .zipWith(Flowable.range(1, 3), (error, attempt) -> new RetryContext(error, attempt))
+                                .flatMap(context -> {
+                                    if (context.error() instanceof MongoCommandException mongoError && 
+                                        mongoError.getErrorCode() == 12587) {
+                                        logger.debug("Retrying index deletion for {} due to background operation, attempt={}/3", 
+                                                   collection.getNamespace().getCollectionName(), context.attempt());
+                                        return Flowable.timer(context.attempt() * 2, TimeUnit.SECONDS); // exponential backoff
+                                    }
+                                    return Flowable.error(context.error());
+                                }))
+                        .doOnError(e -> logger.error("An error has occurred while deleting index {}", indexName, e))
+                        .doOnComplete(() -> logger.debug("Successfully deleted index {}", indexName)))
+                .toFlowable()
+                .defaultIfEmpty(Completable.complete())
+                .ignoreElements()
+                .doOnComplete(() -> logger.debug("Index drop operation completed for collection {}", collection.getNamespace().getCollectionName()));
     }
 
     public static Bson toBsonFilter(String name, Optional<?> optional) {
@@ -173,4 +197,6 @@ public final class MongoUtils {
             return Maybe.just(and(filterCriteria));
         }
     }
+
+    record RetryContext(Throwable error, int attempt) {}
 }
