@@ -21,6 +21,7 @@ import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -42,10 +43,11 @@ import static io.gravitee.am.repository.Scope.RATE_LIMIT;
 // Need to name this component to end with Repository on in order to make it injectable
 // as the Repository plugin only scan beanName ending with Repository or TransactionManager
 @Component("ConnectionProviderFromRepository")
+@Slf4j
 public class MongoConnectionProvider implements ConnectionProvider<MongoClient, MongoConnectionConfiguration>, InitializingBean {
 
     @Autowired
-    private RepositoriesEnvironment environment;
+    RepositoriesEnvironment environment;
 
     private ClientWrapper<MongoClient> commonMongoClient;
     private ClientWrapper<MongoClient> oauthMongoClient;
@@ -97,7 +99,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     }
 
     @Override
-    public ClientWrapper getClientWrapper(String name) {
+    public ClientWrapper<MongoClient> getClientWrapper(String name) {
         if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
             return notUseGwSettingsForOauth2 ? oauthMongoClient : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
@@ -123,15 +125,16 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
                 return commonMongoClient;
             }
         } else {
-            return new MongoClientWrapper(new MongoFactory(environment, prefix).getObject(), getDatabaseName(prefix));
+            return new MongoClientWrapper(new MongoFactory(environment, prefix).getObject(), getDatabaseName(prefix + ".mongodb."));
         }
     }
 
     @Override
     public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId) {
-        // TODO make sure that client is rebuilt if the instance is closed....
-        String prefix = determinePrefixFromDataSourceId(datasourceId);
-       this.dsClientWrappers.computeIfAbsent(datasourceId, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject(), getDatabaseName(datasourceId)));
+        final String prefix = determinePrefixFromDataSourceId(datasourceId);
+        this.dsClientWrappers.computeIfAbsent(datasourceId, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject(), getDatabaseName(prefix)));
+
+        log.debug("Using datasource {} client wrapper: prefix: {}", datasourceId, prefix);
         return this.dsClientWrappers.get(datasourceId);
     }
 
@@ -140,32 +143,30 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
             var propertyKey = String.format("datasources.mongodb[%d].id", i);
             var value = environment.getProperty(propertyKey, String.class);
             if (isNull(value)) {
-                break;
-            } else {
-                if (datasourceId.equals(value)) {
-                    return String.format("datasources.mongodb[%d].settings.", i);
-                }
+                throw new IllegalArgumentException("No datasource found with id: " + datasourceId);
+            }
+
+            if (datasourceId.equals(value)) {
+                return String.format("datasources.mongodb[%d].settings.", i);
             }
         }
-
-        return "";
     }
 
     private String getDatabaseName(Scope scope) {
         boolean useManagementSettings = environment.getProperty(scope.getRepositoryPropertyKey() + ".use-management-settings", Boolean.class, true);
         String propertyPrefix = useManagementSettings ? Scope.MANAGEMENT.getRepositoryPropertyKey() : scope.getRepositoryPropertyKey();
-        return getDatabaseName(propertyPrefix);
+        return getDatabaseName(propertyPrefix  + ".mongodb.");
     }
 
     private String getDatabaseName(String prefix) {
-        String uri = environment.getProperty(prefix + ".mongodb.uri", "");
+        String uri = environment.getProperty(prefix + "uri", "");
         if (!uri.isEmpty()) {
             final String path = URI.create(uri).getPath();
             if (path != null && path.length() > 1) {
                 return path.substring(1);
             }
         }
-        return environment.getProperty(prefix + ".mongodb.dbname", "gravitee-am");
+        return environment.getProperty(prefix + "dbname", "gravitee-am");
     }
 
     @Override
