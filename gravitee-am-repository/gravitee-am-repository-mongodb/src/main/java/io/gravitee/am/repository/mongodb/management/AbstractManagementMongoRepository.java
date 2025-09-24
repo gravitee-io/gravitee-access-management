@@ -45,10 +45,10 @@ public abstract class AbstractManagementMongoRepository extends AbstractMongoRep
     @Qualifier("managementMongoTemplate")
     protected MongoDatabase mongoOperations;
 
-    @Value("${management.mongodb.ensureIndexOnStart:true}")
+    @Value("${repositories.management.mongodb.ensureIndexOnStart:${management.mongodb.ensureIndexOnStart:true}}")
     protected boolean ensureIndexOnStart;
 
-    @Value("${management.mongodb.cursorMaxTime:60000}")
+    @Value("${repositories.management.mongodb.cursorMaxTime:${management.mongodb.cursorMaxTime:60000}}")
     protected int cursorMaxTimeInMs;
 
     protected void createIndex(MongoCollection<?> collection, Map<Document, IndexOptions> indexes) {
