@@ -37,6 +37,7 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
 
     @Override
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
+        LOGGER.debug("Rate limit request: key={}, weight={}, currentTime={}", key, weight, System.currentTimeMillis());
         return findById(key)
                 .flatMapSingle(rateLimit -> {
                     if (rateLimit.hasNotExpired()) {
@@ -45,9 +46,13 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
                                 .builder(rateLimit)
                                 .counter(rateLimit.getCounter() + weight)
                                 .build();
+                        LOGGER.debug("Found and incrementing existing rate limit: key={}, oldCounter={}, newCounter={}, resetTime={}", 
+                            key, rateLimit.getCounter(), updatedRateLimit.getCounter(), rateLimit.getResetTime());
                         return update(updatedRateLimit);
                     } else {
                         // Rate limit has expired, delete it and create a new one
+                        LOGGER.debug("Rate limit expired for key={}, resetTime={}, currentTime={}, will delete and recreate", 
+                            key, rateLimit.getResetTime(), System.currentTimeMillis());
                         return deleteById(key)
                                 .andThen(createNew(weight, supplier))
                                 .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {} after deleting expired entry", rl.getKey(), weight))
@@ -56,7 +61,9 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
                 })
                 .switchIfEmpty(createNew(weight, supplier)
                         .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {}", rl.getKey(), weight))
-                        .compose(this::insert));
+                        .compose(this::insert))
+                .doOnSuccess(rl -> LOGGER.debug("Rate limit result: key={}, counter={}, resetTime={}, limit={}", 
+                    rl.getKey(), rl.getCounter(), rl.getResetTime(), rl.getLimit()));
     }
 
     private Single<RateLimit> insert(Single<RateLimit> rateLimit) {
@@ -81,7 +88,12 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
 
     private Single<RateLimit> createNew(long weight, Supplier<RateLimit> supplier){
         return Single.fromSupplier(supplier::get)
-                .doOnSuccess(rl -> rl.setCounter(weight));
+                .doOnSuccess(rl -> {
+                    LOGGER.debug("Supplier created rate limit: key={}, resetTime={}, limit={}, timeWindow={}ms", 
+                        rl.getKey(), rl.getResetTime(), rl.getLimit(), 
+                        rl.getResetTime() - System.currentTimeMillis());
+                    rl.setCounter(weight);
+                });
     }
 
     private Completable deleteById(String key) {

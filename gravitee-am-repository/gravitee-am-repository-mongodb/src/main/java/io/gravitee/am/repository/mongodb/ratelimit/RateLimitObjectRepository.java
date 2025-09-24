@@ -60,16 +60,20 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
 
     @Override
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
+        log.debug("Rate limit request: key={}, weight={}, currentTime={}", key, weight, Instant.now().toEpochMilli());
         return findNotExpiredById(key, weight, supplier)
-                .doOnSuccess(rl -> log.debug("Incrementing rate limit entry for key {} with weight {}", rl.getKey(), weight));
+                .doOnSuccess(rl -> log.debug("Rate limit result: key={}, counter={}, resetTime={}, limit={}", 
+                    rl.getKey(), rl.getCounter(), rl.getResetTime(), rl.getLimit()));
     }
 
     private Single<RateLimit> findNotExpiredById(String key, long weight, Supplier<RateLimit> supplier) {
+        long currentTime = Instant.now().toEpochMilli();
+        
         return Maybe.fromPublisher(
                         rateLimitCollection.findOneAndUpdate(
                                 Filters.and(
                                         Filters.eq("_id", key),
-                                        Filters.gt("resetTime", Instant.now().toEpochMilli())
+                                        Filters.gt("resetTime", currentTime)
                                 ),
                                 Updates.inc("counter", weight),
                                 new FindOneAndUpdateOptions().returnDocument(ReturnDocument.AFTER)
@@ -81,7 +85,7 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
                                 rateLimitCollection.findOneAndDelete(
                                         Filters.and(
                                                 Filters.eq("_id", key),
-                                                Filters.lte("resetTime", Instant.now().toEpochMilli())
+                                                Filters.lte("resetTime", currentTime)
                                         )
                                 )
                         )
@@ -101,6 +105,12 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
                                         )
                                 )
                         )
+                        .doOnSubscribe(disposable -> {
+                            RateLimit newRateLimit = supplier.get();
+                            log.debug("Supplier created rate limit: key={}, resetTime={}, limit={}, timeWindow={}ms", 
+                                key, newRateLimit.getResetTime(), newRateLimit.getLimit(), 
+                                newRateLimit.getResetTime() - currentTime);
+                        })
                 )
                 .toSingle()
                 .map(this::toEntity);
