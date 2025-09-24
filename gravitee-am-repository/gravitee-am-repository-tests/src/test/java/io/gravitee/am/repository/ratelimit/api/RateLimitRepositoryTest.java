@@ -88,8 +88,9 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
     @Test
     public void shouldIncrementAndGet_fromSuppliedCounterByTwo() throws InterruptedException {
         final RateLimit rateLimit = RATE_LIMITS.get("rl-2");
-        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 2L);
-        final long expectedCounter = 42L;
+        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 1L);
+        // Counter is set in rateLimits.json at 40
+        final long expectedCounter = 41L;
 
         observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
@@ -104,8 +105,8 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
     @Test
     public void shouldIncrementAndGet_withUnknownKey() throws InterruptedException {
         final RateLimit rateLimit = of("rl-3", 0, 100000, 5000, "rl-3-subscription");
-        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 10L);
-        final long expectedCounter = 10L;
+        final TestObserver<RateLimit> observer = incrementAndObserve(rateLimit, 1L);
+        final long expectedCounter = 1L;
 
         observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
@@ -127,13 +128,13 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
         rateLimitRepository.incrementAndGet(expiredRateLimit.getKey(), 1L, () -> expiredRateLimit).blockingGet();
 
         // When we increment again, since the stored rate limit has expired, the repo should reset the counter and push reset_time forward
-        final TestObserver<RateLimit> observer = incrementAndObserve(expiredRateLimit, 2L);
+        final TestObserver<RateLimit> observer = incrementAndObserve(expiredRateLimit, 1L);
 
         observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         observer.assertValue(shouldNotFail(rl -> {
             // Counter should be reset to "weight", not old value + weight
-            assertEquals(2L, rl.getCounter());
+            assertEquals(1L, rl.getCounter());
 
             // Reset time should now be in the future (from the supplier)
             long now = Instant.now().toEpochMilli();
@@ -153,17 +154,19 @@ public class RateLimitRepositoryTest extends AbstractRateLimitTest {
 
         // Insert into repository with valid (non-expired) reset time
         RATE_LIMITS.put(validRateLimit.getKey(), validRateLimit);
+        // Call 1
         rateLimitRepository.incrementAndGet(validRateLimit.getKey(), 1L, () -> validRateLimit).blockingGet();
 
         // When we increment again, since reset_time > now, the repo should just increment counter
-        final TestObserver<RateLimit> observer = incrementAndObserve(validRateLimit, 3L);
+        // Call 2
+        final TestObserver<RateLimit> observer = incrementAndObserve(validRateLimit, 1L);
 
         observer.await(OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         observer.assertValue(shouldNotFail(rl -> {
             // Counter should be incremented, not reset
             // First call: counter = 1 (weight), Second call: counter = 1 + 3 = 4
-            assertEquals(4L, rl.getCounter());
+            assertEquals(2L, rl.getCounter());
 
             // Reset time should remain the same
             assertEquals(validRateLimit.getResetTime(), rl.getResetTime());
