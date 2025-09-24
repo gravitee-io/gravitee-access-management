@@ -50,13 +50,12 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
                             key, rateLimit.getCounter(), updatedRateLimit.getCounter(), rateLimit.getResetTime());
                         return update(updatedRateLimit);
                     } else {
-                        // Rate limit has expired, delete it and create a new one
-                        LOGGER.debug("Rate limit expired for key={}, resetTime={}, currentTime={}, will delete and recreate", 
+                        // Rate limit has expired, update it with new values
+                        LOGGER.debug("Rate limit expired for key={}, resetTime={}, currentTime={}, will update with new values", 
                             key, rateLimit.getResetTime(), System.currentTimeMillis());
-                        return deleteById(key)
-                                .andThen(createNew(weight, supplier))
-                                .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {} after deleting expired entry", rl.getKey(), weight))
-                                .compose(this::insert);
+                        return createNew(weight, supplier)
+                                .doOnSuccess(rl -> LOGGER.debug("Updating expired rate limit entry for key {} with weight {}", rl.getKey(), weight))
+                                .flatMap(this::update);
                     }
                 })
                 .switchIfEmpty(createNew(weight, supplier)
