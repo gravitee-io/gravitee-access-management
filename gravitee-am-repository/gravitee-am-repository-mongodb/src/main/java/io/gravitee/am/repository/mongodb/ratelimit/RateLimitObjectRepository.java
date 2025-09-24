@@ -80,37 +80,19 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
                         )
                 )
                 .switchIfEmpty(
-                        // Delete expired rate limit entry if it exists
+                        // Create new rate limit entry (upsert will handle expired entries automatically)
                         Maybe.fromPublisher(
-                                rateLimitCollection.findOneAndDelete(
-                                        Filters.and(
-                                                Filters.eq("_id", key),
-                                                Filters.lte("resetTime", currentTime)
-                                        )
+                                rateLimitCollection.findOneAndUpdate(
+                                        Filters.eq("_id", key),
+                                        Updates.combine(
+                                                Updates.set("counter", weight),
+                                                Updates.set("resetTime", supplier.get().getResetTime()),
+                                                Updates.set("limit", supplier.get().getLimit()),
+                                                Updates.set("subscription", supplier.get().getSubscription())
+                                        ),
+                                        new FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER)
                                 )
                         )
-                        .ignoreElement()
-                        .andThen(
-                                // Create new rate limit entry
-                                Maybe.fromPublisher(
-                                        rateLimitCollection.findOneAndUpdate(
-                                                Filters.eq("_id", key),
-                                                Updates.combine(
-                                                        Updates.set("counter", weight),
-                                                        Updates.set("resetTime", supplier.get().getResetTime()),
-                                                        Updates.set("limit", supplier.get().getLimit()),
-                                                        Updates.set("subscription", supplier.get().getSubscription())
-                                                ),
-                                                new FindOneAndUpdateOptions().upsert(true).returnDocument(ReturnDocument.AFTER)
-                                        )
-                                )
-                        )
-                        .doOnSubscribe(disposable -> {
-                            RateLimit newRateLimit = supplier.get();
-                            log.debug("Supplier created rate limit: key={}, resetTime={}, limit={}, timeWindow={}ms", 
-                                key, newRateLimit.getResetTime(), newRateLimit.getLimit(), 
-                                newRateLimit.getResetTime() - currentTime);
-                        })
                 )
                 .toSingle()
                 .map(this::toEntity);
