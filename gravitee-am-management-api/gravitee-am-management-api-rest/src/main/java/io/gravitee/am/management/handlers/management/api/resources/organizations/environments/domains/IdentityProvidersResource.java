@@ -139,6 +139,7 @@ public class IdentityProvidersResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
                 .andThen(identityProviderManager.checkPluginDeployment(newIdentityProvider.getType()))
+                .andThen(identityProviderManager.validateDatasource(newIdentityProvider.getConfiguration()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))

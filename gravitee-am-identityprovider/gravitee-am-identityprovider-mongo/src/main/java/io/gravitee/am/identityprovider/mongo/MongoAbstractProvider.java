@@ -25,6 +25,7 @@ import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.util.StringUtils;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -67,6 +68,14 @@ public abstract class MongoAbstractProvider implements InitializingBean {
         final var systemScope = Scope.fromName(environment.getProperty("repositories.system-cluster", String.class, Scope.MANAGEMENT.getName()));
         if (!(systemScope == Scope.MANAGEMENT || systemScope == Scope.GATEWAY)) {
             throw new IllegalStateException("Unable to initialize Mongo Identity Provider, repositories.system-cluster only accept 'management' or 'gateway'");
+        }
+
+        // whatever are the values for the mongo connection settings or the useSystemCluster
+        // if DataSource is present, it takes precedence on everything
+        if (StringUtils.hasLength(this.configuration.getDatasourceId()) && this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
+            this.clientWrapper = this.commonConnectionProvider.getClientWrapperFromDatasource(this.configuration.getDatasourceId());
+            this.mongoClient = this.clientWrapper.getClient();
+            return;
         }
 
         if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {

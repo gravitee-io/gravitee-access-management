@@ -21,12 +21,15 @@ import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
+import static java.util.Objects.isNull;
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
@@ -50,6 +53,8 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private boolean notUseMngSettingsForOauth2;
     private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
+
+    private Map<String, ClientWrapper<MongoClient>> dsClientWrappers = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -75,7 +80,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     }
 
     @Override
-    public ClientWrapper getClientWrapper(String name) {
+    public ClientWrapper<MongoClient> getClientWrapper(String name) {
         if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
             return notUseGwSettingsForOauth2 ? oauthMongoClient : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
@@ -88,6 +93,27 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public ClientWrapper<MongoClient> getClientFromConfiguration(MongoConnectionConfiguration configuration) {
         return new MongoClientWrapper(MongoFactory.createClient(configuration));
+    }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId) {
+        final String prefix = determinePrefixFromDataSourceId(datasourceId);
+        this.dsClientWrappers.computeIfAbsent(datasourceId, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject()));
+        return this.dsClientWrappers.get(datasourceId);
+    }
+
+    private String determinePrefixFromDataSourceId(String datasourceId) {
+        for (int i = 0; true; i++) {
+            var propertyKey = String.format("datasources.mongodb[%d].id", i);
+            var value = environment.getProperty(propertyKey, String.class);
+            if (isNull(value)) {
+                throw new IllegalArgumentException("No datasource found with id: " + datasourceId);
+            }
+
+            if (datasourceId.equals(value)) {
+                return String.format("datasources.mongodb[%d].settings.", i);
+            }
+        }
     }
 
     @Override
