@@ -155,32 +155,54 @@ public class UriBuilderRequest {
                 .map(h -> h.split(":", 2)[0])
                 .ifPresent(builder::host);
 
-        Boolean hasXForwardedHost = xForwardedHost != null && !xForwardedHost.isEmpty();
-        String hostHeaderPort = !hasXForwardedHost && requestHost != null && requestHost.contains(":") ? requestHost.split(":")[1] : null;
-        String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
-        String xForwardedHostPort = xForwardedHost != null && xForwardedHost.contains(":") ? xForwardedHost.split(":")[1] : null;
+        Optional.ofNullable(resolvePort(request, xForwardedHost, requestHost, scheme))
+            .ifPresent(p -> {
+                try {
+                    builder.port(Integer.parseInt(p));
+                } catch (NumberFormatException ex) {
+                    LOGGER.warn("Invalid port value: {}", p);
+                }
+            });
+    }
+
+    /**
+     * Resolves the port to use based on HTTP header precedence.
+     * Precedence: X-Forwarded-Port (if non-default) > X-Forwarded-Host port > Host header port
+     *
+     * @param request the HTTP request
+     * @param xForwardedHost the X-Forwarded-Host header value
+     * @param requestHost the Host header value
+     * @param scheme the request scheme (http/https)
+     * @return the resolved port string, or null if no valid port found
+     */
+    private static String resolvePort(HttpServerRequest request, String xForwardedHost, String requestHost, String scheme) {
+        boolean isLegacyMode = StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts();
 
         // Precedence: X-Forwarded-Port (if non-default) > X-Forwarded-Host port > Host header port
-        String port;
+        String forwardedPort = request.getHeader(HttpHeaders.X_FORWARDED_PORT);
         if (forwardedPort != null && !isDefaultPort(forwardedPort, scheme)) {
-            port = forwardedPort;
-        } else if (xForwardedHostPort != null) {
-            port = xForwardedHostPort;
-        } else {
-            port = hostHeaderPort;
-        }
-
-        // In legacy mode, always set the port; otherwise, omit default ports
-        boolean portEligibleForLegacyMode = hostHeaderPort != null || forwardedPort == null || xForwardedHostPort != null;
-        if (port == null || isDefaultPort(port, scheme) && !(portEligibleForLegacyMode && StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts())) {
-            return;
+            return forwardedPort;
         }
         
-        try {
-            builder.port(Integer.parseInt(port));
-        } catch (NumberFormatException ex) {
-            LOGGER.warn("Invalid port value: {}", port);
+        String xForwardedHostPort = resolvePortFromHostString(xForwardedHost, scheme, isLegacyMode);
+        if (xForwardedHostPort != null) {
+            return xForwardedHostPort;
         }
+        
+        // Only use Host header port if no X-Forwarded-Host
+        if (xForwardedHost == null || xForwardedHost.isEmpty()) {
+            return resolvePortFromHostString(requestHost, scheme, isLegacyMode);
+        }
+        
+        return null;
+    }
+
+    private static String resolvePortFromHostString(String host, String scheme, boolean isLegacyMode) {
+        return Optional.ofNullable(host)
+            .filter(h -> h.contains(":"))
+            .map(h -> h.split(":")[1])
+            .filter(port -> !isDefaultPort(port, scheme) || isLegacyMode)
+            .orElse(null);
     }
 
     /**
