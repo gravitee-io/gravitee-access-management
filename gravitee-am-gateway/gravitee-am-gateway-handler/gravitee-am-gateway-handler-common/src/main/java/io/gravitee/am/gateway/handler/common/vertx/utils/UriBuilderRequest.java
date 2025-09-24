@@ -172,8 +172,8 @@ public class UriBuilderRequest {
         }
 
         // In legacy mode, always set the port; otherwise, omit default ports
-        boolean isXForwardedPort = hostHeaderPort != null || forwardedPort == null;
-        if (port == null || isDefaultPort(port, scheme) && !(isXForwardedPort && StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts())) {
+        boolean portEligibleForLegacyMode = hostHeaderPort != null || forwardedPort == null || xForwardedHostPort != null;
+        if (port == null || isDefaultPort(port, scheme) && !(portEligibleForLegacyMode && StaticEnvironmentProvider.includeDefaultHttpHostHeaderPorts())) {
             return;
         }
         
