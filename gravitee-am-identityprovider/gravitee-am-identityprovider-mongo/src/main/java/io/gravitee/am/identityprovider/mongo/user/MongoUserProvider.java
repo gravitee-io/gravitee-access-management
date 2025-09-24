@@ -68,7 +68,7 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
 
     private MongoCollection<Document> usersCollection;
 
-    @Value("${management.mongodb.ensureIndexOnStart:true}")
+    @Value("${repositories.management.mongodb.ensureIndexOnStart:${management.mongodb.ensureIndexOnStart:true}}")
     private boolean ensureIndexOnStart;
 
     @Override
