@@ -51,10 +51,10 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
                         return update(updatedRateLimit);
                     } else {
                         // Rate limit has expired, update it with new values
-                        LOGGER.debug("Rate limit expired for key={}, resetTime={}, currentTime={}, will update with new values", 
+                        LOGGER.debug("Rate limit expired for key={}, resetTime={}, currentTime={}, creating new rate limit",
                             key, rateLimit.getResetTime(), System.currentTimeMillis());
                         return createNew(weight, supplier)
-                                .doOnSuccess(rl -> LOGGER.debug("Updating expired rate limit entry for key {} with weight {}", rl.getKey(), weight))
+                                .doOnSuccess(rl -> LOGGER.debug("Created new rate limit entry for key {} with weight {}", rl.getKey(), weight))
                                 .flatMap(this::update);
                     }
                 })
