@@ -88,11 +88,12 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
 
     private Single<RateLimit> createNew(long weight, Supplier<RateLimit> supplier){
         return Single.fromSupplier(supplier::get)
-                .doOnSuccess(rl -> {
+                .map(rl -> {
                     LOGGER.debug("Supplier created rate limit: key={}, resetTime={}, limit={}, timeWindow={}ms", 
                         rl.getKey(), rl.getResetTime(), rl.getLimit(), 
                         rl.getResetTime() - System.currentTimeMillis());
                     rl.setCounter(weight);
+                    return rl;
                 });
     }
 
