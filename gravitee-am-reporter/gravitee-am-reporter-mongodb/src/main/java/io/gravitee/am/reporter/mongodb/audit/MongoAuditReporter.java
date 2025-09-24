@@ -114,17 +114,21 @@ import static java.util.stream.Collectors.toMap;
 public class MongoAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
+
     @Autowired
     private ConnectionProvider connectionProvider;
 
     @Autowired
     private MongoReporterConfiguration configuration;
 
-    @Value("${management.mongodb.ensureIndexOnStart:true}")
+    @Value("${repositories.management.mongodb.ensureIndexOnStart:${management.mongodb.ensureIndexOnStart:true}}")
     private boolean ensureIndexOnStart;
 
-    @Value("${management.mongodb.cursorMaxTime:60000}")
+    @Value("${repositories.management.mongodb.cursorMaxTime:${management.mongodb.cursorMaxTime:60000}}")
     private int cursorMaxTimeInMs;
+
+    @Value("${reporters.mongodb.batchSize:2000}")
+    private int batchSize = 2000;
 
     @Value("${reporters.mongodb.readPreference:PRIMARY}")
     private String readPreference = "PRIMARY";
@@ -146,9 +150,16 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
     }
 
+    protected final <TResult> FindPublisher<TResult> withBatchSize(FindPublisher<TResult> query) {
+        return query.batchSize(this.batchSize);
+    }
+
     protected final <TResult> AggregatePublisher<TResult> withMaxTimeout(AggregatePublisher<TResult> query) {
         return query.maxTime(this.cursorMaxTimeInMs, TimeUnit.MILLISECONDS);
     }
+
+    protected final <TResult> AggregatePublisher<TResult> withBatchSize(AggregatePublisher<TResult> query) {
+        return query.batchSize(this.batchSize);    }
 
     @Override
     public boolean canSearch() {
@@ -162,7 +173,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
         // run search query
         Single<Long> countOperation = Observable.fromPublisher(withReadPreferenceCollection().countDocuments(query, new CountOptions().maxTime(cursorMaxTimeInMs, TimeUnit.MILLISECONDS))).first(0l);
-        Single<List<Audit>> auditsOperation = Observable.fromPublisher(withMaxTimeout(withReadPreferenceCollection().find(query))
+        Single<List<Audit>> auditsOperation = Observable.fromPublisher(withBatchSize(withMaxTimeout(withReadPreferenceCollection().find(query)))
                         .sort(new BasicDBObject(FIELD_TIMESTAMP, -1))
                         .skip(size * page).limit(size))
                 .map(this::convert).collect(LinkedList::new, List::add);
@@ -305,7 +316,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                 )
         ).toList();
 
-        return Observable.fromPublisher(withMaxTimeout(withReadPreferenceCollection().aggregate(Arrays.asList(
+        return Observable.fromPublisher(withBatchSize(withMaxTimeout(withReadPreferenceCollection().aggregate(Arrays.asList(
                         Aggregates.match(query),
                         Aggregates.group(
                                 new BasicDBObject("_id",
@@ -313,7 +324,7 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
                                                 Arrays.asList(subTractTimestamp, new BasicDBObject("$mod", Arrays.asList(subTractTimestamp, criteria.interval()))))),
                                 condition
                         )), Document.class))
-                ).toList()
+                )).toList()
                 .map(docs -> {
                     Map<String, Map<Long, Long>> results = new HashMap<>();
                     types.forEach((key, value) -> results.put(key, new HashMap<>()));
@@ -334,8 +345,8 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
         if (criteria.size() != null && criteria.size() != 0) {
             aggregates.add(Aggregates.limit(criteria.size()));
         }
-        return Observable.fromPublisher(withMaxTimeout(withReadPreferenceCollection().aggregate(aggregates, Document.class
-                )))
+        return Observable.fromPublisher(withBatchSize(withMaxTimeout(withReadPreferenceCollection().aggregate(aggregates, Document.class
+                ))))
                 .toList()
                 .map(docs -> docs.stream().collect(toMap(d -> ((Document) d.get("_id")).get("_id"), d -> d.get("count"))));
     }
