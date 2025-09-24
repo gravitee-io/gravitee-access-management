@@ -57,7 +57,11 @@ public class RedisRateLimitRepository implements RateLimitRepository<RateLimit> 
             return Single.error(new RedisNotConnectedException());
         }
 
+        log.debug("Rate limit request: key={}, weight={}, currentTime={}", key, weight, System.currentTimeMillis());
         final RateLimit newRate = supplier.get();
+        log.debug("Supplier created rate limit: key={}, resetTime={}, limit={}, timeWindow={}ms", 
+            key, newRate.getResetTime(), newRate.getLimit(), 
+            newRate.getResetTime() - System.currentTimeMillis());
 
         return SingleHelper
                 .toSingle(
@@ -82,11 +86,17 @@ public class RedisRateLimitRepository implements RateLimitRepository<RateLimit> 
                         rateLimit.setResetTime(response.get(2).toLong());
                         rateLimit.setSubscription(response.get(3).toString());
 
+                        log.debug("Redis script returned existing rate limit: key={}, counter={}, resetTime={}, limit={}", 
+                            key, rateLimit.getCounter(), rateLimit.getResetTime(), rateLimit.getLimit());
                         return rateLimit;
                     }
 
+                    log.debug("Redis script returned new rate limit (expired or not found): key={}, counter={}, resetTime={}, limit={}", 
+                        key, newRate.getCounter(), newRate.getResetTime(), newRate.getLimit());
                     return newRate;
                 })
+                .doOnSuccess(rl -> log.debug("Rate limit result: key={}, counter={}, resetTime={}, limit={}", 
+                    rl.getKey(), rl.getCounter(), rl.getResetTime(), rl.getLimit()))
                 .timeout(operationTimeout, TimeUnit.MILLISECONDS, Single.error(new RedisOperationTimeoutException(operationTimeout)));
     }
 
