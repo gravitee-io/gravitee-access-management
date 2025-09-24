@@ -151,10 +151,9 @@ public class UriBuilderRequest {
         String hostname = Optional.ofNullable(xForwardedHost)
                 .filter(Predicate.not(String::isEmpty))
                 .orElse(requestHost);
-        hostname = Optional.ofNullable(hostname)
+        Optional.ofNullable(hostname)
                 .map(h -> h.split(":", 2)[0])
-                .orElse(null);
-        builder.host(hostname);
+                .ifPresent(builder::host);
 
         Boolean hasXForwardedHost = xForwardedHost != null && !xForwardedHost.isEmpty();
         String hostHeaderPort = !hasXForwardedHost && requestHost != null && requestHost.contains(":") ? requestHost.split(":")[1] : null;
