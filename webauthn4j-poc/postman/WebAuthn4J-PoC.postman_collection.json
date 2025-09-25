@@ -1,0 +1,407 @@
+{
+	"info": {
+		"_postman_id": "webauthn4j-poc-collection",
+		"name": "WebAuthn4J PoC - Fallback Validation Demo",
+		"description": "Postman collection for testing WebAuthn4J PoC with Android Key attestation and fallback certificate validation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Configuration",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/webauthn/config",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"webauthn",
+						"config"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Registration Flow",
+			"item": [
+				{
+					"name": "Begin Registration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/register/begin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"register",
+								"begin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Complete Registration (Android Key)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"credential\": {\n    \"id\": \"{{credentialId}}\",\n    \"rawId\": \"{{credentialId}}\",\n    \"response\": {\n      \"attestationObject\": \"{{attestationObject}}\",\n      \"clientDataJSON\": \"{{clientDataJSON}}\"\n    },\n    \"type\": \"public-key\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/register/complete",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"register",
+								"complete"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Authentication Flow",
+			"item": [
+				{
+					"name": "Begin Authentication",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/authenticate/begin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"authenticate",
+								"begin"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Complete Authentication",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"{{username}}\",\n  \"credential\": {\n    \"id\": \"{{credentialId}}\",\n    \"rawId\": \"{{credentialId}}\",\n    \"response\": {\n      \"authenticatorData\": \"{{authenticatorData}}\",\n      \"clientDataJSON\": \"{{clientDataJSON}}\",\n      \"signature\": \"{{signature}}\",\n      \"userHandle\": \"{{userHandle}}\"\n    },\n    \"type\": \"public-key\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/authenticate/complete",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"authenticate",
+								"complete"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Certificate Management",
+			"item": [
+				{
+					"name": "Get All Certificates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/certificates",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"certificates"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Certificate Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/certificates/rotation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"certificates",
+								"rotation"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "MDS Management",
+			"item": [
+				{
+					"name": "Get MDS Configuration",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/mds/config",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"mds",
+								"config"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update MDS/Mode Configuration",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"useMdsOnly\": false,\n  \"useMdsForValidation\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/config",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"config"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get MDS Cache Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/mds/cache",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"mds",
+								"cache"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		
+		{
+			"name": "MDS-Only Mode (Migration Testing)",
+			"item": [
+				{
+					"name": "Get MDS-Only Mode Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/mds-only",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"mds-only"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Debug and Statistics",
+			"item": [
+				{
+					"name": "Get Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/debug/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"debug",
+								"statistics"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Trust Anchors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/debug/trust-anchors",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"debug",
+								"trust-anchors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Credentials",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/webauthn/debug/credentials",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"webauthn",
+								"debug",
+								"credentials"
+							]
+						}
+					},
+					"response": []
+				},
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "username",
+			"value": "testuser",
+			"type": "string"
+		},
+		{
+			"key": "credentialId",
+			"value": "test-credential-id",
+			"type": "string"
+		},
+		{
+			"key": "attestationObject",
+			"value": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVikdKbqkhPJnC90siSSsyDPryY-BHQ3zHVPPN2VQMMYSHnMl2gAAAAAAAAAAAAAAAAAAAAAAAAAAAGJ0l2j3YmtZHUfqe08tW1WmGpA9lUwdUoRAP1MpVQusgQIDAQABoUYwRAIgBwdtQONzBHVJSD5btmGqxb5pBk9yN7x4Sdrq0C4rR8ACIC2dZ8R5xWvtgz9mth4G34ZJvMx1iX6oRE1N0+uQJ",
+			"type": "string"
+		},
+		{
+			"key": "clientDataJSON",
+			"value": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiVGVzdENoYWxsZW5nZSIsIm9yaWdpbiI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MCIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+			"type": "string"
+		},
+		{
+			"key": "authenticatorData",
+			"value": "dKbqkhPJnC90siSSsyDPryY-BHQ3zHVPPN2VQMMYSHnMl2gAAAAAAAAAAAAAAAAAAAAAAAAAAAGJ0l2j3YmtZHUfqe08tW1WmGpA9lUwdUoRAP1MpVQusgQIDAQAB",
+			"type": "string"
+		},
+		{
+			"key": "signature",
+			"value": "MEUCIQDj4VUxIHTzR67YeU+2kHfFqyOSQ+PYUd1w4c3D2QyX2AIgLZ1nxHnFa+2DP2a2Hgbvhkm8zHWJfqhETU3T65Ak",
+			"type": "string"
+		},
+		{
+			"key": "userHandle",
+			"value": "dGVzdHVzZXI",
+			"type": "string"
+		}
+	]
+}

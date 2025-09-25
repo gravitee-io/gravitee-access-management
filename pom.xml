@@ -70,6 +70,7 @@
         <module>gravitee-am-ciba-delegated-service</module>
         <module>gravitee-am-monitoring</module>
         <module>gravitee-am-dataplane</module>
+        <module>webauthn4j-poc</module>
     </modules>
 
     <properties>
