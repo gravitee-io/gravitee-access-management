@@ -9,7 +9,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,48 +37,6 @@ public class MDSService {
         this.vertx = vertx;
         this.trustAnchorRepository = trustAnchorRepository;
         this.cachedMetadata = new ConcurrentHashMap<>();
-    }
-
-    // Removed old verifyAuthenticator and mock metadata helpers
-
-    
-
-    /**
-     * Create verification result JSON
-     */
-    private JsonObject createVerificationResult(JsonObject statement, boolean verified, String reason) {
-        JsonObject result = new JsonObject()
-            .put("verified", verified)
-            .put("reason", reason)
-            .put("timestamp", System.currentTimeMillis());
-            
-        if (statement != null) {
-            result.put("aaguid", statement.getString("aaguid"))
-                .put("description", statement.getString("description"))
-                .put("authenticatorVersion", statement.getInteger("authenticatorVersion"))
-                .put("protocolFamily", statement.getString("protocolFamily"))
-                .put("schema", statement.getInteger("schema"))
-                .put("upv", statement.getJsonArray("upv"))
-                .put("authenticationAlgorithms", statement.getJsonArray("authenticationAlgorithms"))
-                .put("publicKeyAlgAndEncodings", statement.getJsonArray("publicKeyAlgAndEncodings"))
-                .put("attestationTypes", statement.getJsonArray("attestationTypes"))
-                .put("userVerificationDetails", statement.getJsonArray("userVerificationDetails"))
-                .put("keyProtection", statement.getJsonArray("keyProtection"))
-                .put("matcherProtection", statement.getJsonArray("matcherProtection"))
-                .put("cryptoStrength", statement.getInteger("cryptoStrength"))
-                .put("operatingEnv", statement.getString("operatingEnv"))
-                .put("attachmentHint", statement.getJsonArray("attachmentHint"))
-                .put("isSecondFactorOnly", statement.getBoolean("isSecondFactorOnly"))
-                .put("tcDisplay", statement.getInteger("tcDisplay"))
-                .put("tcDisplayContentType", statement.getString("tcDisplayContentType"))
-                .put("tcDisplayPNGCharacteristics", statement.getJsonObject("tcDisplayPNGCharacteristics"))
-                .put("attestationRootCertificates", statement.getJsonArray("attestationRootCertificates"))
-                .put("ecdaaTrustAnchors", statement.getJsonArray("ecdaaTrustAnchors"))
-                .put("icon", statement.getString("icon"))
-                .put("supportedExtensions", statement.getJsonArray("supportedExtensions"));
-        }
-        
-        return result;
     }
 
     /**

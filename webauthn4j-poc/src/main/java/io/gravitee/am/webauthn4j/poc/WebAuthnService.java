@@ -6,7 +6,6 @@ import io.vertx.ext.auth.webauthn4j.WebAuthn4J;
 import io.vertx.ext.auth.webauthn4j.RelyingParty;
 import io.vertx.ext.auth.webauthn4j.WebAuthn4JOptions;
 import io.vertx.ext.auth.webauthn4j.WebAuthn4JCredentials;
-import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import org.slf4j.Logger;
