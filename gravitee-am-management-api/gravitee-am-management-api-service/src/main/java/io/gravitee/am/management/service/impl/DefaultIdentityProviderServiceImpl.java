@@ -124,7 +124,7 @@ public class DefaultIdentityProviderServiceImpl implements DefaultIdentityProvid
 
             configMap.put("uri", mongoUri);
             configMap.put("host", (mongoHost != null) ? mongoHost : "");
-            configMap.put("port", (mongoPort != null) ? Integer.parseInt(mongoPort): "");
+            configMap.put("port", (mongoPort != null) ? Integer.parseInt(mongoPort): null);
             configMap.put("enableCredentials", false);
             configMap.put("database", mongoDBName);
             configMap.put("usersCollection", "idp_users_" + lowerCaseId);
