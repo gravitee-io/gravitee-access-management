@@ -70,9 +70,6 @@ public class IdentityProvidersResource extends AbstractResource {
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
-    @Autowired
-    private DatasourceValidator datasourceValidator;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "List registered identity providers of the organization",
@@ -123,7 +120,6 @@ public class IdentityProvidersResource extends AbstractResource {
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.CREATE)
                 .andThen(identityProviderManager.checkPluginDeployment(newIdentityProvider.getType()))
-                .andThen(datasourceValidator.validate(newIdentityProvider.getConfiguration()))
                 .andThen(identityProviderService.create(ReferenceType.ORGANIZATION, organizationId, newIdentityProvider, authenticatedUser, false)
                         .map(identityProvider -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/identities/" + identityProvider.getId()))

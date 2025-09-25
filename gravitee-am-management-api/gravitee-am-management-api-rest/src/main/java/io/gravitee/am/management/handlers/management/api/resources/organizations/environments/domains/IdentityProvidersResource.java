@@ -75,9 +75,6 @@ public class IdentityProvidersResource extends AbstractResource {
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
-    @Autowired
-    private DatasourceValidator datasourceValidator;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -143,7 +140,6 @@ public class IdentityProvidersResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
                 .andThen(identityProviderManager.checkPluginDeployment(newIdentityProvider.getType()))
-                .andThen(datasourceValidator.validate(newIdentityProvider.getConfiguration()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))

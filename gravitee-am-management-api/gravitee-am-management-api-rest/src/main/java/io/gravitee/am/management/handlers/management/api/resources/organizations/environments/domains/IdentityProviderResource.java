@@ -73,9 +73,6 @@ public class IdentityProviderResource extends AbstractResource {
     @Autowired
     private IdentityProviderManager identityProviderManager;
 
-    @Autowired
-    private DatasourceValidator datasourceValidator;
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
@@ -144,7 +141,6 @@ public class IdentityProviderResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)
-                .andThen(datasourceValidator.validate(updateIdentityProvider.getConfiguration()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser, false)))
