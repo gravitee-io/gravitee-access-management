@@ -1232,7 +1232,8 @@ jobs:
         default: "."
         type: string
     docker:
-      - image: sonarsource/sonar-scanner-cli:5
+      - image: sonarsource/sonar-scanner-cli:11.4
+        user: root
     resource_class: xlarge
     steps:
       #      - run:
