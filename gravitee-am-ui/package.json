@@ -104,7 +104,7 @@
     "npm": ">=10.2.4"
   },
   "resolutions": {
-    "vite": "6.3.5"
+    "vite": "6.3.6"
   },
   "packageManager": "yarn@4.1.1"
 }
