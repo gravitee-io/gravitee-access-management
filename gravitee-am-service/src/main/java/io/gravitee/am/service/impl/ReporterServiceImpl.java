@@ -358,12 +358,11 @@ public class ReporterServiceImpl implements ReporterService {
             var collectionSuffix = (reference == null || reference.matches(ReferenceType.ORGANIZATION, Organization.DEFAULT))
                     ? ""
                     : ("_" + reference.id());
-
             reporterConfig = """
                         {
                           "uri": "%s",
-                          %s
-                          %s
+                          "host": "%s",
+                          "port": %d,
                           "enableCredentials": false,
                           "database": "%s",
                           "reportableCollection": "reporter_audits%s",
@@ -372,8 +371,8 @@ public class ReporterServiceImpl implements ReporterService {
                         }
                         """.formatted(
                     mongoUri,
-                    (mongoHost != null) ? "\"host\":\"" + mongoHost + "\"," : "",
-                    (mongoPort != null) ? "\"port\":" + Integer.parseInt(mongoPort) + "," : "",
+                    (mongoHost != null) ?  mongoHost : "",
+                    (mongoPort != null) ? Integer.parseInt(mongoPort) : null,
                     mongoDBName,
                     collectionSuffix
             );
