@@ -239,5 +239,4 @@ public class IdentityProviderManagerImpl extends AbstractService<IdentityProvide
         }
         return Completable.complete();
     }
-
 }
