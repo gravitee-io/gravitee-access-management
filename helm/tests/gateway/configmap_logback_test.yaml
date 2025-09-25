@@ -1,0 +1,294 @@
+suite: test that Gateway logback.xml configmap generation works correctly
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+
+  - it: should not generate logback.xml when debug logging is disabled
+    set:
+      gateway.logging.debug: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNull:
+          path: data.[logback.xml]
+
+  - it: should generate logback.xml when debug logging is enabled
+    set:
+      gateway.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNotNull:
+          path: data.[logback.xml]
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>*"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<configuration>"
+
+  - it: should generate logback.xml with default console appender
+    set:
+      gateway.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"STDOUT\" class=\"ch.qos.logback.core.ConsoleAppender\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender-ref ref=\"async-console\" />"
+
+  - it: should generate logback.xml with JSON encoder when stdout.json is enabled
+    set:
+      gateway.logging.debug: true
+      gateway.logging.stdout.json: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<encoder class=\"ch.qos.logback.core.encoder.LayoutWrappingEncoder\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<layout class=\"ch.qos.logback.contrib.json.classic.JsonLayout\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<jsonFormatter"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "class=\"ch.qos.logback.contrib.jackson.JacksonJsonFormatter\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSSXX</timestampFormat>"
+
+  - it: should generate logback.xml with pattern encoder when stdout.json is disabled
+    set:
+      gateway.logging.debug: true
+      gateway.logging.stdout.json: false
+      gateway.logging.stdout.encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<encoder>"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<pattern>%d\\{HH:mm:ss\\.SSS\\} \\[%thread\\] %-5level %logger\\{36\\} - %msg%n</pattern>"
+
+  - it: should generate logback.xml with custom encoder pattern
+    set:
+      gateway.logging.debug: true
+      gateway.logging.stdout.json: false
+      gateway.logging.stdout.encoderPattern: "%d{yyyy-MM-dd HH:mm:ss} [%X{api}] %-5level %logger - %msg%n"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<pattern>%d\\{yyyy-MM-dd HH:mm:ss\\} \\[%X\\{api\\}\\] %-5level %logger - %msg%n</pattern>"
+
+  - it: should generate logback.xml with file appender when file logging is enabled
+    set:
+      gateway.logging.debug: true
+      gateway.logging.file.enabled: true
+      gateway.logging.file.encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+      gateway.logging.file.rollingPolicy: |
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <fileNamePattern>${gravitee.home}/logs/gravitee_%d{yyyy-MM-dd}.log</fileNamePattern>
+          <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"FILE\" class=\"ch.qos.logback.core.rolling.RollingFileAppender\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<file>\\$\\{gravitee\\.home\\}/logs/gravitee\\.log</file>"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<rollingPolicy class=\"ch.qos.logback.core.rolling.TimeBasedRollingPolicy\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"async-file\" class=\"ch.qos.logback.classic.AsyncAppender\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender-ref ref=\"FILE\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender-ref ref=\"async-file\" />"
+
+  - it: should not generate file appender when file logging is disabled
+    set:
+      gateway.logging.debug: true
+      gateway.logging.file.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"FILE\""
+      - notMatchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"async-file\""
+      - notMatchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender-ref ref=\"async-file\" />"
+
+  - it: should generate logback.xml with default logger levels
+    set:
+      gateway.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"io.gravitee\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"com.graviteesource\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"org.reflections\" level=\"WARN\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"org.springframework\" level=\"WARN\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<root level=\"INFO\">"
+
+  - it: should generate logback.xml with custom logger levels
+    set:
+      gateway.logging.debug: true
+      gateway.logging.graviteeLevel: "DEBUG"
+      gateway.logging.graviteeSourceLevel: "TRACE"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"io.gravitee\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"com.graviteesource\" level=\"TRACE\" />"
+
+  - it: should generate logback.xml with extra loggers
+    set:
+      gateway.logging.debug: true
+      gateway.logging.extraLoggers: |
+        <logger name="custom.logger" level="DEBUG" />
+        <logger name="another.logger" level="TRACE" />
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"custom.logger\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"another.logger\" level=\"TRACE\" />"
+
+  - it: should generate complete logback.xml with all features enabled
+    set:
+      gateway.logging.debug: true
+      gateway.logging.stdout.json: true
+      gateway.logging.file.enabled: true
+      gateway.logging.file.encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+      gateway.logging.file.rollingPolicy: |
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <fileNamePattern>${gravitee.home}/logs/gravitee_%d{yyyy-MM-dd}.log</fileNamePattern>
+          <maxHistory>30</maxHistory>
+        </rollingPolicy>
+      gateway.logging.graviteeLevel: "DEBUG"
+      gateway.logging.graviteeSourceLevel: "DEBUG"
+      gateway.logging.extraLoggers: |
+        <logger name="io.gravitee.am.gateway" level="TRACE" />
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNotNull:
+          path: data.[logback.xml]
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>*"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<configuration>"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"STDOUT\""
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"FILE\""
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"async-file\""
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"async-console\""
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"io.gravitee\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"com.graviteesource\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"io.gravitee.am.gateway\" level=\"TRACE\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<root level=\"INFO\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender-ref ref=\"async-console\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender-ref ref=\"async-file\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "</configuration>"
+
+  - it: should generate configmap with both gravitee.yml and logback.xml when debug is enabled
+    set:
+      gateway.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNotNull:
+          path: data.[gravitee.yml]
+      - isNotNull:
+          path: data.[logback.xml]
+      - isNotEmpty:
+          path: data.[gravitee.yml]
+      - isNotEmpty:
+          path: data.[logback.xml]
