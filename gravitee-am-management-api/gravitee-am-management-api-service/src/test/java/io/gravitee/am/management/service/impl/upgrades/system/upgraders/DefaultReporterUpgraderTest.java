@@ -107,4 +107,5 @@ public class DefaultReporterUpgraderTest {
 
         return reporter;
     }
+
 }
