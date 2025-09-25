@@ -18,7 +18,7 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import com.webauthn4j.anchor.TrustAnchorRepository;
+import java.util.Base64;
 
 /**
  * Simplified WebAuthn service using Vert.x Auth WebAuthn4J with certificate rotation and MDS support
@@ -86,14 +86,9 @@ public class WebAuthnService {
                 options.setUseMetadata(true);
                 logger.info("🔐 MDS-only mode enabled - using Metadata Service for validation");
             } else {
-                // Hardcoded certificates mode with dynamic trust anchor
-                logger.info("🔐 Hardcoded certificates mode enabled with dynamic trust anchor");
+                // Hardcoded certificates mode - rely on pre-validation for certificate chain verification
+                logger.info("🔐 Hardcoded certificates mode enabled - using pre-validation for certificate verification");
                 logger.info("📋 Available certificates for rotation: {}", certificateService.getCertificateCount());
-                
-                // Create dynamic trust anchor repository
-                TrustAnchorRepository trustAnchorRepo = certificateService.getTrustAnchorRepository();
-                logger.info("✅ Dynamic TrustAnchorRepository created with {} certificates", 
-                    certificateService.getCertificateCount());
                 
                 // Log certificate details for demonstration
                 Map<String, Map<String, Object>> certInfo = certificateService.getCertificateInfo();
@@ -105,10 +100,9 @@ public class WebAuthnService {
                         entry.getValue().get("validTo"));
                 }
                 
-                logger.info("🔄 Dynamic trust anchor allows runtime certificate updates");
-                logger.info("   - New certificates can be added at runtime");
-                logger.info("   - Expired certificates can be removed");
-                logger.info("   - TrustAnchorRepository updates automatically");
+                logger.info("🔄 Certificate chain verification handled by preValidateAttestationAnchoring()");
+                logger.info("   - Dynamic TrustAnchorRepository available for pre-validation");
+                logger.info("   - WebAuthn4J library will use default validation");
             }
 
             return WebAuthn4J.create(vertx, options);
