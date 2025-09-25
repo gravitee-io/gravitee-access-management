@@ -54,7 +54,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
 
-    private Map<String, ClientWrapper<MongoClient>> dsClientWrappers = new ConcurrentHashMap<>();
+    private final Map<String, ClientWrapper<MongoClient>> dsClientWrappers = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -98,8 +98,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId) {
         final String prefix = determinePrefixFromDataSourceId(datasourceId);
-        this.dsClientWrappers.computeIfAbsent(datasourceId, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject()));
-        return this.dsClientWrappers.get(datasourceId);
+        return this.dsClientWrappers.computeIfAbsent(datasourceId, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject()));
     }
 
     private String determinePrefixFromDataSourceId(String datasourceId) {

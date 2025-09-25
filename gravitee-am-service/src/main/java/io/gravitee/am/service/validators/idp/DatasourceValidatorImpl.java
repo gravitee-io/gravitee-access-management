@@ -73,7 +73,7 @@ public class DatasourceValidatorImpl implements DatasourceValidator {
         return getDatasourceIdentifierKeys()
                 .map(key -> environment.getProperty(key, String.class))
                 .filter(Objects::nonNull)
-                .filter(foundDatasourceId -> datasourceId.equals(foundDatasourceId))
+                .filter(datasourceId::equals)
                 .firstElement()
                 .switchIfEmpty(Maybe.error(new InvalidDataSourceException(
                         String.format("Datasource with ID %s not found", datasourceId))))
