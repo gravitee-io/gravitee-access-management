@@ -59,6 +59,7 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/version: {{ .Values.gateway.image.tag | default .Chart.AppVersion | quote }}
         app.kubernetes.io/component: "{{ .Values.gateway.name }}"
+        helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
         {{- if .Values.gateway.deployment.labels }}
         {{- range $key, $value := .Values.gateway.deployment.labels }}
         {{ $key }}: {{ $value | quote }}
