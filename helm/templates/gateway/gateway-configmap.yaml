@@ -531,11 +531,11 @@ data:
         </appender>
 
         <logger name="io.gravitee" level="{{ .Values.gateway.logging.graviteeLevel }}" />
-        <logger name="com.graviteesource" level="{{ .Values.api.logging.graviteeSourceLevel }}" />
+        <logger name="com.graviteesource" level="{{ .Values.gateway.logging.graviteeSourceLevel }}" />
         <logger name="org.reflections" level="WARN" />
         <logger name="org.springframework" level="WARN" />
         {{- if .Values.gateway.logging.extraLoggers }}
-{{ .Values.gateway.logging.extraLoggers | indent 12 }}
+{{ .Values.gateway.logging.extraLoggers | indent 8 }}
         {{- end }}
 
         <!-- Strictly speaking, the level attribute is not necessary since -->

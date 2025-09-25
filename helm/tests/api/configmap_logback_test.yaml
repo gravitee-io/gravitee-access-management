@@ -1,0 +1,320 @@
+suite: test that API logback.xml configmap generation works correctly
+templates:
+  - "api/api-configmap.yaml"
+tests:
+
+  - it: should not generate logback.xml when debug logging is disabled
+    set:
+      api.logging.debug: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNull:
+          path: data.[logback.xml]
+
+  - it: should generate logback.xml when debug logging is enabled
+    set:
+      api.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNotNull:
+          path: data.[logback.xml]
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>*"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<configuration>"
+
+  - it: should generate logback.xml with default console appender
+    set:
+      api.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"STDOUT\" class=\"ch.qos.logback.core.ConsoleAppender\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender-ref ref=\"STDOUT\" />"
+
+  - it: should generate logback.xml with JSON encoder when stdout.json is enabled
+    set:
+      api.logging.debug: true
+      api.logging.stdout.json: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<encoder class=\"ch.qos.logback.core.encoder.LayoutWrappingEncoder\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<layout class=\"ch.qos.logback.contrib.json.classic.JsonLayout\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<jsonFormatter"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "class=\"ch.qos.logback.contrib.jackson.JacksonJsonFormatter\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<timestampFormat>yyyy-MM-dd'T'HH:mm:ss.SSSXX</timestampFormat>"
+
+  - it: should generate logback.xml with pattern encoder when stdout.json is disabled
+    set:
+      api.logging.debug: true
+      api.logging.stdout.json: false
+      api.logging.stdout.encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<encoder>"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<pattern>%d\\{HH:mm:ss\\.SSS\\} \\[%thread\\] %-5level %logger\\{36\\} - %msg%n</pattern>"
+
+  - it: should generate logback.xml with custom encoder pattern
+    set:
+      api.logging.debug: true
+      api.logging.stdout.json: false
+      api.logging.stdout.encoderPattern: "%d{yyyy-MM-dd HH:mm:ss} [%X{api}] %-5level %logger - %msg%n"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<pattern>%d\\{yyyy-MM-dd HH:mm:ss\\} \\[%X\\{api\\}\\] %-5level %logger - %msg%n</pattern>"
+
+  - it: should generate logback.xml with file appender when file logging is enabled
+    set:
+      api.logging.debug: true
+      api.logging.file.enabled: true
+      api.logging.file.encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+      api.logging.file.rollingPolicy: |
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <fileNamePattern>${gravitee.management.log.dir}/gravitee_%d{yyyy-MM-dd}.log</fileNamePattern>
+          <maxHistory>30</maxHistory>
+        </rollingPolicy>
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"FILE\" class=\"ch.qos.logback.core.rolling.RollingFileAppender\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<file>\\$\\{gravitee\\.management\\.log\\.dir\\}/gravitee\\.log</file>"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<rollingPolicy class=\"ch.qos.logback.core.rolling.TimeBasedRollingPolicy\">"
+
+  - it: should not generate file appender when file logging is disabled
+    set:
+      api.logging.debug: true
+      api.logging.file.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"FILE\""
+
+  - it: should generate logback.xml with default logger levels
+    set:
+      api.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"io.gravitee\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"com.graviteesource\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"org.eclipse.jetty\" level=\"INFO\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<root level=\"WARN\">"
+
+  - it: should generate logback.xml with custom logger levels
+    set:
+      api.logging.debug: true
+      api.logging.graviteeLevel: "DEBUG"
+      api.logging.graviteeSourceLevel: "TRACE"
+      api.logging.jettyLevel: "DEBUG"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"io.gravitee\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"com.graviteesource\" level=\"TRACE\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"org.eclipse.jetty\" level=\"DEBUG\" />"
+
+  - it: should generate logback.xml with extra loggers
+    set:
+
+      api.logging.debug: true
+      api.logging.extraLoggers: |
+        <logger name="custom.api.logger" level="DEBUG" />
+        <logger name="another.api.logger" level="TRACE" />
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"custom.api.logger\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"another.api.logger\" level=\"TRACE\" />"
+
+  - it: should generate complete logback.xml with all features enabled
+    set:
+      api.logging.debug: true
+      api.logging.stdout.json: true
+      api.logging.file.enabled: true
+      api.logging.file.encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+      api.logging.file.rollingPolicy: |
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+          <fileNamePattern>${gravitee.management.log.dir}/gravitee_%d{yyyy-MM-dd}.log</fileNamePattern>
+          <maxHistory>30</maxHistory>
+        </rollingPolicy>
+      api.logging.graviteeLevel: "DEBUG"
+      api.logging.graviteeSourceLevel: "DEBUG"
+      api.logging.jettyLevel: "INFO"
+      api.logging.extraLoggers: |
+        <logger name="io.gravitee.am.management" level="TRACE" />
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNotNull:
+          path: data.[logback.xml]
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<?xml version=\"1.0\" encoding=\"UTF-8\"?>*"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<configuration>"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"STDOUT\""
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender name=\"FILE\""
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"io.gravitee\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"com.graviteesource\" level=\"DEBUG\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"org.eclipse.jetty\" level=\"INFO\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"io.gravitee.am.management\" level=\"TRACE\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<root level=\"WARN\">"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<appender-ref ref=\"STDOUT\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "</configuration>"
+
+  - it: should generate configmap with both gravitee.yml and logback.xml when debug is enabled
+    set:
+
+      api.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNotNull:
+          path: data.[gravitee.yml]
+      - isNotNull:
+          path: data.[logback.xml]
+      - isNotEmpty:
+          path: data.[gravitee.yml]
+      - isNotEmpty:
+          path: data.[logback.xml]
+
+  - it: should generate logback.xml with correct file appender path for API
+    set:
+
+      api.logging.debug: true
+      api.logging.file.enabled: true
+      api.logging.file.encoderPattern: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<file>\\$\\{gravitee\\.management\\.log\\.dir\\}/gravitee\\.log</file>"
+
+  - it: should handle API-specific logback configuration differences
+    set:
+      api.logging.debug: true
+      api.logging.graviteeLevel: "DEBUG"
+      api.logging.jettyLevel: "INFO"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<logger name=\"org.eclipse.jetty\" level=\"INFO\" />"
+      - matchRegex:
+          path: data.[logback.xml]
+          pattern: "<root level=\"WARN\">"
+
+  - it: should generate logback.xml when api enabled and external config not used
+    set:
+      api.logging.debug: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - isNotNull:
+          path: data.[logback.xml]
