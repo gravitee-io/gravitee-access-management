@@ -23,6 +23,7 @@ import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.gravitee.am.service.validators.idp.DatasourceValidator;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -56,6 +57,9 @@ public class IdentityProviderResource extends AbstractResource {
 
     @Autowired
     private IdentityProviderServiceProxy identityProviderService;
+
+    @Autowired
+    private DatasourceValidator datasourceValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -94,6 +98,7 @@ public class IdentityProviderResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkPermission(ReferenceType.ORGANIZATION, organizationId, Permission.ORGANIZATION_IDENTITY_PROVIDER, Acl.UPDATE)
+                .andThen(datasourceValidator.validate(updateIdentityProvider.getConfiguration()))
                 .andThen(identityProviderService.update(ReferenceType.ORGANIZATION, organizationId, identity, updateIdentityProvider, authenticatedUser, false))
                 .subscribe(response::resume, response::resume);
     }

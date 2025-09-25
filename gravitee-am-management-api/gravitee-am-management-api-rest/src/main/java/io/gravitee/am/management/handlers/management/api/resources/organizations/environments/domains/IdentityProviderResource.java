@@ -28,6 +28,7 @@ import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.IdentityProviderNotFoundException;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.gravitee.am.service.validators.idp.DatasourceValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -71,6 +72,9 @@ public class IdentityProviderResource extends AbstractResource {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private DatasourceValidator datasourceValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -140,6 +144,7 @@ public class IdentityProviderResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.UPDATE)
+                .andThen(datasourceValidator.validate(updateIdentityProvider.getConfiguration()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.update(domain, identity, updateIdentityProvider, authenticatedUser, false)))

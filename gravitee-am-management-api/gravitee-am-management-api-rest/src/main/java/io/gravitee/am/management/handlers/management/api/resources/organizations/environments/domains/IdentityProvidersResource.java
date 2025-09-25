@@ -26,6 +26,7 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.NewIdentityProvider;
+import io.gravitee.am.service.validators.idp.DatasourceValidator;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,6 +74,9 @@ public class IdentityProvidersResource extends AbstractResource {
 
     @Autowired
     private IdentityProviderManager identityProviderManager;
+
+    @Autowired
+    private DatasourceValidator datasourceValidator;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -139,7 +143,7 @@ public class IdentityProvidersResource extends AbstractResource {
 
         checkAnyPermission(organizationId, environmentId, domain, Permission.DOMAIN_IDENTITY_PROVIDER, Acl.CREATE)
                 .andThen(identityProviderManager.checkPluginDeployment(newIdentityProvider.getType()))
-                .andThen(identityProviderManager.validateDatasource(newIdentityProvider.getConfiguration()))
+                .andThen(datasourceValidator.validate(newIdentityProvider.getConfiguration()))
                 .andThen(domainService.findById(domain)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
                         .flatMapSingle(__ -> identityProviderService.create(domain, newIdentityProvider, authenticatedUser))

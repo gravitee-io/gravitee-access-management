@@ -237,8 +237,10 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
         }
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
+
+        var repo = getUserRepository();
         return userValidator.validate(user)
-                .andThen(getUserRepository().create(user))
+                .andThen(repo.create(user))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
