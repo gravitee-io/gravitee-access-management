@@ -34,7 +34,7 @@ export function getJiraVersion(versionName) {
 export async function getJiraIssuesOfVersion(versionId) {
   const token = process.env.JIRA_TOKEN;
 
-  const issuesFromJira = await fetch(`https://gravitee.atlassian.net/rest/api/3/search?jql=project=AM AND fixVersion=${versionId}`, {
+  const issuesFromJira = await fetch(`https://gravitee.atlassian.net/rest/api/3/search/jql?jql=project=AM AND fixVersion=${versionId}&fields=*all`, {
     method: 'GET',
     headers: {
       Authorization: `Basic ${token}`,
