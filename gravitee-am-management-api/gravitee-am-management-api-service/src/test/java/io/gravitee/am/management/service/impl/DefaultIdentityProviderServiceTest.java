@@ -20,6 +20,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -124,6 +125,18 @@ public class DefaultIdentityProviderServiceTest {
 
         assertEquals("BCrypt", test.get("passwordEncoder"));
         assertEquals(10, ((PasswordEncoderOptions) test.get("passwordEncoderOptions")).getRounds());
+    }
+
+    @Test
+    public void default_idp_config_has_null_port_when_mongo_servers_are_defined() {
+        environment.setProperty("repositories.management.mongodb.servers[0].host", "localhost");
+        environment.setProperty("repositories.management.mongodb.servers[0].port", 27017);
+        environment.setProperty("repositories.management.mongodb.port", 99999); // this value should be ignored
+
+        Map<String, Object> test = cut.createProviderConfiguration("test", null);
+
+        assertNull(test.get("port"));
+        assertEquals("mongodb://localhost:27017/?connectTimeoutMS=5000&socketTimeoutMS=5000", test.get("uri"));
     }
 
     @Test
