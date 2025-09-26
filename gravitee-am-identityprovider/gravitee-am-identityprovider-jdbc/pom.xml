@@ -24,12 +24,12 @@
     <parent>
         <artifactId>gravitee-am-identityprovider</artifactId>
         <groupId>io.gravitee.am.identityprovider</groupId>
-        <version>4.8.7-SNAPSHOT</version>
+        <version>4.8.7</version>
     </parent>
 
     <artifactId>gravitee-am-identityprovider-jdbc</artifactId>
 
-    <version>4.8.7-SNAPSHOT</version>
+    <version>4.8.7</version>
     <name>Gravitee IO - Access Management - Identity Provider - JDBC</name>
 
     <dependencies>
