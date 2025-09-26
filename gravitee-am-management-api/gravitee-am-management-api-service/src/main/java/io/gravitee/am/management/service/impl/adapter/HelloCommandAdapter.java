@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.management.service.impl.adapter;
 
+import com.google.common.base.Strings;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.service.InstallationService;
@@ -78,10 +79,18 @@ public class HelloCommandAdapter implements CommandAdapter<io.gravitee.exchange.
                             .defaultOrganizationId(Organization.DEFAULT)
                             .defaultEnvironmentId(Environment.DEFAULT);
                     Map<String, String> additionalInformation = new HashMap<>(installation.getAdditionalInformation());
-                    additionalInformation.put(API_URL, apiURL);
-                    additionalInformation.put(UI_URL, uiURL);
+                    additionalInformation.put(API_URL, sanitizeUrl(apiURL));
+                    additionalInformation.put(UI_URL, sanitizeUrl(uiURL));
                     payloadBuilder.additionalInformation(additionalInformation);
                     return new HelloCommand(payloadBuilder.build());
                 });
+    }
+
+    private static String sanitizeUrl(String url) {
+        if (Strings.isNullOrEmpty(url)) {
+            return null;
+        }
+
+        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 }

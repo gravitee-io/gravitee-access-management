@@ -55,4 +55,56 @@ public class RedirectUtils {
         }
         return builder;
     }
+
+    /**
+     * Builds a redirect URL by combining a base URI and a redirect path.
+     * Handles trailing slashes properly to prevent double slashes which are rejected by Jetty.
+     * 
+     * @param redirectUri the base URI (may have trailing slashes)
+     * @param redirectPath the path to append (may or may not start with slash)
+     * @return the properly formatted redirect URL
+     */
+    public static String buildCockpitRedirectUrl(String redirectUri, String redirectPath) {
+        if (redirectUri == null) {
+            return redirectPath;
+        }
+        
+        try {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(redirectUri);
+            
+            // Remove trailing slashes from the base path
+            String basePath = builder.build().getPath();
+            if (basePath != null && basePath.endsWith("/")) {
+                builder.replacePath(removeTrailingSlashes(basePath));
+            }
+            
+            // Add the redirect path
+            if (redirectPath != null && !redirectPath.isEmpty()) {
+                if (!redirectPath.startsWith("/")) {
+                    redirectPath = "/" + redirectPath;
+                }
+                builder.path(redirectPath);
+            }
+            
+            return builder.build().toUriString();
+        } catch (Exception e) {
+            // Fallback to simple concatenation if UriComponentsBuilder fails
+            return removeTrailingSlashes(redirectUri) + 
+                   (redirectPath != null && !redirectPath.isEmpty() && !redirectPath.startsWith("/") ? "/" : "") + 
+                   redirectPath;
+        }
+    }
+
+    private static String removeTrailingSlashes(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        
+        int end = input.length();
+        while (end > 0 && input.charAt(end - 1) == '/') {
+            end--;
+        }
+        
+        return end == input.length() ? input : input.substring(0, end);
+    }
 }

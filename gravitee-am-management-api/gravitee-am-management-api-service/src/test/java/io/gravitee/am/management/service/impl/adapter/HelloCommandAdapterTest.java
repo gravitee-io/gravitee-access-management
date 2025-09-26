@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
+import org.springframework.test.util.ReflectionTestUtils;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -105,5 +105,32 @@ class HelloCommandAdapterTest {
                 .adapt(INSTALLATION_ID, new io.gravitee.exchange.api.command.hello.HelloCommand(new HelloCommandPayload()))
                 .test()
                 .assertError(TechnicalException.class);
+    }
+
+    @Test
+    void adaptWithTrailingSlashUrls() {
+        // Set URLs with trailing slashes using reflection
+        ReflectionTestUtils.setField(cut, "apiURL", "http://localhost:8093/management/");
+        ReflectionTestUtils.setField(cut, "uiURL", "http://localhost:4200/");
+        
+        final Installation installation = new Installation();
+        installation.setId(INSTALLATION_ID);
+        installation.getAdditionalInformation().put(CUSTOM_KEY, CUSTOM_VALUE);
+
+        when(node.hostname()).thenReturn(HOSTNAME);
+        when(installationService.getOrInitialize()).thenReturn(Single.just(installation));
+
+        final TestObserver<HelloCommand> obs = cut
+                .adapt(INSTALLATION_ID, new io.gravitee.exchange.api.command.hello.HelloCommand(new HelloCommandPayload()))
+                .test();
+
+        obs.awaitDone(10, TimeUnit.SECONDS);
+        obs.assertValue(helloCommand -> {
+            // Verify that trailing slashes are removed
+            assertEquals("http://localhost:8093/management", helloCommand.getPayload().getAdditionalInformation().get("API_URL"));
+            assertEquals("http://localhost:4200", helloCommand.getPayload().getAdditionalInformation().get("UI_URL"));
+
+            return true;
+        });
     }
 }
