@@ -128,3 +128,13 @@ tests:
       - equal:
           path: spec.template.spec.securityContext.fsGroup
           value: 1001
+
+  - it: Label helm.sh/chart present
+    template: gateway/gateway-deployment.yaml
+    chart:
+      version: 1.0.0-chart
+      appVersion: 1.0.0-app
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels.[helm.sh/chart]
+          value: am-1.0.0-chart
