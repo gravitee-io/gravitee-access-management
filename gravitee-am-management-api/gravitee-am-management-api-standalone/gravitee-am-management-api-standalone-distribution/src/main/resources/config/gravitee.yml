@@ -464,6 +464,20 @@ gateway:
 #      path: ${gravitee.home}/security/truststore.jks
 #      password: secret
 
+# Data sources for MongoIDP connection pooling
+# datasources:
+#   mongodb:
+#     - id: idp-connection-pool-1
+#       settings:
+#         dbname: gw-db
+#         host: gw.db.host
+#         port: 27016
+#     - id: idp-connection-pool-2
+#       settings:
+#         dbname: mgmt-db
+#         host: mgmt.db.host
+#         port: 27017
+
 # Allows to enable or disable recaptcha (see https://developers.google.com/recaptcha/docs/v3). This only affect the AM login page.
 #reCaptcha:
 #  enabled: false
