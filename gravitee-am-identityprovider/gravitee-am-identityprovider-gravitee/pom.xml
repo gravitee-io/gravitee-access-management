@@ -22,14 +22,14 @@
     <parent>
         <artifactId>gravitee-am-identityprovider</artifactId>
         <groupId>io.gravitee.am.identityprovider</groupId>
-        <version>4.7.15</version>
+        <version>4.7.16-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>gravitee-am-identityprovider-gravitee</artifactId>
     <packaging>jar</packaging>
 
-    <version>4.7.15</version>
+    <version>4.7.16-SNAPSHOT</version>
     <name>Gravitee IO - Access Management - Identity Provider - Gravitee</name>
 
     <dependencies>

@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-reporter</artifactId>
         <groupId>io.gravitee.am.reporter</groupId>
-        <version>4.7.15</version>
+        <version>4.7.16-SNAPSHOT</version>
     </parent>
 
     <artifactId>gravitee-am-reporter-api</artifactId>
