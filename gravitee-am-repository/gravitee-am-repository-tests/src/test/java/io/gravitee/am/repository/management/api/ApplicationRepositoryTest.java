@@ -24,12 +24,14 @@ import io.gravitee.am.model.MfaEnrollType;
 import io.gravitee.am.model.RememberDeviceSettings;
 import io.gravitee.am.model.StepUpAuthenticationSettings;
 import io.gravitee.am.model.account.AccountSettings;
+import io.gravitee.am.model.application.ApplicationMCPSettings;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.application.MCPToolDefinition;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.idp.ApplicationIdentityProvider;
 import io.gravitee.am.model.login.LoginSettings;
@@ -536,6 +538,132 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         assertEqualsTo(updatedApp, testObserver);
+    }
+
+    @Test
+    public void testCreateAndRetrieveMCPApplication() {
+        // create MCP application
+        Application mcpApp = buildMCPApplication();
+        Application mcpAppCreated = applicationRepository.create(mcpApp).blockingGet();
+
+        // fetch MCP application
+        TestObserver<Application> testObserver = applicationRepository.findById(mcpAppCreated.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        assertEqualsMCPApplication(mcpApp, testObserver);
+    }
+
+    @Test
+    public void testUpdateMCPApplication() {
+        // create MCP application
+        Application mcpApp = buildMCPApplication();
+        Application mcpAppCreated = applicationRepository.create(mcpApp).blockingGet();
+
+        // update MCP application
+        Application updatedMCPApp = buildMCPApplication();
+        updatedMCPApp.setId(mcpAppCreated.getId());
+        // Change the MCP URL
+        updatedMCPApp.getSettings().getMcp().setUrl("https://updated-mcp.example.com");
+
+        TestObserver<Application> testObserver = applicationRepository.update(updatedMCPApp).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(app -> 
+            app.getSettings() != null && 
+            app.getSettings().getMcp() != null &&
+            "https://updated-mcp.example.com".equals(app.getSettings().getMcp().getUrl())
+        );
+    }
+
+    private static Application buildMCPApplication() {
+        String random = UUID.randomUUID().toString();
+        Application app = new Application();
+        app.setType(ApplicationType.MCP);
+        app.setCertificate("cert" + random);
+        app.setDescription("MCP app desc" + random);
+        app.setDomain("domain" + random);
+        app.setName("mcp-app" + random);
+        app.setTemplate(false);
+        app.setEnabled(true);
+        app.setFactors(Sets.newSet("fact1" + random));
+        app.setSettings(buildMCPApplicationSettings());
+        app.setIdentityProviders(getProviderSettings());
+        HashMap<String, Object> metadata = new HashMap<>();
+        metadata.put("mcp-key", "mcp-value");
+        app.setMetadata(metadata);
+        app.setCreatedAt(new Date());
+        app.setUpdatedAt(new Date());
+        return app;
+    }
+
+    private static ApplicationSettings buildMCPApplicationSettings() {
+        ApplicationSettings settings = new ApplicationSettings();
+        
+        // OAuth settings for MCP
+        ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setGrantTypes(Collections.singletonList("client_credentials"));
+        oauth.setClientId("mcp-client-id");
+        oauth.setClientSecret("mcp-client-secret");
+        oauth.setClientName("MCP Application");
+        oauth.setClientType("confidential");
+        oauth.setApplicationType("service");
+        oauth.setTokenEndpointAuthMethod("client_secret_basic");
+        settings.setOauth(oauth);
+
+        // MCP specific settings
+        ApplicationMCPSettings mcp = new ApplicationMCPSettings();
+        mcp.setUrl("https://mcp.example.com/api");
+        
+        // Create tool definitions
+        MCPToolDefinition tool1 = new MCPToolDefinition();
+        tool1.setName("filesystem");
+        tool1.setDescription("File system operations");
+        tool1.setRequiredScopes(Arrays.asList("filesystem:read", "filesystem:write"));
+        tool1.setInputSchema("{\"type\": \"object\", \"properties\": {\"path\": {\"type\": \"string\"}}}");
+
+        MCPToolDefinition tool2 = new MCPToolDefinition();
+        tool2.setName("web_search");
+        tool2.setDescription("Web search functionality");
+        tool2.setRequiredScopes(Collections.singletonList("web:search"));
+        tool2.setInputSchema("{\"type\": \"object\", \"properties\": {\"query\": {\"type\": \"string\"}}}");
+
+        mcp.setToolDefinitions(Arrays.asList(tool1, tool2));
+        settings.setMcp(mcp);
+
+        return settings;
+    }
+
+    private void assertEqualsMCPApplication(Application app, TestObserver<Application> testObserver) {
+        testObserver.assertValue(a -> a.getName().equals(app.getName()));
+        testObserver.assertValue(a -> a.getType().equals(app.getType()));
+        testObserver.assertValue(a -> a.isEnabled() == app.isEnabled());
+        testObserver.assertValue(a -> a.isTemplate() == app.isTemplate());
+        testObserver.assertValue(a -> a.getFactors().containsAll(app.getFactors()));
+        testObserver.assertValue(a -> a.getCertificate().equals(app.getCertificate()));
+        testObserver.assertValue(a -> a.getDescription().equals(app.getDescription()));
+        testObserver.assertValue(a -> a.getIdentityProviders() != null);
+        testObserver.assertValue(a -> a.getIdentityProviders().size() == 2);
+        testObserver.assertValue(a -> a.getSettings() != null);
+        testObserver.assertValue(a -> a.getSettings().getOauth() != null);
+        testObserver.assertValue(a -> a.getSettings().getOauth().getGrantTypes().contains("client_credentials"));
+        testObserver.assertValue(a -> a.getSettings().getOauth().getClientId().equals("mcp-client-id"));
+        testObserver.assertValue(a -> a.getSettings().getOauth().getClientName().equals("MCP Application"));
+        testObserver.assertValue(a -> a.getSettings().getMcp() != null);
+        testObserver.assertValue(a -> a.getSettings().getMcp().getUrl().equals("https://mcp.example.com/api"));
+        testObserver.assertValue(a -> a.getSettings().getMcp().getToolDefinitions() != null);
+        testObserver.assertValue(a -> a.getSettings().getMcp().getToolDefinitions().size() == 2);
+        testObserver.assertValue(a -> a.getSettings().getMcp().getToolDefinitions().stream()
+                .anyMatch(tool -> "filesystem".equals(tool.getName()) && 
+                        tool.getRequiredScopes().contains("filesystem:read")));
+        testObserver.assertValue(a -> a.getSettings().getMcp().getToolDefinitions().stream()
+                .anyMatch(tool -> "web_search".equals(tool.getName()) && 
+                        tool.getRequiredScopes().contains("web:search")));
+        testObserver.assertValue(a -> a.getMetadata() != null);
+        testObserver.assertValue(a -> a.getMetadata().containsKey("mcp-key"));
     }
 
 }
