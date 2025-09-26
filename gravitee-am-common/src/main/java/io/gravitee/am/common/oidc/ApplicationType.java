@@ -25,7 +25,9 @@ package io.gravitee.am.common.oidc;
  */
 public interface ApplicationType {
 
+    String AGENT = "AGENT";
     String WEB = "web";
     String NATIVE = "native";
     String BROWSER = "browser";
+    String MCP = "mcp";
 }

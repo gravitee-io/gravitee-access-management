@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model;
 
+import io.gravitee.am.model.application.ApplicationMCPSettings;
 import io.gravitee.am.model.application.ApplicationType;
 import jakarta.validation.constraints.NotNull;
 
@@ -35,6 +36,8 @@ public class NewApplication {
 
     private String description;
 
+    private String agentCardUrl;
+
     private String clientId;
 
     private String clientSecret;
@@ -42,6 +45,8 @@ public class NewApplication {
     private List<String> redirectUris;
 
     private Map<String, Object> metadata;
+
+    private ApplicationMCPSettings mcp;
 
     public String getName() {
         return name;
@@ -65,6 +70,14 @@ public class NewApplication {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAgentCardUrl() {
+        return agentCardUrl;
+    }
+
+    public void setAgentCardUrl(String agentCardUrl) {
+        this.agentCardUrl = agentCardUrl;
     }
 
     public String getClientId() {
@@ -97,6 +110,14 @@ public class NewApplication {
 
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
+    }
+
+    public ApplicationMCPSettings getMcp() {
+        return mcp;
+    }
+
+    public void setMcp(ApplicationMCPSettings mcp) {
+        this.mcp = mcp;
     }
 
     @Override
