@@ -75,7 +75,7 @@ public class RedirectUtils {
             // Remove trailing slashes from the base path
             String basePath = builder.build().getPath();
             if (basePath != null && basePath.endsWith("/")) {
-                builder.replacePath(basePath.replaceAll("/+$", ""));
+                builder.replacePath(removeTrailingSlashes(basePath));
             }
             
             // Add the redirect path
@@ -89,9 +89,22 @@ public class RedirectUtils {
             return builder.build().toUriString();
         } catch (Exception e) {
             // Fallback to simple concatenation if UriComponentsBuilder fails
-            return redirectUri.replaceAll("/+$", "") + 
+            return removeTrailingSlashes(redirectUri) + 
                    (redirectPath != null && !redirectPath.isEmpty() && !redirectPath.startsWith("/") ? "/" : "") + 
                    redirectPath;
         }
+    }
+
+    private static String removeTrailingSlashes(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
+        
+        int end = input.length();
+        while (end > 0 && input.charAt(end - 1) == '/') {
+            end--;
+        }
+        
+        return end == input.length() ? input : input.substring(0, end);
     }
 }
