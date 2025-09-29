@@ -45,7 +45,6 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   ngOnInit() {
     this.certificates = this.route.snapshot.data['certificates'];
     this.datasources = this.route.snapshot.data['datasources'];
-    console.log('Loaded datasources:', this.datasources);
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -54,9 +53,6 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
         .identitySchema(changes.provider.currentValue.type)
         .pipe(map((schema) => enrichFormWithCerts(schema, this.certificates)))
         .subscribe((data) => {
-          console.log('Provider schema loaded:', data);
-          console.log('Schema properties:', data?.properties);
-          console.log('datasourceId property:', data?.properties?.['datasourceId']);
           // Process datasource widgets BEFORE setting the schema
           this.applyDataSourceSelection(data);
           this.providerSchema = data;
@@ -100,8 +96,6 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   }
 
   private applyDataSourceSelectionRecursive(property: any, propertyName?: string): void {
-    console.log('Processing property:', propertyName, property);
-    
     // Handle nested objects
     if (property.type === 'object' && property.properties) {
       for (const key in property.properties) {
@@ -109,7 +103,7 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
         this.applyDataSourceSelectionRecursive(child, key);
       }
     }
-    
+
     // Handle arrays
     if (property.type === 'array') {
       if (property.items?.properties) {
@@ -119,14 +113,13 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
         }
       }
     }
-    
+
     // Apply datasource widget transformation
     this.applyDataSourceWidget(property, propertyName);
   }
 
   private applyDataSourceWidget(property: any, propertyName?: string): void {
     if ('datasource' === property.widget || 'datasource' === propertyName) {
-      console.log('Found datasource widget:', propertyName, property, 'Available datasources:', this.datasources);
       if (this.datasources?.length > 0) {
         property['x-schema-form'] = { type: 'select' };
         property.enum = this.datasources.map((d) => d.id);
@@ -134,11 +127,9 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
           map[obj.id] = obj.name;
           return map;
         }, {});
-        console.log('Transformed datasource widget:', property);
       } else {
         // if list of datasources is empty, disable the field
         property['readonly'] = true;
-        console.log('No datasources available, field disabled');
       }
     }
   }

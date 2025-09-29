@@ -24,7 +24,6 @@ export class DataSourcesResolver {
   constructor(private datasourcesService: DataSourcesService) {}
 
   resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
-    // Datasources are organization-level, so we use the same service for both contexts
     return this.datasourcesService.findAll();
   }
 }

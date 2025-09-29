@@ -58,7 +58,6 @@ forkJoin([constants, build]).subscribe((response) => {
   Object.keys(response[1]).forEach((key) => (AppConfig.settings[key] = response[1][key]));
   AppConfig.settings.portalTitle = PORTAL_TITLE;
   AppConfig.settings.organizationBaseURL = AppConfig.settings.baseURL + '/organizations/' + DEFAULT_ORGANIZATION;
-
   AppConfig.settings.environmentBaseURL = AppConfig.settings.organizationBaseURL + '/environments/' + DEFAULT_ENV;
   AppConfig.settings.domainBaseURL = AppConfig.settings.organizationBaseURL + '/environments/' + DEFAULT_ENV + '/domains/';
   const resourceURL = `${AppConfig.settings.baseURL}/platform/license`;

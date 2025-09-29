@@ -237,7 +237,6 @@ public abstract class AbstractUserService<T extends CommonUserRepository> implem
         }
         user.setCreatedAt(new Date());
         user.setUpdatedAt(user.getCreatedAt());
-
         return userValidator.validate(user)
                 .andThen(getUserRepository().create(user))
                 .onErrorResumeNext(ex -> {
