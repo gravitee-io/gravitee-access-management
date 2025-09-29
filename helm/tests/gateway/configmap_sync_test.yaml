@@ -16,7 +16,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             services:
               core:

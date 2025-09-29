@@ -1,0 +1,1 @@
+helm unittest -f 'tests/**/*.yaml' . -t JUnit

@@ -559,18 +559,12 @@ By setting the value to `null` for `runAsUser` and `runAsGroup` it forces OpenSh
 Install `unittest` helm plugin
 
 ```shell
-helm plugin install https://github.com/quintush/helm-unittest
+helm plugin install https://github.com/helm-unittest/helm-unittest --version 1.0.1
 ```
 
-Inside `am` directory, run:
+Inside `am/helm` directory, run:
 
 ```shell
-helm unittest -3 -f 'tests/**/*.yaml' .
+./test-all.sh
 ```
 
-The consecutive starts in the previous command matches number of subdirectories between `tests` folder and `yaml` files and runs the tests in the sub folders.
-Run the following command for test files located in the root of the `tests` folder.
-
-```shell
-helm unittest -3 -f 'tests/*.yaml' .
-```

@@ -13,7 +13,7 @@ tests:
       - isKind:
           of: ConfigMap
       - notMatchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             domains:
               reporters:
@@ -29,7 +29,7 @@ tests:
       - isKind:
           of: ConfigMap
       - notMatchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             domains:
               reporters:
@@ -45,7 +45,7 @@ tests:
       - isKind:
           of: ConfigMap
       - notMatchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             domains:
               identities:
@@ -61,7 +61,7 @@ tests:
       - isKind:
           of: ConfigMap
       - notMatchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             domains:
               identities:

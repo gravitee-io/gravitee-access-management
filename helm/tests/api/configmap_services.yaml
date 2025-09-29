@@ -19,7 +19,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             [ ]{2}notifier:
             [ ]{2}  client-secret:
@@ -57,7 +57,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             [ ]{2}notifier:
             [ ]{2}  client-secret:
@@ -90,7 +90,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             [ ]{2}notifier:
             [ ]{2}  client-secret:

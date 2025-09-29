@@ -10,7 +10,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             alpn: true
 
@@ -26,7 +26,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             alpn: true
 
@@ -42,7 +42,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             alpn: false
   - it: Should ignore ssl config if ssl disabled
@@ -64,7 +64,7 @@ tests:
       - isKind:
           of: ConfigMap
       - notMatchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             secured
   - it: Should have ssl config if ssl enabled
@@ -95,7 +95,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             http:
               [a-zA-Z0-9:.# \n]*
@@ -142,7 +142,7 @@ tests:
       - isKind:
           of: ConfigMap
       - notMatchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "truststore:"
   - it: Should skip mtls_section config if not provided
     template: gateway/gateway-configmap.yaml
@@ -167,7 +167,7 @@ tests:
       - isKind:
           of: ConfigMap
       - notMatchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "mtls_aliases:"
   - it: Should not configure custom cert header if not provided
     template: gateway/gateway-configmap.yaml
@@ -196,7 +196,7 @@ tests:
       - isKind:
           of: ConfigMap
       - notMatchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "certificateHeader:"
   - it: Should add ssl secret and watch
     template: gateway/gateway-configmap.yaml
@@ -226,7 +226,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             http:
               [a-zA-Z0-9:.# \n]*
