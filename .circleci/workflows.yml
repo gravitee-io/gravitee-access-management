@@ -1925,6 +1925,10 @@ workflows:
       - setup:
           name: setup
           context: cicd-orchestrator
+      - job-test-am-charts:
+          name: helm tests
+          requires:
+            - setup
       - release:
           name: release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
           context: cicd-orchestrator
@@ -1933,7 +1937,7 @@ workflows:
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           hotfix_version: << pipeline.parameters.hotfix_version >>
           requires:
-            - setup
+            - helm tests
       - build_n_push_am_ce_job:
           name: publish docker images
           context: cicd-orchestrator
@@ -1955,15 +1959,11 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           requires:
             - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
-      - job-test-am-charts:
-          name: helm tests
-          requires:
-            - release_dist <<# pipeline.parameters.dry_run >> - Dry Run<</ pipeline.parameters.dry_run >>
       - job-release_helm:
           name: publish helm charts
           context: cicd-orchestrator
           requires:
-            - helm tests
+            - publish docker images
       - release_notes_am:
           name: release notes
           context: cicd-orchestrator
