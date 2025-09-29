@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
 import io.gravitee.am.common.exception.authentication.AuthenticationException;
+import io.gravitee.am.common.exception.authentication.UserAuthenticationAbortedException;
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
@@ -287,15 +288,17 @@ public class LoginCallbackFailureHandler extends LoginAbstractHandler {
             params.setAll(originalParams);
         }
         params.set(Parameters.CLIENT_ID, client.getClientId());
-        params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
-        String errorDescription = encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage());
-        params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
 
-        String toHash = "social_authentication_failed" + "$" + errorDescription;
-        if (context.session() != null) {
-            context.session().put(ERROR_HASH, HashUtil.generateSHA256(toHash));
+        if (!(throwable instanceof UserAuthenticationAbortedException)) {
+            params.set(ConstantKeys.ERROR_PARAM_KEY, "social_authentication_failed");
+            String errorDescription = encodeURIComponent(throwable.getCause() != null ? throwable.getCause().getMessage() : throwable.getMessage());
+            params.set(ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY, errorDescription);
+
+            String toHash = "social_authentication_failed" + "$" + errorDescription;
+            if (context.session() != null) {
+                context.session().put(ERROR_HASH, HashUtil.generateSHA256(toHash));
+            }
         }
-
 
         String uri = getUri(context, params);
         closeRemoteSessionAndRedirect(context, authentication, uri);

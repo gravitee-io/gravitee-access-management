@@ -18,10 +18,13 @@ package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
+import io.gravitee.am.common.exception.authentication.UserAuthenticationAbortedException;
+import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.auth.event.AuthenticationEvent;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.user.EndUserAuthentication;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.social.CloseSessionMode;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
@@ -34,6 +37,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import lombok.Getter;
+import lombok.Setter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,8 +54,12 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
@@ -124,13 +133,16 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertNotNull(userAsyncResult.result());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertNotNull(asyncResult.result);
         verify(userAuthenticationManager, times(1)).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
@@ -165,13 +177,17 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertNotNull(userAsyncResult.result());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertFalse(asyncResult.isFailed());
         verify(userAuthenticationManager, times(1)).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
@@ -218,13 +234,17 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertNotNull(userAsyncResult.result());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertFalse(asyncResult.isFailed());
         verify(userAuthenticationManager, times(1)).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
         verify(routingContext, keepAlive == CloseSessionMode.KEEP_ACTIVE ? never() : times(1)).put(OIDC_PROVIDER_ID_TOKEN_KEY, "idp_id_token_value");
@@ -259,13 +279,17 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertNotNull(userAsyncResult.result());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertFalse(asyncResult.isFailed());
         verify(userAuthenticationManager, times(1)).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
@@ -299,13 +323,16 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
-        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
-            latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertNotNull(userAsyncResult.result());
-        });
 
+        Result asyncResult = new Result();
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
+            latch.countDown();
+        });
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertFalse(asyncResult.isFailed());
         verify(userAuthenticationManager, times(1)).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
@@ -326,14 +353,127 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.failed());
-            Assert.assertTrue(userAsyncResult.cause() instanceof BadCredentialsException);
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertTrue(asyncResult.isFailed());
+        Assert.assertTrue(asyncResult.getCause() instanceof BadCredentialsException);
+        verify(userAuthenticationManager, never()).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_errorParameter() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+
+        Client client = new Client();
+
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(new DefaultUser("my-user-id")));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(httpServerRequest.getParam(ERROR_PARAM_KEY)).thenReturn("login_required");
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Result asyncResult = new Result();
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
+            latch.countDown();
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertTrue(asyncResult.isFailed());
+        Assert.assertTrue(asyncResult.getCause() instanceof InvalidRequestException && asyncResult.getCause().getMessage().contains("login_required"));
+        verify(userAuthenticationManager, never()).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_errorParameter_access_denied_User_auth_aborted_franceConnect() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+
+        Client client = new Client();
+
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(new DefaultUser("my-user-id")));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        IdentityProvider mockIdp = mock(IdentityProvider.class);
+        when(mockIdp.getType()).thenReturn("franceconnect-am-idp");
+        when(identityProviderManager.getIdentityProvider(any())).thenReturn(mockIdp);
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(httpServerRequest.getParam(ERROR_PARAM_KEY)).thenReturn("access_denied");
+        when(httpServerRequest.getParam(ERROR_DESCRIPTION_PARAM_KEY)).thenReturn("User auth aborted");
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+                asyncResult.setFailed(userAsyncResult.failed());
+                asyncResult.setCause(userAsyncResult.cause());
+                latch.countDown();
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertTrue(asyncResult.isFailed());
+        Assert.assertTrue(asyncResult.getCause() instanceof UserAuthenticationAbortedException);
+        verify(userAuthenticationManager, never()).connect(any());
+        verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_errorParameter_access_denied_User_auth_aborted_noFranceConnect() throws Exception {
+        JsonObject credentials = new JsonObject();
+        credentials.put("username", "my-user-id");
+        credentials.put("password", "my-user-password");
+        credentials.put("provider", "idp");
+
+        Client client = new Client();
+
+        when(authenticationProvider.loadUserByUsername(any(EndUserAuthentication.class))).thenReturn(Maybe.just(new DefaultUser("my-user-id")));
+        when(routingContext.get("client")).thenReturn(client);
+        when(routingContext.get("provider")).thenReturn(authenticationProvider);
+        IdentityProvider mockIdp = mock(IdentityProvider.class);
+        when(mockIdp.getType()).thenReturn("unknown-am-idp");
+        when(identityProviderManager.getIdentityProvider(any())).thenReturn(mockIdp);
+        when(routingContext.request()).thenReturn(httpServerRequest);
+        final io.vertx.core.http.HttpServerRequest delegateRequest = mock(io.vertx.core.http.HttpServerRequest.class);
+        when(httpServerRequest.getDelegate()).thenReturn(delegateRequest);
+        when(httpServerRequest.getParam(ERROR_PARAM_KEY)).thenReturn("access_denied");
+        when(httpServerRequest.getParam(ERROR_DESCRIPTION_PARAM_KEY)).thenReturn("User auth aborted");
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
+        authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+                asyncResult.setFailed(userAsyncResult.failed());
+                asyncResult.setCause(userAsyncResult.cause());
+                latch.countDown();
+        });
+
+        assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertTrue(asyncResult.isFailed());
+        Assert.assertTrue(asyncResult.getCause() instanceof InvalidRequestException);
         verify(userAuthenticationManager, never()).connect(any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
@@ -354,14 +494,17 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.failed());
-            Assert.assertTrue(userAsyncResult.cause() instanceof BadCredentialsException);
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertTrue(asyncResult.isFailed());
+        Assert.assertTrue(asyncResult.getCause() instanceof BadCredentialsException);
         verify(userAuthenticationManager, never()).connect(any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
@@ -391,13 +534,17 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.succeeded());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertFalse(asyncResult.isFailed());
         verify(userAuthenticationManager).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
@@ -426,13 +573,16 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.succeeded());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertFalse(asyncResult.isFailed());
         verify(userAuthenticationManager).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
@@ -463,13 +613,16 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.succeeded());
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        assertFalse(asyncResult.isFailed());
         verify(userAuthenticationManager).connect(any(), any(), any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.SUCCESS), any());
     }
@@ -499,14 +652,17 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.failed());
-            Assert.assertTrue(userAsyncResult.cause() instanceof LoginCallbackFailedException);
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertTrue(asyncResult.isFailed());
+        Assert.assertTrue(asyncResult.getCause() instanceof LoginCallbackFailedException);
         verify(userAuthenticationManager, never()).connect(any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
@@ -536,14 +692,16 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.failed());
-            Assert.assertTrue(userAsyncResult.cause() instanceof LoginCallbackFailedException);
         });
-
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+        Assert.assertTrue(asyncResult.isFailed());
+        Assert.assertTrue(asyncResult.getCause() instanceof LoginCallbackFailedException);
         verify(userAuthenticationManager, never()).connect(any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
     }
@@ -572,15 +730,27 @@ public class SocialAuthenticationProviderTest {
         when(delegateRequest.method()).thenReturn(HttpMethod.POST);
 
         CountDownLatch latch = new CountDownLatch(1);
+        Result asyncResult = new Result();
         authProvider.authenticate(routingContext, credentials, userAsyncResult -> {
+            asyncResult.setFailed(userAsyncResult.failed());
+            asyncResult.setCause(userAsyncResult.cause());
+            asyncResult.setResult(userAsyncResult.result());
             latch.countDown();
-            Assert.assertNotNull(userAsyncResult);
-            Assert.assertTrue(userAsyncResult.failed());
-            Assert.assertTrue(userAsyncResult.cause() instanceof LoginCallbackFailedException);
         });
 
         assertTrue(latch.await(10, TimeUnit.SECONDS));
+
+        Assert.assertTrue(asyncResult.isFailed());
+        Assert.assertTrue(asyncResult.getCause() instanceof LoginCallbackFailedException);
         verify(userAuthenticationManager, never()).connect(any());
         verify(eventManager).publishEvent(argThat(evt -> evt == AuthenticationEvent.FAILURE), any());
+    }
+
+    @Setter
+    @Getter
+    private static class Result {
+        boolean failed;
+        Throwable cause;
+        io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User result;
     }
 }
