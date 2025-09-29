@@ -44,9 +44,8 @@ tests:
           count: 1
       - isKind:
           of: Deployment
-      - equal:
+      - notExists:
           path: spec.template.spec.serviceAccountName
-          value: null
 
   - it: Deploy with custom managed ServiceAccount
     template: gateway/gateway-deployment.yaml

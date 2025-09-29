@@ -14,10 +14,10 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "[ ]{4}allow-origin: https://myorigin"
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "[ ]{4}allow-credentials: true"
   
   - it: should have custom settings for Xframe
@@ -30,7 +30,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "[ ]{4}action: DENY"
 
   - it: should have custom settings for csp
@@ -43,7 +43,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "[ ]{4}reportOnly: true"
 
   - it: should have custom settings for csrf
@@ -56,5 +56,5 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "[ ]{4}secret: mysupersecret"

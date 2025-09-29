@@ -14,7 +14,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             user:
               name: name
@@ -30,12 +30,12 @@ tests:
 
     asserts:
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: |
             user:
               email:
                 policy:
                   pattern: .*
       - matchRegex:
-          path: data.[gravitee.yml]
+          path: data["gravitee.yml"]
           pattern: "pattern: \\^\\[a\\-zA\\-Z0\\-9_\\+\\-\\]\\+\\(\\?\\:\\\\\\.\\[a\\-zA\\-Z0\\-9_\\+\\-\\]\\+\\)\\*\\@\\(\\?:\\[a\\-zA\\-Z0\\-9\\-\\]\\+\\\\.\\)\\+\\[a\\-zA\\-Z\\]\\{2,15\\}\\$"

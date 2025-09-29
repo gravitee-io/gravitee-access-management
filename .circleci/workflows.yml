@@ -374,7 +374,7 @@ commands:
     steps:
       - run:
           name: execute the units tests in << parameters.folder >>.
-          command: helm unittest -3 -f '<< parameters.files >>' << parameters.folder >> -t JUnit -o << parameters.output-file >>
+          command: helm unittest -f '<< parameters.files >>' << parameters.folder >> -t JUnit -o << parameters.output-file >>
 
   cmd-helm-lint:
     description: Lint the helm charts available in the folder
@@ -1854,7 +1854,7 @@ jobs:
           version: v3.18.2
       - run:
           name: install helm-unittest plugin
-          command: helm plugin install https://github.com/quintush/helm-unittest --version 0.2.11
+          command: helm plugin install https://github.com/helm-unittest/helm-unittest --version 1.0.1
       - cmd-helm-lint:
           folder: helm/
       - cmd-helm-tests:

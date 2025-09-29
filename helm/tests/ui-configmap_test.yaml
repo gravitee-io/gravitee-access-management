@@ -12,7 +12,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[constants.json]
+          path: data["constants.json"]
           pattern: "[ ]+\"baseURL\": \"http://test/base/url\""
 
   - it: should have default value.api.ingress.path if baseURL not defined
@@ -22,7 +22,7 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[constants.json]
+          path: data["constants.json"]
           pattern: "[ ]+\"baseURL\": \"https://am.example.com/management\""
 
   - it: should have baseURL based on custom api.ingress data
@@ -36,5 +36,5 @@ tests:
       - isKind:
           of: ConfigMap
       - matchRegex:
-          path: data.[constants.json]
+          path: data["constants.json"]
           pattern: "[ ]+\"baseURL\": \"https://custom.hostname/custom/path/management\""
