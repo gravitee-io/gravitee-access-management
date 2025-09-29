@@ -53,6 +53,7 @@ import { DomainEntrypointResolver } from './resolvers/domain-entrypoint.resolver
 import { DomainFlowsResolver } from './resolvers/domain-flows.resolver';
 import { ProvidersResolver } from './resolvers/providers.resolver';
 import { ProviderResolver } from './resolvers/provider.resolver';
+import { DataSourcesResolver } from './resolvers/datasources.resolver';
 import { ProviderRolesComponent } from './domain/settings/providers/provider/roles/roles.component';
 import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
 import { ProviderMappersComponent } from './domain/settings/providers/provider/mappers/mappers.component';
@@ -375,6 +376,7 @@ export const routes: Routes = [
                 canActivate: [AuthGuard],
                 resolve: {
                   identities: IdentitiesOrganizationResolver,
+                  datasources: DataSourcesResolver,
                 },
                 data: {
                   perms: {
@@ -1651,6 +1653,7 @@ export const routes: Routes = [
                             resolve: {
                               certificates: CertificatesResolver,
                               identities: IdentitiesResolver,
+                              datasources: DataSourcesResolver,
                             },
                           },
                           {
