@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.root.resources.auth.provider;
 
 import io.gravitee.am.common.exception.authentication.BadCredentialsException;
 import io.gravitee.am.common.exception.authentication.LoginCallbackFailedException;
+import io.gravitee.am.common.exception.authentication.UserAuthenticationAbortedException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.AuthenticationDetails;
@@ -37,6 +38,7 @@ import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.service.utils.vertx.RequestUtils;
 import io.gravitee.common.event.EventManager;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -52,6 +54,8 @@ import java.util.Map;
 
 import static io.gravitee.am.common.utils.ConstantKeys.ACCESS_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.ID_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_ACCESS_TOKEN_KEY;
 import static io.gravitee.am.common.utils.ConstantKeys.OIDC_PROVIDER_ID_TOKEN_KEY;
@@ -113,6 +117,23 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
             endUserAuthentication.getContext().set(Claims.user_agent, RequestUtils.userAgent(context.request()));
         }
 
+        Completable.fromAction(() -> {
+            // perform callback url evaluation to see if an error is present
+            // in case of error, do not call the provider.loadUserByUsername method
+            // but throw an exception
+            // note: this logic should be managed by the IdentityProvider plugin but as it requires an interface update,
+            // we cannot do it on a maintenance version
+            final var error = context.request().getParam(ERROR_PARAM_KEY);
+            if (error != null) {
+                final var errorDescription = context.request().getParam(ERROR_DESCRIPTION_PARAM_KEY);
+                logger.debug("Authentication attempt using social identity provider {} failed with error {} (description: {})", authProvider, error, errorDescription);
+                var provider = identityProviderManager.getIdentityProvider(authProvider);
+                if ("access_denied".equals(error) && "User auth aborted".equals(errorDescription) && "franceconnect-am-idp".equals(provider.getType())) {
+                    throw new UserAuthenticationAbortedException(error, errorDescription);
+                }
+                throw new BadCredentialsException("Unable to authenticate user, provider has returned error '" + error + "' with description '" + errorDescription + "'");
+            }
+        }).andThen(
         // authenticate the user via the social provider
         authenticationProvider.loadUserByUsername(endUserAuthentication)
                 .switchIfEmpty(Single.error(() -> new BadCredentialsException("Unable to authenticate social provider, authentication provider has returned empty value")))
@@ -154,13 +175,17 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
                     ((DefaultUser) user).setAdditionalInformation(additionalInformation);
                     return userAuthenticationManager.connect(user, client, authenticationContext.request());
-                })
+                }))
                 .subscribe(user -> {
                     gatewayMetricProvider.incrementSuccessfulAuth(true);
                     eventManager.publishEvent(AuthenticationEvent.SUCCESS, new AuthenticationDetails(endUserAuthentication, domain, client, user));
                     resultHandler.handle(Future.succeededFuture(new io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User(user)));
                 }, error -> {
-                    logger.error("Unable to authenticate social provider", error);
+                    if (error instanceof UserAuthenticationAbortedException) {
+                        logger.debug("Social provider authentication aborted", error);
+                    } else {
+                        logger.error("Unable to authenticate social provider", error);
+                    }
                     gatewayMetricProvider.incrementFailedAuth(true);
                     eventManager.publishEvent(AuthenticationEvent.FAILURE, new AuthenticationDetails(endUserAuthentication, domain, client, error));
                     resultHandler.handle(Future.failedFuture(error));
