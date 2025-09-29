@@ -463,13 +463,13 @@ gateway:
 #   mongodb:
 #     - id: idp-connection-pool-1
 #       settings:
-#         dbname: gw-db
-#         host: gw.db.host
+#          dbname: idp-db-1
+#         host: idp.db.host1
 #         port: 27016
 #     - id: idp-connection-pool-2
 #       settings:
-#         dbname: mgmt-db
-#         host: mgmt.db.host
+#         dbname: idp-db-2
+#         host: idp.db.host2
 #         port: 27017
 
 ## enabled resilience mode
