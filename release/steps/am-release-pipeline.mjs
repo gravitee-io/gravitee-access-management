@@ -23,6 +23,7 @@ export class ReleaseVersion extends AbstractStepRelease {
             rc_requested: options.releaseCandidate,
             tag_latest: options.tagLatest,
             tag_latest_support: options.tagLatestSupport,
+            create_maintenance_version_branch: true
         };
     }
 }
