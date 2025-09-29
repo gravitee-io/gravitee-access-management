@@ -27,6 +27,7 @@ export interface RateLimitConfig {
   periodSeconds?: number;
   async?: boolean;
   addHeaders?: boolean;
+  dynamicLimit?: string;
 }
 
 export interface TokenRequestOptions {
@@ -97,7 +98,7 @@ export const configureRateLimitPolicy = async (
       periodTimeUnit: "SECONDS",
       key: config.keyExpression,
       limit: config.limit ?? 2,
-      dynamicLimit: (config.limit ?? 2).toString()
+      dynamicLimit: config.dynamicLimit ?? 2
     }
   };
 
@@ -214,13 +215,4 @@ export const waitForRateLimitReset = async (seconds: number) => {
   console.log(`⏳ Waiting ${seconds} seconds for rate limit window to reset...`);
   await new Promise((r) => setTimeout(r, seconds * 1000));
   console.log('✅ Rate limit window reset');
-};
-
-/**
- * Default rate limit configuration for tests
- */
-export const DEFAULT_RATE_LIMIT_CONFIG: RateLimitConfig = {
-  keyExpression: "{#request.headers['test-rate-limit-key']}",
-  limit: 2,
-  periodSeconds: 3
 };

@@ -73,7 +73,7 @@ afterAll(async () => {
 /**
  * Default rate limit configuration for tests
  */
-export const DEFAULT_RATE_LIMIT_CONFIG: RateLimitConfig = {
+const DEFAULT_RATE_LIMIT_CONFIG: RateLimitConfig = {
     keyExpression: "{#request.headers['test-rate-limit-key']}",
     limit: 2,
     periodSeconds: 3
@@ -205,5 +205,65 @@ describe('Rate Limiting Policy Tests', () => {
     expect(rateLimitedRequests[0].body.error_description).toContain('Rate limit exceeded');
     
     console.log('✅ Rate limiting works without headers when addHeaders is disabled');
+  });
+
+  it('Should use dynamicLimit when static limit is 0', async () => {
+    // Configure rate limiting policy with dynamic limit (limit must be 0)
+    const dynamicConfig: RateLimitConfig = {
+      keyExpression: "{#request.headers['test-rate-limit-key']}",
+      limit: 0, // Must be 0 for dynamicLimit to work
+      periodSeconds: 3,
+      dynamicLimit: '4'
+    };
+    
+    await configureRateLimitPolicy(domain.id, accessToken, dynamicConfig);
+
+    // Make requests to test dynamic rate limiting
+    const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
+      headers: { 
+        'test-rate-limit-key': 'dynamic-limit-test'
+      }
+    });
+
+    const results = analyzeRateLimitResults(requests);
+    const firstRequest = requests[0];
+    const actualLimit = parseInt(firstRequest.headers['x-rate-limit-limit']);
+    
+    // Should use dynamicLimit value of 4
+    expect(actualLimit).toBe(4);
+    expect(results.successCount).toEqual(4);
+    expect(results.rateLimitedCount).toEqual(2);
+    
+    console.log('✅ Dynamic rate limiting works when limit is 0');
+  });
+
+  it('Should ignore dynamicLimit when static limit is greater than 0', async () => {
+    // Configure rate limiting policy with static limit (dynamicLimit should be ignored)
+    const staticConfig: RateLimitConfig = {
+      keyExpression: "{#request.headers['test-rate-limit-key']}",
+      limit: 3, // When limit > 0, dynamicLimit is ignored
+      periodSeconds: 3,
+      dynamicLimit: '10' // This should be ignored
+    };
+    
+    await configureRateLimitPolicy(domain.id, accessToken, staticConfig);
+
+    // Make requests to test static rate limiting
+    const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
+      headers: { 
+        'test-rate-limit-key': 'static-limit-test'
+      }
+    });
+
+    const results = analyzeRateLimitResults(requests);
+    const firstRequest = requests[0];
+    const actualLimit = parseInt(firstRequest.headers['x-rate-limit-limit']);
+    
+    // Should use static limit value of 3, not dynamicLimit of 10
+    expect(actualLimit).toBe(3);
+    expect(results.successCount).toEqual(3);
+    expect(results.rateLimitedCount).toEqual(3);
+    
+    console.log('✅ Static rate limiting works and ignores dynamicLimit when limit > 0');
   });
 });
