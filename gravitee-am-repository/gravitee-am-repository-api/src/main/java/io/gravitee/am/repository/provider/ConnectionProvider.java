@@ -43,5 +43,7 @@ public interface ConnectionProvider<T, C extends ConnectionConfiguration> extend
 
     default ClientWrapper<T> getClientWrapperFromDatasource(String datasourceId) { return null; };
 
+    default void removeClientWrapperForDatasource(String datasourceId) { }
+
     boolean canHandle(String backendType);
 }

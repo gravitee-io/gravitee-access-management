@@ -51,4 +51,8 @@ public class MongoClientWrapper implements ClientWrapper<MongoClient> {
         this.reference.set(0);
         this.client.close();
     }
+
+    int getClientReferenceValue() {
+        return reference.get();
+    }
 }

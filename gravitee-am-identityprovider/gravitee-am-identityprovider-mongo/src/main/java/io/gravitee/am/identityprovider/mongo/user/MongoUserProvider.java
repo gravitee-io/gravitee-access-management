@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
+import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
 import java.util.Date;
@@ -84,6 +85,10 @@ public class MongoUserProvider extends MongoAbstractProvider implements UserProv
     public UserProvider stop() {
         if (this.clientWrapper != null) {
             this.clientWrapper.releaseClient();
+
+            if (StringUtils.hasLength(this.configuration.getDatasourceId())) {
+                this.removeClientWrapper(this.configuration.getDatasourceId());
+            }
         }
         return this;
     }

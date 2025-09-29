@@ -133,4 +133,17 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     public boolean canHandle(String backendType) {
         return BACKEND_TYPE_MONGO.equals(backendType);
     }
+
+    @Override
+    public void removeClientWrapperForDatasource(String datasourceId) {
+        ClientWrapper<MongoClient> clientWrapper = this.dsClientWrappers.get(datasourceId);
+        if (clientWrapper == null) {
+            return;
+        }
+
+        int referenceCount = ((MongoClientWrapper)clientWrapper).getClientReferenceValue();
+        if (referenceCount <= 0) {
+            this.dsClientWrappers.remove(datasourceId);
+        }
+    }
 }
