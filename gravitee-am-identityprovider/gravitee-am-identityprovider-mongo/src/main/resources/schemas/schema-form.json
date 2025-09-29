@@ -24,8 +24,9 @@
     },
     "datasourceId": {
       "type": "string",
-      "title": "Data source ID",
-      "description": "Data source identifier used to connect to MongoDB."
+      "title": "Data source ID 2",
+      "description": "Data source 222 identifier used to connect to MongoDB.",
+      "widget": "datasource"
     },
     "enableCredentials" : {
       "type" : "boolean",
