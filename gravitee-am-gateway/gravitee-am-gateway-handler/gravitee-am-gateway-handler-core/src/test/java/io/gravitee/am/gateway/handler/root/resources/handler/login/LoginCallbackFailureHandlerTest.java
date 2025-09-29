@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import io.gravitee.am.common.exception.authentication.BadCredentialsException;
+import io.gravitee.am.common.exception.authentication.UserAuthenticationAbortedException;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.oauth2.ResponseType;
@@ -166,6 +168,50 @@ public class LoginCallbackFailureHandlerTest extends RxWebTestBase {
                     String location = resp.headers().get("location");
                     assertNotNull(location);
                     assertTrue(location.contains("/login?error=social_authentication_failed&error_description=policy_exception"));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldRedirectToLoginPage_without_error_when_user_abort_auth_on_social_idp() throws Exception {
+        var authenticationProvider = mock(SocialAuthenticationProvider.class);
+
+        router.route().order(-1).handler(routingContext -> {
+            Client client = new Client();
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_CONTEXT_KEY, authenticationProvider);
+            routingContext.fail(new UserAuthenticationAbortedException("access_denied", "User auth aborted"));
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertFalse(location.contains("error="));
+                },
+                HttpStatusCode.FOUND_302, "Found", null);
+    }
+
+    @Test
+    public void shouldRedirectToLoginPage_with_error_when_social_idp_throw_an_error() throws Exception {
+        var authenticationProvider = mock(SocialAuthenticationProvider.class);
+
+        router.route().order(-1).handler(routingContext -> {
+            Client client = new Client();
+            routingContext.put(ConstantKeys.CLIENT_CONTEXT_KEY, client);
+            routingContext.put(ConstantKeys.PROVIDER_CONTEXT_KEY, authenticationProvider);
+            routingContext.fail(new BadCredentialsException("access_denied"));
+        });
+
+        testRequest(
+                HttpMethod.GET, "/login/callback",
+                null,
+                resp -> {
+                    String location = resp.headers().get("location");
+                    assertNotNull(location);
+                    assertTrue(location.contains("/login?error=social_authentication_failed"));
                 },
                 HttpStatusCode.FOUND_302, "Found", null);
     }
