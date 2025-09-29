@@ -390,6 +390,7 @@ export const routes: Routes = [
                 canActivate: [AuthGuard],
                 resolve: {
                   provider: ProviderResolver,
+                  datasources: DataSourcesResolver,
                 },
                 data: {
                   breadcrumb: {
@@ -1661,6 +1662,7 @@ export const routes: Routes = [
                             component: ProviderComponent,
                             resolve: {
                               provider: ProviderResolver,
+                              datasources: DataSourcesResolver,
                             },
                             data: {
                               breadcrumb: {
