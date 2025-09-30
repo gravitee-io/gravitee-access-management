@@ -248,3 +248,32 @@ tests:
                   password: "t0pS3cre7"
                   secret: secret_pkcs12
                   watch: true
+  - it: Should render session timeout as integer not scientific notation
+    template: gateway/gateway-configmap.yaml
+    set:
+      gateway:
+        http:
+          cookie:
+            secure: false
+            sameSite: Lax
+            session:
+              name: session-gravitee
+              timeout: 1800000
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: |
+            http:
+              cookie:
+                secure: false
+                sameSite: Lax
+                session:
+                  name: session-gravitee
+                  timeout: 1800000
+      - notMatchRegex:
+          path: data.[gravitee.yml]
+          pattern: "1\\.8e\\+06"
