@@ -178,12 +178,13 @@ public class LoginAuthenticationHandler implements Handler<RoutingContext> {
     private void enhanceSocialIdentityProviders(List<IdentityProvider> identityProviders, RoutingContext context, Handler<AsyncResult<List<SocialProviderData>>> resultHandler) {
         Observable.fromIterable(identityProviders)
                 .flatMapSingle(identityProvider -> {
+                    IdentityProvider providerCopy = new IdentityProvider(identityProvider);
                     // get social identity provider type (currently use for display purpose (logo, description, ...)
-                    identityProvider.setType(socialProviders.getOrDefault(identityProvider.getType(), identityProvider.getType()));
+                    providerCopy.setType(socialProviders.getOrDefault(identityProvider.getType(), identityProvider.getType()));
                     // get social sign in url
-                    return getAuthorizeUrl(identityProvider.getId(), context)
-                            .map(authorizeUrl -> new SocialProviderData(identityProvider, authorizeUrl))
-                            .defaultIfEmpty(new SocialProviderData(identityProvider, null));
+                    return getAuthorizeUrl(providerCopy.getId(), context)
+                            .map(authorizeUrl -> new SocialProviderData(providerCopy, authorizeUrl))
+                            .defaultIfEmpty(new SocialProviderData(providerCopy, null));
                 })
                 .toList()
                 .subscribe(socialProviderData -> resultHandler.handle(Future.succeededFuture(socialProviderData)),
