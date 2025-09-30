@@ -22,6 +22,7 @@ import io.gravitee.am.repository.mongodb.provider.impl.MongoConnectionProvider;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -33,6 +34,8 @@ import static java.util.Objects.isNull;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+
+@Slf4j
 public abstract class MongoAbstractProvider implements InitializingBean {
 
     @Autowired
@@ -74,27 +77,35 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
         // whatever are the values for the mongo connection settings or the useSystemCluster
         // if DataSource is present, it takes precedence on everything
-        if (StringUtils.hasLength(this.configuration.getDatasourceId()) && this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-            final String datasourceId = this.configuration.getDatasourceId();
-            final String propertyPrefix = determinePrefixFromDataSourceId(datasourceId);
-
-            // If the database is not set, we use the value provided by the datasource.
-            if (this.configuration.getDatabase() == null) {
-                this.configuration.setDatabase(environment.getProperty(propertyPrefix + "dbname"));
-            }
-
-            this.clientWrapper = this.commonConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
-            this.mongoClient = this.clientWrapper.getClient();
-            return;
-        }
-
-        if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-            this.clientWrapper = this.identityProviderEntity != null && this.identityProviderEntity.isSystem() ?
-                    this.commonConnectionProvider.getClientWrapper() : getClientWrapperBasedOnConfig(systemScope);
+        if (shouldUseDatasource()) {
+            configureDatasourceClient();
+        } else if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
+                this.clientWrapper = this.identityProviderEntity != null && this.identityProviderEntity.isSystem() ?
+                        this.commonConnectionProvider.getClientWrapper() : getClientWrapperBasedOnConfig(systemScope);
         } else {
             this.clientWrapper = mongoProvider.getClientFromConfiguration(this.configuration);
         }
         this.mongoClient = this.clientWrapper.getClient();
+    }
+
+    private boolean shouldUseDatasource() {
+        return StringUtils.hasLength(this.configuration.getDatasourceId()) &&
+                this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO);
+    }
+
+    private void configureDatasourceClient() {
+        final String datasourceId = this.configuration.getDatasourceId();
+        final String propertyPrefix = determinePrefixFromDataSourceId(datasourceId);
+
+        // Override the database with the value provided by the datasource
+        final String databaseName = environment.getProperty(propertyPrefix + "dbname");
+        if (databaseName == null || databaseName.isEmpty()) {
+            throw new IllegalStateException("No `dbname` property found for datasource: " + datasourceId);
+        }
+
+        log.debug("Configuring Mongo Provider with datasource ID={}, prefix={}, database={}",datasourceId, propertyPrefix, databaseName);
+        this.configuration.setDatabase(databaseName);
+        this.clientWrapper = this.commonConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
     }
 
     private ClientWrapper getClientWrapperBasedOnConfig(Scope scope) {
@@ -111,15 +122,17 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     }
 
     private String determinePrefixFromDataSourceId(String datasourceId) {
+        final String prefix = "datasources.mongodb";
         for (int i = 0; true; i++) {
-            var propertyKey = String.format("datasources.mongodb[%d].id", i);
+            var propertyKey = String.format("%s[%d].id", prefix, i);
             var value = environment.getProperty(propertyKey, String.class);
             if (isNull(value)) {
                 throw new IllegalArgumentException("No datasource found with id: " + datasourceId);
             }
 
             if (datasourceId.equals(value)) {
-                return String.format("datasources.mongodb[%d].settings.", i);
+                log.debug("Datasource found with id={} at index={}", datasourceId, i);
+                return String.format("%s[%d].settings", prefix, i);
             }
         }
     }
