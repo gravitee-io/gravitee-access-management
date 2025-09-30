@@ -44,12 +44,9 @@ public class DataSourcesResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(summary = "List all the data sources",
-            description = "User must have the ENVIRONMENT[LIST] permission on the specified organization " +
-                    "AND either ENVIRONMENT[READ] permission on each environment " +
-                    "or ENVIRONMENT[READ] permission on the specified organization." +
-                    "Each returned environment is filtered and contains only basic information such as id and name.")
+            description = "Returns all of the available data sources to be used in IDP creation")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "List all the environments of the organization",
+            @ApiResponse(responseCode = "200", description = "List all the IDP data sources",
                     content = @Content(mediaType =  "application/json",
                             array = @ArraySchema(schema = @Schema(implementation = DataSource.class)))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})

@@ -25,6 +25,7 @@ import io.gravitee.am.repository.provider.ConnectionProvider;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,7 @@ import static io.gravitee.am.repository.Scope.OAUTH2;
  */
 // Need to name this component to end with Repository on in order to make it injectable
 // as the Repository plugin only scan beanName ending with Repository or TransactionManager
+@Slf4j
 @Component("ConnectionProviderFromRepository")
 public class MongoConnectionProvider implements ConnectionProvider<MongoClient, MongoConnectionConfiguration>, InitializingBean {
 
@@ -98,7 +100,15 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId) {
         final String prefix = determinePrefixFromDataSourceId(datasourceId);
-        return this.dsClientWrappers.computeIfAbsent(datasourceId, k -> new MongoClientWrapper(new MongoFactory(environment, prefix, true).getObject()));
+        log.debug("Using datasource {} with prefix {}", datasourceId, prefix);
+        return this.dsClientWrappers.computeIfAbsent(datasourceId, k ->
+                new MongoClientWrapper(
+                        new MongoFactory(
+                                environment, prefix, true).getObject(),
+                        () -> {
+                            log.debug("Cleaning up datasource {}", datasourceId);
+                            this.dsClientWrappers.remove(datasourceId);
+                        }));
     }
 
     private String determinePrefixFromDataSourceId(String datasourceId) {
@@ -132,18 +142,5 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public boolean canHandle(String backendType) {
         return BACKEND_TYPE_MONGO.equals(backendType);
-    }
-
-    @Override
-    public void removeClientWrapperForDatasource(String datasourceId) {
-        ClientWrapper<MongoClient> clientWrapper = this.dsClientWrappers.get(datasourceId);
-        if (clientWrapper == null) {
-            return;
-        }
-
-        int referenceCount = ((MongoClientWrapper)clientWrapper).getClientReferenceValue();
-        if (referenceCount <= 0) {
-            this.dsClientWrappers.remove(datasourceId);
-        }
     }
 }
