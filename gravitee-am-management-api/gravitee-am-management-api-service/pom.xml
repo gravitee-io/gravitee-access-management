@@ -30,7 +30,7 @@
     <artifactId>gravitee-am-management-api-service</artifactId>
     <name>Gravitee IO - Access Management - Management API - Service</name>
     <properties>
-        <greenmail-junit5.version>2.1.5</greenmail-junit5.version>
+        <greenmail-junit5.version>2.1.6</greenmail-junit5.version>
     </properties>
 
     <dependencies>
