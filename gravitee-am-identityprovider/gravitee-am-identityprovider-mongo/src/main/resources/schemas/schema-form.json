@@ -158,7 +158,6 @@
     }
   },
   "required": [
-    "database",
     "usersCollection",
     "findUserByUsernameQuery",
     "findUserByEmailQuery",
@@ -169,14 +168,26 @@
   "anyOf":[
     {
       "required": [
-        "uri"
+        "uri",
+        "database"
       ]
     },
     {
       "required": [
         "host",
-        "port"
+        "port",
+        "database"
       ]
+    },
+    {
+      "required": [
+        "datasourceId"
+      ],
+      "properties": {
+        "database": {
+          "type": "string"
+        }
+      }
     }
   ]
 }
