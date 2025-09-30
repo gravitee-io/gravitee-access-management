@@ -16120,10 +16120,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"style-mod@npm:^4.0.0":
-  version: 4.1.1
-  resolution: "style-mod@npm:4.1.1"
-  checksum: 10c0/29da0329e4a49ce16c2affc3240ec667e4ace616e1dc40ed029b9b12008d854fe42cde1f1209d4fbd7696294a148970e654a0d1b659bbf9ca64aefe383bb9249
+"style-mod@npm:^4.1.2":
+  version: 4.1.2
+  resolution: "style-mod@npm:4.1.2"
+  checksum: 10c0/ad4d870b3642b0e42ecc7be0e106dd14b7af11985e34fee8de34e5e38c3214bfc96fa7055acea86d75a3a59ddea3f6a8c6641001a66494d7df72d09685e3fadb
   languageName: node
   linkType: hard
 
