@@ -27,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
+import static java.util.Objects.isNull;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
@@ -73,7 +75,15 @@ public abstract class MongoAbstractProvider implements InitializingBean {
         // whatever are the values for the mongo connection settings or the useSystemCluster
         // if DataSource is present, it takes precedence on everything
         if (StringUtils.hasLength(this.configuration.getDatasourceId()) && this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-            this.clientWrapper = this.commonConnectionProvider.getClientWrapperFromDatasource(this.configuration.getDatasourceId());
+            final String datasourceId = this.configuration.getDatasourceId();
+            final String propertyPrefix = determinePrefixFromDataSourceId(datasourceId);
+
+            // If the database is not set, we use the value provided by the datasource.
+            if (this.configuration.getDatabase() == null) {
+                this.configuration.setDatabase(environment.getProperty(propertyPrefix + "dbname"));
+            }
+
+            this.clientWrapper = this.commonConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
             this.mongoClient = this.clientWrapper.getClient();
             return;
         }
@@ -98,5 +108,19 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
     protected String getEncodedUsername(String username) {
         return this.configuration.isUsernameCaseSensitive() ? username : username.toLowerCase();
+    }
+
+    private String determinePrefixFromDataSourceId(String datasourceId) {
+        for (int i = 0; true; i++) {
+            var propertyKey = String.format("datasources.mongodb[%d].id", i);
+            var value = environment.getProperty(propertyKey, String.class);
+            if (isNull(value)) {
+                throw new IllegalArgumentException("No datasource found with id: " + datasourceId);
+            }
+
+            if (datasourceId.equals(value)) {
+                return String.format("datasources.mongodb[%d].settings.", i);
+            }
+        }
     }
 }

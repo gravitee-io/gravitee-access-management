@@ -98,31 +98,16 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     }
 
     @Override
-    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId) {
-        final String prefix = determinePrefixFromDataSourceId(datasourceId);
-        log.debug("Using datasource {} with prefix {}", datasourceId, prefix);
+    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId, String propertyPrefix) {
+        log.debug("Using datasource {} with property prefix {}", datasourceId, propertyPrefix);
         return this.dsClientWrappers.computeIfAbsent(datasourceId, k ->
                 new MongoClientWrapper(
                         new MongoFactory(
-                                environment, prefix, true).getObject(),
+                                environment, propertyPrefix, true).getObject(),
                         () -> {
                             log.debug("Cleaning up datasource {}", datasourceId);
                             this.dsClientWrappers.remove(datasourceId);
                         }));
-    }
-
-    private String determinePrefixFromDataSourceId(String datasourceId) {
-        for (int i = 0; true; i++) {
-            var propertyKey = String.format("datasources.mongodb[%d].id", i);
-            var value = environment.getProperty(propertyKey, String.class);
-            if (isNull(value)) {
-                throw new IllegalArgumentException("No datasource found with id: " + datasourceId);
-            }
-
-            if (datasourceId.equals(value)) {
-                return String.format("datasources.mongodb[%d].settings.", i);
-            }
-        }
     }
 
     @Override
