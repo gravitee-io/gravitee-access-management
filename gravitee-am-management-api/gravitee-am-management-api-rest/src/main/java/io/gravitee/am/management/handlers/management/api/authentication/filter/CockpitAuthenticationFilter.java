@@ -24,6 +24,7 @@ import io.gravitee.am.jwt.DefaultJWTParser;
 import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.management.handlers.management.api.authentication.provider.generator.JWTGenerator;
 import io.gravitee.am.management.handlers.management.api.authentication.service.AuthenticationService;
+import io.gravitee.am.management.handlers.management.api.utils.RedirectUtils;
 import io.gravitee.am.model.Environment;
 import io.gravitee.am.service.EnvironmentService;
 import io.gravitee.node.api.configuration.Configuration;
@@ -140,7 +141,11 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
 
                     Cookie jwtAuthenticationCookie = jwtGenerator.generateCookie(principal);
                     httpResponse.addCookie(jwtAuthenticationCookie);
-                    httpResponse.sendRedirect((String) jwt.get("redirect_uri") + redirectPath);
+                    
+                    // Build redirect URL properly handling trailing slashes
+                    String redirectUri = (String) jwt.get("redirect_uri");
+                    String finalRedirectUrl = RedirectUtils.buildCockpitRedirectUrl(redirectUri, redirectPath);
+                    httpResponse.sendRedirect(finalRedirectUrl);
                 } catch (Exception e) {
                     log.error("Error occurred when trying to login using cockpit.", e);
                     httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -150,6 +155,7 @@ public class CockpitAuthenticationFilter extends GenericFilterBean {
             filterChain.doFilter(request, response);
         }
     }
+
 
     private boolean enabled() {
         return getProperty("cockpit.enabled", "cloud.enabled", Boolean.class, false);
