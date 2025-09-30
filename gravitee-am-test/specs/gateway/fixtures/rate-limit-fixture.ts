@@ -155,6 +155,36 @@ export const makeTokenRequests = async (
 };
 
 /**
+ * Make multiple token requests concurrently
+ */
+export const makeConcurrentTokenRequests = async (
+  tokenEndpoint: string,
+  application: any,
+  count: number,
+  options: TokenRequestOptions = {}
+) => {
+  const {
+    grantType = 'client_credentials',
+    headers = {},
+    body = `grant_type=${grantType}`
+  } = options;
+
+  const promises = Array.from({ length: count }).map(() =>
+    performPost(
+      tokenEndpoint,
+      '',
+      body,
+      {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + applicationBase64Token(application),
+        ...headers,
+      }
+    )
+  );
+  return await Promise.all(promises);
+};
+
+/**
  * Analyze rate limiting results from requests
  */
 export const analyzeRateLimitResults = (requests: any[]) => {

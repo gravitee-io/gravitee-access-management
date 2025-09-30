@@ -21,6 +21,7 @@ import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-co
 import { 
   configureRateLimitPolicy,
   makeTokenRequests,
+  makeConcurrentTokenRequests,
   analyzeRateLimitResults,
   verifyRateLimitHeaders,
   verifyRateLimitHeadersMissing,
@@ -237,33 +238,79 @@ describe('Rate Limiting Policy Tests', () => {
     console.log('✅ Dynamic rate limiting works when limit is 0');
   });
 
-  it('Should ignore dynamicLimit when static limit is greater than 0', async () => {
-    // Configure rate limiting policy with static limit (dynamicLimit should be ignored)
-    const staticConfig: RateLimitConfig = {
+  it('Should apply dynamicLimit with EL expression', async () => {
+    // Configure rate limiting to read limit from request header
+    const headerDynamicConfig: RateLimitConfig = {
       keyExpression: "{#request.headers['test-rate-limit-key']}",
-      limit: 3, // When limit > 0, dynamicLimit is ignored
+      limit: 0,
       periodSeconds: 3,
-      dynamicLimit: '10' // This should be ignored
+      dynamicLimit: "{#request.headers['x-test-ratelimit']}"
     };
-    
-    await configureRateLimitPolicy(domain.id, accessToken, staticConfig);
 
-    // Make requests to test static rate limiting
-    const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
-      headers: { 
-        'test-rate-limit-key': 'static-limit-test'
+    await configureRateLimitPolicy(domain.id, accessToken, headerDynamicConfig);
+
+    // Case 1: Header sets limit to 5
+    const requestsLimit5 = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
+      headers: {
+        'test-rate-limit-key': 'hdr-limit-5',
+        'x-test-ratelimit': '5'
       }
     });
 
-    const results = analyzeRateLimitResults(requests);
-    const firstRequest = requests[0];
-    const actualLimit = parseInt(firstRequest.headers['x-rate-limit-limit']);
-    
-    // Should use static limit value of 3, not dynamicLimit of 10
-    expect(actualLimit).toBe(3);
-    expect(results.successCount).toEqual(3);
-    expect(results.rateLimitedCount).toEqual(3);
-    
-    console.log('✅ Static rate limiting works and ignores dynamicLimit when limit > 0');
+    const resultLimit5 = analyzeRateLimitResults(requestsLimit5);
+    const firstReq5 = requestsLimit5[0];
+    expect(firstReq5.headers['x-rate-limit-limit']).toBe('5');
+    expect(resultLimit5.successCount).toEqual(5);
+    expect(resultLimit5.rateLimitedCount).toEqual(1);
+
+    // Case 2: Header sets limit to 2
+    const requestsLimit2 = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4, {
+      headers: {
+        'test-rate-limit-key': 'hdr-limit-2',
+        'x-test-ratelimit': '2'
+      }
+    });
+
+    const resultLimit2 = analyzeRateLimitResults(requestsLimit2);
+    const firstReq2 = requestsLimit2[0];
+    expect(firstReq2.headers['x-rate-limit-limit']).toBe('2');
+    expect(resultLimit2.successCount).toEqual(2);
+    expect(resultLimit2.rateLimitedCount).toEqual(2);
+  });
+
+  it('Should enforce rate limiting in async mode with concurrent requests', async () => {
+    // Test async (non-strict) mode with more requests to ensure we see blocking
+    const asyncConfig: RateLimitConfig = {
+      keyExpression: "{#request.headers['test-rate-limit-key']}",
+      limit: 2,
+      periodSeconds: 3,
+      async: true
+    };
+    await configureRateLimitPolicy(domain.id, accessToken, asyncConfig);
+
+    // Fire 6 concurrent requests to ensure we exceed the limit and see blocking
+    const asyncRequests = await makeConcurrentTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
+      headers: { 'test-rate-limit-key': 'async-concurrent-test' }
+    });
+    const asyncResults = analyzeRateLimitResults(asyncRequests);
+
+    // Verify async mode rate limiting behavior:
+    // - successCount should be at least the limit (2) - async mode should allow at least the configured limit
+    // - rateLimitedCount should be at least 1 (proving rate limiting is working)
+    // - Total should equal 6
+    expect(asyncResults.successCount).toBeGreaterThanOrEqual(2);
+    expect(asyncResults.rateLimitedCount).toBeGreaterThanOrEqual(1);
+    expect(asyncResults.successCount + asyncResults.rateLimitedCount).toBe(6);
+
+    // Verify that we have at least one rate limited request (proves rate limiting is working)
+    const rateLimitedRequests = asyncResults.rateLimitedRequests;
+    expect(rateLimitedRequests.length).toBeGreaterThan(0);
+    const firstLimited = rateLimitedRequests[0];
+    expect(firstLimited.status).toBe(429);
+    expect(firstLimited.body.error).toBe('invalid_grant');
+    // Check rate-limited headers: remaining should be 0 when limit is reached
+    expect(firstLimited.headers['x-rate-limit-limit']).toBe('2');
+    expect(firstLimited.headers['x-rate-limit-remaining']).toBe('0');
+    expect(firstLimited.headers['x-rate-limit-reset']).toBeDefined();
   });
 });
