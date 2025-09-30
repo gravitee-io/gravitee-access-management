@@ -28,7 +28,7 @@ data:
         {{- if .Values.gateway.http.cookie.session }}
         session:
           name: {{ .Values.gateway.http.cookie.session.name | default "GRAVITEE_IO_AM_SESSION" }}
-          timeout: {{ .Values.gateway.http.cookie.session.timeout | default 1800000 }}
+          timeout: {{ .Values.gateway.http.cookie.session.timeout | default 1800000 | int }}
         {{- end }}
     {{- end }}
     {{- if .Values.gateway.http.csrf }}
