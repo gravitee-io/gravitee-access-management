@@ -34,11 +34,13 @@ import io.gravitee.am.repository.mongodb.provider.metrics.MongoMetricsConnection
 import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.channel.nio.NioEventLoopGroup;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -62,29 +64,19 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Slf4j
+@Component("mongoFactory")
 public class MongoFactory implements FactoryBean<MongoClient> {
     private static final String PASSWORD = "password";
     private static final String SERVERS = "servers[";
     private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
     public static final NioEventLoopGroup COMMON_EVENT_LOOP_GROUP = new NioEventLoopGroup();
 
-    private final Logger logger = LoggerFactory.getLogger(MongoFactory.class);
+    @Autowired
+    private RepositoriesEnvironment environment;
 
-    private final RepositoriesEnvironment environment;
-
-    private final String propertyPrefix;
-    private boolean fromDatasource;
-
-    public MongoFactory(RepositoriesEnvironment environment, String propertyPrefix) {
-        this.environment = environment;
-        this.propertyPrefix = propertyPrefix + ".mongodb.";
-    }
-
-    public MongoFactory(RepositoriesEnvironment environment, String propertyPrefix, boolean fromDatasource) {
-        this.environment = environment;
-        this.propertyPrefix = propertyPrefix;
-        this.fromDatasource = fromDatasource;
-    }
+    @Setter
+    private String propertyPrefix;
 
     public static MongoClient createClient(MongoConnectionConfiguration configuration) {
         MongoClient mongoClient;
@@ -122,6 +114,10 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
     @Override
     public MongoClient getObject() {
+        if (propertyPrefix == null) {
+            throw new IllegalStateException("Property prefix is not initialized");
+        }
+
         // Client settings
         MongoClientSettings.Builder builder = MongoClientSettings.builder();
         builder.writeConcern(WriteConcern.ACKNOWLEDGED);
@@ -272,7 +268,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
     }
 
     private int getServersCount() {
-        logger.debug("Looking for MongoDB server configuration...");
+        log.debug("Looking for MongoDB server configuration...");
 
         boolean found = true;
         int idx = 0;
@@ -302,7 +298,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
     private <T> T readPropertyValue(String propertyName, Class<T> propertyType, T defaultValue) {
         T value = environment.getProperty(propertyName, propertyType, defaultValue);
-        logger.debug("Read property {}: {}", propertyName, value);
+        log.debug("Read property {}: {}", propertyName, value);
         return value;
     }
 

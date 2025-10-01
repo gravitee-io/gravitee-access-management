@@ -30,7 +30,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import static java.util.Objects.isNull;
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
@@ -47,6 +46,9 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
 
     @Autowired
     private RepositoriesEnvironment environment;
+
+    @Autowired
+    private MongoFactory mongoFactory;
 
     private ClientWrapper<MongoClient> commonMongoClient;
     private ClientWrapper<MongoClient> oauthMongoClient;
@@ -67,12 +69,12 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
         notUseMngSettingsForGateway = !useMngSettingsForGateway;
         // create the common client just after the bean Initialization to guaranty the uniqueness
-        commonMongoClient = new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getRepositoryPropertyKey()).getObject());
+        commonMongoClient = buildClientWrapper(MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.");
         if (notUseMngSettingsForGateway) {
-            gatewayMongoClient = new MongoClientWrapper(new MongoFactory(environment, GATEWAY.getRepositoryPropertyKey()).getObject());
+            gatewayMongoClient = buildClientWrapper(GATEWAY.getRepositoryPropertyKey() + ".mongodb.");
         }
         if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
-            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject());
+            oauthMongoClient = buildClientWrapper(OAUTH2.getRepositoryPropertyKey() + ".mongodb.");
         }
     }
 
@@ -101,13 +103,13 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId, String propertyPrefix) {
         log.debug("Using datasource {} with property prefix {}", datasourceId, propertyPrefix);
         return this.dsClientWrappers.computeIfAbsent(datasourceId, k ->
-                new MongoClientWrapper(
-                        new MongoFactory(
-                                environment, propertyPrefix, true).getObject(),
-                        () -> {
-                            log.debug("Cleaning up datasource {}", datasourceId);
-                            this.dsClientWrappers.remove(datasourceId);
-                        }));
+                {
+                    mongoFactory.setPropertyPrefix(propertyPrefix);
+                    return new MongoClientWrapper(mongoFactory.getObject(), () -> {
+                        log.debug("Cleaning up datasource {}", datasourceId);
+                        this.dsClientWrappers.remove(datasourceId);
+                    });
+                });
     }
 
     @Override
@@ -127,5 +129,10 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public boolean canHandle(String backendType) {
         return BACKEND_TYPE_MONGO.equals(backendType);
+    }
+
+    private MongoClientWrapper buildClientWrapper(String prefix) {
+        mongoFactory.setPropertyPrefix(prefix);
+        return new MongoClientWrapper(mongoFactory.getObject());
     }
 }
