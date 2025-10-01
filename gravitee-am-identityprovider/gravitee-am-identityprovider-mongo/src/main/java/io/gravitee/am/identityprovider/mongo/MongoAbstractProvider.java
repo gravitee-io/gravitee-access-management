@@ -75,17 +75,22 @@ public abstract class MongoAbstractProvider implements InitializingBean {
             throw new IllegalStateException("Unable to initialize Mongo Identity Provider, repositories.system-cluster only accept 'management' or 'gateway'");
         }
 
-        // whatever are the values for the mongo connection settings or the useSystemCluster
-        // if DataSource is present, it takes precedence on everything
-        if (shouldUseDatasource()) {
-            configureDatasourceClient();
-        } else if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-                this.clientWrapper = this.identityProviderEntity != null && this.identityProviderEntity.isSystem() ?
-                        this.commonConnectionProvider.getClientWrapper() : getClientWrapperBasedOnConfig(systemScope);
-        } else {
-            this.clientWrapper = mongoProvider.getClientFromConfiguration(this.configuration);
-        }
+        this.clientWrapper = this.buildClientWrapper(systemScope);
         this.mongoClient = this.clientWrapper.getClient();
+    }
+
+    private ClientWrapper<MongoClient> buildClientWrapper(Scope scope) {
+        if (shouldUseDatasource()) {
+            return configureDatasourceClient();
+        }
+
+        if (!this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
+            return mongoProvider.getClientFromConfiguration(this.configuration);
+        }
+
+        return this.identityProviderEntity != null && this.identityProviderEntity.isSystem()
+                ? this.commonConnectionProvider.getClientWrapper()
+                : getClientWrapperBasedOnConfig(scope);
     }
 
     private boolean shouldUseDatasource() {
@@ -93,7 +98,7 @@ public abstract class MongoAbstractProvider implements InitializingBean {
                 this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO);
     }
 
-    private void configureDatasourceClient() {
+    private ClientWrapper<MongoClient> configureDatasourceClient() {
         final String datasourceId = this.configuration.getDatasourceId();
         final String propertyPrefix = determinePrefixFromDataSourceId(datasourceId);
 
@@ -105,12 +110,13 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
         log.debug("Configuring Mongo Provider with datasource ID={}, prefix={}, database={}",datasourceId, propertyPrefix, databaseName);
         this.configuration.setDatabase(databaseName);
-        this.clientWrapper = this.commonConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
+        return this.commonConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
     }
 
-    private ClientWrapper getClientWrapperBasedOnConfig(Scope scope) {
-        return this.configuration.isUseSystemCluster() ? this.commonConnectionProvider.getClientWrapper(scope.getName()) :
-                this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
+    private ClientWrapper<MongoClient> getClientWrapperBasedOnConfig(Scope scope) {
+        return this.configuration.isUseSystemCluster()
+                ? this.commonConnectionProvider.getClientWrapper(scope.getName())
+                : this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
     }
 
     protected String getSafeUsername(String username) {
