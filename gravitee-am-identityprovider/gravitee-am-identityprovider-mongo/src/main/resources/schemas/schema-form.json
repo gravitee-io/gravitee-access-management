@@ -182,12 +182,7 @@
     {
       "required": [
         "datasourceId"
-      ],
-      "properties": {
-        "database": {
-          "type": "string"
-        }
-      }
+      ]
     }
   ]
 }
