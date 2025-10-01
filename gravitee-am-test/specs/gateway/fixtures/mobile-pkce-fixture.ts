@@ -24,6 +24,9 @@ import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { uniqueName } from '@utils-commands/misc';
+import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { login } from '@gateway-commands/login-commands';
+import { applicationBase64Token } from '@gateway-commands/utils';
 
 export interface MobilePKCEFixture {
   domain: Domain;
@@ -32,7 +35,11 @@ export interface MobilePKCEFixture {
   defaultIdp: IdentityProvider;
   openIdConfiguration: any;
   accessToken: string;
+  redirectUri: string;
   cleanup: () => Promise<void>;
+  completeAuthorizationFlow: (codeChallenge: string) => Promise<string>;
+  exchangeCodeForToken: (authCode: string, codeVerifier: string) => any;
+  buildInvalidAuthUrl: (params: Record<string, string>) => string;
 }
 
 // Test constants
@@ -189,6 +196,66 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
   const openIdConfiguration = domainReady.oidcConfig;
   expect(openIdConfiguration).toBeDefined();
 
+  // Helper functions
+  const completeAuthorizationFlow = async (codeChallenge: string): Promise<string> => {
+    const clientId = application.settings.oauth.clientId;
+    const authUrl = buildAuthorizationUrl(
+      openIdConfiguration.authorization_endpoint,
+      clientId,
+      redirectUri,
+      codeChallenge
+    );
+    
+    const authResponse = await performGet(authUrl).expect(302);
+    const loginResponse = await login(
+      authResponse,
+      user.username,
+      clientId,
+      TEST_CONSTANTS.USER_PASSWORD,
+      false,
+      false
+    );
+    
+    const authorizeResponse = await performGet(loginResponse.headers['location'], '', {
+      Cookie: loginResponse.headers['set-cookie'],
+    }).expect(302);
+    
+    const redirectUrl = authorizeResponse.headers['location'];
+    expect(redirectUrl).toContain(redirectUri);
+    expect(redirectUrl).toContain('code=');
+    
+    return extractAuthorizationCode(redirectUrl);
+  };
+
+  const exchangeCodeForToken = (authCode: string, codeVerifier: string) => {
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: authCode,
+      redirect_uri: redirectUri,
+      code_verifier: codeVerifier,
+    });
+
+    return performPost(
+      `${openIdConfiguration.token_endpoint}?${tokenParams.toString()}`,
+      '',
+      null,
+      {
+        Authorization: `Basic ${applicationBase64Token(application)}`,
+      }
+    );
+  };
+
+  const buildInvalidAuthUrl = (params: Record<string, string>): string => {
+    const urlParams = new URLSearchParams({
+      response_type: 'code',
+      client_id: application.settings.oauth.clientId,
+      redirect_uri: redirectUri,
+      state: 'test-state',
+      ...params,
+    });
+    return `${openIdConfiguration.authorization_endpoint}?${urlParams.toString()}`;
+  };
+
   // Cleanup function
   const cleanup = async () => {
     if (readyDomain && accessToken) {
@@ -203,6 +270,10 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
     defaultIdp,
     openIdConfiguration,
     accessToken,
+    redirectUri,
     cleanup,
+    completeAuthorizationFlow,
+    exchangeCodeForToken,
+    buildInvalidAuthUrl,
   };
 };

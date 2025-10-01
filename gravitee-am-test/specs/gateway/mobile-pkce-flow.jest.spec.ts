@@ -19,7 +19,6 @@ import fetch from 'cross-fetch';
 
 // Gateway commands
 import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
-import { login } from '@gateway-commands/login-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 
 // Fixtures
@@ -27,8 +26,6 @@ import {
   setupMobilePKCEFixture, 
   generateCodeVerifier, 
   generateCodeChallenge, 
-  buildAuthorizationUrl,
-  extractAuthorizationCode,
   validateTokenResponse,
   MobilePKCEFixture 
 } from './fixtures/mobile-pkce-fixture';
@@ -54,61 +51,86 @@ afterAll(async () => {
 });
 
 describe('Mobile PKCE Flow', () => {
-  it('should complete mobile PKCE flow with custom URI scheme', async () => {
-    // Generate PKCE parameters for mobile app
-    const mobileCodeVerifier = generateCodeVerifier();
-    const mobileCodeChallenge = generateCodeChallenge();
+  it('should complete PKCE flow with custom URI scheme', async () => {
+    const codeVerifier = generateCodeVerifier();
+    const codeChallenge = generateCodeChallenge();
 
-    const mobileClientId = fixture.application.settings.oauth.clientId;
+    const authCode = await fixture.completeAuthorizationFlow(codeChallenge);
+    const tokenResponse = await fixture.exchangeCodeForToken(authCode, codeVerifier).expect(200);
 
-    // Step 1: Initiate mobile authorization flow with PKCE parameters
-    const mobileAuthUrl = buildAuthorizationUrl(
-      fixture.openIdConfiguration.authorization_endpoint,
-      mobileClientId,
-      MOBILE_REDIRECT_URI,
-      mobileCodeChallenge
-    );
-    const mobileAuthResponse = await performGet(mobileAuthUrl).expect(302);
+    validateTokenResponse(tokenResponse);
+  });
 
-    // Step 2: Complete mobile user login flow
-    const mobileLoginResponse = await login(
-      mobileAuthResponse,
-      fixture.user.username,
-      mobileClientId,
-      'MobileP@ssw0rd123!',
-      false,
-      false
-    );
+  describe('PKCE Error Scenarios', () => {
+    it('should fail when missing code_challenge parameter', async () => {
+      const authUrl = fixture.buildInvalidAuthUrl({});
 
-    // Step 3: Follow redirect to mobile authorization endpoint
-    const mobileAuthorizeResponse = await performGet(mobileLoginResponse.headers['location'], '', {
-      Cookie: mobileLoginResponse.headers['set-cookie'],
-    }).expect(302);
-
-    // Step 4: Extract authorization code from mobile custom URI scheme redirect
-    const mobileRedirectUrl = mobileAuthorizeResponse.headers['location'];
-    expect(mobileRedirectUrl).toContain(MOBILE_REDIRECT_URI);
-    expect(mobileRedirectUrl).toContain('code=');
-    const mobileAuthorizationCode = extractAuthorizationCode(mobileRedirectUrl);
-
-    // Step 5: Exchange mobile authorization code for access token
-    const mobileTokenParams = new URLSearchParams({
-      grant_type: 'authorization_code',
-      code: mobileAuthorizationCode,
-      redirect_uri: MOBILE_REDIRECT_URI,
-      code_verifier: mobileCodeVerifier,
+      const response = await performGet(authUrl).expect(302);
+      expect(response.headers['location']).toContain(fixture.redirectUri);
+      expect(response.headers['location']).toContain('error=invalid_request');
+      expect(response.headers['location']).toContain('Missing+parameter%3A+code_challenge');
     });
 
-    const mobileTokenResponse = await performPost(
-      `${fixture.openIdConfiguration.token_endpoint}?${mobileTokenParams.toString()}`,
-      '',
-      null,
-      {
-        Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
-      }
-    ).expect(200);
+    it('should fail when using plain code_challenge_method when S256 is forced', async () => {
+      const authUrl = fixture.buildInvalidAuthUrl({
+        code_challenge: 'plain-challenge',
+        code_challenge_method: 'plain',
+      });
 
-    // Step 6: Validate mobile access token response
-    validateTokenResponse(mobileTokenResponse);
+      const response = await performGet(authUrl).expect(302);
+      expect(response.headers['location']).toContain(fixture.redirectUri);
+      expect(response.headers['location']).toContain('error=invalid_request');
+      expect(response.headers['location']).toContain('Invalid+parameter%3A+code_challenge_method');
+    });
+
+    it('should fail when missing code_verifier in token exchange', async () => {
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = generateCodeChallenge();
+      const authCode = await fixture.completeAuthorizationFlow(codeChallenge);
+
+      const tokenParams = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: authCode,
+        redirect_uri: fixture.redirectUri,
+        // Missing code_verifier
+      });
+
+      const response = await performPost(
+        `${fixture.openIdConfiguration.token_endpoint}?${tokenParams.toString()}`,
+        '',
+        null,
+        {
+          Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
+        }
+      ).expect(400);
+
+      expect(response.body.error).toBe('invalid_grant');
+      expect(response.body.error_description).toContain('code_verifier');
+    });
+
+    it('should fail when code_verifier does not match code_challenge', async () => {
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = generateCodeChallenge();
+      const authCode = await fixture.completeAuthorizationFlow(codeChallenge);
+
+      const tokenParams = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: authCode,
+        redirect_uri: fixture.redirectUri,
+        code_verifier: 'wrong-verifier-that-does-not-match-challenge',
+      });
+
+      const response = await performPost(
+        `${fixture.openIdConfiguration.token_endpoint}?${tokenParams.toString()}`,
+        '',
+        null,
+        {
+          Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
+        }
+      ).expect(400);
+
+      expect(response.body.error).toBe('invalid_grant');
+      expect(response.body.error_description).toContain('code_verifier');
+    });
   });
 });
