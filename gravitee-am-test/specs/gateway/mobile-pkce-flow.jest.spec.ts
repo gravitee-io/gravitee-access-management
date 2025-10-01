@@ -133,4 +133,83 @@ describe('Mobile PKCE Flow', () => {
       expect(response.body.error_description).toContain('code_verifier');
     });
   });
+
+  describe('Redirect URI Validation Scenarios', () => {
+    it('should fail with unregistered custom URI scheme', async () => {
+      const unregisteredUri = 'com.unauthorized.app:/callback';
+      const params = new URLSearchParams({
+        response_type: 'code',
+        client_id: fixture.application.settings.oauth.clientId,
+        redirect_uri: unregisteredUri,
+        state: 'test-state',
+        code_challenge: generateCodeChallenge(),
+        code_challenge_method: 'S256',
+      });
+      const authUrl = `${fixture.openIdConfiguration.authorization_endpoint}?${params.toString()}`;
+
+      const response = await performGet(authUrl).expect(302);
+      expect(response.headers['location']).toContain('/oauth/error');
+      expect(response.headers['location']).toContain('error=redirect_uri_mismatch');
+      expect(response.headers['location']).toContain('MUST+match+the+registered+callback+URL');
+    });
+
+    it('should fail with malformed custom URI scheme', async () => {
+      const malformedUri = 'invalid-uri-scheme';
+      const params = new URLSearchParams({
+        response_type: 'code',
+        client_id: fixture.application.settings.oauth.clientId,
+        redirect_uri: malformedUri,
+        state: 'test-state',
+        code_challenge: generateCodeChallenge(),
+        code_challenge_method: 'S256',
+      });
+      const authUrl = `${fixture.openIdConfiguration.authorization_endpoint}?${params.toString()}`;
+
+      const response = await performGet(authUrl).expect(302);
+      expect(response.headers['location']).toContain('/oauth/error');
+      expect(response.headers['location']).toContain('error=redirect_uri_mismatch');
+    });
+
+    it('should fail with redirect_uri mismatch in token exchange', async () => {
+      const codeVerifier = generateCodeVerifier();
+      const codeChallenge = generateCodeChallenge();
+      const authCode = await fixture.completeAuthorizationFlow(codeChallenge);
+
+      const tokenParams = new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: authCode,
+        redirect_uri: 'com.different.app:/callback', // Different from authorization
+        code_verifier: codeVerifier,
+      });
+
+      const response = await performPost(
+        `${fixture.openIdConfiguration.token_endpoint}?${tokenParams.toString()}`,
+        '',
+        null,
+        {
+          Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
+        }
+      ).expect(400);
+
+      expect(response.body.error).toBe('invalid_grant');
+      expect(response.body.error_description).toContain('Redirect URI mismatch');
+    });
+
+    it('should fail with HTTP redirect_uri when custom URI scheme is expected', async () => {
+      const httpUri = 'http://localhost:4000/callback';
+      const params = new URLSearchParams({
+        response_type: 'code',
+        client_id: fixture.application.settings.oauth.clientId,
+        redirect_uri: httpUri,
+        state: 'test-state',
+        code_challenge: generateCodeChallenge(),
+        code_challenge_method: 'S256',
+      });
+      const authUrl = `${fixture.openIdConfiguration.authorization_endpoint}?${params.toString()}`;
+
+      const response = await performGet(authUrl).expect(302);
+      expect(response.headers['location']).toContain('/oauth/error');
+      expect(response.headers['location']).toContain('error=redirect_uri_mismatch');
+    });
+  });
 });
