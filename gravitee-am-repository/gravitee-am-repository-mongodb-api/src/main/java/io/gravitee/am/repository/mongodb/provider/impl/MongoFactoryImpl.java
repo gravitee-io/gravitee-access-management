@@ -30,6 +30,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.mongodb.provider.MongoFactory;
 import io.gravitee.am.repository.mongodb.provider.metrics.MongoMetricsConnectionPoolListener;
 import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -66,7 +67,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 @Slf4j
 @Component("mongoFactory")
-public class MongoFactory implements FactoryBean<MongoClient> {
+public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory {
     private static final String PASSWORD = "password";
     private static final String SERVERS = "servers[";
     private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";

@@ -19,6 +19,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.mongodb.provider.MongoFactory;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 
@@ -96,7 +97,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
 
     @Override
     public ClientWrapper<MongoClient> getClientFromConfiguration(MongoConnectionConfiguration configuration) {
-        return new MongoClientWrapper(MongoFactory.createClient(configuration));
+        return new MongoClientWrapper(MongoFactoryImpl.createClient(configuration));
     }
 
     @Override

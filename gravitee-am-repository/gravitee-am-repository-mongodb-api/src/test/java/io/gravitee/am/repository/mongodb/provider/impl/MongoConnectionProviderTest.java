@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.provider.impl;
 import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.mongodb.provider.MongoFactory;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import org.junit.Before;
@@ -148,9 +149,12 @@ public class MongoConnectionProviderTest {
         setupDefaultConfiguration();
         mongoConnectionProvider.afterPropertiesSet();
 
-        ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapper(OAUTH2.getName());
+        ClientWrapper<MongoClient> oauthWrapper = mongoConnectionProvider.getClientWrapper(OAUTH2.getName());
+        ClientWrapper<MongoClient> mgmtWrapper = mongoConnectionProvider.getClientWrapper(MANAGEMENT.getName());
 
-        assertThat(result).isNotNull();
+        assertThat(oauthWrapper).isNotNull();
+        assertThat(mgmtWrapper).isNotNull();
+        assertThat(oauthWrapper).isSameAs(mgmtWrapper);
     }
 
     @Test
@@ -165,9 +169,12 @@ public class MongoConnectionProviderTest {
         when(mongoFactory.getObject()).thenReturn(mongoClient);
         mongoConnectionProvider.afterPropertiesSet();
 
-        ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapper(OAUTH2.getName());
+        ClientWrapper<MongoClient> oauthWrapper = mongoConnectionProvider.getClientWrapper(OAUTH2.getName());
+        ClientWrapper<MongoClient> mgmtWrapper = mongoConnectionProvider.getClientWrapper(MANAGEMENT.getName());
 
-        assertThat(result).isNotNull();
+        assertThat(oauthWrapper).isNotNull();
+        assertThat(mgmtWrapper).isNotNull();
+        assertThat(oauthWrapper).isNotSameAs(mgmtWrapper);
     }
 
     @Test
@@ -182,9 +189,13 @@ public class MongoConnectionProviderTest {
         when(mongoFactory.getObject()).thenReturn(mongoClient);
         mongoConnectionProvider.afterPropertiesSet();
 
-        ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapper(OAUTH2.getName());
 
-        assertThat(result).isNotNull();
+        ClientWrapper<MongoClient> oauthWrapper = mongoConnectionProvider.getClientWrapper(OAUTH2.getName());
+        ClientWrapper<MongoClient> gatewayWrapper = mongoConnectionProvider.getClientWrapper(GATEWAY.getName());
+
+        assertThat(oauthWrapper).isNotNull();
+        assertThat(gatewayWrapper).isNotNull();
+        assertThat(oauthWrapper).isSameAs(gatewayWrapper);
     }
 
     @Test
@@ -199,9 +210,12 @@ public class MongoConnectionProviderTest {
         when(mongoFactory.getObject()).thenReturn(mongoClient);
         mongoConnectionProvider.afterPropertiesSet();
 
-        ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapper(GATEWAY.getName());
+        ClientWrapper<MongoClient> gatewayWrapper = mongoConnectionProvider.getClientWrapper(GATEWAY.getName());
+        ClientWrapper<MongoClient> mgmtWrapper = mongoConnectionProvider.getClientWrapper(MANAGEMENT.getName());
 
-        assertThat(result).isNotNull();
+        assertThat(gatewayWrapper).isNotNull();
+        assertThat(mgmtWrapper).isNotNull();
+        assertThat(gatewayWrapper).isNotSameAs(mgmtWrapper);
     }
 
     @Test
