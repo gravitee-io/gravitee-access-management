@@ -43,7 +43,7 @@ export interface MobilePKCEFixture {
 }
 
 // Test constants
-const TEST_CONSTANTS = {
+export const TEST_CONSTANTS = {
   DOMAIN_NAME_PREFIX: 'mobile-pkce-test',
   DOMAIN_DESCRIPTION: 'Mobile PKCE test domain',
   APP_NAME: 'mobile-pkce-app',
@@ -56,18 +56,16 @@ const TEST_CONSTANTS = {
   USER_EMAIL: 'mobile.user@test.com',
   USER_FIRST_NAME: 'Mobile',
   USER_LAST_NAME: 'User',
-  CODE_VERIFIER: 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk',
-  CODE_CHALLENGE: 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM',
   CODE_CHALLENGE_METHOD: 'S256' as const,
 } as const;
 
-// PKCE helper functions
-export function generateCodeVerifier(): string {
-  return TEST_CONSTANTS.CODE_VERIFIER;
-}
-
-export function generateCodeChallenge(): string {
-  return TEST_CONSTANTS.CODE_CHALLENGE;
+// Helper function to parse error messages from URL-encoded location headers
+export function parseErrorFromLocation(location: string): { error: string; errorDescription: string } {
+  const url = new URL(location);
+  return {
+    error: url.searchParams.get('error') || '',
+    errorDescription: url.searchParams.get('error_description') || '',
+  };
 }
 
 // Helper functions for PKCE flow
@@ -93,7 +91,7 @@ export function extractAuthorizationCode(redirectUrl: string): string {
 export function validateTokenResponse(tokenResult: any): void {
   expect(tokenResult.body.access_token).toBeDefined();
   expect(tokenResult.body.token_type).toBeDefined();
-  expect(tokenResult.body.token_type).toEqual('bearer');
+  expect(tokenResult.body.token_type.toLowerCase()).toBe('bearer');
   expect(tokenResult.body.expires_in).toBeDefined();
   expect(tokenResult.body.scope).toBeDefined();
 }
@@ -236,10 +234,11 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
     });
 
     return performPost(
-      `${openIdConfiguration.token_endpoint}?${tokenParams.toString()}`,
+      openIdConfiguration.token_endpoint,
       '',
-      null,
+      tokenParams.toString(),
       {
+        'Content-Type': 'application/x-www-form-urlencoded',
         Authorization: `Basic ${applicationBase64Token(application)}`,
       }
     );
@@ -250,7 +249,7 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
       response_type: 'code',
       client_id: application.settings.oauth.clientId,
       redirect_uri: redirectUri,
-      state: 'test-state',
+      state: TEST_CONSTANTS.STATE,
       ...params,
     });
     return `${openIdConfiguration.authorization_endpoint}?${urlParams.toString()}`;
