@@ -28,6 +28,7 @@ import io.gravitee.am.identityprovider.mongo.MongoIdentityProviderConfiguration;
 import io.gravitee.am.identityprovider.mongo.utils.PasswordEncoder;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import io.reactivex.rxjava3.core.Observable;
 import org.bson.Document;
 import org.springframework.beans.factory.InitializingBean;
@@ -59,6 +60,11 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
                 new Document("username", "UserWithCase").append("email", "userwithcase@acme.com").append("password", "UserWithCase")
         );
         users.forEach(doc -> Observable.fromPublisher(collection.insertOne(doc)).blockingFirst());
+    }
+
+    @Bean
+    public DataSourcesConfiguration dataSourcesConfiguration() {
+        return new DataSourcesConfiguration(null);
     }
 
     @Bean

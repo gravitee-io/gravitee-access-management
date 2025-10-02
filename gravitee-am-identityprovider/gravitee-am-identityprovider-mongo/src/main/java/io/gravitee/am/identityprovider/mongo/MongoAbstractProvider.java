@@ -134,7 +134,7 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     private String determinePrefixFromDataSourceId(String datasourceId) {
         var prefix = dataSourcesConfiguration.getDataSourceKeyById(datasourceId);
         if (!isNull(prefix)) {
-            return prefix + ".";
+            return prefix + ".settings.";
         }
 
         throw new IllegalArgumentException("No datasource found for id: " + datasourceId);
