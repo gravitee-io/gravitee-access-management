@@ -1099,6 +1099,7 @@ jobs:
             helm dependency build helm/
             
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              echo "running: helm upgrade for am-master-dev"
               helm upgrade \
                           --install am-master \
                           -n am-master-dev \
@@ -1109,18 +1110,7 @@ jobs:
                           --set "gateway.image.tag=${TAG}" \
                           --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                           --set "ui.image.tag=${TAG}"
-            
-              helm upgrade \
-                          --install am-master-ce \
-                          -n am-master-ce-dev \
-                          -f ./cloud-am/devs-preprod/values-ce.yaml ./helm/ \
-                          --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                          --set "api.image.tag=${TAG}" \
-                          --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                          --set "gateway.image.tag=${TAG}" \
-                          --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                          --set "ui.image.tag=${TAG}"
-            
+              echo "running: helm upgrade for am-master-postgres-dev"
               helm upgrade \
                           --install am-psql \
                           -n am-master-postgres-dev \
@@ -1136,6 +1126,7 @@ jobs:
               kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
               # replace verison Pattern into generic maint configuration
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-maint.yaml
+              echo "running: helm upgrade for am-${CIRCLE_BRANCH//./-}-dev"
               helm upgrade \
                                       --install am-${CIRCLE_BRANCH//./-} \
                                       -n am-${CIRCLE_BRANCH//./-}-dev \
@@ -1150,6 +1141,7 @@ jobs:
               # same with ce version
               kubectl create namespace am-${CIRCLE_BRANCH//./-}-ce-dev --dry-run=client -o yaml | kubectl apply -f -
               sed -i 's#__BRANCH_NAME_SANITIZED__#'${CIRCLE_BRANCH//./-}'#g' ./cloud-am/devs-preprod/values-ce-maint.yaml
+              echo "running: helm upgrade for am-${CIRCLE_BRANCH//./-}-ce-dev"
               helm upgrade \
                                       --install am-${CIRCLE_BRANCH//./-}-ce \
                                       -n am-${CIRCLE_BRANCH//./-}-ce-dev \
