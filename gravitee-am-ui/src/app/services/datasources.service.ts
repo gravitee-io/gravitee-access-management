@@ -21,7 +21,7 @@ import { AppConfig } from '../../config/app.config';
 
 @Injectable()
 export class DataSourcesService {
-    private baseURL: string = AppConfig.settings.environmentBaseURL;
+  private baseURL: string = AppConfig.settings.environmentBaseURL;
 
   constructor(private http: HttpClient) {}
 

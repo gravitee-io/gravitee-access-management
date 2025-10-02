@@ -23,7 +23,7 @@ import { DataSourcesService } from '../services/datasources.service';
 export class DataSourcesResolver {
   constructor(private datasourcesService: DataSourcesService) {}
 
-  resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any> {
+  resolve(_route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): Observable<any> {
     return this.datasourcesService.findAll();
   }
 }

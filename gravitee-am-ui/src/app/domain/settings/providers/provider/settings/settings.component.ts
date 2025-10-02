@@ -106,7 +106,6 @@ export class ProviderSettingsComponent implements OnInit {
             }
             this.providerSchema['properties'][key].default = '';
           });
-          
           // Process datasource widgets
           this.applyDataSourceSelection();
         }
@@ -218,7 +217,6 @@ export class ProviderSettingsComponent implements OnInit {
         this.applyDataSourceSelectionRecursive(child, key);
       }
     }
-    
     // Handle arrays
     if (property.type === 'array') {
       if (property.items?.properties) {
@@ -228,7 +226,6 @@ export class ProviderSettingsComponent implements OnInit {
         }
       }
     }
-    
     // Apply datasource widget transformation
     this.applyDataSourceWidget(property, propertyName);
   }
