@@ -29,6 +29,7 @@ import com.mongodb.connection.TransportSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 import io.gravitee.am.repository.mongodb.provider.MongoFactory;
 import io.gravitee.am.repository.mongodb.provider.metrics.MongoMetricsConnectionPoolListener;
@@ -67,7 +68,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  */
 @Slf4j
 @Component("mongoFactory")
-public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory {
+public class MongoFactoryImpl implements MongoFactory {
     private static final String PASSWORD = "password";
     private static final String SERVERS = "servers[";
     private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
@@ -108,11 +109,6 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
             mongoClient = MongoClients.create(settings.build());
         }
         return mongoClient;
-    }
-
-    @Override
-    public MongoClient getObject() {
-        throw new UnsupportedOperationException("Use getObject(String prefix) instead.");
     }
 
     @Override
@@ -300,16 +296,6 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
         T value = environment.getProperty(propertyName, propertyType, defaultValue);
         log.debug("Read property {}: {}", propertyName, value);
         return value;
-    }
-
-    @Override
-    public Class<?> getObjectType() {
-        return MongoClient.class;
-    }
-
-    @Override
-    public boolean isSingleton() {
-        return true;
     }
 
     private KeyManager[] getKeyManagers(String propertyPrefix) {
