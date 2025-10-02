@@ -43,7 +43,7 @@ export class WidgetChartGaugeComponent implements OnChanges {
           ? `<div style="text-align: center;"><p>No data to display</p></div>`
           : `<div style="text-align: center;">
           <p>${title}</p>
-          <p>${percentage}: % <small style="font-size: 65%">(${current}/${max})</small></p>
+          <p>${percentage.toFixed(1)}% <small style="font-size: 65%">(${current}/${max})</small></p>
          </div>`;
       this.chartOptions = {
         title: {
