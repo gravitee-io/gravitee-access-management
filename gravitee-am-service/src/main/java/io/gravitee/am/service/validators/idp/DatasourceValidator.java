@@ -21,5 +21,4 @@ import io.reactivex.rxjava3.core.Observable;
 
 public interface DatasourceValidator {
     Completable validate(String configuration);
-    Observable<String> getDatasourceIdentifierKeys();
 }

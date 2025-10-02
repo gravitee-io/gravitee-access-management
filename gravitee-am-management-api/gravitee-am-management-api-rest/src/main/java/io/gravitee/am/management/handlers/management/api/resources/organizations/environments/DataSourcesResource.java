@@ -57,7 +57,7 @@ public class DataSourcesResource extends AbstractResource {
             @Suspended final AsyncResponse response) {
 
         datasourceService.findAll()
-                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName()))
+                .sorted((o1, o2) -> String.CASE_INSENSITIVE_ORDER.compare(o1.name(), o2.name()))
                 .toList()
                 .subscribe(response::resume, response::resume);
     }

@@ -28,7 +28,7 @@ import java.util.Set;
 @Configuration
 public class DataSourcesConfiguration {
 
-    public static final String DATASOURCES_PREFIX = "datasources.";
+    private static final String DATASOURCES_PREFIX = "datasources.";
     private final ConfigurableEnvironment environment;
 
     private Map<String, DataSource> dataSources;
@@ -49,10 +49,6 @@ public class DataSourcesConfiguration {
     private void buildDataSources() {
         dataSources = new HashMap<>();
 
-        if (environment == null) {
-            return;
-        }
-
         var properties = EnvironmentUtils.getPropertiesStartingWith(environment, DATASOURCES_PREFIX);
         parseDatasource(properties);
     }
@@ -63,10 +59,6 @@ public class DataSourcesConfiguration {
         for (Map.Entry<String, Object> entry : properties.entrySet()) {
             String key = entry.getKey();
             String value = entry.getValue() != null ? entry.getValue().toString() : "";
-
-            if (!key.startsWith(DATASOURCES_PREFIX)) {
-                continue;
-            }
 
             String relativeKey = key.substring(DATASOURCES_PREFIX.length());
 

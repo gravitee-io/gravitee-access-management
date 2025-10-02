@@ -18,6 +18,7 @@ package io.gravitee.am.service.validators.idp;
 
 import com.nimbusds.jose.util.JSONObjectUtils;
 import io.gravitee.am.service.exception.InvalidDataSourceException;
+import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import io.gravitee.common.util.EnvironmentUtils;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -35,18 +36,11 @@ import java.util.Objects;
 @Component
 public class DatasourceValidatorImpl implements DatasourceValidator {
     private static final Logger logger = LoggerFactory.getLogger(DatasourceValidatorImpl.class);
-    
-    private static final String DATASOURCES_PREFIX = "datasources.";
+
     public static final String DATASOURCE_ID_KEY = "datasourceId";
 
     @Autowired
-    private StandardEnvironment environment;
-
-    public DatasourceValidatorImpl() {}
-
-    public DatasourceValidatorImpl(StandardEnvironment environment) {
-        this.environment = environment;
-    }
+    private DataSourcesConfiguration dataSourcesConfiguration;
 
     public Completable validate(String configuration) {
         return Observable.fromCallable(() -> configuration)
@@ -70,21 +64,9 @@ public class DatasourceValidatorImpl implements DatasourceValidator {
 
     private Completable validateDatasourceId(String datasourceId) {
         logger.debug("validating datasource ID: {}", datasourceId);
-        return getDatasourceIdentifierKeys()
-                .map(key -> environment.getProperty(key, String.class))
-                .filter(Objects::nonNull)
-                .filter(datasourceId::equals)
-                .firstElement()
-                .switchIfEmpty(Maybe.error(new InvalidDataSourceException(
-                        String.format("Datasource with ID %s not found", datasourceId))))
-                .ignoreElement();
-    }
-
-    public Observable<String> getDatasourceIdentifierKeys() {
-        return Observable.fromCallable(() -> EnvironmentUtils
-                .getPropertiesStartingWith(environment, DATASOURCES_PREFIX))
-                .flatMapIterable(Map::keySet)
-                .cast(String.class)
-                .filter(key -> key.contains(".id"));
+        if (dataSourcesConfiguration.getDataSourceKeyById(datasourceId) == null) {
+            throw new InvalidDataSourceException("Could not find datasource with id: " + datasourceId);
+        }
+        return Completable.complete();
     }
 }

@@ -15,29 +15,10 @@
  */
 package io.gravitee.am.model;
 
-import lombok.Getter;
-import lombok.Setter;
+public record DataSource(String id, String name, String description) implements Resource {
 
-/**
- * @author GraviteeSource Team
- */
-
-@Setter
-@Getter
-public class DataSource implements Resource{
-
-    private String id;
-    private String name;
-    private String description;
-
-    public DataSource() {
-        super();
-    }
-
-    public DataSource(String id, String name, String description) {
-        super();
-        this.id = id;
-        this.name = name;
-        this.description = description;
+    @Override
+    public String getId() {
+        return this.id;
     }
 }

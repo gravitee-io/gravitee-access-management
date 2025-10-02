@@ -49,14 +49,6 @@ public class DataSourcesConfigurationTest {
     }
 
     @Test
-    public void testConstructor_WithNullEnvironment() {
-        DataSourcesConfiguration config = new DataSourcesConfiguration(null);
-        
-        assertThat(config.getDataSources()).isEmpty();
-        assertThat(config.getDataSourcesAsSet()).isEmpty();
-    }
-
-    @Test
     public void testConstructor_WithEmptyProperties() {
         ConfigurableEnvironment environment = org.mockito.Mockito.mock(ConfigurableEnvironment.class);
         
@@ -90,14 +82,14 @@ public class DataSourcesConfigurationTest {
         
         DataSource dataSource = dataSourcesMap.get("datasources.mongo[0]");
         assertThat(dataSource.getId()).isEqualTo("mongo-db-1");
-        assertThat(dataSource.getName()).isEqualTo("MongoDB Database");
-        assertThat(dataSource.getDescription()).isEqualTo("Primary MongoDB database");
+        assertThat(dataSource.name()).isEqualTo("MongoDB Database");
+        assertThat(dataSource.description()).isEqualTo("Primary MongoDB database");
         
         // Check the set contains the same datasource
         DataSource dataSourceFromSet = dataSourcesSet.iterator().next();
         assertThat(dataSourceFromSet.getId()).isEqualTo("mongo-db-1");
-        assertThat(dataSourceFromSet.getName()).isEqualTo("MongoDB Database");
-        assertThat(dataSourceFromSet.getDescription()).isEqualTo("Primary MongoDB database");
+        assertThat(dataSourceFromSet.name()).isEqualTo("MongoDB Database");
+        assertThat(dataSourceFromSet.description()).isEqualTo("Primary MongoDB database");
     }
 
     @Test
@@ -113,8 +105,8 @@ public class DataSourcesConfigurationTest {
         
         DataSource dataSource = dataSources.iterator().next();
         assertThat(dataSource.getId()).isEqualTo("mongo-db-1");
-        assertThat(dataSource.getName()).isEqualTo("mongo-db-1"); // Should default to id
-        assertThat(dataSource.getDescription()).isEqualTo("Primary MongoDB database");
+        assertThat(dataSource.name()).isEqualTo("mongo-db-1"); // Should default to id
+        assertThat(dataSource.description()).isEqualTo("Primary MongoDB database");
     }
 
     @Test
@@ -130,8 +122,8 @@ public class DataSourcesConfigurationTest {
         
         DataSource dataSource = dataSources.iterator().next();
         assertThat(dataSource.getId()).isEqualTo("mongo-db-1");
-        assertThat(dataSource.getName()).isEqualTo("MongoDB Database");
-        assertThat(dataSource.getDescription()).isEqualTo("mongo datasource (index: 0)");
+        assertThat(dataSource.name()).isEqualTo("MongoDB Database");
+        assertThat(dataSource.description()).isEqualTo("mongo datasource (index: 0)");
     }
 
     @Test
@@ -197,13 +189,13 @@ public class DataSourcesConfigurationTest {
 
         assertThat(primaryDb).isNotNull();
         assertThat(primaryDb.getId()).isEqualTo("mongo-db-1");
-        assertThat(primaryDb.getName()).isEqualTo("Primary MongoDB");
-        assertThat(primaryDb.getDescription()).isEqualTo("Primary database");
+        assertThat(primaryDb.name()).isEqualTo("Primary MongoDB");
+        assertThat(primaryDb.description()).isEqualTo("Primary database");
 
         assertThat(secondaryDb).isNotNull();
         assertThat(secondaryDb.getId()).isEqualTo("mongo-db-2");
-        assertThat(secondaryDb.getName()).isEqualTo("Secondary MongoDB");
-        assertThat(secondaryDb.getDescription()).isEqualTo("Secondary database");
+        assertThat(secondaryDb.name()).isEqualTo("Secondary MongoDB");
+        assertThat(secondaryDb.description()).isEqualTo("Secondary database");
     }
 
     @Test
@@ -231,13 +223,13 @@ public class DataSourcesConfigurationTest {
 
         assertThat(mongoDb).isNotNull();
         assertThat(mongoDb.getId()).isEqualTo("mongo-db-1");
-        assertThat(mongoDb.getName()).isEqualTo("MongoDB Database");
-        assertThat(mongoDb.getDescription()).isEqualTo("MongoDB database");
+        assertThat(mongoDb.name()).isEqualTo("MongoDB Database");
+        assertThat(mongoDb.description()).isEqualTo("MongoDB database");
 
         assertThat(postgresDb).isNotNull();
         assertThat(postgresDb.getId()).isEqualTo("postgres-db-1");
-        assertThat(postgresDb.getName()).isEqualTo("PostgreSQL Database");
-        assertThat(postgresDb.getDescription()).isEqualTo("PostgreSQL database");
+        assertThat(postgresDb.name()).isEqualTo("PostgreSQL Database");
+        assertThat(postgresDb.description()).isEqualTo("PostgreSQL database");
     }
 
     @Test
@@ -255,7 +247,7 @@ public class DataSourcesConfigurationTest {
         
         DataSource dataSource = dataSources.iterator().next();
         assertThat(dataSource.getId()).isEqualTo("mongo-db-3");
-        assertThat(dataSource.getName()).isEqualTo("MongoDB Database");
+        assertThat(dataSource.name()).isEqualTo("MongoDB Database");
     }
 
     @Test
@@ -272,8 +264,8 @@ public class DataSourcesConfigurationTest {
         
         DataSource dataSource = dataSources.iterator().next();
         assertThat(dataSource.getId()).isEqualTo("mongo-db-1");
-        assertThat(dataSource.getName()).isEqualTo("mongo-db-1"); // Should default to id
-        assertThat(dataSource.getDescription()).isEqualTo("mongo datasource (index: 0)");
+        assertThat(dataSource.name()).isEqualTo("mongo-db-1"); // Should default to id
+        assertThat(dataSource.description()).isEqualTo("mongo datasource (index: 0)");
     }
 
     @Test
