@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.mongo;
 
 import com.mongodb.reactivestreams.client.MongoClient;
+import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.impl.MongoConnectionProvider;
@@ -52,6 +53,9 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
     @Autowired
     protected Environment environment;
+
+    @Autowired
+    private DataSourcesConfiguration dataSourcesConfiguration;
 
     protected ClientWrapper<MongoClient> clientWrapper;
 
@@ -128,18 +132,11 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     }
 
     private String determinePrefixFromDataSourceId(String datasourceId) {
-        final String prefix = "datasources.mongodb";
-        for (int i = 0; true; i++) {
-            var propertyKey = String.format("%s[%d].id", prefix, i);
-            var value = environment.getProperty(propertyKey, String.class);
-            if (isNull(value)) {
-                throw new IllegalArgumentException("No datasource found with id: " + datasourceId);
-            }
-
-            if (datasourceId.equals(value)) {
-                log.debug("Datasource found with id={} at index={}", datasourceId, i);
-                return String.format("%s[%d].settings", prefix, i);
-            }
+        var prefix = dataSourcesConfiguration.getDataSourceKeyById(datasourceId);
+        if (!isNull(prefix)) {
+            return prefix + ".";
         }
+
+        throw new IllegalArgumentException("No datasource found for id: " + datasourceId);
     }
 }

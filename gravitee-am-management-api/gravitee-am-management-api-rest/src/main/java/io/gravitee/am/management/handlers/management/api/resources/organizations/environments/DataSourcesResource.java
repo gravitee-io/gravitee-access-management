@@ -43,7 +43,8 @@ public class DataSourcesResource extends AbstractResource {
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List all the data sources",
+    @Operation(operationId="listAllDataSources",
+            summary = "List all the data sources",
             description = "Returns all of the available data sources to be used in IDP creation")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List all the IDP data sources",
