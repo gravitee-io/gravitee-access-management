@@ -49,6 +49,10 @@ public class DataSourcesConfiguration {
     private void buildDataSources() {
         dataSources = new HashMap<>();
 
+        if(environment == null) {
+            return;
+        }
+
         var properties = EnvironmentUtils.getPropertiesStartingWith(environment, DATASOURCES_PREFIX);
         parseDatasource(properties);
     }
