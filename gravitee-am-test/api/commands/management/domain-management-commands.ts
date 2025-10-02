@@ -24,7 +24,7 @@ import faker from 'faker';
 
 const request = require('supertest');
 
-export type DomainOidcConfig = { userinfo_endpoint: string; token_endpoint: string; end_session_endpoint: string; [key: string]: any };
+export type DomainOidcConfig = { userinfo_endpoint: string; token_endpoint: string; end_session_endpoint: string; introspection_endpoint: string, [key: string]: any };
 export type DomainWithOidcConfig = { domain: Domain; oidcConfig?: DomainOidcConfig };
 
 export const setupDomainForTest = async (
