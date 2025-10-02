@@ -77,15 +77,14 @@ public class MongoConnectionProviderTest {
         when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
                 .thenReturn(true);
 
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
         mongoConnectionProvider.afterPropertiesSet();
 
         verify(environment).getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true));
         verify(environment).getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false));
         verify(environment).getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true));
-        verify(mongoFactory, atLeastOnce()).setPropertyPrefix(anyString());
-        verify(mongoFactory, atLeastOnce()).getObject();
+        verify(mongoFactory, atLeastOnce()).getObject(any());
     }
 
     @Test
@@ -97,13 +96,12 @@ public class MongoConnectionProviderTest {
         when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
                 .thenReturn(true);
 
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
         mongoConnectionProvider.afterPropertiesSet();
 
-        verify(mongoFactory).setPropertyPrefix(MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.");
-        verify(mongoFactory).setPropertyPrefix(OAUTH2.getRepositoryPropertyKey() + ".mongodb.");
-        verify(mongoFactory, atLeast(2)).getObject();
+        verify(mongoFactory).getObject(MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.");
+        verify(mongoFactory).getObject(OAUTH2.getRepositoryPropertyKey() + ".mongodb.");
     }
 
     @Test
@@ -115,13 +113,12 @@ public class MongoConnectionProviderTest {
         when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
                 .thenReturn(false);
 
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
         mongoConnectionProvider.afterPropertiesSet();
 
-        verify(mongoFactory).setPropertyPrefix(MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.");
-        verify(mongoFactory).setPropertyPrefix(GATEWAY.getRepositoryPropertyKey() + ".mongodb.");
-        verify(mongoFactory, atLeast(2)).getObject();
+        verify(mongoFactory).getObject(MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.");
+        verify(mongoFactory).getObject(GATEWAY.getRepositoryPropertyKey() + ".mongodb.");
     }
 
     @Test
@@ -166,7 +163,7 @@ public class MongoConnectionProviderTest {
         when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
                 .thenReturn(true);
 
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
         mongoConnectionProvider.afterPropertiesSet();
 
         ClientWrapper<MongoClient> oauthWrapper = mongoConnectionProvider.getClientWrapper(OAUTH2.getName());
@@ -186,7 +183,7 @@ public class MongoConnectionProviderTest {
         when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
                 .thenReturn(false);
 
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
         mongoConnectionProvider.afterPropertiesSet();
 
 
@@ -207,7 +204,7 @@ public class MongoConnectionProviderTest {
         when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
                 .thenReturn(false);
 
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
         mongoConnectionProvider.afterPropertiesSet();
 
         ClientWrapper<MongoClient> gatewayWrapper = mongoConnectionProvider.getClientWrapper(GATEWAY.getName());
@@ -226,51 +223,47 @@ public class MongoConnectionProviderTest {
 
         assertThat(result).isNotNull();
         assertThat(result).isInstanceOf(MongoClientWrapper.class);
-        verify(mongoFactory, never()).setPropertyPrefix(anyString());
-        verify(mongoFactory, never()).getObject();
+        verify(mongoFactory, never()).getObject(any());
     }
 
     @Test
     public void testGetClientWrapperFromDatasource_NewDatasource() {
         String datasourceId = "test-datasource";
         String propertyPrefix = "test.prefix.";
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
         ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
 
         assertThat(result).isNotNull();
         assertThat(result).isInstanceOf(MongoClientWrapper.class);
-        verify(mongoFactory).setPropertyPrefix(propertyPrefix);
-        verify(mongoFactory).getObject();
+        verify(mongoFactory).getObject(propertyPrefix);
     }
 
     @Test
     public void testGetClientWrapperFromDatasource_ExistingDatasource() {
         String datasourceId = "test-datasource";
         String propertyPrefix = "test.prefix.";
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
         ClientWrapper<MongoClient> result1 = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
         ClientWrapper<MongoClient> result2 = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
 
         assertThat(result1).isSameAs(result2);
-        verify(mongoFactory, times(1)).setPropertyPrefix(propertyPrefix);
-        verify(mongoFactory, times(1)).getObject();
+        verify(mongoFactory, times(1)).getObject(propertyPrefix);
     }
 
     @Test
     public void testGetClientWrapperFromDatasource_CleanupOnShutdown() {
         String datasourceId = "test-datasource";
         String propertyPrefix = "test.prefix.";
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
         ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
         
         MongoClientWrapper wrapper = (MongoClientWrapper) result;
         wrapper.releaseClient();
 
-        verify(mongoFactory).setPropertyPrefix(propertyPrefix);
-        verify(mongoFactory).getObject();
+        verify(mongoFactory).getObject(propertyPrefix);
     }
 
     @Test
@@ -326,22 +319,21 @@ public class MongoConnectionProviderTest {
         String datasource2 = "datasource2";
         String prefix1 = "prefix1.";
         String prefix2 = "prefix2.";
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
         ClientWrapper<MongoClient> result1 = mongoConnectionProvider.getClientWrapperFromDatasource(datasource1, prefix1);
         ClientWrapper<MongoClient> result2 = mongoConnectionProvider.getClientWrapperFromDatasource(datasource2, prefix2);
 
         assertThat(result1).isNotSameAs(result2);
-        verify(mongoFactory).setPropertyPrefix(prefix1);
-        verify(mongoFactory).setPropertyPrefix(prefix2);
-        verify(mongoFactory, times(2)).getObject();
+        verify(mongoFactory).getObject(prefix1);
+        verify(mongoFactory).getObject(prefix2);
     }
 
     @Test
     public void testDatasourceClientWrapperCleanup() throws Exception {
         String datasourceId = "cleanup-test";
         String propertyPrefix = "test.prefix.";
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
         ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
         
@@ -363,6 +355,6 @@ public class MongoConnectionProviderTest {
                 .thenReturn(false);
         when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
                 .thenReturn(true);
-        when(mongoFactory.getObject()).thenReturn(mongoClient);
+        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
     }
 }

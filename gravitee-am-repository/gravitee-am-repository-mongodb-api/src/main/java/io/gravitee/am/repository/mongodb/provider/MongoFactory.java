@@ -23,16 +23,9 @@ import com.mongodb.reactivestreams.client.MongoClient;
  * @author GraviteeSource Team
  */
 public interface MongoFactory {
-
-    /**
-     * Set the property prefix for configuration
-     * @param propertyPrefix the property prefix
-     */
-    void setPropertyPrefix(String propertyPrefix);
-
     /**
      * Get the MongoDB client instance
      * @return the MongoDB client
      */
-    MongoClient getObject();
+    MongoClient getObject(String prefix);
 }

@@ -76,9 +76,6 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
     @Autowired
     private RepositoriesEnvironment environment;
 
-    @Setter
-    private String propertyPrefix;
-
     public static MongoClient createClient(MongoConnectionConfiguration configuration) {
         MongoClient mongoClient;
 
@@ -115,9 +112,11 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
 
     @Override
     public MongoClient getObject() {
-        if (propertyPrefix == null) {
-            throw new IllegalStateException("Property prefix is not initialized");
-        }
+        throw new UnsupportedOperationException("Use getObject(String prefix) instead.");
+    }
+
+    @Override
+    public MongoClient getObject(String propertyPrefix){
 
         // Client settings
         MongoClientSettings.Builder builder = MongoClientSettings.builder();
@@ -133,8 +132,8 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
         final MeterRegistry amRegistry = Metrics.getDefaultRegistry();
         final MongoMetricsConnectionPoolListener connectionPoolListener = new MongoMetricsConnectionPoolListener(amRegistry, "common-pool");
 
-        final SslSettings sslSettings = buildSslSettings();
-        final ServerSettings serverSettings = buildServerSettings();
+        final SslSettings sslSettings = buildSslSettings(propertyPrefix);
+        final ServerSettings serverSettings = buildServerSettings(propertyPrefix);
 
         // Trying to get the MongoClientURI if uri property is defined
         String uri = readPropertyValue(propertyPrefix + "uri");
@@ -206,7 +205,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
 
             // clustering option
             List<ServerAddress> seeds;
-            int serversCount = getServersCount();
+            int serversCount = getServersCount(propertyPrefix);
             if (serversCount == 0) {
                 String host = readPropertyValue(propertyPrefix + "host", String.class, "localhost");
                 int port = readPropertyValue(propertyPrefix + "port", int.class, 27017);
@@ -214,7 +213,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
             } else {
                 seeds = new ArrayList<>(serversCount);
                 for (int i = 0; i < serversCount; i++) {
-                    seeds.add(buildServerAddress(i));
+                    seeds.add(buildServerAddress(i, propertyPrefix));
                 }
             }
             clusterBuilder.hosts(seeds);
@@ -236,7 +235,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
         }
     }
 
-    private SslSettings buildSslSettings() {
+    private SslSettings buildSslSettings(String propertyPrefix) {
         final SslSettings.Builder sslBuilder = SslSettings.builder();
         final boolean sslEnabled = readPropertyValue(propertyPrefix + "sslEnabled", Boolean.class, false);
         sslBuilder.enabled(sslEnabled);
@@ -244,7 +243,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
             try {
                 String tlsProtocol = readPropertyValue(propertyPrefix + "tlsProtocol", String.class, DEFAULT_TLS_PROTOCOL);
                 SSLContext sslContext = SSLContext.getInstance(tlsProtocol);
-                sslContext.init(getKeyManagers(), getTrustManagers(), null);
+                sslContext.init(getKeyManagers(propertyPrefix), getTrustManagers(propertyPrefix), null);
                 sslBuilder.context(sslContext);
 
                 Boolean sslInvalidHostNameAllowed = readPropertyValue(propertyPrefix + "sslInvalidHostNameAllowed", Boolean.class, false);
@@ -256,7 +255,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
         return sslBuilder.build();
     }
 
-    private ServerSettings buildServerSettings() {
+    private ServerSettings buildServerSettings(String propertyPrefix) {
         ServerSettings.Builder serverBuilder = ServerSettings.builder();
         Integer minHeartbeatFrequency = readPropertyValue(propertyPrefix + "minHeartbeatFrequency", Integer.class);
         Integer heartbeatFrequency = readPropertyValue(propertyPrefix + "heartbeatFrequency", Integer.class);
@@ -268,7 +267,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
         return serverBuilder.build();
     }
 
-    private int getServersCount() {
+    private int getServersCount(String propertyPrefix) {
         log.debug("Looking for MongoDB server configuration...");
 
         boolean found = true;
@@ -282,7 +281,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
         return --idx;
     }
 
-    private ServerAddress buildServerAddress(int idx) {
+    private ServerAddress buildServerAddress(int idx, String propertyPrefix) {
         String host = environment.getProperty(propertyPrefix + SERVERS + idx + "].host");
         int port = readPropertyValue(propertyPrefix + SERVERS + idx + "].port", int.class, 27017);
 
@@ -313,7 +312,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
         return true;
     }
 
-    private KeyManager[] getKeyManagers() {
+    private KeyManager[] getKeyManagers(String propertyPrefix) {
         String keystorePropertyPrefix = propertyPrefix + "keystore.";
         // TODO: Old properties are kept for backwards compatibility, new ones were added in 3.18.1.
         // So remove `keystore`, `keystorePassword` and `keyPassword` properties in 3.19.0+
@@ -349,7 +348,7 @@ public class MongoFactoryImpl implements FactoryBean<MongoClient>, MongoFactory 
         }
     }
 
-    private TrustManager[] getTrustManagers() {
+    private TrustManager[] getTrustManagers(String propertyPrefix) {
         String truststorePropertyPrefix = propertyPrefix + "truststore.";
         String truststorePath = readPropertyValue(truststorePropertyPrefix + "path", String.class);
         String truststoreType = readPropertyValue(truststorePropertyPrefix + "type", String.class);

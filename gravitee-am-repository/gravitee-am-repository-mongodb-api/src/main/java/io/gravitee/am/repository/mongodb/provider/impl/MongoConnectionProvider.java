@@ -105,8 +105,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         log.debug("Using datasource {} with property prefix {}", datasourceId, propertyPrefix);
         return this.dsClientWrappers.computeIfAbsent(datasourceId, k ->
                 {
-                    mongoFactory.setPropertyPrefix(propertyPrefix);
-                    return new MongoClientWrapper(mongoFactory.getObject(), () -> {
+                    return new MongoClientWrapper(mongoFactory.getObject(propertyPrefix), () -> {
                         log.debug("Cleaning up datasource {}", datasourceId);
                         this.dsClientWrappers.remove(datasourceId);
                     });
@@ -133,7 +132,6 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     }
 
     private MongoClientWrapper buildClientWrapper(String prefix) {
-        mongoFactory.setPropertyPrefix(prefix);
-        return new MongoClientWrapper(mongoFactory.getObject());
+        return new MongoClientWrapper(mongoFactory.getObject(prefix));
     }
 }
