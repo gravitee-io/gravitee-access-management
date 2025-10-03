@@ -98,4 +98,11 @@ public interface ApplicationService {
     default Completable delete(String id, Domain domain) {
         return delete(id, null, domain);
     }
+
+    /**
+     * Fetch agent card information from the specified URL
+     * @param agentCardUrl The URL to fetch agent card information from
+     * @return Single containing the agent card information
+     */
+    Single<Object> fetchAgentCard(String agentCardUrl);
 }

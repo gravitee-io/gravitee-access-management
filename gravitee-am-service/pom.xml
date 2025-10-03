@@ -68,6 +68,13 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- OpenFGA SDK -->
+        <dependency>
+            <groupId>dev.openfga</groupId>
+            <artifactId>openfga-sdk</artifactId>
+            <version>0.8.2</version>
+        </dependency>
+
         <!-- TODO remove this dependency, it's used to generate certificate file, should be replaced with well known endpoint -->
         <dependency>
             <groupId>io.gravitee.am.plugins.handlers</groupId>
@@ -181,6 +188,11 @@
         <dependency>
             <groupId>jakarta.inject</groupId>
             <artifactId>jakarta.inject-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.openfga</groupId>
+            <artifactId>openfga-sdk</artifactId>
+            <version>0.9.0</version>
         </dependency>
         <!-- Need to keep javax until all dependencies we are using are migrate to JDK17 -->
         <dependency>

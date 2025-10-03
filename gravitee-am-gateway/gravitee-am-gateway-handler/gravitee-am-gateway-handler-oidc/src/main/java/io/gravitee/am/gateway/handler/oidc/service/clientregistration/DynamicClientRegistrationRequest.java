@@ -19,7 +19,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.converter.JWKSetDeserializer;
+import io.gravitee.am.model.application.ApplicationMCPSettings;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.MCPToolDefinition;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.oidc.JWKSet;
 import io.gravitee.am.service.utils.SetterUtils;
@@ -215,6 +217,9 @@ public class DynamicClientRegistrationRequest {
     @JsonProperty("backchannel_user_code_parameter")
     private Optional<Boolean> backchannelUserCodeParameter;
 
+    @JsonProperty("x_mcp_settings")
+    private Optional<ApplicationMCPSettings> mcp;
+
     // GETTER AND SETTERS //
 
     public Optional<List<String>> getRedirectUris() {
@@ -319,6 +324,14 @@ public class DynamicClientRegistrationRequest {
 
     public void setSectorIdentifierUri(Optional<String> sectorIdentifierUri) {
         this.sectorIdentifierUri = sectorIdentifierUri;
+    }
+
+    public Optional<ApplicationMCPSettings> getMcp() {
+        return mcp;
+    }
+
+    public void setMcp(Optional<ApplicationMCPSettings> mcp) {
+        this.mcp = mcp;
     }
 
     public Optional<String> getSubjectType() {
@@ -679,6 +692,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
         SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
         SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
+        SetterUtils.safeSet(client::setMcp, this.getMcp());
 
         return client;
     }
@@ -749,6 +763,7 @@ public class DynamicClientRegistrationRequest {
         SetterUtils.safeSet(client::setBackchannelUserCodeParameter, this.getBackchannelUserCodeParameter());
         SetterUtils.safeSet(client::setBackchannelAuthRequestSignAlg, this.getBackchannelAuthRequestSignAlg());
         SetterUtils.safeSet(client::setBackchannelClientNotificationEndpoint, this.getBackchannelClientNotificationEndpoint());
+        SetterUtils.safeSet(client::setMcp, this.getMcp());
 
         return client;
     }

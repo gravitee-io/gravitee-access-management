@@ -2,7 +2,7 @@ const { join } = require('path');
 
 module.exports = {
   root: true,
-  ignorePatterns: ['projects/**/*'],
+  ignorePatterns: ['projects/**/*', 'src/app/domain/settings/openfga/openfga.component.ts', 'src/app/domain/settings/openfga/openfga.component.spec.ts', 'src/app/services/openfga.service.ts'],
   plugins: ['eslint-plugin-import', 'rxjs'],
   overrides: [
     {

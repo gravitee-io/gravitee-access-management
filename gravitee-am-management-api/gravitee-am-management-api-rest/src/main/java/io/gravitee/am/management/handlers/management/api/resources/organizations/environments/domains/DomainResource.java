@@ -264,6 +264,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(FactorsResource.class);
     }
 
+    @Path("openfga")
+    public OpenFGAResource getOpenFGAResource() {
+        return resourceContext.getResource(OpenFGAResource.class);
+    }
+
     @Path("resources")
     public ServiceResourcesResource getServiceResourcesResource() {
         return resourceContext.getResource(ServiceResourcesResource.class);

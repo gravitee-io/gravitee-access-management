@@ -24,6 +24,8 @@ import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
+import io.gravitee.am.gateway.handler.common.client.ClientManager;
+import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
@@ -47,6 +49,7 @@ import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
+import io.gravitee.am.service.reporter.builder.TokenDelegationAuditBuilder;
 import io.gravitee.common.util.Maps;
 import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
@@ -119,6 +122,9 @@ public class TokenServiceImpl implements TokenService {
     @Value("${handlers.oauth2.response.strict:false}")
     private boolean strictResponse = false;
 
+    @Autowired
+    private ClientSyncService clientManager;
+
     @Override
     public Maybe<Token> getAccessToken(String token, Client client) {
         return jwtService.decodeAndVerify(token, client, ACCESS_TOKEN)
@@ -181,7 +187,8 @@ public class TokenServiceImpl implements TokenService {
                                     (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
                             .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser).toSingle(() -> enhancedToken))
-                            .doOnSuccess(enhancedToken -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                            .doOnSuccess(enhancedToken -> {
+                                auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
                                     .accessToken(accessToken.getJti())
                                     .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
                                     .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
@@ -196,7 +203,29 @@ public class TokenServiceImpl implements TokenService {
                                         return params;
                                     })
                                     .tokenTarget(endUser)
-                                    .accessTokenSubject(enhancedToken.getSubject())));
+                                    .accessTokenSubject(enhancedToken.getSubject()));
+
+                                if (accessToken.get("act") != null) {
+                                    clientManager.findByClientId((String)((Map)accessToken.get("act")).get("sub"))
+                                                    .subscribe(agent ->
+                                    auditService.report(AuditBuilder.builder(TokenDelegationAuditBuilder.class)
+                                            .accessToken(accessToken.getJti())
+                                            .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
+                                            .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
+                                            .tokenActor(endUser)
+                                            .withParams(() -> {
+                                                var params = new HashMap<String, Object>();
+                                                params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE, oAuth2Request.getGrantType());
+                                                params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE, oAuth2Request.getResponseType());
+                                                if (!isEmpty(oAuth2Request.getScopes())) {
+                                                    params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE, String.join(" ", oAuth2Request.getScopes()));
+                                                }
+                                                return params;
+                                            })
+                                            .agent(agent)), error -> logger.error("Unable to report token delegation audit", error));
+                                }
+
+                            });
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(endUser).throwable(error)));
     }
@@ -364,6 +393,8 @@ public class TokenServiceImpl implements TokenService {
         // set custom claims
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
+
+
         return jwt;
     }
 
@@ -388,7 +419,7 @@ public class TokenServiceImpl implements TokenService {
         } else {
             subjectManager.updateJWT(jwt, user);
         }
-        jwt.setAud(oAuth2Request.getClientId());
+        jwt.setAud(oAuth2Request.getClientId()); // aud maybe resource server uri...
         jwt.setDomain(client.getDomain());
         jwt.setIat(Instant.now().getEpochSecond());
         jwt.setJti(SecureRandomString.generate());
@@ -404,6 +435,17 @@ public class TokenServiceImpl implements TokenService {
         if (permissions != null && !permissions.isEmpty()) {
             jwt.put(PERMISSIONS, permissions);
         }
+
+        if (oAuth2Request.parameters().containsKey("requested_actor")) {
+            jwt.put("act",Map.of("sub", oAuth2Request.parameters().getFirst("requested_actor")) );
+        }
+
+        if (oAuth2Request.parameters().containsKey("resource_uri") && user.getAdditionalInformation().containsKey("agentId")) {
+
+            jwt.put("act",Map.of("sub",user.getAdditionalInformation().get("agentId"), "act", user.getAdditionalInformation().get("act")) );
+        }
+
+
 
         return jwt;
     }
