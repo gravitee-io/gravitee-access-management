@@ -72,11 +72,7 @@ export class DataSourcesService {
    * @param propertyName The name of the property
    * @param datasources Array of available datasources
    */
-  private applyDataSourceSelectionRecursive(
-    property: SchemaProperty,
-    propertyName?: string,
-    datasources?: DataSource[]
-  ): void {
+  private applyDataSourceSelectionRecursive(property: SchemaProperty, propertyName?: string, datasources?: DataSource[]): void {
     // Handle nested objects
     if (property.type === 'object' && property.properties) {
       for (const key in property.properties) {
@@ -105,11 +101,7 @@ export class DataSourcesService {
    * @param propertyName The name of the property
    * @param datasources Array of available datasources
    */
-  private applyDataSourceWidget(
-    property: SchemaProperty,
-    propertyName?: string,
-    datasources?: DataSource[]
-  ): void {
+  private applyDataSourceWidget(property: SchemaProperty, propertyName?: string, datasources?: DataSource[]): void {
     if ('datasource' === property.widget || 'datasource' === propertyName) {
       if (datasources?.length > 0) {
         property['x-schema-form'] = { type: 'select' };

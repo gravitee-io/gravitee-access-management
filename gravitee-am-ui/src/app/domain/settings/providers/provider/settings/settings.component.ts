@@ -201,5 +201,4 @@ export class ProviderSettingsComponent implements OnInit {
   valueCopied(message: string): void {
     this.snackbarService.open(message);
   }
-
 }
