@@ -16,6 +16,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { JSONSchema7 } from 'json-schema';
 
 import { AppConfig } from '../../config/app.config';
 
@@ -24,20 +25,11 @@ export interface DataSource {
   name: string;
 }
 
-export interface SchemaProperty {
-  type?: string;
+// Extend JSONSchema7 to include custom properties used by the application
+export interface ExtendedJSONSchema extends JSONSchema7 {
   widget?: string;
-  properties?: { [key: string]: SchemaProperty };
-  items?: {
-    properties?: { [key: string]: SchemaProperty };
-  };
   'x-schema-form'?: any;
-  enum?: string[];
   readonly?: boolean;
-}
-
-export interface Schema {
-  properties?: { [key: string]: SchemaProperty };
 }
 
 @Injectable()
@@ -56,10 +48,10 @@ export class DataSourcesService {
    * @param datasources Array of available datasources
    * @returns The processed schema with datasource widgets transformed
    */
-  applyDataSourceSelection(schema: Schema, datasources: DataSource[]): Schema {
+  applyDataSourceSelection(schema: ExtendedJSONSchema, datasources: DataSource[]): ExtendedJSONSchema {
     if (schema && schema.properties) {
       for (const key in schema.properties) {
-        const property = schema.properties[key];
+        const property = schema.properties[key] as ExtendedJSONSchema;
         this.applyDataSourceSelectionRecursive(property, key, datasources);
       }
     }
@@ -72,20 +64,21 @@ export class DataSourcesService {
    * @param propertyName The name of the property
    * @param datasources Array of available datasources
    */
-  private applyDataSourceSelectionRecursive(property: SchemaProperty, propertyName?: string, datasources?: DataSource[]): void {
+  private applyDataSourceSelectionRecursive(property: ExtendedJSONSchema, propertyName?: string, datasources?: DataSource[]): void {
     // Handle nested objects
     if (property.type === 'object' && property.properties) {
       for (const key in property.properties) {
-        const child = property.properties[key];
+        const child = property.properties[key] as ExtendedJSONSchema;
         this.applyDataSourceSelectionRecursive(child, key, datasources);
       }
     }
 
     // Handle arrays
-    if (property.type === 'array') {
-      if (property.items?.properties) {
-        for (const key in property.items.properties) {
-          const child = property.items.properties[key];
+    if (property.type === 'array' && property.items) {
+      const itemsSchema = property.items as ExtendedJSONSchema;
+      if (itemsSchema.properties) {
+        for (const key in itemsSchema.properties) {
+          const child = itemsSchema.properties[key] as ExtendedJSONSchema;
           this.applyDataSourceSelectionRecursive(child, key, datasources);
         }
       }
@@ -101,7 +94,7 @@ export class DataSourcesService {
    * @param propertyName The name of the property
    * @param datasources Array of available datasources
    */
-  private applyDataSourceWidget(property: SchemaProperty, propertyName?: string, datasources?: DataSource[]): void {
+  private applyDataSourceWidget(property: ExtendedJSONSchema, propertyName?: string, datasources?: DataSource[]): void {
     if ('datasource' === property.widget || 'datasource' === propertyName) {
       if (datasources?.length > 0) {
         property['x-schema-form'] = { type: 'select' };
