@@ -26,6 +26,7 @@ import { DialogService } from '../../../../../services/dialog.service';
 import { EntrypointService } from '../../../../../services/entrypoint.service';
 import { AppConfig } from '../../../../../../config/app.config';
 import { enrichFormWithCerts } from '../provider.form.enricher';
+import { DataSourcesService } from '../../../../../services/datasources.service';
 
 @Component({
   selector: 'provider-settings',
@@ -59,6 +60,7 @@ export class ProviderSettingsComponent implements OnInit {
     private domainService: DomainService,
     private dialogService: DialogService,
     private entrypointService: EntrypointService,
+    private dataSourcesService: DataSourcesService,
   ) {}
 
   ngOnInit() {
@@ -107,7 +109,7 @@ export class ProviderSettingsComponent implements OnInit {
             this.providerSchema['properties'][key].default = '';
           });
           // Process datasource widgets
-          this.applyDataSourceSelection();
+          this.providerSchema = this.dataSourcesService.applyDataSourceSelection(this.providerSchema, this.datasources);
         }
       });
   }
@@ -200,49 +202,4 @@ export class ProviderSettingsComponent implements OnInit {
     this.snackbarService.open(message);
   }
 
-  private applyDataSourceSelection(): void {
-    if (this.providerSchema.properties) {
-      for (const key in this.providerSchema.properties) {
-        const property = this.providerSchema.properties[key];
-        this.applyDataSourceSelectionRecursive(property, key);
-      }
-    }
-  }
-
-  private applyDataSourceSelectionRecursive(property: any, propertyName?: string): void {
-    // Handle nested objects
-    if (property.type === 'object' && property.properties) {
-      for (const key in property.properties) {
-        const child = property.properties[key];
-        this.applyDataSourceSelectionRecursive(child, key);
-      }
-    }
-    // Handle arrays
-    if (property.type === 'array') {
-      if (property.items?.properties) {
-        for (const key in property.items.properties) {
-          const child = property.items.properties[key];
-          this.applyDataSourceSelectionRecursive(child, key);
-        }
-      }
-    }
-    // Apply datasource widget transformation
-    this.applyDataSourceWidget(property, propertyName);
-  }
-
-  private applyDataSourceWidget(property: any, propertyName?: string): void {
-    if ('datasource' === property.widget || 'datasource' === propertyName) {
-      if (this.datasources?.length > 0) {
-        property['x-schema-form'] = { type: 'select' };
-        property.enum = this.datasources.map((d) => d.id);
-        property['x-schema-form'].titleMap = this.datasources.reduce((map, obj) => {
-          map[obj.id] = obj.name;
-          return map;
-        }, {});
-      } else {
-        // if list of datasources is empty, disable the field
-        property['readonly'] = true;
-      }
-    }
-  }
 }

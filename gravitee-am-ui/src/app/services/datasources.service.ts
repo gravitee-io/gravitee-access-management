@@ -19,13 +19,109 @@ import { Observable } from 'rxjs';
 
 import { AppConfig } from '../../config/app.config';
 
+export interface DataSource {
+  id: string;
+  name: string;
+}
+
+export interface SchemaProperty {
+  type?: string;
+  widget?: string;
+  properties?: { [key: string]: SchemaProperty };
+  items?: {
+    properties?: { [key: string]: SchemaProperty };
+  };
+  'x-schema-form'?: any;
+  enum?: string[];
+  readonly?: boolean;
+}
+
+export interface Schema {
+  properties?: { [key: string]: SchemaProperty };
+}
+
 @Injectable()
 export class DataSourcesService {
   private baseURL: string = AppConfig.settings.environmentBaseURL;
 
   constructor(private http: HttpClient) {}
 
-  findAll(): Observable<any> {
-    return this.http.get<any>(this.baseURL + '/data-sources');
+  findAll(): Observable<DataSource[]> {
+    return this.http.get<DataSource[]>(this.baseURL + '/data-sources');
+  }
+
+  /**
+   * Applies datasource selection transformations to a schema
+   * @param schema The schema to process
+   * @param datasources Array of available datasources
+   * @returns The processed schema with datasource widgets transformed
+   */
+  applyDataSourceSelection(schema: Schema, datasources: DataSource[]): Schema {
+    if (schema && schema.properties) {
+      for (const key in schema.properties) {
+        const property = schema.properties[key];
+        this.applyDataSourceSelectionRecursive(property, key, datasources);
+      }
+    }
+    return schema;
+  }
+
+  /**
+   * Recursively processes schema properties to handle nested objects and arrays
+   * @param property The property to process
+   * @param propertyName The name of the property
+   * @param datasources Array of available datasources
+   */
+  private applyDataSourceSelectionRecursive(
+    property: SchemaProperty,
+    propertyName?: string,
+    datasources?: DataSource[]
+  ): void {
+    // Handle nested objects
+    if (property.type === 'object' && property.properties) {
+      for (const key in property.properties) {
+        const child = property.properties[key];
+        this.applyDataSourceSelectionRecursive(child, key, datasources);
+      }
+    }
+
+    // Handle arrays
+    if (property.type === 'array') {
+      if (property.items?.properties) {
+        for (const key in property.items.properties) {
+          const child = property.items.properties[key];
+          this.applyDataSourceSelectionRecursive(child, key, datasources);
+        }
+      }
+    }
+
+    // Apply datasource widget transformation
+    this.applyDataSourceWidget(property, propertyName, datasources);
+  }
+
+  /**
+   * Transforms datasource widgets into select dropdowns
+   * @param property The property to transform
+   * @param propertyName The name of the property
+   * @param datasources Array of available datasources
+   */
+  private applyDataSourceWidget(
+    property: SchemaProperty,
+    propertyName?: string,
+    datasources?: DataSource[]
+  ): void {
+    if ('datasource' === property.widget || 'datasource' === propertyName) {
+      if (datasources?.length > 0) {
+        property['x-schema-form'] = { type: 'select' };
+        property.enum = datasources.map((d) => d.id);
+        property['x-schema-form'].titleMap = datasources.reduce((map, obj) => {
+          map[obj.id] = obj.name;
+          return map;
+        }, {});
+      } else {
+        // if list of datasources is empty, disable the field
+        property['readonly'] = true;
+      }
+    }
   }
 }
