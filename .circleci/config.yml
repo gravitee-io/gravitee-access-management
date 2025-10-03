@@ -57,6 +57,10 @@ parameters:
     type: boolean
     default: false
     description: "Creates maintenance version branch"
+  run_ui_tests:
+    type: boolean
+    default: true
+    description: "Runs UI jest tests + Lint"
 
 orbs:
   path-filtering: circleci/path-filtering@0.0.2
@@ -71,3 +75,4 @@ workflows:
             gravitee-am-repository/.* run-container-test true
             gravitee-am-dataplane/.* run-container-test true
             ^.*pom\.xml$ run-container-test true
+            gravitee-am-ui/.* run_ui_tests true

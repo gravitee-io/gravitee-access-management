@@ -102,6 +102,10 @@ parameters:
     type: boolean
     default: false
     description: "Creates maintenance version branch"
+  run_ui_tests:
+    type: boolean
+    default: true
+    description: "Runs UI jest tests + Lint"
 
 commands:
   create_docker_context:
@@ -1194,7 +1198,7 @@ jobs:
       - restore-maven-job-cache:
           jobName: coverage_build
       - run:
-          name: Maven Package
+          name: Maven Verify
           command: |
             export AM_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot -U -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
             echo $AM_VERSION > am.version
@@ -1276,14 +1280,11 @@ jobs:
           at: /tmp
       - checkout
       - restore-maven-job-cache:
-          jobName: junit_tests
-      - mvn_git_commit_id
+          jobName: pull_requests
       - run:
-          name: "Maven unit tests"
+          name: "Maven verify (backend)"
           command: |
-            mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui
-      - save-maven-job-cache:
-          jobName: junit_tests
+            mvn -s /tmp/.gravitee.settings.xml verify -pl \!gravitee-am-ui -Dlicense.skip=true
       - run:
           name: Save test results
           command: |
@@ -1292,6 +1293,27 @@ jobs:
           when: always
       - store_test_results:
           path: ~/test-results
+
+  ui_tests:
+    executor:
+      name: openjdk
+      class: large
+      version: "21.0.6"
+    steps:
+      - when:
+          condition:
+            equal: [ true, << pipeline.parameters.run_ui_tests >> ]
+          steps:
+            - attach_workspace:
+                at: /tmp
+            - checkout
+            - restore-maven-job-cache:
+                jobName: pull_requests
+            - run:
+                name: "Maven test (ui)"
+                command: |
+                  mvn -s /tmp/.gravitee.settings.xml test -pl gravitee-am-ui -Dlicense.skip=true
+
   pull_requests_ce:
     executor:
       name: openjdk
@@ -1305,7 +1327,7 @@ jobs:
           jobName: pull_requests
       - mvn_git_commit_id
       - run:
-          name: "Maven Package and install without tests"
+          name: "Maven Package Install (no tests)"
           command: |
             mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot,with-mocks clean install -DskipTests
       - save-maven-job-cache:
@@ -2108,6 +2130,10 @@ workflows:
                 secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
                 var-name: GITHUB_TOKEN
       - junit_tests:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+      - ui_tests:
           context: cicd-orchestrator
           requires:
             - process_pull_request
