@@ -70,12 +70,12 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
         notUseMngSettingsForGateway = !useMngSettingsForGateway;
         // create the common client just after the bean Initialization to guaranty the uniqueness
-        commonMongoClient = buildClientWrapper(MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.");
+        commonMongoClient = buildClientWrapper(MANAGEMENT);
         if (notUseMngSettingsForGateway) {
-            gatewayMongoClient = buildClientWrapper(GATEWAY.getRepositoryPropertyKey() + ".mongodb.");
+            gatewayMongoClient = buildClientWrapper(GATEWAY);
         }
         if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
-            oauthMongoClient = buildClientWrapper(OAUTH2.getRepositoryPropertyKey() + ".mongodb.");
+            oauthMongoClient = buildClientWrapper(OAUTH2);
         }
     }
 
@@ -104,12 +104,10 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId, String propertyPrefix) {
         log.debug("Using datasource {} with property prefix {}", datasourceId, propertyPrefix);
         return this.dsClientWrappers.computeIfAbsent(datasourceId, k ->
-                {
-                    return new MongoClientWrapper(mongoFactory.getObject(propertyPrefix), () -> {
-                        log.debug("Cleaning up datasource {}", datasourceId);
-                        this.dsClientWrappers.remove(datasourceId);
-                    });
-                });
+                new MongoClientWrapper(mongoFactory.getObject(propertyPrefix), () -> {
+                    log.debug("Cleaning up datasource {}", datasourceId);
+                    this.dsClientWrappers.remove(datasourceId);
+                }));
     }
 
     @Override
@@ -131,7 +129,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         return BACKEND_TYPE_MONGO.equals(backendType);
     }
 
-    private MongoClientWrapper buildClientWrapper(String prefix) {
-        return new MongoClientWrapper(mongoFactory.getObject(prefix));
+    private MongoClientWrapper buildClientWrapper(Scope scope) {
+        return new MongoClientWrapper(mongoFactory.getObject(scope.getRepositoryPropertyKey() + ".mongodb."));
     }
 }
