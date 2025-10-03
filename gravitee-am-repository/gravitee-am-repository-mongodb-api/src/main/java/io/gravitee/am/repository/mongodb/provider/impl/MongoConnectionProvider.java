@@ -19,8 +19,14 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.mongodb.provider.MongoFactory;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -37,11 +43,15 @@ import static io.gravitee.am.repository.Scope.OAUTH2;
  */
 // Need to name this component to end with Repository on in order to make it injectable
 // as the Repository plugin only scan beanName ending with Repository or TransactionManager
+@Slf4j
 @Component("ConnectionProviderFromRepository")
 public class MongoConnectionProvider implements ConnectionProvider<MongoClient, MongoConnectionConfiguration>, InitializingBean {
 
     @Autowired
     private RepositoriesEnvironment environment;
+
+    @Autowired
+    private MongoFactory mongoFactory;
 
     private ClientWrapper<MongoClient> commonMongoClient;
     private ClientWrapper<MongoClient> oauthMongoClient;
@@ -50,6 +60,8 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private boolean notUseMngSettingsForOauth2;
     private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
+
+    private final Map<String, ClientWrapper<MongoClient>> dsClientWrappers = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -60,6 +72,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         notUseMngSettingsForOauth2 = !useMngSettingsForOauth2;
         notUseMngSettingsForGateway = !useMngSettingsForGateway;
         // create the common client just after the bean Initialization to guaranty the uniqueness
+<<<<<<< HEAD
         commonMongoClient =
                 new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getRepositoryPropertyKey()).getObject(), getDatabaseName(MANAGEMENT));
         if (notUseMngSettingsForGateway) {
@@ -67,6 +80,14 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         }
         if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
             oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject(), getDatabaseName(OAUTH2));
+=======
+        commonMongoClient = buildClientWrapper(MANAGEMENT);
+        if (notUseMngSettingsForGateway) {
+            gatewayMongoClient = buildClientWrapper(GATEWAY);
+        }
+        if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
+            oauthMongoClient = buildClientWrapper(OAUTH2);
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
         }
     }
 
@@ -76,7 +97,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     }
 
     @Override
-    public ClientWrapper getClientWrapper(String name) {
+    public ClientWrapper<MongoClient> getClientWrapper(String name) {
         if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
             return notUseGwSettingsForOauth2 ? oauthMongoClient : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
@@ -88,6 +109,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
 
     @Override
     public ClientWrapper<MongoClient> getClientFromConfiguration(MongoConnectionConfiguration configuration) {
+<<<<<<< HEAD
         return new MongoClientWrapper(MongoFactory.createClient(configuration), configuration.getDatabase());
     }
 
@@ -119,6 +141,19 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
             }
         }
         return environment.getProperty(prefix + ".mongodb.dbname", "gravitee-am");
+=======
+        return new MongoClientWrapper(MongoFactoryImpl.createClient(configuration));
+    }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId, String propertyPrefix) {
+        log.debug("Using datasource {} with property prefix {}", datasourceId, propertyPrefix);
+        return this.dsClientWrappers.computeIfAbsent(datasourceId, k ->
+                new MongoClientWrapper(mongoFactory.getObject(propertyPrefix), () -> {
+                    log.debug("Cleaning up datasource {}", datasourceId);
+                    this.dsClientWrappers.remove(datasourceId);
+                }));
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     }
 
     @Override
@@ -138,5 +173,9 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public boolean canHandle(String backendType) {
         return BACKEND_TYPE_MONGO.equals(backendType);
+    }
+
+    private MongoClientWrapper buildClientWrapper(Scope scope) {
+        return new MongoClientWrapper(mongoFactory.getObject(scope.getRepositoryPropertyKey() + ".mongodb."));
     }
 }

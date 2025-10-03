@@ -17,7 +17,11 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
+<<<<<<< HEAD
   version: 4.7.6
+=======
+  version: 4.6.22
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
 servers:
 - url: /management
 security:
@@ -42,7 +46,11 @@ tags:
 - name: audit
 - name: bot detection
 - name: certificate
+<<<<<<< HEAD
 - name: dataPlane
+=======
+- name: data-sources
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
 - name: device identifiers
 - name: devices
 - name: dictionary
@@ -338,6 +346,7 @@ paths:
                   $ref: "#/components/schemas/Environment"
         "500":
           description: Internal server error
+<<<<<<< HEAD
   /organizations/{organizationId}/environments/{environmentId}/data-planes:
     get:
       tags:
@@ -346,6 +355,15 @@ paths:
       description: "List all the data planes accessible to the current user. User\
         \ must have DOMAIN[CREATE] permission on the specified environment or organization"
       operationId: listDataPlanes
+=======
+  /organizations/{organizationId}/environments/{environmentId}/data-sources:
+    get:
+      tags:
+      - data-sources
+      summary: List all the data sources
+      description: Returns all of the available data sources to be used in IDP creation
+      operationId: listAllDataSources
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
       parameters:
       - name: organizationId
         in: path
@@ -359,13 +377,21 @@ paths:
           type: string
       responses:
         "200":
+<<<<<<< HEAD
           description: List accessible data planes for current user
+=======
+          description: List all the IDP data sources
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
           content:
             application/json:
               schema:
                 type: array
                 items:
+<<<<<<< HEAD
                   $ref: "#/components/schemas/DataPlane"
+=======
+                  $ref: "#/components/schemas/DataSource"
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains:
@@ -6946,6 +6972,8 @@ paths:
       - name: size
         in: query
         schema:
+          maximum: 1000
+          minimum: 1
           type: integer
           format: int32
           default: 30
@@ -9313,6 +9341,8 @@ paths:
       - name: size
         in: query
         schema:
+          maximum: 1000
+          minimum: 1
           type: integer
           format: int32
           default: 30
@@ -11489,9 +11519,15 @@ components:
           type: array
           items:
             type: string
+<<<<<<< HEAD
         allowedScopesEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
+=======
+        clientTemplateEnabled:
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
+          type: boolean
+        allowedScopesEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -11591,11 +11627,23 @@ components:
         lastCheckedAt:
           type: string
           format: date-time
+<<<<<<< HEAD
     DataPlane:
       type: object
       properties:
         delegate:
           $ref: "#/components/schemas/Plugin"
+=======
+    DataSource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     DeviceIdentifier:
       type: object
       properties:
@@ -11699,11 +11747,19 @@ components:
           $ref: "#/components/schemas/SAMLSettings"
         corsSettings:
           $ref: "#/components/schemas/CorsSettings"
+<<<<<<< HEAD
         dataPlaneId:
           type: string
         dynamicClientRegistrationTemplateEnabled:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
+=======
+        redirectUriStrictMatching:
+          type: boolean
+        redirectUriLocalhostAllowed:
+          type: boolean
+        redirectUriWildcardAllowed:
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -14182,6 +14238,8 @@ components:
           format: int64
         deviceIdentifierId:
           type: string
+        skipChallengeWhenRememberDevice:
+          type: boolean
         skipRememberDevice:
           type: boolean
     Reporter:
@@ -15300,6 +15358,19 @@ components:
           type: string
         zoneInfo:
           type: string
+<<<<<<< HEAD
+=======
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
         middleName:
           type: string
         inactive:
@@ -15314,6 +15385,7 @@ components:
           type: string
         disabled:
           type: boolean
+<<<<<<< HEAD
         fullId:
           $ref: "#/components/schemas/UserId"
         identitiesAsMap:
@@ -15324,6 +15396,8 @@ components:
           type: object
           additionalProperties:
             type: object
+=======
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     UserEntity:
       type: object
       properties:
@@ -15499,6 +15573,19 @@ components:
           type: string
         zoneInfo:
           type: string
+<<<<<<< HEAD
+=======
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
         middleName:
           type: string
         inactive:
@@ -15513,6 +15600,7 @@ components:
           type: string
         disabled:
           type: boolean
+<<<<<<< HEAD
         fullId:
           $ref: "#/components/schemas/UserId"
         identitiesAsMap:
@@ -15523,6 +15611,8 @@ components:
           type: object
           additionalProperties:
             type: object
+=======
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     UserId:
       type: object
       properties:

@@ -36,6 +36,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import io.reactivex.rxjava3.core.Observable;
 import org.bson.Document;
 import org.springframework.beans.factory.InitializingBean;
@@ -72,8 +73,13 @@ public class MongoUserProviderTestConfiguration implements InitializingBean {
     }
 
     @Bean
+<<<<<<< HEAD
     public DataPlaneRegistry dataPlaneRegistry() {
         return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class));
+=======
+    public DataSourcesConfiguration dataSourcesConfiguration() {
+        return new DataSourcesConfiguration(null);
+>>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     }
 
     @Bean

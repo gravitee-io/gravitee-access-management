@@ -29,16 +29,20 @@ import com.mongodb.connection.TransportSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
+import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.mongodb.provider.MongoFactory;
 import io.gravitee.am.repository.mongodb.provider.metrics.MongoMetricsConnectionPoolListener;
 import io.gravitee.node.monitoring.metrics.Metrics;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.netty.channel.nio.NioEventLoopGroup;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -62,22 +66,16 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MongoFactory implements FactoryBean<MongoClient> {
+@Slf4j
+@Component("mongoFactory")
+public class MongoFactoryImpl implements MongoFactory {
     private static final String PASSWORD = "password";
     private static final String SERVERS = "servers[";
     private static final String DEFAULT_TLS_PROTOCOL = "TLSv1.2";
     public static final NioEventLoopGroup COMMON_EVENT_LOOP_GROUP = new NioEventLoopGroup();
 
-    private final Logger logger = LoggerFactory.getLogger(MongoFactory.class);
-
-    private final RepositoriesEnvironment environment;
-
-    private final String propertyPrefix;
-
-    public MongoFactory(RepositoriesEnvironment environment, String propertyPrefix) {
-        this.environment = environment;
-        this.propertyPrefix = propertyPrefix + ".mongodb.";
-    }
+    @Autowired
+    private RepositoriesEnvironment environment;
 
     public static MongoClient createClient(MongoConnectionConfiguration configuration) {
         MongoClient mongoClient;
@@ -114,7 +112,8 @@ public class MongoFactory implements FactoryBean<MongoClient> {
     }
 
     @Override
-    public MongoClient getObject() {
+    public MongoClient getObject(String propertyPrefix){
+
         // Client settings
         MongoClientSettings.Builder builder = MongoClientSettings.builder();
         builder.writeConcern(WriteConcern.ACKNOWLEDGED);
@@ -129,8 +128,8 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         final MeterRegistry amRegistry = Metrics.getDefaultRegistry();
         final MongoMetricsConnectionPoolListener connectionPoolListener = new MongoMetricsConnectionPoolListener(amRegistry, "common-pool");
 
-        final SslSettings sslSettings = buildSslSettings();
-        final ServerSettings serverSettings = buildServerSettings();
+        final SslSettings sslSettings = buildSslSettings(propertyPrefix);
+        final ServerSettings serverSettings = buildServerSettings(propertyPrefix);
 
         // Trying to get the MongoClientURI if uri property is defined
         String uri = readPropertyValue(propertyPrefix + "uri");
@@ -202,7 +201,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
             // clustering option
             List<ServerAddress> seeds;
-            int serversCount = getServersCount();
+            int serversCount = getServersCount(propertyPrefix);
             if (serversCount == 0) {
                 String host = readPropertyValue(propertyPrefix + "host", String.class, "localhost");
                 int port = readPropertyValue(propertyPrefix + "port", int.class, 27017);
@@ -210,7 +209,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             } else {
                 seeds = new ArrayList<>(serversCount);
                 for (int i = 0; i < serversCount; i++) {
-                    seeds.add(buildServerAddress(i));
+                    seeds.add(buildServerAddress(i, propertyPrefix));
                 }
             }
             clusterBuilder.hosts(seeds);
@@ -232,7 +231,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         }
     }
 
-    private SslSettings buildSslSettings() {
+    private SslSettings buildSslSettings(String propertyPrefix) {
         final SslSettings.Builder sslBuilder = SslSettings.builder();
         final boolean sslEnabled = readPropertyValue(propertyPrefix + "sslEnabled", Boolean.class, false);
         sslBuilder.enabled(sslEnabled);
@@ -240,7 +239,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             try {
                 String tlsProtocol = readPropertyValue(propertyPrefix + "tlsProtocol", String.class, DEFAULT_TLS_PROTOCOL);
                 SSLContext sslContext = SSLContext.getInstance(tlsProtocol);
-                sslContext.init(getKeyManagers(), getTrustManagers(), null);
+                sslContext.init(getKeyManagers(propertyPrefix), getTrustManagers(propertyPrefix), null);
                 sslBuilder.context(sslContext);
 
                 Boolean sslInvalidHostNameAllowed = readPropertyValue(propertyPrefix + "sslInvalidHostNameAllowed", Boolean.class, false);
@@ -252,7 +251,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         return sslBuilder.build();
     }
 
-    private ServerSettings buildServerSettings() {
+    private ServerSettings buildServerSettings(String propertyPrefix) {
         ServerSettings.Builder serverBuilder = ServerSettings.builder();
         Integer minHeartbeatFrequency = readPropertyValue(propertyPrefix + "minHeartbeatFrequency", Integer.class);
         Integer heartbeatFrequency = readPropertyValue(propertyPrefix + "heartbeatFrequency", Integer.class);
@@ -264,8 +263,8 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         return serverBuilder.build();
     }
 
-    private int getServersCount() {
-        logger.debug("Looking for MongoDB server configuration...");
+    private int getServersCount(String propertyPrefix) {
+        log.debug("Looking for MongoDB server configuration...");
 
         boolean found = true;
         int idx = 0;
@@ -278,7 +277,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         return --idx;
     }
 
-    private ServerAddress buildServerAddress(int idx) {
+    private ServerAddress buildServerAddress(int idx, String propertyPrefix) {
         String host = environment.getProperty(propertyPrefix + SERVERS + idx + "].host");
         int port = readPropertyValue(propertyPrefix + SERVERS + idx + "].port", int.class, 27017);
 
@@ -295,21 +294,11 @@ public class MongoFactory implements FactoryBean<MongoClient> {
 
     private <T> T readPropertyValue(String propertyName, Class<T> propertyType, T defaultValue) {
         T value = environment.getProperty(propertyName, propertyType, defaultValue);
-        logger.debug("Read property {}: {}", propertyName, value);
+        log.debug("Read property {}: {}", propertyName, value);
         return value;
     }
 
-    @Override
-    public Class<?> getObjectType() {
-        return MongoClient.class;
-    }
-
-    @Override
-    public boolean isSingleton() {
-        return true;
-    }
-
-    private KeyManager[] getKeyManagers() {
+    private KeyManager[] getKeyManagers(String propertyPrefix) {
         String keystorePropertyPrefix = propertyPrefix + "keystore.";
         // TODO: Old properties are kept for backwards compatibility, new ones were added in 3.18.1.
         // So remove `keystore`, `keystorePassword` and `keyPassword` properties in 3.19.0+
@@ -345,7 +334,7 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         }
     }
 
-    private TrustManager[] getTrustManagers() {
+    private TrustManager[] getTrustManagers(String propertyPrefix) {
         String truststorePropertyPrefix = propertyPrefix + "truststore.";
         String truststorePath = readPropertyValue(truststorePropertyPrefix + "path", String.class);
         String truststoreType = readPropertyValue(truststorePropertyPrefix + "type", String.class);

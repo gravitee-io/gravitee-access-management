@@ -22,6 +22,12 @@
       "title": "MongoDB connection port",
       "description": "Not required if the MongoDB connection URI is set."
     },
+    "datasourceId": {
+      "type": "string",
+      "title": "Data source ID",
+      "description": "Data source identifier used to connect to MongoDB.",
+      "widget": "datasource"
+    },
     "enableCredentials" : {
       "type" : "boolean",
       "default": false,
@@ -152,7 +158,6 @@
     }
   },
   "required": [
-    "database",
     "usersCollection",
     "findUserByUsernameQuery",
     "findUserByEmailQuery",
@@ -163,13 +168,20 @@
   "anyOf":[
     {
       "required": [
-        "uri"
+        "uri",
+        "database"
       ]
     },
     {
       "required": [
         "host",
-        "port"
+        "port",
+        "database"
+      ]
+    },
+    {
+      "required": [
+        "datasourceId"
       ]
     }
   ]
