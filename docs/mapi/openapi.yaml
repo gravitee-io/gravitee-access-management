@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.6.12
+  version: 4.6.22
 servers:
 - url: /management
 security:
@@ -42,6 +42,7 @@ tags:
 - name: audit
 - name: bot detection
 - name: certificate
+- name: data-sources
 - name: device identifiers
 - name: devices
 - name: dictionary
@@ -335,6 +336,35 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Environment"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/data-sources:
+    get:
+      tags:
+      - data-sources
+      summary: List all the data sources
+      description: Returns all of the available data sources to be used in IDP creation
+      operationId: listAllDataSources
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List all the IDP data sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataSource"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains:
@@ -6854,6 +6884,8 @@ paths:
       - name: size
         in: query
         schema:
+          maximum: 1000
+          minimum: 1
           type: integer
           format: int32
           default: 30
@@ -9221,6 +9253,8 @@ paths:
       - name: size
         in: query
         schema:
+          maximum: 1000
+          minimum: 1
           type: integer
           format: int32
           default: 30
@@ -11397,9 +11431,9 @@ components:
           type: array
           items:
             type: string
-        allowedScopesEnabled:
-          type: boolean
         clientTemplateEnabled:
+          type: boolean
+        allowedScopesEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -11499,6 +11533,15 @@ components:
         lastCheckedAt:
           type: string
           format: date-time
+    DataSource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
     DeviceIdentifier:
       type: object
       properties:
@@ -11602,11 +11645,11 @@ components:
           $ref: "#/components/schemas/SAMLSettings"
         corsSettings:
           $ref: "#/components/schemas/CorsSettings"
+        redirectUriStrictMatching:
+          type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
-          type: boolean
-        redirectUriStrictMatching:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -14065,6 +14108,8 @@ components:
           format: int64
         deviceIdentifierId:
           type: string
+        skipChallengeWhenRememberDevice:
+          type: boolean
         skipRememberDevice:
           type: boolean
     Reporter:
@@ -15159,6 +15204,10 @@ components:
           type: string
         zoneInfo:
           type: string
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
         identitiesAsMap:
           type: object
           additionalProperties:
@@ -15179,10 +15228,6 @@ components:
           type: string
         disabled:
           type: boolean
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
     UserEntity:
       type: object
       properties:
@@ -15358,6 +15403,10 @@ components:
           type: string
         zoneInfo:
           type: string
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
         identitiesAsMap:
           type: object
           additionalProperties:
@@ -15378,10 +15427,6 @@ components:
           type: string
         disabled:
           type: boolean
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
     UserId:
       type: object
       properties:

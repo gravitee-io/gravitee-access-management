@@ -39,4 +39,9 @@ public class EnvironmentResource extends AbstractResource {
     public DomainsResource getDomainsResource() {
         return resourceContext.getResource(DomainsResource.class);
     }
+
+    @Path("/data-sources")
+    public DataSourcesResource getDataSourcesResource() {
+        return resourceContext.getResource(DataSourcesResource.class);
+    }
 }

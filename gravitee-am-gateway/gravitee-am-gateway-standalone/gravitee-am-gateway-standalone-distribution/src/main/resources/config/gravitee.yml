@@ -458,6 +458,20 @@ gateway:
 #      cache:
 #        capacity: 8200  #if null defaults to 4096
 
+# Data sources for MongoIDP connection pooling
+# datasources:
+#   mongodb:
+#     - id: idp-connection-pool-1
+#       settings:
+#          dbname: idp-db-1
+#         host: idp.db.host1
+#         port: 27016
+#     - id: idp-connection-pool-2
+#       settings:
+#         dbname: idp-db-2
+#         host: idp.db.host2
+#         port: 27017
+
 ## enabled resilience mode
 ## this option is useful for domain created
 ## starting from AM 4.5.0, domains created
