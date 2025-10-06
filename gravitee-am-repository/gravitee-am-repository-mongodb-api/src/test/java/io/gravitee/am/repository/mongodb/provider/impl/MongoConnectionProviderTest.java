@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,7 +35,6 @@ import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
 import static io.gravitee.am.repository.provider.ConnectionProvider.BACKEND_TYPE_MONGO;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -70,31 +69,25 @@ public class MongoConnectionProviderTest {
 
     @Test
     public void testAfterPropertiesSet_DefaultConfiguration() throws Exception {
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(true);
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(true);
-
-        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
+        setupDefaultConfiguration();
 
         mongoConnectionProvider.afterPropertiesSet();
 
         verify(environment).getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true));
         verify(environment).getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false));
         verify(environment).getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true));
+        verify(environment).getProperty(eq(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true));
         verify(mongoFactory, atLeastOnce()).getObject(any());
     }
 
     @Test
     public void testAfterPropertiesSet_OAuth2UsesOwnSettings() throws Exception {
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(true);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
+        setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+
+        setDefaultDatabaseName();
 
         when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
@@ -106,12 +99,12 @@ public class MongoConnectionProviderTest {
 
     @Test
     public void testAfterPropertiesSet_GatewayUsesOwnSettings() throws Exception {
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(true);
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(false);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
+        setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+
+        setDefaultDatabaseName();
 
         when(mongoFactory.getObject(any())).thenReturn(mongoClient);
 
@@ -156,12 +149,12 @@ public class MongoConnectionProviderTest {
 
     @Test
     public void testGetClientWrapper_OAuth2UsesOwnSettings() throws Exception {
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(true);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
+        setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+
+        setDefaultDatabaseName();
 
         when(mongoFactory.getObject(any())).thenReturn(mongoClient);
         mongoConnectionProvider.afterPropertiesSet();
@@ -176,16 +169,8 @@ public class MongoConnectionProviderTest {
 
     @Test
     public void testGetClientWrapper_OAuth2UsesGatewaySettings() throws Exception {
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false)))
-                .thenReturn(true);
-        when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(false);
-
-        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
+        setupDefaultConfiguration();
         mongoConnectionProvider.afterPropertiesSet();
-
 
         ClientWrapper<MongoClient> oauthWrapper = mongoConnectionProvider.getClientWrapper(OAUTH2.getName());
         ClientWrapper<MongoClient> gatewayWrapper = mongoConnectionProvider.getClientWrapper(GATEWAY.getName());
@@ -197,12 +182,12 @@ public class MongoConnectionProviderTest {
 
     @Test
     public void testGetClientWrapper_GatewayUsesOwnSettings() throws Exception {
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(true);
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(false);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
+        setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+
+        setDefaultDatabaseName();
 
         when(mongoFactory.getObject(any())).thenReturn(mongoClient);
         mongoConnectionProvider.afterPropertiesSet();
@@ -229,8 +214,9 @@ public class MongoConnectionProviderTest {
     @Test
     public void testGetClientWrapperFromDatasource_NewDatasource() {
         String datasourceId = "test-datasource";
-        String propertyPrefix = "test.prefix.";
-        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
+        String propertyPrefix = MANAGEMENT.getRepositoryPropertyKey();
+
+        setupDefaultConfiguration();
 
         ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
 
@@ -242,8 +228,9 @@ public class MongoConnectionProviderTest {
     @Test
     public void testGetClientWrapperFromDatasource_ExistingDatasource() {
         String datasourceId = "test-datasource";
-        String propertyPrefix = "test.prefix.";
-        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
+        String propertyPrefix = MANAGEMENT.getRepositoryPropertyKey();
+
+        setupDefaultConfiguration();
 
         ClientWrapper<MongoClient> result1 = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
         ClientWrapper<MongoClient> result2 = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
@@ -255,11 +242,12 @@ public class MongoConnectionProviderTest {
     @Test
     public void testGetClientWrapperFromDatasource_CleanupOnShutdown() {
         String datasourceId = "test-datasource";
-        String propertyPrefix = "test.prefix.";
-        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
+        String propertyPrefix = MANAGEMENT.getRepositoryPropertyKey();
+
+        setupDefaultConfiguration();
 
         ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
-        
+
         MongoClientWrapper wrapper = (MongoClientWrapper) result;
         wrapper.releaseClient();
 
@@ -317,9 +305,10 @@ public class MongoConnectionProviderTest {
     public void testMultipleDatasources() {
         String datasource1 = "datasource1";
         String datasource2 = "datasource2";
-        String prefix1 = "prefix1.";
-        String prefix2 = "prefix2.";
-        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
+        String prefix1 = MANAGEMENT.getRepositoryPropertyKey();
+        String prefix2 = GATEWAY.getRepositoryPropertyKey();
+
+        setupDefaultConfiguration();
 
         ClientWrapper<MongoClient> result1 = mongoConnectionProvider.getClientWrapperFromDatasource(datasource1, prefix1);
         ClientWrapper<MongoClient> result2 = mongoConnectionProvider.getClientWrapperFromDatasource(datasource2, prefix2);
@@ -332,29 +321,45 @@ public class MongoConnectionProviderTest {
     @Test
     public void testDatasourceClientWrapperCleanup() throws Exception {
         String datasourceId = "cleanup-test";
-        String propertyPrefix = "test.prefix.";
-        when(mongoFactory.getObject(any())).thenReturn(mongoClient);
+        String propertyPrefix = MANAGEMENT.getRepositoryPropertyKey();
+
+        setupDefaultConfiguration();
 
         ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
-        
+
         java.lang.reflect.Field dsClientWrappersField = MongoConnectionProvider.class.getDeclaredField("dsClientWrappers");
         dsClientWrappersField.setAccessible(true);
         @SuppressWarnings("unchecked")
         Map<String, ClientWrapper<MongoClient>> dsClientWrappers = (Map<String, ClientWrapper<MongoClient>>) dsClientWrappersField.get(mongoConnectionProvider);
-        
+
         assertThat(dsClientWrappers).containsKey(datasourceId);
-        
+
         MongoClientWrapper wrapper = (MongoClientWrapper) result;
         wrapper.releaseClient();
     }
 
     private void setupDefaultConfiguration() {
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(true);
-        when(environment.getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false)))
-                .thenReturn(false);
-        when(environment.getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true)))
-                .thenReturn(true);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
+        setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+
+        setDefaultDatabaseName();
+
         when(mongoFactory.getObject(any())).thenReturn(mongoClient);
+    }
+
+    private void setDefaultDatabaseName() {
+        setStringProperty(OAUTH2.getRepositoryPropertyKey() + ".mongodb.uri", "");
+        setStringProperty(GATEWAY.getRepositoryPropertyKey() + ".mongodb.uri", "");
+        setStringProperty(MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri", "");
+    }
+
+    private void setBooleanProperty(String property, Boolean provided, Boolean returned) {
+        when(environment.getProperty(eq(property), eq(Boolean.class), eq(provided))).thenReturn(returned);
+    }
+
+    private void setStringProperty(String property, String value) {
+        when(environment.getProperty(eq(property), eq(value))).thenReturn(value);
     }
 }
