@@ -38,7 +38,7 @@
     "@asciidoctor/core": "3.0.4",
     "@ctrl/ngx-codemirror": "7.0.0",
     "@gravitee/ui-components": "4.3.3",
-    "@gravitee/ui-particles-angular": "14.2.2",
+    "@gravitee/ui-particles-angular": "14.2.3",
     "@ngx-formly/core": "6.3.12",
     "@ngx-formly/material": "6.3.12",
     "@swimlane/ngx-datatable": "20.1.0",
