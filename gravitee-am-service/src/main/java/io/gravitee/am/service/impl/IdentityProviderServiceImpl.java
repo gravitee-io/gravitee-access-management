@@ -57,6 +57,7 @@ import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.IdentityProviderAuditBuilder;
+import io.gravitee.am.service.validators.idp.DatasourceValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -87,20 +88,22 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
     private final PluginConfigurationValidationService validationService;
+    private final DatasourceValidator datasourceValidator;
 
     public IdentityProviderServiceImpl(@Lazy IdentityProviderRepository identityProviderRepository,
                                        ApplicationService applicationService,
                                        EventService eventService,
                                        AuditService auditService,
                                        ObjectMapper objectMapper,
-                                       PluginConfigurationValidationService validationService
-    ) {
+                                       PluginConfigurationValidationService validationService,
+                                       DatasourceValidator datasourceValidator) {
         this.identityProviderRepository = identityProviderRepository;
         this.applicationService = applicationService;
         this.eventService = eventService;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
         this.validationService = validationService;
+        this.datasourceValidator = datasourceValidator;
     }
 
     @Override
@@ -174,7 +177,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     private Single<IdentityProvider> innerCreate(IdentityProvider identityProvider) {
-        return identityProviderRepository.create(identityProvider)
+        return datasourceValidator.validate(identityProvider.getConfiguration())
+                .andThen(identityProviderRepository.create(identityProvider))
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.CREATE));
@@ -225,7 +229,8 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     // as idp may be system idp so on the UI config is empty.
                     validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
 
-                    return identityProviderRepository.update(identityToUpdate)
+                    return datasourceValidator.validate(identityToUpdate.getConfiguration())
+                            .andThen(identityProviderRepository.update(identityToUpdate))
                             .flatMap(identityProvider1 -> {
                                 // create event for sync process
                                 Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
