@@ -54,6 +54,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -290,11 +291,25 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Single<User> checkAccountPasswordExpiry(Client client, User connectedUser) {
-        final var idp = identityProviderManager.getIdentityProvider(connectedUser.getLastIdentityUsed());
-        if (passwordService.checkAccountPasswordExpiry(connectedUser, passwordPolicyManager.getPolicy(client, idp).orElse(null))) {
-            return Single.error(new AccountPasswordExpiredException("Account's password is expired"));
+        if (doesUserConnectWithSecondaryAccount(connectedUser)) {
+            return Single.just(connectedUser);
         }
-        return Single.just(connectedUser);
+
+        final String lastIdp = StringUtils.hasLength(connectedUser.getLastIdentityUsed()) ? connectedUser.getLastIdentityUsed() : connectedUser.getSource();
+        // Password policy should be evaluated on the idp with the user provider.
+        return identityProviderManager.getUserProvider(lastIdp)
+                .flatMapSingle(__ -> {
+                    final var idp = identityProviderManager.getIdentityProvider(connectedUser.getLastIdentityUsed());
+                    if (passwordService.checkAccountPasswordExpiry(connectedUser, passwordPolicyManager.getPolicy(client, idp).orElse(null))) {
+                        return Single.error(new AccountPasswordExpiredException("Account's password is expired"));
+                    }
+                    return Single.just(connectedUser);
+                })
+                .switchIfEmpty(Single.just(connectedUser));
+    }
+
+    private boolean doesUserConnectWithSecondaryAccount(User connectedUser) {
+        return connectedUser.getLastIdentityUsed() != null &&  connectedUser.getSource() != null && !connectedUser.getSource().equals(connectedUser.getLastIdentityUsed());
     }
 
     private List<ApplicationIdentityProvider> getApplicationIdentityProviders(Client client) {
