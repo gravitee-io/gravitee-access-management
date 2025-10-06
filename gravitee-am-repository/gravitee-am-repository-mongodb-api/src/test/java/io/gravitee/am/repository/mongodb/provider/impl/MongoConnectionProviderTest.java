@@ -33,6 +33,7 @@ import java.util.Map;
 import static io.gravitee.am.repository.Scope.GATEWAY;
 import static io.gravitee.am.repository.Scope.MANAGEMENT;
 import static io.gravitee.am.repository.Scope.OAUTH2;
+import static io.gravitee.am.repository.Scope.RATE_LIMIT;
 import static io.gravitee.am.repository.provider.ConnectionProvider.BACKEND_TYPE_MONGO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -77,6 +78,8 @@ public class MongoConnectionProviderTest {
         verify(environment).getProperty(eq(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false));
         verify(environment).getProperty(eq(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true));
         verify(environment).getProperty(eq(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true));
+        verify(environment, atLeastOnce()).getProperty(eq(RATE_LIMIT.getRepositoryPropertyKey() + ".use-management-settings"), eq(Boolean.class), eq(true));
+        verify(environment).getProperty(eq(RATE_LIMIT.getRepositoryPropertyKey() + ".use-gateway-settings"), eq(Boolean.class), eq(false));
         verify(mongoFactory, atLeastOnce()).getObject(any());
     }
 
@@ -86,6 +89,8 @@ public class MongoConnectionProviderTest {
         setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
         setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, true);
         setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
 
         setDefaultDatabaseName();
 
@@ -103,6 +108,8 @@ public class MongoConnectionProviderTest {
         setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
         setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, false);
         setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
 
         setDefaultDatabaseName();
 
@@ -153,6 +160,8 @@ public class MongoConnectionProviderTest {
         setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
         setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, true);
         setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
 
         setDefaultDatabaseName();
 
@@ -186,6 +195,8 @@ public class MongoConnectionProviderTest {
         setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
         setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, false);
         setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
 
         setDefaultDatabaseName();
 
@@ -343,6 +354,8 @@ public class MongoConnectionProviderTest {
         setBooleanProperty(OAUTH2.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
         setBooleanProperty(GATEWAY.getRepositoryPropertyKey() + ".use-management-settings", true, true);
         setBooleanProperty(MANAGEMENT.getRepositoryPropertyKey() + ".use-management-settings", true, true);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-management-settings", true, false);
+        setBooleanProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".use-gateway-settings", false, false);
 
         setDefaultDatabaseName();
 
@@ -353,6 +366,7 @@ public class MongoConnectionProviderTest {
         setStringProperty(OAUTH2.getRepositoryPropertyKey() + ".mongodb.uri", "");
         setStringProperty(GATEWAY.getRepositoryPropertyKey() + ".mongodb.uri", "");
         setStringProperty(MANAGEMENT.getRepositoryPropertyKey() + ".mongodb.uri", "");
+        setStringProperty(RATE_LIMIT.getRepositoryPropertyKey() + ".mongodb.uri", "");
     }
 
     private void setBooleanProperty(String property, Boolean provided, Boolean returned) {
