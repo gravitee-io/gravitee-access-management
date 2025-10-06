@@ -10321,12 +10321,8 @@ __metadata:
     "@ngx-formly/material": "npm:6.3.12"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/hammerjs": "npm:2.0.46"
-<<<<<<< HEAD
     "@types/jest": "npm:29.5.14"
-=======
-    "@types/jest": "npm:29.5.12"
     "@types/json-schema": "npm:^7.0.15"
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.11.23"
     "@typescript-eslint/eslint-plugin": "npm:7.1.0"
@@ -16657,15 +16653,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-<<<<<<< HEAD
 "ts-jest@npm:^29.0.0, ts-jest@npm:^29.3.0":
-  version: 29.3.4
-  resolution: "ts-jest@npm:29.3.4"
-=======
-"ts-jest@npm:^29.0.0":
   version: 29.4.4
   resolution: "ts-jest@npm:29.4.4"
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
   dependencies:
     bs-logger: "npm:^0.2.6"
     fast-json-stable-stringify: "npm:^2.1.0"

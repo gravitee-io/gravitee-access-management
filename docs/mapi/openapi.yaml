@@ -1,27 +1,7 @@
-#
-# Copyright (C) 2015 The Gravitee team (http://gravitee.io)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#         http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-<<<<<<< HEAD
-  version: 4.8.0
-=======
-  version: 4.7.16
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
+  version: 4.8.8-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -11672,19 +11652,11 @@ components:
           type: array
           items:
             type: string
-<<<<<<< HEAD
         allowedScopesEnabled:
           type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-=======
         openDynamicClientRegistrationEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
-          type: boolean
-        allowedScopesEnabled:
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
           type: boolean
         clientTemplateEnabled:
           type: boolean
@@ -11906,37 +11878,23 @@ components:
           $ref: "#/components/schemas/CorsSettings"
         dataPlaneId:
           type: string
-<<<<<<< HEAD
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
+        dynamicClientRegistrationTemplateEnabled:
+          type: boolean
+        redirectUriUnsecuredHttpSchemeAllowed:
+          type: boolean
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
-        redirectUriExpressionLanguageEnabled:
-          type: boolean
         redirectUriStrictMatching:
-=======
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
-        dynamicClientRegistrationTemplateEnabled:
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
           type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
-          type: boolean
-<<<<<<< HEAD
-        dynamicClientRegistrationTemplateEnabled:
-          type: boolean
-        redirectUriUnsecuredHttpSchemeAllowed:
-=======
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
           type: boolean
     DomainPage:
       type: object
@@ -13960,22 +13918,15 @@ components:
           type: array
           items:
             type: string
-<<<<<<< HEAD
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
-        dynamicClientRegistrationEnabled:
-=======
-        dynamicClientRegistrationEnabled:
+        openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
-        openDynamicClientRegistrationEnabled:
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
+        dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         clientTemplateEnabled:
-          type: boolean
-          writeOnly: true
-        openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
     PatchDomain:
@@ -15584,21 +15535,10 @@ components:
           type: string
         zoneInfo:
           type: string
-<<<<<<< HEAD
         fullId:
           $ref: "#/components/schemas/UserId"
-=======
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
         middleName:
           type: string
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         inactive:
           type: boolean
         profile:
@@ -15611,7 +15551,6 @@ components:
           type: string
         disabled:
           type: boolean
-<<<<<<< HEAD
         identitiesAsMap:
           type: object
           additionalProperties:
@@ -15620,10 +15559,6 @@ components:
           type: object
           additionalProperties:
             type: object
-=======
-        fullId:
-          $ref: "#/components/schemas/UserId"
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
     UserEntity:
       type: object
       properties:
@@ -15799,21 +15734,10 @@ components:
           type: string
         zoneInfo:
           type: string
-<<<<<<< HEAD
         fullId:
           $ref: "#/components/schemas/UserId"
-=======
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
         middleName:
           type: string
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         inactive:
           type: boolean
         profile:
@@ -15826,7 +15750,6 @@ components:
           type: string
         disabled:
           type: boolean
-<<<<<<< HEAD
         identitiesAsMap:
           type: object
           additionalProperties:
@@ -15835,10 +15758,6 @@ components:
           type: object
           additionalProperties:
             type: object
-=======
-        fullId:
-          $ref: "#/components/schemas/UserId"
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
     UserId:
       type: object
       properties:
