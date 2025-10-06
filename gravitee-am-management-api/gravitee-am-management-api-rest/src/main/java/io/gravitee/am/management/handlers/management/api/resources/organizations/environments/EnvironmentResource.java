@@ -44,4 +44,9 @@ public class EnvironmentResource extends AbstractResource {
     public DataPlanesResource getDataPlanesResource() {
         return resourceContext.getResource(DataPlanesResource.class);
     }
+
+    @Path("/data-sources")
+    public DataSourcesResource getDataSourcesResource() {
+        return resourceContext.getResource(DataSourcesResource.class);
+    }
 }
