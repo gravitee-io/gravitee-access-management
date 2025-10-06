@@ -87,11 +87,7 @@ public class TokenEndpoint implements Handler<RoutingContext> {
             tokenRequest.setConfirmationMethodX5S256(context.get(ConstantKeys.PEER_CERTIFICATE_THUMBPRINT));
         }
 
-        io.vertx.core.http.HttpServerRequest request = context.request().getDelegate();
-        Request serverRequest = new VertxHttpServerRequest(request);
-        Response serverResponse = new VertxHttpServerResponse(request, serverRequest.metrics());
-
-        tokenGranter.grant(tokenRequest, serverResponse, client)
+        tokenGranter.grant(tokenRequest, tokenRequest.getHttpResponse(), client)
                 .subscribe(accessToken -> context.response()
                         .putHeader(HttpHeaders.CACHE_CONTROL, "no-store")
                         .putHeader(HttpHeaders.PRAGMA, "no-cache")
