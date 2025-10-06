@@ -64,12 +64,9 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
 
-<<<<<<< HEAD
     private boolean notUseMngSettingsForRateLimit;
     private boolean notUseGwSettingsForRateLimit;
-=======
     private final Map<String, ClientWrapper<MongoClient>> dsClientWrappers = new ConcurrentHashMap<>();
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -96,7 +93,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
             oauthMongoClient = buildClientWrapper(OAUTH2);
         }
         if (notUseMngSettingsForRateLimit && notUseGwSettingsForRateLimit) {
-            ratelimitMongoClient = new MongoClientWrapper(new MongoFactory(environment, RATE_LIMIT.getRepositoryPropertyKey()).getObject(), getDatabaseName(Scope.RATE_LIMIT));
+            ratelimitMongoClient = buildClientWrapper(RATE_LIMIT);
         }
     }
 

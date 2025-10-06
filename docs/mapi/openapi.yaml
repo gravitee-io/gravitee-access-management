@@ -17,11 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-<<<<<<< HEAD
-  version: 4.8.0
-=======
-  version: 4.7.16
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
+  version: 4.10.0-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -7886,7 +7882,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_10
+      operationId: deleteUserFactor
       parameters:
       - name: organizationId
         in: path
@@ -7969,7 +7965,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_11
+      operationId: delete_10
       parameters:
       - name: organizationId
         in: path
@@ -8518,7 +8514,7 @@ paths:
       summary: Delete a form
       description: "User must have the ORGANIZATION_FORM[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_12
+      operationId: delete_11
       parameters:
       - name: organizationId
         in: path
@@ -8903,7 +8899,7 @@ paths:
       summary: Delete an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission\
         \ on the specified organization"
-      operationId: delete_13
+      operationId: delete_12
       parameters:
       - name: organizationId
         in: path
@@ -9256,7 +9252,7 @@ paths:
       summary: Delete a plaform role
       description: "User must have the ORGANIZATION_ROLE[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_14
+      operationId: delete_13
       parameters:
       - name: organizationId
         in: path
@@ -9439,7 +9435,7 @@ paths:
       summary: Delete the sharding tag
       description: "User must have the ORGANIZATION_TAG[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_15
+      operationId: delete_14
       parameters:
       - name: organizationId
         in: path
@@ -11479,6 +11475,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/NewOrganizationUser"
@@ -11498,6 +11495,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/NewUser"
@@ -11517,6 +11515,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             type: string
@@ -11562,6 +11561,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/UpdateUserWithId"
@@ -11672,22 +11672,13 @@ components:
           type: array
           items:
             type: string
-<<<<<<< HEAD
         dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
-          type: boolean
-=======
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-        dynamicClientRegistrationEnabled:
           type: boolean
         allowedScopesEnabled:
           type: boolean
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
         clientTemplateEnabled:
-          type: boolean
-        allowedScopesEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -11907,31 +11898,19 @@ components:
           $ref: "#/components/schemas/CorsSettings"
         dataPlaneId:
           type: string
-<<<<<<< HEAD
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        redirectUriLocalhostAllowed:
-          type: boolean
-        redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
-        redirectUriWildcardAllowed:
-          type: boolean
         redirectUriExpressionLanguageEnabled:
           type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
-=======
-        openDynamicClientRegistrationEnabled:
-          type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
-        dynamicClientRegistrationTemplateEnabled:
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
+        openDynamicClientRegistrationEnabled:
           type: boolean
         dynamicClientRegistrationTemplateEnabled:
+          type: boolean
+        redirectUriLocalhostAllowed:
+          type: boolean
+        redirectUriWildcardAllowed:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -11966,6 +11945,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/BaseJsonNode"
@@ -12320,6 +12300,8 @@ components:
           - REGISTRATION_CONFIRMATION
           - TOKEN
           - WEBAUTHN_REGISTER
+          - MFA_CHALLENGE
+          - MFA_ENROLLMENT
         condition:
           type: string
     FlowEntity:
@@ -12352,6 +12334,8 @@ components:
           - REGISTRATION_CONFIRMATION
           - TOKEN
           - WEBAUTHN_REGISTER
+          - MFA_CHALLENGE
+          - MFA_ENROLLMENT
         condition:
           type: string
         icon:
@@ -12609,6 +12593,8 @@ components:
           type: boolean
         identifierFirstEnabled:
           type: boolean
+        resetPasswordOnExpiration:
+          type: boolean
         enforcePasswordPolicyEnabled:
           type: boolean
     MFASettings:
@@ -12711,6 +12697,7 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
     NewAlertNotifier:
       required:
@@ -12719,6 +12706,7 @@ components:
       type: object
       properties:
         type:
+          minLength: 1
           type: string
         name:
           type: string
@@ -12798,8 +12786,10 @@ components:
       type: object
       properties:
         type:
+          minLength: 1
           type: string
         name:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -12809,6 +12799,7 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
     NewDeviceIdentifier:
       required:
@@ -12832,8 +12823,10 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
         locale:
+          minLength: 1
           type: string
     NewDomain:
       required:
@@ -13051,6 +13044,7 @@ components:
       type: object
       properties:
         username:
+          minLength: 1
           type: string
         password:
           type: string
@@ -13113,6 +13107,7 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
         minLength:
           minimum: 0
@@ -13251,6 +13246,7 @@ components:
       type: object
       properties:
         username:
+          minLength: 1
           type: string
         password:
           type: string
@@ -13359,6 +13355,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/BaseJsonNode"
@@ -13959,11 +13956,8 @@ components:
           type: array
           items:
             type: string
-<<<<<<< HEAD
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
-=======
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
         dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
@@ -14996,6 +14990,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15009,6 +15004,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15020,8 +15016,10 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15035,6 +15033,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15087,6 +15086,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15116,6 +15116,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15166,6 +15167,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15197,6 +15199,7 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
         minLength:
           minimum: 0
@@ -15241,6 +15244,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15292,6 +15296,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15579,23 +15584,10 @@ components:
           type: string
         zoneInfo:
           type: string
-<<<<<<< HEAD
         fullId:
           $ref: "#/components/schemas/UserId"
         middleName:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-=======
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        middleName:
-          type: string
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
         identitiesAsMap:
           type: object
           additionalProperties:
@@ -15612,11 +15604,10 @@ components:
           type: string
         disabled:
           type: boolean
-<<<<<<< HEAD
-=======
-        fullId:
-          $ref: "#/components/schemas/UserId"
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserEntity:
       type: object
       properties:
@@ -15792,23 +15783,10 @@ components:
           type: string
         zoneInfo:
           type: string
-<<<<<<< HEAD
         fullId:
           $ref: "#/components/schemas/UserId"
         middleName:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-=======
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        middleName:
-          type: string
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
         identitiesAsMap:
           type: object
           additionalProperties:
@@ -15825,11 +15803,10 @@ components:
           type: string
         disabled:
           type: boolean
-<<<<<<< HEAD
-=======
-        fullId:
-          $ref: "#/components/schemas/UserId"
->>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserId:
       type: object
       properties:
@@ -15909,6 +15886,7 @@ components:
       type: object
       properties:
         username:
+          minLength: 1
           type: string
     VirtualHost:
       type: object
