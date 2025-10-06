@@ -25,15 +25,21 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author GraviteeSource Team
  */
 public class MongoClientWrapper implements ClientWrapper<MongoClient> {
-
     private final MongoClient client;
     private final String dbName;
+    private Runnable postShutdownFunction;
 
     private AtomicInteger reference = new AtomicInteger(0);
 
     public MongoClientWrapper(MongoClient client, String dbName) {
         this.client = client;
         this.dbName = dbName;
+    }
+
+    public MongoClientWrapper(MongoClient client, Runnable postShutdownFunction, String dbName) {
+        this.client = client;
+        this.dbName = dbName;
+        this.postShutdownFunction = postShutdownFunction;
     }
 
     @Override
@@ -57,5 +63,9 @@ public class MongoClientWrapper implements ClientWrapper<MongoClient> {
     void shutdown() {
         this.reference.set(0);
         this.client.close();
+
+        if (this.postShutdownFunction != null) {
+            this.postShutdownFunction.run();
+        }
     }
 }

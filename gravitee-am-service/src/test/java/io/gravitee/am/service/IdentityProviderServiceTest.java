@@ -52,6 +52,7 @@ import io.gravitee.am.service.impl.IdentityProviderServiceImpl;
 import io.gravitee.am.service.model.AssignPasswordPolicy;
 import io.gravitee.am.service.model.NewIdentityProvider;
 import io.gravitee.am.service.model.UpdateIdentityProvider;
+import io.gravitee.am.service.validators.idp.DatasourceValidator;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -72,19 +73,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class IdentityProviderServiceTest {
 
-
-    private IdentityProviderRepository identityProviderRepository = mock();
-
-    private EventService eventService = mock();
-
-    private ApplicationService applicationService = mock();
-
+    private final IdentityProviderRepository identityProviderRepository = mock();
+    private final EventService eventService = mock();
+    private final ApplicationService applicationService = mock();
+    private final DatasourceValidator datasourceValidator = mock();
     private PluginConfigurationValidationService validationService = mock();
 
-    private IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
-            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(), validationService
+    private final IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
+            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(),validationService, datasourceValidator
     );
-
 
     private final static String DOMAIN = "domain1";
     private final Clock testClock = Clock.fixed(Instant.parse("2024-07-15T10:00:00Z"), ZoneOffset.UTC);
@@ -96,7 +93,7 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldFindById() {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.just(new IdentityProvider()));
-        TestObserver testObserver = identityProviderService.findById("my-identity-provider").test();
+        TestObserver<IdentityProvider> testObserver = identityProviderService.findById("my-identity-provider").test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertComplete();
@@ -107,7 +104,7 @@ public class IdentityProviderServiceTest {
     @Test
     public void shouldFindById_notExistingIdentityProvider() {
         when(identityProviderRepository.findById("my-identity-provider")).thenReturn(Maybe.empty());
-        TestObserver testObserver = identityProviderService.findById("my-identity-provider").test();
+        TestObserver<IdentityProvider> testObserver = identityProviderService.findById("my-identity-provider").test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
 
         testObserver.assertNoValues();
@@ -189,6 +186,7 @@ public class IdentityProviderServiceTest {
         idp.setReferenceId("domain#1");
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -201,9 +199,25 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldNotCreate_WhenDatasourceIsInvalid() {
+        NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
+        IdentityProvider idp = new IdentityProvider();
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId("domain#1");
+        when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.error(new Exception("a failure")));
+
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
     public void shouldCreate_technicalException() {
         NewIdentityProvider newIdentityProvider = mock(NewIdentityProvider.class);
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.error(TechnicalException::new));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
 
         TestObserver<IdentityProvider> testObserver = new TestObserver<>();
         identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).subscribe(testObserver);
@@ -242,6 +256,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -255,6 +270,23 @@ public class IdentityProviderServiceTest {
     }
 
     @Test
+    public void shouldNotUpdate_WhenDatasourceIsInvalid() {
+        UpdateIdentityProvider updateIdentityProvider = mock(UpdateIdentityProvider.class);
+        IdentityProvider idp = new IdentityProvider();
+        idp.setReferenceType(ReferenceType.DOMAIN);
+        idp.setReferenceId("domain#1");
+
+        when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(new IdentityProvider()));
+        when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(idp));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.error(new Exception("a failure")));
+
+        TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
+
+        testObserver.assertError(TechnicalManagementException.class);
+        testObserver.assertNotComplete();
+    }
+
+    @Test
     public void shouldUpdate_isUpgrader_isSystem() {
         UpdateIdentityProvider updateIdentityProvider = (UpdateIdentityProvider) createIdentityProviders(true, false);
         IdentityProvider identityProvider = (IdentityProvider) createIdentityProviders(false, true);
@@ -262,6 +294,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(identityProvider));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, true).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -283,6 +316,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(identityProvider));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -305,6 +339,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.findById(eq(ReferenceType.DOMAIN), eq(DOMAIN), eq("my-identity-provider"))).thenReturn(Maybe.just(identityProvider));
         when(identityProviderRepository.update(any(IdentityProvider.class))).thenReturn(Single.just(identityProvider));
         when(eventService.create(any())).thenReturn(Single.just(new Event()));
+        when(datasourceValidator.validate(any())).thenReturn(Completable.complete());
 
         TestObserver testObserver = identityProviderService.update(DOMAIN, "my-identity-provider", updateIdentityProvider, false).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

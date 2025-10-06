@@ -32,6 +32,7 @@ import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistryImpl;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import io.reactivex.rxjava3.core.Observable;
 import org.bson.Document;
 import org.springframework.beans.factory.InitializingBean;
@@ -71,7 +72,12 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
     public DataPlaneRegistry dataPlaneRegistry() {
         return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class));
     }
-    
+
+    @Bean
+    public DataSourcesConfiguration dataSourcesConfiguration() {
+        return new DataSourcesConfiguration(null);
+    }
+
     @Bean
     public MongoIdentityProviderConfiguration mongoIdentityProviderConfiguration() {
         MongoIdentityProviderConfiguration configuration = new MongoIdentityProviderConfiguration();
