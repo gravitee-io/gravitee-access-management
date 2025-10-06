@@ -207,7 +207,7 @@ public class IdentityProviderServiceTest {
         when(identityProviderRepository.create(any(IdentityProvider.class))).thenReturn(Single.just(idp));
         when(datasourceValidator.validate(any())).thenReturn(Completable.error(new Exception("a failure")));
 
-        TestObserver testObserver = identityProviderService.create(DOMAIN, newIdentityProvider).test();
+        TestObserver testObserver = identityProviderService.create(new Domain(DOMAIN), newIdentityProvider, null).test();
 
         testObserver.assertError(TechnicalManagementException.class);
         testObserver.assertNotComplete();

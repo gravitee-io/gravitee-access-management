@@ -178,7 +178,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
 
     private Single<IdentityProvider> innerCreate(IdentityProvider identityProvider) {
         return datasourceValidator.validate(identityProvider.getConfiguration())
-                .andThen(identityProviderRepository.create(identityProvider)
+                .andThen(identityProviderRepository.create(identityProvider))
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.CREATE));
@@ -187,7 +187,7 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
-                }));
+                });
     }
 
     private static IdentityProvider prepareIdp(NewIdentityProvider newIdentityProvider, ReferenceType domain, String domain1, boolean system) {
@@ -230,12 +230,12 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
 
                     return datasourceValidator.validate(identityToUpdate.getConfiguration())
-                            .andThen(identityProviderRepository.update(identityToUpdate)
+                            .andThen(identityProviderRepository.update(identityToUpdate))
                             .flatMap(identityProvider1 -> {
                                 // create event for sync process
                                 Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
-                            }));
+                            });
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
