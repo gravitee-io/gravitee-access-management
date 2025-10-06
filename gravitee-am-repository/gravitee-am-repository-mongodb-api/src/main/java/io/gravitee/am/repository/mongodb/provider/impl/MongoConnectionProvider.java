@@ -19,8 +19,15 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import io.gravitee.am.common.env.RepositoriesEnvironment;
 import io.gravitee.am.repository.Scope;
 import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
+import io.gravitee.am.repository.mongodb.provider.MongoFactory;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -38,11 +45,15 @@ import static io.gravitee.am.repository.Scope.RATE_LIMIT;
  */
 // Need to name this component to end with Repository on in order to make it injectable
 // as the Repository plugin only scan beanName ending with Repository or TransactionManager
+@Slf4j
 @Component("ConnectionProviderFromRepository")
 public class MongoConnectionProvider implements ConnectionProvider<MongoClient, MongoConnectionConfiguration>, InitializingBean {
 
     @Autowired
     private RepositoriesEnvironment environment;
+
+    @Autowired
+    private MongoFactory mongoFactory;
 
     private ClientWrapper<MongoClient> commonMongoClient;
     private ClientWrapper<MongoClient> oauthMongoClient;
@@ -53,8 +64,12 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     private boolean notUseGwSettingsForOauth2;
     private boolean notUseMngSettingsForGateway;
 
+<<<<<<< HEAD
     private boolean notUseMngSettingsForRateLimit;
     private boolean notUseGwSettingsForRateLimit;
+=======
+    private final Map<String, ClientWrapper<MongoClient>> dsClientWrappers = new ConcurrentHashMap<>();
+>>>>>>> 465b28781 ([4.7.x] feat: Add datasource support for mongo clients (#6639))
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -73,13 +88,12 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
         notUseMngSettingsForRateLimit = !useMngSettingsForRateLimit;
 
         // create the common client just after the bean Initialization to guaranty the uniqueness
-        commonMongoClient =
-                new MongoClientWrapper(new MongoFactory(environment, MANAGEMENT.getRepositoryPropertyKey()).getObject(), getDatabaseName(MANAGEMENT));
+        commonMongoClient = buildClientWrapper(MANAGEMENT);
         if (notUseMngSettingsForGateway) {
-            gatewayMongoClient = new MongoClientWrapper(new MongoFactory(environment, GATEWAY.getRepositoryPropertyKey()).getObject(), getDatabaseName(GATEWAY));
+            gatewayMongoClient = buildClientWrapper(GATEWAY);
         }
         if (notUseMngSettingsForOauth2 && notUseGwSettingsForOauth2) {
-            oauthMongoClient = new MongoClientWrapper(new MongoFactory(environment, OAUTH2.getRepositoryPropertyKey()).getObject(), getDatabaseName(OAUTH2));
+            oauthMongoClient = buildClientWrapper(OAUTH2);
         }
         if (notUseMngSettingsForRateLimit && notUseGwSettingsForRateLimit) {
             ratelimitMongoClient = new MongoClientWrapper(new MongoFactory(environment, RATE_LIMIT.getRepositoryPropertyKey()).getObject(), getDatabaseName(Scope.RATE_LIMIT));
@@ -92,7 +106,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     }
 
     @Override
-    public ClientWrapper getClientWrapper(String name) {
+    public ClientWrapper<MongoClient> getClientWrapper(String name) {
         if (OAUTH2.getName().equals(name) && notUseMngSettingsForOauth2) {
             return notUseGwSettingsForOauth2 ? oauthMongoClient : getClientWrapper(GATEWAY.getName());
         } else if (GATEWAY.getName().equals(name) && notUseMngSettingsForGateway) {
@@ -106,7 +120,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
 
     @Override
     public ClientWrapper<MongoClient> getClientFromConfiguration(MongoConnectionConfiguration configuration) {
-        return new MongoClientWrapper(MongoFactory.createClient(configuration), configuration.getDatabase());
+        return new MongoClientWrapper(MongoFactoryImpl.createClient(configuration), configuration.getDatabase());
     }
 
     @Override
@@ -118,7 +132,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
                 return commonMongoClient;
             }
         } else {
-            return new MongoClientWrapper(new MongoFactory(environment, prefix).getObject(), getDatabaseName(prefix));
+            return new MongoClientWrapper(mongoFactory.getObject(prefix), getDatabaseName(prefix));
         }
     }
 
@@ -137,6 +151,16 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
             }
         }
         return environment.getProperty(prefix + ".mongodb.dbname", "gravitee-am");
+    }
+
+    @Override
+    public ClientWrapper<MongoClient> getClientWrapperFromDatasource(String datasourceId, String propertyPrefix) {
+        log.debug("Using datasource {} with property prefix {}", datasourceId, propertyPrefix);
+        return this.dsClientWrappers.computeIfAbsent(datasourceId, k ->
+                new MongoClientWrapper(mongoFactory.getObject(propertyPrefix), () -> {
+                    log.debug("Cleaning up datasource {}", datasourceId);
+                    this.dsClientWrappers.remove(datasourceId);
+                }, getDatabaseName(propertyPrefix)));
     }
 
     @Override
@@ -159,5 +183,9 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
     @Override
     public boolean canHandle(String backendType) {
         return BACKEND_TYPE_MONGO.equals(backendType);
+    }
+
+    private MongoClientWrapper buildClientWrapper(Scope scope) {
+        return new MongoClientWrapper(mongoFactory.getObject(scope.getRepositoryPropertyKey() + ".mongodb."), getDatabaseName(scope));
     }
 }
