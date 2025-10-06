@@ -56,6 +56,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -63,7 +64,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.gravitee.am.identityprovider.api.AuthenticationProvider.ACTUAL_USERNAME;
-import static java.lang.Boolean.TRUE;
 import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
@@ -293,17 +293,33 @@ public class UserAuthenticationManagerImpl implements UserAuthenticationManager 
     }
 
     private Single<User> checkAccountPasswordExpiry(Client client, User connectedUser) {
-        final var idp = identityProviderManager.getIdentityProvider(connectedUser.getLastIdentityUsed());
-        PasswordPolicy passwordPolicy = passwordPolicyManager.getPolicy(client, idp).orElse(null);
-        LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
-        if (passwordService.checkAccountPasswordExpiry(connectedUser, passwordPolicy)) {
-            if(loginSettings != null && TRUE.equals(loginSettings.getResetPasswordOnExpiration())) {
-                connectedUser.setForceResetPassword(true);
-                return userService.update(connectedUser);
-            }
-            return Single.error(new AccountPasswordExpiredException("Account's password is expired"));
+        if (doesUserConnectWithSecondaryAccount(connectedUser)) {
+            return Single.just(connectedUser);
         }
-        return Single.just(connectedUser);
+
+        final String lastIdp = StringUtils.hasLength(connectedUser.getLastIdentityUsed()) ? connectedUser.getLastIdentityUsed() : connectedUser.getSource();
+        // Password policy should be evaluated on the idp with the user provider.
+        return identityProviderManager.getUserProvider(lastIdp)
+                .flatMapSingle(__ -> {
+                    final var idp = identityProviderManager.getIdentityProvider(lastIdp);
+                    final PasswordPolicy passwordPolicy = passwordPolicyManager.getPolicy(client, idp).orElse(null);
+                    final LoginSettings loginSettings = LoginSettings.getInstance(domain, client);
+
+                    if (passwordService.checkAccountPasswordExpiry(connectedUser, passwordPolicy)) {
+                        if (loginSettings != null && Boolean.TRUE.equals(loginSettings.getResetPasswordOnExpiration())) {
+                            connectedUser.setForceResetPassword(true);
+                            return userService.update(connectedUser);
+                        }
+                        return Single.error(new AccountPasswordExpiredException("Account's password is expired"));
+                    }
+
+                    return Single.just(connectedUser);
+                })
+                .switchIfEmpty(Single.just(connectedUser));
+    }
+
+    private boolean doesUserConnectWithSecondaryAccount(User connectedUser) {
+        return connectedUser.getLastIdentityUsed() != null &&  connectedUser.getSource() != null && !connectedUser.getSource().equals(connectedUser.getLastIdentityUsed());
     }
 
     private List<ApplicationIdentityProvider> getApplicationIdentityProviders(Client client) {
