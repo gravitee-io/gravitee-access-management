@@ -32,6 +32,7 @@ import io.gravitee.am.identityprovider.api.AuthenticationContext;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.identityprovider.api.UserProvider;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.User;
@@ -140,6 +141,7 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(mock(UserProvider.class)));
 
         when(passwordService.checkAccountPasswordExpiry(any(), any())).thenReturn(false);
 
@@ -147,6 +149,7 @@ public class UserAuthenticationManagerTest {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
+            user.setSource("idp-1");
             return Single.just(user);
         });
 
@@ -186,7 +189,124 @@ public class UserAuthenticationManagerTest {
     }
 
     @Test
-    public void shouldAuthenticateUser_singleIdentityProvider_PasswordExpiry() {
+    public void shouldAuthenticateUser_PasswordExpiry_skipped_if_secondary_account_is_the_current_one() {
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setIdentityProviders(getApplicationIdentityProviders("idp-1", "idp-2"));
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+
+
+        IdentityProvider identityProvider2 = new IdentityProvider();
+        identityProvider2.setId("idp-2");
+
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.getIdentityProvider("idp-2")).thenReturn(identityProvider);
+
+        when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
+            User user = new User();
+            user.setUsername(idpUser.getUsername());
+            user.setSource("idp-1");
+            user.setLastIdentityUsed("idp-2");
+            return Single.just(user);
+        });
+
+        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.just(new DefaultUser("username"));
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "username";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return new SimpleAuthenticationContext();
+            }
+        }).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertComplete();
+        observer.assertValue(user -> user.getUsername().equals("username"));
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.SUCCESS), any());
+        verify(passwordService, never()).checkAccountPasswordExpiry(any(), any());
+    }
+
+    @Test
+    public void shouldAuthenticateUser_PasswordExpiry_skipped_if_UserProvider_not_implemented() {
+        Client client = new Client();
+        client.setClientId("client-id");
+        client.setIdentityProviders(getApplicationIdentityProviders("idp-1"));
+
+        IdentityProvider identityProvider = new IdentityProvider();
+        identityProvider.setId("idp-1");
+
+        when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.empty());
+
+        when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
+            io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
+            User user = new User();
+            user.setUsername(idpUser.getUsername());
+            user.setSource("idp-1");
+            return Single.just(user);
+        });
+
+        when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
+                return Maybe.just(new DefaultUser("username"));
+            }
+
+            @Override
+            public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(String username) {
+                return Maybe.empty();
+            }
+        }));
+        TestObserver<User> observer = userAuthenticationManager.authenticate(client, new Authentication() {
+            @Override
+            public Object getCredentials() {
+                return null;
+            }
+
+            @Override
+            public Object getPrincipal() {
+                return "username";
+            }
+
+            @Override
+            public AuthenticationContext getContext() {
+                return new SimpleAuthenticationContext();
+            }
+        }).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertNoErrors();
+        observer.assertComplete();
+        observer.assertValue(user -> user.getUsername().equals("username"));
+        verify(eventManager, times(1)).publishEvent(eq(AuthenticationEvent.SUCCESS), any());
+        verify(passwordService, never()).checkAccountPasswordExpiry(any(), any());
+    }
+
+    @Test
+    public void shouldNotAuthenticateUser_singleIdentityProvider_PasswordExpiry() {
         Client client = new Client();
         client.setClientId("client-id");
         client.setIdentityProviders(getApplicationIdentityProviders("idp-1"));
@@ -194,13 +314,14 @@ public class UserAuthenticationManagerTest {
         IdentityProvider identityProvider = new IdentityProvider();
         identityProvider.setId("idp-1");
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
-
+        when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(passwordService.checkAccountPasswordExpiry(any(), any())).thenReturn(true);
 
         when(userAuthenticationService.connect(any(), any(), any(), eq(true))).then(invocation -> {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
+            user.setSource("idp-1");
             return Single.just(user);
         });
 
@@ -302,10 +423,12 @@ public class UserAuthenticationManagerTest {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
+            user.setSource("idp-1");
             return Single.just(user);
         });
 
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
@@ -380,11 +503,13 @@ public class UserAuthenticationManagerTest {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
+            user.setSource("idp-1");
             return Single.just(user);
         });
 
         AuthenticationProvider authenticationProvider1 = mock(AuthenticationProvider.class);
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(mock(UserProvider.class)));
 
         AuthenticationProvider authenticationProvider2 = mock(AuthenticationProvider.class);
         when(authenticationProvider2.loadUserByUsername(any(Authentication.class))).thenReturn(Maybe.just(new DefaultUser("username2")));
@@ -434,10 +559,12 @@ public class UserAuthenticationManagerTest {
             io.gravitee.am.identityprovider.api.User idpUser = invocation.getArgument(0);
             User user = new User();
             user.setUsername(idpUser.getUsername());
+            user.setSource("idp-1");
             return Single.just(user);
         });
 
         when(identityProviderManager.getIdentityProvider("idp-1")).thenReturn(identityProvider);
+        when(identityProviderManager.getUserProvider("idp-1")).thenReturn(Maybe.just(mock(UserProvider.class)));
         when(identityProviderManager.get("idp-1")).thenReturn(Maybe.just(new AuthenticationProvider() {
             @Override
             public Maybe<io.gravitee.am.identityprovider.api.User> loadUserByUsername(Authentication authentication) {
