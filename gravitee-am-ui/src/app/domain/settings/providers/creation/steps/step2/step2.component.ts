@@ -20,6 +20,7 @@ import { map } from 'rxjs/operators';
 import { OrganizationService } from '../../../../../../services/organization.service';
 import { SnackbarService } from '../../../../../../services/snackbar.service';
 import { enrichFormWithCerts } from '../../../provider/provider.form.enricher';
+import { DataSourcesService } from '../../../../../../services/datasources.service';
 
 @Component({
   selector: 'provider-creation-step2',
@@ -34,15 +35,18 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
   providerSchema: any = {};
   domainWhitelistPattern = '';
   private certificates: any[];
+  private datasources: any[];
 
   constructor(
     private organizationService: OrganizationService,
     private snackbarService: SnackbarService,
     private route: ActivatedRoute,
+    private dataSourcesService: DataSourcesService,
   ) {}
 
   ngOnInit() {
     this.certificates = this.route.snapshot.data['certificates'];
+    this.datasources = this.route.snapshot.data['datasources'];
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -51,7 +55,8 @@ export class ProviderCreationStep2Component implements OnInit, OnChanges {
         .identitySchema(changes.provider.currentValue.type)
         .pipe(map((schema) => enrichFormWithCerts(schema, this.certificates)))
         .subscribe((data) => {
-          this.providerSchema = data;
+          // Process datasource widgets BEFORE setting the schema
+          this.providerSchema = this.dataSourcesService.applyDataSourceSelection(data, this.datasources);
         });
     }
   }

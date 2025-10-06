@@ -26,6 +26,7 @@ import { DialogService } from '../../../../../services/dialog.service';
 import { EntrypointService } from '../../../../../services/entrypoint.service';
 import { AppConfig } from '../../../../../../config/app.config';
 import { enrichFormWithCerts } from '../provider.form.enricher';
+import { DataSourcesService } from '../../../../../services/datasources.service';
 
 @Component({
   selector: 'provider-settings',
@@ -48,6 +49,7 @@ export class ProviderSettingsComponent implements OnInit {
   customCode: string;
   domainWhitelistPattern: string;
   certificates: any[];
+  private datasources: any[];
 
   constructor(
     private providerService: ProviderService,
@@ -58,10 +60,12 @@ export class ProviderSettingsComponent implements OnInit {
     private domainService: DomainService,
     private dialogService: DialogService,
     private entrypointService: EntrypointService,
+    private dataSourcesService: DataSourcesService,
   ) {}
 
   ngOnInit() {
     this.certificates = this.route.snapshot.data['certificates'];
+    this.datasources = this.route.snapshot.data['datasources'];
     this.provider = this.route.snapshot.data['provider'];
     if (this.provider.system) {
       // settings tab is useless for system providers
@@ -104,6 +108,8 @@ export class ProviderSettingsComponent implements OnInit {
             }
             this.providerSchema['properties'][key].default = '';
           });
+          // Process datasource widgets
+          this.providerSchema = this.dataSourcesService.applyDataSourceSelection(this.providerSchema, this.datasources);
         }
       });
   }
