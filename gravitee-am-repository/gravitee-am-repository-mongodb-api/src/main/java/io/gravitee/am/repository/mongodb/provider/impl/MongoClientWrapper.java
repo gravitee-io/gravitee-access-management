@@ -26,11 +26,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MongoClientWrapper implements ClientWrapper<MongoClient> {
     private final MongoClient client;
-<<<<<<< HEAD
     private final String dbName;
-=======
     private Runnable postShutdownFunction;
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
 
     private AtomicInteger reference = new AtomicInteger(0);
 
@@ -39,8 +36,9 @@ public class MongoClientWrapper implements ClientWrapper<MongoClient> {
         this.dbName = dbName;
     }
 
-    public MongoClientWrapper(MongoClient client, Runnable postShutdownFunction) {
+    public MongoClientWrapper(MongoClient client, Runnable postShutdownFunction, String dbName) {
         this.client = client;
+        this.dbName = dbName;
         this.postShutdownFunction = postShutdownFunction;
     }
 

@@ -63,10 +63,7 @@ import org.apache.commons.text.RandomStringGenerator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-<<<<<<< HEAD
 import org.mockito.ArgumentCaptor;
-=======
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -80,22 +77,10 @@ public class IdentityProviderServiceTest {
     private final EventService eventService = mock();
     private final ApplicationService applicationService = mock();
     private final DatasourceValidator datasourceValidator = mock();
-
-<<<<<<< HEAD
-    private IdentityProviderRepository identityProviderRepository = mock();
-
-    private EventService eventService = mock();
-
-    private ApplicationService applicationService = mock();
-
     private PluginConfigurationValidationService validationService = mock();
 
-    private IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
-            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(), validationService
-=======
     private final IdentityProviderService identityProviderService = new IdentityProviderServiceImpl(
-            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(), datasourceValidator
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
+            identityProviderRepository, applicationService, eventService, mock(), new ObjectMapper(),validationService, datasourceValidator
     );
 
     private final static String DOMAIN = "domain1";

@@ -41,11 +41,9 @@ public interface ConnectionProvider<T, C extends ConnectionConfiguration> extend
 
     ClientWrapper<T> getClientFromConfiguration(C configuration);
 
-<<<<<<< HEAD
     ClientWrapper<T> getClientWrapperFromPrefix(String prefix);
-=======
+
     default ClientWrapper<T> getClientWrapperFromDatasource(String datasourceId, String propertyPrefix) { return null; };
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
 
     boolean canHandle(String backendType);
 }

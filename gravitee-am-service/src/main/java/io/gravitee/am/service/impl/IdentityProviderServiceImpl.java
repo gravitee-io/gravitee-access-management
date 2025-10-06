@@ -87,33 +87,23 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     private final EventService eventService;
     private final AuditService auditService;
     private final ObjectMapper objectMapper;
-<<<<<<< HEAD
     private final PluginConfigurationValidationService validationService;
-=======
     private final DatasourceValidator datasourceValidator;
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
 
     public IdentityProviderServiceImpl(@Lazy IdentityProviderRepository identityProviderRepository,
                                        ApplicationService applicationService,
                                        EventService eventService,
                                        AuditService auditService,
                                        ObjectMapper objectMapper,
-<<<<<<< HEAD
-                                       PluginConfigurationValidationService validationService
-    ) {
-=======
+                                       PluginConfigurationValidationService validationService,
                                        DatasourceValidator datasourceValidator) {
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
         this.identityProviderRepository = identityProviderRepository;
         this.applicationService = applicationService;
         this.eventService = eventService;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
-<<<<<<< HEAD
         this.validationService = validationService;
-=======
         this.datasourceValidator = datasourceValidator;
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     }
 
     @Override
@@ -180,7 +170,6 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     public Single<IdentityProvider> create(Domain domain, NewIdentityProvider newIdentityProvider, User principal, boolean system) {
         LOGGER.debug("Create a new identity provider {} for domain {}", newIdentityProvider, domain.getId());
 
-<<<<<<< HEAD
         var identityProvider = prepareIdp(newIdentityProvider, ReferenceType.DOMAIN, domain.getId(), system);
         identityProvider.setDataPlaneId(domain.getDataPlaneId());
 
@@ -188,25 +177,17 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
     }
 
     private Single<IdentityProvider> innerCreate(IdentityProvider identityProvider) {
-        return identityProviderRepository.create(identityProvider)
+        return datasourceValidator.validate(identityProvider.getConfiguration())
+                .andThen(identityProviderRepository.create(identityProvider)
                 .flatMap(identityProvider1 -> {
                     // create event for sync process
                     Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
                 })
-=======
-        return datasourceValidator.validate(identityProvider.getConfiguration())
-                .andThen(identityProviderRepository.create(identityProvider)
-                        .flatMap(identityProvider1 -> {
-                            // create event for sync process
-                            Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.CREATE));
-                            return eventService.create(event).flatMap(__ -> Single.just(identityProvider1));
-                        }))
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to create an identity provider", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an identity provider", ex));
-                });
+                }));
     }
 
     private static IdentityProvider prepareIdp(NewIdentityProvider newIdentityProvider, ReferenceType domain, String domain1, boolean system) {
@@ -244,16 +225,12 @@ public class IdentityProviderServiceImpl implements IdentityProviderService {
                     identityToUpdate.setUpdatedAt(new Date());
                     identityToUpdate.setConfiguration(sanitizeClientAuthCertificate(identityToUpdate.getConfiguration()));
 
-<<<<<<< HEAD
                     // for update validate config against schema here instead of the resource
                     // as idp may be system idp so on the UI config is empty.
                     validationService.validate(identityToUpdate.getType(), identityToUpdate.getConfiguration());
 
-                    return identityProviderRepository.update(identityToUpdate)
-=======
                     return datasourceValidator.validate(identityToUpdate.getConfiguration())
                             .andThen(identityProviderRepository.update(identityToUpdate)
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
                             .flatMap(identityProvider1 -> {
                                 // create event for sync process
                                 Event event = new Event(Type.IDENTITY_PROVIDER, new Payload(identityProvider1.getId(), identityProvider1.getReferenceType(), identityProvider1.getReferenceId(), Action.UPDATE));

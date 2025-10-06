@@ -69,17 +69,15 @@ public class MongoAuthenticationProviderTestConfiguration implements Initializin
     }
 
     @Bean
-<<<<<<< HEAD
     public DataPlaneRegistry dataPlaneRegistry() {
         return new DataPlaneRegistryImpl(mock(DataPlaneLoader.class), mock(DataPlanePluginManager.class));
     }
-    
-=======
+
+    @Bean
     public DataSourcesConfiguration dataSourcesConfiguration() {
         return new DataSourcesConfiguration(null);
     }
 
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     @Bean
     public MongoIdentityProviderConfiguration mongoIdentityProviderConfiguration() {
         MongoIdentityProviderConfiguration configuration = new MongoIdentityProviderConfiguration();

@@ -29,11 +29,8 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
-<<<<<<< HEAD
-=======
 
 import static java.util.Objects.isNull;
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -85,34 +82,20 @@ public abstract class MongoAbstractProvider implements InitializingBean {
             throw new IllegalStateException("Unable to initialize Mongo Identity Provider, repositories.system-cluster only accept 'management' or 'gateway'");
         }
 
-<<<<<<< HEAD
-        // If the scope is Gateway, we have to use the DataPlane client
-        if (StringUtils.hasText(this.identityProviderEntity.getDataPlaneId()) && systemScope == Scope.GATEWAY && configuration.isUseSystemCluster()) {
-            final var provider = this.dataPlaneRegistry.getProviderById(this.identityProviderEntity.getDataPlaneId());
-            // make sure the DataPlane plugin is a Mongo one
-            if (provider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-                this.clientWrapper = provider.getClientWrapper();
-                this.mongoClient = this.clientWrapper.getClient();
-                return;
-            }
-        }
-
-        // the data plane client is not the one which has been configured if we land here.
-        // use the commonConnectionProvider for system idp, or create dedicated client
-        if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-            this.clientWrapper = (this.identityProviderEntity != null && this.identityProviderEntity.isSystem()) || configuration.isUseSystemCluster() ?
-                    this.commonConnectionProvider.getClientWrapper() : this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
-        } else {
-            this.clientWrapper = mongoProvider.getClientFromConfiguration(this.configuration);
-        }
-
-        this.mongoClient = this.clientWrapper.getClient();
-=======
         this.clientWrapper = this.buildClientWrapper(systemScope);
         this.mongoClient = this.clientWrapper.getClient();
     }
 
     private ClientWrapper<MongoClient> buildClientWrapper(Scope scope) {
+        // If the scope is Gateway, we have to use the DataPlane client
+        if (StringUtils.hasText(this.identityProviderEntity.getDataPlaneId()) && scope == Scope.GATEWAY && configuration.isUseSystemCluster()) {
+            final var provider = this.dataPlaneRegistry.getProviderById(this.identityProviderEntity.getDataPlaneId());
+            // make sure the DataPlane plugin is a Mongo one
+            if (provider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
+                return provider.getClientWrapper();
+            }
+        }
+
         if (shouldUseDatasource()) {
             return configureDatasourceClient();
         }
@@ -150,7 +133,6 @@ public abstract class MongoAbstractProvider implements InitializingBean {
         return this.configuration.isUseSystemCluster()
                 ? this.commonConnectionProvider.getClientWrapper(scope.getName())
                 : this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     }
 
     protected String getSafeUsername(String username) {

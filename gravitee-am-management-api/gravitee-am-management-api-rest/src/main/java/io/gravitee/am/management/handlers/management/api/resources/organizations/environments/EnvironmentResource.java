@@ -40,14 +40,13 @@ public class EnvironmentResource extends AbstractResource {
         return resourceContext.getResource(DomainsResource.class);
     }
 
-<<<<<<< HEAD
     @Path("/data-planes")
     public DataPlanesResource getDataPlanesResource() {
         return resourceContext.getResource(DataPlanesResource.class);
-=======
+    }
+
     @Path("/data-sources")
     public DataSourcesResource getDataSourcesResource() {
         return resourceContext.getResource(DataSourcesResource.class);
->>>>>>> c6a36be30 (feat: Add datasource support for mongo clients (#6553))
     }
 }
