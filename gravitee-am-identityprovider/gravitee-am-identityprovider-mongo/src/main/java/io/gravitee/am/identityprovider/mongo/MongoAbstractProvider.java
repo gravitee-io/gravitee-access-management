@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.mongo;
 
 import com.mongodb.reactivestreams.client.MongoClient;
+import io.gravitee.am.service.spring.datasource.DataSourcesConfiguration;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.plugins.dataplane.core.DataPlaneRegistry;
 import io.gravitee.am.repository.Scope;
@@ -23,15 +24,20 @@ import io.gravitee.am.repository.mongodb.provider.impl.MongoConnectionProvider;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.am.service.authentication.crypto.password.PasswordEncoder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
+import static java.util.Objects.isNull;
+
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
+
+@Slf4j
 public abstract class MongoAbstractProvider implements InitializingBean {
 
     @Autowired
@@ -51,6 +57,9 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
     @Autowired
     protected Environment environment;
+
+    @Autowired
+    private DataSourcesConfiguration dataSourcesConfiguration;
 
     protected ClientWrapper<MongoClient> clientWrapper;
 
@@ -73,27 +82,57 @@ public abstract class MongoAbstractProvider implements InitializingBean {
             throw new IllegalStateException("Unable to initialize Mongo Identity Provider, repositories.system-cluster only accept 'management' or 'gateway'");
         }
 
+        this.clientWrapper = this.buildClientWrapper(systemScope);
+        this.mongoClient = this.clientWrapper.getClient();
+    }
+
+    private ClientWrapper<MongoClient> buildClientWrapper(Scope scope) {
         // If the scope is Gateway, we have to use the DataPlane client
-        if (StringUtils.hasText(this.identityProviderEntity.getDataPlaneId()) && systemScope == Scope.GATEWAY && configuration.isUseSystemCluster()) {
+        if (StringUtils.hasText(this.identityProviderEntity.getDataPlaneId()) && scope == Scope.GATEWAY && configuration.isUseSystemCluster()) {
             final var provider = this.dataPlaneRegistry.getProviderById(this.identityProviderEntity.getDataPlaneId());
             // make sure the DataPlane plugin is a Mongo one
             if (provider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-                this.clientWrapper = provider.getClientWrapper();
-                this.mongoClient = this.clientWrapper.getClient();
-                return;
+                return provider.getClientWrapper();
             }
         }
 
-        // the data plane client is not the one which has been configured if we land here.
-        // use the commonConnectionProvider for system idp, or create dedicated client
-        if (this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
-            this.clientWrapper = (this.identityProviderEntity != null && this.identityProviderEntity.isSystem()) || configuration.isUseSystemCluster() ?
-                    this.commonConnectionProvider.getClientWrapper() : this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
-        } else {
-            this.clientWrapper = mongoProvider.getClientFromConfiguration(this.configuration);
+        if (shouldUseDatasource()) {
+            return configureDatasourceClient();
         }
 
-        this.mongoClient = this.clientWrapper.getClient();
+        if (!this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
+            return mongoProvider.getClientFromConfiguration(this.configuration);
+        }
+
+        return this.identityProviderEntity != null && this.identityProviderEntity.isSystem()
+                ? this.commonConnectionProvider.getClientWrapper()
+                : getClientWrapperBasedOnConfig(scope);
+    }
+
+    private boolean shouldUseDatasource() {
+        return StringUtils.hasLength(this.configuration.getDatasourceId()) &&
+                this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO);
+    }
+
+    private ClientWrapper<MongoClient> configureDatasourceClient() {
+        final String datasourceId = this.configuration.getDatasourceId();
+        final String propertyPrefix = determinePrefixFromDataSourceId(datasourceId);
+
+        // Override the database with the value provided by the datasource
+        final String databaseName = environment.getProperty(propertyPrefix + "dbname");
+        if (databaseName == null || databaseName.isEmpty()) {
+            throw new IllegalStateException("No `dbname` property found for datasource: " + datasourceId);
+        }
+
+        log.debug("Configuring Mongo Provider with datasource ID={}, prefix={}, database={}",datasourceId, propertyPrefix, databaseName);
+        this.configuration.setDatabase(databaseName);
+        return this.commonConnectionProvider.getClientWrapperFromDatasource(datasourceId, propertyPrefix);
+    }
+
+    private ClientWrapper<MongoClient> getClientWrapperBasedOnConfig(Scope scope) {
+        return this.configuration.isUseSystemCluster()
+                ? this.commonConnectionProvider.getClientWrapper(scope.getName())
+                : this.commonConnectionProvider.getClientFromConfiguration(this.configuration);
     }
 
     protected String getSafeUsername(String username) {
@@ -102,5 +141,14 @@ public abstract class MongoAbstractProvider implements InitializingBean {
 
     protected String getEncodedUsername(String username) {
         return this.configuration.isUsernameCaseSensitive() ? username : username.toLowerCase();
+    }
+
+    private String determinePrefixFromDataSourceId(String datasourceId) {
+        var prefix = dataSourcesConfiguration.getDataSourceKeyById(datasourceId);
+        if (!isNull(prefix)) {
+            return prefix + ".settings.";
+        }
+
+        throw new IllegalArgumentException("No datasource found for id: " + datasourceId);
     }
 }

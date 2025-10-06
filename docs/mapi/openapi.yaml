@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.7.6
+  version: 4.7.16
 servers:
 - url: /management
 security:
@@ -42,6 +42,7 @@ tags:
 - name: audit
 - name: bot detection
 - name: certificate
+- name: data-sources
 - name: dataPlane
 - name: device identifiers
 - name: devices
@@ -344,7 +345,7 @@ paths:
       - dataPlane
       summary: List of data planes
       description: "List all the data planes accessible to the current user. User\
-        \ must have DOMAIN[CREATE] permission on the specified environment or organization"
+        \ must have DATA_PLANE[READ] permission on the specified environment or organization"
       operationId: listDataPlanes
       parameters:
       - name: organizationId
@@ -366,6 +367,35 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DataPlane"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/data-sources:
+    get:
+      tags:
+      - data-sources
+      summary: List all the data sources
+      description: Returns all of the available data sources to be used in IDP creation
+      operationId: listAllDataSources
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List all the IDP data sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataSource"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains:
@@ -6946,6 +6976,8 @@ paths:
       - name: size
         in: query
         schema:
+          maximum: 1000
+          minimum: 1
           type: integer
           format: int32
           default: 30
@@ -9313,6 +9345,8 @@ paths:
       - name: size
         in: query
         schema:
+          maximum: 1000
+          minimum: 1
           type: integer
           format: int32
           default: 30
@@ -11057,7 +11091,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Application"
+            $ref: "#/components/schemas/FilteredApplication"
         currentPage:
           type: integer
           format: int32
@@ -11489,11 +11523,11 @@ components:
           type: array
           items:
             type: string
-        allowedScopesEnabled:
-          type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
+          type: boolean
+        allowedScopesEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
@@ -11596,6 +11630,15 @@ components:
       properties:
         delegate:
           $ref: "#/components/schemas/Plugin"
+    DataSource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
     DeviceIdentifier:
       type: object
       properties:
@@ -11701,19 +11744,19 @@ components:
           $ref: "#/components/schemas/CorsSettings"
         dataPlaneId:
           type: string
-        dynamicClientRegistrationTemplateEnabled:
+        openDynamicClientRegistrationEnabled:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
+        dynamicClientRegistrationTemplateEnabled:
           type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
+          type: boolean
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        redirectUriStrictMatching:
           type: boolean
     DomainPage:
       type: object
@@ -12026,6 +12069,30 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApplicationFactorSettings"
+    FilteredApplication:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - WEB
+          - NATIVE
+          - BROWSER
+          - SERVICE
+          - RESOURCE_SERVER
+        enabled:
+          type: boolean
+        template:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
     FilteredIdentityProviderInfo:
       type: object
       properties:
@@ -13317,6 +13384,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -13589,6 +13657,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -13700,10 +13769,10 @@ components:
           type: array
           items:
             type: string
-        openDynamicClientRegistrationEnabled:
+        dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
-        dynamicClientRegistrationEnabled:
+        openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         clientTemplateEnabled:
@@ -13777,6 +13846,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -13917,6 +13987,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -14051,6 +14122,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -14182,6 +14254,8 @@ components:
           format: int64
         deviceIdentifierId:
           type: string
+        skipChallengeWhenRememberDevice:
+          type: boolean
         skipRememberDevice:
           type: boolean
     Reporter:
@@ -15300,8 +15374,16 @@ components:
           type: string
         zoneInfo:
           type: string
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
         middleName:
           type: string
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
         inactive:
           type: boolean
         profile:
@@ -15316,14 +15398,6 @@ components:
           type: boolean
         fullId:
           $ref: "#/components/schemas/UserId"
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
     UserEntity:
       type: object
       properties:
@@ -15499,8 +15573,16 @@ components:
           type: string
         zoneInfo:
           type: string
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
         middleName:
           type: string
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
         inactive:
           type: boolean
         profile:
@@ -15515,14 +15597,6 @@ components:
           type: boolean
         fullId:
           $ref: "#/components/schemas/UserId"
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
     UserId:
       type: object
       properties:
