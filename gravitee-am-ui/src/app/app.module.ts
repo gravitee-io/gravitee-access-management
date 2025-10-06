@@ -144,6 +144,8 @@ import { DomainSettingsWebAuthnComponent } from './domain/settings/webauthn/weba
 import { DomainSettingsFlowsComponent } from './domain/settings/flows/flows.component';
 import { ProvidersResolver } from './resolvers/providers.resolver';
 import { ProviderResolver } from './resolvers/provider.resolver';
+import { DataSourcesResolver } from './resolvers/datasources.resolver';
+import { DataSourcesService } from './services/datasources.service';
 import { ProviderSettingsComponent } from './domain/settings/providers/provider/settings/settings.component';
 import { CreateMapperComponent, ProviderMappersComponent } from './domain/settings/providers/provider/mappers/mappers.component';
 import { BreadcrumbComponent } from './components/breadcrumb/breadcrumb.component';
@@ -796,6 +798,8 @@ import { DomainStoreService } from './stores/domain.store';
     DomainFlowsResolver,
     ProvidersResolver,
     ProviderResolver,
+    DataSourcesResolver,
+    DataSourcesService,
     CertificatesResolver,
     SignCertificatesResolver,
     CertificateResolver,

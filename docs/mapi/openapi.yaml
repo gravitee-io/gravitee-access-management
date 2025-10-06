@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.8.0
+  version: 4.9.0-alpha.2-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -42,6 +42,7 @@ tags:
 - name: audit
 - name: bot detection
 - name: certificate
+- name: data-sources
 - name: dataPlane
 - name: device identifiers
 - name: devices
@@ -344,7 +345,7 @@ paths:
       - dataPlane
       summary: List of data planes
       description: "List all the data planes accessible to the current user. User\
-        \ must have DOMAIN[CREATE] permission on the specified environment or organization"
+        \ must have DATA_PLANE[READ] permission on the specified environment or organization"
       operationId: listDataPlanes
       parameters:
       - name: organizationId
@@ -366,6 +367,35 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/DataPlane"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/data-sources:
+    get:
+      tags:
+      - data-sources
+      summary: List all the data sources
+      description: Returns all of the available data sources to be used in IDP creation
+      operationId: listAllDataSources
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List all the IDP data sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DataSource"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains:
@@ -7086,6 +7116,8 @@ paths:
       - name: size
         in: query
         schema:
+          maximum: 1000
+          minimum: 1
           type: integer
           format: int32
           default: 30
@@ -7850,7 +7882,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_10
+      operationId: deleteUserFactor
       parameters:
       - name: organizationId
         in: path
@@ -7933,7 +7965,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_11
+      operationId: delete_10
       parameters:
       - name: organizationId
         in: path
@@ -8482,7 +8514,7 @@ paths:
       summary: Delete a form
       description: "User must have the ORGANIZATION_FORM[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_12
+      operationId: delete_11
       parameters:
       - name: organizationId
         in: path
@@ -8867,7 +8899,7 @@ paths:
       summary: Delete an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission\
         \ on the specified organization"
-      operationId: delete_13
+      operationId: delete_12
       parameters:
       - name: organizationId
         in: path
@@ -9220,7 +9252,7 @@ paths:
       summary: Delete a plaform role
       description: "User must have the ORGANIZATION_ROLE[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_14
+      operationId: delete_13
       parameters:
       - name: organizationId
         in: path
@@ -9403,7 +9435,7 @@ paths:
       summary: Delete the sharding tag
       description: "User must have the ORGANIZATION_TAG[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_15
+      operationId: delete_14
       parameters:
       - name: organizationId
         in: path
@@ -9454,6 +9486,8 @@ paths:
       - name: size
         in: query
         schema:
+          maximum: 1000
+          minimum: 1
           type: integer
           format: int32
           default: 30
@@ -11198,7 +11232,7 @@ components:
         data:
           type: array
           items:
-            $ref: "#/components/schemas/Application"
+            $ref: "#/components/schemas/FilteredApplication"
         currentPage:
           type: integer
           format: int32
@@ -11441,6 +11475,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/NewOrganizationUser"
@@ -11460,6 +11495,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/NewUser"
@@ -11479,6 +11515,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             type: string
@@ -11524,6 +11561,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/UpdateUserWithId"
@@ -11634,13 +11672,13 @@ components:
           type: array
           items:
             type: string
-        dynamicClientRegistrationEnabled:
+        allowedScopesEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
-        allowedScopesEnabled:
+        dynamicClientRegistrationEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -11746,6 +11784,15 @@ components:
       properties:
         delegate:
           $ref: "#/components/schemas/Plugin"
+    DataSource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
     DeviceIdentifier:
       type: object
       properties:
@@ -11853,21 +11900,21 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        redirectUriLocalhostAllowed:
-          type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
+        dynamicClientRegistrationTemplateEnabled:
+          type: boolean
+        redirectUriLocalhostAllowed:
+          type: boolean
         redirectUriWildcardAllowed:
+          type: boolean
+        redirectUriStrictMatching:
           type: boolean
         redirectUriExpressionLanguageEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
-          type: boolean
-        dynamicClientRegistrationTemplateEnabled:
           type: boolean
     DomainPage:
       type: object
@@ -11898,6 +11945,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/BaseJsonNode"
@@ -12180,6 +12228,30 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ApplicationFactorSettings"
+    FilteredApplication:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - WEB
+          - NATIVE
+          - BROWSER
+          - SERVICE
+          - RESOURCE_SERVER
+        enabled:
+          type: boolean
+        template:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
     FilteredIdentityProviderInfo:
       type: object
       properties:
@@ -12228,6 +12300,8 @@ components:
           - REGISTRATION_CONFIRMATION
           - TOKEN
           - WEBAUTHN_REGISTER
+          - MFA_CHALLENGE
+          - MFA_ENROLLMENT
         condition:
           type: string
     FlowEntity:
@@ -12260,6 +12334,8 @@ components:
           - REGISTRATION_CONFIRMATION
           - TOKEN
           - WEBAUTHN_REGISTER
+          - MFA_CHALLENGE
+          - MFA_ENROLLMENT
         condition:
           type: string
         icon:
@@ -12517,6 +12593,8 @@ components:
           type: boolean
         identifierFirstEnabled:
           type: boolean
+        resetPasswordOnExpiration:
+          type: boolean
         enforcePasswordPolicyEnabled:
           type: boolean
     MFASettings:
@@ -12619,6 +12697,7 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
     NewAlertNotifier:
       required:
@@ -12627,6 +12706,7 @@ components:
       type: object
       properties:
         type:
+          minLength: 1
           type: string
         name:
           type: string
@@ -12706,8 +12786,10 @@ components:
       type: object
       properties:
         type:
+          minLength: 1
           type: string
         name:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -12717,6 +12799,7 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
     NewDeviceIdentifier:
       required:
@@ -12740,8 +12823,10 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
         locale:
+          minLength: 1
           type: string
     NewDomain:
       required:
@@ -12959,6 +13044,7 @@ components:
       type: object
       properties:
         username:
+          minLength: 1
           type: string
         password:
           type: string
@@ -13021,6 +13107,7 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
         minLength:
           minimum: 0
@@ -13159,6 +13246,7 @@ components:
       type: object
       properties:
         username:
+          minLength: 1
           type: string
         password:
           type: string
@@ -13267,6 +13355,7 @@ components:
           type: integer
           format: int32
         items:
+          minItems: 1
           type: array
           items:
             $ref: "#/components/schemas/BaseJsonNode"
@@ -13480,6 +13569,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -13754,6 +13844,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -13867,13 +13958,13 @@ components:
             type: string
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-          writeOnly: true
         openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         clientTemplateEnabled:
+          type: boolean
+          writeOnly: true
+        dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
     PatchDomain:
@@ -13946,6 +14037,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -14086,6 +14178,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -14220,6 +14313,7 @@ components:
             - ORGANIZATION_FORM
             - ORGANIZATION_MEMBER
             - ENVIRONMENT
+            - DATA_PLANE
             - DOMAIN
             - DOMAIN_SETTINGS
             - DOMAIN_FORM
@@ -14351,6 +14445,8 @@ components:
           format: int64
         deviceIdentifierId:
           type: string
+        skipChallengeWhenRememberDevice:
+          type: boolean
         skipRememberDevice:
           type: boolean
     Reporter:
@@ -14894,6 +14990,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -14907,6 +15004,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -14918,8 +15016,10 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -14933,6 +15033,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -14985,6 +15086,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15014,6 +15116,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15064,6 +15167,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15095,6 +15199,7 @@ components:
       type: object
       properties:
         name:
+          minLength: 1
           type: string
         minLength:
           minimum: 0
@@ -15139,6 +15244,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15190,6 +15296,7 @@ components:
         name:
           type: string
         type:
+          minLength: 1
           type: string
         configuration:
           type: string
@@ -15477,18 +15584,12 @@ components:
           type: string
         zoneInfo:
           type: string
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        middleName:
-          type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
         identitiesAsMap:
           type: object
           additionalProperties:
             type: object
+        middleName:
+          type: string
         inactive:
           type: boolean
         profile:
@@ -15501,6 +15602,12 @@ components:
           type: string
         disabled:
           type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserEntity:
       type: object
       properties:
@@ -15676,18 +15783,12 @@ components:
           type: string
         zoneInfo:
           type: string
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        middleName:
-          type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
         identitiesAsMap:
           type: object
           additionalProperties:
             type: object
+        middleName:
+          type: string
         inactive:
           type: boolean
         profile:
@@ -15700,6 +15801,12 @@ components:
           type: string
         disabled:
           type: boolean
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserId:
       type: object
       properties:
@@ -15779,6 +15886,7 @@ components:
       type: object
       properties:
         username:
+          minLength: 1
           type: string
     VirtualHost:
       type: object
