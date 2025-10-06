@@ -3347,9 +3347,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@gravitee/ui-particles-angular@npm:14.2.2":
-  version: 14.2.2
-  resolution: "@gravitee/ui-particles-angular@npm:14.2.2"
+"@gravitee/ui-particles-angular@npm:14.2.3":
+  version: 14.2.3
+  resolution: "@gravitee/ui-particles-angular@npm:14.2.3"
   dependencies:
     "@fontsource/fira-mono": "npm:4.5.0"
     "@fontsource/golos-ui": "npm:^4.5.1"
@@ -3377,7 +3377,7 @@ __metadata:
       optional: true
     prismjs:
       optional: true
-  checksum: 10c0/ff2de4c78411a9ce66196191a0800357fa3a3d8b8b71e6622344eea8702bcb65567f307e5717c7735d7d91c6b89bdd911e059d680db74375c978bc383992ed01
+  checksum: 10c0/eb2cfe161e97b55a921ad723e87a6c71f555018f171d8eb55319b6d24338fbb0beac72d9288d6ecf2fbeb9b70221b940bc2a194b243c486938fe75051d04b1d3
   languageName: node
   linkType: hard
 
@@ -10249,7 +10249,7 @@ __metadata:
     "@asciidoctor/core": "npm:3.0.4"
     "@ctrl/ngx-codemirror": "npm:7.0.0"
     "@gravitee/ui-components": "npm:4.3.3"
-    "@gravitee/ui-particles-angular": "npm:14.2.2"
+    "@gravitee/ui-particles-angular": "npm:14.2.3"
     "@ngx-formly/core": "npm:6.3.12"
     "@ngx-formly/material": "npm:6.3.12"
     "@swimlane/ngx-datatable": "npm:20.1.0"
