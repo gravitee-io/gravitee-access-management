@@ -15,14 +15,18 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
-import io.gravitee.am.model.application.ApplicationScopeSettings;
+import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.ApplicationService;
+import io.gravitee.am.service.exception.ApplicationSecretConfigurationException;
+import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -30,11 +34,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_CLIENT_SECRETS_UPGRADER;
-import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_SCOPE_SETTINGS_UPGRADER;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -70,7 +78,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
         return updateSystemTask(task, (SystemTaskStatus.ONGOING), conditionalOperationId)
                 .flatMap(updatedTask -> {
                     if (updatedTask.getOperationId().equals(instanceOperationId)) {
-                        return migrateScopeSettings(updatedTask);
+                        return migrateClientSecret(updatedTask);
                     } else {
                         return Single.error(new IllegalStateException("Task " + getTaskId() + " already processed by another instance : trigger a retry"));
                     }
@@ -83,14 +91,28 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
         return new IllegalStateException(UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE);
     }
 
-    private Single<Boolean> migrateScopeSettings(SystemTask task) {
+    private Single<Boolean> migrateClientSecret(SystemTask task) {
         return applicationService.fetchAll()
                 .flatMapPublisher(Flowable::fromIterable)
                 .flatMapSingle(app -> {
-                    logger.debug("Process application '{}'", app.getId());
-                    // First, if the secrets don't exist at all, create the empty list
-                    if (app.getSecretSettings() == null) {
-                        app.setSecretSettings(new ArrayList<>());
+                    logger.debug("Process application '{}' for client secret migration", app.getId());
+
+                    String settingsId = null;
+                    boolean updateRequired = false;
+
+                    // First, ensure secret settings exist (handle null or empty list)
+                    if (app.getSecretSettings() == null || app.getSecretSettings().isEmpty()) {
+                        var defaultSecretSettings = buildNoneSecretSettings();
+                        app.setSecretSettings(List.of(defaultSecretSettings));
+                        settingsId = defaultSecretSettings.getId();
+                        updateRequired = true;
+                    } else {
+                        settingsId = app.getSecretSettings().getFirst().getId();
+                    }
+
+                    if (app.getSecrets() == null) {
+                        app.setSecrets(new ArrayList<>());
+                        updateRequired = true;
                     }
 
                     if (app.getSettings() != null && app.getSettings().getOauth() != null) {
@@ -98,32 +120,44 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                         var clientSecret = oauthSettings.getClientSecret();
 
                         // If there is not a historical secret, we can skip this application
-                        if(clientSecret == null || clientSecret.isEmpty()) {
-                            // do nothing
-                            return Single.just(app);
+                        if (clientSecret != null) {
+                            logger.debug("Migrating client secret for application '{}'", app.getId());
+                            // migrate the client secret into the new list of secrets
+                            ClientSecret newSecret = new ClientSecret();
+                            newSecret.setId(UUID.randomUUID().toString());
+                            newSecret.setSettingsId(settingsId);
+                            newSecret.setSecret(clientSecret);
+                            newSecret.setCreatedAt(app.getCreatedAt());
+                            newSecret.setExpiresAt(oauthSettings.getClientSecretExpiresAt());
+
+                            // Add the new secret to the application
+                            app.getSecrets().add(newSecret);
+
+                            // Remove the client secret from the application settings
+                            logger.debug("Removing client secret from application oauth settings for application '{}'", app.getId());
+                            oauthSettings.setClientSecret(null);
+                            oauthSettings.setClientSecretExpiresAt(null);
+                            updateRequired = true;
+                        } else {
+                            logger.debug("No client secret to migrate for application '{}'", app.getId());
                         }
-
-                        // TODO: migrate the client secret into the new list of secrets
-                        ClientSecret newSecret = new ClientSecret();
-                        newSecret.setSecret(clientSecret);
-                        newSecret.setCreatedAt(app.getCreatedAt());
-                        newSecret.setExpiresAt(oauthSettings.getClientSecretExpiresAt());
-
-                        logger.debug("Update settings for application '{}'", app.getId());
-                    } else {
-                        logger.debug("No scope to process for application '{}'", app.getId());
                     }
-                    return applicationService.update(app);
+
+                    if (updateRequired) {
+                        logger.debug("Update client secret settings for application '{}'", app.getId());
+                        return applicationService.update(app);
+                    }
+
+                    return Single.just(app);
                 }).ignoreElements()
                 .doOnError(err -> updateSystemTask(task, (SystemTaskStatus.FAILURE), task.getOperationId()).subscribe())
-                .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
-                        .map(__ -> true)
-                        .onErrorResumeNext(err -> {
-                            logger.error("Unable to update status for migrate scope options task: {}", err.getMessage());
-                            return Single.just(false);
-                        }))
+                .andThen(Single.defer(() ->
+                        updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
+                                .map(__ -> true)
+                                .onErrorReturnItem(false)
+                ))
                 .onErrorResumeNext(err -> {
-                    logger.error("Unable to migrate scope options for applications: {}", err.getMessage());
+                    logger.error("Unable to migrate client secret for applications: {}", err.getMessage());
                     return Single.just(false);
                 });
     }
@@ -136,5 +170,18 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
     @Override
     protected String getTaskId() {
         return TASK_ID;
+    }
+
+    private ApplicationSecretSettings buildNoneSecretSettings() {
+        try {
+            ObjectMapper om = new ObjectMapper();
+            SecretHashAlgorithm noneAlg = SecretHashAlgorithm.NONE;
+            Map<String, Object> noProperties = Map.of();
+            final var serializedConfig = om.writeValueAsString(List.of(noneAlg, noProperties));
+            final var id = Base64.getEncoder().encodeToString(MessageDigest.getInstance("SHA-256").digest(serializedConfig.getBytes()));
+            return new ApplicationSecretSettings(id, noneAlg.name(), noProperties);
+        } catch (JsonProcessingException | NoSuchAlgorithmException e) {
+            throw new ApplicationSecretConfigurationException(e);
+        }
     }
 }
