@@ -71,7 +71,10 @@ public class EnrichAuthFlowPolicy {
                 enrichAuthFlowContext(context)
                         .subscribe(
                                 success -> policyChain.doNext(request, response),
-                                error -> policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENRICH_AUTH_FLOW_ERROR_KEY, error.getMessage()))
+                                error -> {
+                                    LOGGER.warn("An error occurs while enriching authentication flow context", error);
+                                    policyChain.failWith(PolicyResult.failure(GATEWAY_POLICY_ENRICH_AUTH_FLOW_ERROR_KEY, error.getMessage()));
+                                }
                         );
             }
         } else {
