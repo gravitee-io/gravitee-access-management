@@ -87,6 +87,11 @@ public abstract class MongoAbstractProvider implements InitializingBean {
     }
 
     private ClientWrapper<MongoClient> buildClientWrapper(Scope scope) {
+        // Datasource takes precedence over everything else
+        if (shouldUseDatasource()) {
+            return configureDatasourceClient();
+        }
+
         // If the scope is Gateway, we have to use the DataPlane client
         if (StringUtils.hasText(this.identityProviderEntity.getDataPlaneId()) && scope == Scope.GATEWAY && configuration.isUseSystemCluster()) {
             final var provider = this.dataPlaneRegistry.getProviderById(this.identityProviderEntity.getDataPlaneId());
@@ -94,10 +99,6 @@ public abstract class MongoAbstractProvider implements InitializingBean {
             if (provider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
                 return provider.getClientWrapper();
             }
-        }
-
-        if (shouldUseDatasource()) {
-            return configureDatasourceClient();
         }
 
         if (!this.commonConnectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
