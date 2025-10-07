@@ -328,7 +328,7 @@ public class ApplicationClientSecretsUpgraderTest {
         alreadyMigrated.setId("already-migrated");
         alreadyMigrated.setCreatedAt(new Date());
         alreadyMigrated.setSecretSettings(
-                List.of(new ApplicationSecretSettings("migrated-id", "SHA256", Map.of()))
+                List.of(new ApplicationSecretSettings("migrated-id", "NONE", Map.of()))
         );
         alreadyMigrated.setSecrets(new ArrayList<>());
         final ApplicationSettings settings = new ApplicationSettings();
