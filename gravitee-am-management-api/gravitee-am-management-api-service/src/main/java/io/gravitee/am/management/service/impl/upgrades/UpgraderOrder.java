@@ -38,6 +38,7 @@ public final class UpgraderOrder {
     public static final int ORG_DEFAULT_REPORTER_UPGRADER = 17;
     public static final int DOMAIN_DATA_PLANE_UPGRADER = 18;
     public static final int IDP_DATA_PLANE_UPGRADER = 19;
+    public static final int APPLICATION_CLIENT_SECRETS_UPGRADER = 20;
 
     private UpgraderOrder() {
         throw new UnsupportedOperationException("utility class, don't instantiate");
