@@ -21,6 +21,7 @@ import io.gravitee.am.model.SystemTaskStatus;
 import io.gravitee.am.model.application.ApplicationOAuthSettings;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ApplicationSettings;
+import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.ApplicationService;
 import io.reactivex.rxjava3.core.Maybe;
@@ -316,6 +317,33 @@ public class ApplicationClientSecretsUpgraderTest {
         verify(applicationService, never()).update(argThat(app -> 
             app.getId().equals("no-migration-needed")
         ));
+    }
+
+    @Test
+    public void shouldAssignUniqueDefaultNameWhenAlreadyExists() {
+        stubUpgradeInitialized();
+
+        final String originalSecret = "secret-to-migrate";
+        final Application app = appWithClientSecret("app-unique-name", originalSecret, null, new Date());
+        app.setSecrets(new ArrayList<>());
+        ClientSecret existing = new ClientSecret();
+        existing.setId(UUID.randomUUID().toString());
+        existing.setName("Default");
+        app.getSecrets().add(existing);
+
+        stubFetchAll(app);
+        stubUpdateEchoInput();
+        stubUpdateIfPropagateOperationId();
+
+        upgrader.upgrade();
+
+        verify(applicationService, times(1)).update(argThat(updated -> {
+            return updated.getId().equals("app-unique-name")
+                    && updated.getSecrets() != null
+                    && updated.getSecrets().size() == 2
+                    && updated.getSecrets().stream().anyMatch(s -> "Default".equalsIgnoreCase(s.getName()))
+                    && updated.getSecrets().stream().anyMatch(s -> "Default (2)".equalsIgnoreCase(s.getName()));
+        }));
     }
     // Helpers
     private void stubUpgradeInitialized() {

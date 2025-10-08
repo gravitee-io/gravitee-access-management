@@ -129,6 +129,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                             // migrate the client secret into the new list of secrets
                             ClientSecret newSecret = new ClientSecret();
                             newSecret.setId(UUID.randomUUID().toString());
+                            newSecret.setName(nextAvailableSecretName(app.getSecrets(), "Default"));
                             newSecret.setSettingsId(settingsId);
                             newSecret.setSecret(clientSecret);
                             newSecret.setCreatedAt(app.getCreatedAt());
@@ -153,16 +154,12 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                     }
 
                     return Single.just(app);
-                }).ignoreElements()
-                .doOnError(err -> updateSystemTask(task, (SystemTaskStatus.FAILURE), task.getOperationId()).subscribe())
-                .andThen(Single.defer(() ->
-                        updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
-                                .map(b -> true)
-                                .onErrorReturnItem(false)
-                ))
+                })
+                .ignoreElements()
+                .andThen(updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId()).map(t -> true))
                 .onErrorResumeNext(err -> {
                     logger.error("Unable to migrate client secret for applications: {}", err.getMessage());
-                    return Single.just(false);
+                    return updateSystemTask(task, SystemTaskStatus.FAILURE, task.getOperationId()).map(t -> false);
                 });
     }
 
@@ -186,5 +183,27 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
         } catch (JsonProcessingException | NoSuchAlgorithmException e) {
             throw new ApplicationSecretConfigurationException(e);
         }
+    }
+
+    private String nextAvailableSecretName(List<ClientSecret> existingSecrets, String baseName) {
+        if (existingSecrets == null || existingSecrets.isEmpty()) {
+            return baseName;
+        }
+        String candidate = baseName;
+        int counter = 2;
+        while (hasSecretWithName(existingSecrets, candidate)) {
+            candidate = baseName + " (" + counter + ")";
+            counter++;
+        }
+        return candidate;
+    }
+
+    private boolean hasSecretWithName(List<ClientSecret> existingSecrets, String name) {
+        for (ClientSecret secret : existingSecrets) {
+            if (secret != null && secret.getName() != null && secret.getName().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
