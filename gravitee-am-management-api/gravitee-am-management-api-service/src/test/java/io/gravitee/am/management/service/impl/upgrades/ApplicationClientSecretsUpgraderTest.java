@@ -52,12 +52,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @ExtendWith(MockitoExtension.class)
 public class ApplicationClientSecretsUpgraderTest {
-
 
     @Mock
     private SystemTaskRepository systemTaskRepository;
@@ -82,80 +80,29 @@ public class ApplicationClientSecretsUpgraderTest {
 
     @Test
     public void shouldUpgrade() {
-        when(systemTaskRepository.findById(anyString())).thenReturn(Maybe.empty());
-        final SystemTask task = new SystemTask();
-        task.setStatus(SystemTaskStatus.INITIALIZED.name());
-        when(systemTaskRepository.create(any())).thenReturn(Single.just(task));
+        stubUpgradeInitialized();
 
         // App with no settings at all - should get default secret settings and empty secrets list
-        final Application appNoSettings = new Application();
-        appNoSettings.setId("app1");
-        appNoSettings.setCreatedAt(new Date());
-        appNoSettings.setSettings(null);
-        appNoSettings.setSecretSettings(null);
-        appNoSettings.setSecrets(null);
+        final Application appNoSettings = appNoSettings("app1");
 
         // App with settings but no oauth settings - should get default secret settings and empty secrets list
-        final Application appNoOauthSettings = new Application();
-        appNoOauthSettings.setId("app2");
-        appNoOauthSettings.setCreatedAt(new Date());
-        appNoOauthSettings.setSettings(new ApplicationSettings());
-        appNoOauthSettings.setSecretSettings(null);
-        appNoOauthSettings.setSecrets(null);
+        final Application appNoOauthSettings = appWithSettingsNoOauth("app2");
 
         // App with oauth settings but no client secret - should get default secret settings and empty secrets list
-        final Application appNoClientSecret = new Application();
-        appNoClientSecret.setId("app3");
-        appNoClientSecret.setCreatedAt(new Date());
-        final ApplicationSettings settings = new ApplicationSettings();
-        settings.setOauth(new ApplicationOAuthSettings());
-        appNoClientSecret.setSettings(settings);
-        appNoClientSecret.setSecretSettings(null);
-        appNoClientSecret.setSecrets(null);
+        final Application appNoClientSecret = appWithEmptyOauth("app3");
 
         // App with client secret that needs migration
-        final Application appWithClientSecret = new Application();
-        appWithClientSecret.setId("app4");
-        appWithClientSecret.setCreatedAt(new Date());
-        final ApplicationSettings settingsWithSecret = new ApplicationSettings();
-        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
         final String clientSecret = UUID.randomUUID().toString();
         final Date secretExpiresAt = new Date();
-        oauth.setClientSecret(clientSecret);
-        oauth.setClientSecretExpiresAt(secretExpiresAt);
-        settingsWithSecret.setOauth(oauth);
-        appWithClientSecret.setSettings(settingsWithSecret);
-        appWithClientSecret.setSecretSettings(null);
-        appWithClientSecret.setSecrets(null);
+        final Application appWithClientSecret = appWithClientSecret("app4", clientSecret, secretExpiresAt, new Date());
 
         // App with existing secret settings but still has client secret to migrate
-        final Application appWithSecretSettingsAndSecret = new Application();
-        appWithSecretSettingsAndSecret.setId("app5");
-        appWithSecretSettingsAndSecret.setCreatedAt(new Date());
-        appWithSecretSettingsAndSecret.setSecretSettings(
-                List.of(new ApplicationSecretSettings("existing-id", "SHA256", Map.of()))
-        );
-        appWithSecretSettingsAndSecret.setSecrets(new ArrayList<>());
-        final ApplicationSettings settingsWithSecretAndSettings = new ApplicationSettings();
-        final ApplicationOAuthSettings oauthWithSecret = new ApplicationOAuthSettings();
         final String existingClientSecret = UUID.randomUUID().toString();
-        oauthWithSecret.setClientSecret(existingClientSecret);
-        settingsWithSecretAndSettings.setOauth(oauthWithSecret);
-        appWithSecretSettingsAndSecret.setSettings(settingsWithSecretAndSettings);
+        final Application appWithSecretSettingsAndSecret = appWithSecretSettingsAndClientSecret("app5", "existing-id", "SHA256", existingClientSecret);
 
-        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(
-                appNoSettings, 
-                appNoOauthSettings, 
-                appNoClientSecret, 
-                appWithClientSecret, 
-                appWithSecretSettingsAndSecret
-        )));
-        when(applicationService.update(any())).thenReturn(Single.just(new Application()));
-        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
-            SystemTask sysTask = args.getArgument(0);
-            sysTask.setOperationId(args.getArgument(1));
-            return Single.just(sysTask);
-        });
+        stubFetchAll(appNoSettings, appNoOauthSettings, appNoClientSecret, appWithClientSecret, appWithSecretSettingsAndSecret);
+        stubUpdateEchoInput();
+        stubUpdateIfPropagateOperationId();
 
         upgrader.upgrade();
 
@@ -241,28 +188,14 @@ public class ApplicationClientSecretsUpgraderTest {
 
     @Test
     public void shouldHandleEmptySecretSettingsList() {
-        when(systemTaskRepository.findById(anyString())).thenReturn(Maybe.empty());
-        final SystemTask task = new SystemTask();
-        task.setStatus(SystemTaskStatus.INITIALIZED.name());
-        when(systemTaskRepository.create(any())).thenReturn(Single.just(task));
+        stubUpgradeInitialized();
 
         // App with empty secret settings list (not null, but empty) - should create default settings
-        final Application appWithEmptySecretSettings = new Application();
-        appWithEmptySecretSettings.setId("app-empty-settings");
-        appWithEmptySecretSettings.setCreatedAt(new Date());
-        appWithEmptySecretSettings.setSecretSettings(new ArrayList<>());
-        appWithEmptySecretSettings.setSecrets(null);
-        final ApplicationSettings settings = new ApplicationSettings();
-        settings.setOauth(new ApplicationOAuthSettings());
-        appWithEmptySecretSettings.setSettings(settings);
+        final Application appWithEmptySecretSettings = appWithEmptySecretSettings("app-empty-settings");
 
-        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(appWithEmptySecretSettings)));
-        when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
-            SystemTask sysTask = args.getArgument(0);
-            sysTask.setOperationId(args.getArgument(1));
-            return Single.just(sysTask);
-        });
+        stubFetchAll(appWithEmptySecretSettings);
+        stubUpdateEchoInput();
+        stubUpdateIfPropagateOperationId();
 
         upgrader.upgrade();
 
@@ -279,31 +212,15 @@ public class ApplicationClientSecretsUpgraderTest {
 
     @Test
     public void shouldHandleAppWithoutCreatedAt() {
-        when(systemTaskRepository.findById(anyString())).thenReturn(Maybe.empty());
-        final SystemTask task = new SystemTask();
-        task.setStatus(SystemTaskStatus.INITIALIZED.name());
-        when(systemTaskRepository.create(any())).thenReturn(Single.just(task));
+        stubUpgradeInitialized();
 
         // App without createdAt date but with client secret to migrate
-        final Application appNoCreatedAt = new Application();
-        appNoCreatedAt.setId("app-no-created-at");
-        appNoCreatedAt.setCreatedAt(null);
-        final ApplicationSettings settings = new ApplicationSettings();
-        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
         final String clientSecret = "test-secret";
-        oauth.setClientSecret(clientSecret);
-        settings.setOauth(oauth);
-        appNoCreatedAt.setSettings(settings);
-        appNoCreatedAt.setSecretSettings(null);
-        appNoCreatedAt.setSecrets(null);
+        final Application appNoCreatedAt = appWithClientSecret("app-no-created-at", clientSecret, null, null);
 
-        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(appNoCreatedAt)));
-        when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
-            SystemTask sysTask = args.getArgument(0);
-            sysTask.setOperationId(args.getArgument(1));
-            return Single.just(sysTask);
-        });
+        stubFetchAll(appNoCreatedAt);
+        stubUpdateEchoInput();
+        stubUpdateIfPropagateOperationId();
 
         upgrader.upgrade();
 
@@ -318,32 +235,13 @@ public class ApplicationClientSecretsUpgraderTest {
 
     @Test
     public void shouldNotUpdateAppsAlreadyMigrated() {
-        when(systemTaskRepository.findById(anyString())).thenReturn(Maybe.empty());
-        final SystemTask task = new SystemTask();
-        task.setStatus(SystemTaskStatus.INITIALIZED.name());
-        when(systemTaskRepository.create(any())).thenReturn(Single.just(task));
+        stubUpgradeInitialized();
 
         // App that has already been migrated - has secret settings, secrets list, and no client secret in oauth
-        final Application alreadyMigrated = new Application();
-        alreadyMigrated.setId("already-migrated");
-        alreadyMigrated.setCreatedAt(new Date());
-        alreadyMigrated.setSecretSettings(
-                List.of(new ApplicationSecretSettings("migrated-id", "NONE", Map.of()))
-        );
-        alreadyMigrated.setSecrets(new ArrayList<>());
-        final ApplicationSettings settings = new ApplicationSettings();
-        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
-        oauth.setClientSecret(null); // Already migrated, no client secret
-        oauth.setClientSecretExpiresAt(null);
-        settings.setOauth(oauth);
-        alreadyMigrated.setSettings(settings);
+        final Application alreadyMigrated = alreadyMigratedApp("already-migrated");
 
-        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(alreadyMigrated)));
-        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
-            SystemTask sysTask = args.getArgument(0);
-            sysTask.setOperationId(args.getArgument(1));
-            return Single.just(sysTask);
-        });
+        stubFetchAll(alreadyMigrated);
+        stubUpdateIfPropagateOperationId();
 
         upgrader.upgrade();
 
@@ -353,28 +251,15 @@ public class ApplicationClientSecretsUpgraderTest {
 
     @Test
     public void shouldVerifyMigrationDetails() {
-        when(systemTaskRepository.findById(anyString())).thenReturn(Maybe.empty());
-        final SystemTask task = new SystemTask();
-        task.setStatus(SystemTaskStatus.INITIALIZED.name());
-        when(systemTaskRepository.create(any())).thenReturn(Single.just(task));
+        stubUpgradeInitialized();
 
         final String testSecret = "my-test-secret";
         final Date testCreatedAt = new Date(System.currentTimeMillis() - 100000);
         final Date testExpiresAt = new Date(System.currentTimeMillis() + 100000);
 
-        final Application app = new Application();
-        app.setId("test-app");
-        app.setCreatedAt(testCreatedAt);
-        final ApplicationSettings settings = new ApplicationSettings();
-        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
-        oauth.setClientSecret(testSecret);
-        oauth.setClientSecretExpiresAt(testExpiresAt);
-        settings.setOauth(oauth);
-        app.setSettings(settings);
-        app.setSecretSettings(null);
-        app.setSecrets(null);
+        final Application app = appWithClientSecret("test-app", testSecret, testExpiresAt, testCreatedAt);
 
-        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(app)));
+        stubFetchAll(app);
         when(applicationService.update(any())).thenAnswer(invocation -> {
             Application updatedApp = invocation.getArgument(0);
             
@@ -399,12 +284,7 @@ public class ApplicationClientSecretsUpgraderTest {
             
             return Single.just(updatedApp);
         });
-        
-        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
-            SystemTask sysTask = args.getArgument(0);
-            sysTask.setOperationId(args.getArgument(1));
-            return Single.just(sysTask);
-        });
+        stubUpdateIfPropagateOperationId();
 
         upgrader.upgrade();
 
@@ -413,42 +293,17 @@ public class ApplicationClientSecretsUpgraderTest {
 
     @Test
     public void shouldMigrateOnlyAppsNeedingMigration() {
-        when(systemTaskRepository.findById(anyString())).thenReturn(Maybe.empty());
-        final SystemTask task = new SystemTask();
-        task.setStatus(SystemTaskStatus.INITIALIZED.name());
-        when(systemTaskRepository.create(any())).thenReturn(Single.just(task));
+        stubUpgradeInitialized();
 
         // App that needs migration (has client secret)
-        final Application needsMigration = new Application();
-        needsMigration.setId("needs-migration");
-        needsMigration.setCreatedAt(new Date());
-        final ApplicationSettings settings1 = new ApplicationSettings();
-        final ApplicationOAuthSettings oauth1 = new ApplicationOAuthSettings();
-        oauth1.setClientSecret("secret-to-migrate");
-        settings1.setOauth(oauth1);
-        needsMigration.setSettings(settings1);
-        needsMigration.setSecretSettings(null);
-        needsMigration.setSecrets(null);
+        final Application needsMigration = needsMigrationApp("needs-migration");
 
         // App that doesn't need migration (no client secret, already has settings)
-        final Application noMigrationNeeded = new Application();
-        noMigrationNeeded.setId("no-migration-needed");
-        noMigrationNeeded.setCreatedAt(new Date());
-        noMigrationNeeded.setSecretSettings(List.of(new ApplicationSecretSettings("id", "NONE", Map.of())));
-        noMigrationNeeded.setSecrets(new ArrayList<>());
-        final ApplicationSettings settings2 = new ApplicationSettings();
-        final ApplicationOAuthSettings oauth2 = new ApplicationOAuthSettings();
-        oauth2.setClientSecret(null);
-        settings2.setOauth(oauth2);
-        noMigrationNeeded.setSettings(settings2);
+        final Application noMigrationNeeded = noMigrationNeededApp("no-migration-needed");
 
-        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(needsMigration, noMigrationNeeded)));
-        when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
-            SystemTask sysTask = args.getArgument(0);
-            sysTask.setOperationId(args.getArgument(1));
-            return Single.just(sysTask);
-        });
+        stubFetchAll(needsMigration, noMigrationNeeded);
+        stubUpdateEchoInput();
+        stubUpdateIfPropagateOperationId();
 
         upgrader.upgrade();
 
@@ -461,5 +316,137 @@ public class ApplicationClientSecretsUpgraderTest {
         verify(applicationService, never()).update(argThat(app -> 
             app.getId().equals("no-migration-needed")
         ));
+    }
+    // Helpers
+    private void stubUpgradeInitialized() {
+        when(systemTaskRepository.findById(anyString())).thenReturn(Maybe.empty());
+        when(systemTaskRepository.create(any())).thenReturn(Single.just(initializedTask()));
+    }
+
+    private SystemTask initializedTask() {
+        final SystemTask task = new SystemTask();
+        task.setStatus(SystemTaskStatus.INITIALIZED.name());
+        return task;
+    }
+
+    private void stubUpdateIfPropagateOperationId() {
+        when(systemTaskRepository.updateIf(any(), anyString())).thenAnswer(args -> {
+            SystemTask sysTask = args.getArgument(0);
+            sysTask.setOperationId(args.getArgument(1));
+            return Single.just(sysTask);
+        });
+    }
+
+    private void stubUpdateEchoInput() {
+        when(applicationService.update(any())).thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+    }
+
+    private void stubFetchAll(Application... applications) {
+        when(applicationService.fetchAll()).thenReturn(Single.just(Set.of(applications)));
+    }
+
+    private Application baseApp(String id, Date createdAt) {
+        final Application app = new Application();
+        app.setId(id);
+        app.setCreatedAt(createdAt != null ? createdAt : null);
+        return app;
+    }
+
+    private Application appNoSettings(String id) {
+        final Application app = baseApp(id, new Date());
+        app.setSettings(null);
+        app.setSecretSettings(null);
+        app.setSecrets(null);
+        return app;
+    }
+
+    private Application appWithSettingsNoOauth(String id) {
+        final Application app = baseApp(id, new Date());
+        app.setSettings(new ApplicationSettings());
+        app.setSecretSettings(null);
+        app.setSecrets(null);
+        return app;
+    }
+
+    private Application appWithEmptyOauth(String id) {
+        final Application app = baseApp(id, new Date());
+        final ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(new ApplicationOAuthSettings());
+        app.setSettings(settings);
+        app.setSecretSettings(null);
+        app.setSecrets(null);
+        return app;
+    }
+
+    private Application appWithClientSecret(String id, String secret, Date expiresAt, Date createdAt) {
+        final Application app = baseApp(id, createdAt);
+        final ApplicationSettings settings = new ApplicationSettings();
+        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setClientSecret(secret);
+        oauth.setClientSecretExpiresAt(expiresAt);
+        settings.setOauth(oauth);
+        app.setSettings(settings);
+        app.setSecretSettings(null);
+        app.setSecrets(null);
+        return app;
+    }
+
+    private Application appWithSecretSettingsAndClientSecret(String id, String settingsId, String algorithm, String secret) {
+        final Application app = baseApp(id, new Date());
+        app.setSecretSettings(List.of(new ApplicationSecretSettings(settingsId, algorithm, Map.of())));
+        app.setSecrets(new ArrayList<>());
+        final ApplicationSettings settings = new ApplicationSettings();
+        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setClientSecret(secret);
+        settings.setOauth(oauth);
+        app.setSettings(settings);
+        return app;
+    }
+
+    private Application appWithEmptySecretSettings(String id) {
+        final Application app = baseApp(id, new Date());
+        app.setSecretSettings(new ArrayList<>());
+        app.setSecrets(null);
+        final ApplicationSettings settings = new ApplicationSettings();
+        settings.setOauth(new ApplicationOAuthSettings());
+        app.setSettings(settings);
+        return app;
+    }
+
+    private Application alreadyMigratedApp(String id) {
+        final Application app = baseApp(id, new Date());
+        app.setSecretSettings(List.of(new ApplicationSecretSettings("migrated-id", "NONE", Map.of())));
+        app.setSecrets(new ArrayList<>());
+        final ApplicationSettings settings = new ApplicationSettings();
+        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setClientSecret(null);
+        oauth.setClientSecretExpiresAt(null);
+        settings.setOauth(oauth);
+        app.setSettings(settings);
+        return app;
+    }
+
+    private Application needsMigrationApp(String id) {
+        final Application app = baseApp(id, new Date());
+        final ApplicationSettings settings = new ApplicationSettings();
+        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setClientSecret("secret-to-migrate");
+        settings.setOauth(oauth);
+        app.setSettings(settings);
+        app.setSecretSettings(null);
+        app.setSecrets(null);
+        return app;
+    }
+
+    private Application noMigrationNeededApp(String id) {
+        final Application app = baseApp(id, new Date());
+        app.setSecretSettings(List.of(new ApplicationSecretSettings("id", "NONE", Map.of())));
+        app.setSecrets(new ArrayList<>());
+        final ApplicationSettings settings = new ApplicationSettings();
+        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setClientSecret(null);
+        settings.setOauth(oauth);
+        app.setSettings(settings);
+        return app;
     }
 }
