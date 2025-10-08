@@ -264,6 +264,15 @@ plugins: # Copy plugins to Gateway and Management API
 	@make pluginsGateway
 	@make pluginsManagement
 
+smart-build: ## Smart incremental build - only rebuild changed modules (skip tests)
+	@./smart-build.sh --skip-tests
+
+smart-build-test: ## Smart incremental build - only rebuild changed modules (with tests)
+	@./smart-build.sh
+
+smart-build-force: ## Force rebuild all modules and restart services
+	@./smart-build.sh --force --skip-tests
+
 pluginsJdbc: # Copy plugins to Gateway and Management API
 	@make version
 	@make commonPluginsManagement
