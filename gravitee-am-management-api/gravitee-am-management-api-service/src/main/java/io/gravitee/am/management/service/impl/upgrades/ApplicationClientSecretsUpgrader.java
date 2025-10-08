@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.management.service.impl.upgrades;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.SystemTask;
 import io.gravitee.am.model.SystemTaskStatus;
@@ -25,7 +23,7 @@ import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.repository.management.api.SystemTaskRepository;
 import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.exception.ApplicationSecretConfigurationException;
+import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.gravitee.am.service.spring.application.SecretHashAlgorithm;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -34,13 +32,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_CLIENT_SECRETS_UPGRADER;
@@ -54,12 +49,8 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "client_secrets_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Application client secrets can't be upgraded, other instance may process them or an upgrader has failed previously";
-    private static final SecretHashAlgorithm noneAlg = SecretHashAlgorithm.NONE;
 
     private final Logger logger = LoggerFactory.getLogger(ApplicationClientSecretsUpgrader.class);
-
-    private final ObjectMapper om = new ObjectMapper();
-    private final Map<String, Object> noProperties = Map.of();
 
     private final ApplicationService applicationService;
 
@@ -92,27 +83,21 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                 .flatMapSingle(app -> {
                     logger.debug("Process application '{}' for client secret migration", app.getId());
 
-                    String settingsId = null;
-                    boolean updateRequired = false;
+                    final var existingSecretSettings = app.getSecretSettings();
+                    final var maybeExistingNone = Optional.ofNullable(existingSecretSettings)
+                            .flatMap(list -> list.stream()
+                                    .filter(s -> Objects.equals(s.getAlgorithm(), SecretHashAlgorithm.NONE.name()))
+                                    .findFirst());
 
-                    // First, ensure secret settings exist (handle null or empty list)
-                    if (app.getSecretSettings() != null) {
-                        settingsId = app.getSecretSettings()
-                                .stream()
-                                .filter(s -> Objects.equals(s.getAlgorithm(), noneAlg.name()))
-                                .map(ApplicationSecretSettings::getId)
-                                .findFirst()
-                                .orElse(null);
-                    }
-
-                    // If no secret settings exist, create a default one
-                    if (settingsId == null) {
-                        var defaultSecretSettings = buildNoneSecretSettings();
+                    final ApplicationSecretSettings selectedSettings = maybeExistingNone.orElseGet(() -> {
+                        var defaultSecretSettings = ApplicationSecretConfig.buildNoneSecretSettings();
                         logger.debug("Create default application secret settings for application '{}' ({})", app.getId(), defaultSecretSettings.getId());
                         app.setSecretSettings(List.of(defaultSecretSettings));
-                        settingsId = defaultSecretSettings.getId();
-                        updateRequired = true;
-                    }
+                        return defaultSecretSettings;
+                    });
+
+                    String settingsId = selectedSettings.getId();
+                    boolean updateRequired = maybeExistingNone.isEmpty();
 
                     if (app.getSecrets() == null) {
                         app.setSecrets(new ArrayList<>());
@@ -171,18 +156,6 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
     @Override
     protected String getTaskId() {
         return TASK_ID;
-    }
-
-    private ApplicationSecretSettings buildNoneSecretSettings() {
-        try {
-            final var serializedConfig = om.writeValueAsString(List.of(noneAlg, noProperties));
-            final var id = Base64.getEncoder().encodeToString(
-                    MessageDigest.getInstance("SHA-256").digest(serializedConfig.getBytes())
-            );
-            return new ApplicationSecretSettings(id, noneAlg.name(), noProperties);
-        } catch (JsonProcessingException | NoSuchAlgorithmException e) {
-            throw new ApplicationSecretConfigurationException(e);
-        }
     }
 
     private String nextAvailableSecretName(List<ClientSecret> existingSecrets, String baseName) {
