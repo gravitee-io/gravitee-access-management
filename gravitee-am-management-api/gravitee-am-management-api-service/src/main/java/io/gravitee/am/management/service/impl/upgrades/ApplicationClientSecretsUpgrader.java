@@ -46,7 +46,6 @@ import java.util.UUID;
 import static io.gravitee.am.management.service.impl.upgrades.UpgraderOrder.APPLICATION_CLIENT_SECRETS_UPGRADER;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Component
@@ -55,11 +54,11 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
     private static final String TASK_ID = "client_secrets_migration";
     private static final String UPGRADE_NOT_SUCCESSFUL_ERROR_MESSAGE =
             "Application client secrets can't be upgraded, other instance may process them or an upgrader has failed previously";
+    private static final SecretHashAlgorithm noneAlg = SecretHashAlgorithm.NONE;
 
     private final Logger logger = LoggerFactory.getLogger(ApplicationClientSecretsUpgrader.class);
 
     private final ObjectMapper om = new ObjectMapper();
-    private final SecretHashAlgorithm noneAlg = SecretHashAlgorithm.NONE;
     private final Map<String, Object> noProperties = Map.of();
 
     private final ApplicationService applicationService;
@@ -79,7 +78,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                         return Single.error(new IllegalStateException("Task " + getTaskId() + " already processed by another instance : trigger a retry"));
                     }
                 })
-                .map(__ -> true);
+                .map(b -> true);
     }
 
     @Override
@@ -158,7 +157,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                 .doOnError(err -> updateSystemTask(task, (SystemTaskStatus.FAILURE), task.getOperationId()).subscribe())
                 .andThen(Single.defer(() ->
                         updateSystemTask(task, SystemTaskStatus.SUCCESS, task.getOperationId())
-                                .map(__ -> true)
+                                .map(b -> true)
                                 .onErrorReturnItem(false)
                 ))
                 .onErrorResumeNext(err -> {
