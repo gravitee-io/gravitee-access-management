@@ -1,7 +1,3 @@
-import 'jest-preset-angular/setup-jest';
-import 'zone.js';
-import 'zone.js/testing';
-
 /*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
@@ -17,8 +13,10 @@ import 'zone.js/testing';
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { AppConfig } from './config/app.config';
-
-beforeAll(() => {
-  AppConfig.settings.domainBaseURL = 'http://example.com/domains/';
-});
+module.exports = {
+  maxWorkers: 1,
+  collectCoverage: false,
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/build/', '/out/'],
+  verbose: false,
+  cache: true,
+};
