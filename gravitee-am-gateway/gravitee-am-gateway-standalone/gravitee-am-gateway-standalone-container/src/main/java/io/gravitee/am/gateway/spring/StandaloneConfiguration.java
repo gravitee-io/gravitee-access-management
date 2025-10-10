@@ -31,6 +31,7 @@ import io.gravitee.am.gateway.reactor.spring.ReactorConfiguration;
 import io.gravitee.am.gateway.vertx.VertxServerConfiguration;
 import io.gravitee.am.password.dictionary.spring.PasswordDictionaryConfiguration;
 import io.gravitee.am.plugins.authdevice.notifier.spring.AuthenticationDeviceNotifierSpringConfiguration;
+import io.gravitee.am.plugins.authorizationengine.spring.AuthorizationEngineSpringConfiguration;
 import io.gravitee.am.plugins.botdetection.spring.BotDetectionSpringConfiguration;
 import io.gravitee.am.plugins.certificate.spring.CertificateSpringConfiguration;
 import io.gravitee.am.plugins.dataplane.core.DataPlanePluginManager;
@@ -82,6 +83,7 @@ import org.springframework.core.env.Environment;
         ServiceConfiguration.class,
         GatewayPurgeServiceConfiguration.class,
         IdentityProviderSpringConfiguration.class,
+        AuthorizationEngineSpringConfiguration.class,
         CertificateSpringConfiguration.class,
         ExtensionGrantSpringConfiguration.class,
         ReporterSpringConfiguration.class,

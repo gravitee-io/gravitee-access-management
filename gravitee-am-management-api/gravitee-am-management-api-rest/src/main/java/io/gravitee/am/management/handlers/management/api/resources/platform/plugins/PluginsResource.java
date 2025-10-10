@@ -85,4 +85,9 @@ public class PluginsResource {
     public DeviceIdentifiersPluginResource getDeviceIdentifiersPlugins() {
         return resourceContext.getResource(DeviceIdentifiersPluginResource.class);
     }
+
+    @Path("authorization-engines")
+    public AuthorizationEnginesPluginResource getAuthorizationEnginesPlugins() {
+        return resourceContext.getResource(AuthorizationEnginesPluginResource.class);
+    }
 }

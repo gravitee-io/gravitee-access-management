@@ -54,6 +54,7 @@ public abstract class Event {
             case PASSWORD_POLICY -> PasswordPolicyEvent.actionOf(action);
             case REVOKE_TOKEN -> RevokeTokenEvent.actionOf(action);
             case USER -> UserEvent.actionOf(action);
+            case AUTHORIZATION_ENGINE ->  AuthorizationEngineEvent.actionOf(action);
             default -> null;
         };
     }

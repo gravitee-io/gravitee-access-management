@@ -24,6 +24,7 @@ security:
 - gravitee-auth: []
 tags:
 - name: Authentication Device Notifier
+- name: Authorization Engine
 - name: Bot Detection
 - name: Certificate
 - name: Device Identifier
@@ -40,6 +41,7 @@ tags:
 - name: alerts
 - name: application
 - name: audit
+- name: authorization engine
 - name: bot detection
 - name: certificate
 - name: data-sources
@@ -2832,6 +2834,208 @@ paths:
       responses:
         "204":
           description: Authentication Device Notifier successfully deleted
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines:
+    get:
+      tags:
+      - authorization engine
+      - domain
+      summary: List registered authorization engines for a security domain
+      description: "User must have the DOMAIN_AUTHORIZATION_ENGINE[LIST] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission\
+        \ on the specified organization."
+      operationId: listAuthorizationEngines
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: List registered authorization engines for a security domain
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuthorizationEngine"
+        "500":
+          description: Internal server error
+    post:
+      tags:
+      - authorization engine
+      - domain
+      summary: Create an authorization engine
+      description: "User must have the DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission\
+        \ on the specified organization"
+      operationId: createAuthorizationEngine
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewAuthorizationEngine"
+        required: true
+      responses:
+        "201":
+          description: Authorization engine successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationEngine"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines/{engineId}:
+    get:
+      tags:
+      - authorization engine
+      - domain
+      summary: Get an authorization engine
+      description: "User must have the DOMAIN_AUTHORIZATION_ENGINE[READ] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[READ] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[READ] permission\
+        \ on the specified organization"
+      operationId: findAuthorizationEngine
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: engineId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Authorization engine
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationEngine"
+        "500":
+          description: Internal server error
+    put:
+      tags:
+      - authorization engine
+      - domain
+      summary: Update an authorization engine
+      description: "User must have the DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission\
+        \ on the specified organization"
+      operationId: updateAuthorizationEngine
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: engineId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAuthorizationEngine"
+        required: true
+      responses:
+        "200":
+          description: Authorization engine successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizationEngine"
+        "500":
+          description: Internal server error
+    delete:
+      tags:
+      - authorization engine
+      - domain
+      summary: Delete an authorization engine
+      description: "User must have the DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission\
+        \ on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission\
+        \ on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission\
+        \ on the specified organization"
+      operationId: deleteAuthorizationEngine
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: engineId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Authorization engine successfully deleted
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/bot-detections:
@@ -9989,6 +10193,60 @@ paths:
           description: default response
           content:
             application/json: {}
+  /platform/plugins/authorization-engines:
+    get:
+      tags:
+      - Plugin
+      - Authorization Engine
+      - platform
+      summary: List authorization engine plugins
+      description: There is no particular permission needed. User must be authenticated.
+      operationId: listAuthorizationEnginePlugins
+      responses:
+        default:
+          description: default response
+          content:
+            application/json: {}
+  /platform/plugins/authorization-engines/{authorizationEngine}:
+    get:
+      tags:
+      - Plugin
+      - Authorization Engine
+      - platform
+      summary: Get an authorization engine plugin
+      description: There is no particular permission needed. User must be authenticated.
+      operationId: getAuthorizationEnginePlugin
+      parameters:
+      - name: authorizationEngine
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          description: default response
+          content:
+            application/json: {}
+  /platform/plugins/authorization-engines/{authorizationEngine}/schema:
+    get:
+      tags:
+      - Plugin
+      - Authorization Engine
+      - platform
+      summary: Get an authorization engine plugin's schema
+      description: There is no particular permission needed. User must be authenticated.
+      operationId: getAuthorizationEnginePluginSchema
+      parameters:
+      - name: authorizationEngine
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          description: default response
+          content:
+            application/json: {}
   /platform/plugins/bot-detections:
     get:
       tags:
@@ -11428,6 +11686,33 @@ components:
         updatedAt:
           type: string
           format: date-time
+    AuthorizationEngine:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        configuration:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+        referenceId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     BaseJsonNode:
       type: object
     BotDetection:
@@ -11676,9 +11961,9 @@ components:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
-        allowedScopesEnabled:
-          type: boolean
         clientTemplateEnabled:
+          type: boolean
+        allowedScopesEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -11900,21 +12185,21 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        redirectUriExpressionLanguageEnabled:
-          type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-        dynamicClientRegistrationTemplateEnabled:
           type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
         redirectUriStrictMatching:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+        dynamicClientRegistrationTemplateEnabled:
           type: boolean
     DomainPage:
       type: object
@@ -12760,6 +13045,21 @@ components:
           type: string
         configuration:
           type: string
+    NewAuthorizationEngine:
+      required:
+      - configuration
+      - name
+      - type
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        name:
+          type: string
+        configuration:
+          type: string
     NewBotDetection:
       required:
       - configuration
@@ -13576,6 +13876,7 @@ components:
             - DOMAIN_EMAIL_TEMPLATE
             - DOMAIN_EXTENSION_POINT
             - DOMAIN_IDENTITY_PROVIDER
+            - DOMAIN_AUTHORIZATION_ENGINE
             - DOMAIN_AUDIT
             - DOMAIN_CERTIFICATE
             - DOMAIN_USER
@@ -13851,6 +14152,7 @@ components:
             - DOMAIN_EMAIL_TEMPLATE
             - DOMAIN_EXTENSION_POINT
             - DOMAIN_IDENTITY_PROVIDER
+            - DOMAIN_AUTHORIZATION_ENGINE
             - DOMAIN_AUDIT
             - DOMAIN_CERTIFICATE
             - DOMAIN_USER
@@ -14044,6 +14346,7 @@ components:
             - DOMAIN_EMAIL_TEMPLATE
             - DOMAIN_EXTENSION_POINT
             - DOMAIN_IDENTITY_PROVIDER
+            - DOMAIN_AUTHORIZATION_ENGINE
             - DOMAIN_AUDIT
             - DOMAIN_CERTIFICATE
             - DOMAIN_USER
@@ -14185,6 +14488,7 @@ components:
             - DOMAIN_EMAIL_TEMPLATE
             - DOMAIN_EXTENSION_POINT
             - DOMAIN_IDENTITY_PROVIDER
+            - DOMAIN_AUTHORIZATION_ENGINE
             - DOMAIN_AUDIT
             - DOMAIN_CERTIFICATE
             - DOMAIN_USER
@@ -14320,6 +14624,7 @@ components:
             - DOMAIN_EMAIL_TEMPLATE
             - DOMAIN_EXTENSION_POINT
             - DOMAIN_IDENTITY_PROVIDER
+            - DOMAIN_AUTHORIZATION_ENGINE
             - DOMAIN_AUDIT
             - DOMAIN_CERTIFICATE
             - DOMAIN_USER
@@ -14994,6 +15299,18 @@ components:
           type: string
         configuration:
           type: string
+    UpdateAuthorizationEngine:
+      required:
+      - configuration
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        configuration:
+          type: string
+        type:
+          type: string
     UpdateBotDetection:
       required:
       - configuration
@@ -15576,16 +15893,12 @@ components:
           type: boolean
         serviceAccount:
           type: boolean
-        address:
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
-        fullId:
-          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
         identitiesAsMap:
@@ -15600,14 +15913,18 @@ components:
           type: string
         birthdate:
           type: string
+        zoneInfo:
+          type: string
         phoneNumber:
           type: string
-        disabled:
-          type: boolean
-        lastIdentityInformation:
+        address:
           type: object
           additionalProperties:
             type: object
+        disabled:
+          type: boolean
+        locale:
+          type: string
     UserEntity:
       type: object
       properties:
@@ -15775,16 +16092,12 @@ components:
           $ref: "#/components/schemas/ApplicationEntity"
         sourceId:
           type: string
-        address:
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
-        fullId:
-          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
         identitiesAsMap:
@@ -15799,14 +16112,18 @@ components:
           type: string
         birthdate:
           type: string
+        zoneInfo:
+          type: string
         phoneNumber:
           type: string
-        disabled:
-          type: boolean
-        lastIdentityInformation:
+        address:
           type: object
           additionalProperties:
             type: object
+        disabled:
+          type: boolean
+        locale:
+          type: string
     UserId:
       type: object
       properties:
