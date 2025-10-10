@@ -53,7 +53,10 @@ parameters:
     type: boolean
     default: false
     description: "Is this a hotfix?"
-
+  create_maintenance_version_branch:
+    type: boolean
+    default: false
+    description: "Creates maintenance version branch"
 
 orbs:
   path-filtering: circleci/path-filtering@0.0.2
