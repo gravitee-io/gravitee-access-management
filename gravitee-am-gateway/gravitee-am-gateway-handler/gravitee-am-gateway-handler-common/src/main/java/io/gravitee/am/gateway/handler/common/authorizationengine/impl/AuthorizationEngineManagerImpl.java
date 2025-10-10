@@ -128,6 +128,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
         final String eventType = authorizationEngineEvent.toString().toLowerCase();
         logger.info("Domain {} has received {} authorization engine event for {}",
                 domain.getName(), eventType, authorizationEngineId);
+
         authorizationEngineRepository.findById(authorizationEngineId)
                 .flatMapSingle(authorizationEngine ->
                         loadAuthorizationEngine(authorizationEngine)
