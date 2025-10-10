@@ -150,6 +150,23 @@
     </mapping>
 
     <mapping map-null="false">
+        <class-a>io.gravitee.am.model.ProtectedResource</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource</class-b>
+
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.AppSecretSettingsConverter">
+            <a>secretSettings</a>
+            <b>secretSettings</b>
+        </field>
+
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.ListToStringConverter">
+            <a>resourceIdentifiers</a>
+            <b>resourceIdentifiers</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.List</a-hint>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
         <class-a>io.gravitee.am.model.User</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcUser</class-b>
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">

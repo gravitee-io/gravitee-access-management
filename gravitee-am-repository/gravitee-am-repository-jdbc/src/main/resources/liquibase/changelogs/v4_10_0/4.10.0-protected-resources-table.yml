@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.0-protected-resources-table
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: protected_resources
+          - tableExists:
+              tableName: protected_resource_client_secrets
+      changes:
+        - createTable:
+            tableName: protected_resources
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: description, type: clob, constraints: { nullable: true } }
+              - column: { name: resource_identifiers, type: text, constraints: { nullable: true } }
+              - column: { name: domain_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: client_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: secret_settings, type: clob, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_protected_resource
+            columnNames: id
+            tableName: protected_resources
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+              - column:
+                  name: type
+              - column:
+                  name: updated_at
+                  descending: true
+            indexName: idx_protected_resources_domain_id
+            tableName: protected_resources
+            unique: false
+
+        - createIndex:
+            columns:
+              - column:
+                  name: domain_id
+              - column:
+                  name: client_id
+            indexName: idx_protected_resources_client_id
+            tableName: protected_resources
+            unique: false
+
+        - createTable:
+            tableName: protected_resource_client_secrets
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: protected_resource_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: expires_at, type: timestamp(6), constraints: { nullable: true } }
+              - column: { name: settings_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: secret, type: nvarchar(374), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_protected_resource_client_secrets
+            columnNames: id
+            tableName: protected_resource_client_secrets
+
+        - createIndex:
+            columns:
+              - column:
+                  name: protected_resource_id
+            indexName: idx_protected_resources_client_sec_prot_res_id
+            tableName: protected_resource_client_secrets
+            unique: false
+
+        - addForeignKeyConstraint:
+            baseColumnNames: protected_resource_id
+            baseTableName: protected_resource_client_secrets
+            constraintName: fk_protected_resource_client_secrets_protresid
+            onDelete: CASCADE
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: protected_resources

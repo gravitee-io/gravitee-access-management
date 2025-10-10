@@ -26,6 +26,7 @@ apis/PlatformApi.ts
 apis/PluginApi.ts
 apis/PolicyApi.ts
 apis/PreviewApi.ts
+apis/ProtectedResourceApi.ts
 apis/ReporterApi.ts
 apis/ResourceApi.ts
 apis/RoleApi.ts
@@ -137,6 +138,7 @@ models/NewIdentityProvider.ts
 models/NewMembership.ts
 models/NewOrganizationUser.ts
 models/NewPasswordPolicy.ts
+models/NewProtectedResource.ts
 models/NewReporter.ts
 models/NewRole.ts
 models/NewScope.ts
@@ -181,6 +183,7 @@ models/PatchSecurityProfileSettings.ts
 models/PatchStepUpAuthentication.ts
 models/PreviewRequest.ts
 models/PreviewResponse.ts
+models/ProtectedResourceSecret.ts
 models/Reference.ts
 models/RememberDeviceSettings.ts
 models/Reporter.ts

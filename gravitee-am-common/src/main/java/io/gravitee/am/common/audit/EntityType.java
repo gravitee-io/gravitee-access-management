@@ -52,4 +52,6 @@ public interface EntityType {
     String THEME = "THEME";
     String MFA_FACTOR= "MFA_FACTOR";
     String PASSWORD_POLICY= "PASSWORD_POLICY";
+    String PROTECTED_RESOURCE = "PROTECTED_RESOURCE";
+
 }

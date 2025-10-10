@@ -455,6 +455,11 @@ import { DataPlanesResolver } from './resolvers/data-planes.resolver';
 import { SecretsCertificatesModule } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.module';
 import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secrets.component';
 import { DomainStoreService } from './stores/domain.store';
+import { DomainMcpServersComponent } from './domain/mcp-servers/mcp-servers.component';
+import { DomainNewMcpServerComponent } from './domain/mcp-servers/mcp-server-new/new-mcp-server.component';
+import { DomainMcpServerComponent } from './domain/mcp-servers/mcp-server/domain-mcp-server.component';
+import { ProtectedResourceService } from './services/protected-resource.service';
+import { McpServersService } from './domain/mcp-servers/mcp-servers.service';
 
 @NgModule({
   declarations: [
@@ -497,6 +502,9 @@ import { DomainStoreService } from './stores/domain.store';
     DomainSettingsFlowsComponent,
     DomainSettingsDeviceIdentifiersComponent,
     DomainSettingsThemeComponent,
+    DomainMcpServersComponent,
+    DomainMcpServerComponent,
+    DomainNewMcpServerComponent,
     ConfirmComponent,
     DictionaryDialogComponent,
     EmptystateComponent,
@@ -847,6 +855,8 @@ import { DomainStoreService } from './stores/domain.store';
     EntrypointResolver,
     PolicyService,
     ApplicationService,
+    ProtectedResourceService,
+    McpServersService,
     ApplicationsResolver,
     ApplicationResolver,
     MembershipsResolver,

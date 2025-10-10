@@ -58,30 +58,7 @@ import io.gravitee.am.management.service.permissions.PermissionAcls;
 import io.gravitee.am.model.Organization;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.BotDetectionService;
-import io.gravitee.am.service.CertificatePluginService;
-import io.gravitee.am.service.CertificateService;
-import io.gravitee.am.service.DeviceIdentifierService;
-import io.gravitee.am.service.EmailTemplateService;
-import io.gravitee.am.service.EntrypointService;
-import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.ExtensionGrantService;
-import io.gravitee.am.service.FactorService;
-import io.gravitee.am.service.FlowService;
-import io.gravitee.am.service.FormService;
-import io.gravitee.am.service.IdentityProviderService;
-import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.OrganizationGroupService;
-import io.gravitee.am.service.OrganizationService;
-import io.gravitee.am.service.PasswordPolicyService;
-import io.gravitee.am.service.PasswordService;
-import io.gravitee.am.service.ReporterService;
-import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.ScopeApprovalService;
-import io.gravitee.am.service.ScopeService;
-import io.gravitee.am.service.ThemeService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.PasswordHistoryService;
 import io.gravitee.am.service.validators.email.UserEmail;
@@ -301,6 +278,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected NewsletterService newsletterService;
+
+    @Autowired
+    protected ProtectedResourceService protectedResourceService;
 
     @BeforeEach
     public void init() {
@@ -654,6 +634,11 @@ public abstract class JerseySpringTest {
         @Bean
         public NewsletterService newsletterService() {
             return mock(NewsletterService.class);
+        }
+
+        @Bean
+        public ProtectedResourceService protectedResourceService() {
+            return mock(ProtectedResourceService.class);
         }
     }
 

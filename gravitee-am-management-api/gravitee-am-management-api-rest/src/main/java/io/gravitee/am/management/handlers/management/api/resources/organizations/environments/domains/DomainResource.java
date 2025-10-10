@@ -189,6 +189,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(ApplicationsResource.class);
     }
 
+    @Path("protected-resources")
+    public ProtectedResourcesResource getProtectedResourcesResource() {
+        return resourceContext.getResource(ProtectedResourcesResource.class);
+    }
+
     @Path("identities")
     public IdentityProvidersResource getIdentityProvidersResource() {
         return resourceContext.getResource(IdentityProvidersResource.class);
