@@ -71,7 +71,7 @@
     "@angular/compiler-cli": "19.2.14",
     "@angular/language-service": "19.2.14",
     "@types/jest": "29.5.14",
-    "@types/json-schema": "^7.0.15",
+    "@types/json-schema": "7.0.15",
     "@types/lodash": "4.17.20",
     "@types/node": "20.11.23",
     "@typescript-eslint/eslint-plugin": "8.35.1",
@@ -105,7 +105,7 @@
     "npm": ">=10.2.4"
   },
   "resolutions": {
-    "style-mod": "^4.1.2",
+    "style-mod": "4.1.2",
     "vite": "6.3.6"
   },
   "packageManager": "yarn@4.1.1"
