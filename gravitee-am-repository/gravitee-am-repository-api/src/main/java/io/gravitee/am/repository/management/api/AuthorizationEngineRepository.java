@@ -30,4 +30,6 @@ public interface AuthorizationEngineRepository extends CrudRepository<Authorizat
     Flowable<AuthorizationEngine> findByDomain(String domain);
 
     Maybe<AuthorizationEngine> findByDomainAndId(String domainId, String id);
+
+    Maybe<AuthorizationEngine> findByDomainAndType(String domainId, String type);
 }

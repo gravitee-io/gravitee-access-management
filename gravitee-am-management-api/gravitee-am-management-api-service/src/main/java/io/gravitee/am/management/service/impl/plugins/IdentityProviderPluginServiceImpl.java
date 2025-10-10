@@ -112,7 +112,7 @@ public class IdentityProviderPluginServiceImpl extends AbstractPluginService imp
 
     @Override
     public Maybe<String> getIcon(String identityProviderId) {
-        LOGGER.debug("Find identity provider plugin schema by ID: {}", identityProviderId);
+        LOGGER.debug("Find identity provider icon by ID: {}", identityProviderId);
         return Maybe.create(emitter -> {
             try {
                 String icon = identityProviderPluginManager.getIcon(identityProviderId, true);

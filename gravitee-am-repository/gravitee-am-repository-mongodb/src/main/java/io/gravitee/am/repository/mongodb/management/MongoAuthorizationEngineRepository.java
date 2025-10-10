@@ -43,6 +43,8 @@ import static com.mongodb.client.model.Filters.eq;
 @Component
 public class MongoAuthorizationEngineRepository extends AbstractManagementMongoRepository implements AuthorizationEngineRepository {
 
+    protected static final String FIELD_TYPE = "type";
+
     private MongoCollection<AuthorizationEngineMongo> authorizationEnginesCollection;
 
     @PostConstruct
@@ -77,6 +79,14 @@ public class MongoAuthorizationEngineRepository extends AbstractManagementMongoR
     @Override
     public Maybe<AuthorizationEngine> findByDomainAndId(String domainId, String id) {
         return Observable.fromPublisher(authorizationEnginesCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.DOMAIN.name()), eq(FIELD_REFERENCE_ID, domainId), eq(FIELD_ID, id))).first())
+                .firstElement()
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Maybe<AuthorizationEngine> findByDomainAndType(String domainId, String type) {
+        return Observable.fromPublisher(authorizationEnginesCollection.find(and(eq(FIELD_REFERENCE_TYPE, ReferenceType.DOMAIN.name()), eq(FIELD_REFERENCE_ID, domainId), eq(FIELD_TYPE, type))).first())
                 .firstElement()
                 .map(this::convert)
                 .observeOn(Schedulers.computation());

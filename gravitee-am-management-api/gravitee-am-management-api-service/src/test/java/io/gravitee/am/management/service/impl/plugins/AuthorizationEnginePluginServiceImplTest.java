@@ -16,6 +16,7 @@
 package io.gravitee.am.management.service.impl.plugins;
 
 import io.gravitee.am.authorizationengine.api.AuthorizationEngine;
+import io.gravitee.am.management.service.AuthorizationEnginePluginService;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.plugin.AuthorizationEnginePlugin;
@@ -29,6 +30,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -89,7 +91,7 @@ class AuthorizationEnginePluginServiceImplTest {
         doReturn(Arrays.asList(authEngine1, authEngine2)).when(authorizationEnginePluginManager).findAll(true);
 
         // when
-        TestObserver<List<AuthorizationEnginePlugin>> observer = service.findAll().test();
+        TestObserver<List<AuthorizationEnginePlugin>> observer = service.findAll(null).test();
 
         // then
         observer.assertComplete();
@@ -120,7 +122,7 @@ class AuthorizationEnginePluginServiceImplTest {
         when(authorizationEnginePluginManager.findAll(true)).thenReturn(Collections.emptyList());
 
         // when
-        TestObserver<List<AuthorizationEnginePlugin>> observer = service.findAll().test();
+        TestObserver<List<AuthorizationEnginePlugin>> observer = service.findAll(null).test();
 
         // then
         observer.assertComplete();
@@ -128,6 +130,29 @@ class AuthorizationEnginePluginServiceImplTest {
             assertTrue(result.isEmpty());
             return true;
         });
+    }
+
+    @Test
+    void shouldExpandIcon() throws IOException {
+        AuthorizationEngine authEngine = mock(AuthorizationEngine.class);
+        PluginManifest manifest = mock(PluginManifest.class);
+        when(authEngine.manifest()).thenReturn(manifest);
+        when(manifest.id()).thenReturn("openfga");
+        when(manifest.name()).thenReturn("OpenFGA");
+        when(manifest.description()).thenReturn("desc");
+        when(manifest.version()).thenReturn("1.0");
+        when(manifest.feature()).thenReturn("authorization-engine");
+        when(authEngine.deployed()).thenReturn(true);
+
+        doReturn(List.of(authEngine)).when(authorizationEnginePluginManager).findAll(true);
+        when(authorizationEnginePluginManager.getIcon("openfga", true)).thenReturn("data:image/png;base64,xxx");
+
+        TestObserver<List<AuthorizationEnginePlugin>> observer = service.findAll(List.of(
+                AuthorizationEnginePluginService.EXPAND_ICON
+        )).test();
+
+        observer.assertComplete();
+        observer.assertValue(result -> result.getFirst().getIcon().equals("data:image/png;base64,xxx"));
     }
 
     @Test
@@ -192,7 +217,7 @@ class AuthorizationEnginePluginServiceImplTest {
 
         // then
         observer.assertError(TechnicalManagementException.class);
-        observer.assertError(ex -> ex.getMessage().contains("An error occurs while trying to get authorization engine plugin : error-plugin"));
+        observer.assertError(ex -> ex.getMessage().contains("An error occurs while trying to get authorization engine plugin: error-plugin"));
     }
 
     @Test

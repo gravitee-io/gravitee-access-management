@@ -223,6 +223,12 @@ import { DeviceIdentifierResolver } from './resolvers/device-identifier.resolver
 import { DeviceIdentifierComponent } from './domain/settings/deviceidentifiers/device-identifier/device-identifier.component';
 import { UserDevicesComponent } from './domain/settings/users/user/devices/devices.component';
 import { UserDevicesResolver } from './resolvers/user-devices.resolver';
+import { DomainSettingsAuthorizationEnginesComponent } from './domain/authorization-engines/authorization-engines.component';
+import { AuthorizationEngineCreationComponent } from './domain/authorization-engines/creation/authorization-engine-creation.component';
+import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga.component';
+import { AuthorizationEnginesResolver } from './resolvers/authorization-engines.resolver';
+import { AuthorizationEnginePluginsResolver } from './resolvers/authorization-engine-plugins.resolver';
+import { AuthorizationEngineResolver } from './resolvers/authorization-engine.resolver';
 import { CibaComponent } from './domain/settings/openid/ciba/ciba.component';
 import { CibaSettingsComponent } from './domain/settings/openid/ciba/settings/ciba-settings.component';
 import { Saml2Component } from './domain/settings/saml2/saml2.component';
@@ -1507,6 +1513,62 @@ export const routes: Routes = [
                             },
                           },
                         ],
+                      },
+                    ],
+                  },
+                  {
+                    path: 'authorization-engines',
+                    canActivate: [AuthGuard],
+                    data: {
+                      menu: {
+                        label: 'Authorization',
+                        icon: 'gio:shield-check',
+                        level: 'top',
+                      },
+                      perms: {
+                        only: ['domain_authorization_engine_list'],
+                      },
+                    },
+                    children: [
+                      {
+                        path: '',
+                        pathMatch: 'full',
+                        component: DomainSettingsAuthorizationEnginesComponent,
+                        resolve: {
+                          authorizationEngines: AuthorizationEnginesResolver,
+                          authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                        },
+                      },
+                      {
+                        path: 'new',
+                        component: AuthorizationEngineCreationComponent,
+                        canActivate: [AuthGuard],
+                        resolve: {
+                          authorizationEngines: AuthorizationEnginesResolver,
+                          authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                        },
+                        data: {
+                          perms: {
+                            only: ['domain_authorization_engine_create'],
+                          },
+                        },
+                      },
+                      {
+                        path: ':engineId/openfga',
+                        component: OpenFGAComponent,
+                        canActivate: [AuthGuard],
+                        resolve: {
+                          engine: AuthorizationEngineResolver,
+                          authorizationEnginePlugins: AuthorizationEnginePluginsResolver,
+                        },
+                        data: {
+                          breadcrumb: {
+                            label: 'OpenFGA Management',
+                          },
+                          perms: {
+                            only: ['domain_authorization_engine_read'],
+                          },
+                        },
                       },
                     ],
                   },

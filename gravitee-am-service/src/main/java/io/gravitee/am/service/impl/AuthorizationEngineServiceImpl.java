@@ -18,6 +18,7 @@ package io.gravitee.am.service.impl;
 import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
+import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationEngine;
@@ -25,11 +26,15 @@ import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
+import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
-import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.AuthorizationEngineAlreadyExistsException;
+import io.gravitee.am.service.exception.AuthorizationEngineInvalidConfigurationException;
 import io.gravitee.am.service.exception.AuthorizationEngineNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationEngine;
@@ -58,13 +63,16 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
     private final AuthorizationEngineRepository authorizationEngineRepository;
     private final EventService eventService;
     private final AuditService auditService;
+    private final AuthorizationEnginePluginManager authorizationEnginePluginManager;
 
     public AuthorizationEngineServiceImpl(@Lazy AuthorizationEngineRepository authorizationEngineRepository,
                                          EventService eventService,
-                                         AuditService auditService) {
+                                         AuditService auditService,
+                                         AuthorizationEnginePluginManager authorizationEnginePluginManager) {
         this.authorizationEngineRepository = authorizationEngineRepository;
         this.eventService = eventService;
         this.auditService = auditService;
+        this.authorizationEnginePluginManager = authorizationEnginePluginManager;
     }
 
     @Override
@@ -102,17 +110,29 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
     public Single<AuthorizationEngine> create(String domainId, NewAuthorizationEngine newAuthorizationEngine, User principal) {
         LOGGER.debug("Create a new authorization engine {} for domain {}", newAuthorizationEngine, domainId);
 
-        AuthorizationEngine authorizationEngine = new AuthorizationEngine();
-        authorizationEngine.setId(newAuthorizationEngine.getId() == null ? RandomString.generate() : newAuthorizationEngine.getId());
-        authorizationEngine.setReferenceType(ReferenceType.DOMAIN);
-        authorizationEngine.setReferenceId(domainId);
-        authorizationEngine.setName(newAuthorizationEngine.getName());
-        authorizationEngine.setType(newAuthorizationEngine.getType());
-        authorizationEngine.setConfiguration(newAuthorizationEngine.getConfiguration());
-        authorizationEngine.setCreatedAt(new Date());
-        authorizationEngine.setUpdatedAt(authorizationEngine.getCreatedAt());
+        // Check if authorization engine of this type already exists in the domain
+        return authorizationEngineRepository.findByDomainAndType(domainId, newAuthorizationEngine.getType())
+                .isEmpty()
+                .flatMap(isEmpty -> {
+                    if (!isEmpty) {
+                        return Single.error(new AuthorizationEngineAlreadyExistsException(newAuthorizationEngine.getType()));
+                    }
 
-        return authorizationEngineRepository.create(authorizationEngine)
+                    return validateConfiguration(newAuthorizationEngine.getType(), newAuthorizationEngine.getConfiguration())
+                            .andThen(Single.defer(() -> {
+                                AuthorizationEngine authorizationEngine = new AuthorizationEngine();
+                                authorizationEngine.setId(newAuthorizationEngine.getId() == null ? RandomString.generate() : newAuthorizationEngine.getId());
+                                authorizationEngine.setReferenceType(ReferenceType.DOMAIN);
+                                authorizationEngine.setReferenceId(domainId);
+                                authorizationEngine.setName(newAuthorizationEngine.getName());
+                                authorizationEngine.setType(newAuthorizationEngine.getType());
+                                authorizationEngine.setConfiguration(newAuthorizationEngine.getConfiguration());
+                                authorizationEngine.setCreatedAt(new Date());
+                                authorizationEngine.setUpdatedAt(authorizationEngine.getCreatedAt());
+
+                                return authorizationEngineRepository.create(authorizationEngine);
+                            }));
+                })
                 .flatMap(createdEngine -> {
                     // create event for sync process
                     Event event = new Event(Type.AUTHORIZATION_ENGINE, new Payload(createdEngine.getId(), createdEngine.getReferenceType(), createdEngine.getReferenceId(), Action.CREATE));
@@ -128,6 +148,9 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                         .reference(new Reference(ReferenceType.DOMAIN, domainId))
                         .throwable(throwable)))
                 .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
                     LOGGER.error("An error occurs while trying to create an authorization engine", ex);
                     return Single.error(new TechnicalManagementException("An error occurs while trying to create an authorization engine", ex));
                 });
@@ -139,7 +162,8 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
 
         return authorizationEngineRepository.findByDomainAndId(domainId, id)
                 .switchIfEmpty(Single.error(new AuthorizationEngineNotFoundException(id)))
-                .flatMap(oldEngine -> {
+                .flatMap(oldEngine -> validateConfiguration(oldEngine.getType(), updateAuthorizationEngine.getConfiguration())
+                        .andThen(Single.defer(() -> {
                     AuthorizationEngine engineToUpdate = new AuthorizationEngine(oldEngine);
                     engineToUpdate.setName(updateAuthorizationEngine.getName());
                     engineToUpdate.setConfiguration(updateAuthorizationEngine.getConfiguration());
@@ -162,7 +186,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                                     .reference(new Reference(oldEngine.getReferenceType(), oldEngine.getReferenceId()))
                                     .authorizationEngine(oldEngine)
                                     .throwable(throwable)));
-                })
+                })))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -205,6 +229,23 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                     LOGGER.error("An error occurs while trying to delete authorization engine: {}", authorizationEngineId, ex);
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete authorization engine: %s", authorizationEngineId), ex));
+                });
+    }
+
+    private Completable validateConfiguration(String type, String configuration) {
+        return Completable.fromAction(() -> {
+                    ValidationResult validationResult = authorizationEnginePluginManager.validate(new ProviderConfiguration(type, configuration));
+                    if (validationResult.failed()) {
+                        LOGGER.warn("An error occurs while validating the authorization engine configuration. Failed message: {}", validationResult.failedMessage());
+                        throw new AuthorizationEngineInvalidConfigurationException(validationResult.failedMessage());
+                    }
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to validate authorization engine configuration", ex);
+                    return Completable.error(new TechnicalManagementException("An error occurs while trying to validate authorization engine configuration", ex));
                 });
     }
 }

@@ -18,6 +18,7 @@ package io.gravitee.am.plugins.authorizationengine.core;
 import io.gravitee.am.authorizationengine.api.AuthorizationEngine;
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineConfiguration;
 import io.gravitee.am.authorizationengine.api.AuthorizationEngineProvider;
+import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.plugins.handlers.api.core.AmPluginManager;
 import io.gravitee.am.plugins.handlers.api.core.ConfigurationFactory;
 import io.gravitee.am.plugins.handlers.api.core.NamedBeanFactoryPostProcessor;
@@ -27,6 +28,7 @@ import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -49,11 +51,23 @@ public class AuthorizationEnginePluginManager
 
     @Override
     public AuthorizationEngineProvider create(ProviderConfiguration providerConfig) {
-        logger.debug("Looking for an authorization engine for [{}]", providerConfig.getType());
-        var authEngine = Optional.ofNullable(get(providerConfig.getType())).orElseThrow(() -> new IllegalStateException("No authorization engine is registered for type " + providerConfig.getType()));
+        var authEngine = getAuthorizationEngineOrThrow(providerConfig.getType());
 
         var authEngineConfiguration = configurationFactory.create(authEngine.configuration(), providerConfig.getConfiguration());
         return createProvider(authEngine, new AuthorizationEngineConfigurationBeanFactoryPostProcessor(authEngineConfiguration));
+    }
+
+    @Override
+    public ValidationResult validate(ProviderConfiguration providerConfig) {
+        var authEngine = getAuthorizationEngineOrThrow(providerConfig.getType());
+        var authEngineConfiguration = configurationFactory.create(authEngine.configuration(), providerConfig.getConfiguration());
+        return validateProvider(authEngine, List.of(new AuthorizationEngineConfigurationBeanFactoryPostProcessor(authEngineConfiguration)));
+    }
+
+    private AuthorizationEngine<?, AuthorizationEngineProvider> getAuthorizationEngineOrThrow(String providerType) {
+        logger.debug("Looking for an authorization engine for [{}]", providerType);
+        return Optional.ofNullable(get(providerType))
+                .orElseThrow(() -> new IllegalStateException("No authorization engine is registered for type " + providerType));
     }
 
     private static class AuthorizationEngineConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<AuthorizationEngineConfiguration> {

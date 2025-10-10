@@ -111,6 +111,13 @@ public class JdbcAuthorizationEngineRepository extends AbstractJdbcRepository im
     }
 
     @Override
+    public Maybe<AuthorizationEngine> findByDomainAndType(String domainId, String type) {
+        LOGGER.debug("findByDomainAndType({}, {})", domainId, type);
+        return this.authorizationEngineRepository.findByType(ReferenceType.DOMAIN.name(), domainId, type)
+                .map(this::toEntity);
+    }
+
+    @Override
     public Single<AuthorizationEngine> create(AuthorizationEngine item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create authorizationEngine with id {}", item.getId());

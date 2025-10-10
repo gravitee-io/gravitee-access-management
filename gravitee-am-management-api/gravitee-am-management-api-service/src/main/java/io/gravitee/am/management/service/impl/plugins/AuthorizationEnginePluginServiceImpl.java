@@ -37,7 +37,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
 
     private final Logger LOGGER = LoggerFactory.getLogger(AuthorizationEnginePluginServiceImpl.class);
 
-    private AuthorizationEnginePluginManager authorizationEnginePluginManager;
+    private final AuthorizationEnginePluginManager authorizationEnginePluginManager;
 
     public AuthorizationEnginePluginServiceImpl(AuthorizationEnginePluginManager authorizationEnginePluginManager) {
         super(authorizationEnginePluginManager);
@@ -45,27 +45,28 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
     }
 
     @Override
-    public Single<List<AuthorizationEnginePlugin>> findAll() {
+    public Single<List<AuthorizationEnginePlugin>> findAll(List<String> expand) {
         LOGGER.debug("List all authorization engine plugins");
         return Observable.fromIterable(authorizationEnginePluginManager.findAll(true))
-                .map(this::convert)
+                .flatMapSingle(plugin -> convert(plugin, expand))
                 .toList();
     }
 
     @Override
     public Maybe<AuthorizationEnginePlugin> findById(String authorizationEngineId) {
         LOGGER.debug("Find authorization engine plugin by ID: {}", authorizationEngineId);
-        return Maybe.create(emitter -> {
+        return Maybe.defer(() -> {
             try {
                 Plugin plugin = authorizationEnginePluginManager.findById(authorizationEngineId);
-                if (plugin != null) {
-                    emitter.onSuccess(convert(plugin));
-                } else {
-                    emitter.onComplete();
+                if (plugin == null) {
+                    return Maybe.empty();
                 }
+                return convert(plugin, null).toMaybe();
             } catch (Exception ex) {
-                LOGGER.error("An error occurs while trying to get authorization engine plugin : {}", authorizationEngineId, ex);
-                emitter.onError(new TechnicalManagementException("An error occurs while trying to get authorization engine plugin : " + authorizationEngineId, ex));
+                LOGGER.error("An error occurs while trying to get authorization engine plugin: {}", authorizationEngineId, ex);
+                return Maybe.error(new TechnicalManagementException(
+                        "An error occurs while trying to get authorization engine plugin: " + authorizationEngineId, ex
+                ));
             }
         });
     }
@@ -88,7 +89,25 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
         });
     }
 
-    private AuthorizationEnginePlugin convert(Plugin plugin) {
+    @Override
+    public Maybe<String> getIcon(String authorizationEngineId) {
+        LOGGER.debug("Find authorization engine plugin icon by ID: {}", authorizationEngineId);
+        return Maybe.create(emitter -> {
+            try {
+                String icon = authorizationEnginePluginManager.getIcon(authorizationEngineId, true);
+                if (icon != null) {
+                    emitter.onSuccess(icon);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error occurs while trying to get icon for authorization engine plugin {}", authorizationEngineId, e);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get icon for authorization engine plugin " + authorizationEngineId, e));
+            }
+        });
+    }
+
+    private Single<AuthorizationEnginePlugin> convert(Plugin plugin, List<String> expand) {
         var authorizationEnginePlugin = new AuthorizationEnginePlugin();
         authorizationEnginePlugin.setId(plugin.manifest().id());
         authorizationEnginePlugin.setName(plugin.manifest().name());
@@ -96,6 +115,14 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
         authorizationEnginePlugin.setVersion(plugin.manifest().version());
         authorizationEnginePlugin.setDeployed(plugin.deployed());
         authorizationEnginePlugin.setFeature(plugin.manifest().feature());
-        return authorizationEnginePlugin;
+        if (expand != null && expand.contains(AuthorizationEnginePluginService.EXPAND_ICON)) {
+            return getIcon(plugin.manifest().id())
+                    .map(icon -> {
+                        authorizationEnginePlugin.setIcon(icon);
+                        return authorizationEnginePlugin;
+                    })
+                    .toSingle();
+        }
+        return Single.just(authorizationEnginePlugin);
     }
 }

@@ -55,7 +55,6 @@ export class HttpRequestInterceptor implements HttpInterceptor {
     if (this.environmentService.getCurrentEnvironment()) {
       envId = this.environmentService.getCurrentEnvironment().id;
     }
-
     request = request.clone({
       withCredentials: true,
       setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [this.xsrfToken] } : {},
