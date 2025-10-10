@@ -1,0 +1,346 @@
+<!--
+
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="gv-page-container">
+  <div class="page-header">
+    <div class="page-header__title">
+      <img *ngIf="plugin?.icon" [src]="plugin.icon" class="page-header__icon" [alt]="plugin.displayName || plugin.name" />
+      <h1 class="page-header__text">{{ authorizationEngine?.name || plugin?.displayName || 'OpenFGA Authorization Engine' }}</h1>
+    </div>
+    <div class="page-header__details" *ngIf="storeId || authorizationModelId">
+      <div class="page-header__details-item" *ngIf="storeInfo?.name || storeId">
+        <span class="label">Store</span>
+        <span class="value">
+          <span class="primary">{{ storeInfo?.name || 'Unnamed store' }}</span>
+          <span *ngIf="storeId" class="badge">ID: {{ storeId }}</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="gv-page-description">Manage your OpenFGA settings.</div>
+
+  <mat-tab-group [dynamicHeight]="true">
+    <!-- Authorization Model Tab -->
+    <mat-tab label="Authorization Model">
+      <div fxLayout="row" fxLayoutGap="20px">
+        <div fxLayout="column" fxFlex="70">
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Authorization Model (ID: {{ authorizationModelId }})</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div class="codemirror-wrapper">
+              <ngx-codemirror [(ngModel)]="authorizationModelDsl" [options]="codeMirrorOptions" class="openfga-editor"> </ngx-codemirror>
+            </div>
+          </div>
+
+          <div class="gv-form-section" *ngIf="modelGraph">
+            <div class="gv-form-section-title">
+              <h5>Model Visualization</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div #graphContainer class="graph-container"></div>
+          </div>
+        </div>
+        <div class="gv-page-description" fxFlex="30">
+          <h3>Authorization Model</h3>
+          <div class="gv-page-description-content">
+            <p>Your authorization model using OpenFGA DSL syntax.</p>
+            <small>Example Model</small>
+            <div class="code-example">
+              <pre>
+model
+  schema 1.1
+
+type user
+
+type document
+  relations
+    define owner: [user]
+    define reader: [user] or owner
+    define writer: [user] or owner</pre
+              >
+            </div>
+            <p>
+              This model defines a document type with owner, reader, and writer relations. Readers and writers automatically include owners.
+            </p>
+            <p>
+              <a href="https://openfga.dev/docs/modeling" target="_blank" rel="noopener"> Learn more about OpenFGA modeling → </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Relationship Tuples Tab -->
+    <mat-tab label="Relationship Tuples">
+      <div fxLayout="row" fxLayoutGap="20px">
+        <div fxLayout="column" fxFlex="70">
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Add New Tuple</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div class="tuple-form">
+              <mat-form-field appearance="outline">
+                <mat-label>User</mat-label>
+                <input matInput [formControl]="userControl" placeholder="e.g., user:alice" />
+                <mat-error *ngIf="userControl.hasError('required')"> User is required </mat-error>
+                <mat-error *ngIf="userControl.hasError('pattern')"> Must contain ":" (e.g., user:alice) </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Relation</mat-label>
+                <input matInput [formControl]="relationControl" placeholder="e.g., reader" />
+                <mat-error *ngIf="relationControl.hasError('required')"> Relation is required </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Object</mat-label>
+                <input matInput [formControl]="objectControl" placeholder="e.g., document:1" />
+                <mat-error *ngIf="objectControl.hasError('required')"> Object is required </mat-error>
+                <mat-error *ngIf="objectControl.hasError('pattern')"> Must contain ":" (e.g., document:1) </mat-error>
+              </mat-form-field>
+
+              <button mat-raised-button color="primary" (click)="addTuple()" [disabled]="!isAddTupleValid()">
+                <mat-icon>add</mat-icon>
+                Add Tuple
+              </button>
+            </div>
+          </div>
+
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Current Tuples ({{ tuples.length }})</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div *ngIf="!isLoadingTuples">
+              <mat-table [dataSource]="tuples" *ngIf="tuples.length > 0">
+                <ng-container matColumnDef="user">
+                  <mat-header-cell *matHeaderCellDef>User</mat-header-cell>
+                  <mat-cell *matCellDef="let tuple">{{ tuple.user }}</mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="relation">
+                  <mat-header-cell *matHeaderCellDef>Relation</mat-header-cell>
+                  <mat-cell *matCellDef="let tuple">{{ tuple.relation }}</mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="object">
+                  <mat-header-cell *matHeaderCellDef>Object</mat-header-cell>
+                  <mat-cell *matCellDef="let tuple">{{ tuple.object }}</mat-cell>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                  <mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+                  <mat-cell *matCellDef="let tuple">
+                    <button mat-icon-button color="warn" (click)="deleteTuple(tuple)">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </mat-cell>
+                </ng-container>
+
+                <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+                <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+              </mat-table>
+
+              <p *ngIf="tuples.length === 0">No tuples defined yet.</p>
+
+              <div class="pagination-controls">
+                <button mat-button (click)="previousPage()" [disabled]="!hasPreviousPage() || isLoadingTuples">
+                  <span>
+                    <mat-icon>chevron_left</mat-icon>
+                    <span>Previous</span>
+                  </span>
+                </button>
+                <button mat-button (click)="nextPage()" [disabled]="!hasNextPage() || isLoadingTuples">
+                  <span>
+                    <span>Next</span>
+                    <mat-icon>chevron_right</mat-icon>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gv-page-description" fxFlex="30">
+          <h3>Relationship Tuples</h3>
+          <div class="gv-page-description-content">
+            <p>Tuples represent relationships between users and resources in your system.</p>
+            <small>Tuple Format</small>
+            <div class="code-example">
+              <pre>user:alice reader document:report</pre>
+            </div>
+            <p>This tuple means "Alice has reader permission on document:report".</p>
+            <small>Common Patterns</small>
+            <ul>
+              <li><code>user:bob owner document:1</code> - Direct ownership</li>
+              <li><code>user:carol member group:admins</code> - Group membership</li>
+              <li><code>group:admins admin workspace:main</code> - Group permissions</li>
+            </ul>
+            <p>
+              <a href="https://openfga.dev/docs/concepts#what-is-a-relationship-tuple" target="_blank" rel="noopener">
+                Learn more about tuples →
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Test Permissions Tab -->
+    <mat-tab label="Test Permissions">
+      <div fxLayout="row" fxLayoutGap="20px">
+        <div fxLayout="column" fxFlex="70">
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Test a Permission</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div class="test-form">
+              <mat-form-field appearance="outline">
+                <mat-label>User</mat-label>
+                <input matInput [formControl]="testUserControl" placeholder="e.g., user:alice" />
+                <mat-error *ngIf="testUserControl.hasError('required')"> User is required </mat-error>
+                <mat-error *ngIf="testUserControl.hasError('pattern')"> Must contain ":" (e.g., user:alice) </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Relation</mat-label>
+                <input matInput [formControl]="testRelationControl" placeholder="e.g., reader" />
+                <mat-error *ngIf="testRelationControl.hasError('required')"> Relation is required </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Object</mat-label>
+                <input matInput [formControl]="testObjectControl" placeholder="e.g., document:1" />
+                <mat-error *ngIf="testObjectControl.hasError('required')"> Object is required </mat-error>
+                <mat-error *ngIf="testObjectControl.hasError('pattern')"> Must contain ":" (e.g., document:1) </mat-error>
+              </mat-form-field>
+
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="checkPermission()"
+                [disabled]="!isCheckPermissionValid() || isCheckingPermission"
+              >
+                <mat-icon>security</mat-icon>
+                {{ isCheckingPermission ? 'Checking...' : 'Check Permission' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="gv-form-section" *ngIf="permissionResult">
+            <div class="gv-form-section-title">
+              <h5>Result</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <div class="permission-result">
+              <div [class.allowed]="permissionResult.allowed" [class.denied]="!permissionResult.allowed">
+                <mat-icon [color]="permissionResult.allowed ? 'primary' : 'warn'">
+                  {{ permissionResult.allowed ? 'check_circle' : 'cancel' }}
+                </mat-icon>
+                <span>{{ permissionResult.allowed ? 'ALLOWED' : 'DENIED' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gv-page-description" fxFlex="30">
+          <h3>Permission Testing</h3>
+          <div class="gv-page-description-content">
+            <p>Test if a user has a specific permission on an object.</p>
+            <small>How it Works</small>
+            <p>
+              OpenFGA evaluates the test against your authorization model and existing tuples. The check traverses the relationship graph to
+              determine if the permission is granted.
+            </p>
+            <small>Example Scenarios</small>
+            <ul>
+              <li><strong>Direct permission:</strong> user:alice has explicit reader on document:1</li>
+              <li><strong>Inherited permission:</strong> user:bob is owner, inherits reader permission</li>
+              <li><strong>Group permission:</strong> user:carol is in admins group, admins have access</li>
+            </ul>
+            <p>
+              <a href="https://openfga.dev/docs/getting-started/perform-check" target="_blank" rel="noopener">
+                Learn more about checks →
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Configuration Tab -->
+    <mat-tab label="Configuration">
+      <div fxLayout="row" fxLayoutGap="20px">
+        <div fxLayout="column" fxFlex="70">
+          <div class="gv-form-section">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Name</mat-label>
+              <input matInput type="text" placeholder="Name" [(ngModel)]="authorizationEngine.name" required />
+              <mat-hint>Authorization engine name</mat-hint>
+            </mat-form-field>
+          </div>
+
+          <div class="gv-form-section">
+            <div class="gv-form-section-title">
+              <h5>Configuration</h5>
+              <mat-divider></mat-divider>
+            </div>
+            <provider-form
+              [providerConfiguration]="configuration"
+              [providerSchema]="configurationSchema"
+              (configurationCompleted)="onConfigurationChanged($event)"
+            >
+            </provider-form>
+          </div>
+
+          <div fxLayout="row">
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="saveConfiguration()"
+              [disabled]="!isConfigurationDirty() || !configurationIsValid || isSaving"
+            >
+              <span class="gv-button-content">
+                <mat-progress-spinner *ngIf="isSaving" [diameter]="16" [strokeWidth]="2" mode="indeterminate"></mat-progress-spinner>
+                <span>{{ isSaving ? 'Saving...' : 'SAVE' }}</span>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div class="gv-page-description" fxFlex="30">
+          <h3>OpenFGA Configuration</h3>
+          <div class="gv-page-description-content">
+            <p>Configure your OpenFGA server to enable fine-grained authorization.</p>
+            <small>Troubleshooting</small>
+            <p>If connection fails, verify:</p>
+            <ul>
+              <li>API URL is reachable from your server</li>
+              <li>Store ID exists in your OpenFGA instance</li>
+              <li>Credentials have proper permissions</li>
+            </ul>
+            <p>
+              <a href="https://openfga.dev/docs/getting-started/setup-openfga" target="_blank" rel="noopener"> OpenFGA setup guide → </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

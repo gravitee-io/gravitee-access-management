@@ -1,0 +1,30 @@
+.gv-page-container {
+  ngx-datatable {
+    .authorization-engine-header {
+      align-items: center;
+      margin: 5px;
+
+      .authorization-engine-icon {
+        margin: 0 12px 0 0;
+      }
+
+      .authorization-engine-information {
+        h3 {
+          margin: 0;
+          font-size: 14px;
+          font-weight: normal;
+        }
+
+        small {
+          color: rgb(0 0 0 / 54%);
+        }
+      }
+    }
+  }
+}
+
+:host {
+  ::ng-deep.authorization-engine-name-cell {
+    padding: 0 !important;
+  }
+}

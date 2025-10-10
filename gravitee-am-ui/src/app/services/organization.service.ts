@@ -457,6 +457,22 @@ export class OrganizationService {
     return this.http.get<any>(`${this.platformURL}/plugins/device-identifiers/${id}/schema`);
   }
 
+  authorizationEngines(expandIcon: boolean): Observable<any> {
+    const expand = [];
+    if (expandIcon) {
+      expand.push('expand=icon');
+    }
+    let url = `${this.platformURL}/plugins/authorization-engines`;
+    if (expand.length > 0) {
+      url += `?${expand.join('&')}`;
+    }
+    return this.http.get<any>(url);
+  }
+
+  authorizationEngineSchema(id): Observable<any> {
+    return this.http.get<any>(this.platformURL + '/plugins/authorization-engines/' + id + '/schema');
+  }
+
   spelGrammar(): Observable<any> {
     return this.http.get<any>(this.platformURL + '/configuration/spel/grammar');
   }

@@ -35,11 +35,25 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.time.Instant;
+import java.util.Date;
+import java.util.concurrent.ConcurrentMap;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author GraviteeSource Team
@@ -73,6 +87,8 @@ class AuthorizationEngineManagerImplTest {
         testEngine.setReferenceType(ReferenceType.DOMAIN);
         testEngine.setReferenceId("domain-id");
         testEngine.setConfiguration("{\"connectionUri\":\"http://localhost:8080\"}");
+        testEngine.setCreatedAt(Date.from(Instant.ofEpochMilli(1761127563)));
+        testEngine.setUpdatedAt(Date.from(Instant.ofEpochMilli(1761127563)));
     }
 
     private void startManager() {
@@ -149,6 +165,8 @@ class AuthorizationEngineManagerImplTest {
 
         when(authorizationEngineService.findAll())
                 .thenReturn(Flowable.just(testEngine));
+        when(authorizationEngineService.findById("engine-id"))
+                .thenReturn(Maybe.just(testEngine));
 
         startManager();
 
@@ -162,6 +180,7 @@ class AuthorizationEngineManagerImplTest {
 
     @Test
     void shouldReturnEmptyWhenProviderNotFound() {
+        when(authorizationEngineService.findById("non-existent-id")).thenReturn(Maybe.just(testEngine));
 
         // when
         TestObserver<AuthorizationEngineProvider> observer = manager.getProvider("non-existent-id").test();
@@ -178,6 +197,8 @@ class AuthorizationEngineManagerImplTest {
                 .thenReturn(mockProvider);
         when(authorizationEngineService.findAll())
                 .thenReturn(Flowable.just(testEngine));
+        when(authorizationEngineService.findById("engine-id"))
+                .thenReturn(Maybe.just(testEngine));
 
         startManager();
 
@@ -239,6 +260,8 @@ class AuthorizationEngineManagerImplTest {
                 .thenReturn(mockProvider);
         when(authorizationEngineService.findAll())
                 .thenReturn(Flowable.just(testEngine));
+        when(authorizationEngineService.findById("engine-id"))
+                .thenReturn(Maybe.just(testEngine));
 
         startManager();
 
@@ -254,8 +277,11 @@ class AuthorizationEngineManagerImplTest {
         manager.onEvent(event);
 
         // then - provider should be removed
-        TestObserver<AuthorizationEngineProvider> afterObserver = manager.getProvider("engine-id").test();
-        afterObserver.assertNoValues();
+        Object providers = ReflectionTestUtils.getField(manager, "providers");
+
+        assertNotNull(providers);
+        assertInstanceOf(ConcurrentMap.class ,providers);
+        assertEquals(0, ((ConcurrentMap<?, ?>) providers).size());
         verify(mockProvider, times(1)).stop();
     }
 

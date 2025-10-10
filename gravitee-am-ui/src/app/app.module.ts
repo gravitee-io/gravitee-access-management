@@ -227,6 +227,11 @@ import { EmailService } from './services/email.service';
 import { EmailResolver } from './resolvers/email.resolver';
 import { SelectApplicationsComponent } from './domain/components/applications/select-applications.component';
 import { ConsentsResolver } from './resolvers/consents.resolver';
+import { AuthorizationEngineService } from './services/authorization-engine.service';
+import { OpenFGAService } from './services/openfga.service';
+import { AuthorizationEnginesResolver } from './resolvers/authorization-engines.resolver';
+import { AuthorizationEnginePluginsResolver } from './resolvers/authorization-engine-plugins.resolver';
+import { AuthorizationEngineResolver } from './resolvers/authorization-engine.resolver';
 import { AuditsComponent } from './domain/settings/audits/audits.component';
 import { AuditComponent } from './domain/settings/audits/audit/audit.component';
 import { AuditsSettingsComponent } from './domain/settings/audits/settings/settings.component';
@@ -460,6 +465,11 @@ import { DomainNewMcpServerComponent } from './domain/mcp-servers/mcp-server-new
 import { DomainMcpServerComponent } from './domain/mcp-servers/mcp-server/domain-mcp-server.component';
 import { ProtectedResourceService } from './services/protected-resource.service';
 import { McpServersService } from './domain/mcp-servers/mcp-servers.service';
+import { DomainSettingsAuthorizationEnginesComponent } from './domain/authorization-engines/authorization-engines.component';
+import { AuthorizationEngineCreationComponent } from './domain/authorization-engines/creation/authorization-engine-creation.component';
+import { AuthorizationEngineCreationStep1Component } from './domain/authorization-engines/creation/steps/step1/step1.component';
+import { AuthorizationEngineCreationStep2Component } from './domain/authorization-engines/creation/steps/step2/step2.component';
+import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga.component';
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 
@@ -721,6 +731,11 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
     FactorsSelectDialogComponent,
     PasswordPoliciesComponent,
     DomainSettingsSecretsComponent,
+    DomainSettingsAuthorizationEnginesComponent,
+    AuthorizationEngineCreationComponent,
+    AuthorizationEngineCreationStep1Component,
+    AuthorizationEngineCreationStep2Component,
+    OpenFGAComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],
@@ -792,6 +807,8 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
     DialogService,
     SnackbarService,
     OrganizationService,
+    AuthorizationEngineService,
+    OpenFGAService,
     EnvironmentService,
     AuthService,
     CertificateService,
@@ -843,6 +860,9 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
     EmailResolver,
     DictionariesResolver,
     ConsentsResolver,
+    AuthorizationEnginePluginsResolver,
+    AuthorizationEnginesResolver,
+    AuthorizationEngineResolver,
     AuditService,
     AuditsResolver,
     AuditResolver,

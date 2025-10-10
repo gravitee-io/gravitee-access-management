@@ -60,6 +60,7 @@ tags:
 - name: identity provider
 - name: platform
 - name: preview
+- name: protected-resource
 - name: reporter
 - name: resource
 - name: role
@@ -6195,6 +6196,47 @@ paths:
       responses:
         "200":
           description: Result of evaluating the password against the policy
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources:
+    post:
+      tags:
+      - protected-resource
+      - domain
+      summary: Create a Protected Resource definition
+      description: "User must have PROTECTED_RESOURCE[CREATE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[CREATE] permission on the specified organization"
+      operationId: createProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewProtectedResource"
+        required: true
+      responses:
+        "201":
+          description: Protected Resource successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourceSecret"
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters:
     get:
       tags:
@@ -10202,6 +10244,13 @@ paths:
       summary: List authorization engine plugins
       description: There is no particular permission needed. User must be authenticated.
       operationId: listAuthorizationEnginePlugins
+      parameters:
+      - name: expand
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
       responses:
         default:
           description: default response
@@ -12185,21 +12234,21 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
-        redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
         redirectUriExpressionLanguageEnabled:
           type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
+        redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
         dynamicClientRegistrationTemplateEnabled:
+          type: boolean
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        redirectUriStrictMatching:
           type: boolean
     DomainPage:
       type: object
@@ -13438,6 +13487,32 @@ components:
         oldPasswords:
           type: integer
           format: int32
+    NewProtectedResource:
+      required:
+      - name
+      - resourceIdentifiers
+      - type
+      type: object
+      properties:
+        name:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        resourceIdentifiers:
+          minItems: 1
+          type: array
+          items:
+            minLength: 1
+            type: string
+        clientId:
+          type: string
+        clientSecret:
+          type: string
+        type:
+          minLength: 1
+          pattern: ^MCP_SERVER$
+          type: string
     NewReporter:
       required:
       - configuration
@@ -13916,6 +13991,7 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
+            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
             - INSTALLATION
     PatchApplicationAdvancedSettings:
@@ -14192,6 +14268,7 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
+            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
             - INSTALLATION
     PatchApplicationType:
@@ -14386,6 +14463,7 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
+            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
             - INSTALLATION
     PatchEnrollSettings:
@@ -14528,6 +14606,7 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
+            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
             - INSTALLATION
         clientRegistrationSettings:
@@ -14664,6 +14743,7 @@ components:
             - APPLICATION_RESOURCE
             - APPLICATION_ANALYTICS
             - APPLICATION_FLOW
+            - PROTECTED_RESOURCE
             - LICENSE_NOTIFICATION
             - INSTALLATION
     PatchScope:
@@ -14726,6 +14806,17 @@ components:
           - EMAIL
           - FORM
         template:
+          type: string
+    ProtectedResourceSecret:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        clientId:
+          type: string
+        clientSecret:
           type: string
     Reference:
       type: object
@@ -15893,12 +15984,18 @@ components:
           type: boolean
         serviceAccount:
           type: boolean
+        address:
+          type: object
+          additionalProperties:
+            type: object
         fullId:
           $ref: "#/components/schemas/UserId"
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
+        disabled:
+          type: boolean
         middleName:
           type: string
         identitiesAsMap:
@@ -15917,12 +16014,6 @@ components:
           type: string
         phoneNumber:
           type: string
-        address:
-          type: object
-          additionalProperties:
-            type: object
-        disabled:
-          type: boolean
         locale:
           type: string
     UserEntity:
@@ -16092,12 +16183,18 @@ components:
           $ref: "#/components/schemas/ApplicationEntity"
         sourceId:
           type: string
+        address:
+          type: object
+          additionalProperties:
+            type: object
         fullId:
           $ref: "#/components/schemas/UserId"
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
+        disabled:
+          type: boolean
         middleName:
           type: string
         identitiesAsMap:
@@ -16116,12 +16213,6 @@ components:
           type: string
         phoneNumber:
           type: string
-        address:
-          type: object
-          additionalProperties:
-            type: object
-        disabled:
-          type: boolean
         locale:
           type: string
     UserId:

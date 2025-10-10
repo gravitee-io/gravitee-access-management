@@ -19,15 +19,18 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.service.model.plugin.AuthorizationEnginePlugin;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.core.GenericType;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -58,7 +61,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
         plugin2.setDeployed(false);
 
         doReturn(Single.just(Arrays.asList(plugin1, plugin2)))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(new ArrayList<>());
 
         final Response response = target("platform")
                 .path("plugins")
@@ -67,14 +70,52 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new GenericType<>() {});
+        assertEquals(2, plugins.size());
+        assertEquals("OpenFGA", plugins.get(0).getName());
+        assertEquals("Zanzibar", plugins.get(1).getName());
+        assertNull(plugins.get(0).getIcon());
+        verify(authorizationEnginePluginService, times(1)).findAll(new ArrayList<>());
+    }
 
-        verify(authorizationEnginePluginService, times(1)).findAll();
+    @Test
+    public void shouldListAuthorizationEnginePluginsWithIcon() {
+        final AuthorizationEnginePlugin plugin1 = new AuthorizationEnginePlugin();
+        plugin1.setId("openfga");
+        plugin1.setName("OpenFGA");
+        plugin1.setVersion("1.0.0");
+        plugin1.setDeployed(true);
+        plugin1.setIcon("openfga.png");
+
+        final AuthorizationEnginePlugin plugin2 = new AuthorizationEnginePlugin();
+        plugin2.setId("zanzibar");
+        plugin2.setName("Zanzibar");
+        plugin2.setVersion("1.0.0");
+        plugin2.setDeployed(false);
+        plugin2.setIcon("zanzibar.png");
+
+        doReturn(Single.just(Arrays.asList(plugin1, plugin2)))
+                .when(authorizationEnginePluginService).findAll(List.of("icon"));
+
+        final Response response = target("platform")
+                .path("plugins")
+                .path("authorization-engines")
+                .queryParam("expand", "icon")
+                .request()
+                .get();
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new GenericType<>() {});
+        assertEquals(2, plugins.size());
+        assertEquals("openfga.png", plugins.get(0).getIcon());
+        assertEquals("zanzibar.png", plugins.get(1).getIcon());
+        verify(authorizationEnginePluginService, times(1)).findAll(List.of("icon"));
     }
 
     @Test
     public void shouldListAuthorizationEnginePlugins_emptyList() {
         doReturn(Single.just(Collections.emptyList()))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(new ArrayList<>());
 
         final Response response = target("platform")
                 .path("plugins")
@@ -88,7 +129,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
     @Test
     public void shouldListAuthorizationEnginePlugins_serviceError() {
         doReturn(Single.error(new RuntimeException("Service error")))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(List.of("icon"));
 
         final Response response = target("platform")
                 .path("plugins")
@@ -115,17 +156,18 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
 
         // Return plugins in unsorted order
         doReturn(Single.just(Arrays.asList(plugin1, plugin2, plugin3)))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(List.of("icon"));
 
         final Response response = target("platform")
                 .path("plugins")
                 .path("authorization-engines")
+                .queryParam("expand", "icon")
                 .request()
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new jakarta.ws.rs.core.GenericType<List<AuthorizationEnginePlugin>>() {});
+        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new GenericType<>() {});
         assertEquals(3, plugins.size());
         assertEquals("Alpha Engine", plugins.get(0).getName());
         assertEquals("OpenFGA", plugins.get(1).getName());
@@ -145,18 +187,19 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
         notDeployedPlugin.setDeployed(false);
 
         doReturn(Single.just(Arrays.asList(deployedPlugin, notDeployedPlugin)))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(List.of("icon"));
 
         final Response response = target("platform")
                 .path("plugins")
                 .path("authorization-engines")
+                .queryParam("expand", "icon")
                 .request()
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         // Both deployed and not deployed should be returned by the service
-        verify(authorizationEnginePluginService, times(1)).findAll();
+        verify(authorizationEnginePluginService, times(1)).findAll(List.of("icon"));
     }
 
     @Test
@@ -172,16 +215,17 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
         plugin2.setVersion("1.0.0");
 
         doReturn(Single.just(Arrays.asList(plugin1, plugin2)))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(List.of("icon"));
 
         final Response response = target("platform")
                 .path("plugins")
                 .path("authorization-engines")
+                .queryParam("expand", "icon")
                 .request()
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new jakarta.ws.rs.core.GenericType<List<AuthorizationEnginePlugin>>() {});
+        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new GenericType<>() {});
         assertEquals(2, plugins.size());
         assertEquals("openfga-v1", plugins.get(0).getId());
         assertEquals("openfga-v2", plugins.get(1).getId());

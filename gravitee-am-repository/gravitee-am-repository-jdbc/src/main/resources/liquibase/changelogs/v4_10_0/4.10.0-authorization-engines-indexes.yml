@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.10-create-idx_authorization_engines
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_devices_domain_user
+                tableName: devices
+      changes:
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_type
+              - column:
+                  name: reference_id
+              - column:
+                  name: id
+            indexName: idx_authorization_engines_reference_id
+            tableName: authorization_engines
+            unique: false
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_type
+              - column:
+                  name: reference_id
+              - column:
+                  name: type
+            indexName: idx_authorization_engines_reference_type
+            tableName: authorization_engines
+            unique: false

@@ -33,4 +33,7 @@ public interface SpringAuthorizationEngineRepository extends RxJava3CrudReposito
 
     @Query("select * from authorization_engines a where a.reference_type = :refType and a.reference_id = :refId and a.id = :id")
     Maybe<JdbcAuthorizationEngine> findById(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("id") String id);
+
+    @Query("select * from authorization_engines a where a.reference_type = :refType and a.reference_id = :refId and a.type = :type")
+    Maybe<JdbcAuthorizationEngine> findByType(@Param("refType") String referenceType, @Param("refId") String referenceId, @Param("type") String type);
 }
