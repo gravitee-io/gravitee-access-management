@@ -22,6 +22,8 @@ import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
 import io.gravitee.am.gateway.handler.common.audit.impl.GatewayAuditReporterManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.IdentityProviderManager;
 import io.gravitee.am.gateway.handler.common.auth.idp.impl.IdentityProviderManagerImpl;
+import io.gravitee.am.gateway.handler.common.authorizationengine.AuthorizationEngineManager;
+import io.gravitee.am.gateway.handler.common.authorizationengine.impl.AuthorizationEngineManagerImpl;
 import io.gravitee.am.gateway.handler.common.auth.listener.AuthenticationEventListener;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationService;
@@ -172,6 +174,11 @@ public class CommonConfiguration {
     @Bean
     public IdentityProviderManager identityProviderManager() {
         return new IdentityProviderManagerImpl();
+    }
+
+    @Bean
+    public AuthorizationEngineManager authorizationEngineManager() {
+        return new AuthorizationEngineManagerImpl();
     }
 
     @Bean

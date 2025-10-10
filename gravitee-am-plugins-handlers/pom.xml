@@ -34,6 +34,7 @@
     <modules>
         <module>gravitee-am-plugins-handlers-api</module>
         <module>gravitee-am-plugins-handlers-identityprovider</module>
+        <module>gravitee-am-plugins-handlers-authorizationengine</module>
         <module>gravitee-am-plugins-handlers-extensiongrant</module>
         <module>gravitee-am-plugins-handlers-certificate</module>
         <module>gravitee-am-plugins-handlers-reporter</module>

@@ -17,6 +17,7 @@ package io.gravitee.am.management.standalone.node;
 
 import io.gravitee.am.management.service.AlertTriggerManager;
 import io.gravitee.am.management.service.AuditReporterManager;
+import io.gravitee.am.management.service.AuthorizationEngineManager;
 import io.gravitee.am.management.service.CertificateManager;
 import io.gravitee.am.management.service.ClientSecretNotifierService;
 import io.gravitee.am.management.service.EmailManager;
@@ -76,6 +77,7 @@ public class ManagementNode extends JettyNode {
         components.add(AuditReporterManager.class);
         components.add(IdentityProviderManager.class);
         components.add(CertificateManager.class);
+        components.add(AuthorizationEngineManager.class);
         components.add(EmailManager.class);
         components.add(AlertTriggerManager.class);
         components.add(AlertTriggerProviderManager.class);

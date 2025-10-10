@@ -31,6 +31,7 @@ public interface EntityType {
     String ROLE = "ROLE";
     String SCOPE = "SCOPE";
     String IDENTITY_PROVIDER = "IDENTITY_PROVIDER";
+    String AUTHORIZATION_ENGINE = "AUTHORIZATION_ENGINE";
     String EMAIL = "EMAIL";
     String FORM = "FORM";
     String REPORTER = "REPORTER";

@@ -1,0 +1,37 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.0-add-authorization-engines-table
+      author: GraviteeSource Team
+      validCheckSum: ANY
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: authorization_engines
+      changes:
+        - createTable:
+            tableName: authorization_engines
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: name, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: configuration, type: clob, constraints: { nullable: true } }
+              - column: { name: reference_type, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: reference_id, type: nvarchar(255), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_authorization_engines
+            columnNames: id
+            tableName: authorization_engines
+
+        - createIndex:
+            columns:
+              - column:
+                  name: reference_type
+              - column:
+                  name: reference_id
+            indexName: idx_authorization_engines_reference
+            tableName: authorization_engines
+            unique: false

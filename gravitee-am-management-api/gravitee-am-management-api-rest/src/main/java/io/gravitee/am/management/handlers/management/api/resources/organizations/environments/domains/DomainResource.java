@@ -309,6 +309,11 @@ public class DomainResource extends AbstractDomainResource {
         return resourceContext.getResource(ThemesResource.class);
     }
 
+    @Path("authorization-engines")
+    public AuthorizationEnginesResource getAuthorizationEnginesResource() {
+        return resourceContext.getResource(AuthorizationEnginesResource.class);
+    }
+
     private void updateInternal(String organizationId, String environmentId, String domainId, final PatchDomain patchDomain, final AsyncResponse response) {
 
         final User authenticatedUser = getAuthenticatedUser();
