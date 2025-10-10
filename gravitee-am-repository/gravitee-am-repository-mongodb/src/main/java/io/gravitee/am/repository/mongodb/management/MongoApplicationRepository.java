@@ -361,7 +361,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return application;
     }
 
-    private static List<ClientSecretMongo> convertToClientSecretMongo(List<ClientSecret> clientSecrets) {
+    public static List<ClientSecretMongo> convertToClientSecretMongo(List<ClientSecret> clientSecrets) {
         List<ClientSecretMongo> result = null;
         if (clientSecrets != null) {
             result = clientSecrets.stream().map(secret -> {
@@ -382,7 +382,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return result;
     }
 
-    private static List<ClientSecret> convertToClientSecret(List<ClientSecretMongo> clientSecretMongos) {
+    public static List<ClientSecret> convertToClientSecret(List<ClientSecretMongo> clientSecretMongos) {
         List<ClientSecret> result = null;
         if (clientSecretMongos != null) {
             result = clientSecretMongos.stream().map(mongoSecret -> {
@@ -399,7 +399,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return result;
     }
 
-    private static List<ApplicationSecretSettings> convertToSecretSettings(List<ApplicationSecretSettingsMongo> secretSettingsMongo) {
+    public static List<ApplicationSecretSettings> convertToSecretSettings(List<ApplicationSecretSettingsMongo> secretSettingsMongo) {
         List<ApplicationSecretSettings> result = null;
         if (secretSettingsMongo != null) {
             result = secretSettingsMongo.stream().map(ssm -> {
@@ -413,7 +413,7 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
         return result;
     }
 
-    private static List<ApplicationSecretSettingsMongo> convertToSecretSettingsMongo(List<ApplicationSecretSettings> secretSettings) {
+    public static List<ApplicationSecretSettingsMongo> convertToSecretSettingsMongo(List<ApplicationSecretSettings> secretSettings) {
         List<ApplicationSecretSettingsMongo> result = null;
         if (secretSettings != null) {
             result = secretSettings.stream().map(ssm -> {

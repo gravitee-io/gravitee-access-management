@@ -164,4 +164,8 @@ public class Application implements Resource, PasswordSettingsAware {
     public PasswordSettings getPasswordSettings() {
         return Optional.ofNullable(settings).map(ApplicationSettings::getPasswordSettings).orElse(null);
     }
+
+    public String clientId(){
+        return getSettings() != null && getSettings().getOauth() != null ? getSettings().getOauth().getClientId() : null;
+    }
 }

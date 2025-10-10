@@ -66,7 +66,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 @Tag(name = "application")
-public class ApplicationsResource extends AbstractResource {
+public class ApplicationsResource extends AbstractDomainResource {
 
     private static final String MAX_APPLICATIONS_SIZE_PER_PAGE_STRING = "50";
 
@@ -75,9 +75,6 @@ public class ApplicationsResource extends AbstractResource {
 
     @Autowired
     private ApplicationService applicationService;
-
-    @Autowired
-    private DomainService domainService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -177,13 +174,6 @@ public class ApplicationsResource extends AbstractResource {
     @Path("{application}")
     public ApplicationResource getApplicationResource() {
         return resourceContext.getResource(ApplicationResource.class);
-    }
-
-
-    private Single<Domain> checkDomainExists(String domain) {
-        return domainService.findById(domain)
-                .switchIfEmpty(Maybe.error(new DomainNotFoundException(domain)))
-                .toSingle();
     }
 
     public static final class ApplicationPage extends Page<FilteredApplication> {
