@@ -33,6 +33,7 @@ import { DeviceIdentifiersApi } from '@management-apis/DeviceIdentifiersApi';
 import { PasswordPolicyApi } from '@management-apis/PasswordPolicyApi';
 import { ExtensionGrantApi } from '@management-apis/ExtensionGrantApi';
 import { BotDetectionApi } from '@management-apis/BotDetectionApi';
+import {ProtectedResourceApi} from "@management-apis/ProtectedResourceApi";
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, accessToken: accessToken });
@@ -57,6 +58,10 @@ export function getDomainApi(accessToken) {
 
 export function getApplicationApi(accessToken) {
   return new ApplicationApi(createAccessTokenConfig(accessToken));
+}
+
+export function getProtectedResourcesApi(accessToken) {
+  return new ProtectedResourceApi(createAccessTokenConfig(accessToken));
 }
 
 export function getRoleApi(accessToken) {

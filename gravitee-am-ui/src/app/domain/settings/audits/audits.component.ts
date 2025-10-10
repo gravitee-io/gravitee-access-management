@@ -152,7 +152,7 @@ export class AuditsComponent implements OnInit {
     routerLink.push('domains');
     routerLink.push(this.route.snapshot.paramMap.get('domainId'));
 
-    if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION') {
+    if (row.target.type !== 'CLIENT' && row.target.type !== 'APPLICATION' && row.target.type !== 'PROTECTED_RESOURCE') {
       routerLink.push('settings');
     }
     return routerLink;
@@ -170,6 +170,8 @@ export class AuditsComponent implements OnInit {
           routerLink.push('password-policies');
         } else if (row.target.type === 'CLIENT') {
           routerLink.push('applications');
+        } else if (row.target.type === 'PROTECTED_RESOURCE') {
+          routerLink.push('mcp-servers');
         } else {
           routerLink.push(row.target.type.toLowerCase() + 's');
         }

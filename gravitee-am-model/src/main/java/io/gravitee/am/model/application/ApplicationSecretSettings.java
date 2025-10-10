@@ -25,7 +25,7 @@ import java.util.TreeMap;
  * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class ApplicationSecretSettings {
+public class  ApplicationSecretSettings {
 
     private String id;
 

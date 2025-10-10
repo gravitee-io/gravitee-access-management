@@ -1,6 +1,6 @@
 {
   "name": "gravitee-am-test",
-  "version": "3.18.0-SNAPSHOT",
+  "version": "4.10.0-SNAPSHOT",
   "private": true,
   "description": "Gravitee.io AM - Tests",
   "scripts": {

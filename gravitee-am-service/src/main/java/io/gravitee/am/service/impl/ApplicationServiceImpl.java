@@ -97,7 +97,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -175,6 +174,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationTokenCustomClaimsValidator customClaimsValidator;
+
+    @Autowired
+    private OAuthClientUniquenessValidator oAuthClientUniquenessValidator;
 
     private ClientRedirectUrisValidator clientRedirectUrisValidator = new ClientRedirectUrisValidator();
 
@@ -559,7 +561,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         // check uniqueness
-        return checkApplicationUniqueness(domain.getId(), application)
+        return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), application.clientId())
                 // validate application metadata
                 .andThen(validateApplicationMetadata(application))
                 .flatMap(this::validateApplicationAuthMethod)

@@ -96,6 +96,15 @@ public interface EventType {
 
     /**
      * ----------
+     * Protected resource audit log actions
+     * ----------
+     */
+    String PROTECTED_RESOURCE_CREATED = "PROTECTED_RESOURCE_CREATED";
+    String PROTECTED_RESOURCE_UPDATED = "PROTECTED_RESOURCE_UPDATED";
+    String PROTECTED_RESOURCE_DELETED = "PROTECTED_RESOURCE_DELETED";
+
+    /**
+     * ----------
      * Certificate audit log actions
      * ----------
      */
@@ -381,7 +390,8 @@ public interface EventType {
                 TOKEN_CREATED, TOKEN_REVOKED, CLIENT_AUTHENTICATION,
                 MFA_CHALLENGE, MFA_ENROLLMENT, MFA_CHALLENGE_SENT, MFA_MAX_ATTEMPT_REACHED,
                 MFA_RATE_LIMIT_REACHED, MFA_REMEMBER_DEVICE,
-                PASSWORD_POLICY_CREATED, PASSWORD_POLICY_UPDATED, PASSWORD_POLICY_DELETED
+                PASSWORD_POLICY_CREATED, PASSWORD_POLICY_UPDATED, PASSWORD_POLICY_DELETED,
+                PROTECTED_RESOURCE_CREATED, PROTECTED_RESOURCE_UPDATED, PROTECTED_RESOURCE_DELETED
         ));
     }
     static List<String> loginTypes(){

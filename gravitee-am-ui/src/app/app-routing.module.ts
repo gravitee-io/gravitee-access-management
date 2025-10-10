@@ -248,6 +248,9 @@ import { PasswordPoliciesResolver } from './resolvers/password-policies-resolver
 import { ProviderGroupsComponent } from './domain/settings/providers/provider/groups/groups/groups.component';
 import { DataPlanesResolver } from './resolvers/data-planes.resolver';
 import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secrets.component';
+import { DomainMcpServersComponent } from './domain/mcp-servers/mcp-servers.component';
+import { DomainNewMcpServerComponent } from './domain/mcp-servers/mcp-server-new/new-mcp-server.component';
+import { DomainMcpServerComponent } from './domain/mcp-servers/mcp-server/domain-mcp-server.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1443,6 +1446,42 @@ export const routes: Routes = [
                             ],
                           },
                         ],
+                      },
+                    ],
+                  },
+                  {
+                    path: 'mcp-servers',
+                    canActivate: [AuthGuard],
+                    data: {
+                      menu: {
+                        label: 'MCP Servers',
+                        icon: 'gio:server',
+                        level: 'top',
+                      },
+                      breadcrumb: {
+                        include: true,
+                      },
+                      perms: {
+                        only: ['protected_resource_read'],
+                      },
+                    },
+                    children: [
+                      {
+                        path: '',
+                        component: DomainMcpServersComponent,
+                        pathMatch: 'full',
+                        runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
+                      },
+                      {
+                        path: 'new',
+                        component: DomainNewMcpServerComponent,
+                        canActivate: [AuthGuard],
+                      },
+                      {
+                        path: ':mcpServerId',
+                        component: DomainMcpServerComponent,
+                        runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
+                        children: [],
                       },
                     ],
                   },
