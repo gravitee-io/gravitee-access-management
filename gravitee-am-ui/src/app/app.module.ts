@@ -29,6 +29,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatNativeDateModule, MatRippleModule } from '@angular/material/core';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatIconModule } from '@angular/material/icon';
@@ -90,6 +91,7 @@ import { LoginComponent } from './login/login.component';
 import { LoginCallbackComponent } from './login/callback/callback.component';
 import { DomainsComponent } from './settings/domains/domains.component';
 import { DomainService } from './services/domain.service';
+import { OpenFGAService } from './services/openfga.service';
 import { DomainComponent } from './domain/domain.component';
 import { SidenavService } from './components/sidenav/sidenav.service';
 import { NavbarService } from './components/navbar/navbar.service';
@@ -267,6 +269,7 @@ import { ApplicationComponent } from './domain/applications/application/applicat
 import { ApplicationAnalyticsComponent } from './domain/applications/application/analytics/analytics.component';
 import { ApplicationOverviewComponent } from './domain/applications/application/overview/overview.component';
 import { ApplicationEndpointsComponent } from './domain/applications/application/endpoints/endpoints.component';
+import { ApplicationToolsComponent } from './domain/applications/application/tools/tools.component';
 import { ApplicationGeneralComponent } from './domain/applications/application/advanced/general/general.component';
 import { PasswordPolicyComponent } from './domain/applications/application/advanced/password-policy/password-policy.component';
 import { DomainPasswordPolicyComponent } from './domain/settings/password-policy/domain-password-policy.component';
@@ -292,6 +295,7 @@ import {
 import { ApplicationGrantFlowsComponent } from './domain/applications/application/advanced/oauth2/grantFlows/application-grant-flows.component';
 import { ApplicationSecretsCertificatesComponent } from './domain/applications/application/advanced/secrets-certificates/secrets-certificates.component';
 import { ApplicationMetadataComponent } from './domain/applications/application/advanced/metadata/metadata.component';
+import { ApplicationAgentCardComponent } from './domain/applications/application/advanced/agent-card/agent-card.component';
 import {
   ApplicationMembershipsComponent,
   ApplicationMembershipsDialogComponent,
@@ -614,6 +618,7 @@ import { DomainStoreService } from './stores/domain.store';
     ApplicationComponent,
     ApplicationOverviewComponent,
     ApplicationEndpointsComponent,
+    ApplicationToolsComponent,
     ApplicationGeneralComponent,
     PasswordPolicyComponent,
     PasswordPolicyStatusComponent,
@@ -634,6 +639,7 @@ import { DomainStoreService } from './stores/domain.store';
     ApplicationGrantFlowsComponent,
     ApplicationSecretsCertificatesComponent,
     ApplicationMetadataComponent,
+    ApplicationAgentCardComponent,
     ApplicationMembershipsComponent,
     ApplicationFactorsComponent,
     ApplicationResourcesComponent,
@@ -727,6 +733,7 @@ import { DomainStoreService } from './stores/domain.store';
     MatChipsModule,
     MatDatepickerModule,
     MatDialogModule,
+    MatDividerModule,
     MatExpansionModule,
     MatGridListModule,
     MatIconModule,
@@ -774,6 +781,7 @@ import { DomainStoreService } from './stores/domain.store';
   ],
   providers: [
     DomainService,
+    OpenFGAService,
     ProviderService,
     SidenavService,
     NavigationService,

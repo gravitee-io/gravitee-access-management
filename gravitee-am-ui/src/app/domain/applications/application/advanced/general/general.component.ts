@@ -67,6 +67,10 @@ export class ApplicationGeneralComponent implements OnInit {
       type: 'SERVICE',
     },
     {
+      name: 'Agent',
+      type: 'AGENT',
+    },
+    {
       name: 'Resource Server',
       type: 'RESOURCE_SERVER',
     },

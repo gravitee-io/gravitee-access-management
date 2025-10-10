@@ -165,6 +165,7 @@ export const ApplicationTypeEnum = {
   Native: 'NATIVE',
   Browser: 'BROWSER',
   Service: 'SERVICE',
+  Agent: 'AGENT',
   ResourceServer: 'RESOURCE_SERVER',
 } as const;
 export type ApplicationTypeEnum = typeof ApplicationTypeEnum[keyof typeof ApplicationTypeEnum];

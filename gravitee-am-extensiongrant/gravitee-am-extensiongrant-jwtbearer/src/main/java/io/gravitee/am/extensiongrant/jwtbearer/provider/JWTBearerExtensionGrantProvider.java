@@ -149,6 +149,9 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
                 }
             });
         }
+        if (claimsSet.getClaim("act") != null) {
+            additionalInformation.put("act", claimsSet.getClaim("act"));
+        }
         user.setAdditionalInformation(additionalInformation);
         return user;
     }

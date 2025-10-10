@@ -33,6 +33,7 @@ import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.gateway.api.Request;
 import io.reactivex.rxjava3.core.Maybe;
+import io.vertx.rxjava3.ext.web.client.WebClient;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -55,7 +56,7 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                                    IdentityProviderManager identityProviderManager,
                                    UserGatewayService userService,
                                    RulesEngine rulesEngine,
-                                   SubjectManager subjectManager) {
+                                   SubjectManager subjectManager, WebClient webClient) {
         super(extensionGrantProvider,
                 extensionGrant,
                 userAuthenticationManager,
@@ -63,7 +64,7 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                 tokenRequestResolver,
                 identityProviderManager,
                 userService,
-                rulesEngine);
+                rulesEngine, webClient);
         this.subjectManager = subjectManager;
     }
 
