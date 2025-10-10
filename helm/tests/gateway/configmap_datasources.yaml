@@ -1,0 +1,25 @@
+suite: Test Gateway configmap section datasources
+templates:
+  - "gateway/gateway-configmap.yaml"
+tests:
+  - it: Test datasources config block
+    template: gateway/gateway-configmap.yaml
+    set:
+      datasources:
+        mongodb:
+          - id: idp-connection-pool-1
+            settings:
+              dbname: idp-db-1
+              host: idp.db.host1
+              port: 27016
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: ".*datasources:"
+      - matchRegex:
+          path: data.[gravitee.yml]
+          pattern: ".*- id: idp-connection-pool-1"

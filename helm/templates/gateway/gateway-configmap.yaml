@@ -217,6 +217,12 @@ data:
 {{ toYaml .Values.gateway.resilience | indent 6}}
 {{- end }}
 
+
+{{- if .Values.datasources }}
+    datasources:
+{{ toYaml .Values.datasources | indent 6 }}
+{{- end }}
+
 {{ include "repositories" . | indent 4}}
   {{- if .Values.gateway.consent }}
     consent:
