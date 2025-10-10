@@ -420,6 +420,11 @@ data:
           {{- end }}
         {{- end }}
 
+  {{- if .Values.datasources }}
+    datasources:
+{{ toYaml .Values.datasources | indent 6 }}
+  {{- end }}
+
   {{- if .Values.gateway.consent }}
     consent:
 {{ toYaml .Values.gateway.consent | indent 6  }}
