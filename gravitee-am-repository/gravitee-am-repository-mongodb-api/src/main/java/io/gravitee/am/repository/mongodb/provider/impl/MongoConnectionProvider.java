@@ -129,7 +129,7 @@ public class MongoConnectionProvider implements ConnectionProvider<MongoClient, 
                 return commonMongoClient;
             }
         } else {
-            return new MongoClientWrapper(mongoFactory.getObject(prefix), getDatabaseName(prefix));
+            return new MongoClientWrapper(mongoFactory.getObject(prefix + ".mongodb."), getDatabaseName(prefix));
         }
     }
 

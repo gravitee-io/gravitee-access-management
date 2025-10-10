@@ -223,6 +223,24 @@ public class MongoConnectionProviderTest {
     }
 
     @Test
+    public void testGetClientWrapperFromDataplane() {
+        String propertyPrefix = "dataPlanes[0]";
+
+        setupDefaultConfiguration();
+
+        setStringProperty(propertyPrefix + ".mongodb.uri", "");
+        setStringProperty(propertyPrefix + ".mongodb.dbname", "gravitee-am");
+
+        ClientWrapper<MongoClient> result = mongoConnectionProvider.getClientWrapperFromPrefix(propertyPrefix);
+
+        assertThat(result).isNotNull();
+        assertThat(result).isInstanceOf(MongoClientWrapper.class);
+        verify(environment).getProperty(propertyPrefix + ".mongodb.uri", "");
+        verify(environment).getProperty(propertyPrefix + ".mongodb.dbname", "gravitee-am");
+        verify(mongoFactory).getObject(propertyPrefix + ".mongodb.");
+    }
+
+    @Test
     public void testGetClientWrapperFromDatasource_NewDatasource() {
         String datasourceId = "test-datasource";
         String propertyPrefix = MANAGEMENT.getRepositoryPropertyKey();
