@@ -293,7 +293,7 @@ public class ApplicationClientSecretsUpgraderTest {
     }
 
     @Test
-    public void shouldMigrateOnlyAppsNeedingMigration() {
+    public void shouldMigrateOnlyAppsNeedingMigration_NONE_Alg() {
         stubUpgradeInitialized();
 
         // App that needs migration (has client secret)
@@ -315,6 +315,33 @@ public class ApplicationClientSecretsUpgraderTest {
         
         // Should not update the app that doesn't need migration
         verify(applicationService, never()).update(argThat(app -> 
+            app.getId().equals("no-migration-needed")
+        ));
+    }
+
+    @Test
+    public void shouldMigrateOnlyAppsNeedingMigration_SHA512_Alg() {
+        stubUpgradeInitialized();
+
+        // App that needs migration (has client secret)
+        final Application needsMigration = needsMigrationApp("needs-migration");
+
+        // App that doesn't need migration (no client secret, already has settings)
+        final Application noMigrationNeeded = noMigrationNeededAppWithSecretAlg("no-migration-needed");
+
+        stubFetchAll(needsMigration, noMigrationNeeded);
+        stubUpdateEchoInput();
+        stubUpdateIfPropagateOperationId();
+
+        upgrader.upgrade();
+
+        // Should only update the app that needs migration
+        verify(applicationService, times(1)).update(argThat(app ->
+            app.getId().equals("needs-migration")
+        ));
+
+        // Should not update the app that doesn't need migration
+        verify(applicationService, never()).update(argThat(app ->
             app.getId().equals("no-migration-needed")
         ));
     }
@@ -469,6 +496,18 @@ public class ApplicationClientSecretsUpgraderTest {
     private Application noMigrationNeededApp(String id) {
         final Application app = baseApp(id, new Date());
         app.setSecretSettings(List.of(new ApplicationSecretSettings("id", "NONE", Map.of())));
+        app.setSecrets(new ArrayList<>());
+        final ApplicationSettings settings = new ApplicationSettings();
+        final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();
+        oauth.setClientSecret(null);
+        settings.setOauth(oauth);
+        app.setSettings(settings);
+        return app;
+    }
+
+    private Application noMigrationNeededAppWithSecretAlg(String id) {
+        final Application app = baseApp(id, new Date());
+        app.setSecretSettings(List.of(new ApplicationSecretSettings("id", "SHA_512", Map.of())));
         app.setSecrets(new ArrayList<>());
         final ApplicationSettings settings = new ApplicationSettings();
         final ApplicationOAuthSettings oauth = new ApplicationOAuthSettings();

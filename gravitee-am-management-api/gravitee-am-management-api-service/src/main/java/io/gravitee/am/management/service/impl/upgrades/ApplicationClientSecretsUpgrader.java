@@ -84,12 +84,10 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                     logger.debug("Process application '{}' for client secret migration", app.getId());
 
                     final var existingSecretSettings = app.getSecretSettings();
-                    final var maybeExistingNone = Optional.ofNullable(existingSecretSettings)
-                            .flatMap(list -> list.stream()
-                                    .filter(s -> Objects.equals(s.getAlgorithm(), SecretHashAlgorithm.NONE.name()))
-                                    .findFirst());
+                    final var maybeExistingSettings = Optional.ofNullable(existingSecretSettings)
+                            .flatMap(list -> list.stream().findFirst());
 
-                    final ApplicationSecretSettings selectedSettings = maybeExistingNone.orElseGet(() -> {
+                    final ApplicationSecretSettings selectedSettings = maybeExistingSettings.orElseGet(() -> {
                         var defaultSecretSettings = ApplicationSecretConfig.buildNoneSecretSettings();
                         logger.debug("Create default application secret settings for application '{}' ({})", app.getId(), defaultSecretSettings.getId());
                         app.setSecretSettings(List.of(defaultSecretSettings));
@@ -97,7 +95,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                     });
 
                     String settingsId = selectedSettings.getId();
-                    boolean updateRequired = maybeExistingNone.isEmpty();
+                    boolean updateRequired = maybeExistingSettings.isEmpty();
 
                     if (app.getSecrets() == null) {
                         app.setSecrets(new ArrayList<>());
@@ -109,7 +107,7 @@ public class ApplicationClientSecretsUpgrader extends SystemTaskUpgrader {
                         var clientSecret = oauthSettings.getClientSecret();
 
                         // If there is not a historical secret, we can skip this application
-                        if (clientSecret != null) {
+                        if (clientSecret != null && maybeExistingSettings.isEmpty()) {
                             logger.debug("Migrating client secret for application '{}'", app.getId());
                             // migrate the client secret into the new list of secrets
                             ClientSecret newSecret = new ClientSecret();
