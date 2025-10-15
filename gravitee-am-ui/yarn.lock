@@ -5948,7 +5948,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/json-schema@npm:*, @types/json-schema@npm:^7.0.15, @types/json-schema@npm:^7.0.8, @types/json-schema@npm:^7.0.9":
+"@types/json-schema@npm:*, @types/json-schema@npm:7.0.15, @types/json-schema@npm:^7.0.15, @types/json-schema@npm:^7.0.8, @types/json-schema@npm:^7.0.9":
   version: 7.0.15
   resolution: "@types/json-schema@npm:7.0.15"
   checksum: 10c0/a996a745e6c5d60292f36731dd41341339d4eeed8180bb09226e5c8d23759067692b1d88e5d91d72ee83dfc00d3aca8e7bd43ea120516c17922cbcb7c3e252db
@@ -10578,7 +10578,7 @@ __metadata:
     "@ngx-formly/material": "npm:6.3.12"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/jest": "npm:29.5.14"
-    "@types/json-schema": "npm:^7.0.15"
+    "@types/json-schema": "npm:7.0.15"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:20.11.23"
     "@typescript-eslint/eslint-plugin": "npm:8.35.1"
@@ -16447,7 +16447,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"style-mod@npm:^4.1.2":
+"style-mod@npm:4.1.2":
   version: 4.1.2
   resolution: "style-mod@npm:4.1.2"
   checksum: 10c0/ad4d870b3642b0e42ecc7be0e106dd14b7af11985e34fee8de34e5e38c3214bfc96fa7055acea86d75a3a59ddea3f6a8c6641001a66494d7df72d09685e3fadb
