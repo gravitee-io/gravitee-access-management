@@ -98,6 +98,10 @@ parameters:
     type: boolean
     default: false
     description: "Is this a hotfix?"
+  create_maintenance_version_branch:
+    type: boolean
+    default: false
+    description: "Creates maintenance version branch"
 
 commands:
   create_docker_context:
@@ -1221,6 +1225,10 @@ jobs:
         type: boolean
         default: false
         description: "Is this a hotfix?"
+      create_maintenance_version_branch:
+        type: boolean
+        default: false
+        description: "Create maintenance version branch"
     executor:
       name: openjdk
       class: xlarge
@@ -1230,6 +1238,7 @@ jobs:
       RC_REQUESTED: << parameters.rc_requested >>
       GIO_VERSION: << parameters.graviteeio_version >>
       HOTFIX_VERSION: << parameters.hotfix_version >>
+      CREATE_MAINT_VER_BRANCH: << parameters.create_maintenance_version_branch >>
     steps:
       - checkout
       - restore-maven-job-cache:
@@ -1240,9 +1249,9 @@ jobs:
       - run:
           name: Maven Prepare Release
           command: |
-            # 1./  Update maven dependencies versions from properties
+            # 1./ Update maven dependencies versions from properties
             mvn -s /tmp/.gravitee.settings.xml -B -U versions:update-properties -Dmaven.version.rules.serverId=artifactory-gravitee-releases -Dincludes=io.gravitee.*:* -DallowMajorUpdates=false -DallowMinorUpdates=false -DallowIncrementalUpdates=false -DgenerateBackupPoms=false
-            # 2./ Now  calculate the maven project verison with the maven exec plugin
+            # 2./ Now calculate the maven project version with the maven exec plugin
             export MVN_PRJ_VERSION=$(mvn -s /tmp/.gravitee.settings.xml -Dexec.executable='echo' -Dexec.args='${project.version}' --non-recursive exec:exec -q | tee -a /tmp/maven.logs; echo "$?" > /tmp/maven.exit.code)
             
             export MVN_PRJ_VERSION=$(echo "${MVN_PRJ_VERSION}" | awk -F '-SNAPSHOT' '{print $1}')
@@ -1340,7 +1349,7 @@ jobs:
             
             export GIT_BRANCH_FILTER=$(git branch -a | grep "${MAINTENANCE_GIT_BRANCH}")
 
-            if [ "x${GIT_BRANCH_FILTER}" == "x" ]; then
+            if [ "x${GIT_BRANCH_FILTER}" == "x" ] && [ "${CREATE_MAINT_VER_BRANCH}" == "true" ]; then
               echo "# ---- git Maintenance branch [${MAINTENANCE_GIT_BRANCH}] does not exist, creating it"
               git checkout -b ${MAINTENANCE_GIT_BRANCH}
               mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_PATCH_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
@@ -1359,7 +1368,7 @@ jobs:
 
               git checkout ${CURRENT_GIT_BRANCH}
             else
-              echo "git Maintenance branch [${MAINTENANCE_GIT_BRANCH}] does exist, no need to create it, also CURRENT_GIT_BRANCH=[${CURRENT_GIT_BRANCH}] and MAINTENANCE_GIT_BRANCH=[${MAINTENANCE_GIT_BRANCH}] are supposed to be equal."
+              echo "git Maintenance branch [${MAINTENANCE_GIT_BRANCH}] does exist or creation is disabled - no need to create it. Also CURRENT_GIT_BRANCH=[${CURRENT_GIT_BRANCH}] and MAINTENANCE_GIT_BRANCH=[${MAINTENANCE_GIT_BRANCH}] are supposed to be equal."
             fi;
             
             export NEXT_MINOR_VERSION=$((${MVN_PRJ_VERSION_MINOR}+1))
@@ -1816,6 +1825,7 @@ workflows:
           rc_requested: << pipeline.parameters.rc_requested >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           hotfix_version: << pipeline.parameters.hotfix_version >>
+          create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
             - setup
       - build_n_push_am_ce_job:
@@ -1875,6 +1885,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           rc_requested: << pipeline.parameters.rc_requested >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
+          create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
             - setup
       - build_n_push_am_ce_job:
@@ -1913,6 +1924,7 @@ workflows:
           dry_run: << pipeline.parameters.dry_run >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           hotfix_version: true
+          create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
           requires:
             - setup
       - build_n_push_am_ce_job:
@@ -2216,6 +2228,7 @@ workflows:
           rc_requested: << pipeline.parameters.rc_requested >>
           graviteeio_version: << pipeline.parameters.graviteeio_version >>
           hotfix_version: << pipeline.parameters.hotfix_version >>
+          create_maintenance_version_branch: << pipeline.parameters.create_maintenance_version_branch >>
 
   publish_maven_central:
     when:
