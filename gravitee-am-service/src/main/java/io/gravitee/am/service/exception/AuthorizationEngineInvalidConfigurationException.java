@@ -13,29 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.service.exception;
 
-import io.gravitee.am.service.model.plugin.AuthorizationEnginePlugin;
-import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.Single;
-
-import java.util.List;
+import static io.gravitee.common.http.HttpStatusCode.BAD_REQUEST_400;
 
 /**
  * @author GraviteeSource Team
  */
-public interface AuthorizationEnginePluginService extends PluginService {
-    String EXPAND_ICON = "icon";
+public class AuthorizationEngineInvalidConfigurationException extends AbstractManagementException {
 
-    default Single<List<AuthorizationEnginePlugin>> findAll() {
-        return findAll(null);
+    private final String message;
+
+    public AuthorizationEngineInvalidConfigurationException(String message) {
+        this.message = message;
     }
 
-    Single<List<AuthorizationEnginePlugin>> findAll(List<String> expand);
+    @Override
+    public int getHttpStatusCode() {
+        return BAD_REQUEST_400;
+    }
 
-    Maybe<AuthorizationEnginePlugin> findById(String id);
-
-    Maybe<String> getSchema(String id);
-
-    Maybe<String> getIcon(String id);
+    @Override
+    public String getMessage() {
+        if (message == null || message.isBlank()) {
+            return "Invalid authorization engine configuration";
+        }
+        return message;
+    }
 }

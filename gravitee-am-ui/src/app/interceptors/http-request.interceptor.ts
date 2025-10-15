@@ -56,9 +56,14 @@ export class HttpRequestInterceptor implements HttpInterceptor {
       envId = this.environmentService.getCurrentEnvironment().id;
     }
 
+    const skipErrorSnackbar = request.headers.has('X-Skip-Error-Snackbar');
+
     request = request.clone({
       withCredentials: true,
-      setHeaders: this.xsrfToken ? { 'X-Xsrf-Token': [this.xsrfToken] } : {},
+      setHeaders: {
+        ...(this.xsrfToken ? { 'X-Xsrf-Token': [this.xsrfToken] } : {}),
+      },
+      headers: request.headers.delete('X-Skip-Error-Snackbar'),
       url: request.url.replace(':organizationId', orgId).replace(':environmentId', envId),
     });
 
@@ -80,7 +85,7 @@ export class HttpRequestInterceptor implements HttpInterceptor {
               this.authService.unauthorized();
             } else if (err.status === 403) {
               this.snackbarService.open('Access denied');
-            } else {
+            } else if (!skipErrorSnackbar) {
               this.snackbarService.open(err.error.message || 'Server error');
             }
           }

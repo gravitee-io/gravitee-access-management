@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.service.model.plugin;
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 
-import lombok.Getter;
-import lombok.Setter;
+import { OrganizationService } from '../services/organization.service';
 
-/**
- * @author GraviteeSource Team
- */
-@Getter
-@Setter
-public class AuthorizationEnginePlugin extends AbstractPlugin {
+@Injectable()
+export class AuthorizationEnginePluginsResolver {
+  constructor(private organizationService: OrganizationService) {}
 
-    private String icon;
+  resolve(): Observable<any> {
+    return this.organizationService.authorizationEngines(true);
+  }
 }

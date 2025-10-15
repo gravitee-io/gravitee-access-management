@@ -20,10 +20,14 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.common.plugin.ValidationResult;
+import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
+import io.gravitee.am.service.exception.AuthorizationEngineAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationEngineNotFoundException;
+import io.gravitee.am.service.exception.AuthorizationEngineInvalidConfigurationException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationEngine;
 import io.gravitee.am.service.model.UpdateAuthorizationEngine;
@@ -34,6 +38,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -61,10 +66,18 @@ class AuthorizationEngineServiceImplTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private AuthorizationEnginePluginManager authorizationEnginePluginManager;
+
     @InjectMocks
     private AuthorizationEngineServiceImpl service;
 
     private final User principal = new DefaultUser("test-user");
+
+    @BeforeEach
+    void init() {
+        when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
+    }
 
     @Test
     void shouldCreateAuthorizationEngine() {
@@ -74,6 +87,8 @@ class AuthorizationEngineServiceImplTest {
         newEngine.setType("openfga");
         newEngine.setConfiguration("{\"connectionUri\":\"http://localhost:8080\"}");
 
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any(Event.class)))
@@ -112,6 +127,8 @@ class AuthorizationEngineServiceImplTest {
         newEngine.setType("openfga");
         // No ID provided
 
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any(Event.class)))
@@ -142,6 +159,8 @@ class AuthorizationEngineServiceImplTest {
         newEngine.setName("Test Engine");
         newEngine.setType("openfga");
 
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any(Event.class)))
@@ -172,6 +191,8 @@ class AuthorizationEngineServiceImplTest {
 
         ArgumentCaptor<AuthorizationEngine> captor = ArgumentCaptor.forClass(AuthorizationEngine.class);
 
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
         when(eventService.create(any(Event.class)))
@@ -201,6 +222,8 @@ class AuthorizationEngineServiceImplTest {
         createdEngine.setReferenceType(ReferenceType.DOMAIN);
         createdEngine.setReferenceId("domain-id");
 
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenReturn(Single.just(createdEngine));
         when(eventService.create(any(Event.class)))
@@ -226,6 +249,8 @@ class AuthorizationEngineServiceImplTest {
         newEngine.setName("Test Engine");
         newEngine.setType("openfga");
 
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenReturn(Single.error(new RuntimeException("Database error")));
         doNothing().when(auditService).report(any(AuditBuilder.class));
@@ -241,6 +266,126 @@ class AuthorizationEngineServiceImplTest {
         observer.assertError(TechnicalManagementException.class);
         observer.assertError(ex -> ex.getMessage().contains("An error occurs while trying to create an authorization engine"));
         verify(eventService, never()).create(any(Event.class));
+    }
+
+    @Test
+    void shouldFailWhenValidationFails() {
+        // given
+        NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
+        newEngine.setName("Test Engine");
+        newEngine.setType("openfga");
+        newEngine.setConfiguration("{}");
+
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.empty());
+        when(authorizationEnginePluginManager.validate(any()))
+                .thenReturn(ValidationResult.invalid("Failed to connect"));
+
+        // when
+        TestObserver<AuthorizationEngine> observer = service.create("domain-id", newEngine, principal).test();
+
+        // then
+        observer.assertError(AuthorizationEngineInvalidConfigurationException.class);
+        observer.assertError(ex -> ex.getMessage().contains("Failed to connect"));
+
+        verify(authorizationEngineRepository, never()).create(any());
+        verify(eventService, never()).create(any(Event.class));
+    }
+
+    @Test
+    void shouldFailUpdateWhenValidationFails() {
+        // given
+        String engineId = "engine-id";
+        UpdateAuthorizationEngine updateEngine = new UpdateAuthorizationEngine();
+        updateEngine.setName("Updated Engine");
+        updateEngine.setConfiguration("{}");
+
+        AuthorizationEngine existingEngine = new AuthorizationEngine();
+        existingEngine.setId(engineId);
+        existingEngine.setType("openfga");
+        existingEngine.setReferenceType(ReferenceType.DOMAIN);
+        existingEngine.setReferenceId("domain-id");
+
+        when(authorizationEngineRepository.findByDomainAndId("domain-id", engineId))
+                .thenReturn(Maybe.just(existingEngine));
+        when(authorizationEnginePluginManager.validate(any()))
+                .thenReturn(ValidationResult.invalid("Failed to connect"));
+
+        // when
+        TestObserver<AuthorizationEngine> observer = service.update("domain-id", engineId, updateEngine, principal).test();
+
+        // then
+        observer.assertError(AuthorizationEngineInvalidConfigurationException.class);
+        observer.assertError(ex -> ex.getMessage().contains("Failed to connect"));
+
+        verify(authorizationEngineRepository, never()).update(any());
+        verify(eventService, never()).create(any(Event.class));
+    }
+
+    @Test
+    void shouldThrowAlreadyExistsExceptionWhenTypeAlreadyExists() {
+        // given
+        NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
+        newEngine.setName("New OpenFGA Engine");
+        newEngine.setType("openfga");
+
+        AuthorizationEngine existingEngine = new AuthorizationEngine();
+        existingEngine.setId("existing-engine-id");
+        existingEngine.setType("openfga");
+        existingEngine.setReferenceId("domain-id");
+
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(existingEngine));
+
+        // when
+        TestObserver<AuthorizationEngine> observer = service.create(
+                "domain-id",
+                newEngine,
+                principal
+        ).test();
+
+        // then
+        observer.assertError(AuthorizationEngineAlreadyExistsException.class);
+        observer.assertError(ex -> ex.getMessage().contains("Authorization engine of type [openfga] already exists for this domain"));
+        verify(authorizationEngineRepository, never()).create(any(AuthorizationEngine.class));
+        verify(eventService, never()).create(any(Event.class));
+    }
+
+    @Test
+    void shouldAllowCreationWhenDifferentTypeExists() {
+        // given
+        NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
+        newEngine.setName("OpenFGA Engine");
+        newEngine.setType("openfga");
+
+        AuthorizationEngine existingEngine = new AuthorizationEngine();
+        existingEngine.setId("existing-engine-id");
+        existingEngine.setType("opa");
+        existingEngine.setReferenceId("domain-id");
+
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(existingEngine));
+        when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
+                .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
+        when(eventService.create(any(Event.class)))
+                .thenReturn(Single.just(new Event()));
+        doNothing().when(auditService).report(any(AuditBuilder.class));
+
+        // when
+        TestObserver<AuthorizationEngine> observer = service.create(
+                "domain-id",
+                newEngine,
+                principal
+        ).test();
+
+        // then
+        observer.assertComplete();
+        observer.assertValue(engine -> {
+            assertEquals("openfga", engine.getType());
+            return true;
+        });
+        verify(authorizationEngineRepository, times(1)).create(any(AuthorizationEngine.class));
+        verify(eventService, times(1)).create(any(Event.class));
     }
 
     @Test

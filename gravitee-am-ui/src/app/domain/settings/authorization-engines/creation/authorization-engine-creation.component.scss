@@ -1,0 +1,28 @@
+.gv-page-container {
+  .gv-page-content {
+    margin-top: 20px;
+  }
+
+  .stepper-button-zone {
+    margin-top: 30px;
+    margin-bottom: 30px;
+
+    ::ng-deep .mat-button-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gv-button-content {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+
+      mat-progress-spinner {
+        width: 16px !important;
+        height: 16px !important;
+      }
+    }
+  }
+}

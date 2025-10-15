@@ -1,0 +1,48 @@
+@use '@angular/material' as mat;
+
+mat-card {
+  @include mat.elevation-transition;
+
+  display: flex;
+  box-sizing: border-box;
+  margin-top: 10px;
+  place-content: center center;
+}
+
+mat-card:hover,
+mat-card.selected {
+  @include mat.elevation(8);
+
+  cursor: pointer;
+}
+
+mat-card.disabled {
+  cursor: not-allowed !important;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+mat-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+:host ::ng-deep mat-card-content i {
+  font-size: 6rem;
+}
+
+:host ::ng-deep mat-card-content img {
+  height: 6rem;
+}
+
+.already-in-use-badge {
+  margin-top: 8px;
+}
+
+.cards-container {
+  display: grid;
+  grid-gap: 1rem;
+  grid-template-columns: repeat(3, 1fr);
+}

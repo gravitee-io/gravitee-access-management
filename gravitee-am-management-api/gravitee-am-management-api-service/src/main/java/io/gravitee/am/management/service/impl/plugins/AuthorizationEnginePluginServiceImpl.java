@@ -37,7 +37,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
 
     private final Logger LOGGER = LoggerFactory.getLogger(AuthorizationEnginePluginServiceImpl.class);
 
-    private AuthorizationEnginePluginManager authorizationEnginePluginManager;
+    private final AuthorizationEnginePluginManager authorizationEnginePluginManager;
 
     public AuthorizationEnginePluginServiceImpl(AuthorizationEnginePluginManager authorizationEnginePluginManager) {
         super(authorizationEnginePluginManager);
@@ -45,10 +45,10 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
     }
 
     @Override
-    public Single<List<AuthorizationEnginePlugin>> findAll() {
+    public Single<List<AuthorizationEnginePlugin>> findAll(List<String> expand) {
         LOGGER.debug("List all authorization engine plugins");
         return Observable.fromIterable(authorizationEnginePluginManager.findAll(true))
-                .map(this::convert)
+                .map(plugin -> convert(plugin, expand))
                 .toList();
     }
 
@@ -59,7 +59,7 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
             try {
                 Plugin plugin = authorizationEnginePluginManager.findById(authorizationEngineId);
                 if (plugin != null) {
-                    emitter.onSuccess(convert(plugin));
+                    emitter.onSuccess(convert(plugin, null));
                 } else {
                     emitter.onComplete();
                 }
@@ -88,7 +88,25 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
         });
     }
 
-    private AuthorizationEnginePlugin convert(Plugin plugin) {
+    @Override
+    public Maybe<String> getIcon(String authorizationEngineId) {
+        LOGGER.debug("Find authorization engine plugin icon by ID: {}", authorizationEngineId);
+        return Maybe.create(emitter -> {
+            try {
+                String icon = authorizationEnginePluginManager.getIcon(authorizationEngineId, true);
+                if (icon != null) {
+                    emitter.onSuccess(icon);
+                } else {
+                    emitter.onComplete();
+                }
+            } catch (Exception e) {
+                LOGGER.error("An error occurs while trying to get icon for authorization engine plugin {}", authorizationEngineId, e);
+                emitter.onError(new TechnicalManagementException("An error occurs while trying to get icon for authorization engine plugin " + authorizationEngineId, e));
+            }
+        });
+    }
+
+    private AuthorizationEnginePlugin convert(Plugin plugin, List<String> expand) {
         var authorizationEnginePlugin = new AuthorizationEnginePlugin();
         authorizationEnginePlugin.setId(plugin.manifest().id());
         authorizationEnginePlugin.setName(plugin.manifest().name());
@@ -96,6 +114,11 @@ public class AuthorizationEnginePluginServiceImpl extends AbstractPluginService 
         authorizationEnginePlugin.setVersion(plugin.manifest().version());
         authorizationEnginePlugin.setDeployed(plugin.deployed());
         authorizationEnginePlugin.setFeature(plugin.manifest().feature());
+        if (expand != null) {
+            if (expand.contains(AuthorizationEnginePluginService.EXPAND_ICON)) {
+                this.getIcon(authorizationEnginePlugin.getId()).subscribe(authorizationEnginePlugin::setIcon);
+            }
+        }
         return authorizationEnginePlugin;
     }
 }

@@ -58,7 +58,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
         plugin2.setDeployed(false);
 
         doReturn(Single.just(Arrays.asList(plugin1, plugin2)))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(null);
 
         final Response response = target("platform")
                 .path("plugins")
@@ -68,13 +68,13 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        verify(authorizationEnginePluginService, times(1)).findAll();
+        verify(authorizationEnginePluginService, times(1)).findAll(null);
     }
 
     @Test
     public void shouldListAuthorizationEnginePlugins_emptyList() {
         doReturn(Single.just(Collections.emptyList()))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(null);
 
         final Response response = target("platform")
                 .path("plugins")
@@ -88,7 +88,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
     @Test
     public void shouldListAuthorizationEnginePlugins_serviceError() {
         doReturn(Single.error(new RuntimeException("Service error")))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(null);
 
         final Response response = target("platform")
                 .path("plugins")
@@ -115,7 +115,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
 
         // Return plugins in unsorted order
         doReturn(Single.just(Arrays.asList(plugin1, plugin2, plugin3)))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(null);
 
         final Response response = target("platform")
                 .path("plugins")
@@ -125,7 +125,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
-        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new jakarta.ws.rs.core.GenericType<List<AuthorizationEnginePlugin>>() {});
+        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new jakarta.ws.rs.core.GenericType<>() {});
         assertEquals(3, plugins.size());
         assertEquals("Alpha Engine", plugins.get(0).getName());
         assertEquals("OpenFGA", plugins.get(1).getName());
@@ -145,7 +145,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
         notDeployedPlugin.setDeployed(false);
 
         doReturn(Single.just(Arrays.asList(deployedPlugin, notDeployedPlugin)))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(null);
 
         final Response response = target("platform")
                 .path("plugins")
@@ -156,7 +156,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         // Both deployed and not deployed should be returned by the service
-        verify(authorizationEnginePluginService, times(1)).findAll();
+        verify(authorizationEnginePluginService, times(1)).findAll(null);
     }
 
     @Test
@@ -172,7 +172,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
         plugin2.setVersion("1.0.0");
 
         doReturn(Single.just(Arrays.asList(plugin1, plugin2)))
-                .when(authorizationEnginePluginService).findAll();
+                .when(authorizationEnginePluginService).findAll(null);
 
         final Response response = target("platform")
                 .path("plugins")
@@ -181,7 +181,7 @@ public class AuthorizationEnginesPluginResourceTest extends JerseySpringTest {
                 .get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new jakarta.ws.rs.core.GenericType<List<AuthorizationEnginePlugin>>() {});
+        final List<AuthorizationEnginePlugin> plugins = response.readEntity(new jakarta.ws.rs.core.GenericType<>() {});
         assertEquals(2, plugins.size());
         assertEquals("openfga-v1", plugins.get(0).getId());
         assertEquals("openfga-v2", plugins.get(1).getId());

@@ -46,6 +46,7 @@ public class AuthorizationEngineManagerImpl extends AbstractService<Authorizatio
     private static final Logger logger = LoggerFactory.getLogger(AuthorizationEngineManagerImpl.class);
 
     private final ConcurrentMap<String, AuthorizationEngineProvider> providers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, AuthorizationEngine> authorizationEngines = new ConcurrentHashMap<>();
 
     @Autowired
     private AuthorizationEnginePluginManager authorizationEnginePluginManager;
@@ -74,13 +75,36 @@ public class AuthorizationEngineManagerImpl extends AbstractService<Authorizatio
 
     @Override
     public Maybe<AuthorizationEngineProvider> getProvider(String authorizationEngineId) {
-        AuthorizationEngineProvider provider = providers.get(authorizationEngineId);
-        return provider != null ? Maybe.just(provider) : Maybe.empty();
+        if (authorizationEngineId == null) {
+            return Maybe.empty();
+        }
+
+        // Since we need to ensure provider is available on-demand, we read from the repository
+        // to check if the provider exists and if our cached version is up-to-date
+        return authorizationEngineService.findById(authorizationEngineId)
+                .flatMap(persistedEngine -> {
+                    AuthorizationEngineProvider localProvider = providers.get(authorizationEngineId);
+                    if (localProvider != null &&
+                            authorizationEngines.containsKey(authorizationEngineId) &&
+                            authorizationEngines.get(authorizationEngineId).getUpdatedAt().getTime() >= persistedEngine.getUpdatedAt().getTime()) {
+                        // Cached version is up-to-date
+                        return Maybe.just(localProvider);
+                    } else {
+                        // Need to load or reload the provider
+                        this.removeProvider(authorizationEngineId, false);
+                        return this.loadProviderAndReturn(persistedEngine);
+                    }
+                });
     }
 
     private void removeProvider(String authorizationEngineId) {
+        removeProvider(authorizationEngineId, true);
+    }
+
+    private void removeProvider(String authorizationEngineId, boolean unused) {
         logger.info("Removing authorization engine provider for {}", authorizationEngineId);
         AuthorizationEngineProvider provider = providers.remove(authorizationEngineId);
+        authorizationEngines.remove(authorizationEngineId);
 
         if (provider != null) {
             try {
@@ -94,14 +118,16 @@ public class AuthorizationEngineManagerImpl extends AbstractService<Authorizatio
     private Completable loadProvider(AuthorizationEngine authorizationEngine) {
         return Completable.fromAction(() -> {
             logger.info("Loading authorization engine provider: {} [{}]", authorizationEngine.getName(), authorizationEngine.getType());
+            var engineId = authorizationEngine.getId();
 
             try {
                 ProviderConfiguration config = new ProviderConfiguration(authorizationEngine.getType(), authorizationEngine.getConfiguration());
                 AuthorizationEngineProvider provider = authorizationEnginePluginManager.create(config);
 
-                removeProvider(authorizationEngine.getId());
+                removeProvider(engineId, false);
                 if (provider != null) {
-                    providers.put(authorizationEngine.getId(), provider);
+                    providers.put(engineId, provider);
+                    authorizationEngines.put(engineId, authorizationEngine);
                     logger.info("Provider for {} successfully loaded", authorizationEngine.getName());
                 } else {
                     logger.warn("Provider for {} returned null", authorizationEngine.getName());
@@ -110,10 +136,29 @@ public class AuthorizationEngineManagerImpl extends AbstractService<Authorizatio
             } catch (Exception ex) {
                 logger.error("An error occurred while loading authorization engine provider: {} [{}]",
                         authorizationEngine.getName(), authorizationEngine.getType(), ex);
-                removeProvider(authorizationEngine.getId());
+                removeProvider(engineId, false);
                 throw ex;
             }
         });
+    }
+
+    private Maybe<AuthorizationEngineProvider> loadProviderAndReturn(AuthorizationEngine authorizationEngine) {
+        return loadProvider(authorizationEngine)
+                .andThen(Maybe.defer(() -> {
+                    AuthorizationEngineProvider provider = providers.get(authorizationEngine.getId());
+                    if (provider != null) {
+                        return Maybe.just(provider);
+                    } else {
+                        return Maybe.empty();
+                    }
+                }))
+                .onErrorResumeNext(ex -> {
+                    logger.error("An error has occurred while loading authorization engine provider: {} [{}]",
+                            authorizationEngine.getName(), authorizationEngine.getType(), ex);
+                    providers.remove(authorizationEngine.getId());
+                    authorizationEngines.remove(authorizationEngine.getId());
+                    return Maybe.empty();
+                });
     }
 
     @Override

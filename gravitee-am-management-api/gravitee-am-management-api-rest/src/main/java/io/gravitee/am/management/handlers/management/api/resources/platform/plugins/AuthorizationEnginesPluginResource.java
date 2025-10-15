@@ -24,6 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.container.Suspended;
@@ -31,6 +32,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -50,9 +52,9 @@ public class AuthorizationEnginesPluginResource {
     @Operation(operationId = "listAuthorizationEnginePlugins",
             summary = "List authorization engine plugins",
             description = "There is no particular permission needed. User must be authenticated.")
-    public void list(@Suspended final AsyncResponse response) {
+    public void list(@QueryParam("expand") final List<String> expand, @Suspended final AsyncResponse response) {
 
-        authorizationEnginePluginService.findAll()
+        authorizationEnginePluginService.findAll(expand)
                 .map(plugins -> plugins.stream()
                         .sorted(Comparator.comparing(AuthorizationEnginePlugin::getName))
                         .collect(Collectors.toList()))

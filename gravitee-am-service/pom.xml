@@ -249,5 +249,10 @@
             <version>1.36</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.gravitee.am.plugins.handlers</groupId>
+            <artifactId>gravitee-am-plugins-handlers-authorizationengine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 </project>
