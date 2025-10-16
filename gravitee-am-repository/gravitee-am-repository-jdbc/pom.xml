@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-repository</artifactId>
         <groupId>io.gravitee.am.repository</groupId>
-        <version>4.9.0</version>
+        <version>4.9.1-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
