@@ -21,10 +21,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Strings;
 
-import java.net.URI;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.regex.Pattern.quote;
@@ -44,6 +44,8 @@ public abstract class AbstractSensitiveProxy {
     protected static final String SENSITIVE_VALUE = "********";
     protected static final Pattern SENSITIVE_VALUE_PATTERN = Pattern.compile("^(\\*+)$");
 
+    private static final String USERINFO_PATTERN_EXTRACTOR = "^(?:[^/]+://)?(?<userInfo>[^/@]+)@.*";
+    private static final Pattern USER_INFO_PATTERN = Pattern.compile(USERINFO_PATTERN_EXTRACTOR);
     protected void filterSensitiveData(
             JsonNode schemaNode,
             JsonNode configurationNode,
@@ -57,8 +59,7 @@ public abstract class AbstractSensitiveProxy {
                 }
                 if (isSensitiveUri(entry) && configurationNode.get(entry.getKey()) instanceof TextNode) {
                     final String uri = configurationNode.get(entry.getKey()).asText();
-                    final String userInfo = URI.create(uri).getUserInfo();
-                    extractUriPassword(userInfo).ifPresent(passwordToHide ->
+                    extractPasswordFromUriUserInfo(uri).ifPresent(passwordToHide ->
                         ((ObjectNode) configurationNode).put(entry.getKey(), uri.replaceFirst(quote(passwordToHide), SENSITIVE_VALUE))
                     );
                 }
@@ -118,13 +119,11 @@ public abstract class AbstractSensitiveProxy {
             if (isSensitiveUri(entry) && updatedConfigurationNode.isObject()) {
                 final JsonNode newUri = updatedConfigurationNode.get(entry.getKey());
                 if (newUri != null && !Strings.isNullOrEmpty(newUri.asText())) {
-                    final String incomingUserInfo = URI.create(newUri.asText()).getUserInfo();
-                    final JsonNode olrUriNode = oldConfigurationNode.get(entry.getKey());
-                    if (olrUriNode != null && !Strings.isNullOrEmpty(olrUriNode.asText())) {
-                        extractUriPassword(incomingUserInfo).ifPresent(newPassword -> {
+                    final JsonNode oldUriNode = oldConfigurationNode.get(entry.getKey());
+                    if (oldUriNode != null && !Strings.isNullOrEmpty(oldUriNode.asText())) {
+                        extractPasswordFromUriUserInfo(newUri.asText()).ifPresent(newPassword -> {
                             if (SENSITIVE_VALUE_PATTERN.matcher(newPassword).matches()) {
-                                final String oldUserInfo = URI.create(olrUriNode.asText()).getUserInfo();
-                                extractUriPassword(oldUserInfo).or(() -> Optional.of(""))
+                                extractPasswordFromUriUserInfo(oldUriNode.asText()).or(() -> Optional.of(""))
                                         .ifPresent(oldPwd -> ((ObjectNode) updatedConfigurationNode).put(entry.getKey(), newUri.asText().replaceFirst(quote(newPassword), oldPwd)));
                             }
                         });
@@ -134,9 +133,11 @@ public abstract class AbstractSensitiveProxy {
         };
     }
 
-    private Optional<String> extractUriPassword(String userInfo) {
+    protected final Optional<String> extractPasswordFromUriUserInfo(String uri) {
         Optional<String> result = Optional.empty();
-        if (!Strings.isNullOrEmpty(userInfo)) {
+        Matcher matcher = USER_INFO_PATTERN.matcher(uri);
+        if (matcher.find()) {
+            final String userInfo = matcher.group("userInfo");
             final int index = userInfo.indexOf(":");
             if (index != -1) {
                 final String pwd = userInfo.substring(index+1);
