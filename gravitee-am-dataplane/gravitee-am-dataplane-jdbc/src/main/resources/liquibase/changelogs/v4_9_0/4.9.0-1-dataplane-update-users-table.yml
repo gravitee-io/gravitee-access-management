@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-dp-update-users-table
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          and:
+            - columnExists:
+                tableName: users
+                columnName: employee_number
+            - columnExists:
+                tableName: users
+                columnName: cost_center
+            - columnExists:
+                tableName: users
+                columnName: organization
+            - columnExists:
+                tableName: users
+                columnName: division
+            - columnExists:
+                tableName: users
+                columnName: department
+      changes:
+        #############################
+        # users #
+        ############################
+        - addColumn:
+            tableName: users
+            columns:
+              - column: { name: employee_number, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: cost_center, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: organization, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: division, type: nvarchar(255), constraints: { nullable: true } }
+              - column: { name: department, type: nvarchar(255), constraints: { nullable: true } }

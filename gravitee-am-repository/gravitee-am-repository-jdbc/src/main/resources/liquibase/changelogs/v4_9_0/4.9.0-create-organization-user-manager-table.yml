@@ -1,0 +1,25 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.9.0-create-organization-user-manager-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: organization_user_manager
+      changes:
+        - createTable:
+            tableName: organization_user_manager
+            columns:
+              - column: { name: user_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: manager_id, type: nvarchar(64), constraints: { nullable: true } }
+              - column: { name: ref, type: nvarchar(1024), constraints: { nullable: true } }
+              - column: { name: display_name, type: nvarchar(255), constraints: { nullable: true } }
+
+        - createIndex:
+            columns:
+              - column:
+                  name: user_id
+            indexName: idx_org_user_manager_user
+            tableName: organization_user_manager
+            unique: false

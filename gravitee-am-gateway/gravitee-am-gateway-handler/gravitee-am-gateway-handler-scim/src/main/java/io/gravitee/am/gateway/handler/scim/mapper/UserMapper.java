@@ -21,7 +21,9 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.scim.model.Address;
 import io.gravitee.am.gateway.handler.scim.model.Attribute;
 import io.gravitee.am.gateway.handler.scim.model.Certificate;
+import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
+import io.gravitee.am.gateway.handler.scim.model.Manager;
 import io.gravitee.am.gateway.handler.scim.model.Meta;
 import io.gravitee.am.gateway.handler.scim.model.Name;
 import io.gravitee.am.gateway.handler.scim.model.User;
@@ -119,6 +121,24 @@ public class UserMapper {
         meta.setLocation(baseUrl + (listing ? "/" + scimUser.getId() : ""));
         scimUser.setMeta(meta);
 
+        // Enterprise User
+        if (user.isEnterpriseUser()) {
+            EnterpriseUser.EnterpriseUser0 enterpriseUser = new EnterpriseUser.EnterpriseUser0();
+            enterpriseUser.setEmployeeNumber(user.getEmployeeNumber());
+            enterpriseUser.setCostCenter(user.getCostCenter());
+            enterpriseUser.setOrganization(user.getOrganization());
+            enterpriseUser.setDivision(user.getDivision());
+            enterpriseUser.setDepartment(user.getDepartment());
+            if (user.getManager() != null) {
+                Manager manager = new Manager();
+                manager.setValue(user.getManager().getValue());
+                manager.setRef(user.getManager().getRef());
+                manager.setDisplayName(user.getManager().getDisplayName());
+                enterpriseUser.setManager(manager);
+            }
+            scimUser.setEnterpriseUser(enterpriseUser);
+        }
+
         // Gravitee User extension schemas
         // To determine if the current user resource is a Gravitee User Resource
         // we remove every OpenID standard claims from the additionalInformation map
@@ -131,7 +151,7 @@ public class UserMapper {
                         .filter(a -> a.getValue() != null)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         if (!customClaims.isEmpty()) {
-            scimUser.setSchemas(GraviteeUser.SCHEMAS);
+            scimUser.setSchemas(user.isEnterpriseUser() ? GraviteeUser.SCHEMAS_WITH_ENTERPRISE : GraviteeUser.SCHEMAS);
             scimUser.setAdditionalInformation(customClaims);
         }
 
@@ -199,6 +219,22 @@ public class UserMapper {
         user.setEntitlements(scimUser.getEntitlements());
         user.setRoles(scimUser.getRoles());
         user.setX509Certificates(toModelCertificates(scimUser.getX509Certificates()));
+
+        // Enterprise User
+        if (scimUser instanceof EnterpriseUser enterpriseUser && enterpriseUser.getEnterpriseUser() != null) {
+            user.setEmployeeNumber(enterpriseUser.getEnterpriseUser().getEmployeeNumber());
+            user.setCostCenter(enterpriseUser.getEnterpriseUser().getCostCenter());
+            user.setOrganization(enterpriseUser.getEnterpriseUser().getOrganization());
+            user.setDepartment(enterpriseUser.getEnterpriseUser().getDepartment());
+            user.setDivision(enterpriseUser.getEnterpriseUser().getDivision());
+            if (enterpriseUser.getEnterpriseUser().getManager() != null) {
+                io.gravitee.am.model.scim.Manager manager = new io.gravitee.am.model.scim.Manager();
+                manager.setValue(enterpriseUser.getEnterpriseUser().getManager().getValue());
+                manager.setRef(enterpriseUser.getEnterpriseUser().getManager().getRef());
+                manager.setDisplayName(enterpriseUser.getEnterpriseUser().getManager().getDisplayName());
+                user.setManager(manager);
+            }
+        }
 
         // set additional information
         if (scimUser instanceof GraviteeUser graviteeUser && graviteeUser.getAdditionalInformation() != null) {

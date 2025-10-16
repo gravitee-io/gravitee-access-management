@@ -19,8 +19,10 @@ import io.gravitee.am.common.oidc.StandardClaims;
 import io.gravitee.am.common.oidc.idtoken.Claims;
 import io.gravitee.am.common.scim.Schema;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.scim.model.EnterpriseUser;
 import io.gravitee.am.gateway.handler.scim.model.GraviteeUser;
 import io.gravitee.am.gateway.handler.scim.model.User;
+import io.gravitee.am.model.scim.Manager;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -29,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -73,6 +77,40 @@ public class UserMapperTest {
         User scimUser = UserMapper.convert(user, "/", false);
         assertTrue(scimUser.getSchemas().contains(Schema.SCHEMA_URI_USER));
         assertTrue(((GraviteeUser) scimUser).getAdditionalInformation() == null);
+    }
+
+    @Test
+    public void shouldConvert_enterpriseUser() {
+        io.gravitee.am.model.User user = new io.gravitee.am.model.User();
+        user.setEmployeeNumber("12345");
+        user.setCostCenter("CC100");
+        user.setOrganization("Engineering");
+        user.setDivision("R&D");
+        user.setDepartment("Software");
+
+        Manager userManager = new Manager();
+        userManager.setValue("mgr123");
+        userManager.setRef("http://example.com/managers/mgr123");
+        userManager.setDisplayName("Jane Doe");
+        user.setManager(userManager);
+
+        User scimUser = UserMapper.convert(user, "/", false);
+        assertNotNull(scimUser);
+        assertTrue(scimUser instanceof EnterpriseUser);
+
+        EnterpriseUser.EnterpriseUser0 enterpriseUser = ((EnterpriseUser) scimUser).getEnterpriseUser();
+
+        assertEquals("12345", enterpriseUser.getEmployeeNumber());
+        assertEquals("CC100", enterpriseUser.getCostCenter());
+        assertEquals("Engineering", enterpriseUser.getOrganization());
+        assertEquals("R&D", enterpriseUser.getDivision());
+        assertEquals("Software", enterpriseUser.getDepartment());
+
+        io.gravitee.am.gateway.handler.scim.model.Manager resultManager = enterpriseUser.getManager();
+        assertNotNull(resultManager);
+        assertEquals("mgr123", resultManager.getValue());
+        assertEquals("http://example.com/managers/mgr123", resultManager.getRef());
+        assertEquals("Jane Doe", resultManager.getDisplayName());
     }
 
     private Map<String, Object> standardClaims() {

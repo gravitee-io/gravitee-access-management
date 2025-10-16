@@ -23,16 +23,20 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
+import io.gravitee.am.model.scim.Manager;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcOrganizationUser;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcUser;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserAddressesRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserAttributesRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserDynamicRoleRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserEntitlementRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserManagerRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringOrganizationUserRoleRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserManagerRepository;
 import io.gravitee.am.repository.management.api.OrganizationUserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
 import io.reactivex.rxjava3.core.Completable;
@@ -92,6 +96,10 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     private static final String ADDR_COL_COUNTRY = "country";
     private static final String ADDR_COL_PRIMARY = "primary";
 
+    private static final String MANAGER_COL_ID = "manager_id";
+    private static final String MANAGER_COL_REF = "ref";
+    private static final String MANAGER_COL_DISPLAY_NAME = "display_name";
+
     private static final String USER_COL_ID = "id";
     private static final String USER_COL_EMAIL = "email";
     private static final String USER_COL_EXTERNAL_ID = "external_id";
@@ -131,6 +139,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     private static final String USER_COL_ADDITIONAL_INFORMATION = "additional_information";
     private static final String USER_COL_FORCE_RESET_PASSWORD = "force_reset_password";
     private static final String USER_COL_SERVICE_ACCOUNT = "service_account";
+    private static final String USER_COL_EMPLOYEE_NUMBER = "employee_number";
+    private static final String USER_COL_COST_CENTER = "cost_center";
+    private static final String USER_COL_ORGANIZATION = "organization";
+    private static final String USER_COL_DIVISION = "division";
+    private static final String USER_COL_DEPARTMENT = "department";
 
 
     private static final List<String> USER_COLUMNS = List.of(
@@ -172,7 +185,12 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             USER_COL_FACTORS,
             USER_COL_ADDITIONAL_INFORMATION,
             USER_COL_FORCE_RESET_PASSWORD,
-            USER_COL_SERVICE_ACCOUNT
+            USER_COL_SERVICE_ACCOUNT,
+            USER_COL_EMPLOYEE_NUMBER,
+            USER_COL_COST_CENTER,
+            USER_COL_ORGANIZATION,
+            USER_COL_DIVISION,
+            USER_COL_DEPARTMENT
     );
 
 
@@ -195,6 +213,14 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             ATTR_COL_TYPE,
             ATTR_COL_PRIMARY
     );
+
+    private static final List<String> MANAGER_COLUMNS = List.of(
+            FK_USER_ID,
+            MANAGER_COL_ID,
+            MANAGER_COL_REF,
+            MANAGER_COL_DISPLAY_NAME
+    );
+
     public static final String REF_ID = "refId";
     public static final String REF_TYPE = "refType";
     private static final UserIdFields USER_ID_FIELDS = new UserIdFields(USER_COL_ID, USER_COL_SOURCE, USER_COL_EXTERNAL_ID);
@@ -206,6 +232,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     private String insertUserStatement;
     private String insertAddressStatement;
     private String insertAttributesStatement;
+    private String insertManagerStatement;
 
     @Autowired
     protected SpringOrganizationUserRepository userRepository;
@@ -225,6 +252,9 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     @Autowired
     protected SpringOrganizationUserEntitlementRepository entitlementRepository;
 
+    @Autowired
+    protected SpringOrganizationUserManagerRepository managerRepository;
+
     protected User toEntity(JdbcOrganizationUser entity) {
         return mapper.map(entity, User.class);
     }
@@ -239,6 +269,7 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         this.updateUserStatement = createUpdateStatement("organization_users", USER_COLUMNS, List.of(USER_COL_ID));
         this.insertAddressStatement = createInsertStatement("organization_user_addresses", ADDRESS_COLUMNS);
         this.insertAttributesStatement = createInsertStatement("organization_user_attributes", ATTRIBUTES_COLUMNS);
+        this.insertManagerStatement = createInsertStatement("organization_user_manager", MANAGER_COLUMNS);
     }
 
     @Override
@@ -435,6 +466,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
         insertSpec = addQuotedField(insertSpec, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
         insertSpec = addQuotedField(insertSpec, USER_COL_SERVICE_ACCOUNT, item.getServiceAccount(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_EMPLOYEE_NUMBER, item.getEmployeeNumber(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_COST_CENTER, item.getCostCenter(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_ORGANIZATION, item.getOrganization(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_DIVISION, item.getDivision(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_DEPARTMENT, item.getDepartment(), String.class);
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         insertAction = persistChildEntities(insertAction, item, UpdateActions.updateAll());
@@ -495,6 +531,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
         update = addQuotedField(update, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
         update = addQuotedField(update, USER_COL_SERVICE_ACCOUNT, item.getServiceAccount(), Boolean.class);
+        update = addQuotedField(update, USER_COL_EMPLOYEE_NUMBER, item.getEmployeeNumber(), String.class);
+        update = addQuotedField(update, USER_COL_COST_CENTER, item.getCostCenter(), String.class);
+        update = addQuotedField(update, USER_COL_ORGANIZATION, item.getOrganization(), String.class);
+        update = addQuotedField(update, USER_COL_DIVISION, item.getDivision(), String.class);
+        update = addQuotedField(update, USER_COL_DEPARTMENT, item.getDepartment(), String.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
@@ -538,7 +579,13 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         Mono<Long> deleteAddresses =getTemplate().getDatabaseClient().sql("DELETE FROM organization_user_addresses WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         Mono<Long> deleteAttributes = getTemplate().getDatabaseClient().sql("DELETE FROM organization_user_attributes WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         Mono<Long> deleteEntitlements = getTemplate().getDatabaseClient().sql("DELETE FROM organization_user_entitlements WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
-        return deleteRoles.then(deleteAddresses).then(deleteAttributes).then(deleteEntitlements).map(Long::longValue);
+        Mono<Long> deleteManager = getTemplate().getDatabaseClient().sql("DELETE FROM organization_user_manager WHERE user_id IN (SELECT id FROM organization_users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
+        return deleteRoles
+                .then(deleteAddresses)
+                .then(deleteAttributes)
+                .then(deleteEntitlements)
+                .then(deleteManager)
+                .map(Long::longValue);
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, User item, UpdateActions updateActions) {
@@ -594,6 +641,20 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 actionFlow = actionFlow.then(attributes.get());
             }
         }
+
+        if (updateActions.updateManager()) {
+            final Manager manager = item.getManager();
+            if (manager != null) {
+                actionFlow = actionFlow.then(Mono.defer(() -> {
+                    DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertManagerStatement).bind(FK_USER_ID, item.getId());
+                    insert = manager.getValue() != null ? insert.bind(MANAGER_COL_ID, manager.getValue()) : insert.bindNull(MANAGER_COL_ID, String.class);
+                    insert = manager.getRef() != null ? insert.bind(MANAGER_COL_REF, manager.getRef()) : insert.bindNull(MANAGER_COL_REF, String.class);
+                    insert = manager.getDisplayName() != null ? insert.bind(MANAGER_COL_DISPLAY_NAME, manager.getDisplayName()) : insert.bindNull(MANAGER_COL_DISPLAY_NAME, String.class);
+                    return insert.fetch().rowsUpdated();
+                }));
+            }
+        }
+
         return actionFlow;
     }
 
@@ -650,6 +711,10 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
             Mono<Long> deleteEntitlements = getTemplate().delete(JdbcOrganizationUser.Entitlements.class).matching(criteria).all();
             result = result.then(deleteEntitlements);
         }
+        if (actions.updateManager()) {
+            Mono<Long> deleteManager = getTemplate().delete(JdbcUser.Manager.class).matching(criteria).all();
+            result = result.then(deleteManager);
+        }
         return result;
     }
 
@@ -695,8 +760,24 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                                         user.setIms(map.get(ATTRIBUTE_USER_FIELD_IM));
                                     }
                                     return user;
+                                }))
+                .flatMap(user ->
+                        managerRepository.findByUserId(user.getId())
+                                .map(Optional::ofNullable)
+                                .switchIfEmpty(Maybe.just(Optional.empty()))
+                                .map(optManager -> {
+                                    optManager.ifPresent(manager -> user.setManager(convertManager(manager)));
+                                    return user;
                                 })
+                                .toSingle()
                 );
     }
 
+    private Manager convertManager(JdbcOrganizationUser.Manager userManager) {
+        var result = new Manager();
+        result.setRef(userManager.getRef());
+        result.setValue(userManager.getManagerId());
+        result.setDisplayName(userManager.getDisplayName());
+        return result;
+    }
 }

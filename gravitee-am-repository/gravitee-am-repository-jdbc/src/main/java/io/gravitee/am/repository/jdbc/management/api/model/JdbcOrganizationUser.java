@@ -236,4 +236,48 @@ public class JdbcOrganizationUser extends AbstractUser {
             this.primary = primary;
         }
     }
+
+    @Table("organization_user_manager")
+    public static class Manager {
+        @Column("user_id")
+        private String userId;
+        @Column("manager_id")
+        private String managerId;
+        @Column("ref")
+        private String ref;
+        @Column("display_name")
+        private String displayName;
+
+        public String getUserId() {
+            return userId;
+        }
+
+        public void setUserId(String userId) {
+            this.userId = userId;
+        }
+
+        public String getManagerId() {
+            return managerId;
+        }
+
+        public void setManagerId(String managerId) {
+            this.managerId = managerId;
+        }
+
+        public String getRef() {
+            return ref;
+        }
+
+        public void setRef(String ref) {
+            this.ref = ref;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public void setDisplayName(String displayName) {
+            this.displayName = displayName;
+        }
+    }
 }

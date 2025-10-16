@@ -26,8 +26,10 @@ import io.gravitee.am.model.analytics.AnalyticsQuery;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
+import io.gravitee.am.model.scim.Manager;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
+import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserManagerRepository;
 import io.gravitee.am.repository.jdbc.provider.common.OffsetPageRequest;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -118,6 +120,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String ADDR_COL_COUNTRY = "country";
     private static final String ADDR_COL_PRIMARY = "primary";
 
+    private static final String MANAGER_COL_ID = "manager_id";
+    private static final String MANAGER_COL_REF = "ref";
+    private static final String MANAGER_COL_DISPLAY_NAME = "display_name";
+
     private static final String USER_COL_ID = "id";
     private static final String USER_COL_EMAIL = "email";
     private static final String USER_COL_EXTERNAL_ID = "external_id";
@@ -155,6 +161,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private static final String USER_COL_FACTORS = "factors";
     private static final String USER_COL_ADDITIONAL_INFORMATION = "additional_information";
     private static final String USER_COL_FORCE_RESET_PASSWORD = "force_reset_password";
+    private static final String USER_COL_EMPLOYEE_NUMBER = "employee_number";
+    private static final String USER_COL_COST_CENTER = "cost_center";
+    private static final String USER_COL_ORGANIZATION = "organization";
+    private static final String USER_COL_DIVISION = "division";
+    private static final String USER_COL_DEPARTMENT = "department";
 
     public static final String USER_COL_LAST_PASSWORD_RESET = "last_password_reset";
     public static final String USER_COL_LAST_USERNAME_RESET = "last_username_reset";
@@ -205,7 +216,12 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             USER_COL_FACTORS,
             USER_COL_LAST_IDENTITY_USED,
             USER_COL_ADDITIONAL_INFORMATION,
-            USER_COL_FORCE_RESET_PASSWORD
+            USER_COL_FORCE_RESET_PASSWORD,
+            USER_COL_EMPLOYEE_NUMBER,
+            USER_COL_COST_CENTER,
+            USER_COL_ORGANIZATION,
+            USER_COL_DIVISION,
+            USER_COL_DEPARTMENT
     );
 
 
@@ -237,6 +253,14 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             USER_COL_LINKED_AT,
             USER_COL_ADDITIONAL_INFORMATION
     );
+
+    private static final List<String> MANAGER_COLUMNS = List.of(
+            FK_USER_ID,
+            MANAGER_COL_ID,
+            MANAGER_COL_REF,
+            MANAGER_COL_DISPLAY_NAME
+    );
+
     private static final String REF_ID = "refId";
     private static final String REF_TYPE = "refType";
     private static final String EMAIL = "email";
@@ -250,6 +274,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
     private String insertAddressStatement;
     private String insertAttributesStatement;
     private String insertIdentitiesStatement;
+    private String insertManagerStatement;
 
     @Autowired
     protected SpringUserRepository userRepository;
@@ -274,6 +299,9 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Autowired
     protected SpringUserIdentitiesRepository identitiesRepository;
+
+    @Autowired
+    protected SpringUserManagerRepository managerRepository;
 
     @Autowired
     protected Environment environment;
@@ -351,6 +379,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         result.setAdditionalInformation(mapToStringConverter.convertFrom(entity.getAdditionalInformation(), null));
         result.setX509Certificates(x509Converter.convertFrom(entity.getX509Certificates(), null));
         result.setForceResetPassword(entity.getForceResetPassword());
+        result.setEmployeeNumber(entity.getEmployeeNumber());
+        result.setCostCenter(entity.getCostCenter());
+        result.setOrganization(entity.getOrganization());
+        result.setDivision(entity.getDivision());
+        result.setDepartment(entity.getDepartment());
 
         return result;
     }
@@ -421,6 +454,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         result.setAdditionalInformation(mapToStringConverter.convertTo(entity.getAdditionalInformation(), null));
         result.setX509Certificates(x509Converter.convertTo(entity.getX509Certificates(), null));
         result.setForceResetPassword(entity.getForceResetPassword());
+        result.setEmployeeNumber(entity.getEmployeeNumber());
+        result.setCostCenter(entity.getCostCenter());
+        result.setOrganization(entity.getOrganization());
+        result.setDivision(entity.getDivision());
+        result.setDepartment(entity.getDepartment());
 
         return result;
     }
@@ -432,6 +470,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         this.insertAddressStatement = createInsertStatement("user_addresses", ADDRESS_COLUMNS);
         this.insertAttributesStatement = createInsertStatement("user_attributes", ATTRIBUTES_COLUMNS);
         this.insertIdentitiesStatement = createInsertStatement("user_identities", IDENTITIES_COLUMNS);
+        this.insertManagerStatement = createInsertStatement("user_manager", MANAGER_COLUMNS);
     }
 
     @Override
@@ -830,6 +869,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_FACTORS, item.getFactors());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
         insertSpec = addQuotedField(insertSpec, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_EMPLOYEE_NUMBER, item.getEmployeeNumber(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_COST_CENTER, item.getCostCenter(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_ORGANIZATION, item.getOrganization(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_DIVISION, item.getDivision(), String.class);
+        insertSpec = addQuotedField(insertSpec, USER_COL_DEPARTMENT, item.getDepartment(), String.class);
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
 
@@ -893,6 +937,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         update = databaseDialectHelper.addJsonField(update, USER_COL_FACTORS, item.getFactors());
         update = databaseDialectHelper.addJsonField(update, USER_COL_ADDITIONAL_INFORMATION, item.getAdditionalInformation());
         update = addQuotedField(update, USER_COL_FORCE_RESET_PASSWORD, item.getForceResetPassword(), Boolean.class);
+        update = addQuotedField(update, USER_COL_EMPLOYEE_NUMBER, item.getEmployeeNumber(), String.class);
+        update = addQuotedField(update, USER_COL_COST_CENTER, item.getCostCenter(), String.class);
+        update = addQuotedField(update, USER_COL_ORGANIZATION, item.getOrganization(), String.class);
+        update = addQuotedField(update, USER_COL_DIVISION, item.getDivision(), String.class);
+        update = addQuotedField(update, USER_COL_DEPARTMENT, item.getDepartment(), String.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
@@ -935,11 +984,13 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         Mono<Long> deleteAttributes = getTemplate().getDatabaseClient().sql("DELETE FROM user_attributes WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         Mono<Long> deleteEntitlements = getTemplate().getDatabaseClient().sql("DELETE FROM user_entitlements WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         Mono<Long> deleteIdentities = getTemplate().getDatabaseClient().sql("DELETE FROM user_identities WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
+        Mono<Long> deleteManager = getTemplate().getDatabaseClient().sql("DELETE FROM user_manager WHERE user_id IN (SELECT id FROM users u WHERE u.reference_type = :refType AND u.reference_id = :refId)").bind(REF_TYPE, refType).bind(REF_ID, refId).fetch().rowsUpdated();
         return deleteRoles
                 .then(deleteAddresses)
                 .then(deleteAttributes)
                 .then(deleteEntitlements)
-                .then(deleteIdentities);
+                .then(deleteIdentities)
+                .then(deleteManager);
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, User item, UpdateActions updateActions) {
@@ -1014,17 +1065,30 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         if (updateActions.updateIdentities()) {
             final List<UserIdentity> identities = item.getIdentities();
             if (identities != null && !identities.isEmpty()) {
-            actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(identity -> {
-                DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertIdentitiesStatement).bind(FK_USER_ID, item.getId());
-                insert = identity.getUserId() != null ? insert.bind(USER_COL_IDENTITY_ID, identity.getUserId()) : insert.bindNull(USER_COL_IDENTITY_ID, String.class);
-                insert = identity.getUsername() != null ? insert.bind(USER_COL_USERNAME, identity.getUsername()) : insert.bindNull(USER_COL_USERNAME, String.class);
-                insert = identity.getProviderId() != null ? insert.bind(USER_COL_PROVIDER_ID, identity.getProviderId()) : insert.bindNull(USER_COL_PROVIDER_ID, String.class);
-                insert = addQuotedField(insert, USER_COL_LINKED_AT, dateConverter.convertTo(identity.getLinkedAt(), null), LocalDateTime.class);
-                insert = identity.getAdditionalInformation() != null ? databaseDialectHelper.addJsonField(insert, USER_COL_ADDITIONAL_INFORMATION, identity.getAdditionalInformation()) : insert.bindNull(USER_COL_ADDITIONAL_INFORMATION, String.class);
-                return insert.fetch().rowsUpdated();
-            }).reduce(Long::sum));
+                actionFlow = actionFlow.then(Flux.fromIterable(identities).concatMap(identity -> {
+                    DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertIdentitiesStatement).bind(FK_USER_ID, item.getId());
+                    insert = identity.getUserId() != null ? insert.bind(USER_COL_IDENTITY_ID, identity.getUserId()) : insert.bindNull(USER_COL_IDENTITY_ID, String.class);
+                    insert = identity.getUsername() != null ? insert.bind(USER_COL_USERNAME, identity.getUsername()) : insert.bindNull(USER_COL_USERNAME, String.class);
+                    insert = identity.getProviderId() != null ? insert.bind(USER_COL_PROVIDER_ID, identity.getProviderId()) : insert.bindNull(USER_COL_PROVIDER_ID, String.class);
+                    insert = addQuotedField(insert, USER_COL_LINKED_AT, dateConverter.convertTo(identity.getLinkedAt(), null), LocalDateTime.class);
+                    insert = identity.getAdditionalInformation() != null ? databaseDialectHelper.addJsonField(insert, USER_COL_ADDITIONAL_INFORMATION, identity.getAdditionalInformation()) : insert.bindNull(USER_COL_ADDITIONAL_INFORMATION, String.class);
+                    return insert.fetch().rowsUpdated();
+                }).reduce(Long::sum));
+            }
         }
-    }
+
+        if (updateActions.updateManager()) {
+            final Manager manager = item.getManager();
+            if (manager != null) {
+                actionFlow = actionFlow.then(Mono.defer(() -> {
+                    DatabaseClient.GenericExecuteSpec insert = getTemplate().getDatabaseClient().sql(insertManagerStatement).bind(FK_USER_ID, item.getId());
+                    insert = manager.getValue() != null ? insert.bind(MANAGER_COL_ID, manager.getValue()) : insert.bindNull(MANAGER_COL_ID, String.class);
+                    insert = manager.getRef() != null ? insert.bind(MANAGER_COL_REF, manager.getRef()) : insert.bindNull(MANAGER_COL_REF, String.class);
+                    insert = manager.getDisplayName() != null ? insert.bind(MANAGER_COL_DISPLAY_NAME, manager.getDisplayName()) : insert.bindNull(MANAGER_COL_DISPLAY_NAME, String.class);
+                    return insert.fetch().rowsUpdated();
+                }));
+            }
+        }
 
         return actionFlow;
     }
@@ -1089,6 +1153,10 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
             Mono<Long> deleteIdentities = getTemplate().delete(JdbcUser.Identity.class).matching(criteria).all();
             result = result.then(deleteIdentities);
         }
+        if (actions.updateManager()) {
+            Mono<Long> deleteManager = getTemplate().delete(JdbcUser.Manager.class).matching(criteria).all();
+            result = result.then(deleteManager);
+        }
         return result;
     }
 
@@ -1147,7 +1215,16 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                                 .map(identities -> {
                                     user.setIdentities(identities);
                                     return user;
+                                }))
+                .flatMap(user ->
+                        managerRepository.findByUserId(user.getId())
+                                .map(Optional::ofNullable)
+                                .switchIfEmpty(Maybe.just(Optional.empty()))
+                                .map(optManager -> {
+                                    optManager.ifPresent(manager -> user.setManager(convertManager(manager)));
+                                    return user;
                                 })
+                                .toSingle()
                 );
     }
 
@@ -1190,4 +1267,11 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return result;
     }
 
+    private Manager convertManager(JdbcUser.Manager userManager) {
+        var result = new Manager();
+        result.setRef(userManager.getRef());
+        result.setValue(userManager.getManagerId());
+        result.setDisplayName(userManager.getDisplayName());
+        return result;
+    }
 }
