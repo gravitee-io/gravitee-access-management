@@ -22,7 +22,8 @@ export class ReleaseHotfix extends AbstractStepRelease {
       gio_action: 'release-hotfix-version',
       hotfix_version: true,
       tag_latest: false,
-      tag_latest_support: false
+      tag_latest_support: false,
+      create_maintenance_version_branch: false
     };
   }
 }
