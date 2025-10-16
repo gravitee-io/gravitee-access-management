@@ -60,7 +60,7 @@ public abstract class AbstractSensitiveProxy {
                 if (isSensitiveUri(entry) && configurationNode.get(entry.getKey()) instanceof TextNode) {
                     final String uri = configurationNode.get(entry.getKey()).asText();
                     extractPasswordFromUriUserInfo(uri).ifPresent(passwordToHide ->
-                        ((ObjectNode) configurationNode).put(entry.getKey(), uri.replaceFirst(quote(passwordToHide), SENSITIVE_VALUE))
+                        ((ObjectNode) configurationNode).put(entry.getKey(), uri.replaceFirst(quote(passwordToHide+"@"), SENSITIVE_VALUE+"@"))
                     );
                 }
             });
@@ -124,7 +124,7 @@ public abstract class AbstractSensitiveProxy {
                         extractPasswordFromUriUserInfo(newUri.asText()).ifPresent(newPassword -> {
                             if (SENSITIVE_VALUE_PATTERN.matcher(newPassword).matches()) {
                                 extractPasswordFromUriUserInfo(oldUriNode.asText()).or(() -> Optional.of(""))
-                                        .ifPresent(oldPwd -> ((ObjectNode) updatedConfigurationNode).put(entry.getKey(), newUri.asText().replaceFirst(quote(newPassword), oldPwd)));
+                                        .ifPresent(oldPwd -> ((ObjectNode) updatedConfigurationNode).put(entry.getKey(), newUri.asText().replaceFirst(quote(newPassword+"@"), oldPwd+"@")));
                             }
                         });
                     }
