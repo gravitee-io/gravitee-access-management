@@ -21,6 +21,7 @@ import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
@@ -39,6 +40,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
 import java.util.HashMap;
@@ -65,6 +67,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
 
     private AuthenticationFlowContextService authenticationFlowContextService;
 
+    private JWTService jwtService;
     private boolean exitOnError;
     public AuthorizationCodeTokenGranter() {
         super(GrantType.AUTHORIZATION_CODE);
@@ -76,7 +79,8 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                                          UserAuthenticationManager userAuthenticationManager,
                                          AuthenticationFlowContextService authenticationFlowContextService,
                                          Environment env,
-                                         RulesEngine rulesEngine) {
+                                         RulesEngine rulesEngine,
+                                         JWTService jwtService) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
@@ -85,6 +89,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
         this.userAuthenticationManager = userAuthenticationManager;
         this.authenticationFlowContextService = authenticationFlowContextService;
         this.exitOnError = env.getProperty("authenticationFlow.exitOnError", Boolean.class, Boolean.FALSE);
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -98,33 +103,47 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
 
         return super.parseRequest(tokenRequest, client)
                 .flatMap(tokenRequest1 -> authorizationCodeService.remove(code, client)
-                        .flatMap(authorizationCode ->
-                                authenticationFlowContextService.removeContext(authorizationCode.getTransactionId(), authorizationCode.getContextVersion())
-                                    .onErrorResumeNext(error -> (exitOnError) ? Maybe.error(error) : Maybe.just(new AuthenticationFlowContext()))
-                                    .map(ctx -> {
-                                        checkRedirectUris(tokenRequest1, authorizationCode);
-                                        checkPKCE( tokenRequest1, authorizationCode);
-                                        // set resource owner
-                                        tokenRequest1.setSubject(authorizationCode.getSubject());
-                                        // set original scopes
-                                        tokenRequest1.setScopes(authorizationCode.getScopes());
-                                        // set authorization code initial request parameters (step1 of authorization code flow)
-                                        if (authorizationCode.getRequestParameters() != null) {
-                                            authorizationCode.getRequestParameters().forEach((key, value) -> tokenRequest1.parameters().putIfAbsent(key, value));
+                        .flatMap(authorizationCode -> {
+                                    var actorValidation = Single.just(tokenRequest1);
+                                    if (authorizationCode.getRequestParameters().containsKey("requested_actor")) {
+                                        tokenRequest1.getAdditionalParameters().put("requested_actor", authorizationCode.getRequestParameters().get("requested_actor"));
+                                        // check actorId
+                                        final var actorToken = tokenRequest.parameters().getFirst("actor_token");
+                                        if (actorToken != null) {
+                                            // for commodity, all clients in the domain are using the same cert, but we should retrieve the right cert based on the JWT header first
+                                            actorValidation = jwtService.decodeAndVerify(actorToken, client, JWTService.TokenType.ID_TOKEN).map(__ -> tokenRequest1);
                                         }
-                                        // set decoded authorization code to the current request
-                                        Map<String, Object> decodedAuthorizationCode = new HashMap<>();
-                                        decodedAuthorizationCode.put("code", authorizationCode.getCode());
-                                        decodedAuthorizationCode.put("transactionId", authorizationCode.getTransactionId());
-                                        tokenRequest1.setAuthorizationCode(decodedAuthorizationCode);
+                                    }
 
-                                        // store only the AuthenticationFlowContext.data attributes in order to simplify EL templating
-                                        // and provide an up to date set of data if the enrichAuthFlow Policy ius used multiple time in a step
-                                        // {#context.attributes['authFlow']['entry']}
-                                        tokenRequest1.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, ctx.getData());
+                                    return actorValidation.flatMapMaybe(tokenRequest2 ->
+                                            authenticationFlowContextService.removeContext(authorizationCode.getTransactionId(), authorizationCode.getContextVersion())
+                                             .onErrorResumeNext(error -> (exitOnError) ? Maybe.error(error) : Maybe.just(new AuthenticationFlowContext()))
+                                            .map(ctx -> {
+                                                checkRedirectUris(tokenRequest2, authorizationCode);
+                                                checkPKCE(tokenRequest2, authorizationCode);
+                                                // set resource owner
+                                                tokenRequest2.setSubject(authorizationCode.getSubject());
+                                                // set original scopes
+                                                tokenRequest2.setScopes(authorizationCode.getScopes());
+                                                // set authorization code initial request parameters (step1 of authorization code flow)
+                                                if (authorizationCode.getRequestParameters() != null) {
+                                                    authorizationCode.getRequestParameters().forEach((key, value) -> tokenRequest2.parameters().putIfAbsent(key, value));
+                                                }
+                                                // set decoded authorization code to the current request
+                                                Map<String, Object> decodedAuthorizationCode = new HashMap<>();
+                                                decodedAuthorizationCode.put("code", authorizationCode.getCode());
+                                                decodedAuthorizationCode.put("transactionId", authorizationCode.getTransactionId());
+                                                tokenRequest2.setAuthorizationCode(decodedAuthorizationCode);
 
-                                        return tokenRequest1;
-                                    })
+                                                // store only the AuthenticationFlowContext.data attributes in order to simplify EL templating
+                                                // and provide an up to date set of data if the enrichAuthFlow Policy ius used multiple time in a step
+                                                // {#context.attributes['authFlow']['entry']}
+                                                tokenRequest2.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, ctx.getData());
+
+                                                return tokenRequest2;
+                                            }
+                                            ));
+                                }
                         ).toSingle());
     }
 

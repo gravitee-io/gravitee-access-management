@@ -56,11 +56,25 @@ export class ApplicationCreationStep1Component implements OnInit {
       subDescription: 'e.g : Shell script, daemon, CLI',
     },
     {
+      name: 'Agent',
+      icon: 'settings_applications',
+      type: 'AGENT',
+      description: 'Agent applications',
+      subDescription: 'e.g : Monitoring agents, automation tools',
+    },
+    {
       name: 'Resource Server',
       icon: 'folder_shared',
       type: 'RESOURCE_SERVER',
       description: 'Resource Server apps',
       subDescription: 'e.g : APIs',
+    },
+    {
+      name: 'MCP Server',
+      icon: 'folder_shared',
+      type: 'MCP',
+      description: 'Model Context Protocol Server apps',
+      subDescription: 'e.g : Jira/Stripe/GitHub',
     },
   ];
 

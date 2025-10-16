@@ -1,0 +1,189 @@
+<!--
+    Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+            http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <div>
+    <div fxFlex="70">
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
+          <h5>Agent Card Information</h5>
+          <mat-divider></mat-divider>
+        </div>
+        
+        <!-- Agent Card URL Display -->
+        <div style="margin-bottom: 20px;">
+          <mat-form-field appearance="outline" floatLabel="always" style="width: 100%;">
+            <mat-label>Agent Card URL</mat-label>
+            <input
+              matInput
+              type="url"
+              [value]="application.agentCardUrl"
+              readonly
+            />
+            <mat-hint>Configured URL to the agent's .well-known/agent.json endpoint</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="margin-bottom: 20px;">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="fetchViaBackend()"
+            [disabled]="loading || !application.agentCardUrl">
+            <mat-icon>cloud_download</mat-icon>
+            Fetch Agent Info
+          </button>
+          
+          <button
+            mat-stroked-button
+            (click)="fetchAgentInfo()"
+            [disabled]="loading || !application.agentCardUrl"
+            style="margin-left: 10px;">
+            <mat-icon>refresh</mat-icon>
+            Direct Fetch (may fail due to CORS)
+          </button>
+          
+          <button
+            mat-stroked-button
+            (click)="testUrl()"
+            [disabled]="!application.agentCardUrl"
+            style="margin-left: 10px;">
+            <mat-icon>open_in_new</mat-icon>
+            Test URL
+          </button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div *ngIf="loading" style="text-align: center; margin: 20px 0;">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>Loading agent information...</p>
+        </div>
+
+        <!-- Error Display -->
+        <div *ngIf="error" style="margin: 20px 0; padding: 15px; background-color: #ffebee; border-radius: 4px; border-left: 4px solid #f44336;">
+          <h6 style="color: #d32f2f; margin: 0 0 10px 0;">
+            <mat-icon style="vertical-align: middle; margin-right: 5px;">error</mat-icon>
+            Error Loading Agent Information
+          </h6>
+          <p style="margin: 0; color: #d32f2f;">{{ error }}</p>
+          <button
+            mat-button
+            color="primary"
+            (click)="refreshAgentInfo()"
+            style="margin-top: 10px;">
+            <mat-icon>refresh</mat-icon>
+            Try Again
+          </button>
+        </div>
+
+        <!-- Agent Information Display -->
+        <div *ngIf="agentInfo && !loading" style="margin-top: 20px;">
+          <div style="background-color: #f5f5f5; border-radius: 8px; padding: 20px;">
+            <h6 style="margin: 0 0 15px 0; color: #1976d2;">
+              <mat-icon style="vertical-align: middle; margin-right: 5px;">info</mat-icon>
+              Agent Information
+            </h6>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div *ngIf="agentInfo.name">
+                <strong>Name:</strong>
+                <p style="margin: 5px 0 0 0;">{{ agentInfo.name }}</p>
+              </div>
+              
+              <div *ngIf="agentInfo.version">
+                <strong>Version:</strong>
+                <p style="margin: 5px 0 0 0;">{{ agentInfo.version }}</p>
+              </div>
+              
+              <div *ngIf="agentInfo.protocolVersion" style="grid-column: 1 / -1;">
+                <strong>Protocol Version:</strong>
+                <p style="margin: 5px 0 0 0;">{{ agentInfo.protocolVersion }}</p>
+              </div>
+              
+              <div *ngIf="agentInfo.description" style="grid-column: 1 / -1;">
+                <strong>Description:</strong>
+                <p style="margin: 5px 0 0 0;">{{ agentInfo.description }}</p>
+              </div>
+            </div>
+
+            <!-- Skills Section -->
+            <div *ngIf="agentInfo.skills && agentInfo.skills.length > 0" style="margin-top: 20px;">
+              <strong>Skills:</strong>
+              <div style="margin-top: 10px;">
+                <mat-chip-list>
+                  <mat-chip *ngFor="let skill of agentInfo.skills" [title]="skill.description">
+                    {{ skill.name }}
+                  </mat-chip>
+                </mat-chip-list>
+              </div>
+            </div>
+
+            <!-- Capabilities Section -->
+            <div *ngIf="agentInfo.capabilities && agentInfo.capabilities.length > 0" style="margin-top: 20px;">
+              <strong>Capabilities:</strong>
+              <div style="margin-top: 10px;">
+                <mat-chip-list>
+                  <mat-chip *ngFor="let capability of agentInfo.capabilities">
+                    {{ capability }}
+                  </mat-chip>
+                </mat-chip-list>
+              </div>
+            </div>
+
+            <!-- Raw JSON Display (Collapsible) -->
+            <div style="margin-top: 20px;">
+              <button
+                mat-button
+                (click)="showRawJson = !showRawJson"
+                style="color: #666;">
+                <mat-icon>{{ showRawJson ? 'expand_less' : 'expand_more' }}</mat-icon>
+                {{ showRawJson ? 'Hide' : 'Show' }} Raw JSON
+              </button>
+              
+              <div *ngIf="showRawJson" style="margin-top: 10px;">
+                <pre style="background-color: #f8f8f8; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px;">{{ agentInfo | json }}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Agent Info Message -->
+        <div *ngIf="!agentInfo && !loading && !error && application.agentCardUrl" style="text-align: center; margin: 40px 0; color: #666;">
+          <mat-icon style="font-size: 48px; color: #ccc; margin-bottom: 10px;">info</mat-icon>
+          <p>Click "Fetch Agent Info" to load agent information from the configured URL.</p>
+          <p><em>Agent information is automatically fetched when you visit this page.</em></p>
+        </div>
+
+        <!-- No Agent Card URL Message -->
+        <div *ngIf="!application.agentCardUrl" style="text-align: center; margin: 40px 0; color: #666;">
+          <mat-icon style="font-size: 48px; color: #ccc; margin-bottom: 10px;">link_off</mat-icon>
+          <p>No Agent Card URL configured for this application.</p>
+          <p>Configure the Agent Card URL in the application settings to view agent information.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="gv-page-description" fxFlex>
+      <h3>Agent Card</h3>
+      <div class="gv-page-description-content">
+        <p>View and manage agent information for this AGENT application.</p>
+        <p>The agent card displays information fetched from the configured Agent Card URL (.well-known/agent.json endpoint), including capabilities, skills, and metadata.</p>
+        <p><strong>Default behavior:</strong> Agent information is automatically fetched via the backend proxy to avoid CORS issues. You can also try direct fetching if needed.</p>
+      </div>
+    </div>
+  </div>
+</div>

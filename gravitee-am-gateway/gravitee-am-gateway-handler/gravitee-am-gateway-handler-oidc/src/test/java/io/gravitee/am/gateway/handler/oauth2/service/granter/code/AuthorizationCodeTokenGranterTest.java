@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.code;
 
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -59,6 +60,8 @@ public class AuthorizationCodeTokenGranterTest {
 
     @Mock
     private UserAuthenticationManager userAuthenticationManager;
+    @Mock
+    private JWTService jwtService;
 
     @Mock
     private AuthenticationFlowContextService authenticationFlowContextService;
@@ -75,7 +78,7 @@ public class AuthorizationCodeTokenGranterTest {
     @Before
     public void init() {
         Mockito.when(env.getProperty(any(), Mockito.eq(Boolean.class), any())).thenReturn(true);
-        granter = new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, env, rulesEngine);
+        granter = new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, env, rulesEngine, jwtService);
     }
 
     @Test

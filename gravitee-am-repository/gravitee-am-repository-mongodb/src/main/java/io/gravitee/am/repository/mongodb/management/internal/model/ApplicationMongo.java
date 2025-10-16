@@ -31,6 +31,7 @@ public class ApplicationMongo extends Auditable {
     private String name;
     private String type;
     private String description;
+    private String agentCardUrl;
     private String domain;
     private boolean enabled = true;
     private boolean template;
@@ -73,6 +74,14 @@ public class ApplicationMongo extends Auditable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getAgentCardUrl() {
+        return agentCardUrl;
+    }
+
+    public void setAgentCardUrl(String agentCardUrl) {
+        this.agentCardUrl = agentCardUrl;
     }
 
     public String getDomain() {

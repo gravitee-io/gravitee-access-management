@@ -84,6 +84,7 @@ export const NewApplicationTypeEnum = {
   Native: 'NATIVE',
   Browser: 'BROWSER',
   Service: 'SERVICE',
+  Agent: 'AGENT',
   ResourceServer: 'RESOURCE_SERVER',
 } as const;
 export type NewApplicationTypeEnum = typeof NewApplicationTypeEnum[keyof typeof NewApplicationTypeEnum];

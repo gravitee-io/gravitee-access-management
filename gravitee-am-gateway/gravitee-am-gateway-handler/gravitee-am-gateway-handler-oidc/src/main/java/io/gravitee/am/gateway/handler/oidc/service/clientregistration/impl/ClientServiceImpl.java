@@ -204,6 +204,7 @@ public class ClientServiceImpl implements ClientService {
             case io.gravitee.am.common.oidc.ApplicationType.WEB -> ApplicationType.WEB;
             case io.gravitee.am.common.oidc.ApplicationType.NATIVE -> ApplicationType.NATIVE;
             case io.gravitee.am.common.oidc.ApplicationType.BROWSER -> ApplicationType.BROWSER;
+            case io.gravitee.am.common.oidc.ApplicationType.MCP -> ApplicationType.MCP;
             default -> ApplicationType.SERVICE;
         };
     }
@@ -284,6 +285,7 @@ public class ClientServiceImpl implements ClientService {
         advancedSettings.setSkipConsent(client.getAutoApproveScopes() != null && client.getAutoApproveScopes().contains("true"));
         advancedSettings.setFlowsInherited(client.isFlowsInherited());
         applicationSettings.setAdvanced(advancedSettings);
+        applicationSettings.setMcp(client.getMcp());
 
         // account settings
         if (client.getAccountSettings() != null) {

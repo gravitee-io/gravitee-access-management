@@ -42,6 +42,7 @@ public class ExtensionGrantGranterTest {
                 Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock(),
+                Mockito.mock(),
                 Mockito.mock());
 
         TokenRequest tokenRequest = new TokenRequest();
@@ -65,6 +66,7 @@ public class ExtensionGrantGranterTest {
         ExtensionGrantGranter granter = new ExtensionGrantGranter(
                 extensionGrantProvider,
                 extensionGrant,
+                Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock(),

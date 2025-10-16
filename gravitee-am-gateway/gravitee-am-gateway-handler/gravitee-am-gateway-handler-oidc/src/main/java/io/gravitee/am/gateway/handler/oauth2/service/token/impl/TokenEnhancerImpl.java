@@ -46,7 +46,7 @@ public class TokenEnhancerImpl implements TokenEnhancer {
      * Probably will be removed in 4.9.0
      */
     @Deprecated(forRemoval = true)
-    @Value("${legacy.openid.accept_openid_for_service_app:false}")
+    @Value("${legacy.openid.accept_openid_for_service_app:true}")
     private Boolean acceptOpenidForServiceApp = Boolean.FALSE;
 
     @Override
