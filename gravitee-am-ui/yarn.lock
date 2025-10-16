@@ -10578,6 +10578,7 @@ __metadata:
     "@ngx-formly/material": "npm:6.3.12"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/jest": "npm:29.5.14"
+    "@types/json-schema": "npm:^7.0.15"
     "@types/lodash": "npm:4.17.20"
     "@types/node": "npm:20.11.23"
     "@typescript-eslint/eslint-plugin": "npm:8.35.1"
