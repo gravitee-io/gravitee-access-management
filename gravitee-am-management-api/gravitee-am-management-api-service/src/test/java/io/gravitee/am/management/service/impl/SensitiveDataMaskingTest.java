@@ -37,13 +37,21 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
 
     private static final String URI_WITH_USERNAME = "mongodb+srv://user@hostname/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
 
+    private static final String URI_WITH_USERNAME_AND_MULTIPLE_HOST = "mongodb+srv://user@hostname1,hostname2/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
+
     private static final String URI_WITH_CREDENTIALS = "mongodb+srv://user:password@hostname/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
+
+    private static final String URI_WITH_CREDENTIALS_AND_MULTIPLE_HOST = "mongodb+srv://user:password@hostname1,hostname2/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
 
     private static final String URI_WITH_CREDENTIALS_EMPTY_PWD = "mongodb+srv://user:@hostname/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
 
     private static final String URI_WITH_UPDATED_CREDENTIALS = "mongodb+srv://user:password@hostname/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
 
+    private static final String URI_WITH_UPDATED_CREDENTIALS_AND_MULTIPLE_HOST = "mongodb+srv://user:password@hostname1,hostname2/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
+
     private static final String URI_WITH_MASKED_PWD = "mongodb+srv://user:"+SENSITIVE_VALUE+"@hostname/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
+
+    private static final String URI_WITH_MASKED_PWD_AND_MULTIPLE_HOST = "mongodb+srv://user:"+SENSITIVE_VALUE+"@hostname1,hostname2/dbname?retryWrites=true&w=majority&connectTimeoutMS=10000&maxIdleTimeMS=30000";
 
     private static final String TESTABLE_SCHEMA = "{\n" +
             "  \"type\" : \"object\",\n" +
@@ -92,11 +100,28 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
         });
     }
 
+
+    @Test
+    public void shouldFilter_URI_withPassword_and_multiple_host() throws Exception {
+        final JsonNode config = objectMapper.readTree("{ \"uri\": \"" + URI_WITH_CREDENTIALS_AND_MULTIPLE_HOST + "\"}");
+        filterSensitiveData(schema, config, (maskedConfig) -> {
+            assertUriEquals("Password must be replace by '*'", URI_WITH_MASKED_PWD_AND_MULTIPLE_HOST, maskedConfig);
+        });
+    }
+
     @Test
     public void shouldNoFilter_URI_withoutPassword() throws Exception {
         final JsonNode config = objectMapper.readTree("{ \"uri\": \"" + URI_WITH_USERNAME + "\"}");
         filterSensitiveData(schema, config, (maskedConfig) -> {
             assertUriEquals("URI should be the same", URI_WITH_USERNAME, maskedConfig);
+        });
+    }
+
+    @Test
+    public void shouldNoFilter_URI_withoutPassword_and_multiHost() throws Exception {
+        final JsonNode config = objectMapper.readTree("{ \"uri\": \"" + URI_WITH_USERNAME_AND_MULTIPLE_HOST + "\"}");
+        filterSensitiveData(schema, config, (maskedConfig) -> {
+            assertUriEquals("URI should be the same", URI_WITH_USERNAME_AND_MULTIPLE_HOST, maskedConfig);
         });
     }
 
@@ -159,6 +184,18 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
     }
 
     @Test
+    public void shouldUpdate_URI_withUserPassword_And_PreservePassword_And_multiple_host() throws Exception {
+        // receive new URI (additional param) but with masked Password
+        final JsonNode newConfig = objectMapper.readTree("{ \"uri\": \"" + URI_WITH_MASKED_PWD_AND_MULTIPLE_HOST + "custom-param=toto\"}");
+        final JsonNode oldConfig = objectMapper.readTree("{ \"uri\": \"" + URI_WITH_CREDENTIALS_AND_MULTIPLE_HOST + "\"}");
+
+        updateSensitiveData(newConfig, oldConfig, schema, (uriToUpdate) -> {
+            // the final value must be the uri with password present into the old value
+            assertUriEquals("URI should be updated with previous password", URI_WITH_CREDENTIALS_AND_MULTIPLE_HOST + "custom-param=toto", uriToUpdate);
+        });
+    }
+
+    @Test
     public void shouldNotUpdate_URI_withUserPassword_IfNoChanges() throws Exception {
         // receive new URI (additional param) but with masked Password
         final JsonNode newConfig = objectMapper.readTree("{ \"uri\": \"" + URI_WITH_MASKED_PWD + "\"}");
@@ -179,6 +216,18 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
         updateSensitiveData(newConfig, oldConfig, schema, (uriToUpdate) -> {
             // the final value must be the new uri without change
             assertUriEquals("URI should be updated with the new value", URI_WITH_UPDATED_CREDENTIALS + "custom-param=toto", uriToUpdate);
+        });
+    }
+
+    @Test
+    public void shouldUpdate_URI_withUserPassword_And_UpdatePassword_with_multiHost() throws Exception {
+        // receive new URI (additional param) but with new Password
+        final JsonNode newConfig = objectMapper.readTree("{ \"uri\": \"" + URI_WITH_UPDATED_CREDENTIALS_AND_MULTIPLE_HOST + "custom-param=toto\"}");
+        final JsonNode oldConfig = objectMapper.readTree("{ \"uri\": \"" + URI_WITH_CREDENTIALS_AND_MULTIPLE_HOST + "\"}");
+
+        updateSensitiveData(newConfig, oldConfig, schema, (uriToUpdate) -> {
+            // the final value must be the new uri without change
+            assertUriEquals("URI should be updated with the new value", URI_WITH_UPDATED_CREDENTIALS_AND_MULTIPLE_HOST + "custom-param=toto", uriToUpdate);
         });
     }
 
@@ -225,4 +274,5 @@ public class SensitiveDataMaskingTest extends AbstractSensitiveProxy {
             fail();
         }
     }
+
 }
