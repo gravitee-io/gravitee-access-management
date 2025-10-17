@@ -16,6 +16,7 @@
 package io.gravitee.am.identityprovider.api.context;
 
 import io.gravitee.am.identityprovider.api.AuthenticationContext;
+import io.gravitee.am.model.safe.DomainProperties;
 
 import java.util.Map;
 
@@ -26,6 +27,7 @@ import java.util.Map;
 public class EvaluableAuthenticationContext {
 
     private final AuthenticationContext authenticationContext;
+    private DomainProperties domain;
 
     public EvaluableAuthenticationContext(AuthenticationContext authenticationContext) {
         this.authenticationContext = authenticationContext;
@@ -35,4 +37,11 @@ public class EvaluableAuthenticationContext {
         return authenticationContext.getAttributes();
     }
 
+    public DomainProperties getDomain() {
+        return domain;
+    }
+
+    public void setDomain(DomainProperties domain) {
+        this.domain = domain;
+    }
 }

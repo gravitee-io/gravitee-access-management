@@ -242,6 +242,7 @@ public abstract class WebAuthnHandler extends AbstractEndpoint implements Handle
             authenticationContext.set(Claims.USER_AGENT, RequestUtils.userAgent(httpServerRequest));
         }
         authenticationContext.set(Claims.DOMAIN, domainDataPlane.getDomain().getId());
+        authenticationContext.setDomain(domainDataPlane.getDomain());
         authenticationContext.setAttribute(DEVICE_ID, context.request().getParam(DEVICE_ID));
         return authenticationContext;
     }
