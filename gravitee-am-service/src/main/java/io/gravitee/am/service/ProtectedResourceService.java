@@ -17,11 +17,22 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.service.model.ProtectedResourceSecret;
+import io.gravitee.am.model.ProtectedResource.Type;
+import io.gravitee.am.model.ProtectedResourcePrimaryData;
+import io.gravitee.am.model.ProtectedResourceSecret;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.reactivex.rxjava3.core.Single;
+
+import java.util.List;
 
 public interface ProtectedResourceService {
 
     Single<ProtectedResourceSecret> create(Domain domain, User user, NewProtectedResource protectedResource);
+
+    Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest);
+
+    Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest);
+
 }

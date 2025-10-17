@@ -18,10 +18,9 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
+import static io.gravitee.am.model.ProtectedResource.Type.MCP_SERVER;
+import static io.reactivex.rxjava3.core.Single.zip;
 
 public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
 
@@ -110,6 +112,135 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
 
     }
 
+    @Test
+    public void shouldFindBySearch() {
+        ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings());
+        ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings());
+
+        ProtectedResource differentDomain = generateResource("ggg", "domainSearch12", "client1", generateClientSecret(), generateApplicationSecretSettings());
+
+        zip(repository.create(toSave1), repository.create(toSave2), repository.create(differentDomain), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.findByDomainAndType(toSave1.getDomainId(), MCP_SERVER, PageSortRequest.builder()
+                        .page(0)
+                        .size(2)
+                        .sortBy("name")
+                        .asc(true)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 0)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 2)
+                .assertValue(page -> List.copyOf(page.getData()).get(0).id().equals(toSave1.getId()))
+                .assertValue(page -> List.copyOf(page.getData()).get(1).id().equals(toSave2.getId()));
+
+        repository.findByDomainAndType(toSave1.getDomainId(), MCP_SERVER, PageSortRequest.builder()
+                        .page(0)
+                        .size(2)
+                        .sortBy("name")
+                        .asc(false)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 0)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 2)
+                .assertValue(page -> List.copyOf(page.getData()).get(0).id().equals(toSave2.getId()))
+                .assertValue(page -> List.copyOf(page.getData()).get(1).id().equals(toSave1.getId()));
+
+        repository.findByDomainAndType(toSave1.getDomainId(), MCP_SERVER, PageSortRequest.builder()
+                        .page(1)
+                        .size(2)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 1)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().isEmpty());
+
+        repository.findByDomainAndType(toSave1.getDomainId(), MCP_SERVER, PageSortRequest.builder()
+                        .page(1)
+                        .size(1)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 1)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 1);
+    }
+
+    @Test
+    public void shouldFindBySearchByIds() {
+
+        ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings());
+        ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings());
+
+        ProtectedResource differentDomain = generateResource("ggg", "domainSearch21", "client1",generateClientSecret(), generateApplicationSecretSettings());
+
+        zip(repository.create(toSave1), repository.create(toSave2), repository.create(differentDomain), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), MCP_SERVER, List.of(), PageSortRequest.builder()
+                        .page(0)
+                        .size(2)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 0)
+                .assertValue(page -> page.getTotalCount() == 0)
+                .assertValue(page -> page.getData().isEmpty());
+
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), MCP_SERVER, List.of(toSave1.getId(), toSave2.getId()), PageSortRequest.builder()
+                        .page(0)
+                        .size(2)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 0)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 2)
+                .assertValue(page -> page.getData().stream().anyMatch(res -> res.id().equals(toSave1.getId())))
+                .assertValue(page -> page.getData().stream().anyMatch(res -> res.id().equals(toSave2.getId())));
+
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), MCP_SERVER, List.of(toSave1.getId(), toSave2.getId()), PageSortRequest.builder()
+                        .page(1)
+                        .size(2)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 1)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().isEmpty());
+
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), MCP_SERVER, List.of(toSave1.getId(), toSave2.getId()), PageSortRequest.builder()
+                        .page(1)
+                        .size(1)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 1)
+                .assertValue(page -> page.getTotalCount() == 2)
+                .assertValue(page -> page.getData().size() == 1);
+
+        repository.findByDomainAndTypeAndIds(toSave1.getDomainId(), MCP_SERVER, List.of(toSave1.getId()), PageSortRequest.builder()
+                        .page(0)
+                        .size(2)
+                        .build())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertValue(page -> page.getCurrentPage() == 0)
+                .assertValue(page -> page.getTotalCount() == 1)
+                .assertValue(page -> page.getData().size() == 1)
+                .assertValue(page -> page.getData().stream().anyMatch(res -> res.id().equals(toSave1.getId())))
+                .assertValue(page -> page.getData().stream().noneMatch(res -> res.id().equals(toSave2.getId())));
+    }
+
     private ClientSecret generateClientSecret() {
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setId(RandomString.generate());
@@ -129,12 +260,20 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     private ProtectedResource generateResource(ClientSecret clientSecret, ApplicationSecretSettings secretSettings) {
+        return generateResource("test-resource", "domainId", "clientId", clientSecret, secretSettings);
+    }
+
+    private ProtectedResource generateResource(String name, ClientSecret clientSecret, ApplicationSecretSettings secretSettings) {
+        return generateResource(name, "domainId", "clientId", clientSecret, secretSettings);
+    }
+
+    private ProtectedResource generateResource(String name, String domainId, String clientId, ClientSecret clientSecret, ApplicationSecretSettings secretSettings) {
         ProtectedResource toSave = new ProtectedResource();
         toSave.setId(RandomString.generate());
-        toSave.setName("test-resource");
-        toSave.setClientId("client-id");
-        toSave.setDomainId("domain-id");
-        toSave.setType(ProtectedResource.Type.MCP_SERVER);
+        toSave.setName(name);
+        toSave.setClientId(clientId);
+        toSave.setDomainId(domainId);
+        toSave.setType(MCP_SERVER);
         toSave.setCreatedAt(new Date());
         toSave.setUpdatedAt(new Date());
         toSave.setDescription("description");

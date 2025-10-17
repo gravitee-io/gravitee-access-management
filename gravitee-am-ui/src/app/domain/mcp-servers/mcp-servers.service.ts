@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { Observable, shareReplay, map } from 'rxjs';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
+import { Page, Sort } from '../../services/api.model';
 import {
   NewProtectedResourceRequest,
   NewProtectedResourceResponse,
   ProtectedResourceService,
+  ProtectedResourceType,
 } from '../../services/protected-resource.service';
 
 @Injectable({
@@ -28,21 +31,23 @@ import {
 export class McpServersService {
   constructor(private service: ProtectedResourceService) {}
 
-  findByDomain(domainId: string, page: number, size: number): Observable<McpServer[]> {
-    return this.service.findByDomain(domainId, page, size).pipe(
+  findByDomain(domainId: string, page: number, size: number, sort: Sort): Observable<Page<McpServer>> {
+    return this.service.findByDomain(domainId, ProtectedResourceType.MCP_SERVER, page, size, sort).pipe(
       map(
         (page) =>
-          page.map(
-            (elem) =>
-              ({
-                id: elem.id,
-                name: elem.name,
-                resourceIdentifier: elem?.resourceIdentifiers[0],
-                tools: elem.tools,
-                updatedAt: elem.updatedAt,
-              }) as McpServer,
-          ),
-        shareReplay({ bufferSize: 1, refCount: true }),
+          ({
+            ...page,
+            data: page.data.map(
+              (elem) =>
+                ({
+                  id: elem.id,
+                  name: elem.name,
+                  resourceIdentifier: elem?.resourceIdentifiers?.[0],
+                  tools: elem.tools ?? [],
+                  updatedAt: elem.updatedAt,
+                }) as McpServer,
+            ),
+          }) as Page<McpServer>,
       ),
     );
   }
@@ -53,7 +58,7 @@ export class McpServersService {
       description: newMcpServer.description,
       clientId: newMcpServer.clientId,
       clientSecret: newMcpServer.clientSecret,
-      type: 'MCP_SERVER',
+      type: ProtectedResourceType.MCP_SERVER,
     } as NewProtectedResourceRequest;
     return this.service.create(domainId, request);
   }

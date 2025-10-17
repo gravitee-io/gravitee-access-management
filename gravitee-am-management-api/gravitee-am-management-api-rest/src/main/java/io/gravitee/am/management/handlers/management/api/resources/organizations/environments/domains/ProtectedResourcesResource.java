@@ -16,11 +16,13 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Acl;
+import io.gravitee.am.management.handlers.management.api.sort.SortParam;
+import io.gravitee.am.model.*;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.model.NewProtectedResource;
-import io.gravitee.am.service.model.ProtectedResourceSecret;
 import io.gravitee.common.http.MediaType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,22 +33,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.POST;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
 import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
+import java.util.Collection;
+
+import static io.gravitee.am.model.ProtectedResource.Type.fromString;
 
 @Tag(name = "protected-resource")
 public class ProtectedResourcesResource extends AbstractDomainResource {
 
     @Autowired
-    private ProtectedResourceService protectedResourceService;
+    private ProtectedResourceService service;
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -65,20 +67,78 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
     public void createProtectedResource(
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
-            @PathParam("domain") String domain,
+            @PathParam("domain") String domainId,
             @Parameter(name = "protected-resource", required = true)
             @Valid @NotNull final NewProtectedResource newProtectedResource,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domain, Permission.PROTECTED_RESOURCE, Acl.CREATE)
-                .andThen(checkDomainExists(domain)
-                        .flatMap(existingDomain -> protectedResourceService.create(existingDomain, authenticatedUser, newProtectedResource)
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE, Acl.CREATE)
+                .andThen(checkDomainExists(domainId)
+                        .flatMap(existingDomain -> service.create(existingDomain, authenticatedUser, newProtectedResource)
                                 .map(protectedResource -> Response
-                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domain + "/protected-resources/" + protectedResource.getId()))
+                                        .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domainId + "/protected-resources/" + protectedResource.getId()))
                                         .entity(protectedResource)
                                         .build())))
                 .subscribe(response::resume, response::resume);
+    }
+
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "listProtectedResources",
+            summary = "List registered protected resources for a security domain",
+            description = "User must have the PROTECTED_RESOURCE[LIST] permission on the specified domain, environment or organization " +
+                    "AND either PROTECTED_RESOURCE[READ] permission on each domain's protected resource " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE[READ] permission on the specified organization. " +
+                    "Each returned protected resource is filtered and contains only basic information such as id, name, description and isEnabled.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200",
+                    description = "List registered protected resources for a security domain",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProtectedResourcesResource.ProtectedResourcePage.class))
+            ),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void list(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @QueryParam("type") String type,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("50") int size,
+            @Parameter(schema = @Schema(type = "string"))
+            @QueryParam("sort") @DefaultValue("updatedAt.desc") SortParam sort,
+            @Suspended final AsyncResponse response) {
+        User authenticatedUser = getAuthenticatedUser();
+        ProtectedResource.Type resourceType = fromString(type);
+
+        PageSortRequest pageSortRequest = PageSortRequest.builder()
+                .page(page)
+                .size(size)
+                .sortBy(sort.getSortBy())
+                .asc(sort.isAscending())
+                .build();
+
+        checkAnyPermission(organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE, Acl.LIST)
+                .andThen(checkDomainExists(domainId).ignoreElement())
+                .andThen(hasAnyPermission(authenticatedUser, organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE, Acl.READ)
+                        .filter(hasPermission -> hasPermission)
+                        .flatMapSingle(__ ->  service.findByDomainAndType(domainId, resourceType, pageSortRequest))
+                        .switchIfEmpty(
+                                getResourceIdsWithPermission(authenticatedUser, ReferenceType.APPLICATION, Permission.PROTECTED_RESOURCE, Acl.READ)
+                                        .toList()
+                                        .flatMap(ids -> service.findByDomainAndTypeAndIds(domainId, resourceType, ids, pageSortRequest))))
+                .subscribe(response::resume, response::resume);
+    }
+
+    @Schema
+    public static final class ProtectedResourcePage extends Page<ProtectedResourcePrimaryData> {
+        public ProtectedResourcePage(Collection<ProtectedResourcePrimaryData> data, int currentPage, long totalCount) {
+            super(data, currentPage, totalCount);
+        }
     }
 
 }

@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.repository.mongodb.management.internal.model;
+package io.gravitee.am.model;
 
-import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.List;
-
 @Getter
 @Setter
-public class ProtectedResourceMongo extends Auditable {
-    public final static String CLIENT_ID_FIELD = "clientId";
-    public final static String DOMAIN_ID_FIELD = "domainId";
-    public final static String TYPE_FIELD = "type";
-    public final static String UPDATED_AT_FIELD = "updatedAt";
-
+public class ProtectedResourceSecret {
 
     private String id;
 
@@ -36,16 +28,15 @@ public class ProtectedResourceMongo extends Auditable {
 
     private String clientId;
 
-    private String domainId;
+    private String clientSecret;
 
-    private String description;
-
-    private String type;
-
-    private List<String> resourceIdentifiers;
-
-    private List<ClientSecretMongo> clientSecrets;
-
-    private List<ApplicationSecretSettingsMongo> secretSettings;
+    public static ProtectedResourceSecret from(ProtectedResource protectedResource, String clientSecret) {
+        ProtectedResourceSecret result = new ProtectedResourceSecret();
+        result.setClientSecret(clientSecret);
+        result.setClientId(protectedResource.getClientId());
+        result.setId(protectedResource.getId());
+        result.setName(protectedResource.getName());
+        return result;
+    }
 
 }

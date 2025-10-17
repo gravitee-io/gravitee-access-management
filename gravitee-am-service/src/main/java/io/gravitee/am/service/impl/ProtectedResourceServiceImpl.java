@@ -23,6 +23,8 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
@@ -31,7 +33,7 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.InvalidRoleException;
-import io.gravitee.am.service.model.ProtectedResourceSecret;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
@@ -100,6 +102,28 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), toCreate.getClientId())
                 .andThen(doCreate(toCreate, principal))
                 .map(res -> ProtectedResourceSecret.from(res, rawSecret));
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, ProtectedResource.Type type, PageSortRequest pageSortRequest) {
+        LOGGER.debug("Find protected resources by domainId={}, type={}", domain, type);
+        return repository.findByDomainAndType(domain, type, pageSortRequest)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find protected resources by domain {}", domain, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find protected resources by domain %s", domain), ex));
+                });
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, ProtectedResource.Type type, List<String> ids, PageSortRequest pageSortRequest) {
+        LOGGER.debug("Find protected resources by domainId={}, type={}, ids={}", domain, type, ids);
+        return repository.findByDomainAndTypeAndIds(domain, type, ids, pageSortRequest)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find protected resources by domainId={} and type={}", domain, type, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find protected resources by domain %s", domain), ex));
+                });
     }
 
     private Single<ProtectedResource> doCreate(ProtectedResource toCreate, User principal) {
