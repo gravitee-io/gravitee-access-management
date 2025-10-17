@@ -15,31 +15,32 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ProtectedResource;
-import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.ProtectedResource.Type;
+import io.gravitee.am.model.ProtectedResourcePrimaryData;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
-import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationIdentityProviderMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ProtectedResourceMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 import static io.gravitee.am.repository.mongodb.management.MongoApplicationRepository.*;
 import static io.gravitee.am.repository.mongodb.management.internal.model.ProtectedResourceMongo.*;
 
@@ -98,6 +99,33 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, int page, int size) {
+        Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type));
+        return queryProtectedResource(query, page, size).observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, int page, int size) {
+        Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type), in(FIELD_ID, ids));
+        return queryProtectedResource(query, page, size).observeOn(Schedulers.computation());
+    }
+
+    private Single<Page<ProtectedResourcePrimaryData>> queryProtectedResource(Bson query, int page, int size) {
+        Single<Long> countOperation = Observable.fromPublisher(collection
+                        .countDocuments(query, countOptions()))
+                .firstElement()
+                .toSingle();
+        Single<Set<ProtectedResourcePrimaryData>> applicationsOperation = Observable.fromPublisher(
+                        withMaxTime(collection.find(query))
+                                .sort(new BasicDBObject(FIELD_UPDATED_AT, -1))
+                                .skip(size * page).limit(size))
+                .map(this::convert)
+                .map(ProtectedResourcePrimaryData::of)
+                .collect(HashSet::new, Set::add);
+        return Single.zip(countOperation, applicationsOperation, (count, applications) -> new Page<>(applications, page, count));
+    }
+
     private ProtectedResourceMongo convert(ProtectedResource other) {
         ProtectedResourceMongo mongo = new ProtectedResourceMongo();
         mongo.setId(other.getId());
@@ -124,7 +152,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setDescription(mongo.getDescription());
         result.setClientSecrets(convertToClientSecret(mongo.getClientSecrets()));
         result.setSecretSettings(convertToSecretSettings(mongo.getSecretSettings()));
-        result.setType(ProtectedResource.Type.valueOf(mongo.getType()));
+        result.setType(Type.valueOf(mongo.getType()));
         result.setCreatedAt(mongo.getCreatedAt());
         result.setUpdatedAt(mongo.getUpdatedAt());
         return result;
