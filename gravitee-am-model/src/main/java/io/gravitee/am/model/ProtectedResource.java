@@ -29,7 +29,15 @@ import java.util.List;
 public class ProtectedResource {
 
     public enum Type {
-        MCP_SERVER
+        MCP_SERVER;
+
+        public static Type fromString(String type) {
+            try {
+                return Type.valueOf(type.toUpperCase());
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid protected resource type: " + type);
+            }
+        }
     }
 
     private String id;

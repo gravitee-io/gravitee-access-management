@@ -19,20 +19,25 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ProtectedResourceSecret;
+import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.Page;
 import io.gravitee.am.service.model.NewProtectedResource;
-import io.gravitee.am.service.model.ProtectedResourceSecret;
 import io.gravitee.common.http.HttpStatusCode;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.Test;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doReturn;
 
 public class ProtectedResourcesResourceTest extends JerseySpringTest {
@@ -208,6 +213,41 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
         assertEquals("[MCP_SERVERR: Available types: [MCP_SERVER]]", map.get("message"));
         assertEquals(400, map.get("http_status"));
+    }
+
+    @Test
+    public void shouldReturnDomainList(){
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        ClientSecret clientSecret = new ClientSecret();
+        clientSecret.setSecret("SECRETVALUE");
+
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId("app-id");
+        protectedResource.setName("name");
+        protectedResource.setClientSecrets(List.of(clientSecret));
+        protectedResource.setClientId("client-id");
+        protectedResource.setUpdatedAt(new Date());
+
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(new Page(List.of(protectedResource), 0, 1)))
+                .when(protectedResourceService).findByDomainAndType(eq(domainId), eq(ProtectedResource.Type.MCP_SERVER), anyInt(), anyInt());
+
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .queryParam("type", "MCP_SERVER")
+                .request().get();
+
+        Map map = response.readEntity(Map.class);
+        Map data = (Map) ((List)map.get("data")).get(0);
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        assertEquals("app-id", data.get("id"));
+        assertEquals("name", data.get("name"));
     }
 
 }

@@ -28,19 +28,29 @@ import java.time.LocalDateTime;
 @Table(JdbcProtectedResource.TABLE_NAME)
 public class JdbcProtectedResource {
     public static final String TABLE_NAME = "protected_resources";
+    public static final String COLUMN_ID = "id";
+    public static final String COLUMN_DOMAIN_ID = "domain_id";
+    public static final String COLUMN_CLIENT_ID = "client_id";
+    public static final String COLUMN_TYPE = "type";
+    public static final String COLUMN_UPDATED_AT = "updated_at";
+
+
 
     @Id
+    @Column(COLUMN_ID)
     private String id;
 
     private String name;
 
-    @Column("client_id")
+    @Column(COLUMN_CLIENT_ID)
     private String clientId;
 
+    @Column(COLUMN_DOMAIN_ID)
     private String domainId;
 
     private String description;
 
+    @Column(COLUMN_TYPE)
     private String type;
 
     @Column("resource_identifiers")
