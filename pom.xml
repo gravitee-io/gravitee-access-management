@@ -119,7 +119,7 @@
 
         <!-- R2DBC dependencies -->
         <spring-data-r2dbc.version>3.2.2</spring-data-r2dbc.version>
-        <reactor-adapter.version>3.5.3</reactor-adapter.version>
+        <reactor-adapter.version>3.5.4</reactor-adapter.version>
         <reactor-core.version>3.6.7</reactor-core.version>
         <!--
         JDBC driver version, used by TestContainer.
