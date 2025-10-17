@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { ActivatedRoute } from '@angular/router';
+import { SortType } from '@swimlane/ngx-datatable';
+
+import { Page, Sort } from '../../services/api.model';
 
 import { McpServersService } from './mcp-servers.service';
 
@@ -26,17 +28,48 @@ import { McpServersService } from './mcp-servers.service';
   standalone: false,
 })
 export class DomainMcpServersComponent implements OnInit {
-  mcpServers$: Observable<McpServer[]>;
+  PAGE_SIZE = 10;
+  domainId: string;
+  page: Page<McpServer>;
+  currentPage: number;
+  sort: Sort = { dir: 'desc', prop: 'updatedAt' };
 
-  constructor(private service: McpServersService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private service: McpServersService,
+  ) {
+    this.currentPage = 0;
+    this.page = {
+      data: [],
+      totalCount: 0,
+      currentPage: 0,
+    };
+  }
 
   ngOnInit(): void {
-    this.mcpServers$ = this.service.findByDomain('', 1, 1).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+    this.domainId = this.route.snapshot.data['domain']?.id;
+    this.fetchData();
   }
 
-  get isEmpty(): Observable<boolean> {
-    return this.mcpServers$.pipe(map((array) => array.length == 0));
+  fetchData() {
+    this.service.findByDomain(this.domainId, this.currentPage, this.PAGE_SIZE, this.sort).subscribe((page) => (this.page = page));
   }
+
+  changePage(e: any) {
+    this.currentPage = e.offset;
+    this.fetchData();
+  }
+
+  applySort(e: any) {
+    this.sort = e.sorts[0];
+    this.fetchData();
+  }
+
+  get isEmpty(): boolean {
+    return this.page.data?.length == 0;
+  }
+
+  protected readonly SortType = SortType;
 }
 
 interface McpServer {

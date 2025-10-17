@@ -15,27 +15,21 @@
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import { AppConfig } from '../../config/app.config';
+
+import { Page, Sort, transformToQueryParam } from './api.model';
 
 @Injectable()
 export class ProtectedResourceService {
   private baseURL = AppConfig.settings.domainBaseURL;
   constructor(private http: HttpClient) {}
 
-  findByDomain(domainId: string, page: number, size: number): Observable<ProtectedResource[]> {
-    console.log(`${domainId}, ${page}, ${size}`);
-    return of([
-      {
-        id: '4a4eb41e-8432-473e-8eb4-1e8432073e80',
-        name: 'Banking MCP Server',
-        resourceIdentifiers: ['https://something.org'],
-        tools: ['makePayment', 'createAccount'],
-        updatedAt: '2025-10-09 14:30:00',
-        type: 'MCP_SERVER',
-      } as ProtectedResource, // TODO AM-5758
-    ]);
+  findByDomain(domainId: string, type: ProtectedResourceType, page: number, size: number, sort: Sort): Observable<Page<ProtectedResource>> {
+    return this.http.get<Page<ProtectedResource>>(
+      this.baseURL + domainId + `/protected-resources?type=${type}&page=${page}&size=${size}&sort=${transformToQueryParam(sort)}`,
+    );
   }
 
   create(domainId: string, protectedResource: NewProtectedResourceRequest): Observable<NewProtectedResourceResponse> {
@@ -43,10 +37,14 @@ export class ProtectedResourceService {
   }
 }
 
+export enum ProtectedResourceType {
+  MCP_SERVER = 'MCP_SERVER',
+}
+
 export interface ProtectedResource {
   id: string;
   name: string;
-  type: 'MCP_SERVER';
+  type: ProtectedResourceType;
   resourceIdentifiers: string[];
   description?: string;
 
@@ -61,7 +59,7 @@ export interface ProtectedResource {
 
 export interface NewProtectedResourceRequest {
   name: string;
-  type: 'MCP_SERVER';
+  type: ProtectedResourceType;
   resourceIdentifiers: string[];
   description?: string;
   clientId?: string;

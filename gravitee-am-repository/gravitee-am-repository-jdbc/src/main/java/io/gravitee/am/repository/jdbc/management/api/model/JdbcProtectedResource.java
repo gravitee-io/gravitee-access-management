@@ -28,22 +28,34 @@ import java.time.LocalDateTime;
 @Table(JdbcProtectedResource.TABLE_NAME)
 public class JdbcProtectedResource {
     public static final String TABLE_NAME = "protected_resources";
+    public static final String COLUMN_ID = "id";
+    public static final String COLUMN_DOMAIN_ID = "domain_id";
+    public static final String COLUMN_CLIENT_ID = "client_id";
+    public static final String COLUMN_TYPE = "type";
+    public static final String COLUMN_UPDATED_AT = "updated_at";
+    public static final String COLUMN_NAME = "name";
+    public static final String COLUMN_RESOURCE_IDENTIFIERS = "resource_identifiers";
+
 
     @Id
+    @Column(COLUMN_ID)
     private String id;
 
+    @Column(COLUMN_NAME)
     private String name;
 
-    @Column("client_id")
+    @Column(COLUMN_CLIENT_ID)
     private String clientId;
 
+    @Column(COLUMN_DOMAIN_ID)
     private String domainId;
 
     private String description;
 
+    @Column(COLUMN_TYPE)
     private String type;
 
-    @Column("resource_identifiers")
+    @Column(COLUMN_RESOURCE_IDENTIFIERS)
     private String resourceIdentifiers;
 
     @Column("secret_settings")
@@ -52,7 +64,7 @@ public class JdbcProtectedResource {
     @Column("created_at")
     private LocalDateTime createdAt;
 
-    @Column("updated_at")
+    @Column(COLUMN_UPDATED_AT)
     private LocalDateTime updatedAt;
 
     @Getter

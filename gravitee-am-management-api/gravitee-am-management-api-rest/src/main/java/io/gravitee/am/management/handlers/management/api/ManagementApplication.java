@@ -16,17 +16,7 @@
 package io.gravitee.am.management.handlers.management.api;
 
 import io.gravitee.am.management.handlers.management.api.mapper.ObjectMapperResolver;
-import io.gravitee.am.management.handlers.management.api.provider.ByteArrayOutputStreamWriter;
-import io.gravitee.am.management.handlers.management.api.provider.ClientErrorExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.JacksonExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.ManagementExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.Oauth2ExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.BulkPayloadSizeFilter;
-import io.gravitee.am.management.handlers.management.api.provider.ThrowableMapper;
-import io.gravitee.am.management.handlers.management.api.provider.UnrecognizedPropertyExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.UriBuilderRequestFilter;
-import io.gravitee.am.management.handlers.management.api.provider.ValidationExceptionMapper;
-import io.gravitee.am.management.handlers.management.api.provider.WebApplicationExceptionMapper;
+import io.gravitee.am.management.handlers.management.api.provider.*;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.CurrentUserResource;
 import io.gravitee.am.management.handlers.management.api.resources.organizations.OrganizationsResource;
 import io.gravitee.am.management.handlers.management.api.resources.platform.PlatformResource;
@@ -46,6 +36,7 @@ public class ManagementApplication extends ResourceConfig {
     public ManagementApplication() {
         packages("io.gravitee.am.management.handlers.management.api.resources");
 
+        register(SortParamConverterProvider.class);
         register(JacksonFeature.withoutExceptionMappers());
         register(JacksonExceptionMapper.class);
 
