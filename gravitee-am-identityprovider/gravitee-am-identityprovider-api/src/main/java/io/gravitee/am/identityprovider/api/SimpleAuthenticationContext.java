@@ -17,6 +17,8 @@ package io.gravitee.am.identityprovider.api;
 
 import io.gravitee.am.identityprovider.api.context.EvaluableAuthenticationContext;
 import io.gravitee.am.identityprovider.api.context.EvaluableAuthenticationRequest;
+import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.safe.DomainProperties;
 import io.gravitee.el.TemplateContext;
 import io.gravitee.el.TemplateEngine;
 import io.gravitee.gateway.api.Request;
@@ -41,6 +43,7 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
     private final Request request;
     private final Map<String, Object> attributes;
     private TemplateEngine templateEngine;
+    private Domain domain;
 
     public SimpleAuthenticationContext() {
         this(null, new HashMap<>());
@@ -101,8 +104,14 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
             templateEngine = TemplateEngine.templateEngine();
 
             TemplateContext templateContext = templateEngine.getTemplateContext();
+            
             templateContext.setVariable(TEMPLATE_ATTRIBUTE_REQUEST, new EvaluableAuthenticationRequest(request));
-            templateContext.setVariable(TEMPLATE_ATTRIBUTE_CONTEXT, new EvaluableAuthenticationContext(this));
+            EvaluableAuthenticationContext evaluableAuthenticationContext = new EvaluableAuthenticationContext(this);
+            if (domain != null) {
+                evaluableAuthenticationContext.setDomain(new DomainProperties(domain));
+            }
+            templateContext.setVariable(TEMPLATE_ATTRIBUTE_CONTEXT, evaluableAuthenticationContext);
+
         }
         return templateEngine;
     }
@@ -114,6 +123,13 @@ public class SimpleAuthenticationContext implements AuthenticationContext {
 
     @Override
     public AuthenticationContext copy() {
-       return new SimpleAuthenticationContext(request, attributes);
+        SimpleAuthenticationContext copy = new SimpleAuthenticationContext(request, attributes);
+        copy.setDomain(domain);
+        
+        return copy;
+    }
+
+    public void setDomain(Domain domain) {
+        this.domain = domain;
     }
 }
