@@ -96,6 +96,11 @@ public class ServiceResourceServiceProxyImpl extends AbstractSensitiveProxy impl
         return serviceResourceService.delete(domain, resId, principal);
     }
 
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        return serviceResourceService.deleteByDomain(domainId);
+    }
+
     private Single<ServiceResource> filterSensitiveData(ServiceResource serviceResource) {
         return resourcePluginService.getSchema(serviceResource.getType())
                 .map(Optional::ofNullable)

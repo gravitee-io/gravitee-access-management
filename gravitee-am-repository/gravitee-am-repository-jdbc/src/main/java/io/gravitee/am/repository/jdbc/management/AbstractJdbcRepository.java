@@ -58,6 +58,10 @@ public abstract class AbstractJdbcRepository {
     public static final String USER_EXTERNAL_ID_FIELD = "user_external_id";
     public static final String USER_SOURCE_FIELD = "user_source";
 
+    public static final String REFERENCE_ID_FIELD = "reference_id";
+    public static final String REF_TYPE_FIELD = "reference_type";
+    public static final String ID_FIELD = "id";
+
     protected static final UserIdFields DEFAULT_USER_ID_FIELDS = new UserIdFields(USER_ID_FIELD, USER_SOURCE_FIELD, USER_EXTERNAL_ID_FIELD);
 
     protected final Logger LOGGER = LoggerFactory.getLogger(getClass());

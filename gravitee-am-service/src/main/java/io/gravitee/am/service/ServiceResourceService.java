@@ -40,4 +40,6 @@ public interface ServiceResourceService {
 
     Completable delete(String domain, String resId, User principal);
 
+    Completable deleteByDomain(String domainId);
+
 }

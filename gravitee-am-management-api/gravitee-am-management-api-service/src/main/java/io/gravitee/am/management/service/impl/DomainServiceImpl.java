@@ -50,6 +50,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.EnvironmentService;
@@ -67,6 +68,7 @@ import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.ResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.UserActivityService;
 import io.gravitee.am.service.UserService;
@@ -259,6 +261,10 @@ public class DomainServiceImpl implements DomainService {
     @With(AccessLevel.PACKAGE) // to make test setup less painful
     @Value("${domains.identities.default.enabled:true}")
     private boolean createDefaultIdentityProvider = true;
+    @Autowired
+    private DeviceIdentifierService deviceIdentifierService;
+    @Autowired
+    private ServiceResourceService serviceResourceService;
 
     @Override
     public Maybe<Domain> findById(String id) {
@@ -634,6 +640,8 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(passwordHistoryService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(verifyAttemptService.deleteByDomain(domain, DOMAIN))
+                            .andThen(serviceResourceService.deleteByDomain(domainId))
+                            .andThen(deviceIdentifierService.deleteByDomain(domainId))
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE)))))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)

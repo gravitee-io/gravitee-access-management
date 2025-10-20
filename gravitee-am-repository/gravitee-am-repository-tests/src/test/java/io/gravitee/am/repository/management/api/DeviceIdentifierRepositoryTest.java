@@ -16,7 +16,9 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.management.AbstractManagementTest;
 import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
@@ -147,4 +149,61 @@ public class DeviceIdentifierRepositoryTest extends AbstractManagementTest {
         testObserver.assertNoValues();
         testObserver.assertNoErrors();
     }
+
+
+
+    @Test
+    public void testDeleteByDomain() {
+        // create res
+        DeviceIdentifier deviceIdentifier = buildDeviceIdentifier();
+        final String DOMAIN_1 = UUID.random().toString();
+        deviceIdentifier.setReferenceId(DOMAIN_1);
+        repository.create(deviceIdentifier).blockingGet();
+        DeviceIdentifier deviceIdentifier2 = buildDeviceIdentifier();
+        deviceIdentifier2.setReferenceId(DOMAIN_1);
+        repository.create(deviceIdentifier2).blockingGet();
+        DeviceIdentifier deviceIdentifierOtherDomain = buildDeviceIdentifier();
+        final String DOMAIN_2 = UUID.random().toString();
+        deviceIdentifierOtherDomain.setReferenceId(DOMAIN_2);
+        repository.create(deviceIdentifierOtherDomain).blockingGet();
+
+        TestSubscriber<DeviceIdentifier> testSubscriber = repository.findByReference(ReferenceType.DOMAIN, DOMAIN_1).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(2);
+
+        testSubscriber = repository.findByReference(ReferenceType.DOMAIN, DOMAIN_2).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(f -> f.getReferenceId().equals(DOMAIN_2));
+
+        // exec delete by domain
+        TestObserver<Void> deleteCompletable = repository.deleteByReference(Reference.domain(DOMAIN_1)).test();
+        deleteCompletable.awaitDone(10, TimeUnit.SECONDS);
+
+        deleteCompletable.assertComplete();
+        deleteCompletable.assertNoErrors();
+
+        // check that only testDomain entries have been removed
+        testSubscriber = repository.findByReference(ReferenceType.DOMAIN, DOMAIN_1).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
+
+        testSubscriber = repository.findByReference(ReferenceType.DOMAIN, DOMAIN_2).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(f -> f.getReferenceId().equals(DOMAIN_2));
+    }
+
 }
