@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -27,8 +28,11 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 /**
@@ -81,5 +85,13 @@ public class JdbcServiceResourceRepository extends AbstractJdbcRepository implem
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
         return serviceResourceRepository.findByReference(referenceType.name(), referenceId)
                 .map(this::toEntity);
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        LOGGER.debug("deleteByReference({})", reference);
+        return monoToCompletable(getTemplate().delete(JdbcServiceResource.class)
+                .matching(Query.query(where(REFERENCE_ID_FIELD).is(reference.id()).and(where(REF_TYPE_FIELD).is(reference.type().name()))))
+                .all());
     }
 }
