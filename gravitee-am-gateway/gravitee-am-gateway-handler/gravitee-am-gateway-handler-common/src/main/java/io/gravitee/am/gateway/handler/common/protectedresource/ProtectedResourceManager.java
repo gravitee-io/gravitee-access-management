@@ -16,7 +16,7 @@
 package io.gravitee.am.gateway.handler.common.protectedresource;
 
 import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.ProtectedResource;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.common.service.Service;
 
 import java.util.Collection;

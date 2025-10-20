@@ -15,23 +15,24 @@
  */
 package io.gravitee.am.gateway.handler.common.protectedresource.impl;
 
-import io.gravitee.am.common.event.ApplicationEvent;
 import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ProtectedResourceEvent;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
-import io.gravitee.am.model.oidc.Client;
-import io.gravitee.am.model.oidc.ProtectedResource;
+import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -44,25 +45,70 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     @Autowired
     private EventManager eventManager;
 
+    @Autowired
+    private ProtectedResourceRepository protectedResourceRepository;
+
     private final ConcurrentMap<String, ProtectedResource> resources = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, Domain> domains = new ConcurrentHashMap<>();
 
     @Override
-    public void onEvent(Event<ProtectedResourceEvent, Payload> event) {
-
+    public void afterPropertiesSet() throws Exception {
+        log.info("Initializing protected resouces for domain {}", domain.getName());
+        Flowable<ProtectedResource> protectedResourceFlowable = domain.isMaster() ? protectedResourceRepository.findAll() : protectedResourceRepository.findByDomain(domain.getId());
+        protectedResourceFlowable
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        protectedResource -> {
+                            resources.put(protectedResource.getId(), protectedResource);
+                            log.info("Protected Resource {} loaded for domain {}", protectedResource.getName(), domain.getName());
+                        },
+                        error -> log.error("An error has occurred when loading protected resources for domain {}", domain.getName(), error)
+                );
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
+    public void onEvent(Event<ProtectedResourceEvent, Payload> event) {
+        if (event.content().getReferenceType() == ReferenceType.DOMAIN &&
+                (domain.isMaster() || domain.getId().equals(event.content().getReferenceId()))) {
+            switch (event.type()) {
+                case DEPLOY, UPDATE -> deployProtectedResource(event.content().getId());
+                case UNDEPLOY -> removeProtectedResource(event.content().getId());
+                default -> {
+                }
+            }
+        }
+    }
 
+    private void removeProtectedResource(String protectedResourceId) {
+        log.info("Removing protected resource {} for domain {}", protectedResourceId, domain.getName());
+        ProtectedResource deletedProtectedResource = resources.remove(protectedResourceId);
+        if (deletedProtectedResource != null) {
+            log.info("Protected Resource {} has been removed for domain {}", protectedResourceId, domain.getName());
+        } else {
+            log.info("Protected Resource {} was not loaded for domain {}", protectedResourceId, domain.getName());
+        }
+    }
+
+    private void deployProtectedResource(String protectedResourceId) {
+        log.info("Deploying protected resource {} for domain {}", protectedResourceId, domain.getName());
+        protectedResourceRepository.findById(protectedResourceId)
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        client -> {
+                            resources.put(client.getId(), client);
+                            log.info("Application {} loaded for domain {}", protectedResourceId, domain.getName());
+
+                        },
+                        error -> log.error("An error has occurred when loading protected resource {} for domain {}", protectedResourceId, domain.getName(), error),
+                        () -> log.error("No protected resource found with id {}", protectedResourceId));
     }
 
     @Override
     protected void doStart() throws Exception {
         super.doStart();
 
-        log.info("Register event listener for application events for domain {}", domain.getName());
+        log.info("Register event listener for protected resource events for domain {}", domain.getName());
         eventManager.subscribeForEvents(this, ProtectedResourceEvent.class, domain.getId());
     }
 
@@ -70,7 +116,7 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     protected void doStop() throws Exception {
         super.doStop();
 
-        log.info("Dispose event listener for application events for domain {}", domain.getName());
+        log.info("Dispose event listener for protected resource events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ProtectedResourceEvent.class, domain.getId());
         if (domain.isMaster()) {
             domains.keySet().forEach(d -> eventManager.unsubscribeForCrossEvents(this, ProtectedResourceEvent.class, d));
@@ -89,12 +135,12 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
 
     @Override
     public Collection<ProtectedResource> entities() {
-        return List.of();
+        return resources.values();
     }
 
     @Override
     public ProtectedResource get(String protectedResourceId) {
-        return null;
+        return protectedResourceId != null ? resources.get(protectedResourceId) : null;
     }
 
     @Override

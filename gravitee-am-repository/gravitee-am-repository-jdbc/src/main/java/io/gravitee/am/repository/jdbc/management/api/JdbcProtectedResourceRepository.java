@@ -18,8 +18,10 @@ package io.gravitee.am.repository.jdbc.management.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
@@ -28,6 +30,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResou
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceRepository;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +72,10 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 a.domain_id = :domainId AND
                 a.client_id = :clientId
                 """.formatted(TABLE_NAME);
+        String BY_DOMAIN_ID = """
+                SELECT * FROM %s a WHERE
+                a.domain_id = :domainId
+        """.formatted(TABLE_NAME);
     }
 
 
@@ -127,6 +134,21 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .map(this::toEntity)
                 .flatMap(app -> complete(app).toFlowable())
                 .firstElement();
+    }
+
+    @Override
+    public Flowable<ProtectedResource> findAll() {
+        return this.spring.findAll().map(this::toEntity).flatMap(app -> complete(app).toFlowable());
+    }
+
+    @Override
+    public Flowable<ProtectedResource> findByDomain(String domain) {
+        return fluxToFlowable(getTemplate().getDatabaseClient()
+                .sql(Selects.BY_DOMAIN_ID)
+                .bind("domainId", domain)
+                .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
+                .all())
+                .map(this::toEntity);
     }
 
     private Single<ProtectedResource> complete(ProtectedResource entity) {
