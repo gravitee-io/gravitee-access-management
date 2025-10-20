@@ -15,16 +15,17 @@
  */
 package io.gravitee.am.repository.management.api;
 
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.gravitee.common.utils.UUID;
 import io.reactivex.rxjava3.observers.TestObserver;
 import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,9 +58,63 @@ public class ServiceResourceRepositoryTest extends AbstractManagementTest {
         testDomain.assertValue(f -> f.getType().equals(resourceCreated.getType()));
     }
 
+    @Test
+    public void testDeleteByDomain() {
+        // create res
+        ServiceResource resource = buildResource();
+        final String DOMAIN_1 = UUID.randomUUID().toString();
+        resource.setReferenceId(DOMAIN_1);
+        serviceResourceRepository.create(resource).blockingGet();
+        ServiceResource resource2 = buildResource();
+        resource2.setReferenceId(DOMAIN_1);
+        serviceResourceRepository.create(resource2).blockingGet();
+        ServiceResource resourceOtherDomain = buildResource();
+        final String DOMAIN_2 = UUID.randomUUID().toString();
+        resourceOtherDomain.setReferenceId(DOMAIN_2);
+        serviceResourceRepository.create(resourceOtherDomain).blockingGet();
+
+        TestSubscriber<ServiceResource> testSubscriber = serviceResourceRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_1).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(2);
+
+        testSubscriber = serviceResourceRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_2).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(f -> f.getReferenceId().equals(DOMAIN_2));
+
+        // exec delete by domain
+        TestObserver<Void> deleteCompletable = serviceResourceRepository.deleteByReference(Reference.domain(DOMAIN_1)).test();
+        deleteCompletable.awaitDone(10, TimeUnit.SECONDS);
+
+        deleteCompletable.assertComplete();
+        deleteCompletable.assertNoErrors();
+
+        // check that only testDomain entries have been removed
+        testSubscriber = serviceResourceRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_1).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertNoValues();
+
+        testSubscriber = serviceResourceRepository.findByReference(ReferenceType.DOMAIN, DOMAIN_2).test();
+        testSubscriber.awaitDone(10, TimeUnit.SECONDS);
+
+        testSubscriber.assertComplete();
+        testSubscriber.assertNoErrors();
+        testSubscriber.assertValueCount(1);
+        testSubscriber.assertValue(f -> f.getReferenceId().equals(DOMAIN_2));
+    }
+
     private ServiceResource buildResource() {
         ServiceResource resource = new ServiceResource();
-        String random = UUID.random().toString();
+        String random = UUID.randomUUID().toString();
         resource.setName("name"+random);
         resource.setConfiguration("{\"config\": \"" + random +"\"}");
         resource.setType("type"+random);
