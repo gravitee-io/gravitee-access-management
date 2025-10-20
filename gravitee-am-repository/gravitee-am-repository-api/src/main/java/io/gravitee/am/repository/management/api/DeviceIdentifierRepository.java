@@ -16,8 +16,10 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 
 /**
@@ -28,4 +30,5 @@ public interface DeviceIdentifierRepository extends CrudRepository<DeviceIdentif
 
     Flowable<DeviceIdentifier> findByReference(ReferenceType referenceType, String referenceId);
 
+    Completable deleteByReference(Reference reference);
 }
