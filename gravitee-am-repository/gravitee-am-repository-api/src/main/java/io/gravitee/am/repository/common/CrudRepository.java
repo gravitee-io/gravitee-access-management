@@ -32,4 +32,5 @@ public interface CrudRepository<T, ID> {
     Single<T> update(T item);
 
     Completable delete(ID id);
+
 }

@@ -52,4 +52,6 @@ public interface DeviceIdentifierService {
     default Completable delete(String domain, String deviceIdentifierId) {
         return delete(domain, deviceIdentifierId, null);
     }
+
+    Completable deleteByDomain(String domainId);
 }
