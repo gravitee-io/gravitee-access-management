@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcDeviceIdentifier;
@@ -41,10 +42,6 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 @Repository
 public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository implements DeviceIdentifierRepository {
 
-    public static final String REFERENCE_ID_FIELD = "reference_id";
-    public static final String REF_TYPE_FIELD = "reference_type";
-    public static final String ID_FIELD = "id";
-
     protected DeviceIdentifier toEntity(JdbcDeviceIdentifier entity) {
             return mapper.map(entity, DeviceIdentifier.class);
     }
@@ -60,6 +57,14 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
                 .all())
                 .map(this::toEntity);
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        LOGGER.debug("deleteByReference({})", reference);
+        return monoToCompletable(getTemplate().delete(JdbcDeviceIdentifier.class)
+                .matching(Query.query(where(REFERENCE_ID_FIELD).is(reference.id()).and(where(REF_TYPE_FIELD).is(reference.type().name()))))
+                .all());
     }
 
     @Override

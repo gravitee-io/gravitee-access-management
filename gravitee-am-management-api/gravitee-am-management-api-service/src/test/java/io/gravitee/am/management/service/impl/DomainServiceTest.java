@@ -68,6 +68,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
 import io.gravitee.am.service.CertificateService;
+import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.EmailTemplateService;
 import io.gravitee.am.service.EntrypointService;
@@ -83,6 +84,7 @@ import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
+import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -318,6 +320,12 @@ public class DomainServiceTest {
 
     @Mock
     private DefaultIdentityProviderService defaultIdentityProviderService;
+
+    @Mock
+    private DeviceIdentifierService deviceIdentifierService;
+
+    @Mock
+    private ServiceResourceService serviceResourceService;
 
 
     @Test
@@ -1079,6 +1087,8 @@ public class DomainServiceTest {
         when(themeService.findByReference(any(), any())).thenReturn(Maybe.empty());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
+        when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1094,6 +1104,8 @@ public class DomainServiceTest {
         verify(roleService, times(1)).delete(eq(DOMAIN), eq(DOMAIN_ID), eq(ROLE_ID));
         verify(userRepository, times(1)).deleteByReference(any());
         verify(userActivityService, times(1)).deleteByDomain(any());
+        verify(deviceIdentifierService, times(1)).deleteByDomain(DOMAIN_ID);
+        verify(serviceResourceService, times(1)).deleteByDomain(DOMAIN_ID);
         verify(scopeService, times(1)).delete(any(), eq(SCOPE_ID), eq(true));
         verify(domainGroupService, times(1)).delete(any(), eq(GROUP_ID), any());
         verify(formService, times(1)).delete(eq(DOMAIN_ID), eq(FORM_ID));
@@ -1139,6 +1151,8 @@ public class DomainServiceTest {
         when(passwordHistoryService.deleteByReference(any())).thenReturn(complete());
         when(passwordPolicyService.deleteByReference(any(), any())).thenReturn(complete());
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
+        when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);
