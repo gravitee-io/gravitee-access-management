@@ -47,6 +47,7 @@ import io.reactivex.rxjava3.core.Single;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -57,6 +58,7 @@ import java.util.Date;
  */
 @Slf4j
 @Component
+@Primary
 public class ServiceResourceServiceImpl implements ServiceResourceService {
 
     @Lazy
@@ -200,5 +202,11 @@ public class ServiceResourceServiceImpl implements ServiceResourceService {
                     return Completable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to delete resource: %s", resourceId), ex));
                 });
+    }
+
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        log.debug("Delete resource for the domain {}", domainId);
+        return serviceResourceRepository.deleteByReference(Reference.domain(domainId));
     }
 }

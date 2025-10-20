@@ -19,7 +19,9 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.DeviceIdentifier;
 import io.gravitee.am.service.model.NewDeviceIdentifier;
 import io.gravitee.am.service.model.UpdateDeviceIdentifier;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -51,4 +53,6 @@ public interface DeviceIdentifierService {
     default Completable delete(String domain, String deviceIdentifierId) {
         return delete(domain, deviceIdentifierId, null);
     }
+
+    Completable deleteByDomain(String domainId);
 }

@@ -19,6 +19,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.DeviceIdentifier;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.repository.management.api.DeviceIdentifierRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.DeviceIdentifierMongo;
@@ -60,6 +61,12 @@ public class MongoDeviceIdentifierRepository extends AbstractManagementMongoRepo
     @Override
     public Flowable<DeviceIdentifier> findByReference(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(deviceIdentifierMongoMongoCollection.find(and(eq(FIELD_REFERENCE_ID, referenceId), eq(FIELD_REFERENCE_TYPE, referenceType.name())))).map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        return Completable.fromPublisher(deviceIdentifierMongoMongoCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, reference.id()), eq(FIELD_REFERENCE_TYPE, reference.type().name()))))
                 .observeOn(Schedulers.computation());
     }
 

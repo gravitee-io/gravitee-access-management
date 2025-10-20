@@ -18,6 +18,7 @@ package io.gravitee.am.repository.mongodb.management;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.resource.ServiceResource;
 import io.gravitee.am.repository.management.api.ServiceResourceRepository;
@@ -83,6 +84,12 @@ public class MongoServiceResourceRepository extends AbstractManagementMongoRepos
     @Override
     public Completable delete(String id) {
         return Completable.fromPublisher(resourceCollection.deleteOne(eq(FIELD_ID, id)))
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Completable deleteByReference(Reference reference) {
+        return Completable.fromPublisher(resourceCollection.deleteMany(and(eq(FIELD_REFERENCE_ID, reference.id()), eq(FIELD_REFERENCE_TYPE, reference.type().name()))))
                 .observeOn(Schedulers.computation());
     }
 

@@ -174,4 +174,10 @@ public class DeviceIdentifierServiceImpl implements DeviceIdentifierService {
                             String.format("An error occurs while trying to delete device identifier: %s", deviceIdentifier), ex));
                 });
     }
+
+    @Override
+    public Completable deleteByDomain(String domainId) {
+        log.debug("Delete device identifiers by domainId {}", domainId);
+        return deviceIdentifierRepository.deleteByReference(Reference.domain(domainId));
+    }
 }
