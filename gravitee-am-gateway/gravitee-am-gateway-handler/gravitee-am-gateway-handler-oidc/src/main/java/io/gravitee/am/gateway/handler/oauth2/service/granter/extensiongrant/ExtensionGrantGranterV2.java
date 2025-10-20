@@ -28,6 +28,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenService;
 import io.gravitee.am.identityprovider.api.DefaultUser;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -55,7 +56,8 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                                    IdentityProviderManager identityProviderManager,
                                    UserGatewayService userService,
                                    RulesEngine rulesEngine,
-                                   SubjectManager subjectManager) {
+                                   SubjectManager subjectManager,
+                                   Domain domain) {
         super(extensionGrantProvider,
                 extensionGrant,
                 userAuthenticationManager,
@@ -63,7 +65,8 @@ public class ExtensionGrantGranterV2 extends ExtensionGrantGranter {
                 tokenRequestResolver,
                 identityProviderManager,
                 userService,
-                rulesEngine);
+                rulesEngine,
+                domain);
         this.subjectManager = subjectManager;
     }
 
