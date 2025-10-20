@@ -112,10 +112,6 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     private Single<ProtectedResource> doCreate(ProtectedResource toCreate, User principal, Domain domain) {
         return repository.create(toCreate)
-                .flatMap(protectedResource -> {
-                    Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(protectedResource.getId(), ReferenceType.DOMAIN, protectedResource.getDomainId(), Action.CREATE));
-                    return eventService.create(event, domain).flatMap(e -> Single.just(protectedResource));
-                })
                 .doOnSuccess(created -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).protectedResource(created).principal(principal).type(EventType.PROTECTED_RESOURCE_CREATED)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).protectedResource(toCreate).principal(principal).type(EventType.PROTECTED_RESOURCE_CREATED).throwable(throwable)))
                 .flatMap(protectedResource -> {
@@ -137,6 +133,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                                 return membershipService.addOrUpdate((String) principal.getAdditionalInformation().get(Claims.ORGANIZATION), membership)
                                         .map(updatedMembership -> protectedResource);
                             });
+                })
+                .flatMap(protectedResource -> {
+                    Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(protectedResource.getId(), ReferenceType.DOMAIN, protectedResource.getDomainId(), Action.CREATE));
+                    return eventService.create(event, domain).flatMap(e -> Single.just(protectedResource));
                 });
     }
 
