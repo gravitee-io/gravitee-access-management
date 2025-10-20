@@ -20,15 +20,19 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
+import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -65,6 +69,9 @@ public class ProtectedResourceServiceImplTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private EventService eventService;
+
     @InjectMocks
     private ProtectedResourceServiceImpl service;
 
@@ -88,6 +95,7 @@ public class ProtectedResourceServiceImplTest {
         service.create(domain, user, newProtectedResource)
                 .test()
                 .assertError(throwable -> throwable instanceof ApplicationAlreadyExistsException);
+        Mockito.verify(auditService, Mockito.times(0)).report(any());
 
     }
 
@@ -98,6 +106,7 @@ public class ProtectedResourceServiceImplTest {
         Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
                 .thenReturn(Completable.complete());
         Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         Domain domain = new Domain();
         domain.setId("domainId");
@@ -112,6 +121,7 @@ public class ProtectedResourceServiceImplTest {
                 .assertComplete()
                 .assertValue(v -> v.getClientId().equals("clientId"));
         Mockito.verify(auditService, Mockito.times(1)).report(any());
+        Mockito.verify(eventService, Mockito.times(1)).create(any(), any());
     }
 
 
