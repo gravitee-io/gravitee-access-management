@@ -15,13 +15,10 @@
  */
 package io.gravitee.am.repository.management.api;
 
-import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.repository.common.CrudRepository;
-import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.MaybeSource;
 
 public interface ProtectedResourceRepository extends CrudRepository<ProtectedResource, String> {
 
