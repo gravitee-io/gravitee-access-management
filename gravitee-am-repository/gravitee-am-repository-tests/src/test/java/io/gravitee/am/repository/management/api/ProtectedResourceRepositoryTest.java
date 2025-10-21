@@ -18,10 +18,8 @@ package io.gravitee.am.repository.management.api;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ApplicationSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.repository.management.AbstractManagementTest;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -108,6 +106,63 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getId().equals(secretSettings.getId()));
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getAlgorithm().equals(secretSettings.getAlgorithm()));
 
+    }
+
+    @Test
+    public void shouldFindAll() {
+        ensureEmpty();
+
+        var resources = generateResources(10, "domain-id");
+
+        TestObserver<List<ProtectedResource>> testObserver = repository.findAll().toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(res -> res.size() == resources.size())
+                .assertValue(res -> res.getFirst().getClientSecrets() != null && res.getFirst().getClientSecrets().size() == resources.getFirst().getClientSecrets().size())
+                .assertValue(res -> res.getFirst().getSecretSettings() != null && res.getFirst().getSecretSettings().size() == resources.getFirst().getSecretSettings().size());
+    }
+
+    @Test
+    public void shouldFindByDomain() {
+        ensureEmpty();
+
+        var resources = generateResources(5, "domain-id");
+        generateResources(3, "other-domain-id");
+
+        TestObserver<List<ProtectedResource>> testObserver = repository.findByDomain("domain-id").toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(res -> res.size() == resources.size())
+                .assertValue(res -> res.getFirst().getClientSecrets() != null && res.getFirst().getClientSecrets().size() == resources.getFirst().getClientSecrets().size())
+                .assertValue(res -> res.getFirst().getSecretSettings() != null && res.getFirst().getSecretSettings().size() == resources.getFirst().getSecretSettings().size());
+    }
+
+    private void ensureEmpty() {
+        for (ProtectedResource resource : repository.findAll().blockingIterable()) {
+            repository.delete(resource.getId()).blockingAwait();
+        }
+    }
+
+    private List<ProtectedResource> generateResources(int count, String domainId) {
+        List<ProtectedResource> resources = new java.util.ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            ClientSecret clientSecret = generateClientSecret();
+            ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+            ProtectedResource toSave = generateResource(clientSecret, secretSettings);
+            // Add multiple secrets to ensure that the query is correct.
+            for (int j = 0; j < 2; j++) {
+                ClientSecret otherSecret = generateClientSecret();
+                var clientSecrets = new java.util.ArrayList<>(toSave.getClientSecrets());
+                clientSecrets.add(otherSecret);
+                toSave.setClientSecrets(clientSecrets);
+            }
+            toSave.setDomainId(domainId);
+            resources.add(toSave);
+            repository.create(toSave).blockingGet();
+        }
+        return resources;
     }
 
     private ClientSecret generateClientSecret() {
