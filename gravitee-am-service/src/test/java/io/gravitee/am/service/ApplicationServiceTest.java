@@ -44,7 +44,7 @@ import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
-import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
+import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidParameterException;
@@ -800,12 +800,12 @@ public class ApplicationServiceTest {
             mock.getSettings().getOauth().setClientSecret("client_secret");
             return mock;
         }).when(applicationTemplateManager).apply(any());
-        when(oAuthClientUniquenessValidator.checkClientIdUniqueness(any(), any())).thenReturn(Completable.error(new ApplicationAlreadyExistsException("", "")));
+        when(oAuthClientUniquenessValidator.checkClientIdUniqueness(any(), any())).thenReturn(Completable.error(new ClientAlreadyExistsException("", "")));
 
         TestObserver<Application> testObserver = new TestObserver<>();
         applicationService.create(DOMAIN, newClient).subscribe(testObserver);
 
-        testObserver.assertError(ApplicationAlreadyExistsException.class);
+        testObserver.assertError(ClientAlreadyExistsException.class);
         testObserver.assertNotComplete();
         verify(applicationRepository, never()).create(any(Application.class));
     }
