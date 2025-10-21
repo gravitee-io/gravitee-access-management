@@ -17,7 +17,7 @@ package io.gravitee.am.service.impl;
 
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
-import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
+import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
@@ -43,7 +43,7 @@ public class OAuthClientUniquenessValidator {
         return findByDomainAndClientId(domain, clientId)
                 .flatMapCompletable(hasFound -> {
                     if (hasFound) {
-                        return Completable.error(new ApplicationAlreadyExistsException(clientId, domain));
+                        return Completable.error(new ClientAlreadyExistsException(clientId, domain));
                     }
                     return Completable.complete();
                 });
