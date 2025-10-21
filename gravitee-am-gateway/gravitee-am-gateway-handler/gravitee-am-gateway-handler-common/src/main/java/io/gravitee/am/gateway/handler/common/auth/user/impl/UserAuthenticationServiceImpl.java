@@ -196,6 +196,7 @@ public class UserAuthenticationServiceImpl implements UserAuthenticationService 
                         // if the user has been found, try to load user information from its latest identity provider
                         .flatMap(authenticationProvider -> {
                             SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(request);
+                            authenticationContext.setDomain(domain);
                             final Authentication authentication = new EndUserAuthentication(user, null, authenticationContext);
                             return authenticationProvider.loadPreAuthenticatedUser(authentication);
                         })
