@@ -1430,7 +1430,7 @@ jobs:
           jobName: releaseV2
 
       # ---
-      # Package Bundle Must succeed, before nexus staging is done : Package bundle is idempotnent and non immutable, whereas NExus staging and Git release are immutable
+      # Package Bundle Must succeed, before nexus staging is done : Package bundle is idempotent and non immutable, whereas Nexus staging and Git release are immutable
       - package_bundle:
           dry_run: << parameters.dry_run >>
       - git_config
@@ -1498,14 +1498,14 @@ jobs:
             export NEXT_SNAPSHOT_RC_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-alpha.${NEXT_QUALIFIER_VERSION}-SNAPSHOT"
             export NEXT_SNAPSHOT_HOTFIX_VERSION="${MVN_PRJ_VERSION_MAJOR}.${MVN_PRJ_VERSION_MINOR}.${MVN_PRJ_VERSION_PATCH}-hotfix.${NEXT_HOTFIX_VERSION}-SNAPSHOT"
             
-            if [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_PATCH}" == "0" -a "${MVN_PRJ_VERSION_QUALIFIER}" == "1" ]; then
+            if [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_PATCH}" == "0" -a "${CREATE_MAINT_VER_BRANCH}" == "true" ]; then
             
-              echo "# ---- [${MVN_PRJ_VERSION}] is not a maintenance release, so we increment MINOR VERSION from [${MVN_PRJ_VERSION_MINOR}] to [${NEXT_MINOR_VERSION}], and prepared next version will be [${NEXT_SNAPSHOT_VERSION}] "
+              echo "# ---- [${MVN_PRJ_VERSION}] is not a maintenance release and we request maint branch creation, so we increment MINOR VERSION from [${MVN_PRJ_VERSION_MINOR}] to [${NEXT_MINOR_VERSION}], and prepared next version will be [${NEXT_SNAPSHOT_VERSION}] "
               mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_VERSION} -DgenerateBackupPoms=false
             
             elif [ "${RC_REQUESTED}" == "true" -a "${MVN_PRJ_VERSION_QUALIFIER}x" != "x" ]; then
             
-              echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_PATCH_SNAPSHOT_VERSION}] "
+              echo "# ---- [${MVN_PRJ_VERSION}] is a RC maintenance release or RC on master branch before code freeze, so we increment QUALIFIER VERSION from [${MVN_PRJ_VERSION_QUALIFIER}] to [${NEXT_QUALIFIER_VERSION}], and prepared next version will be [${NEXT_PATCH_SNAPSHOT_VERSION}] "
               echo "resetting version in [pom.xml] to [${NEXT_SNAPSHOT_RC_VERSION}]"
               mvn -s /tmp/.gravitee.settings.xml -B versions:set -DnewVersion=${NEXT_SNAPSHOT_RC_VERSION} -DgenerateBackupPoms=false
             elif [ "${HOTFIX_VERSION}" == "true" ]; then
