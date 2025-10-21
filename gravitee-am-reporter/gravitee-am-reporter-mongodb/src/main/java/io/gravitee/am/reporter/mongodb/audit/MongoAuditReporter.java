@@ -24,8 +24,6 @@ import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOptions;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -45,6 +43,7 @@ import io.gravitee.am.reporter.mongodb.audit.model.AuditAccessPointMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditEntityMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditMongo;
 import io.gravitee.am.reporter.mongodb.audit.model.AuditOutcomeMongo;
+import io.gravitee.am.repository.mongodb.provider.impl.MongoConnectionProvider;
 import io.gravitee.am.repository.provider.ClientWrapper;
 import io.gravitee.am.repository.provider.ConnectionProvider;
 import io.gravitee.common.service.AbstractService;
@@ -111,6 +110,10 @@ import static io.gravitee.am.reporter.mongodb.audit.constants.MongoAuditReporter
 public class MongoAuditReporter extends AbstractService<Reporter> implements AuditReporter, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(MongoAuditReporter.class);
+
+    @Autowired
+    private io.gravitee.am.model.Reporter reporterEntity;
+
     @Autowired
     private ConnectionProvider connectionProvider;
 
@@ -122,6 +125,12 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
     private boolean ensureIndexOnStart;
     @Value("${management.mongodb.cursorMaxTime:60000}")
     private int cursorMaxTimeInMs;
+
+    /**
+     * This provider is used to create MongoClient when the main backend is JDBC/R2DBC because in that case the commonConnectionProvider will provide R2DBC ConnectionPool.
+     * This is useful if the user want to create a Mongo IDP when the main backend if a RDBMS.
+     */
+    private final MongoConnectionProvider mongoProvider = new MongoConnectionProvider();
 
     private ClientWrapper<MongoClient> clientWrapper;
 
@@ -188,7 +197,13 @@ public class MongoAuditReporter extends AbstractService<Reporter> implements Aud
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        this.clientWrapper = this.connectionProvider.getClientWrapper();
+        if (this.connectionProvider.canHandle(ConnectionProvider.BACKEND_TYPE_MONGO)) {
+            this.clientWrapper = this.reporterEntity != null && this.reporterEntity.isSystem() ?
+                    this.connectionProvider.getClientWrapper() :
+                    this.connectionProvider.getClientFromConfiguration(this.configuration);
+        } else {
+            this.clientWrapper = mongoProvider.getClientFromConfiguration(this.configuration);
+        }
 
         // init reportable collection
         reportableCollection = this.clientWrapper.getClient().getDatabase(this.configuration.getDatabase()).getCollection(this.configuration.getReportableCollection(), AuditMongo.class);

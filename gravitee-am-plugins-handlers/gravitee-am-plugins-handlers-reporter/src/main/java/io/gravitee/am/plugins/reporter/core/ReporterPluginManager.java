@@ -26,9 +26,6 @@ import io.gravitee.am.reporter.api.audit.AuditReporter;
 import io.gravitee.plugin.core.api.PluginContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 
 import java.util.List;
 
@@ -66,6 +63,7 @@ public class ReporterPluginManager
         var context = providerConfig.getGraviteeContext();
         var postProcessors = ofNullable(context).map(ctx -> List.of(
                 new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration),
+                new ReporterBeanFactoryPostProcessor(providerConfig.getReporter()),
                 new GraviteeContextBeanFactoryPostProcessor(context)
         )).orElse(List.of(new ReporterConfigurationBeanFactoryPostProcessor(reporterConfiguration)));
 
@@ -82,6 +80,12 @@ public class ReporterPluginManager
     private static class ReporterConfigurationBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<ReporterConfiguration> {
         private ReporterConfigurationBeanFactoryPostProcessor(ReporterConfiguration configuration) {
             super("configuration", configuration);
+        }
+    }
+
+    private static class ReporterBeanFactoryPostProcessor extends NamedBeanFactoryPostProcessor<io.gravitee.am.model.Reporter> {
+        private ReporterBeanFactoryPostProcessor(io.gravitee.am.model.Reporter reporter) {
+            super("reporterDefinition", reporter);
         }
     }
 
