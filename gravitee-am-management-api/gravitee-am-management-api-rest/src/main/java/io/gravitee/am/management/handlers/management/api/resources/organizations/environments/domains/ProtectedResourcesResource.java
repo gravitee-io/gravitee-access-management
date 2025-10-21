@@ -134,6 +134,11 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    @Path("{protected-resource}")
+    public ProtectedResourceResource getProtectedResourceResource() {
+        return resourceContext.getResource(ProtectedResourceResource.class);
+    }
+
     @Schema
     public static final class ProtectedResourcePage extends Page<ProtectedResourcePrimaryData> {
         public ProtectedResourcePage(Collection<ProtectedResourcePrimaryData> data, int currentPage, long totalCount) {

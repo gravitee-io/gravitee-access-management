@@ -17,17 +17,28 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResource.Type;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.ProtectedResourceSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.service.model.NewProtectedResource;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
 
 public interface ProtectedResourceService {
+
+    Maybe<ProtectedResource> findById(String id);
+
+    default Maybe<ProtectedResourcePrimaryData> findByDomainAndIdAndType(String domain, String id, ProtectedResource.Type type) {
+        return findById(id)
+                .filter(res -> res.getDomainId().equals(domain))
+                .filter(res -> res.getType().equals(type))
+                .map(ProtectedResourcePrimaryData::of);
+    }
 
     Single<ProtectedResourceSecret> create(Domain domain, User user, NewProtectedResource protectedResource);
 

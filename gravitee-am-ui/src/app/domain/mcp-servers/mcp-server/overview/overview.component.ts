@@ -13,25 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ProtectedResource } from '../../../services/protected-resource.service';
+import { ProtectedResource } from '../../../../services/protected-resource.service';
+import { SnackbarService } from '../../../../services/snackbar.service';
 
 @Component({
-  selector: 'app-mcp-server',
-  templateUrl: './domain-mcp-server.component.html',
-  styleUrl: './domain-mcp-server.component.scss',
+  selector: 'app-domain-mcp-server-overview',
+  templateUrl: './overview.component.html',
+  styleUrl: './overview.component.scss',
   standalone: false,
 })
-export class DomainMcpServerComponent implements OnInit {
+export class DomainMcpServerOverviewComponent implements OnInit {
   domainId: string;
   protectedResource: ProtectedResource;
+  @ViewChild('copyText', { read: ElementRef, static: true }) copyText: ElementRef;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private snackbarService: SnackbarService,
+  ) {}
 
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.protectedResource = this.route.snapshot.data['mcpServer'];
+  }
+
+  copyToClipboard(element: HTMLElement) {
+    this.copyText.nativeElement.value = element.textContent;
+    this.copyText.nativeElement.select();
+    document.execCommand('copy');
+    this.snackbarService.open('Copied to clipboard');
   }
 }

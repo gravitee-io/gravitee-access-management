@@ -27,11 +27,7 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.OrganizationGroupService;
-import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.EnvironmentNotFoundException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -104,11 +100,14 @@ public class PermissionServiceTest {
     @Mock
     private ApplicationService applicationService;
 
+    @Mock
+    private ProtectedResourceService protectedResourceService; // TODO AM-5850
+
     private PermissionService cut;
 
     @Before
     public void before() {
-        cut = new PermissionService(membershipService, orgGroupService, roleService, environmentService, domainService, applicationService);
+        cut = new PermissionService(membershipService, orgGroupService, roleService, environmentService, domainService, applicationService, protectedResourceService);
     }
 
     @Test
@@ -594,6 +593,7 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
+        when(protectedResourceService.findById(any())).thenReturn(Maybe.empty()); // TODO AM-5850
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
 
@@ -621,8 +621,6 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
-        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
@@ -649,8 +647,6 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
-        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
@@ -673,8 +669,6 @@ public class PermissionServiceTest {
         domain.setReferenceId(ENVIRONMENT_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
-        when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
-        when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.error(new EnvironmentNotFoundException(ENVIRONMENT_ID)));
 
         TestObserver<Boolean> obs = cut.haveConsistentReferenceIds(or(of(ReferenceType.ORGANIZATION, ORGANIZATION_ID, APPLICATION, READ),
                 of(ReferenceType.ENVIRONMENT, ENVIRONMENT_ID, APPLICATION, READ),
@@ -714,6 +708,7 @@ public class PermissionServiceTest {
         environment.setOrganizationId(ORGANIZATION_ID);
 
         when(applicationService.findById(eq(APPLICATION_ID))).thenReturn(Maybe.just(application));
+        when(protectedResourceService.findById(any())).thenReturn(Maybe.empty()); // TODO AM-5850
         when(domainService.findById(eq(DOMAIN_ID))).thenReturn(Maybe.just(domain));
         when(environmentService.findById(eq(ENVIRONMENT_ID), eq(ORGANIZATION_ID))).thenReturn(Single.just(environment));
 

@@ -21,7 +21,11 @@ import {deleteDomain, setupDomainForTest} from "@management-commands/domain-mana
 import {uniqueName} from "@utils-commands/misc";
 import faker from "faker";
 import {createApplication} from "@management-commands/application-management-commands";
-import {createProtectedResource, getMcpServers} from "@management-commands/protected-resources-management-commands";
+import {
+    createProtectedResource,
+    getMcpServer,
+    getMcpServers
+} from "@management-commands/protected-resources-management-commands";
 import {NewProtectedResource} from "@management-models/NewProtectedResource";
 
 global.fetch = fetch;
@@ -298,6 +302,15 @@ describe('When admin created bunch of Protected Resources', () => {
         const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.desc');
         expect(pageAsc.data[0].updatedAt).toEqual(pageDesc.data[99].updatedAt);
         expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
+    })
+
+    it('Protected Resource can be found by its id', async () => {
+        const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
+        const protectedResourcePrimaryData = page.data[55];
+
+        const fetched = await getMcpServer(domainTestSearch.id, accessToken, protectedResourcePrimaryData.id)
+        expect(fetched).toEqual(protectedResourcePrimaryData)
+
     })
 
 });
