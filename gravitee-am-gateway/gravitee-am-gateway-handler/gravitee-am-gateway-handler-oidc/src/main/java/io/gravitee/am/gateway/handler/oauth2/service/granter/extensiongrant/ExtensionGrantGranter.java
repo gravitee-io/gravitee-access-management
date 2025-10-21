@@ -33,6 +33,7 @@ import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.AuthenticationProvider;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ExtensionGrant;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -68,6 +69,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
     @Setter
     private Date minDate;
     private final UserGatewayService userService;
+    private final Domain domain;
 
     public ExtensionGrantGranter(ExtensionGrantProvider extensionGrantProvider,
                                  ExtensionGrant extensionGrant,
@@ -76,7 +78,8 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
                                  TokenRequestResolver tokenRequestResolver,
                                  IdentityProviderManager identityProviderManager,
                                  UserGatewayService userService,
-                                 RulesEngine rulesEngine) {
+                                 RulesEngine rulesEngine,
+                                 Domain domain) {
         super(extensionGrant.getGrantType());
         setTokenService(tokenService);
         setTokenRequestResolver(tokenRequestResolver);
@@ -87,6 +90,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
         this.userAuthenticationManager = userAuthenticationManager;
         this.identityProviderManager = identityProviderManager;
         this.userService = userService;
+        this.domain = domain;
     }
 
     @Override
@@ -176,6 +180,7 @@ public class ExtensionGrantGranter extends AbstractTokenGranter {
 
     protected final Maybe<io.gravitee.am.identityprovider.api.User> retrieveUserByUsernameFromIdp(AuthenticationProvider provider, TokenRequest tokenRequest, User user) {
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(tokenRequest);
+        authenticationContext.setDomain(domain);
         final Authentication authentication = new EndUserAuthentication(user, null, authenticationContext);
         return provider.loadPreAuthenticatedUser(authentication);
     }
