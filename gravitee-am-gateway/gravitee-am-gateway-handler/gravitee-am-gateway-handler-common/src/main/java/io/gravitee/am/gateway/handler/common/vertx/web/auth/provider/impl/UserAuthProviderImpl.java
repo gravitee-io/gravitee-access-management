@@ -29,6 +29,7 @@ import io.gravitee.am.gateway.handler.common.vertx.web.auth.user.User;
 import io.gravitee.am.identityprovider.api.Authentication;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.model.Domain;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
@@ -56,6 +57,9 @@ public class UserAuthProviderImpl implements UserAuthProvider {
     @Autowired
     private ClientSyncService clientSyncService;
 
+    @Autowired
+    private Domain domain;
+
     @Override
     public void authenticate(RoutingContext context, JsonObject authInfo, Handler<AsyncResult<User>> handler) {
         String username = authInfo.getString(USERNAME_PARAMETER);
@@ -76,6 +80,8 @@ public class UserAuthProviderImpl implements UserAuthProvider {
 
             // end user authentication
             SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
+            authenticationContext.setDomain(domain);
+
             final Authentication authentication = new EndUserAuthentication(username, password, authenticationContext);
 
             authenticationContext.set(Claims.IP_ADDRESS, ipAddress);
