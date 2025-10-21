@@ -20,7 +20,10 @@ import java.util.List;
 
 public record ProtectedResourcePrimaryData (
         String id,
+        String clientId,
         String name,
+        String description,
+        ProtectedResource.Type type,
         List<String> resourceIdentifiers,
         List<String> tools,
         Date updatedAt){
@@ -28,7 +31,10 @@ public record ProtectedResourcePrimaryData (
     public static ProtectedResourcePrimaryData of(ProtectedResource protectedResource) {
         return new ProtectedResourcePrimaryData(
                 protectedResource.getId(),
+                protectedResource.getClientId(),
                 protectedResource.getName(),
+                protectedResource.getDescription(),
+                protectedResource.getType(),
                 protectedResource.getResourceIdentifiers(),
                 List.of(),
                 protectedResource.getUpdatedAt()

@@ -251,6 +251,8 @@ import { DomainSettingsSecretsComponent } from './domain/settings/secrets/secret
 import { DomainMcpServersComponent } from './domain/mcp-servers/mcp-servers.component';
 import { DomainNewMcpServerComponent } from './domain/mcp-servers/mcp-server-new/new-mcp-server.component';
 import { DomainMcpServerComponent } from './domain/mcp-servers/mcp-server/domain-mcp-server.component';
+import { McpServerResolver } from './resolvers/mcp-server.resolver';
+import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1481,7 +1483,30 @@ export const routes: Routes = [
                         path: ':mcpServerId',
                         component: DomainMcpServerComponent,
                         runGuardsAndResolvers: 'pathParamsOrQueryParamsChange',
-                        children: [],
+                        resolve: {
+                          mcpServer: McpServerResolver,
+                        },
+                        children: [
+                          {
+                            path: '',
+                            redirectTo: 'overview',
+                            pathMatch: 'full',
+                          },
+                          {
+                            path: 'overview',
+                            component: DomainMcpServerOverviewComponent,
+                            data: {
+                              menu: {
+                                label: 'Overview',
+                                section: 'Overview',
+                                level: 'level2',
+                              },
+                            },
+                            resolve: {
+                              entrypoint: DomainEntrypointResolver,
+                            },
+                          },
+                        ],
                       },
                     ],
                   },

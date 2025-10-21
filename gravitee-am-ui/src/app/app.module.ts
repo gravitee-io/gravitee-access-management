@@ -460,6 +460,8 @@ import { DomainNewMcpServerComponent } from './domain/mcp-servers/mcp-server-new
 import { DomainMcpServerComponent } from './domain/mcp-servers/mcp-server/domain-mcp-server.component';
 import { ProtectedResourceService } from './services/protected-resource.service';
 import { McpServersService } from './domain/mcp-servers/mcp-servers.service';
+import { McpServerResolver } from './resolvers/mcp-server.resolver';
+import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 
 @NgModule({
   declarations: [
@@ -505,6 +507,7 @@ import { McpServersService } from './domain/mcp-servers/mcp-servers.service';
     DomainMcpServersComponent,
     DomainMcpServerComponent,
     DomainNewMcpServerComponent,
+    DomainMcpServerOverviewComponent,
     ConfirmComponent,
     DictionaryDialogComponent,
     EmptystateComponent,
@@ -913,6 +916,7 @@ import { McpServersService } from './domain/mcp-servers/mcp-servers.service';
     DataPlaneService,
     DataPlanesResolver,
     DomainStoreService,
+    McpServerResolver,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: HttpRequestInterceptor,

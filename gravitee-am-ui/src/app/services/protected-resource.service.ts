@@ -26,14 +26,24 @@ export class ProtectedResourceService {
   private baseURL = AppConfig.settings.domainBaseURL;
   constructor(private http: HttpClient) {}
 
-  findByDomain(domainId: string, type: ProtectedResourceType, page: number, size: number, sort: Sort): Observable<Page<ProtectedResource>> {
-    return this.http.get<Page<ProtectedResource>>(
-      this.baseURL + domainId + `/protected-resources?type=${type}&page=${page}&size=${size}&sort=${transformToQueryParam(sort)}`,
+  findByDomain(
+    domainId: string,
+    type: ProtectedResourceType,
+    page: number,
+    size: number,
+    sort: Sort,
+  ): Observable<Page<ProtectedResourcePrimaryData>> {
+    return this.http.get<Page<ProtectedResourcePrimaryData>>(
+      this.baseURL + `${domainId}/protected-resources?type=${type}&page=${page}&size=${size}&sort=${transformToQueryParam(sort)}`,
     );
   }
 
   create(domainId: string, protectedResource: NewProtectedResourceRequest): Observable<NewProtectedResourceResponse> {
-    return this.http.post<NewProtectedResourceResponse>(this.baseURL + domainId + '/protected-resources', protectedResource);
+    return this.http.post<NewProtectedResourceResponse>(this.baseURL + `${domainId}/protected-resources`, protectedResource);
+  }
+
+  findById(domainId: string, id: string, type: ProtectedResourceType): Observable<ProtectedResource> {
+    return this.http.get<ProtectedResource>(this.baseURL + `${domainId}/protected-resources/${id}?type=${type}`);
   }
 }
 
@@ -41,14 +51,17 @@ export enum ProtectedResourceType {
   MCP_SERVER = 'MCP_SERVER',
 }
 
-export interface ProtectedResource {
+export interface ProtectedResourcePrimaryData {
   id: string;
   name: string;
   type: ProtectedResourceType;
   resourceIdentifiers: string[];
-  description?: string;
-
   tools: string[];
+  updatedAt: string;
+}
+
+export interface ProtectedResource extends ProtectedResourcePrimaryData {
+  description?: string;
 
   domainId: string;
   clientId: string;

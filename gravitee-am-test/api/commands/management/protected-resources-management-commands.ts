@@ -16,7 +16,7 @@
 
 import { getProtectedResourcesApi } from './service/utils';
 import { NewProtectedResource } from "@management-models/NewProtectedResource";
-import { ProtectedResourceSecret } from "@management-models/index";
+import {ProtectedResourcePrimaryData, ProtectedResourceSecret} from "@management-models/index";
 import {ProtectedResourcePage} from "@management-models/ProtectedResourcePage";
 
 export const createProtectedResource = (domainId: string, accessToken: string, body: NewProtectedResource) : Promise<ProtectedResourceSecret> =>
@@ -36,6 +36,15 @@ export const getMcpServers = (domainId: string, accessToken: string, size = 10, 
     page: page,
     type: 'MCP_SERVER',
     sort: sort
+  });
+
+export const getMcpServer = (domainId: string, accessToken: string, id: string) : Promise<ProtectedResourcePrimaryData> =>
+  getProtectedResourcesApi(accessToken).findProtectedResource({
+      organizationId: 'DEFAULT',
+      environmentId: 'DEFAULT',
+      domain: domainId,
+      protectedResource: id,
+      type: 'MCP_SERVER',
   });
 
 

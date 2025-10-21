@@ -34,6 +34,9 @@ import {
     ProtectedResourcePage,
     ProtectedResourcePageFromJSON,
     ProtectedResourcePageToJSON,
+    ProtectedResourcePrimaryData,
+    ProtectedResourcePrimaryDataFromJSON,
+    ProtectedResourcePrimaryDataToJSON,
     ProtectedResourceSecret,
     ProtectedResourceSecretFromJSON,
     ProtectedResourceSecretToJSON,
@@ -44,6 +47,14 @@ export interface CreateProtectedResourceRequest {
     environmentId: string;
     domain: string;
     newProtectedResource: NewProtectedResource;
+}
+
+export interface FindProtectedResourceRequest {
+    organizationId: string;
+    environmentId: string;
+    domain: string;
+    protectedResource: string;
+    type?: string;
 }
 
 export interface ListProtectedResourcesRequest {
@@ -113,6 +124,62 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
      */
     async createProtectedResource(requestParameters: CreateProtectedResourceRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ProtectedResourceSecret> {
         const response = await this.createProtectedResourceRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * User must have the PROTECTED_RESOURCE[READ] permission on the specified resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization. 
+     * Get an Protected Resource
+     */
+    async findProtectedResourceRaw(requestParameters: FindProtectedResourceRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ProtectedResourcePrimaryData>> {
+        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling findProtectedResource.');
+        }
+
+        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling findProtectedResource.');
+        }
+
+        if (requestParameters.domain === null || requestParameters.domain === undefined) {
+            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling findProtectedResource.');
+        }
+
+        if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+            throw new runtime.RequiredError('protectedResource','Required parameter requestParameters.protectedResource was null or undefined when calling findProtectedResource.');
+        }
+
+        const queryParameters: any = {};
+
+        if (requestParameters.type !== undefined) {
+            queryParameters['type'] = requestParameters.type;
+        }
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("gravitee-auth", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+        const response = await this.request({
+            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"protected-resource"}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => ProtectedResourcePrimaryDataFromJSON(jsonValue));
+    }
+
+    /**
+     * User must have the PROTECTED_RESOURCE[READ] permission on the specified resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization. 
+     * Get an Protected Resource
+     */
+    async findProtectedResource(requestParameters: FindProtectedResourceRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ProtectedResourcePrimaryData> {
+        const response = await this.findProtectedResourceRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

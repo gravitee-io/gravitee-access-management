@@ -17,18 +17,10 @@ package io.gravitee.am.management.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
-import io.gravitee.am.model.Acl;
-import io.gravitee.am.model.Group;
-import io.gravitee.am.model.Membership;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.Role;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.management.api.search.MembershipCriteria;
-import io.gravitee.am.service.ApplicationService;
-import io.gravitee.am.service.EnvironmentService;
-import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.OrganizationGroupService;
-import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidUserException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
@@ -61,6 +53,7 @@ public class PermissionService {
     private final EnvironmentService environmentService;
     private final DomainService domainService;
     private final ApplicationService applicationService;
+    private final ProtectedResourceService protectedResourceService;
     private final Map<String, Boolean> consistencyCache;
 
     public PermissionService(MembershipService membershipService,
@@ -68,13 +61,15 @@ public class PermissionService {
                              RoleService roleService,
                              EnvironmentService environmentService,
                              DomainService domainService,
-                             ApplicationService applicationService) {
+                             ApplicationService applicationService,
+                             ProtectedResourceService protectedResourceService) {
         this.membershipService = membershipService;
         this.orgGroupService = organizationGroupService;
         this.roleService = roleService;
         this.environmentService = environmentService;
         this.domainService = domainService;
         this.applicationService = applicationService;
+        this.protectedResourceService = protectedResourceService;
         this.consistencyCache = new ConcurrentHashMap<>();
     }
 
@@ -156,12 +151,14 @@ public class PermissionService {
         }
 
         return applicationService.findById(applicationId)
-                .flatMapSingle(application -> {
+                .map(Application::getDomain)
+                .switchIfEmpty(protectedResourceService.findById(applicationId).map(ProtectedResource::getDomainId)) // TODO AM-5850
+                .flatMapSingle(storedDomainId -> {
                     if (domainId != null) {
-                        return Single.just(application.getDomain().equals(domainId));
+                        return Single.just(storedDomainId.equals(domainId));
                     } else {
                         // Need to fetch the domain to check if it belongs to the environment / organization.
-                        return isDomainIdConsistent(application.getDomain(), environmentId, organizationId);
+                        return isDomainIdConsistent(storedDomainId, environmentId, organizationId);
                     }
                 }).toSingle();
     }

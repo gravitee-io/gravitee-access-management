@@ -44,7 +44,11 @@ export class DomainComponent implements OnInit {
     this.domainService.domainUpdated$.subscribe((domain) => (this.domain = domain));
 
     // redirect user according to its permissions
-    if (this.router.url.indexOf('applications') === -1 && this.router.url.indexOf('settings') === -1) {
+    if (
+      this.router.url.indexOf('applications') === -1 &&
+      this.router.url.indexOf('settings') === -1 &&
+      this.router.url.indexOf('mcp-servers') === -1
+    ) {
       if (this.canNavigate(['domain_analytics_read'])) {
         this.router.navigate(['dashboard'], { relativeTo: this.route });
       } else if (this.canNavigate(['application_list'])) {

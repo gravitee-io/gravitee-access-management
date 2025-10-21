@@ -39,6 +39,7 @@ import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -79,6 +80,17 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Autowired
     private AuditService auditService;
+
+    @Override
+    public Maybe<ProtectedResource> findById(String id) {
+        LOGGER.debug("Find protected resources by id={}",  id);
+        return repository.findById(id)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find protected resource by and id={}", id, ex);
+                    return Maybe.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find protected resources by  and id=%s", id), ex));
+                });
+    }
 
     @Override
     public Single<ProtectedResourceSecret> create(Domain domain, User principal, NewProtectedResource newProtectedResource) {
