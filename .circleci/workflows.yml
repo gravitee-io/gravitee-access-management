@@ -1114,17 +1114,6 @@ jobs:
                           --set "gateway.image.tag=${TAG}" \
                           --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
                           --set "ui.image.tag=${TAG}"
-              echo "running: helm upgrade for am-master-postgres-dev"
-              helm upgrade \
-                          --install am-psql \
-                          -n am-master-postgres-dev \
-                          -f ./cloud-am/devs-preprod/values-psql.yaml ./helm/ \
-                          --set "api.image.repository=graviteeio.azurecr.io/am-management-api" \
-                          --set "api.image.tag=${TAG}" \
-                          --set "gateway.image.repository=graviteeio.azurecr.io/am-gateway" \
-                          --set "gateway.image.tag=${TAG}" \
-                          --set "ui.image.repository=graviteeio.azurecr.io/am-management-ui" \
-                          --set "ui.image.tag=${TAG}"
             else
               # create namespace if not exist (dry-run will generate YAML manifest and apply will create or update the ns using the manifest)
               kubectl create namespace am-${CIRCLE_BRANCH//./-}-dev --dry-run=client -o yaml | kubectl apply -f -
