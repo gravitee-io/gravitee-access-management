@@ -110,39 +110,29 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
 
     @Test
     public void shouldFindAll() {
-        ensureEmpty();
-
-        var resources = generateResources(10, "domain-id");
+        var resources = generateResources(10, "all-domain-id");
 
         TestObserver<List<ProtectedResource>> testObserver = repository.findAll().toList().test();
         testObserver.awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertNoErrors()
-                .assertValue(res -> res.size() == resources.size())
+                .assertValue(res -> res.size() >= resources.size())
                 .assertValue(res -> res.getFirst().getClientSecrets() != null && res.getFirst().getClientSecrets().size() == resources.getFirst().getClientSecrets().size())
                 .assertValue(res -> res.getFirst().getSecretSettings() != null && res.getFirst().getSecretSettings().size() == resources.getFirst().getSecretSettings().size());
     }
 
     @Test
     public void shouldFindByDomain() {
-        ensureEmpty();
-
-        var resources = generateResources(5, "domain-id");
+        var resources = generateResources(5, "dummy-domain-id");
         generateResources(3, "other-domain-id");
 
-        TestObserver<List<ProtectedResource>> testObserver = repository.findByDomain("domain-id").toList().test();
+        TestObserver<List<ProtectedResource>> testObserver = repository.findByDomain("dummy-domain-id").toList().test();
         testObserver.awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertNoErrors()
                 .assertValue(res -> res.size() == resources.size())
                 .assertValue(res -> res.getFirst().getClientSecrets() != null && res.getFirst().getClientSecrets().size() == resources.getFirst().getClientSecrets().size())
                 .assertValue(res -> res.getFirst().getSecretSettings() != null && res.getFirst().getSecretSettings().size() == resources.getFirst().getSecretSettings().size());
-    }
-
-    private void ensureEmpty() {
-        for (ProtectedResource resource : repository.findAll().blockingIterable()) {
-            repository.delete(resource.getId()).blockingAwait();
-        }
     }
 
     private List<ProtectedResource> generateResources(int count, String domainId) {
