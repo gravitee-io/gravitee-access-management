@@ -50,7 +50,6 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
 
     private final ConcurrentMap<String, ProtectedResource> resources = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<String, Domain> domains = new ConcurrentHashMap<>();
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -69,6 +68,7 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
 
     @Override
     public void onEvent(Event<ProtectedResourceEvent, Payload> event) {
+        log.debug("Receive protected resource event {} for id {}", event.type(), event.content().getId());
         if (event.content().getReferenceType() == ReferenceType.DOMAIN &&
                 (domain.isMaster() || domain.getId().equals(event.content().getReferenceId()))) {
             switch (event.type()) {
@@ -118,9 +118,6 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
 
         log.info("Dispose event listener for protected resource events for domain {}", domain.getName());
         eventManager.unsubscribeForEvents(this, ProtectedResourceEvent.class, domain.getId());
-        if (domain.isMaster()) {
-            domains.keySet().forEach(d -> eventManager.unsubscribeForCrossEvents(this, ProtectedResourceEvent.class, d));
-        }
     }
 
     @Override
@@ -143,13 +140,5 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
         return protectedResourceId != null ? resources.get(protectedResourceId) : null;
     }
 
-    @Override
-    public void deployCrossDomain(Domain domain) {
 
-    }
-
-    @Override
-    public void undeployCrossDomain(Domain domain) {
-
-    }
 }

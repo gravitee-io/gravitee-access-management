@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.common.protectedresource;
 
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.common.service.Service;
 
@@ -31,7 +30,4 @@ public interface ProtectedResourceManager extends Service {
 
     ProtectedResource get(String protectedResourceId);
 
-    void deployCrossDomain(Domain domain);
-
-    void undeployCrossDomain(Domain domain);
 }
