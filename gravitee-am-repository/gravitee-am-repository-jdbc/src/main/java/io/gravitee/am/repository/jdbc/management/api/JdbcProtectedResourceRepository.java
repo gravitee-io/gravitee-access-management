@@ -16,14 +16,9 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.ProtectedResource;
-import io.gravitee.am.model.ReferenceType;
-import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.application.ClientSecret;
-import io.gravitee.am.model.flow.Flow;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcApplication;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceClientSecretRepository;
@@ -34,26 +29,20 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.r2dbc.core.ReactiveDeleteOperation;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
-import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.TreeSet;
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-import static io.gravitee.am.repository.jdbc.management.api.JdbcApplicationRepository.COL_CREATED_AT;
 import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret.FIELD_PROTECTED_RESOURCE_ID;
 import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.TABLE_NAME;
-import static java.util.stream.Collectors.toCollection;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
@@ -138,17 +127,46 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
     @Override
     public Flowable<ProtectedResource> findAll() {
-        return this.spring.findAll().map(this::toEntity).flatMap(app -> complete(app).toFlowable());
+        Flowable<ProtectedResource> resources = this.spring.findAll().map(this::toEntity);
+        return attachSecrets(resources);
     }
 
     @Override
     public Flowable<ProtectedResource> findByDomain(String domain) {
-        return fluxToFlowable(getTemplate().getDatabaseClient()
+        Flowable<ProtectedResource> resources = fluxToFlowable(getTemplate().getDatabaseClient()
                 .sql(Selects.BY_DOMAIN_ID)
                 .bind("domainId", domain)
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity);
+        return attachSecrets(resources);
+    }
+
+    private Flowable<ProtectedResource> attachSecrets(Flowable<ProtectedResource> resourcesFlow) {
+        return resourcesFlow
+                .toList()
+                .flatMapPublisher(resources -> {
+                    if (resources.isEmpty()) {
+                        return Flowable.empty();
+                    }
+                    List<String> ids = resources.stream().map(ProtectedResource::getId).toList();
+                    return clientSecretSpring.findAllByProtectedResourceIdIn(ids)
+                            .toList()
+                            .flatMapPublisher(secrets -> {
+                                Map<String, List<JdbcProtectedResourceClientSecret>> byResourceId = secrets
+                                        .stream()
+                                        .collect(Collectors.groupingBy(JdbcProtectedResourceClientSecret::getProtectedResourceId));
+
+                                resources.forEach(res -> {
+                                    List<JdbcProtectedResourceClientSecret> secretsForRes = byResourceId.get(res.getId());
+                                    List<ClientSecret> mapped = secretsForRes == null ? List.of() : secretsForRes.stream()
+                                            .map(j -> mapper.map(j, ClientSecret.class))
+                                            .toList();
+                                    res.setClientSecrets(mapped);
+                                });
+                                return Flowable.fromIterable(resources);
+                            });
+                });
     }
 
     private Single<ProtectedResource> complete(ProtectedResource entity) {

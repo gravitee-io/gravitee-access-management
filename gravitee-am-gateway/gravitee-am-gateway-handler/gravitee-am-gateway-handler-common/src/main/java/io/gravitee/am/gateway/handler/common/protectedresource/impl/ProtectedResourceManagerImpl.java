@@ -54,14 +54,14 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        log.info("Initializing protected resouces for domain {}", domain.getName());
+        log.info("Initializing protected resources for domain {}", domain.getName());
         Flowable<ProtectedResource> protectedResourceFlowable = domain.isMaster() ? protectedResourceRepository.findAll() : protectedResourceRepository.findByDomain(domain.getId());
         protectedResourceFlowable
                 .subscribeOn(Schedulers.io())
                 .subscribe(
-                        protectedResource -> {
-                            resources.put(protectedResource.getId(), protectedResource);
-                            log.info("Protected Resource {} loaded for domain {}", protectedResource.getName(), domain.getName());
+                        res -> {
+                            resources.put(res.getId(), res);
+                            log.info("Protected Resource {} loaded for domain {}", res.getName(), domain.getName());
                         },
                         error -> log.error("An error has occurred when loading protected resources for domain {}", domain.getName(), error)
                 );
@@ -95,9 +95,9 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
         protectedResourceRepository.findById(protectedResourceId)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
-                        client -> {
-                            resources.put(client.getId(), client);
-                            log.info("Application {} loaded for domain {}", protectedResourceId, domain.getName());
+                        res -> {
+                            resources.put(res.getId(), res);
+                            log.info("Protected Resource {} loaded for domain {}", protectedResourceId, domain.getName());
 
                         },
                         error -> log.error("An error has occurred when loading protected resource {} for domain {}", protectedResourceId, domain.getName(), error),

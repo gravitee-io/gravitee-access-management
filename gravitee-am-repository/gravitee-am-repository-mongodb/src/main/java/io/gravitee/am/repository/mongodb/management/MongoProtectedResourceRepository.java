@@ -109,7 +109,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
 
     @Override
     public Flowable<ProtectedResource> findByDomain(String domain) {
-        return Flowable.fromPublisher(withMaxTime(collection.find(eq(FIELD_DOMAIN, domain)))).map(this::convert)
+        return Flowable.fromPublisher(withMaxTime(collection.find(eq(DOMAIN_ID_FIELD, domain)))).map(this::convert)
                 .observeOn(Schedulers.computation());
     }
 
