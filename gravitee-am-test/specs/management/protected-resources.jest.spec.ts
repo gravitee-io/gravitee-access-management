@@ -66,7 +66,7 @@ describe('When creating protected resource', () => {
             name: faker.commerce.productName(),
             clientId: "client-id",
             type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something.com"]
+            resourceIdentifiers: ["https://something3.com"]
         } as NewProtectedResource;
 
         const createdResource = await createProtectedResource(domain.id, accessToken, request);
@@ -83,7 +83,7 @@ describe('When creating protected resource', () => {
             clientId: "client-id2",
             clientSecret: "secret",
             type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something.com"]
+            resourceIdentifiers: ["https://something4.com"]
         } as NewProtectedResource;
 
         const createdResource = await createProtectedResource(domain.id, accessToken, request);
@@ -100,7 +100,7 @@ describe('When creating protected resource', () => {
             clientId: "client-id3",
             clientSecret: "secret",
             type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something.com"]
+            resourceIdentifiers: ["https://something5.com"]
         } as NewProtectedResource;
 
         const createdResource = await createProtectedResource(domain.id, accessToken, request);
@@ -110,7 +110,7 @@ describe('When creating protected resource', () => {
         expect(createdResource.clientSecret).toEqual(request.clientSecret);
         expect(createdResource.clientId).toEqual(request.clientId);
 
-        createProtectedResource(domain.id, accessToken, request)
+        await createProtectedResource(domain.id, accessToken, request)
             .catch(err => expect(err.response.status).toEqual(400))
     });
 
@@ -129,20 +129,20 @@ describe('When creating protected resource', () => {
             clientId: appRequest.clientId,
             clientSecret: "secret",
             type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something.com"]
+            resourceIdentifiers: ["https://something6.com"]
         } as NewProtectedResource;
 
-        createProtectedResource(domain.id, accessToken, request)
+        await createProtectedResource(domain.id, accessToken, request)
             .catch(err => expect(err.response.status).toEqual(400))
     });
 
     it('Protected Resource must not be created without type', async () => {
         const request = {
             name: faker.commerce.productName(),
-            resourceIdentifiers: ["https://something.com", "https://something2.com"]
+            resourceIdentifiers: ["https://something7.com", "https://something8.com"]
         } as NewProtectedResource;
 
-        createProtectedResource(domain.id, accessToken, request)
+        await createProtectedResource(domain.id, accessToken, request)
           .catch(err => expect(err.response.status).toEqual(400))
     });
 
@@ -150,10 +150,10 @@ describe('When creating protected resource', () => {
         const request = {
             name: faker.commerce.productName(),
             type: 'MCP_SERVERR',
-            resourceIdentifiers: ["https://something.com", "https://something2.com"]
+            resourceIdentifiers: ["https://something9.com", "https://something10.com"]
         } as NewProtectedResource;
 
-        createProtectedResource(domain.id, accessToken, request)
+        await createProtectedResource(domain.id, accessToken, request)
           .catch(err => expect(err.response.status).toEqual(400))
     });
 
@@ -161,21 +161,24 @@ describe('When creating protected resource', () => {
         const request = {
             name: faker.commerce.productName(),
             type: 'MCP_SERVER',
-            resourceIdentifiers: ["something", "https://something2.com"]
+            resourceIdentifiers: ["something", "https://something11.com"]
         } as NewProtectedResource;
 
-        createProtectedResource(domain.id, accessToken, request)
+        await createProtectedResource(domain.id, accessToken, request)
           .catch(err => expect(err.response.status).toEqual(400))
     });
 
-    it('Protected Resource must not be created with wrong resource identifier', async () => {
+    it('Protected Resource must not be created if resourceIdentifier already exists', async () => {
         const request = {
             name: faker.commerce.productName(),
             type: 'MCP_SERVER',
-            resourceIdentifiers: ["something", "https://something2.com"]
+            resourceIdentifiers: ["https://something13.com"]
         } as NewProtectedResource;
 
-        createProtectedResource(domain.id, accessToken, request)
+        const first = await createProtectedResource(domain.id, accessToken, request)
+        expect(first.id).toBeDefined();
+
+        await createProtectedResource(domain.id, accessToken, request)
           .catch(err => expect(err.response.status).toEqual(400))
     });
 
@@ -187,7 +190,7 @@ describe('When admin created bunch of Protected Resources', () => {
             const request = {
                 name: faker.commerce.productName(),
                 type: "MCP_SERVER",
-                resourceIdentifiers: [`https://abc${faker.random.alpha()}.com`, `https://abc${faker.random.alpha()}.com`]
+                resourceIdentifiers: [`https://abc${i}.com`, `https://abc${i}a${i}.com`]
             } as NewProtectedResource;
             await createProtectedResource(domainTestSearch.id, accessToken, request);
         }

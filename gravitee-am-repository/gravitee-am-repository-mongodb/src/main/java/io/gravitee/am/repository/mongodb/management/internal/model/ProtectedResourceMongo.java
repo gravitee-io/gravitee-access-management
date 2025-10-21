@@ -29,6 +29,8 @@ public class ProtectedResourceMongo extends Auditable {
     public final static String TYPE_FIELD = "type";
     public final static String UPDATED_AT_FIELD = "updatedAt";
 
+    public final static String RESOURCE_IDENTIFIERS_FIELD = "resourceIdentifiers";
+
 
     private String id;
 

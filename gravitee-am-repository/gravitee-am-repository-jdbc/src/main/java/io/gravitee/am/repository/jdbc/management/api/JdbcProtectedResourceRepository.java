@@ -123,8 +123,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .firstElement();
     }
 
-    private String transformSortValue(String sort){
-        return switch (sort){
+    private String transformSortValue(String sort) {
+        return switch (sort) {
             case "name" -> COLUMN_NAME;
             case "updatedAt" -> COLUMN_UPDATED_AT;
             default -> COLUMN_UPDATED_AT;
@@ -149,7 +149,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domainId, ProtectedResource.Type type, List<String> ids, PageSortRequest pageSortRequest) {
-        if(ids.isEmpty()){
+        if (ids.isEmpty()) {
             return Single.just(new Page<>());
         }
         String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
@@ -162,8 +162,17 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .map(this::toEntity)
                 .map(ProtectedResourcePrimaryData::of)
                 .toList()
-                .flatMap(data -> spring.countByDomainIdAndTypeAndIdIn(domainId,type,ids).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .flatMap(data -> spring.countByDomainIdAndTypeAndIdIn(domainId, type, ids).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve all protected resources with domainId={}, type={} (page={}/size={})", domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
+    }
+
+    @Override
+    public Single<Boolean> existsByResourceIdentifiers(String domainId, List<String> resourceIdentifiers) {
+        List<Single<Boolean>> checks = resourceIdentifiers.stream()
+                .map(uri -> spring.existsByDomainIdAndResourceIdentifiersContainsIgnoreCase(domainId, uri))
+                .toList();
+        return Single.concat(checks)
+                .any(Boolean::booleanValue);
     }
 
 
