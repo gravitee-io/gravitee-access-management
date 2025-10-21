@@ -25,6 +25,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ClientAlreadyExistsException;
+import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.reactivex.rxjava3.core.Completable;
@@ -74,6 +75,7 @@ public class ProtectedResourceServiceImplTest {
         Mockito.when(repository.create(any())).thenReturn(Single.never());
         Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
                 .thenReturn(Completable.error(new ClientAlreadyExistsException("","")));
+        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
         Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
 
         Domain domain = new Domain();
@@ -92,11 +94,35 @@ public class ProtectedResourceServiceImplTest {
     }
 
     @Test
+    public void shouldNotCreateProtectedResourceWhenResourceIdAlreadyExists() {
+        Mockito.when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        Mockito.when(repository.create(any())).thenReturn(Single.never());
+        Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
+                .thenReturn(Completable.complete());
+        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(true));
+        Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        NewProtectedResource newProtectedResource = new NewProtectedResource();
+        newProtectedResource.setClientId("clientId");
+        newProtectedResource.setType("MCP_SERVER");
+        service.create(domain, user, newProtectedResource)
+                .test()
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
+
+    }
+
+    @Test
     public void shouldCreateProtectedResourceWhenClientIdDoesntExist() {
         Mockito.when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
         Mockito.when(repository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
                 .thenReturn(Completable.complete());
+        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
         Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
 
         Domain domain = new Domain();

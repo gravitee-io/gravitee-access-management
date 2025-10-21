@@ -30,4 +30,6 @@ public interface SpringProtectedResourceRepository extends RxJava3CrudRepository
     Single<Long> countByDomainIdAndType(String domainId, Type type);
 
     Single<Long> countByDomainIdAndTypeAndIdIn(String domainId, Type type, Collection<String> ids);
+
+    Single<Boolean> existsByDomainIdAndResourceIdentifiersContainsIgnoreCase(String domainId, String resourceIdentifier);
 }
