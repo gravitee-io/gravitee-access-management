@@ -24,6 +24,7 @@ import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -61,6 +62,7 @@ public class JdbcRateLimitApiRepository extends AbstractJdbcRepository implement
                 .switchIfEmpty(createNew(weight, supplier)
                         .doOnSuccess(rl -> LOGGER.debug("Creating new rate limit entry for key {} with weight {}", rl.getKey(), weight))
                         .compose(this::insert))
+                .observeOn(Schedulers.computation())
                 .doOnSuccess(rl -> LOGGER.debug("Rate limit result: key={}, counter={}, resetTime={}, limit={}", 
                     rl.getKey(), rl.getCounter(), rl.getResetTime(), rl.getLimit()));
     }

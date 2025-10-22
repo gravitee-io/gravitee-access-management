@@ -119,7 +119,7 @@ public class DefaultRulesEngine implements RulesEngine {
                 executionContext.getAttributes().put(ConstantKeys.USER_CONTEXT_KEY, user);
             }
             return executionContext;
-        }).observeOn(Schedulers.computation());
+        });
     }
 
     private Single<ExecutionContext> rxExecutePolicyChain(List<Policy> policies, ExecutionContext executionContext) {
