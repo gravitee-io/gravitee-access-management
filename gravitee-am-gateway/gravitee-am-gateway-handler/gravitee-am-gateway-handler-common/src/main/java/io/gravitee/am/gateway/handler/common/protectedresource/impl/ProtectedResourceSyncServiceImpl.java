@@ -16,18 +16,33 @@
 
 package io.gravitee.am.gateway.handler.common.protectedresource.impl;
 
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Maybe;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import static io.reactivex.rxjava3.core.Observable.fromIterable;
 
 public class ProtectedResourceSyncServiceImpl implements ProtectedResourceSyncService {
+
+    @Autowired
+    private Domain domain;
+
+    @Autowired
+    private ProtectedResourceManager protectedResourceManager;
+
     @Override
     public Maybe<Client> findByClientId(String clientId) {
-        return null;
+        return findByDomainAndClientId(domain.getId(), clientId);
     }
 
     @Override
-    public Maybe<Client> findByDomainAndClientId(String domain, String clientId) {
-        return null;
+    public Maybe<Client> findByDomainAndClientId(String domainId, String clientId) {
+        return fromIterable(protectedResourceManager.entities())
+                .filter(protectedResource -> protectedResource.getClientId().equals(clientId) && protectedResource.getDomainId().equals(domainId))
+                .map(protectedResource -> protectedResource.toClient())
+                .firstElement();
     }
 }

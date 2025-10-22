@@ -17,6 +17,7 @@ package io.gravitee.am.model;
 
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.oidc.Client;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -78,5 +79,19 @@ public class ProtectedResource {
         this.secretSettings = protectedResource.getSecretSettings();
         this.createdAt = protectedResource.getCreatedAt();
         this.updatedAt = protectedResource.getUpdatedAt();
+    }
+
+    public Client toClient() {
+        Client client = new Client();
+        client.setId(this.id);
+        client.setClientId(this.clientId);
+        client.setClientName(this.name);
+        client.setDomain(this.domainId);
+        client.setEnabled(true);
+        client.setSecretSettings(this.secretSettings);
+        client.setClientSecrets(this.clientSecrets);
+        client.setCreatedAt(this.createdAt);
+        client.setUpdatedAt(this.updatedAt);
+        return client;
     }
 }

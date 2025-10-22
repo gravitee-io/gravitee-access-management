@@ -179,9 +179,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 handler.handle(Future.succeededFuture());
                 return;
             }
-            // get client
+            // get client - first try regular client, then fallback to protected resource
             clientSyncService
                     .findByClientId(decodeURIComponent(clientId))
+                    .switchIfEmpty(protectedResourceSyncService.findByClientId(decodeURIComponent(clientId)))
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),
