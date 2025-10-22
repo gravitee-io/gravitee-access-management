@@ -117,6 +117,7 @@ public class ProtectedResourceServiceImplTest {
         NewProtectedResource newProtectedResource = new NewProtectedResource();
         newProtectedResource.setClientId("clientId");
         newProtectedResource.setType("MCP_SERVER");
+        newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
         service.create(domain, user, newProtectedResource)
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);

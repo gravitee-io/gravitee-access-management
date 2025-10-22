@@ -111,7 +111,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), toCreate.getClientId())
                 .andThen(checkResourceIdentifierUniqueness(domain.getId(), toCreate.getResourceIdentifiers()))
-                .andThen(doCreate(toCreate, principal))
+                .andThen(doCreate(toCreate, principal, domain))
                 .map(res -> ProtectedResourceSecret.from(res, rawSecret));
     }
 
