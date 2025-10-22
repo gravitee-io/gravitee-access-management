@@ -67,6 +67,18 @@ public class AuthorizationEngineManagerImpl extends AbstractService implements A
     }
 
     @Override
+    public Maybe<AuthorizationEngineProvider> getDefault() {
+        final int size = providers.size();
+        if (size == 0) {
+            return Maybe.empty();
+        }
+        if (size > 1) {
+            return Maybe.error(new IllegalStateException("Multiple authorization engine providers found. Only one provider is allowed per domain."));
+        }
+        return Maybe.just(providers.values().iterator().next());
+    }
+
+    @Override
     public void afterPropertiesSet() {
         logger.info("Initializing authorization engines for domain {}", domain.getName());
 

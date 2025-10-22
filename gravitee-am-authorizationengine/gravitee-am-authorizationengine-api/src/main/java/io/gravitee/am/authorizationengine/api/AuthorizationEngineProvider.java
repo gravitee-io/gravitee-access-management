@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.authorizationengine.api;
 
+import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineRequest;
+import io.gravitee.am.authorizationengine.api.model.AuthorizationEngineResponse;
 import io.gravitee.am.common.plugin.AmPluginProvider;
 import io.gravitee.common.service.Service;
 import io.reactivex.rxjava3.core.Single;
@@ -31,10 +33,10 @@ public interface AuthorizationEngineProvider extends Service<AuthorizationEngine
      * This method is called by the Gateway to verify if a subject has permission
      * to perform an action on a resource.
      *
-     * @param request Authorization request containing a request in AuthZen format
+     * @param request Authorization request
      * @return Single<AuthorizationResponse> containing the decision and optional context
      */
-    Single<AuthorizationResponse> check(AuthorizationRequest request);
+    Single<AuthorizationEngineResponse> check(AuthorizationEngineRequest request);
 
     /**
      * Get the JAX-RS management resource instance for Management API.

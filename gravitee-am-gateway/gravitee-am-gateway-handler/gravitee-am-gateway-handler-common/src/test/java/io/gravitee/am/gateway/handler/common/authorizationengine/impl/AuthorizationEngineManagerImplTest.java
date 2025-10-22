@@ -419,4 +419,67 @@ class AuthorizationEngineManagerImplTest {
         TestObserver<AuthorizationEngineProvider> observer = manager.get("engine-id").test();
         observer.assertNoValues();
     }
+
+    @Test
+    void shouldGetDefaultProviderWhenSingleProviderAvailable() {
+        // given
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(testEngine));
+        when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
+                .thenReturn(mockProvider);
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+
+        manager.afterPropertiesSet();
+
+        // when
+        TestObserver<AuthorizationEngineProvider> observer = manager.getDefault().test();
+
+        // then
+        observer.assertComplete();
+        observer.assertValue(mockProvider);
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoProvidersAvailable() {
+        // when
+        TestObserver<AuthorizationEngineProvider> observer = manager.getDefault().test();
+
+        // then
+        observer.assertComplete();
+        observer.assertNoValues();
+    }
+
+    @Test
+    void shouldThrowExceptionWhenMultipleProvidersAvailable() {
+        // given - create multiple engines
+        AuthorizationEngine testEngine2 = new AuthorizationEngine();
+        testEngine2.setId("engine-id-2");
+        testEngine2.setName("Test Engine 2");
+        testEngine2.setType("openfga");
+        testEngine2.setReferenceType(ReferenceType.DOMAIN);
+        testEngine2.setReferenceId("domain-id");
+        testEngine2.setConfiguration("{\"connectionUri\":\"http://localhost:8080\"}");
+
+        AuthorizationEngineProvider mockProvider2 = mock(AuthorizationEngineProvider.class);
+
+        when(authorizationEngineRepository.findByDomain("domain-id"))
+                .thenReturn(Flowable.just(testEngine, testEngine2));
+        when(authorizationEnginePluginManager.create(any(ProviderConfiguration.class)))
+                .thenReturn(mockProvider)
+                .thenReturn(mockProvider2);
+        when(domain.getId()).thenReturn("domain-id");
+        when(domain.getName()).thenReturn("Test Domain");
+
+        manager.afterPropertiesSet();
+
+        // when
+        TestObserver<AuthorizationEngineProvider> observer = manager.getDefault().test();
+
+        // then - should throw IllegalStateException
+        observer.assertError(IllegalStateException.class);
+        observer.assertError(throwable -> 
+            throwable instanceof IllegalStateException && 
+            throwable.getMessage().equals("Multiple authorization engine providers found. Only one provider is allowed per domain."));
+    }
 }

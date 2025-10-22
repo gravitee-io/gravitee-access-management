@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.authorizationengine.api;
+package io.gravitee.am.authorizationengine.api.model;
 
 import lombok.Builder;
 
 import java.util.Map;
 
 /**
- * Authorization response.
+ * Authorization engine response.
  *
  * @author GraviteeSource Team
  */
 @Builder
-public record AuthorizationResponse(
+public record AuthorizationEngineResponse(
         boolean decision,
         // Optional context with additional decision information.
         Map<String, Object> context
-) {
-}
+) {}
