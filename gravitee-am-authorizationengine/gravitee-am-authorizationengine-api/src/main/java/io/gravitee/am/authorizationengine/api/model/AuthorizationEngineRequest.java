@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.authorizationengine.api;
+package io.gravitee.am.authorizationengine.api.model;
 
 import lombok.Builder;
 
 import java.util.Map;
 
 /**
- * Authorization context following the AuthZen request format.
+ * Authorization engine request.
  *
  * @param subject  The subject of the authorization check
  * @param resource The resource being accessed
  * @param action   The action being performed
  * @param context  Additional context information
- * @see <a href="https://openid.github.io/authzen/">AuthZen Specification</a>
  * @author GraviteeSource Team
  */
 @Builder
-public record AuthorizationRequest(
+public record AuthorizationEngineRequest(
         Subject subject,
         Resource resource,
         Action action,

@@ -24,5 +24,16 @@ import io.reactivex.rxjava3.core.Maybe;
  */
 public interface AuthorizationEngineManager extends Service {
 
+    /**
+     * Gets an authorization engine provider associated with the current domain with a given engine identifier.
+     * @param id Authorization engine identifier.
+     * @return Provider instance; or empty if not found.
+     */
     Maybe<AuthorizationEngineProvider> get(String id);
+
+    /**
+     * Gets the default authorization engine provider associated with the current domain.
+     * @return Provider instance; or empty if not found.
+     */
+    Maybe<AuthorizationEngineProvider> getDefault();
 }
