@@ -15,9 +15,12 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.event.Event;
@@ -30,10 +33,8 @@ import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
-import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
-import io.reactivex.rxjava3.core.SingleObserver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 public class ProtectedResourceServiceImplTest {
@@ -145,13 +147,21 @@ public class ProtectedResourceServiceImplTest {
         newProtectedResource.setClientId("clientId");
         newProtectedResource.setType("MCP_SERVER");
         newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
-        service.create(domain, user, newProtectedResource)
+        var result = service.create(domain, user, newProtectedResource)
                 .test()
                 .assertComplete()
                 .assertValue(v -> v.getClientId().equals("clientId"));
         Mockito.verify(auditService, Mockito.times(1)).report(any());
-        Mockito.verify(eventService, Mockito.times(1)).create(any(), any());
+
+        // Verify eventService.create() was called with correct arguments using argThat
+        String resourceId = result.values().getFirst().getId();
+        Mockito.verify(eventService, Mockito.times(1)).create(
+                argThat(event -> event.getType() == Type.PROTECTED_RESOURCE &&
+                        event.getPayload().getId().equals(resourceId) &&
+                        event.getPayload().getReferenceType() == ReferenceType.DOMAIN &&
+                        event.getPayload().getReferenceId().equals(domain.getId()) &&
+                        event.getPayload().getAction() == Action.CREATE),
+                argThat(d -> d.equals(domain))
+        );
     }
-
-
 }
