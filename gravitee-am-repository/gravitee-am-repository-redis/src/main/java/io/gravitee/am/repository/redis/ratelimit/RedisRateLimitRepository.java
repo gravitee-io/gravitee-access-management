@@ -23,6 +23,7 @@ import io.gravitee.repository.ratelimit.api.RateLimitRepository;
 import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.gravitee.am.repository.redis.common.RedisClient;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.redis.client.Response;
@@ -97,6 +98,7 @@ public class RedisRateLimitRepository implements RateLimitRepository<RateLimit> 
                 })
                 .doOnSuccess(rl -> log.debug("Rate limit result: key={}, counter={}, resetTime={}, limit={}", 
                     rl.getKey(), rl.getCounter(), rl.getResetTime(), rl.getLimit()))
+                .observeOn(Schedulers.computation())
                 .timeout(operationTimeout, TimeUnit.MILLISECONDS, Single.error(new RedisOperationTimeoutException(operationTimeout)));
     }
 
