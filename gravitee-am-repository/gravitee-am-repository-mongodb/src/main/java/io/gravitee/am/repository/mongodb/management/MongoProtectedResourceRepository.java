@@ -19,6 +19,8 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.Application;
+import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResource.Type;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
@@ -27,6 +29,7 @@ import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.repository.mongodb.management.internal.model.ProtectedResourceMongo;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
@@ -95,6 +98,19 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         return Observable.fromPublisher(collection.find(and(eq(DOMAIN_ID_FIELD, domainId), eq(CLIENT_ID_FIELD, clientId))).first())
                 .firstElement()
                 .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+
+    @Override
+    public Flowable<ProtectedResource> findAll() {
+        return Flowable.fromPublisher(withMaxTime(collection.find())).map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Flowable<ProtectedResource> findByDomain(String domain) {
+        return Flowable.fromPublisher(withMaxTime(collection.find(eq(DOMAIN_ID_FIELD, domain)))).map(this::convert)
                 .observeOn(Schedulers.computation());
     }
 

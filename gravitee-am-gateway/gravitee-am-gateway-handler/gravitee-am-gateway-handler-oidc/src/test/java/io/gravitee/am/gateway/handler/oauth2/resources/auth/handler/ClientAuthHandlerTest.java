@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler;
 
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
@@ -53,6 +54,9 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     private ClientSyncService clientSyncService;
 
     @Mock
+    private ProtectedResourceSyncService protectedResourceSyncService;
+
+    @Mock
     private ClientAssertionService clientAssertionService;
 
     @Mock
@@ -72,7 +76,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         super.setUp();
         when(domain.getId()).thenReturn("id");
         router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, null, auditService))
+                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, null, auditService, protectedResourceSyncService))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(new ExceptionHandler());
     }
@@ -106,6 +110,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.POST,
@@ -123,6 +128,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(client.getClientSecret()).thenReturn(clientSecret);
         when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_POST);
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.POST,
@@ -139,6 +145,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(client.getClientSecret()).thenReturn(clientSecret);
         when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.POST,
@@ -156,6 +163,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         when(client.getClientSecret()).thenReturn(clientSecret);
         when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.POST,
@@ -173,6 +181,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
         when(clientSyncService.findByClientId("client_id")).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId("client_id")).thenReturn(Maybe.empty());
         testRequest(
                 HttpMethod.POST,
                 "/oauth/token?client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw",
@@ -185,6 +194,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(client.isTlsClientCertificateBoundAccessTokens()).thenReturn(true);
         when(clientSyncService.findByClientId("client_id")).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId("client_id")).thenReturn(Maybe.empty());
 
         when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
 
@@ -199,6 +209,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(clientAssertionService.assertClient(eq("urn:ietf:params:oauth:client-assertion-type:jwt-bearer"), eq("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw"), anyString())).thenReturn(Maybe.just(client));
         when(clientSyncService.findByClientId("client_id")).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId("client_id")).thenReturn(Maybe.empty());
         testRequest(
                 HttpMethod.POST,
                 "/oauth/token?client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_assertion=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJjbGllbnRfaWQifQ.fcf-gV3uZ6P-ecrAc-g9YDcQQYRwKPbqIq_HFSOOrQw",
@@ -211,6 +222,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.NONE);
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
 
         testRequest(
                 HttpMethod.POST,
@@ -224,10 +236,69 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         Client client = mock(Client.class);
         when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.NONE);
         when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
         testRequest(
                 HttpMethod.POST,
                 "/oauth/token?client_id=public-client-id",
                 HttpStatusCode.OK_200, "OK");
 
+    }
+
+    @Test
+    public void shouldInvoke_protectedResource_fallback() throws Exception {
+        // Test that when clientSyncService returns empty, we fallback to protectedResourceSyncService
+        final String clientId = "protected-resource-client-id";
+        final String clientSecret = "client-secret";
+        Client client = mock(Client.class);
+        when(client.getClientId()).thenReturn(clientId);
+        when(client.getClientSecret()).thenReturn(clientSecret);
+        when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_POST);
+        
+        // Client not found in regular clients
+        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
+        // But found as protected resource
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+
+        testRequest(
+                HttpMethod.POST,
+                "/oauth/token?client_id=" + clientId + "&client_secret=" + clientSecret,
+                HttpStatusCode.OK_200, "OK");
+    }
+
+    @Test
+    public void shouldNotInvoke_notFoundInEitherService() throws Exception {
+        // Test that when both services return empty, we get 401
+        final String clientId = "non-existent-client-id";
+        
+        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
+
+        testRequest(
+                HttpMethod.POST,
+                "/oauth/token?client_id=" + clientId + "&client_secret=test",
+                HttpStatusCode.UNAUTHORIZED_401, "Unauthorized");
+    }
+
+    @Test
+    public void shouldInvoke_protectedResource_basic_auth() throws Exception {
+        // Test that basic auth works with protected resource fallback
+        final String clientId = "protected-resource-id";
+        final String clientSecret = "protected-secret";
+        Client client = mock(Client.class);
+        when(client.getClientId()).thenReturn(clientId);
+        when(client.getClientSecret()).thenReturn(clientSecret);
+        when(client.getTokenEndpointAuthMethod()).thenReturn(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
+        
+        // Not in regular clients
+        when(clientSyncService.findByClientId(clientId)).thenReturn(Maybe.empty());
+        // Found as protected resource
+        when(protectedResourceSyncService.findByClientId(clientId)).thenReturn(Maybe.just(client));
+
+        // Base64 encoded "protected-resource-id:protected-secret"
+        testRequest(
+                HttpMethod.POST,
+                "/oauth/token",
+                req -> req.putHeader("Authorization", "Basic cHJvdGVjdGVkLXJlc291cmNlLWlkOnByb3RlY3RlZC1zZWNyZXQ="),
+                HttpStatusCode.OK_200, "OK", null);
     }
 }

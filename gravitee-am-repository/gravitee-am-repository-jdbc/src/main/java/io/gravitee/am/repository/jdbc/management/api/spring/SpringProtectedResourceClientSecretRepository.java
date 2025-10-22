@@ -18,8 +18,11 @@ package io.gravitee.am.repository.jdbc.management.api.spring;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret;
 import io.reactivex.rxjava3.core.Flowable;
 import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret.TABLE_NAME;
 
@@ -29,5 +32,7 @@ public interface SpringProtectedResourceClientSecretRepository extends RxJava3Cr
     @Query("SELECT * FROM " + TABLE_NAME + " s where s.protected_resource_id = :protectedResourceId")
     Flowable<JdbcProtectedResourceClientSecret> findAllByProtectedResourceId(String protectedResourceId);
 
+    @Query("SELECT * FROM " + TABLE_NAME + " s where s.protected_resource_id IN (:protectedResourceIds)")
+    Flowable<JdbcProtectedResourceClientSecret> findAllByProtectedResourceIdIn(@Param("protectedResourceIds") List<String> protectedResourceIds);
 }
 

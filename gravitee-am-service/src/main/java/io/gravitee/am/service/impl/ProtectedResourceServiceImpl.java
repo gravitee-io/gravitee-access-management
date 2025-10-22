@@ -16,6 +16,8 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.common.utils.SecureRandomString;
@@ -23,12 +25,15 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.RoleService;
@@ -81,6 +86,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private EventService eventService;
+
     @Override
     public Maybe<ProtectedResource> findById(String id) {
         LOGGER.debug("Find protected resources by id={}",  id);
@@ -115,7 +123,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), toCreate.getClientId())
                 .andThen(checkResourceIdentifierUniqueness(domain.getId(), toCreate.getResourceIdentifiers()))
-                .andThen(doCreate(toCreate, principal))
+                .andThen(doCreate(toCreate, principal, domain))
                 .map(res -> ProtectedResourceSecret.from(res, rawSecret));
     }
 
@@ -152,7 +160,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 });
     }
 
-    private Single<ProtectedResource> doCreate(ProtectedResource toCreate, User principal) {
+    private Single<ProtectedResource> doCreate(ProtectedResource toCreate, User principal, Domain domain) {
         return repository.create(toCreate)
                 .doOnSuccess(created -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).protectedResource(created).principal(principal).type(EventType.PROTECTED_RESOURCE_CREATED)))
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).protectedResource(toCreate).principal(principal).type(EventType.PROTECTED_RESOURCE_CREATED).throwable(throwable)))
@@ -175,6 +183,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                                 return membershipService.addOrUpdate((String) principal.getAdditionalInformation().get(Claims.ORGANIZATION), membership)
                                         .map(updatedMembership -> protectedResource);
                             });
+                })
+                .flatMap(protectedResource -> {
+                    Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(protectedResource.getId(), ReferenceType.DOMAIN, protectedResource.getDomainId(), Action.CREATE));
+                    return eventService.create(event, domain).flatMap(e -> Single.just(protectedResource));
                 });
     }
 

@@ -20,6 +20,7 @@ import com.nimbusds.jwt.JWTParser;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.common.utils.ConstantKeys;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidClientException;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
@@ -27,6 +28,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.ClientAuthAuditBuilder;
 import io.vertx.core.AsyncResult;
@@ -62,13 +64,15 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
     private final Domain domain;
     private final String certificateHeader;
     private final AuditService auditService;
+    private final ProtectedResourceSyncService protectedResourceSyncService;
 
-    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders, Domain domain, String certificateHeader, AuditService auditService) {
+    public ClientAuthHandlerImpl(ClientSyncService clientSyncService, List<ClientAuthProvider> clientAuthProviders, Domain domain, String certificateHeader, AuditService auditService, ProtectedResourceSyncService protectedResourceSyncService) {
         this.clientSyncService = clientSyncService;
         this.clientAuthProviders = clientAuthProviders;
         this.domain = domain;
         this.certificateHeader = certificateHeader;
         this.auditService = auditService;
+        this.protectedResourceSyncService = protectedResourceSyncService;
     }
 
     @Override
@@ -175,9 +179,10 @@ public class ClientAuthHandlerImpl implements Handler<RoutingContext> {
                 handler.handle(Future.succeededFuture());
                 return;
             }
-            // get client
+            // get client - first try regular client, then fallback to protected resource
             clientSyncService
                     .findByClientId(decodeURIComponent(clientId))
+                    .switchIfEmpty(protectedResourceSyncService.findByClientId(decodeURIComponent(clientId)))
                     .subscribe(
                             client -> handler.handle(Future.succeededFuture(client)),
                             error -> handler.handle(Future.failedFuture(error)),

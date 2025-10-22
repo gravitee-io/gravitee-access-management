@@ -28,6 +28,7 @@ import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResou
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceRepository;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,10 @@ import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.TABLE_NAME;
 
 import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.*;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -62,6 +67,10 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 a.domain_id = :domainId AND
                 a.client_id = :clientId
                 """.formatted(TABLE_NAME);
+        String BY_DOMAIN_ID = """
+                SELECT * FROM %s a WHERE
+                a.domain_id = :domainId
+        """.formatted(TABLE_NAME);
     }
 
 
@@ -123,8 +132,52 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .firstElement();
     }
 
-    private String transformSortValue(String sort) {
-        return switch (sort) {
+    @Override
+    public Flowable<ProtectedResource> findAll() {
+        Flowable<ProtectedResource> resources = this.spring.findAll().map(this::toEntity);
+        return attachSecrets(resources);
+    }
+
+    @Override
+    public Flowable<ProtectedResource> findByDomain(String domain) {
+        Flowable<ProtectedResource> resources = fluxToFlowable(getTemplate().getDatabaseClient()
+                .sql(Selects.BY_DOMAIN_ID)
+                .bind("domainId", domain)
+                .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
+                .all())
+                .map(this::toEntity);
+        return attachSecrets(resources);
+    }
+
+    private Flowable<ProtectedResource> attachSecrets(Flowable<ProtectedResource> resourcesFlow) {
+        return resourcesFlow
+                .toList()
+                .flatMapPublisher(resources -> {
+                    if (resources.isEmpty()) {
+                        return Flowable.empty();
+                    }
+                    List<String> ids = resources.stream().map(ProtectedResource::getId).toList();
+                    return clientSecretSpring.findAllByProtectedResourceIdIn(ids)
+                            .toList()
+                            .flatMapPublisher(secrets -> {
+                                Map<String, List<JdbcProtectedResourceClientSecret>> byResourceId = secrets
+                                        .stream()
+                                        .collect(Collectors.groupingBy(JdbcProtectedResourceClientSecret::getProtectedResourceId));
+
+                                resources.forEach(res -> {
+                                    List<JdbcProtectedResourceClientSecret> secretsForRes = byResourceId.get(res.getId());
+                                    List<ClientSecret> mapped = secretsForRes == null ? List.of() : secretsForRes.stream()
+                                            .map(j -> mapper.map(j, ClientSecret.class))
+                                            .toList();
+                                    res.setClientSecrets(mapped);
+                                });
+                                return Flowable.fromIterable(resources);
+                            });
+                });
+    }
+
+    private String transformSortValue(String sort){
+        return switch (sort){
             case "name" -> COLUMN_NAME;
             case "updatedAt" -> COLUMN_UPDATED_AT;
             default -> COLUMN_UPDATED_AT;

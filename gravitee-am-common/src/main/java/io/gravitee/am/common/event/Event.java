@@ -55,6 +55,7 @@ public abstract class Event {
             case REVOKE_TOKEN -> RevokeTokenEvent.actionOf(action);
             case USER -> UserEvent.actionOf(action);
             case AUTHORIZATION_ENGINE ->  AuthorizationEngineEvent.actionOf(action);
+            case PROTECTED_RESOURCE -> ProtectedResourceEvent.actionOf(action);
             default -> null;
         };
     }

@@ -15,13 +15,18 @@
  */
 package io.gravitee.am.service.impl;
 
+import io.gravitee.am.common.event.Action;
+import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ClientAlreadyExistsException;
@@ -40,6 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 
 @ExtendWith(MockitoExtension.class)
 public class ProtectedResourceServiceImplTest {
@@ -64,6 +70,9 @@ public class ProtectedResourceServiceImplTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private EventService eventService;
 
     @InjectMocks
     private ProtectedResourceServiceImpl service;
@@ -115,6 +124,8 @@ public class ProtectedResourceServiceImplTest {
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
 
+        Mockito.verify(auditService, Mockito.times(0)).report(any());
+
     }
 
     @Test
@@ -125,6 +136,7 @@ public class ProtectedResourceServiceImplTest {
                 .thenReturn(Completable.complete());
         Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
         Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
         Domain domain = new Domain();
         domain.setId("domainId");
@@ -135,12 +147,21 @@ public class ProtectedResourceServiceImplTest {
         newProtectedResource.setClientId("clientId");
         newProtectedResource.setType("MCP_SERVER");
         newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
-        service.create(domain, user, newProtectedResource)
+        var result = service.create(domain, user, newProtectedResource)
                 .test()
                 .assertComplete()
                 .assertValue(v -> v.getClientId().equals("clientId"));
         Mockito.verify(auditService, Mockito.times(1)).report(any());
+
+        // Verify eventService.create() was called with correct arguments using argThat
+        String resourceId = result.values().getFirst().getId();
+        Mockito.verify(eventService, Mockito.times(1)).create(
+                argThat(event -> event.getType() == Type.PROTECTED_RESOURCE &&
+                        event.getPayload().getId().equals(resourceId) &&
+                        event.getPayload().getReferenceType() == ReferenceType.DOMAIN &&
+                        event.getPayload().getReferenceId().equals(domain.getId()) &&
+                        event.getPayload().getAction() == Action.CREATE),
+                argThat(d -> d.equals(domain))
+        );
     }
-
-
 }

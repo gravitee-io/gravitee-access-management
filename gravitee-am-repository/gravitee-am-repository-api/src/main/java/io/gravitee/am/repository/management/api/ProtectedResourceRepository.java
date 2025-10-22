@@ -21,6 +21,7 @@ import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.common.CrudRepository;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -29,6 +30,10 @@ import java.util.List;
 public interface ProtectedResourceRepository extends CrudRepository<ProtectedResource, String> {
 
     Maybe<ProtectedResource> findByDomainAndClient(String domainId, String clientId);
+
+    Flowable<ProtectedResource> findAll();
+
+    Flowable<ProtectedResource> findByDomain(String domain);
 
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest);
 

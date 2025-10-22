@@ -16,6 +16,7 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler;
 
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.impl.ClientAuthHandlerImpl;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAssertionAuthProvider;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.provider.ClientAuthProvider;
@@ -44,7 +45,7 @@ public interface ClientAuthHandler {
 
     String GENERIC_ERROR_MESSAGE = "Client authentication failed due to unknown clientId, expired or invalid client secret";
 
-    static Handler<RoutingContext> create(ClientSyncService clientSyncService, ClientAssertionService clientAssertionService, JWKService jwkService, Domain domain, SecretService appSecretService, String certHeader, AuditService auditService) {
+    static Handler<RoutingContext> create(ClientSyncService clientSyncService, ClientAssertionService clientAssertionService, JWKService jwkService, Domain domain, SecretService appSecretService, String certHeader, AuditService auditService, ProtectedResourceSyncService protectedResourceSyncService) {
         List<ClientAuthProvider> clientAuthProviders = new ArrayList<>();
         clientAuthProviders.add(new ClientBasicAuthProvider(appSecretService));
         clientAuthProviders.add(new ClientPostAuthProvider(appSecretService));
@@ -52,6 +53,6 @@ public interface ClientAuthHandler {
         clientAuthProviders.add(new ClientCertificateAuthProvider(certHeader));
         clientAuthProviders.add(new ClientSelfSignedAuthProvider(jwkService, certHeader));
         clientAuthProviders.add(new ClientNoneAuthProvider());
-        return new ClientAuthHandlerImpl(clientSyncService, clientAuthProviders, domain, certHeader, auditService);
+        return new ClientAuthHandlerImpl(clientSyncService, clientAuthProviders, domain, certHeader, auditService, protectedResourceSyncService);
     }
 }

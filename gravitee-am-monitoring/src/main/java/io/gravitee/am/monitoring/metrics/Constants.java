@@ -33,6 +33,9 @@ public interface Constants {
     String METRICS_IDPS = METRICS_NAME_PREFIX + "idps";
     String METRICS_IDP_EVENTS = METRICS_NAME_PREFIX + "idp_evt";
 
+    String METRICS_PROTECTED_RESOURCES = METRICS_NAME_PREFIX + "protected_resources";
+    String METRICS_PROTECTED_RESOURCE_EVENTS = METRICS_NAME_PREFIX + "protected_resource_evt";
+
     String METRICS_AUTH_EVENTS = METRICS_NAME_PREFIX + "auth_evt";
     String TAG_AUTH_STATUS = "auth_status";
     String TAG_AUTH_IDP = "idp";

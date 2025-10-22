@@ -113,6 +113,78 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void shouldFindAll() {
+        var resources = generateResources(10, "all-domain-id");
+
+        TestObserver<List<ProtectedResource>> testObserver = repository.findAll().toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(res -> res.size() >= resources.size())
+                .assertValue(res -> res.getFirst().getClientSecrets() != null && res.getFirst().getClientSecrets().size() == resources.getFirst().getClientSecrets().size())
+                .assertValue(res -> res.getFirst().getSecretSettings() != null && res.getFirst().getSecretSettings().size() == resources.getFirst().getSecretSettings().size());
+    }
+
+    @Test
+    public void shouldFindByDomain() {
+        var resources = generateResources(5, "dummy-domain-id");
+        generateResources(3, "other-domain-id");
+
+        TestObserver<List<ProtectedResource>> testObserver = repository.findByDomain("dummy-domain-id").toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors()
+                .assertValue(res -> res.size() == resources.size())
+                .assertValue(res -> res.getFirst().getClientSecrets() != null && res.getFirst().getClientSecrets().size() == resources.getFirst().getClientSecrets().size())
+                .assertValue(res -> res.getFirst().getSecretSettings() != null && res.getFirst().getSecretSettings().size() == resources.getFirst().getSecretSettings().size());
+    }
+
+    @Test
+    public void testCreateWithMultipleSecrets() {
+        // Create resource with 3 client secrets
+        ClientSecret clientSecret1 = generateClientSecret();
+        ClientSecret clientSecret2 = generateClientSecret();
+        ClientSecret clientSecret3 = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        
+        ProtectedResource toSave = generateResource(clientSecret1, secretSettings);
+        toSave.setClientSecrets(List.of(clientSecret1, clientSecret2, clientSecret3));
+
+        TestObserver<ProtectedResource> testObserver = repository.create(toSave)
+                .flatMapMaybe(created -> repository.findById(created.getId()))
+                .test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        
+        // Verify exactly 3 secrets
+        testObserver.assertValue(a -> a.getClientSecrets() != null && a.getClientSecrets().size() == 3);
+        
+        // Verify all 3 secrets are persisted correctly
+        testObserver.assertValue(a -> a.getClientSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret1.getId())));
+        testObserver.assertValue(a -> a.getClientSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret2.getId())));
+        testObserver.assertValue(a -> a.getClientSecrets().stream().anyMatch(s -> s.getId().equals(clientSecret3.getId())));
+        
+        // Verify first secret details
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getName() != null);
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSecret() != null);
+        testObserver.assertValue(a -> a.getClientSecrets().get(0).getSettingsId() != null);
+    }
+
+    private List<ProtectedResource> generateResources(int count, String domainId) {
+        List<ProtectedResource> resources = new java.util.ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            ClientSecret clientSecret = generateClientSecret();
+            ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+            ProtectedResource toSave = generateResource(clientSecret, secretSettings);
+            toSave.setDomainId(domainId);
+            resources.add(toSave);
+            repository.create(toSave).blockingGet();
+        }
+        return resources;
+    }
+
     public void shouldFindBySearch() {
         ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings());
         ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings());

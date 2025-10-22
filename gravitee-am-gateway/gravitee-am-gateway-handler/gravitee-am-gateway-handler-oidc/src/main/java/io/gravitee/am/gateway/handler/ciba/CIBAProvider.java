@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.ciba.service.AuthenticationRequestService;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.resources.auth.handler.ClientAuthHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
@@ -69,6 +70,9 @@ public class CIBAProvider extends AbstractProtocolProvider {
 
     @Autowired
     private ClientSyncService clientSyncService;
+
+    @Autowired
+    private ProtectedResourceSyncService protectedResourceSyncService;
 
     @Autowired
     private ClientAssertionService clientAssertionService;
@@ -130,7 +134,7 @@ public class CIBAProvider extends AbstractProtocolProvider {
         final Router cibaRouter = Router.router(vertx);
 
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService, protectedResourceSyncService);
 
         cibaRouter.route(HttpMethod.OPTIONS, AUTHENTICATION_ENDPOINT)
                 .handler(corsHandler);
