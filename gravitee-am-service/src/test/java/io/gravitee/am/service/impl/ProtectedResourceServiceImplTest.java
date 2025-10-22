@@ -36,6 +36,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -82,6 +84,7 @@ public class ProtectedResourceServiceImplTest {
         NewProtectedResource newProtectedResource = new NewProtectedResource();
         newProtectedResource.setClientId("clientId");
         newProtectedResource.setType("MCP_SERVER");
+        newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
         service.create(domain, user, newProtectedResource)
                 .test()
                 .assertError(throwable -> throwable instanceof ClientAlreadyExistsException);
@@ -104,6 +107,7 @@ public class ProtectedResourceServiceImplTest {
         NewProtectedResource newProtectedResource = new NewProtectedResource();
         newProtectedResource.setClientId("clientId");
         newProtectedResource.setType("MCP_SERVER");
+        newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
         service.create(domain, user, newProtectedResource)
                 .test()
                 .assertComplete()

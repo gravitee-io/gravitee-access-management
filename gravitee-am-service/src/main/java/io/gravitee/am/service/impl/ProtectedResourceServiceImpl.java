@@ -93,7 +93,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         toCreate.setId(RandomString.generate());
         toCreate.setName(newProtectedResource.getName());
         toCreate.setDescription(newProtectedResource.getDescription());
-        toCreate.setResourceIdentifiers(newProtectedResource.getResourceIdentifiers());
+        toCreate.setResourceIdentifiers(newProtectedResource.getResourceIdentifiers().stream().map(String::trim).map(String::toLowerCase).toList());
         toCreate.setClientId(hasLength(newProtectedResource.getClientId()) ? newProtectedResource.getClientId() : SecureRandomString.generate());
 
         toCreate.setSecretSettings(List.of(secretSettings));

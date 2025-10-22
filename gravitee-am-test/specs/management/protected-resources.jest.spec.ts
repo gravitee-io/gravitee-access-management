@@ -178,6 +178,55 @@ describe('When creating protected resource', () => {
         createProtectedResource(domain.id, accessToken, request)
           .catch(err => expect(err.response.status).toEqual(400))
     });
+    it('Protected Resource resource identifier http(s)://localhost is correct', async () => {
+        const httpsRequest = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://localhost.com"]
+        } as NewProtectedResource;
+
+        const created1 = await createProtectedResource(domain.id, accessToken, httpsRequest)
+        expect(created1.id).toBeDefined()
+
+        const httpRequest = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["http://localhost.com"]
+        } as NewProtectedResource;
+
+        const created2 = await createProtectedResource(domain.id, accessToken, httpRequest)
+        expect(created2.id).toBeDefined()
+    })
+
+    it('Protected Resource resource identifier and lowercased', async () => {
+        const badRequest = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: [" https://toTrimDomain.com   "]
+        } as NewProtectedResource;
+
+        createProtectedResource(domain.id, accessToken, badRequest)
+          .catch(err => expect(err.response.status).toEqual(400))
+
+        const correctRequest = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://toLowerCaseDomain.com"]
+        } as NewProtectedResource;
+
+        const created = await createProtectedResource(domain.id, accessToken, correctRequest)
+        expect(created.id).toBeDefined()
+
+        const anotherCorrectRequest = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://tolowercasedomain.com"]
+        } as NewProtectedResource;
+
+        createProtectedResource(domain.id, accessToken, anotherCorrectRequest)
+          .catch(err => expect(err.response.status).toEqual(400))
+
+    });
 
 });
 
