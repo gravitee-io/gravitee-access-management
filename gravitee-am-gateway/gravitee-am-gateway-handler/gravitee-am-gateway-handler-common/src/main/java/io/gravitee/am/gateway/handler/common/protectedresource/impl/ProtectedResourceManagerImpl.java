@@ -116,7 +116,7 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
 
                         },
                         error -> log.error("An error has occurred when loading protected resource {} for domain {}", protectedResourceId, domain.getName(), error),
-                        () -> log.error("No protected resource found with id {}", protectedResourceId));
+                        () -> log.warn("No protected resource found with id {}", protectedResourceId));
     }
 
     @Override
