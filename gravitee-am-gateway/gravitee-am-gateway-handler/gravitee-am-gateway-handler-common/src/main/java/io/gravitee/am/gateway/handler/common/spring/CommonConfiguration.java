@@ -54,7 +54,9 @@ import io.gravitee.am.gateway.handler.common.password.PasswordPolicyManagerImpl;
 import io.gravitee.am.gateway.handler.common.policy.DefaultRulesEngine;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.protectedresource.impl.ProtectedResourceManagerImpl;
+import io.gravitee.am.gateway.handler.common.protectedresource.impl.ProtectedResourceSyncServiceImpl;
 import io.gravitee.am.gateway.handler.common.role.RoleManager;
 import io.gravitee.am.gateway.handler.common.role.impl.DefaultRoleManager;
 import io.gravitee.am.gateway.handler.common.role.impl.InMemoryRoleManager;
@@ -217,6 +219,9 @@ public class CommonConfiguration {
     public ProtectedResourceManager protectedResourceManager() {
         return new ProtectedResourceManagerImpl();
     }
+
+    @Bean
+    public ProtectedResourceSyncService protectedResourceSyncService() { return new ProtectedResourceSyncServiceImpl(); }
 
     @Bean
     public ClientSyncService clientSyncService() {

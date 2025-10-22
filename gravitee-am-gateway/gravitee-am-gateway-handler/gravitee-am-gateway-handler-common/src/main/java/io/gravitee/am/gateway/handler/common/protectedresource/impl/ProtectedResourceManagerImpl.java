@@ -89,6 +89,7 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
                     gatewayMetricProvider.decrementProtectedResource();
                 }
                 default -> {
+                    log.warn("Unsupported protected resource event {}", event.type());
                 }
             }
         }
