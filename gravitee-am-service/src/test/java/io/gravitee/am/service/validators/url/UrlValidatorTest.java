@@ -36,6 +36,9 @@ public class UrlValidatorTest {
                 "http://example.com",
                 "https://example.com",
                 "HTTPS://EXAMPLE.COM",
+                "http://example.c",
+                "http://localhost",
+                "http://user@localhost",
                 "https://sub.domain.org/path?x=1",
                 "ftp://files.server.net:21/data",
                 "git+ssh://github.com/user/repo.git",
@@ -56,10 +59,9 @@ public class UrlValidatorTest {
         @ParameterizedTest(name = "[{index}] {0}")
         @ValueSource(strings = {
                 "example.com",
+                "example",
                 "www.example.com",
                 "mailto:user@example.com",
-                "http://localhost",
-                "http://example.c",
                 "://example.com",
                 "http//example.com",
                 "https:/example.com",

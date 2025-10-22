@@ -27,6 +27,7 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.exception.ClientAlreadyExistsException;
+import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -39,6 +40,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 
@@ -79,6 +82,31 @@ public class ProtectedResourceServiceImplTest {
         Mockito.when(repository.create(any())).thenReturn(Single.never());
         Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
                 .thenReturn(Completable.error(new ClientAlreadyExistsException("","")));
+        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
+        Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        NewProtectedResource newProtectedResource = new NewProtectedResource();
+        newProtectedResource.setClientId("clientId");
+        newProtectedResource.setType("MCP_SERVER");
+        newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
+        service.create(domain, user, newProtectedResource)
+                .test()
+                .assertError(throwable -> throwable instanceof ClientAlreadyExistsException);
+
+    }
+
+    @Test
+    public void shouldNotCreateProtectedResourceWhenResourceIdAlreadyExists() {
+        Mockito.when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        Mockito.when(repository.create(any())).thenReturn(Single.never());
+        Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
+                .thenReturn(Completable.complete());
+        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(true));
         Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
 
         Domain domain = new Domain();
@@ -91,7 +119,7 @@ public class ProtectedResourceServiceImplTest {
         newProtectedResource.setType("MCP_SERVER");
         service.create(domain, user, newProtectedResource)
                 .test()
-                .assertError(throwable -> throwable instanceof ClientAlreadyExistsException);
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
 
         Mockito.verify(auditService, Mockito.times(0)).report(any());
 
@@ -103,6 +131,7 @@ public class ProtectedResourceServiceImplTest {
         Mockito.when(repository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
                 .thenReturn(Completable.complete());
+        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
         Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
         Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
@@ -114,6 +143,7 @@ public class ProtectedResourceServiceImplTest {
         NewProtectedResource newProtectedResource = new NewProtectedResource();
         newProtectedResource.setClientId("clientId");
         newProtectedResource.setType("MCP_SERVER");
+        newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
         service.create(domain, user, newProtectedResource)
                 .test()
                 .assertComplete()

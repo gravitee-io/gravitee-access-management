@@ -37,12 +37,14 @@ import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,15 +103,27 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         toCreate.setId(RandomString.generate());
         toCreate.setName(newProtectedResource.getName());
         toCreate.setDescription(newProtectedResource.getDescription());
-        toCreate.setResourceIdentifiers(newProtectedResource.getResourceIdentifiers());
+        toCreate.setResourceIdentifiers(newProtectedResource.getResourceIdentifiers().stream().map(String::trim).map(String::toLowerCase).toList());
         toCreate.setClientId(hasLength(newProtectedResource.getClientId()) ? newProtectedResource.getClientId() : SecureRandomString.generate());
 
         toCreate.setSecretSettings(List.of(secretSettings));
         toCreate.setClientSecrets(List.of(buildClientSecret(domain, secretSettings, rawSecret)));
 
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), toCreate.getClientId())
-                .andThen(doCreate(toCreate, principal, domain))
+                .andThen(checkResourceIdentifierUniqueness(domain.getId(), toCreate.getResourceIdentifiers()))
+                .andThen(doCreate(toCreate, principal))
                 .map(res -> ProtectedResourceSecret.from(res, rawSecret));
+    }
+
+    private Completable checkResourceIdentifierUniqueness(String domainId, List<String> resourceIdentifiers) {
+        return repository.existsByResourceIdentifiers(domainId, resourceIdentifiers)
+                .flatMapCompletable(exists -> {
+                    if(exists) {
+                        return Completable.error(new InvalidProtectedResourceException("Resource identifier already exists"));
+                    } else {
+                        return Completable.complete();
+                    }
+                });
     }
 
     @Override

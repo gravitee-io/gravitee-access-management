@@ -53,10 +53,10 @@ export class McpServersService {
   }
   create(domainId: string, newMcpServer: NewMcpServer): Observable<NewProtectedResourceResponse> {
     const request = {
-      name: newMcpServer.name,
-      resourceIdentifiers: [newMcpServer.resourceIdentifier],
-      description: newMcpServer.description,
-      clientId: newMcpServer.clientId,
+      name: newMcpServer.name?.trim(),
+      resourceIdentifiers: [newMcpServer.resourceIdentifier.toLowerCase().trim()],
+      description: newMcpServer.description?.trim(),
+      clientId: newMcpServer.clientId?.trim(),
       clientSecret: newMcpServer.clientSecret,
       type: ProtectedResourceType.MCP_SERVER,
     } as NewProtectedResourceRequest;

@@ -287,6 +287,61 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .assertValue(page -> page.getData().stream().noneMatch(res -> res.id().equals(toSave2.getId())));
     }
 
+    @Test
+    public void ttest(){
+        ProtectedResource toSave1 = generateResource("abc", "domainSearchExists1", "client1", generateClientSecret(), generateApplicationSecretSettings());
+        ProtectedResource toSave2 = generateResource("dcf", "domainSearchExists1", "client2", generateClientSecret(), generateApplicationSecretSettings());
+
+        toSave1.setResourceIdentifiers(List.of("https://domain.one", "https://domain.two"));
+        toSave2.setResourceIdentifiers(List.of("https://domain.three"));
+
+
+        zip(repository.create(toSave1), repository.create(toSave2), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.existsByResourceIdentifiers("domainSearchExists1", List.of("https://domain.one"))
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true);
+
+        repository.existsByResourceIdentifiers("domainSearchExists1", List.of("https://domain.one", "https://domain.two"))
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true);
+
+        repository.existsByResourceIdentifiers("domainSearchExists1", List.of("https://domain.one", "https://domain.three"))
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true);
+
+        repository.existsByResourceIdentifiers("domainSearchExists1", List.of("https://domain.three"))
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true);
+
+        repository.existsByResourceIdentifiers("domainSearchExists1", List.of())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
+
+        repository.existsByResourceIdentifiers("domainSearchExists1", List.of("https://domain.new"))
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
+
+        repository.existsByResourceIdentifiers("domainSearchExists1", List.of("https://domain.new", "https://domain.new2"))
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
+
+        repository.existsByResourceIdentifiers("domainSearchExists1", List.of("https://domain.new", "https://domain.one"))
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true);
+    }
+
     private ClientSecret generateClientSecret() {
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setId(RandomString.generate());
@@ -307,10 +362,6 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
 
     private ProtectedResource generateResource(ClientSecret clientSecret, ApplicationSecretSettings secretSettings) {
         return generateResource("test-resource", "domainId", "clientId", clientSecret, secretSettings);
-    }
-
-    private ProtectedResource generateResource(String name, ClientSecret clientSecret, ApplicationSecretSettings secretSettings) {
-        return generateResource(name, "domainId", "clientId", clientSecret, secretSettings);
     }
 
     private ProtectedResource generateResource(String name, String domainId, String clientId, ClientSecret clientSecret, ApplicationSecretSettings secretSettings) {

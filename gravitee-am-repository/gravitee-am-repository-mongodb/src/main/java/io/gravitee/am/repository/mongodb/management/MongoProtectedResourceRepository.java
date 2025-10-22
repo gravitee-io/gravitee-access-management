@@ -59,6 +59,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         final var indexes = new HashMap<Document, IndexOptions>();
         indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(CLIENT_ID_FIELD, 1), new IndexOptions().name("d1ci1"));
         indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(TYPE_FIELD, 1).append(UPDATED_AT_FIELD, -1), new IndexOptions().name("d1t1ua_1"));
+        indexes.put(new Document(DOMAIN_ID_FIELD, 1).append(RESOURCE_IDENTIFIERS_FIELD, 1), new IndexOptions().name("d1ri1"));
 
         super.createIndex(collection, indexes);
     }
@@ -123,6 +124,15 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest) {
         Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type), in(FIELD_ID, ids));
         return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Boolean> existsByResourceIdentifiers(String domainId, List<String> resourceIdentifiers) {
+        if(resourceIdentifiers.isEmpty()){
+            return Single.just(false);
+        }
+        return Single.fromPublisher(collection.countDocuments(and(eq(DOMAIN_ID_FIELD, domainId), in(RESOURCE_IDENTIFIERS_FIELD, resourceIdentifiers))))
+                .map(count -> count > 0);
     }
 
     private Single<Page<ProtectedResourcePrimaryData>> queryProtectedResource(Bson query, PageSortRequest pageSortRequest) {

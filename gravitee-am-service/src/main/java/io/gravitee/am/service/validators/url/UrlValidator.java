@@ -18,18 +18,22 @@ package io.gravitee.am.service.validators.url;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.regex.Pattern;
 
 public class UrlValidator implements ConstraintValidator<Url, String> {
-    private static final Pattern URL_PATTERN = Pattern.compile(
-            "\\b[a-zA-Z][a-zA-Z0-9+.-]*://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(?:[^\\s]*)?\\b"
-    );
 
     @Override
     public boolean isValid(String url, ConstraintValidatorContext constraintValidatorContext) {
         if(url == null || url.isEmpty()) {
             return true;
         }
-        return URL_PATTERN.matcher(url).matches();
+        try {
+            URI uri = URI.create(url);
+            return uri.getScheme() != null && uri.getHost() != null;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
