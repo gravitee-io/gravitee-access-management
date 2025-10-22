@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.common.event.Event;
 import io.reactivex.rxjava3.core.Flowable;
@@ -55,6 +56,8 @@ public class ProtectedResourceManagerTest {
     private Event<ProtectedResourceEvent, Payload> event;
     @Mock
     private ProtectedResourceRepository repository;
+    @Mock
+    private GatewayMetricProvider gatewayMetricProvider;
 
     @Before
     public void setUp() {
