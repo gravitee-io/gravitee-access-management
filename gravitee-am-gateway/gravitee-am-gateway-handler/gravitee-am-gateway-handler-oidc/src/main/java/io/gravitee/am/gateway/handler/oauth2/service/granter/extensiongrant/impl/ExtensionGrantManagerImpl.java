@@ -216,7 +216,8 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                             tokenRequestResolver,
                             identityProviderManager,
                             userService,
-                            rulesEngine);
+                            rulesEngine,
+                            domain);
         } else {
             return new ExtensionGrantGranterV2(
                     extensionGrantProvider,
@@ -227,7 +228,8 @@ public class ExtensionGrantManagerImpl extends AbstractService implements Extens
                     identityProviderManager,
                     userService,
                     rulesEngine,
-                    subjectManager);
+                    subjectManager,
+                    domain);
         }
     }
 

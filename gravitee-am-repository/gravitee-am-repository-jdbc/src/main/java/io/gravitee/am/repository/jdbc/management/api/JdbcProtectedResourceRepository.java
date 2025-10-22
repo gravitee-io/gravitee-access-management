@@ -17,7 +17,10 @@ package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret;
@@ -31,6 +34,8 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -43,6 +48,10 @@ import java.util.stream.Collectors;
 
 import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret.FIELD_PROTECTED_RESOURCE_ID;
 import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.TABLE_NAME;
+
+import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.*;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
@@ -76,6 +85,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         return mapper.map(entity, JdbcProtectedResource.class);
     }
 
+    @Override
     public Maybe<ProtectedResource> findById(String id) {
         return spring.findById(id).map(this::toEntity).flatMapSingle(this::complete);
     }
@@ -169,6 +179,50 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 });
     }
 
+    private String transformSortValue(String sort){
+        return switch (sort){
+            case "name" -> COLUMN_NAME;
+            case "updatedAt" -> COLUMN_UPDATED_AT;
+            default -> COLUMN_UPDATED_AT;
+        };
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domainId, ProtectedResource.Type type, PageSortRequest pageSortRequest) {
+        String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
+        Sort.Order order = pageSortRequest.isAsc() ? Sort.Order.asc(transformSortValue(sortBy)) : Sort.Order.desc(transformSortValue(sortBy));
+        Sort sort = Sort.by(order);
+        return fluxToFlowable(getTemplate().select(JdbcProtectedResource.class)
+                .matching(query(where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_TYPE).is(type))
+                        .with(PageRequest.of(pageSortRequest.getPage(), pageSortRequest.getSize(), sort)))
+                .all())
+                .map(this::toEntity)
+                .map(ProtectedResourcePrimaryData::of)
+                .toList()
+                .flatMap(data -> spring.countByDomainIdAndType(domainId, type).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve all protected resources with domainId={}, type={} (page={}/size={})", domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domainId, ProtectedResource.Type type, List<String> ids, PageSortRequest pageSortRequest) {
+        if(ids.isEmpty()){
+            return Single.just(new Page<>());
+        }
+        String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
+        Sort.Order order = pageSortRequest.isAsc() ? Sort.Order.asc(transformSortValue(sortBy)) : Sort.Order.desc(transformSortValue(sortBy));
+        Sort sort = Sort.by(order);
+        return fluxToFlowable(getTemplate().select(JdbcProtectedResource.class)
+                .matching(query(where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_TYPE).is(type).and(COLUMN_ID).in(ids))
+                        .with(PageRequest.of(pageSortRequest.getPage(), pageSortRequest.getSize(), sort)))
+                .all())
+                .map(this::toEntity)
+                .map(ProtectedResourcePrimaryData::of)
+                .toList()
+                .flatMap(data -> spring.countByDomainIdAndTypeAndIdIn(domainId,type,ids).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
+                .doOnError(error -> LOGGER.error("Unable to retrieve all protected resources with domainId={}, type={} (page={}/size={})", domainId, type, pageSortRequest.getPage(), pageSortRequest.getSize(), error));
+    }
+
+
     private Single<ProtectedResource> complete(ProtectedResource entity) {
         return Single.just(entity).flatMap(app ->
                 clientSecretSpring.findAllByProtectedResourceId(app.getId())
@@ -189,11 +243,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                     return secret;
                 })
                 .toList();
-        Mono<Long> deleteSecrets = getTemplate()
-                .delete(Query.query(Criteria.where(FIELD_PROTECTED_RESOURCE_ID).is(protectedResource.getId())), JdbcProtectedResourceClientSecret.class);
-        Flux<ClientSecret> saveSecrets = Flux.fromIterable(jdbcSecrets)
+        return Flux.fromIterable(jdbcSecrets)
                 .concatMap(jdbc -> getTemplate().insert(jdbc))
                 .map(jdbc -> mapper.map(jdbc, ClientSecret.class));
-        return deleteSecrets.thenMany(saveSecrets);
     }
 }

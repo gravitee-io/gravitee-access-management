@@ -26,7 +26,7 @@ import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
-import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
+import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.reactivex.rxjava3.annotations.NonNull;
@@ -39,10 +39,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
@@ -81,7 +78,7 @@ public class ProtectedResourceServiceImplTest {
         Mockito.when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
         Mockito.when(repository.create(any())).thenReturn(Single.never());
         Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
-                .thenReturn(Completable.error(new ApplicationAlreadyExistsException("","")));
+                .thenReturn(Completable.error(new ClientAlreadyExistsException("","")));
         Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
 
         Domain domain = new Domain();
@@ -96,6 +93,7 @@ public class ProtectedResourceServiceImplTest {
                 .test()
                 .assertError(throwable -> throwable instanceof ApplicationAlreadyExistsException);
         Mockito.verify(auditService, Mockito.times(0)).report(any());
+                .assertError(throwable -> throwable instanceof ClientAlreadyExistsException);
 
     }
 

@@ -57,7 +57,6 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.AbstractManagementException;
-import io.gravitee.am.service.exception.ApplicationAlreadyExistsException;
 import io.gravitee.am.service.exception.ApplicationNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
@@ -666,18 +665,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 
                     application.setCertificate(defaultCertificate.getId());
                     return application;
-                });
-    }
-
-    private Completable checkApplicationUniqueness(String domain, Application application) {
-        final String clientId = application.getSettings() != null && application.getSettings().getOauth() != null ? application.getSettings().getOauth().getClientId() : null;
-        return findByDomainAndClientId(domain, clientId)
-                .isEmpty()
-                .flatMapCompletable(isEmpty -> {
-                    if (!isEmpty) {
-                        return Completable.error(new ApplicationAlreadyExistsException(clientId, domain));
-                    }
-                    return Completable.complete();
                 });
     }
 

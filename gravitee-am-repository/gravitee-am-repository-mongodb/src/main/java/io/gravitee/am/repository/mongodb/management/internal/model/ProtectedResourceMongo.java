@@ -26,7 +26,6 @@ import java.util.List;
 public class ProtectedResourceMongo extends Auditable {
     public final static String CLIENT_ID_FIELD = "clientId";
     public final static String DOMAIN_ID_FIELD = "domainId";
-
     public final static String TYPE_FIELD = "type";
     public final static String UPDATED_AT_FIELD = "updatedAt";
 

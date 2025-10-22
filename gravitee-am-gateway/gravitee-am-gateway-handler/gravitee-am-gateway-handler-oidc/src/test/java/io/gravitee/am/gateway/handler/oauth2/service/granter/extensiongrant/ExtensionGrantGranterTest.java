@@ -42,6 +42,7 @@ public class ExtensionGrantGranterTest {
                 Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock(),
+                Mockito.mock(),
                 Mockito.mock());
 
         TokenRequest tokenRequest = new TokenRequest();
@@ -70,6 +71,7 @@ public class ExtensionGrantGranterTest {
                 Mockito.mock(),
                 Mockito.mock(),
                 Mockito.mock(),
+                Mockito.mock(),
                 Mockito.mock());
 
         TokenRequest tokenRequest = new TokenRequest();
@@ -83,6 +85,5 @@ public class ExtensionGrantGranterTest {
                 .assertError(ex -> ex.getMessage().equals("message"));
 
     }
-
 
 }

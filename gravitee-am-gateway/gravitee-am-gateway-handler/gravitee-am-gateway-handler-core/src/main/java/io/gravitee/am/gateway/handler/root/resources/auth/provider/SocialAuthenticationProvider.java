@@ -110,6 +110,7 @@ public class SocialAuthenticationProvider implements UserAuthProvider {
 
         // create authentication context
         SimpleAuthenticationContext authenticationContext = new SimpleAuthenticationContext(new VertxHttpServerRequest(context.request().getDelegate()));
+        authenticationContext.setDomain(domain);
         authenticationContext.attributes().putAll(context.data());
         authenticationContext.set(Parameters.REDIRECT_URI, authInfo.getString(Parameters.REDIRECT_URI));
 

@@ -183,6 +183,8 @@ models/PatchSecurityProfileSettings.ts
 models/PatchStepUpAuthentication.ts
 models/PreviewRequest.ts
 models/PreviewResponse.ts
+models/ProtectedResourcePage.ts
+models/ProtectedResourcePrimaryData.ts
 models/ProtectedResourceSecret.ts
 models/Reference.ts
 models/RememberDeviceSettings.ts

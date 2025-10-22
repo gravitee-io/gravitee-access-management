@@ -15,12 +15,15 @@
  */
 package io.gravitee.am.gateway.handler.root.resources.handler.login;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
 import io.gravitee.am.model.IdentityProvider;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 
@@ -41,6 +44,9 @@ import static io.gravitee.am.gateway.handler.root.resources.handler.login.LoginA
 public class LoginSelectionRuleHandler extends LoginAbstractHandler  {
     private final boolean fromIdentifierFirstLogin;
 
+    @Autowired
+    private Domain domain;
+
     public LoginSelectionRuleHandler(boolean fromIdentifierFirstLogin) {
         this.fromIdentifierFirstLogin = fromIdentifierFirstLogin;
     }
@@ -58,6 +64,7 @@ public class LoginSelectionRuleHandler extends LoginAbstractHandler  {
             ));
 
             var context = new SimpleAuthenticationContext(new VertxHttpServerRequest(routingContext.request().getDelegate()), routingContext.data());
+            context.setDomain(domain);
             var templateEngine = context.getTemplateEngine();
             var identityProvider = client.getIdentityProviders().stream()
                     .filter(appIdp -> socialProviderMap.containsKey(appIdp.getIdentity()))

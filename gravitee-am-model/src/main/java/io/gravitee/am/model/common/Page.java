@@ -23,7 +23,7 @@ import java.util.List;
  * @author GraviteeSource Team
  */
 public class Page<T> {
-    private final Collection<T> data;
+    private final List<T> data;
     private final int currentPage;
     private final long totalCount;
 
@@ -32,7 +32,7 @@ public class Page<T> {
     }
 
     public Page(Collection<T> data, int currentPage, long totalCount) {
-        this.data = data;
+        this.data = List.copyOf(data);
         this.currentPage = currentPage;
         this.totalCount = totalCount;
     }

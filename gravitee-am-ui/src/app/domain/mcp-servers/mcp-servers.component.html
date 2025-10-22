@@ -16,35 +16,45 @@
 
 -->
 <div class="gv-page-container">
-  <h1>MCP Servers</h1>
-  <p>Manage your Model Context Protocol servers and their available tools.</p>
-  <div class="gv-page-content" *ngIf="(isEmpty | async) === false">
+  <div class="gv-page-content" *ngIf="!isEmpty">
+    <h1>MCP Servers</h1>
+    <p>Manage your Model Context Protocol servers and their available tools.</p>
     <ngx-datatable
       class="material"
       [columnMode]="'flex'"
       [headerHeight]="40"
       [footerHeight]="50"
       [rowHeight]="50"
-      [rows]="mcpServers$ | async"
+      [rows]="page.data"
+      [limit]="PAGE_SIZE"
+      [count]="page.totalCount"
+      (page)="changePage($event)"
+      [externalSorting]="false"
       [externalPaging]="true"
-      [count]="1"
+      [sortType]="SortType.single"
+      (sort)="applySort($event)"
     >
-      <ngx-datatable-column name="MCP Server Name" [flexGrow]="4">
+      <ngx-datatable-column name="MCP Server Name" prop="name" [flexGrow]="4" [cellClass]="'row-name-cell'">
         <ng-template let-row="row" ngx-datatable-cell-template>
-          <a [routerLink]="[row.id]">{{ row.name }}</a>
+          <div class="row-header" fxLayout="row">
+            <div class="row-logo">
+              <svg width="40" height="40" [identiconHash]="row.name"></svg>
+            </div>
+            <a [routerLink]="[row.id]">{{ row.name }}</a>
+          </div>
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Resource URI" [flexGrow]="4">
+      <ngx-datatable-column name="Resource URI" prop="resourceIdentifiers" [flexGrow]="4" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.resourceIdentifier }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Tools" [flexGrow]="4">
+      <ngx-datatable-column name="Tools" prop="tools" [flexGrow]="4" [sortable]="false">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.tools }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Last updated at" [flexGrow]="1">
+      <ngx-datatable-column name="Last updated at" prop="updatedAt" [flexGrow]="1">
         <ng-template let-row="row" ngx-datatable-cell-template>
           {{ row.updatedAt | humanDate }}
         </ng-template>
@@ -52,12 +62,9 @@
     </ngx-datatable>
   </div>
 
-  <app-emptystate *ngIf="isEmpty | async" [message]="'MCP Servers will appear here'" [subMessage]="'No data to display'"></app-emptystate>
+  <app-emptystate *ngIf="isEmpty" [message]="'MCP Servers will appear here'" [subMessage]="'No data to display'"></app-emptystate>
 
-  <div
-    *hasPermission="['application_create']"
-    [ngClass]="{ 'gv-add-button': (isEmpty | async) === false, 'gv-add-button-center': isEmpty | async }"
-  >
+  <div *hasPermission="['application_create']" [ngClass]="{ 'gv-add-button': !isEmpty, 'gv-add-button-center': isEmpty }">
     <a mat-fab color="primary" [routerLink]="['new']">
       <mat-icon>add</mat-icon>
     </a>

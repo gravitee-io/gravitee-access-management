@@ -15,17 +15,18 @@
  */
 package io.gravitee.am.repository.mongodb.management;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.BotDetection;
 import io.gravitee.am.model.ProtectedResource;
-import io.gravitee.am.model.application.ApplicationSecretSettings;
-import io.gravitee.am.model.application.ClientSecret;
+import io.gravitee.am.model.ProtectedResource.Type;
+import io.gravitee.am.model.ProtectedResourcePrimaryData;
+import io.gravitee.am.model.common.Page;
+import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
-import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationIdentityProviderMongo;
-import io.gravitee.am.repository.mongodb.management.internal.model.ApplicationMongo;
 import io.gravitee.am.repository.mongodb.management.internal.model.ProtectedResourceMongo;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -33,15 +34,14 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.PostConstruct;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
+import java.util.*;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 import static io.gravitee.am.repository.mongodb.management.MongoApplicationRepository.*;
 import static io.gravitee.am.repository.mongodb.management.internal.model.ProtectedResourceMongo.*;
 
@@ -111,6 +111,32 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     public Flowable<ProtectedResource> findByDomain(String domain) {
         return Flowable.fromPublisher(withMaxTime(collection.find(eq(DOMAIN_ID_FIELD, domain)))).map(this::convert)
                 .observeOn(Schedulers.computation());
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest) {
+        Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type));
+        return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest) {
+        Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type), in(FIELD_ID, ids));
+        return queryProtectedResource(query, pageSortRequest).observeOn(Schedulers.computation());
+    }
+
+    private Single<Page<ProtectedResourcePrimaryData>> queryProtectedResource(Bson query, PageSortRequest pageSortRequest) {
+        Single<Long> countOperation = Observable.fromPublisher(collection
+                        .countDocuments(query, countOptions()))
+                .firstElement()
+                .toSingle();
+        String sortBy = pageSortRequest.getSortBy().orElse(UPDATED_AT_FIELD);
+        Single<List<ProtectedResourcePrimaryData>> operation = Observable.fromPublisher(
+                        withMaxTime(collection.find(query))
+                                .sort(new BasicDBObject(sortBy, pageSortRequest.direction()))
+                                .skip(pageSortRequest.skip()).limit(pageSortRequest.getSize()))
+                .map(this::convert)
+                .map(ProtectedResourcePrimaryData::of)
+                .collect(ArrayList::new, List::add);
+        return Single.zip(countOperation, operation, (count, elements) -> new Page<>(elements, pageSortRequest.getPage(), count));
     }
 
     private ProtectedResourceMongo convert(ProtectedResource other) {
@@ -139,7 +165,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setDescription(mongo.getDescription());
         result.setClientSecrets(convertToClientSecret(mongo.getClientSecrets()));
         result.setSecretSettings(convertToSecretSettings(mongo.getSecretSettings()));
-        result.setType(ProtectedResource.Type.valueOf(mongo.getType()));
+        result.setType(Type.valueOf(mongo.getType()));
         result.setCreatedAt(mongo.getCreatedAt());
         result.setUpdatedAt(mongo.getUpdatedAt());
         return result;
