@@ -111,6 +111,8 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     public Flowable<ProtectedResource> findByDomain(String domain) {
         return Flowable.fromPublisher(withMaxTime(collection.find(eq(DOMAIN_ID_FIELD, domain)))).map(this::convert)
                 .observeOn(Schedulers.computation());
+    }
+
     @Override
     public Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest) {
         Bson query = and(eq(DOMAIN_ID_FIELD, domain), eq(TYPE_FIELD, type));
