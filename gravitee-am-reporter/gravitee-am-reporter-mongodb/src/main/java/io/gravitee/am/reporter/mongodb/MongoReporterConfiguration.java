@@ -16,12 +16,13 @@
 package io.gravitee.am.reporter.mongodb;
 
 import io.gravitee.am.reporter.api.ReporterConfiguration;
+import io.gravitee.am.repository.mongodb.provider.MongoConnectionConfiguration;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class MongoReporterConfiguration implements ReporterConfiguration {
+public class MongoReporterConfiguration implements ReporterConfiguration, MongoConnectionConfiguration {
 
     private String uri;
     private String host;
@@ -51,7 +52,7 @@ public class MongoReporterConfiguration implements ReporterConfiguration {
         this.host = host;
     }
 
-    public int getPort() {
+    public Integer getPort() {
         return port;
     }
 

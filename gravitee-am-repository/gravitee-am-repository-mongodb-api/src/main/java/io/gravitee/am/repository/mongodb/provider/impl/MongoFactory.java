@@ -37,7 +37,6 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.core.env.Environment;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -83,8 +82,16 @@ public class MongoFactory implements FactoryBean<MongoClient> {
         final MeterRegistry amRegistry = Metrics.getDefaultRegistry();
         final MongoMetricsConnectionPoolListener connectionPoolListener = new MongoMetricsConnectionPoolListener(amRegistry, "idp-mongo");
 
+        MongoClientSettings.Builder builder = MongoClientSettings.builder();
+
+        // required to manage the AuditMongo when the system property is set to false
+        CodecRegistry defaultCodecRegistry = MongoClients.getDefaultCodecRegistry();
+        CodecRegistry pojoCodecRegistry = fromProviders(PojoCodecProvider.builder()
+                .automatic(true)
+                .build());
+        builder.codecRegistry(fromRegistries(defaultCodecRegistry, pojoCodecRegistry));
+
         if ((configuration.getUri() != null) && (!configuration.getUri().isEmpty())) {
-            MongoClientSettings.Builder builder = MongoClientSettings.builder();
             MongoClientSettings settings = builder
                     .applyToConnectionPoolSettings(builder1 -> builder1.addConnectionPoolListener(connectionPoolListener))
                     .applyConnectionString(new ConnectionString(configuration.getUri()))
@@ -95,17 +102,16 @@ public class MongoFactory implements FactoryBean<MongoClient> {
             ServerAddress serverAddress = new ServerAddress(configuration.getHost(), configuration.getPort());
             ConnectionPoolSettings.Builder connectionPoolBuilder = ConnectionPoolSettings.builder().addConnectionPoolListener(connectionPoolListener);
             ClusterSettings clusterSettings = ClusterSettings.builder().hosts(of(serverAddress)).build();
-            MongoClientSettings.Builder settings = MongoClientSettings.builder()
-                    .applyToConnectionPoolSettings(builder1 -> builder1.applySettings(connectionPoolBuilder.build()))
+            builder.applyToConnectionPoolSettings(builder1 -> builder1.applySettings(connectionPoolBuilder.build()))
                     .applyToClusterSettings(clusterBuilder -> clusterBuilder.applySettings(clusterSettings));
             if (configuration.isEnableCredentials()) {
                 MongoCredential credential = MongoCredential.createCredential(configuration
                         .getUsernameCredentials(), configuration
                         .getDatabaseCredentials(), configuration
                         .getPasswordCredentials().toCharArray());
-                settings.credential(credential);
+                builder.credential(credential);
             }
-            mongoClient = MongoClients.create(settings.build());
+            mongoClient = MongoClients.create(builder.build());
         }
         return mongoClient;
     }
