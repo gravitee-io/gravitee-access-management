@@ -22,6 +22,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
+import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -48,6 +49,9 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     @Autowired
     private ProtectedResourceRepository protectedResourceRepository;
 
+    @Autowired
+    private GatewayMetricProvider gatewayMetricProvider;
+
     private final ConcurrentMap<String, ProtectedResource> resources = new ConcurrentHashMap<>();
 
 
@@ -59,6 +63,7 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         res -> {
+                            gatewayMetricProvider.incrementProtectedResource();
                             resources.put(res.getId(), res);
                             log.info("Protected Resource {} loaded for domain {}", res.getName(), domain.getName());
                         },
@@ -71,9 +76,18 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
         log.debug("Receive protected resource event {} for id {}", event.type(), event.content().getId());
         if (event.content().getReferenceType() == ReferenceType.DOMAIN &&
                 (domain.isMaster() || domain.getId().equals(event.content().getReferenceId()))) {
+            // count the event after the test to avoid duplicate events across domains
+            gatewayMetricProvider.incrementProtectedResourceEvt();
             switch (event.type()) {
-                case DEPLOY, UPDATE -> deployProtectedResource(event.content().getId());
-                case UNDEPLOY -> removeProtectedResource(event.content().getId());
+                case DEPLOY -> {
+                    gatewayMetricProvider.incrementProtectedResource();
+                    deployProtectedResource(event.content().getId());
+                }
+                case UPDATE -> deployProtectedResource(event.content().getId());
+                case UNDEPLOY -> {
+                    removeProtectedResource(event.content().getId());
+                    gatewayMetricProvider.decrementProtectedResource();
+                }
                 default -> {
                 }
             }
@@ -139,6 +153,4 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     public ProtectedResource get(String protectedResourceId) {
         return protectedResourceId != null ? resources.get(protectedResourceId) : null;
     }
-
-
 }

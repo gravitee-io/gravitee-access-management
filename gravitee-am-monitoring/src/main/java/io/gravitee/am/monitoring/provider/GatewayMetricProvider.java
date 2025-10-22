@@ -26,6 +26,8 @@ import static io.gravitee.am.monitoring.metrics.Constants.METRICS_APP_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_AUTH_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDPS;
 import static io.gravitee.am.monitoring.metrics.Constants.METRICS_IDP_EVENTS;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCES;
+import static io.gravitee.am.monitoring.metrics.Constants.METRICS_PROTECTED_RESOURCE_EVENTS;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_IDP;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_AUTH_STATUS;
 import static io.gravitee.am.monitoring.metrics.Constants.TAG_VALUE_AUTH_IDP_EXTERNAL;
@@ -44,6 +46,10 @@ public class GatewayMetricProvider {
     private final CounterHelper idpEvtCounter = new CounterHelper(METRICS_IDP_EVENTS);
 
     private final GaugeHelper idpGauge = new GaugeHelper(METRICS_IDPS);
+
+    private final CounterHelper protectedResourceEvtCounter = new CounterHelper(METRICS_PROTECTED_RESOURCE_EVENTS);
+
+    private final GaugeHelper protectedResourceGauge = new GaugeHelper(METRICS_PROTECTED_RESOURCES);
 
     private final CounterHelper domainEvtCounter = new CounterHelper(Constants.METRICS_DOMAIN_EVENTS);
 
@@ -89,6 +95,18 @@ public class GatewayMetricProvider {
 
     public void decrementIdp() {
         this.idpGauge.decrementValue();
+    }
+
+    public void incrementProtectedResourceEvt() {
+        this.protectedResourceEvtCounter.increment();
+    }
+
+    public void incrementProtectedResource() {
+        this.protectedResourceGauge.incrementValue();
+    }
+
+    public void decrementProtectedResource() {
+        this.protectedResourceGauge.decrementValue();
     }
 
     public void incrementDomainEvt() {
