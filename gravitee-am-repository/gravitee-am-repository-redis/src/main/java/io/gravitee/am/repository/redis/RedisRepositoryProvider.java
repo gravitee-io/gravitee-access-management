@@ -35,7 +35,7 @@ public class RedisRepositoryProvider implements RepositoryProvider {
 
     @Override
     public Class<?> configuration(Scope scope) {
-        log.info("Checking for Redis configuration for scope:");
+        log.info("Checking for Redis configuration for scope '{}'", scope);
         if (scope == Scope.RATE_LIMIT) {
             return RateLimitRepositoryConfiguration.class;
         }

@@ -28,6 +28,7 @@ import io.gravitee.repository.ratelimit.model.RateLimit;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -62,6 +63,7 @@ public class RateLimitObjectRepository extends AbstractMongoRepository implement
     public Single<RateLimit> incrementAndGet(String key, long weight, Supplier<RateLimit> supplier) {
         log.debug("Rate limit request: key={}, weight={}, currentTime={}", key, weight, Instant.now().toEpochMilli());
         return findNotExpiredById(key, weight, supplier)
+                .observeOn(Schedulers.computation())
                 .doOnSuccess(rl -> log.debug("Rate limit result: key={}, counter={}, resetTime={}, limit={}", 
                     rl.getKey(), rl.getCounter(), rl.getResetTime(), rl.getLimit()));
     }
