@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.handler.OAuth2AuthHandler;
 import io.gravitee.am.gateway.handler.common.vertx.web.auth.provider.OAuth2AuthProvider;
 import io.gravitee.am.gateway.handler.oauth2.OAuth2Provider;
@@ -89,6 +90,9 @@ public class OIDCProvider extends AbstractProtocolProvider {
 
     @Autowired
     private ClientSyncService clientSyncService;
+
+    @Autowired
+    private ProtectedResourceSyncService protectedResourceSyncService;
 
     @Autowired
     private ClientAssertionService clientAssertionService;
@@ -286,7 +290,7 @@ public class OIDCProvider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService, protectedResourceSyncService);
 
         // Request object registration
         oidcRouter

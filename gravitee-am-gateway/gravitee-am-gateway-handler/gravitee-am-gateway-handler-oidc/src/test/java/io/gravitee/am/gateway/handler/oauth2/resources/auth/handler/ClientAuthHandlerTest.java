@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.auth.handler;
 
 import io.gravitee.am.common.oidc.ClientAuthenticationMethod;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.ExceptionHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
@@ -53,6 +54,9 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
     private ClientSyncService clientSyncService;
 
     @Mock
+    private ProtectedResourceSyncService protectedResourceSyncService;
+
+    @Mock
     private ClientAssertionService clientAssertionService;
 
     @Mock
@@ -72,7 +76,7 @@ public class ClientAuthHandlerTest extends RxWebTestBase {
         super.setUp();
         when(domain.getId()).thenReturn("id");
         router.post("/oauth/token")
-                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, null, auditService))
+                .handler(ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, null, auditService, protectedResourceSyncService))
                 .handler(rc -> rc.response().setStatusCode(200).end())
                 .failureHandler(new ExceptionHandler());
     }

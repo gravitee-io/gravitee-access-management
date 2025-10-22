@@ -91,9 +91,9 @@ public class ProtectedResourceServiceImplTest {
         newProtectedResource.setType("MCP_SERVER");
         service.create(domain, user, newProtectedResource)
                 .test()
-                .assertError(throwable -> throwable instanceof ApplicationAlreadyExistsException);
-        Mockito.verify(auditService, Mockito.times(0)).report(any());
                 .assertError(throwable -> throwable instanceof ClientAlreadyExistsException);
+
+        Mockito.verify(auditService, Mockito.times(0)).report(any());
 
     }
 

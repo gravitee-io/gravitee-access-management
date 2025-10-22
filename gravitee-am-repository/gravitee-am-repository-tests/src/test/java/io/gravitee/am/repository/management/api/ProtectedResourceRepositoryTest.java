@@ -157,6 +157,8 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
             repository.create(toSave).blockingGet();
         }
         return resources;
+    }
+
     public void shouldFindBySearch() {
         ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings());
         ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings());

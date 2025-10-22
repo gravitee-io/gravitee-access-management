@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.web.endpoint.ErrorEndpoint;
@@ -111,6 +112,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
     @Autowired
     private ClientSyncService clientSyncService;
+
+    @Autowired
+    private ProtectedResourceSyncService protectedResourceSyncService;
 
     @Autowired
     private ClientAssertionService clientAssertionService;
@@ -240,7 +244,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
         // client auth handler
         final String certificateHeader = environment.getProperty(ConstantKeys.HTTP_SSL_CERTIFICATE_HEADER);
-        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService);
+        final Handler<RoutingContext> clientAuthHandler = ClientAuthHandler.create(clientSyncService, clientAssertionService, jwkService, domain, secretService, certificateHeader, auditService, protectedResourceSyncService);
 
         // static handler
         staticHandler(oauth2Router);
