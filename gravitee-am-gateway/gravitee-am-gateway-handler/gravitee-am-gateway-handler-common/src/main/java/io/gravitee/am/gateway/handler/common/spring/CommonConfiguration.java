@@ -221,7 +221,9 @@ public class CommonConfiguration {
     }
 
     @Bean
-    public ProtectedResourceSyncService protectedResourceSyncService() { return new ProtectedResourceSyncServiceImpl(); }
+    public ProtectedResourceSyncService protectedResourceSyncService() {
+        return new ProtectedResourceSyncServiceImpl();
+    }
 
     @Bean
     public ClientSyncService clientSyncService() {
