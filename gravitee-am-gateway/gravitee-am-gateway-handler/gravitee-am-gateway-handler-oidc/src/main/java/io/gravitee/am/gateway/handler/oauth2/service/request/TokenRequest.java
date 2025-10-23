@@ -154,6 +154,7 @@ public class TokenRequest extends OAuth2Request {
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());
         oAuth2Request.setRefreshToken(getRefreshToken());
         oAuth2Request.setAuthorizationCode(getAuthorizationCode());
+        oAuth2Request.setResource(getResource());
 
         // set UMA 2.0 permissions
         oAuth2Request.setPermissions(getPermissions());

@@ -89,6 +89,11 @@ public class OAuth2Request extends BaseRequest {
     private String subject;
 
     /**
+     * Resource uri
+     */
+    private String resource;
+
+    /**
      * Boolean indicates if the current request support OAuth 2.0 Refresh Token
      */
     private boolean supportRefreshToken;
@@ -146,6 +151,7 @@ public class OAuth2Request extends BaseRequest {
         this.permissions = other.permissions;
         this.pathParameters = other.pathParameters;
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
+        this.resource = other.resource;
 
         //BaseRequest
         this.setId(other.getId());
@@ -284,6 +290,14 @@ public class OAuth2Request extends BaseRequest {
 
     public void setConfirmationMethodX5S256(String confirmationMethodX5S256) {
         this.confirmationMethodX5S256 = confirmationMethodX5S256;
+    }
+
+    public String getResource() {
+        return resource;
+    }
+
+    public void setResource(String resource) {
+        this.resource = resource;
     }
 
     public boolean shouldGenerateIDToken() {

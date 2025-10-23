@@ -115,6 +115,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCode.setExpireAt(authorizationCodeMongo.getExpireAt());
         authorizationCode.setSubject(authorizationCodeMongo.getSubject());
         authorizationCode.setScopes(authorizationCodeMongo.getScopes());
+        authorizationCode.setResource(authorizationCodeMongo.getResource());
 
         if (authorizationCodeMongo.getRequestParameters() != null) {
             MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
@@ -139,12 +140,14 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCodeMongo.setExpireAt(authorizationCode.getExpireAt());
         authorizationCodeMongo.setSubject(authorizationCode.getSubject());
         authorizationCodeMongo.setScopes(authorizationCode.getScopes());
+        authorizationCodeMongo.setResource(authorizationCode.getResource());
 
         if (authorizationCode.getRequestParameters() != null) {
             Document document = new Document();
             authorizationCode.getRequestParameters().forEach(document::append);
             authorizationCodeMongo.setRequestParameters(document);
         }
+
         return authorizationCodeMongo;
     }
 }

@@ -48,6 +48,8 @@ public class AuthorizationCodeMongo {
 
     private String subject;
 
+    private String resource;
+
     private Set<String> scopes;
 
     @BsonProperty("request_parameters")
@@ -123,6 +125,14 @@ public class AuthorizationCodeMongo {
 
     public void setScopes(Set<String> scopes) {
         this.scopes = scopes;
+    }
+
+    public String getResource(){
+        return resource;
+    }
+
+    public void setResource(String resource){
+        this.resource = resource;
     }
 
     public Document getRequestParameters() {

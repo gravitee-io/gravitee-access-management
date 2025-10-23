@@ -171,6 +171,7 @@ public class TokenServiceImpl implements TokenService {
                 .flatMap(executionContext -> {
                     // create JWT access token
                     JWT accessToken = createAccessTokenJWT(oAuth2Request, client, endUser, executionContext);
+
                     // create JWT refresh token
                     JWT refreshToken = oAuth2Request.isSupportRefreshToken() ? createRefreshTokenJWT(oAuth2Request, client, endUser, accessToken) : null;
                     // encode and sign JWT tokens
@@ -363,6 +364,21 @@ public class TokenServiceImpl implements TokenService {
 
         // set custom claims
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
+
+        // set resource audience
+        if(request.getResource() != null) {
+            // check if the aud is already set
+            if (jwt.getAud() == null){
+                jwt.setAud(request.getResource());
+            } else {
+                var audiences = new LinkedHashSet<>();
+                audiences.add(jwt.getAud());
+                audiences.add(request.getResource());
+                var jsonArray = new JSONArray();
+                jsonArray.addAll(audiences);
+                jwt.put(Claims.AUD, jsonArray);
+            }
+        }
 
         return jwt;
     }
