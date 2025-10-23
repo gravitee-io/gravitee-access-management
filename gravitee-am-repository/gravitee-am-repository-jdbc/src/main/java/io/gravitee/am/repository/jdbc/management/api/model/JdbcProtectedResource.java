@@ -94,4 +94,28 @@ public class JdbcProtectedResource {
         private LocalDateTime expiresAt;
 
     }
+
+    @Getter
+    @Setter
+    @Table(JdbcProtectedResourceFeature.TABLE_NAME)
+    public static class JdbcProtectedResourceFeature {
+        public static final String TABLE_NAME = "protected_resource_features";
+
+        @Id
+        private String id;
+
+        private String protectedResourceId;
+
+        private String keyName;
+
+        private String type;
+
+        private String description;
+
+        private String scopes;
+
+        @Column("created_at")
+        private LocalDateTime createdAt;
+
+    }
 }

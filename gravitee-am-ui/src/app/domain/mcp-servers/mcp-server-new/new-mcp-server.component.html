@@ -63,6 +63,66 @@
       </div>
       <div class="gv-form-section">
         <div class="gv-form-section-title">
+          <div class="tools-theme-container">
+            <div>
+              <h5>Tools Configuration</h5>
+              <p>Define the tools that this MCP server provides. Tools can be tied to specific scopes.</p>
+            </div>
+            <button mat-raised-button class="create-button" color="secondary" (click)="openAddToolModal($event)">
+              <mat-icon>add</mat-icon> Add tool
+            </button>
+          </div>
+          <mat-divider></mat-divider>
+          <div *ngIf="newMcpServer.tools.length === 0" class="tools-empty-container">
+            <div>
+              <mat-icon>create_new_folder</mat-icon>
+            </div>
+            <span class="first-line">No tools configured yet</span>
+            <span>Add tools to define what this MCP server provides</span>
+          </div>
+          <div *ngIf="newMcpServer.tools.length !== 0">
+            <ngx-datatable
+              class="material"
+              [columnMode]="'flex'"
+              [scrollbarV]="false"
+              [scrollbarH]="false"
+              [reorderable]="false"
+              [headerHeight]="40"
+              [footerHeight]="0"
+              [rowHeight]="50"
+              [rows]="newMcpServer.tools"
+            >
+              <ngx-datatable-column name="Name" [flexGrow]="3" [draggable]="false" [sortable]="false">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.key }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Description" [canAutoResize]="true" [flexGrow]="9" [draggable]="false" [sortable]="false">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  {{ row.description }}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Scopes" [flexGrow]="9" [draggable]="false" [sortable]="false">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <span *ngFor="let scope of row.scopes.slice(0, 3)" class="tool-badge">
+                    {{ scope }}
+                  </span>
+                  <span *ngIf="row.scopes.length > 3" class="tool-badge">+{{ row.scopes.length - 3 }}</span>
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column [flexGrow]="1" [draggable]="false" [sortable]="false">
+                <ng-template let-row="row" ngx-datatable-cell-template>
+                  <a (click)="removeTool(row.key)" style="margin: auto">
+                    <mat-icon svgIcon="gio:trash" matTooltip="Delete tool" class="tool-trash" />
+                  </a>
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </div>
+        </div>
+      </div>
+      <div class="gv-form-section">
+        <div class="gv-form-section-title">
           <h5>OAuth 2.0 Settings (Optional)</h5>
           <mat-divider></mat-divider>
         </div>
@@ -86,7 +146,11 @@
     <div class="gv-page-description" fxFlex>
       <h3>MCP server?</h3>
       <div class="gv-page-description-content">
-        <p>MCP server is an OAuth2 protected resource</p>
+        <p>
+          MCP Servers act as a bridge, verifying user credentials and permissions before granting access to protected resources. They
+          support various application types, including mobile, web, and backend services, ensuring secure authentication across different
+          platforms.
+        </p>
       </div>
     </div>
   </div>

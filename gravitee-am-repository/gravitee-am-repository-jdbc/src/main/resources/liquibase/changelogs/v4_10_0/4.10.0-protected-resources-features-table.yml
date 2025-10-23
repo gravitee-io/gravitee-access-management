@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.0-protected-resources-features-table
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - tableExists:
+              tableName: protected_resource_features
+      changes:
+        - createTable:
+            tableName: protected_resource_features
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { primaryKey: true, nullable: false } }
+              - column: { name: protected_resource_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: key_name, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: type, type: nvarchar(16), constraints: { nullable: false } }
+              - column: { name: description, type: clob, constraints: { nullable: true } }
+              - column: { name: scopes, type: text, constraints: { nullable: true } }
+              - column: { name: created_at, type: timestamp(6), constraints: { nullable: false } }
+
+        - createIndex:
+            tableName: protected_resource_features
+            columns:
+              - column:
+                  name: protected_resource_id
+              - column:
+                  name: key_name
+            indexName: idx_protected_resource_id_key
+            unique: true

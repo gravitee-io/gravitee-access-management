@@ -21,6 +21,7 @@ import { Page, Sort } from '../../services/api.model';
 import {
   NewProtectedResourceRequest,
   NewProtectedResourceResponse,
+  ProtectedResourceFeatureType,
   ProtectedResourceService,
   ProtectedResourceType,
 } from '../../services/protected-resource.service';
@@ -43,7 +44,13 @@ export class McpServersService {
                   id: elem.id,
                   name: elem.name,
                   resourceIdentifier: elem?.resourceIdentifiers?.[0],
-                  tools: elem.tools ?? [],
+                  tools: elem.features
+                    ? elem.features.map((feat) => ({
+                        key: feat.key,
+                        description: feat.description,
+                        scopes: feat['scopes'],
+                      }))
+                    : [],
                   updatedAt: elem.updatedAt,
                 }) as McpServer,
             ),
@@ -59,6 +66,10 @@ export class McpServersService {
       clientId: newMcpServer.clientId?.trim(),
       clientSecret: newMcpServer.clientSecret,
       type: ProtectedResourceType.MCP_SERVER,
+      features: newMcpServer.tools.map((tool) => ({
+        ...tool,
+        type: ProtectedResourceFeatureType.MCP_TOOL,
+      })),
     } as NewProtectedResourceRequest;
     return this.service.create(domainId, request);
   }
@@ -68,8 +79,8 @@ export interface McpServer {
   id: string;
   name: string;
   resourceIdentifier: string;
-  tools: string[];
   updatedAt: string;
+  tools: McpServerTool[];
 }
 
 export interface NewMcpServer {
@@ -78,4 +89,11 @@ export interface NewMcpServer {
   description?: string;
   clientId?: string;
   clientSecret?: string;
+  tools: McpServerTool[];
+}
+
+export interface McpServerTool {
+  key: string;
+  description: string;
+  scopes: string[];
 }

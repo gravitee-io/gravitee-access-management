@@ -16,7 +16,9 @@
 package io.gravitee.am.repository.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.McpTool;
 import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ProtectedResourceFeature;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.PageSortRequest;
@@ -40,8 +42,10 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     @Test
     public void testCreate() {
         ClientSecret clientSecret = generateClientSecret();
+        McpTool tool1 = generateMcpTool("key1");
+        McpTool tool2 = generateMcpTool("key2");
         ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
-        ProtectedResource toSave = generateResource(clientSecret, secretSettings);
+        ProtectedResource toSave = generateResource(clientSecret, secretSettings, List.of(tool1, tool2));
 
         TestObserver<ProtectedResource> testObserver = repository.create(toSave)
                 .flatMapMaybe(created -> repository.findById(created.getId()))
@@ -71,6 +75,21 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
 
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getId().equals(secretSettings.getId()));
         testObserver.assertValue(a -> a.getSecretSettings().get(0).getAlgorithm().equals(secretSettings.getAlgorithm()));
+
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getKey().equals(tool1.getKey())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getDescription().equals(tool1.getDescription())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getType().equals(tool1.getType())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getCreatedAt().equals(tool1.getCreatedAt())));
+        testObserver.assertValue(a -> a.getFeatures().stream().map(McpTool.class::cast).toList().stream()
+                .anyMatch(f -> f.getScopes().equals(tool1.getScopes())));
+
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getKey().equals(tool2.getKey())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getDescription().equals(tool2.getDescription())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getType().equals(tool2.getType())));
+        testObserver.assertValue(a -> a.getFeatures().stream().anyMatch(f -> f.getCreatedAt().equals(tool2.getCreatedAt())));
+        testObserver.assertValue(a -> a.getFeatures().stream().map(McpTool.class::cast).toList().stream()
+                .anyMatch(f -> f.getScopes().equals(tool2.getScopes())));
+
 
     }
 
@@ -186,10 +205,10 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     public void shouldFindBySearch() {
-        ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings());
-        ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings());
+        ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
 
-        ProtectedResource differentDomain = generateResource("ggg", "domainSearch12", "client1", generateClientSecret(), generateApplicationSecretSettings());
+        ProtectedResource differentDomain = generateResource("ggg", "domainSearch12", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
 
         zip(repository.create(toSave1), repository.create(toSave2), repository.create(differentDomain), List::of)
                 .test().awaitDone(10, TimeUnit.SECONDS)
@@ -248,10 +267,10 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     @Test
     public void shouldFindBySearchByIds() {
 
-        ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings());
-        ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings());
+        ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
 
-        ProtectedResource differentDomain = generateResource("ggg", "domainSearch21", "client1",generateClientSecret(), generateApplicationSecretSettings());
+        ProtectedResource differentDomain = generateResource("ggg", "domainSearch21", "client1",generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
 
         zip(repository.create(toSave1), repository.create(toSave2), repository.create(differentDomain), List::of)
                 .test().awaitDone(10, TimeUnit.SECONDS)
@@ -314,9 +333,9 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
-    public void ttest(){
-        ProtectedResource toSave1 = generateResource("abc", "domainSearchExists1", "client1", generateClientSecret(), generateApplicationSecretSettings());
-        ProtectedResource toSave2 = generateResource("dcf", "domainSearchExists1", "client2", generateClientSecret(), generateApplicationSecretSettings());
+    public void shouldTellIfExistsByDomain(){
+        ProtectedResource toSave1 = generateResource("abc", "domainSearchExists1", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource toSave2 = generateResource("dcf", "domainSearchExists1", "client2", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
 
         toSave1.setResourceIdentifiers(List.of("https://domain.one", "https://domain.two"));
         toSave2.setResourceIdentifiers(List.of("https://domain.three"));
@@ -368,6 +387,15 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .assertValue(true);
     }
 
+    private McpTool generateMcpTool(String key) {
+        McpTool tool = new McpTool();
+        tool.setKey(key);
+        tool.setDescription(RandomString.generate());
+        tool.setScopes(List.of("abc", "cde"));
+        tool.setCreatedAt(new Date());
+        return tool;
+    }
+
     private ClientSecret generateClientSecret() {
         ClientSecret clientSecret = new ClientSecret();
         clientSecret.setId(RandomString.generate());
@@ -387,10 +415,14 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     private ProtectedResource generateResource(ClientSecret clientSecret, ApplicationSecretSettings secretSettings) {
-        return generateResource("test-resource", "domainId", "clientId", clientSecret, secretSettings);
+        return generateResource("test-resource", "domainId", "clientId", clientSecret, secretSettings, List.of());
     }
 
-    private ProtectedResource generateResource(String name, String domainId, String clientId, ClientSecret clientSecret, ApplicationSecretSettings secretSettings) {
+    private ProtectedResource generateResource(ClientSecret clientSecret, ApplicationSecretSettings secretSettings, List<? extends ProtectedResourceFeature> features) {
+        return generateResource("test-resource", "domainId", "clientId", clientSecret, secretSettings, features);
+    }
+
+    private ProtectedResource generateResource(String name, String domainId, String clientId, ClientSecret clientSecret, ApplicationSecretSettings secretSettings, List<? extends ProtectedResourceFeature> features) {
         ProtectedResource toSave = new ProtectedResource();
         toSave.setId(RandomString.generate());
         toSave.setName(name);
@@ -403,6 +435,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         toSave.setResourceIdentifiers(List.of("resource-identifier1", "resource-identifier2"));
         toSave.setSecretSettings(List.of(secretSettings));
         toSave.setClientSecrets(List.of(clientSecret));
+        toSave.setFeatures(features);
         return toSave;
     }
 

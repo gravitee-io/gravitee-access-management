@@ -26,6 +26,8 @@ import {
 import { SnackbarService } from '../../../services/snackbar.service';
 import { McpServersService, NewMcpServer } from '../mcp-servers.service';
 
+import { DomainNewMcpServerToolDialogFactory } from './tool-new-dialog/tool-new-dialog.component';
+
 @Component({
   selector: 'app-new-mcp-server',
   templateUrl: './new-mcp-server.component.html',
@@ -33,21 +35,28 @@ import { McpServersService, NewMcpServer } from '../mcp-servers.service';
   standalone: false,
 })
 export class DomainNewMcpServerComponent implements OnInit {
-  newMcpServer = {} as NewMcpServer;
+  newMcpServer = {
+    tools: [],
+  } as NewMcpServer;
+
   domain: {
     id: string;
     name: string;
   };
 
+  scopes: any[];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private readonly matDialog: MatDialog,
+    private newToolDialogFactory: DomainNewMcpServerToolDialogFactory,
     private snackbarService: SnackbarService,
     private service: McpServersService,
   ) {}
   ngOnInit(): void {
     this.domain = this.route.snapshot.data['domain'];
+    this.scopes = this.route.snapshot.data['scopes'];
   }
 
   registerMcpServer(): void {
@@ -78,6 +87,30 @@ export class DomainNewMcpServerComponent implements OnInit {
       .subscribe((data) => {
         this.router.navigate(['..', data.id], { relativeTo: this.route });
       });
+  }
+
+  openAddToolModal(event: Event): void {
+    event.preventDefault();
+    this.newToolDialogFactory.openDialog({ scopes: this.scopes }, (data) => {
+      if (!data.cancel) {
+        if (this.newMcpServer.tools.find((tool) => tool.key === data.name)) {
+          this.snackbarService.open(`Tool with name ${data.name} already exists`);
+        } else {
+          this.newMcpServer.tools = [
+            ...this.newMcpServer.tools,
+            {
+              key: data.name,
+              scopes: data.scopes,
+              description: data.description,
+            },
+          ];
+        }
+      }
+    });
+  }
+
+  removeTool(toolKey: string): void {
+    this.newMcpServer.tools = this.newMcpServer.tools.filter((tool) => tool.key !== toolKey);
   }
 
   formValid(): boolean {

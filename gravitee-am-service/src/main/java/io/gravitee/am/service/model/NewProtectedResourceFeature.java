@@ -15,41 +15,38 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.url.Url;
-import jakarta.validation.Valid;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.gravitee.am.model.ProtectedResourceFeature;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = NewMcpTool.class, name = "MCP_TOOL"),
+})
 @Getter
 @Setter
-public class NewProtectedResource {
+public class NewProtectedResourceFeature {
 
     @NotBlank
-    private String name;
+    @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "must match regex ^[a-zA-Z0-9_-]+$")
+    private String key;
 
     private String description;
 
-    @NotEmpty
-    private List<@NotBlank @Url String> resourceIdentifiers;
-
-    private String clientId;
-
-    private String clientSecret;
-
-    @NotEmpty
-    @Pattern(regexp = "^MCP_SERVER$", message = "Available types: [MCP_SERVER]")
-    private String type;
-
-    private List<@Valid NewProtectedResourceFeature> features;
-
-    public List<NewProtectedResourceFeature> getFeatures() {
-        return Objects.requireNonNullElseGet(features, ArrayList::new);
+    public ProtectedResourceFeature asFeature(){
+        ProtectedResourceFeature feature = new ProtectedResourceFeature();
+        feature.setKey(getKey());
+        feature.setDescription(getDescription());
+        return feature;
     }
+
+
 }
