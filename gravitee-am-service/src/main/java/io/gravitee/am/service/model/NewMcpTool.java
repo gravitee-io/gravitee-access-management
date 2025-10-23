@@ -15,41 +15,27 @@
  */
 package io.gravitee.am.service.model;
 
-import io.gravitee.am.service.validators.url.Url;
-import jakarta.validation.Valid;
+import io.gravitee.am.model.ProtectedResourceFeature;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import static io.gravitee.am.model.ProtectedResourceFeature.Type.MCP_TOOL;
 
 @Getter
 @Setter
-public class NewProtectedResource {
+public class NewMcpTool extends NewProtectedResourceFeature {
 
-    @NotBlank
-    private String name;
+    private final ProtectedResourceFeature.Type type = MCP_TOOL;
 
-    private String description;
+    List<@NotBlank String> scopes;
 
-    @NotEmpty
-    private List<@NotBlank @Url String> resourceIdentifiers;
-
-    private String clientId;
-
-    private String clientSecret;
-
-    @NotEmpty
-    @Pattern(regexp = "^MCP_SERVER$", message = "Available types: [MCP_SERVER]")
-    private String type;
-
-    private List<@Valid NewProtectedResourceFeature> features;
-
-    public List<NewProtectedResourceFeature> getFeatures() {
-        return Objects.requireNonNullElseGet(features, ArrayList::new);
+    public ProtectedResourceFeature asFeature(){
+        ProtectedResourceFeature feature = super.asFeature();
+        feature.setType(type);
+        return feature;
     }
+
 }

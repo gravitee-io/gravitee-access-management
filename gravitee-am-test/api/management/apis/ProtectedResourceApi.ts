@@ -129,7 +129,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
 
     /**
      * User must have the PROTECTED_RESOURCE[READ] permission on the specified resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization. 
-     * Get an Protected Resource
+     * Get a Protected Resource
      */
     async findProtectedResourceRaw(requestParameters: FindProtectedResourceRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<ProtectedResourcePrimaryData>> {
         if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
@@ -176,7 +176,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
 
     /**
      * User must have the PROTECTED_RESOURCE[READ] permission on the specified resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization. 
-     * Get an Protected Resource
+     * Get a Protected Resource
      */
     async findProtectedResource(requestParameters: FindProtectedResourceRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<ProtectedResourcePrimaryData> {
         const response = await this.findProtectedResourceRaw(requestParameters, initOverrides);

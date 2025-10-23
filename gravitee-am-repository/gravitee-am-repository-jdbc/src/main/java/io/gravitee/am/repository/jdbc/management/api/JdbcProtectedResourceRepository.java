@@ -16,7 +16,9 @@
 package io.gravitee.am.repository.jdbc.management.api;
 
 import io.gravitee.am.common.utils.RandomString;
+import io.gravitee.am.model.McpTool;
 import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ProtectedResourceFeature;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.application.ClientSecret;
 import io.gravitee.am.model.common.Page;
@@ -25,6 +27,7 @@ import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceClientSecretRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceFeatureRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceRepository;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.reactivex.rxjava3.core.Completable;
@@ -61,6 +64,9 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
     @Autowired
     private SpringProtectedResourceClientSecretRepository clientSecretSpring;
 
+    @Autowired
+    private SpringProtectedResourceFeatureRepository featuresSpring;
+
     private interface Selects {
         String BY_DOMAIN_ID_AND_CLIENT_ID = """
                 SELECT * FROM %s a WHERE
@@ -95,12 +101,19 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
         Mono<ProtectedResource> insertWithChildrenUpdate = getTemplate().insert(toJdbcEntity(item)).map(this::toEntity)
-                .flatMap(stored -> persistChildEntities(item)
+                .flatMap(stored -> persistClientSecrets(item)
                         .reduceWith(() -> new ArrayList<ClientSecret>(), (list, sec) -> {
                             list.add(sec);
                             return list;
                         })
                         .doOnNext(stored::setClientSecrets)
+                        .then(Mono.just(stored)))
+                .flatMap(stored -> persistFeatures(item)
+                        .reduceWith(() -> new ArrayList<ProtectedResourceFeature>(), (list, sec) -> {
+                            list.add(sec);
+                            return list;
+                        })
+                        .doOnNext(stored::setFeatures)
                         .then(Mono.just(stored)));
 
         return monoToSingle(insertWithChildrenUpdate.as(trx::transactional));
@@ -176,8 +189,35 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 });
     }
 
-    private String transformSortValue(String sort){
-        return switch (sort){
+    private Flowable<ProtectedResource> attachFeatures(Flowable<ProtectedResource> resourcesFlow) {
+        return resourcesFlow
+                .toList()
+                .flatMapPublisher(resources -> {
+                    if (resources.isEmpty()) {
+                        return Flowable.empty();
+                    }
+                    List<String> ids = resources.stream().map(ProtectedResource::getId).toList();
+                    return featuresSpring.findAllByProtectedResourceIdIn(ids)
+                            .toList()
+                            .flatMapPublisher(secrets -> {
+                                Map<String, List<JdbcProtectedResourceFeature>> byResourceId = secrets
+                                        .stream()
+                                        .collect(Collectors.groupingBy(JdbcProtectedResourceFeature::getProtectedResourceId));
+
+                                resources.forEach(res -> {
+                                    List<JdbcProtectedResourceFeature> secretsForRes = byResourceId.get(res.getId());
+                                    List<McpTool> mapped = secretsForRes == null ? List.of() : secretsForRes.stream()
+                                            .map(feature ->  mapper.map(feature, McpTool.class))
+                                            .toList();
+                                    res.setFeatures(mapped);
+                                });
+                                return Flowable.fromIterable(resources);
+                            });
+                });
+    }
+
+    private String transformSortValue(String sort) {
+        return switch (sort) {
             case "name" -> COLUMN_NAME;
             case "updatedAt" -> COLUMN_UPDATED_AT;
             default -> COLUMN_UPDATED_AT;
@@ -189,11 +229,12 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
         Sort.Order order = pageSortRequest.isAsc() ? Sort.Order.asc(transformSortValue(sortBy)) : Sort.Order.desc(transformSortValue(sortBy));
         Sort sort = Sort.by(order);
-        return fluxToFlowable(getTemplate().select(JdbcProtectedResource.class)
+        Flowable<ProtectedResource> mainFlowable = fluxToFlowable(getTemplate().select(JdbcProtectedResource.class)
                 .matching(query(where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_TYPE).is(type))
                         .with(PageRequest.of(pageSortRequest.getPage(), pageSortRequest.getSize(), sort)))
                 .all())
-                .map(this::toEntity)
+                .map(this::toEntity);
+        return attachFeatures(mainFlowable)
                 .map(ProtectedResourcePrimaryData::of)
                 .toList()
                 .flatMap(data -> spring.countByDomainIdAndType(domainId, type).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
@@ -208,11 +249,12 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         String sortBy = pageSortRequest.getSortBy().orElse(COLUMN_UPDATED_AT);
         Sort.Order order = pageSortRequest.isAsc() ? Sort.Order.asc(transformSortValue(sortBy)) : Sort.Order.desc(transformSortValue(sortBy));
         Sort sort = Sort.by(order);
-        return fluxToFlowable(getTemplate().select(JdbcProtectedResource.class)
+        Flowable<ProtectedResource> mainFlowable = fluxToFlowable(getTemplate().select(JdbcProtectedResource.class)
                 .matching(query(where(COLUMN_DOMAIN_ID).is(domainId).and(COLUMN_TYPE).is(type).and(COLUMN_ID).in(ids))
                         .with(PageRequest.of(pageSortRequest.getPage(), pageSortRequest.getSize(), sort)))
                 .all())
-                .map(this::toEntity)
+                .map(this::toEntity);
+        return attachFeatures(mainFlowable)
                 .map(ProtectedResourcePrimaryData::of)
                 .toList()
                 .flatMap(data -> spring.countByDomainIdAndTypeAndIdIn(domainId, type, ids).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
@@ -230,17 +272,24 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
 
     private Single<ProtectedResource> complete(ProtectedResource entity) {
-        return Single.just(entity).flatMap(app ->
-                clientSecretSpring.findAllByProtectedResourceId(app.getId())
+        return Single.just(entity)
+                .flatMap(app -> clientSecretSpring.findAllByProtectedResourceId(app.getId())
                         .map(jdbcClientSecret -> mapper.map(jdbcClientSecret, ClientSecret.class))
                         .toList()
                         .map(secrets -> {
                             app.setClientSecrets(secrets);
                             return app;
+                        }))
+                .flatMap(app -> featuresSpring.findAllByProtectedResourceId(app.getId())
+                        .map(feature -> mapper.map(feature, McpTool.class))
+                        .toList()
+                        .map(features -> {
+                            app.setFeatures(features);
+                            return app;
                         }));
     }
 
-    private Flux<ClientSecret> persistChildEntities(ProtectedResource protectedResource) {
+    private Flux<ClientSecret> persistClientSecrets(ProtectedResource protectedResource) {
         List<JdbcProtectedResourceClientSecret> jdbcSecrets = protectedResource.getClientSecrets() == null ? List.of() : protectedResource.getClientSecrets()
                 .stream()
                 .map(secret -> mapper.map(secret, JdbcProtectedResourceClientSecret.class))
@@ -252,5 +301,22 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         return Flux.fromIterable(jdbcSecrets)
                 .concatMap(jdbc -> getTemplate().insert(jdbc))
                 .map(jdbc -> mapper.map(jdbc, ClientSecret.class));
+    }
+
+    private Flux<ProtectedResourceFeature> persistFeatures(ProtectedResource protectedResource) {
+        List<JdbcProtectedResourceFeature> jdbcFeatures = protectedResource.getFeatures() == null ? List.of() : protectedResource.getFeatures()
+                .stream()
+                .map(feature -> mapper.map(feature, JdbcProtectedResource.JdbcProtectedResourceFeature.class))
+                .map(feature -> {
+                    feature.setId(RandomString.generate());
+                    feature.setProtectedResourceId(protectedResource.getId());
+                    return feature;
+                })
+                .toList();
+
+
+        return Flux.fromIterable(jdbcFeatures)
+                .concatMap(jdbc -> getTemplate().insert(jdbc))
+                .map(jdbc -> mapper.map(jdbc, ProtectedResourceFeature.class));
     }
 }

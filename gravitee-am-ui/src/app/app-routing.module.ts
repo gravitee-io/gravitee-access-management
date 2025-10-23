@@ -1483,6 +1483,9 @@ export const routes: Routes = [
                       {
                         path: 'new',
                         component: DomainNewMcpServerComponent,
+                        resolve: {
+                          scopes: ScopesAllResolver,
+                        },
                         canActivate: [AuthGuard],
                       },
                       {
