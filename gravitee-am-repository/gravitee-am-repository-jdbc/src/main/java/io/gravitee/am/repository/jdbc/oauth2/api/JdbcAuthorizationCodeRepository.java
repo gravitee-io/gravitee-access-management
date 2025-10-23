@@ -110,7 +110,6 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         insertSpec = addQuotedField(insertSpec, COL_REDIRECT_URI, authorizationCode.getRedirectUri(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_SUBJECT, authorizationCode.getSubject(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TRANSACTION_ID, authorizationCode.getTransactionId(), String.class);
-        LOGGER.warn("resource = {}", authorizationCode.getResource());
         insertSpec = addQuotedField(insertSpec, COL_RESOURCE, authorizationCode.getResource(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CONTEXT_VERSION, authorizationCode.getContextVersion(), int.class);
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(authorizationCode.getCreatedAt(), null), LocalDateTime.class);
