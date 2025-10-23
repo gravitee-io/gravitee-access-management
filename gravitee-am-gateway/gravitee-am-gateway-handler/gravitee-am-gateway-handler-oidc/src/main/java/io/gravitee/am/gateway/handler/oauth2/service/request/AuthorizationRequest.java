@@ -111,6 +111,14 @@ public class AuthorizationRequest extends OAuth2Request {
         this.responseMode = responseMode;
     }
 
+    public String getResource() {
+        if (parameters() == null) {
+            return null;
+        }
+
+        return parameters().getFirst("resource");
+    }
+
     public OAuth2Request createOAuth2Request() {
         AuthorizationRequest oAuth2Request = new AuthorizationRequest();
 
