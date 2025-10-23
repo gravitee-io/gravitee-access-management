@@ -365,22 +365,42 @@ public class TokenServiceImpl implements TokenService {
         // set custom claims
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
-        // set resource audience
-        if (request.getResource() != null) {
-            // check if the aud is already set
-            if (jwt.getAud() == null){
-                jwt.setAud(request.getResource());
-            } else {
-                var audiences = new LinkedHashSet<>();
-                audiences.add(jwt.getAud());
-                audiences.add(request.getResource());
-                var jsonArray = new JSONArray();
-                jsonArray.addAll(audiences);
-                jwt.put(Claims.AUD, jsonArray);
-            }
-        }
+        // Apply resource to aud
+        setResource(request, jwt);
 
         return jwt;
+    }
+
+    private void setResource(OAuth2Request request, JWT jwt) {
+        String resource = request.getResource();
+        if (resource == null) {
+            return;
+        }
+
+        var audience = jwt.get(Claims.AUD);
+        if (audience == null) {
+            jwt.setAud(resource);
+            return;
+        }
+
+        var audiences = new LinkedHashSet<String>();
+        if (audience instanceof List<?> l) {
+            for (Object aud : l) {
+                if (aud instanceof String s) {
+                    audiences.add(s);
+                }
+            }
+        } else if (audience instanceof String s) {
+            audiences.add(s);
+        } else {
+            audiences.add(audience.toString());
+        }
+
+        audiences.add(resource);
+
+        var jsonArray = new JSONArray();
+        jsonArray.addAll(audiences);
+        jwt.put(Claims.AUD, jsonArray);
     }
 
     private JWT createRefreshTokenJWT(OAuth2Request request, Client client, User user, JWT accessToken) {

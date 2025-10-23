@@ -753,6 +753,7 @@ describe('OAuth2 - App version', () => {
 
         expect(jwt.aud).toBeDefined();
         expect(jwt.aud).toContain('https://gravitee.com/mcp');
+        expect(jwt.aud).toContain(clientId);
 
         await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
       });
