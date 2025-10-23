@@ -366,7 +366,7 @@ public class TokenServiceImpl implements TokenService {
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
         // set resource audience
-        if(request.getResource() != null) {
+        if (request.getResource() != null) {
             // check if the aud is already set
             if (jwt.getAud() == null){
                 jwt.setAud(request.getResource());
