@@ -77,6 +77,11 @@ public class AuthorizationCode {
     private Set<String> scopes;
 
     /**
+     * The resource identifier for which the authorization code is requested
+     */
+    private String resource;
+
+    /**
      * The Authorization request parameters
      */
     private MultiValueMap<String,String> requestParameters;
@@ -167,6 +172,14 @@ public class AuthorizationCode {
 
     public void setRequestParameters(MultiValueMap<String,String> requestParameters) {
         this.requestParameters = requestParameters;
+    }
+
+    public String getResource() {
+        return resource;
+    }
+
+    public void setResource(String resource) {
+        this.resource = resource;
     }
 
     @Override
