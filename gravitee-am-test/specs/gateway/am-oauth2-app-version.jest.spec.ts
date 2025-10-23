@@ -45,6 +45,7 @@ import {
 } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 import { Domain } from '../../api/management/models';
+import { decodeJwt } from '@utils-commands/jwt';
 
 global.fetch = fetch;
 
@@ -697,6 +698,61 @@ describe('OAuth2 - App version', () => {
         expect(tokenResult.body.expires_in).toBeDefined();
         expect(tokenResult.body.scope).toBeDefined();
         expect(tokenResult.body.scope).toEqual('scope1');
+
+        await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
+      });
+
+      it('must set resource in aud', async () => {
+        // Prepare Login Flow Parameters
+        const clientId = application2.settings.oauth.clientId;
+        const params = `?response_type=code&client_id=${clientId}&redirect_uri=http://localhost:4000/&resource=https://gravitee.com/mcp`;
+
+        // Initiate the Login Flow
+        const authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
+
+        // Redirect to /login
+        const loginResult = await extractXsrfTokenAndActionResponse(authResponse);
+
+        // Authentication
+        const postLogin = await performFormPost(
+          loginResult.action,
+          '',
+          {
+            'X-XSRF-TOKEN': loginResult.token,
+            username: 'user',
+            password: '#CoMpL3X-P@SsW0Rd',
+            client_id: clientId,
+          },
+          {
+            Cookie: loginResult.headers['set-cookie'],
+            'Content-type': 'application/x-www-form-urlencoded',
+          },
+        ).expect(302);
+
+        // Post-authentication redirect
+        const postLoginRedirect = await performGet(postLogin.headers['location'], '', {
+          Cookie: postLogin.headers['set-cookie'],
+        }).expect(302);
+
+        const redirectUri = postLoginRedirect.headers['location'];
+        const codePattern = /code=([-_a-zA-Z0-9]+)&?/;
+
+        const authorizationCode = redirectUri.match(codePattern)[1];
+
+        const tokenResult = await performPost(
+          `${openIdConfiguration.token_endpoint}?grant_type=authorization_code&code=${authorizationCode}&redirect_uri=http://localhost:4000/`,
+          '',
+          null,
+          {
+            Authorization: 'Basic ' + applicationBase64Token(application2),
+          },
+        ).expect(200);
+
+        // Get the JWT and verify the audience is set as per the resource parameter
+        const jwt = decodeJwt(tokenResult.body.access_token);
+
+        expect(jwt.aud).toBeDefined();
+        expect(jwt.aud).toContain('https://gravitee.com/mcp');
 
         await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
       });
