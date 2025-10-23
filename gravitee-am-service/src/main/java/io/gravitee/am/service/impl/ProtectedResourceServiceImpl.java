@@ -25,27 +25,24 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.*;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
-import io.gravitee.am.model.common.event.Event;
-import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
+import io.gravitee.am.model.common.event.Event;
+import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
-import io.gravitee.am.service.AuditService;
-import io.gravitee.am.service.EventService;
-import io.gravitee.am.service.MembershipService;
-import io.gravitee.am.service.ProtectedResourceService;
-import io.gravitee.am.service.RoleService;
+import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.model.NewMcpTool;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,6 +117,14 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
         toCreate.setSecretSettings(List.of(secretSettings));
         toCreate.setClientSecrets(List.of(buildClientSecret(domain, secretSettings, rawSecret)));
+        toCreate.setFeatures(newProtectedResource.getFeatures().stream().map(f -> {
+            ProtectedResourceFeature feature = f.asFeature();
+            feature.setCreatedAt(toCreate.getCreatedAt());
+            return switch (f) {
+                case NewMcpTool tool -> new McpTool(feature, tool.getScopes());
+                default -> feature;
+            };
+        }).toList());
 
         return oAuthClientUniquenessValidator.checkClientIdUniqueness(domain.getId(), toCreate.getClientId())
                 .andThen(checkResourceIdentifierUniqueness(domain.getId(), toCreate.getResourceIdentifiers()))

@@ -2,9 +2,11 @@ apis/AlertsApi.ts
 apis/ApplicationApi.ts
 apis/AuditApi.ts
 apis/AuthenticationDeviceNotifierApi.ts
+apis/AuthorizationEngineApi.ts
 apis/BotDetectionApi.ts
 apis/CertificateApi.ts
 apis/DataPlaneApi.ts
+apis/DataSourcesApi.ts
 apis/DefaultApi.ts
 apis/DeviceIdentifierApi.ts
 apis/DeviceIdentifiersApi.ts
@@ -65,6 +67,7 @@ models/AuditAccessPoint.ts
 models/AuditEntity.ts
 models/AuditOutcome.ts
 models/AuthenticationDeviceNotifier.ts
+models/AuthorizationEngine.ts
 models/BotDetection.ts
 models/BulkCreateOrganizationUser.ts
 models/BulkCreateUser.ts
@@ -84,8 +87,10 @@ models/CookieSettings.ts
 models/CorsSettings.ts
 models/Credential.ts
 models/DataPlane.ts
+models/DataSource.ts
 models/DeviceIdentifier.ts
 models/Domain.ts
+models/DomainPage.ts
 models/DomainUserBulkRequest.ts
 models/Email.ts
 models/EmailValue.ts
@@ -101,6 +106,7 @@ models/ErrorEntity.ts
 models/ExtensionGrant.ts
 models/Factor.ts
 models/FactorSettings.ts
+models/FilteredApplication.ts
 models/FilteredIdentityProviderInfo.ts
 models/Flow.ts
 models/FlowEntity.ts
@@ -122,6 +128,7 @@ models/NewAccountAccessToken.ts
 models/NewAlertNotifier.ts
 models/NewApplication.ts
 models/NewAuthenticationDeviceNotifier.ts
+models/NewAuthorizationEngine.ts
 models/NewBotDetection.ts
 models/NewCertificate.ts
 models/NewClientSecret.ts
@@ -135,10 +142,12 @@ models/NewFactor.ts
 models/NewForm.ts
 models/NewGroup.ts
 models/NewIdentityProvider.ts
+models/NewMcpTool.ts
 models/NewMembership.ts
 models/NewOrganizationUser.ts
 models/NewPasswordPolicy.ts
 models/NewProtectedResource.ts
+models/NewProtectedResourceFeature.ts
 models/NewReporter.ts
 models/NewRole.ts
 models/NewScope.ts
@@ -183,6 +192,7 @@ models/PatchSecurityProfileSettings.ts
 models/PatchStepUpAuthentication.ts
 models/PreviewRequest.ts
 models/PreviewResponse.ts
+models/ProtectedResourceFeature.ts
 models/ProtectedResourcePage.ts
 models/ProtectedResourcePrimaryData.ts
 models/ProtectedResourceSecret.ts
@@ -217,6 +227,7 @@ models/ThemeEntity.ts
 models/TokenClaim.ts
 models/UMASettings.ts
 models/UpdateAuthenticationDeviceNotifier.ts
+models/UpdateAuthorizationEngine.ts
 models/UpdateBotDetection.ts
 models/UpdateCertificate.ts
 models/UpdateDeviceIdentifier.ts

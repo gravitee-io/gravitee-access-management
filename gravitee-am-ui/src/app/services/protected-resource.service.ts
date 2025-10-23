@@ -51,13 +51,17 @@ export enum ProtectedResourceType {
   MCP_SERVER = 'MCP_SERVER',
 }
 
+export enum ProtectedResourceFeatureType {
+  MCP_TOOL = 'MCP_TOOL',
+}
+
 export interface ProtectedResourcePrimaryData {
   id: string;
   name: string;
   type: ProtectedResourceType;
   resourceIdentifiers: string[];
-  tools: string[];
   updatedAt: string;
+  features: ProtectedResourceFeature[];
 }
 
 export interface ProtectedResource extends ProtectedResourcePrimaryData {
@@ -70,6 +74,12 @@ export interface ProtectedResource extends ProtectedResourcePrimaryData {
   createdAt: string;
 }
 
+export interface ProtectedResourceFeature {
+  key: string;
+  description: string;
+  type: ProtectedResourceFeatureType;
+}
+
 export interface NewProtectedResourceRequest {
   name: string;
   type: ProtectedResourceType;
@@ -77,6 +87,7 @@ export interface NewProtectedResourceRequest {
   description?: string;
   clientId?: string;
   clientSecret?: string;
+  features: ProtectedResourceFeature[];
 }
 
 export interface NewProtectedResourceResponse extends ProtectedResource {

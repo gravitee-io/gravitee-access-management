@@ -23,7 +23,10 @@ import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.model.NewProtectedResource;
+import io.gravitee.am.service.model.NewProtectedResourceFeature;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Single;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -41,6 +44,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.ProtectedResource.Type.fromString;
 
@@ -49,6 +54,11 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
 
     @Autowired
     private ProtectedResourceService service;
+
+    @Path("{protected-resource}")
+    public ProtectedResourceResource getProtectedResourceResource() {
+        return resourceContext.getResource(ProtectedResourceResource.class);
+    }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
@@ -73,7 +83,8 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
 
-        checkAnyPermission(organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE, Acl.CREATE)
+        checkKeyUniqueness(newProtectedResource)
+                .andThen(checkAnyPermission(organizationId, environmentId, domainId, Permission.PROTECTED_RESOURCE, Acl.CREATE))
                 .andThen(checkDomainExists(domainId)
                         .flatMap(existingDomain -> service.create(existingDomain, authenticatedUser, newProtectedResource)
                                 .map(protectedResource -> Response
@@ -83,6 +94,22 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    private Completable checkKeyUniqueness(NewProtectedResource request){
+        return Single.just(request).flatMapCompletable(req -> {
+            List<NewProtectedResourceFeature> features = req.getFeatures();
+            if(features != null && !features.isEmpty()){
+                long uniqueSize = features.stream()
+                        .map(NewProtectedResourceFeature::getKey)
+                        .map(String::trim)
+                        .distinct()
+                        .count();
+                if(uniqueSize < features.size()){
+                    return Completable.error(new BadRequestException("Feature key names must be unique"));
+                }
+            }
+            return Completable.complete();
+        });
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -134,10 +161,7 @@ public class ProtectedResourcesResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
-    @Path("{protected-resource}")
-    public ProtectedResourceResource getProtectedResourceResource() {
-        return resourceContext.getResource(ProtectedResourceResource.class);
-    }
+
 
     @Schema
     public static final class ProtectedResourcePage extends Page<ProtectedResourcePrimaryData> {

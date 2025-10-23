@@ -59,6 +59,8 @@ public class ProtectedResource {
 
     private List<ApplicationSecretSettings> secretSettings;
 
+    private List<? extends ProtectedResourceFeature> features;
+
     @Schema(type = "java.lang.Long")
     private Date createdAt;
 
@@ -79,6 +81,7 @@ public class ProtectedResource {
         this.secretSettings = protectedResource.getSecretSettings();
         this.createdAt = protectedResource.getCreatedAt();
         this.updatedAt = protectedResource.getUpdatedAt();
+        this.features = protectedResource.getFeatures();
     }
 
     public Client toClient() {
