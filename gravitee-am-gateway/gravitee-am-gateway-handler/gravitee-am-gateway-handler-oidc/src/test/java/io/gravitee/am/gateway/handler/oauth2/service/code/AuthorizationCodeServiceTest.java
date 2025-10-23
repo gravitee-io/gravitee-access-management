@@ -25,6 +25,8 @@ import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -38,6 +40,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
@@ -76,6 +80,30 @@ public class AuthorizationCodeServiceTest {
         testObserver.assertNoErrors();
 
         verify(authorizationCodeRepository, times(1)).create(any());
+    }
+
+    @Test
+    public void shouldCreate_noExistingCode_storeResource() {
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setClientId("my-client-id");
+        var resource = "https://my-resource.com/mcp";
+        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(1);
+        requestParameters.add("resource", resource);
+        authorizationRequest.setParameters(requestParameters);
+
+        User user = new User();
+        user.setUsername("my-username-id");
+
+        when(authorizationCodeRepository.create(any())).thenReturn(Single.just(new AuthorizationCode()));
+
+        TestObserver<AuthorizationCode> testObserver = authorizationCodeService.create(authorizationRequest, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Verify the resource is set if provided
+        verify(authorizationCodeRepository, times(1)).create(argThat(
+                code -> Objects.equals(code.getResource(), resource))
+        );
     }
 
 
