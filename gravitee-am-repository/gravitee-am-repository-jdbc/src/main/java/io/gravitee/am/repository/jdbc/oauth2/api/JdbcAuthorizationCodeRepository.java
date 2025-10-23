@@ -60,6 +60,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
     public static final String COL_EXPIRE_AT = "expire_at";
     public static final String COL_SCOPES = "scopes";
     public static final String COL_REQUEST_PARAMETERS = "request_parameters";
+    public static final String COL_RESOURCE = "resource";
     private static final List<String> columns = List.of(
             COL_ID,
             COL_CLIENT_ID,
@@ -71,7 +72,8 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
             COL_CREATED_AT,
             COL_EXPIRE_AT,
             COL_SCOPES,
-            COL_REQUEST_PARAMETERS
+            COL_REQUEST_PARAMETERS,
+            COL_RESOURCE
     );
 
     private String insertStatement;
@@ -108,6 +110,8 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         insertSpec = addQuotedField(insertSpec, COL_REDIRECT_URI, authorizationCode.getRedirectUri(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_SUBJECT, authorizationCode.getSubject(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TRANSACTION_ID, authorizationCode.getTransactionId(), String.class);
+        LOGGER.warn("resource = {}", authorizationCode.getResource());
+        insertSpec = addQuotedField(insertSpec, COL_RESOURCE, authorizationCode.getResource(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CONTEXT_VERSION, authorizationCode.getContextVersion(), int.class);
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(authorizationCode.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_EXPIRE_AT, dateConverter.convertTo(authorizationCode.getExpireAt(), null), LocalDateTime.class);

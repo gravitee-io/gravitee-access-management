@@ -40,6 +40,7 @@ public class JdbcAuthorizationCode {
     private LocalDateTime expireAt;
     @Column("client_id")
     private String clientId;
+    private String resource;
     private String subject;
     @Column("redirect_uri")
     private String redirectUri;
@@ -134,6 +135,14 @@ public class JdbcAuthorizationCode {
 
     public void setRequestParameters(String requestParameters) {
         this.requestParameters = requestParameters;
+    }
+
+    public String getResource() {
+        return resource;
+    }
+
+    public void setResource(String resource) {
+        this.resource = resource;
     }
 
 }
