@@ -59,6 +59,7 @@
             <groupId>io.gravitee.am.dataplane</groupId>
             <artifactId>gravitee-am-dataplane-api</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -72,6 +73,7 @@
             <groupId>io.gravitee.am.repository</groupId>
             <artifactId>gravitee-am-repository-jdbc-api</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Spring dependencies -->
@@ -98,6 +100,7 @@
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
             <version>${reactor-core.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.projectreactor.addons/reactor-adapter -->
@@ -105,11 +108,13 @@
             <groupId>io.projectreactor.addons</groupId>
             <artifactId>reactor-adapter</artifactId>
             <version>${reactor-adapter.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-transport-native-unix-common</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Liquibase -->
@@ -117,11 +122,14 @@
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
             <version>${liquibase.version}</version>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>com.mattbertolini</groupId>
             <artifactId>liquibase-slf4j</artifactId>
             <version>${liquibase-slf4j.version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <!-- R2DBC -->
@@ -148,6 +156,7 @@
             </exclusions>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>io.asyncer</groupId>
             <artifactId>r2dbc-mysql</artifactId>
@@ -160,6 +169,7 @@
             </exclusions>
             <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.mariadb</groupId>
             <artifactId>r2dbc-mariadb</artifactId>
