@@ -379,7 +379,7 @@ public class TokenServiceImpl implements TokenService {
 
         logger.debug("Setting resources");
         var jsonArray = new JSONArray();
-        jsonArray.addAll(request.getResources());
+        jsonArray.addAll(resource);
 
         logger.debug("Resources: {}", jsonArray);
 
