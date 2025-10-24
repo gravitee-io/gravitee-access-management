@@ -377,11 +377,10 @@ public class TokenServiceImpl implements TokenService {
             return;
         }
 
-        logger.debug("Setting resources");
         var jsonArray = new JSONArray();
         jsonArray.addAll(resource);
 
-        logger.debug("Resources: {}", jsonArray);
+        logger.debug("resources: {}, JTI: {}, client ID:{}", jsonArray, jwt.getJti(), request.getClientId());
 
         jwt.put(Claims.AUD, jsonArray);
     }
