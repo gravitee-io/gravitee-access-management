@@ -42,6 +42,7 @@
     "@ngx-formly/core": "6.3.12",
     "@ngx-formly/material": "6.3.12",
     "@openfga/frontend-utils": "^0.2.0-beta.11",
+    "@openfga/sdk": "^0.2.0-beta.22",
     "@openfga/syntax-transformer": "^0.2.0-beta.22",
     "@swimlane/ngx-datatable": "20.1.0",
     "asciidoctor": "3.0.4",
@@ -57,6 +58,7 @@
     "ngx-clipboard": "16.0.0",
     "ngx-file-helpers": "12.0.0",
     "rxjs": "7.8.2",
+    "ulid": "^3.0.1",
     "vis-data": "^8.0.3",
     "vis-network": "^10.0.2",
     "zone.js": "0.15.1"

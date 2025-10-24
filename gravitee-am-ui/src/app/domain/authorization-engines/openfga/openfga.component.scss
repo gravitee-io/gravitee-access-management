@@ -123,6 +123,90 @@ mat-tab-group {
 }
 
 // Authorization model
+.model-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-l;
+  flex-wrap: wrap;
+  min-height: 60px;
+  flex-shrink: 0;
+
+  .model-selector {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: $spacing-s;
+
+    .model-dropdown {
+      width: 300px;
+    }
+
+    .active-indicator {
+      @include flex-center($spacing-xs);
+      color: $color-success;
+      font-size: 14px;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .active-text {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+    }
+  }
+
+  .editing-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-height: 40px;
+
+    h5 {
+      margin: 0;
+      color: $color-primary;
+      font-weight: 500;
+    }
+  }
+
+  .model-actions {
+    display: flex;
+    gap: $spacing-s;
+    align-items: center;
+    margin-left: auto;
+    min-height: 40px;
+
+    button {
+      @include button-with-icon;
+    }
+  }
+}
+
+.model-timestamp {
+  @include flex-center($spacing-xs);
+  padding: $spacing-s $spacing-m;
+  background: $color-bg-light;
+  color: $color-text-secondary;
+  font-size: 12px;
+  font-weight: 500;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  span {
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, monospace;
+  }
+}
+
 .codemirror-wrapper {
   overflow: hidden;
   border: 1px solid $color-border;
@@ -130,7 +214,6 @@ mat-tab-group {
 
   ::ng-deep .CodeMirror {
     height: auto;
-    min-height: 400px;
     font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, monospace;
     font-size: 14px;
     line-height: 1.5;

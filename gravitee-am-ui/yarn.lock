@@ -4951,6 +4951,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openfga/sdk@npm:^0.2.0-beta.22":
+  version: 0.2.10
+  resolution: "@openfga/sdk@npm:0.2.10"
+  dependencies:
+    axios: "npm:^1.6.0"
+    tiny-async-pool: "npm:^2.1.0"
+  checksum: 10c0/7fd888ef233150fa3bb35cca0490983b04d4d464e042de77cd49caf1a83158fefabc13da2a8963b4599a6c1c90a5de237a393ca6fd3fd11b04d025df676bc5e1
+  languageName: node
+  linkType: hard
+
 "@openfga/syntax-transformer@npm:^0.2.0-beta.21, @openfga/syntax-transformer@npm:^0.2.0-beta.22":
   version: 0.2.0
   resolution: "@openfga/syntax-transformer@npm:0.2.0"
@@ -7138,6 +7148,17 @@ __metadata:
   dependencies:
     possible-typed-array-names: "npm:^1.0.0"
   checksum: 10c0/d07226ef4f87daa01bd0fe80f8f310982e345f372926da2e5296aecc25c41cab440916bbaa4c5e1034b453af3392f67df5961124e4b586df1e99793a1374bdb2
+  languageName: node
+  linkType: hard
+
+"axios@npm:^1.6.0":
+  version: 1.12.2
+  resolution: "axios@npm:1.12.2"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.4"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: 10c0/80b063e318cf05cd33a4d991cea0162f3573481946f9129efb7766f38fde4c061c34f41a93a9f9521f02b7c9565ccbc197c099b0186543ac84a24580017adfed
   languageName: node
   linkType: hard
 
@@ -10147,7 +10168,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.0.0":
+"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.15.6":
   version: 1.15.11
   resolution: "follow-redirects@npm:1.15.11"
   peerDependenciesMeta:
@@ -10176,7 +10197,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data@npm:^4.0.0":
+"form-data@npm:^4.0.0, form-data@npm:^4.0.4":
   version: 4.0.4
   resolution: "form-data@npm:4.0.4"
   dependencies:
@@ -10608,6 +10629,7 @@ __metadata:
     "@ngx-formly/core": "npm:6.3.12"
     "@ngx-formly/material": "npm:6.3.12"
     "@openfga/frontend-utils": "npm:^0.2.0-beta.11"
+    "@openfga/sdk": "npm:^0.2.0-beta.22"
     "@openfga/syntax-transformer": "npm:^0.2.0-beta.22"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/jest": "npm:29.5.14"
@@ -10651,6 +10673,7 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.6.3"
+    ulid: "npm:^3.0.1"
     vis-data: "npm:^8.0.3"
     vis-network: "npm:^10.0.2"
     webpack: "npm:5.99.9"
@@ -14689,6 +14712,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"proxy-from-env@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "proxy-from-env@npm:1.1.0"
+  checksum: 10c0/fe7dd8b1bdbbbea18d1459107729c3e4a2243ca870d26d34c2c1bcd3e4425b7bcc5112362df2d93cc7fb9746f6142b5e272fd1cc5c86ddf8580175186f6ad42b
+  languageName: node
+  linkType: hard
+
 "prr@npm:~1.0.1":
   version: 1.0.1
   resolution: "prr@npm:1.0.1"
@@ -16876,6 +16906,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tiny-async-pool@npm:^2.1.0":
+  version: 2.1.0
+  resolution: "tiny-async-pool@npm:2.1.0"
+  checksum: 10c0/658a986a21442fc82ad51af98e86dff6e61f888450722f0bf8bde3a2cbaf0506aa9812ed088ee411881efe6b1e6eedecacd95251f847f46456d15974bf1b87b2
+  languageName: node
+  linkType: hard
+
 "tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.13":
   version: 0.2.15
   resolution: "tinyglobby@npm:0.2.15"
@@ -17275,6 +17312,15 @@ __metadata:
   bin:
     uglifyjs: bin/uglifyjs
   checksum: 10c0/83b0a90eca35f778e07cad9622b80c448b6aad457c9ff8e568afed978212b42930a95f9e1be943a1ffa4258a3340fbb899f41461131c05bb1d0a9c303aed8479
+  languageName: node
+  linkType: hard
+
+"ulid@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "ulid@npm:3.0.1"
+  bin:
+    ulid: dist/cli.js
+  checksum: 10c0/3b3eba4bea0d22fee7a7465d1d239f0bb20f604325a72fdb273085f18a2eeecf4391a967e8446f6d4eaa39f32fabe320a6d87846bd6313aacd2cd294d6d2b858
   languageName: node
   linkType: hard
 
