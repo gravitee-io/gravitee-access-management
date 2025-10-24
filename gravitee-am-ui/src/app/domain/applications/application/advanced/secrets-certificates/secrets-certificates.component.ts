@@ -235,7 +235,7 @@ export class ApplicationSecretsCertificatesComponent implements OnInit {
         switchMap(() =>
           this.applicationService.renewClientSecret(this.domain.id, this.application.id, row.id).pipe(
             tap(() => {
-              this.snackbarService.open(`Client secret renewed - ${row.description}`);
+              this.snackbarService.open(`Client secret renewed - ${row.name}`);
             }),
             map((secretResponse) => ({
               secret: secretResponse.secret,
