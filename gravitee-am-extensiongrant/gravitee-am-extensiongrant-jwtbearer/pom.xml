@@ -24,7 +24,7 @@
     <parent>
         <artifactId>gravitee-am-extensiongrant</artifactId>
         <groupId>io.gravitee.am.extensiongrant</groupId>
-        <version>4.9.1-SNAPSHOT</version>
+        <version>4.9.1</version>
     </parent>
 
     <artifactId>gravitee-am-extensiongrant-jwtbearer</artifactId>
@@ -54,13 +54,13 @@
         <dependency>
             <groupId>io.gravitee.am.identityprovider</groupId>
             <artifactId>gravitee-am-identityprovider-common</artifactId>
-            <version>4.9.1-SNAPSHOT</version>
+            <version>4.9.1</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>io.gravitee.am.identityprovider</groupId>
             <artifactId>gravitee-am-identityprovider-common</artifactId>
-            <version>4.9.1-SNAPSHOT</version>
+            <version>4.9.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
