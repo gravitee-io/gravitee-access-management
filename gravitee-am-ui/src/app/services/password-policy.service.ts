@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { AppConfig } from '../../config/app.config';
 import { DomainPasswordPolicy } from '../domain/settings/password-policy/domain-password-policy.model';
 import { PasswordPolicyStatus } from '../domain/settings/password-policy/password-policy-status.model';
+import { SKIP_404_REDIRECT } from '../interceptors/http-request.interceptor';
 
 @Injectable()
 export class PasswordPolicyService {
@@ -54,7 +55,11 @@ export class PasswordPolicyService {
 
   getPolicyForIdp(domainId: string, idpId): Observable<DomainPasswordPolicy> {
     const params = idpId ? { identity: idpId } : {};
-    return this.http.get(`${this.domainsURL}${domainId}${this.passwordPolicyURL}/activePolicy`, { params });
+    const context = new HttpContext().set(SKIP_404_REDIRECT, true);
+    return this.http.get(`${this.domainsURL}${domainId}${this.passwordPolicyURL}/activePolicy`, {
+      params,
+      context,
+    });
   }
 
   evaluatePassword(domainId: string, policyId: string, userId: string, password: string): Observable<PasswordPolicyStatus> {
