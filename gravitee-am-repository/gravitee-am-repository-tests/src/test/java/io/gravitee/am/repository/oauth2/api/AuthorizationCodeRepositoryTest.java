@@ -21,6 +21,7 @@ import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -112,6 +113,23 @@ public class AuthorizationCodeRepositoryTest extends AbstractOAuthTest {
         authorizationCode.setId("test");
         authorizationCode.setCode("test");
         authorizationCode.setClientId("very-long-client-very-long-client-very-long-client-very-long-client-very-long-client-very-long-client");
+
+        TestObserver<AuthorizationCode> observer = authorizationCodeRepository
+                .create(authorizationCode).test();
+
+        observer.awaitDone(10, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
+
+    @Test
+    public void shouldCreateWithResources() {
+        AuthorizationCode authorizationCode = new AuthorizationCode();
+        authorizationCode.setId("test");
+        authorizationCode.setCode("test");
+        authorizationCode.setClientId("client-id");
+        authorizationCode.setResources(Set.of("one", "two"));
 
         TestObserver<AuthorizationCode> observer = authorizationCodeRepository
                 .create(authorizationCode).test();

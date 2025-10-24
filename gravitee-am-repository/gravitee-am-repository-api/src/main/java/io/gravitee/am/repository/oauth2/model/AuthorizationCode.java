@@ -16,6 +16,8 @@
 package io.gravitee.am.repository.oauth2.model;
 
 import io.gravitee.common.util.MultiValueMap;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.Date;
 import java.util.Set;
@@ -24,6 +26,9 @@ import java.util.Set;
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
+
+@Getter
+@Setter
 public class AuthorizationCode {
 
     /**
@@ -77,97 +82,14 @@ public class AuthorizationCode {
     private Set<String> scopes;
 
     /**
+     * The resource identifier for which the authorization code is requested
+     */
+    private Set<String> resources;
+
+    /**
      * The Authorization request parameters
      */
     private MultiValueMap<String,String> requestParameters;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public int getContextVersion() {
-        return contextVersion;
-    }
-
-    public void setContextVersion(int contextVersion) {
-        this.contextVersion = contextVersion;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Date getExpireAt() {
-        return expireAt;
-    }
-
-    public void setExpireAt(Date expireAt) {
-        this.expireAt = expireAt;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public MultiValueMap<String,String> getRequestParameters() {
-        return requestParameters;
-    }
-
-    public void setRequestParameters(MultiValueMap<String,String> requestParameters) {
-        this.requestParameters = requestParameters;
-    }
 
     @Override
     public boolean equals(Object o) {

@@ -220,6 +220,11 @@
             <b>scopes</b>
             <a-hint>java.util.Set</a-hint>
         </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.SetToStringConverter">
+            <a>resources</a>
+            <b>resources</b>
+            <a-hint>java.util.Set</a-hint>
+        </field>
     </mapping>
 
     <mapping map-null="false">

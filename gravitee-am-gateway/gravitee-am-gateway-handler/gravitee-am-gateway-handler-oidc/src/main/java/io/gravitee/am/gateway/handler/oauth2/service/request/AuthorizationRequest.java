@@ -18,6 +18,7 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 import io.gravitee.am.gateway.handler.oauth2.service.response.AuthorizationResponse;
 import io.gravitee.am.model.oauth2.ScopeApproval;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -109,6 +110,19 @@ public class AuthorizationRequest extends OAuth2Request {
 
     public void setResponseMode(String responseMode) {
         this.responseMode = responseMode;
+    }
+
+    public Set<String> getResources() {
+        if (parameters() == null) {
+            return java.util.Collections.emptySet();
+        }
+
+        List<String> resourceList = parameters().get(io.gravitee.am.common.oauth2.Parameters.RESOURCE);
+        if (resourceList == null) {
+            return java.util.Collections.emptySet();
+        }
+
+        return new HashSet<>(resourceList);
     }
 
     public OAuth2Request createOAuth2Request() {

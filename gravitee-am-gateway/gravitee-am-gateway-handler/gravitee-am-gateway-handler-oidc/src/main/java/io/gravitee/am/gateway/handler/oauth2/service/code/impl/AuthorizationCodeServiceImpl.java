@@ -70,6 +70,7 @@ public class AuthorizationCodeServiceImpl implements AuthorizationCodeService {
         authorizationCode.setRequestParameters(authorizationRequest.parameters());
         authorizationCode.setExpireAt(new Date(System.currentTimeMillis() + authorizationCodeValidity));
         authorizationCode.setCreatedAt(new Date());
+        authorizationCode.setResources(authorizationRequest.getResources());
 
         return authorizationCodeRepository.create(authorizationCode);
     }

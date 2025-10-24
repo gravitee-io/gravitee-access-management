@@ -29,6 +29,7 @@ import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 import org.springframework.stereotype.Component;
 
@@ -47,6 +48,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_ID;
  * @author GraviteeSource Team
  */
 @Component
+@Slf4j
 public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoRepository implements AuthorizationCodeRepository {
 
     private static final String FIELD_TRANSACTION_ID = "transactionId";
@@ -74,6 +76,8 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         if (authorizationCode.getId() == null) {
             authorizationCode.setId(RandomString.generate());
         }
+
+        log.debug("Create authorizationCode with id {}", authorizationCode);
 
         return Single
                 .fromPublisher(authorizationCodeCollection.insertOne(convert(authorizationCode)))
@@ -115,6 +119,7 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCode.setExpireAt(authorizationCodeMongo.getExpireAt());
         authorizationCode.setSubject(authorizationCodeMongo.getSubject());
         authorizationCode.setScopes(authorizationCodeMongo.getScopes());
+        authorizationCode.setResources(authorizationCodeMongo.getResources());
 
         if (authorizationCodeMongo.getRequestParameters() != null) {
             MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>();
@@ -139,12 +144,14 @@ public class MongoAuthorizationCodeRepository extends AbstractOAuth2MongoReposit
         authorizationCodeMongo.setExpireAt(authorizationCode.getExpireAt());
         authorizationCodeMongo.setSubject(authorizationCode.getSubject());
         authorizationCodeMongo.setScopes(authorizationCode.getScopes());
+        authorizationCodeMongo.setResources(authorizationCode.getResources());
 
         if (authorizationCode.getRequestParameters() != null) {
             Document document = new Document();
             authorizationCode.getRequestParameters().forEach(document::append);
             authorizationCodeMongo.setRequestParameters(document);
         }
+
         return authorizationCodeMongo;
     }
 }

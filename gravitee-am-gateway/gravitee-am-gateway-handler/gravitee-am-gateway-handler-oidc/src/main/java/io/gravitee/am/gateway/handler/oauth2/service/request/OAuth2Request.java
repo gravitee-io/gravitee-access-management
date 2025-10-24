@@ -25,6 +25,8 @@ import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.Request;
 import io.gravitee.gateway.api.handler.Handler;
 import io.gravitee.gateway.api.http2.HttpFrame;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 
@@ -33,6 +35,8 @@ import java.util.*;
  * @author GraviteeSource Team
  */
 
+@Getter
+@Setter
 public class OAuth2Request extends BaseRequest {
 
     /**
@@ -87,6 +91,11 @@ public class OAuth2Request extends BaseRequest {
      * Resource owner technical id
      */
     private String subject;
+
+    /**
+     * Resource uris
+     */
+    private Set<String> resources = new HashSet<>();
 
     /**
      * Boolean indicates if the current request support OAuth 2.0 Refresh Token
@@ -146,6 +155,7 @@ public class OAuth2Request extends BaseRequest {
         this.permissions = other.permissions;
         this.pathParameters = other.pathParameters;
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
+        this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
 
         //BaseRequest
         this.setId(other.getId());
@@ -170,120 +180,8 @@ public class OAuth2Request extends BaseRequest {
     public OAuth2Request() {
     }
 
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getGrantType() {
-        return grantType;
-    }
-
-    public void setGrantType(String grantType) {
-        this.grantType = grantType;
-    }
-
-    public String getResponseType() {
-        return responseType;
-    }
-
-    public void setResponseType(String responseType) {
-        this.responseType = responseType;
-    }
-
-    public Set<String> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(Set<String> scopes) {
-        this.scopes = scopes;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
-    }
-
     public boolean isClientOnly() {
         return subject == null;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public boolean isSupportRefreshToken() {
-        return supportRefreshToken;
-    }
-
-    public void setSupportRefreshToken(boolean supportRefreshToken) {
-        this.supportRefreshToken = supportRefreshToken;
-    }
-
-    public Map<String, Object> getContext() {
-        return context;
-    }
-
-    public void setContext(Map<String, Object> context) {
-        this.context = context;
-    }
-
-    public int getContextVersion() {
-        return contextVersion;
-    }
-
-    public void setContextVersion(int contextVersion) {
-        this.contextVersion = contextVersion;
-    }
-
-    public Map<String, Object> getExecutionContext() {
-        return executionContext;
-    }
-
-    public void setExecutionContext(Map<String, Object> executionContext) {
-        this.executionContext = executionContext;
-    }
-
-    public Map<String, Object> getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(Map<String, Object> refreshToken) {
-        this.refreshToken = refreshToken;
-    }
-
-    public Map<String, Object> getAuthorizationCode() {
-        return authorizationCode;
-    }
-
-    public void setAuthorizationCode(Map<String, Object> authorizationCode) {
-        this.authorizationCode = authorizationCode;
-    }
-
-    public List<PermissionRequest> getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(List<PermissionRequest> permissions) {
-        this.permissions = permissions;
-    }
-
-    public String getConfirmationMethodX5S256() {
-        return confirmationMethodX5S256;
-    }
-
-    public void setConfirmationMethodX5S256(String confirmationMethodX5S256) {
-        this.confirmationMethodX5S256 = confirmationMethodX5S256;
     }
 
     public boolean shouldGenerateIDToken() {
