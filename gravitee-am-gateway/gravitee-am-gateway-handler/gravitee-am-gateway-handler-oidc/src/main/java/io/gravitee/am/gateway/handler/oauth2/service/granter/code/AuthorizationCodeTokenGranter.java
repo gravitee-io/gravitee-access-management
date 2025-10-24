@@ -124,7 +124,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                                         tokenRequest1.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, ctx.getData());
 
                                         // store the resource so it can be used later in the token creation for aud
-                                        tokenRequest1.setResource(authorizationCode.getResource());
+                                        tokenRequest1.setResources(authorizationCode.getResources());
                                         return tokenRequest1;
                                     })
                         ).toSingle());

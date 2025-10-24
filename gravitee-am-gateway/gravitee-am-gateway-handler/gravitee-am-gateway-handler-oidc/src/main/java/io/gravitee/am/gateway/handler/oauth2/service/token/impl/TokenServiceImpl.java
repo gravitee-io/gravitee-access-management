@@ -366,40 +366,23 @@ public class TokenServiceImpl implements TokenService {
         enhanceJWT(jwt, client.getTokenCustomClaims(), TokenTypeHint.ACCESS_TOKEN, executionContext);
 
         // Apply resource to aud
-        setResource(request, jwt);
+        setResources(request, jwt);
 
         return jwt;
     }
 
-    private void setResource(OAuth2Request request, JWT jwt) {
-        String resource = request.getResource();
-        if (resource == null) {
+    private void setResources(OAuth2Request request, JWT jwt) {
+        Set<String> resource = request.getResources();
+        if (resource == null || resource.isEmpty()) {
             return;
         }
 
-        var audience = jwt.get(Claims.AUD);
-        if (audience == null) {
-            jwt.setAud(resource);
-            return;
-        }
-
-        var audiences = new LinkedHashSet<String>();
-        if (audience instanceof List<?> l) {
-            for (Object aud : l) {
-                if (aud instanceof String s) {
-                    audiences.add(s);
-                }
-            }
-        } else if (audience instanceof String s) {
-            audiences.add(s);
-        } else {
-            audiences.add(audience.toString());
-        }
-
-        audiences.add(resource);
-
+        logger.debug("Setting resources");
         var jsonArray = new JSONArray();
-        jsonArray.addAll(audiences);
+        jsonArray.addAll(request.getResources());
+
+        logger.debug("Resources: {}", jsonArray);
+
         jwt.put(Claims.AUD, jsonArray);
     }
 

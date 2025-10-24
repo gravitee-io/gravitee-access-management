@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.repository.jdbc.oauth2.api.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
@@ -26,6 +28,8 @@ import java.time.LocalDateTime;
  * @author GraviteeSource Team
  */
 @Table("authorization_codes")
+@Getter
+@Setter
 public class JdbcAuthorizationCode {
     @Id
     private String id;
@@ -40,7 +44,8 @@ public class JdbcAuthorizationCode {
     private LocalDateTime expireAt;
     @Column("client_id")
     private String clientId;
-    private String resource;
+    @Column("resources")
+    private String resources;
     private String subject;
     @Column("redirect_uri")
     private String redirectUri;
@@ -48,101 +53,4 @@ public class JdbcAuthorizationCode {
     private String scopes;
     @Column("request_parameters")
     private String requestParameters;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getTransactionId() {
-        return transactionId;
-    }
-
-    public void setTransactionId(String transactionId) {
-        this.transactionId = transactionId;
-    }
-
-    public int getContextVersion() {
-        return contextVersion;
-    }
-
-    public void setContextVersion(int contextVersion) {
-        this.contextVersion = contextVersion;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getExpireAt() {
-        return expireAt;
-    }
-
-    public void setExpireAt(LocalDateTime expireAt) {
-        this.expireAt = expireAt;
-    }
-
-    public String getClientId() {
-        return clientId;
-    }
-
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    public String getSubject() {
-        return subject;
-    }
-
-    public void setSubject(String subject) {
-        this.subject = subject;
-    }
-
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
-    }
-
-    public String getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(String scopes) {
-        this.scopes = scopes;
-    }
-
-    public String getRequestParameters() {
-        return requestParameters;
-    }
-
-    public void setRequestParameters(String requestParameters) {
-        this.requestParameters = requestParameters;
-    }
-
-    public String getResource() {
-        return resource;
-    }
-
-    public void setResource(String resource) {
-        this.resource = resource;
-    }
-
 }

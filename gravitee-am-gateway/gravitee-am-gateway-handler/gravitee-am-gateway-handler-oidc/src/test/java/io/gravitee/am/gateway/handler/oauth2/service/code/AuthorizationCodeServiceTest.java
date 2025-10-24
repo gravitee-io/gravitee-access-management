@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
@@ -86,9 +87,11 @@ public class AuthorizationCodeServiceTest {
     public void shouldCreate_noExistingCode_storeResource() {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setClientId("my-client-id");
-        var resource = "https://my-resource.com/mcp";
+        var resourceOne = "https://my-resource-one.com/mcp";
+        var resourceTwo = "https://my-resource-two.com/mcp";
         MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(1);
-        requestParameters.add("resource", resource);
+        requestParameters.add("resource", resourceOne);
+        requestParameters.add("resource", resourceTwo);
         authorizationRequest.setParameters(requestParameters);
 
         User user = new User();
@@ -102,10 +105,9 @@ public class AuthorizationCodeServiceTest {
 
         // Verify the resource is set if provided
         verify(authorizationCodeRepository, times(1)).create(argThat(
-                code -> Objects.equals(code.getResource(), resource))
+                code -> Objects.equals(code.getResources(), Set.of(resourceOne, resourceTwo)))
         );
     }
-
 
     @Test
     public void shouldRemove_existingCode() {

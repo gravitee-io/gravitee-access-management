@@ -7,7 +7,7 @@ databaseChangeLog:
         not:
           - columnExists:
               tableName: authorization_codes
-              columnName: resource
+              columnName: resources
       changes:
         #######################
         # authorization_codes #
@@ -15,4 +15,4 @@ databaseChangeLog:
         - addColumn:
             tableName: authorization_codes
             columns:
-              - column: { name: resource, type: clob, constraints: { nullable: true } }
+              - column: { name: resources, type: clob, constraints: { nullable: true } }

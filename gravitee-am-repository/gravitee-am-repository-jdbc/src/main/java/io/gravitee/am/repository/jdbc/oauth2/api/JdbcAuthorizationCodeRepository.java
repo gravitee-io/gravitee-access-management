@@ -60,7 +60,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
     public static final String COL_EXPIRE_AT = "expire_at";
     public static final String COL_SCOPES = "scopes";
     public static final String COL_REQUEST_PARAMETERS = "request_parameters";
-    public static final String COL_RESOURCE = "resource";
+    public static final String COL_RESOURCES = "resources";
     private static final List<String> columns = List.of(
             COL_ID,
             COL_CLIENT_ID,
@@ -73,7 +73,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
             COL_EXPIRE_AT,
             COL_SCOPES,
             COL_REQUEST_PARAMETERS,
-            COL_RESOURCE
+            COL_RESOURCES
     );
 
     private String insertStatement;
@@ -102,6 +102,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         authorizationCode.setId(authorizationCode.getId() == null ? RandomString.generate() : authorizationCode.getId());
         LOGGER.debug("Create authorizationCode with id {} and code {}", authorizationCode.getId(), authorizationCode.getCode());
 
+        LOGGER.debug("JdbcAuthorizationCodeRepository.create({})", authorizationCode);
         DatabaseClient.GenericExecuteSpec insertSpec = getTemplate().getDatabaseClient().sql(insertStatement);
 
         insertSpec = addQuotedField(insertSpec, COL_ID, authorizationCode.getId(), String.class);
@@ -110,10 +111,10 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         insertSpec = addQuotedField(insertSpec, COL_REDIRECT_URI, authorizationCode.getRedirectUri(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_SUBJECT, authorizationCode.getSubject(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_TRANSACTION_ID, authorizationCode.getTransactionId(), String.class);
-        insertSpec = addQuotedField(insertSpec, COL_RESOURCE, authorizationCode.getResource(), String.class);
         insertSpec = addQuotedField(insertSpec, COL_CONTEXT_VERSION, authorizationCode.getContextVersion(), int.class);
         insertSpec = addQuotedField(insertSpec, COL_CREATED_AT, dateConverter.convertTo(authorizationCode.getCreatedAt(), null), LocalDateTime.class);
         insertSpec = addQuotedField(insertSpec, COL_EXPIRE_AT, dateConverter.convertTo(authorizationCode.getExpireAt(), null), LocalDateTime.class);
+        insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_RESOURCES, authorizationCode.getResources());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_SCOPES, authorizationCode.getScopes());
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_REQUEST_PARAMETERS, authorizationCode.getRequestParameters());
 

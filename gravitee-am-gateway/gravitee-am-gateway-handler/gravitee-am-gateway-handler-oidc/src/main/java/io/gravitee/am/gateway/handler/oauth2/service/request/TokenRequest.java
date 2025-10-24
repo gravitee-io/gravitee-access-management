@@ -18,6 +18,8 @@ package io.gravitee.am.gateway.handler.oauth2.service.request;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * See <a href="https://tools.ietf.org/html/rfc6749#section-4.1.3">Access Token Request</a>
@@ -26,6 +28,9 @@ import io.gravitee.common.util.MultiValueMap;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+
+@Getter
+@Setter
 public class TokenRequest extends OAuth2Request {
 
     /**
@@ -65,62 +70,6 @@ public class TokenRequest extends OAuth2Request {
      */
     private String requestingPartyToken;
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getTicket() {
-        return ticket;
-    }
-
-    public void setTicket(String ticket) {
-        this.ticket = ticket;
-    }
-
-    public String getClaimToken() {
-        return claimToken;
-    }
-
-    public void setClaimToken(String claimToken) {
-        this.claimToken = claimToken;
-    }
-
-    public String getClaimTokenFormat() {
-        return claimTokenFormat;
-    }
-
-    public void setClaimTokenFormat(String claimTokenFormat) {
-        this.claimTokenFormat = claimTokenFormat;
-    }
-
-    public String getPersistedClaimsToken() {
-        return persistedClaimsToken;
-    }
-
-    public void setPersistedClaimsToken(String persistedClaimsToken) {
-        this.persistedClaimsToken = persistedClaimsToken;
-    }
-
-    public String getRequestingPartyToken() {
-        return requestingPartyToken;
-    }
-
-    public void setRequestingPartyToken(String requestingPartyToken) {
-        this.requestingPartyToken = requestingPartyToken;
-    }
-
     public OAuth2Request createOAuth2Request() {
         MultiValueMap<String, String> requestParameters = parameters();
         MultiValueMap<String, String> safeRequestParameters = new LinkedMultiValueMap(requestParameters);
@@ -154,7 +103,7 @@ public class TokenRequest extends OAuth2Request {
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());
         oAuth2Request.setRefreshToken(getRefreshToken());
         oAuth2Request.setAuthorizationCode(getAuthorizationCode());
-        oAuth2Request.setResource(getResource());
+        oAuth2Request.setResources(getResources());
 
         // set UMA 2.0 permissions
         oAuth2Request.setPermissions(getPermissions());
