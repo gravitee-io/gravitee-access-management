@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-identityprovider</artifactId>
         <groupId>io.gravitee.am.identityprovider</groupId>
-        <version>4.8.11</version>
+        <version>4.8.12-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
