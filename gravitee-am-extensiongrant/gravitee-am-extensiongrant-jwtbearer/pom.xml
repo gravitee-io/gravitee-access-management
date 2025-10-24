@@ -51,6 +51,15 @@
             <artifactId>spring-beans</artifactId>
             <scope>provided</scope>
         </dependency>
+<<<<<<< HEAD
+=======
+        <dependency>
+            <groupId>io.gravitee.am.identityprovider</groupId>
+            <artifactId>gravitee-am-identityprovider-common</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+>>>>>>> 2aa84d352 (chore: removed duplicated dependency)
     </dependencies>
 
     <build>
