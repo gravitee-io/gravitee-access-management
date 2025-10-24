@@ -472,6 +472,10 @@ import { AuthorizationEngineCreationStep2Component } from './domain/authorizatio
 import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga.component';
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
+import {
+  DomainNewMcpServerToolDialogComponent,
+  DomainNewMcpServerToolDialogFactory,
+} from './domain/mcp-servers/mcp-server-new/tool-new-dialog/tool-new-dialog.component';
 
 @NgModule({
   declarations: [
@@ -518,6 +522,7 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
     DomainMcpServerComponent,
     DomainNewMcpServerComponent,
     DomainMcpServerOverviewComponent,
+    DomainNewMcpServerToolDialogComponent,
     ConfirmComponent,
     DictionaryDialogComponent,
     EmptystateComponent,
@@ -936,6 +941,7 @@ import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-serve
     DataPlaneService,
     DataPlanesResolver,
     DomainStoreService,
+    DomainNewMcpServerToolDialogFactory,
     McpServerResolver,
     {
       provide: HTTP_INTERCEPTORS,

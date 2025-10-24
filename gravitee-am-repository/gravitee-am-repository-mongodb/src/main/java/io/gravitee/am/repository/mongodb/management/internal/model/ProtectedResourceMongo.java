@@ -19,6 +19,8 @@ import io.gravitee.am.repository.mongodb.common.model.Auditable;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -49,5 +51,22 @@ public class ProtectedResourceMongo extends Auditable {
     private List<ClientSecretMongo> clientSecrets;
 
     private List<ApplicationSecretSettingsMongo> secretSettings;
+
+    private List<ProtectedResourceFeatureMongo> features = new ArrayList<>();
+
+    @Getter
+    @Setter
+    public static class ProtectedResourceFeatureMongo {
+        private String key;
+
+        private String description;
+
+        private String type;
+
+        private Date createdAt;
+
+        private List<String> scopes;
+
+    }
 
 }

@@ -19,7 +19,7 @@ import { SortType } from '@swimlane/ngx-datatable';
 
 import { Page, Sort } from '../../services/api.model';
 
-import { McpServersService } from './mcp-servers.service';
+import { McpServer, McpServersService } from './mcp-servers.service';
 
 @Component({
   selector: 'app-mcp-servers',
@@ -70,12 +70,4 @@ export class DomainMcpServersComponent implements OnInit {
   }
 
   protected readonly SortType = SortType;
-}
-
-interface McpServer {
-  id: string;
-  name: string;
-  resourceIdentifier: string;
-  tools: string[];
-  updatedAt: string;
 }

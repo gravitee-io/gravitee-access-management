@@ -25,7 +25,8 @@ public record ProtectedResourcePrimaryData (
         String description,
         ProtectedResource.Type type,
         List<String> resourceIdentifiers,
-        List<String> tools,
+
+        List<? extends ProtectedResourceFeature> features,
         Date updatedAt){
 
     public static ProtectedResourcePrimaryData of(ProtectedResource protectedResource) {
@@ -36,7 +37,7 @@ public record ProtectedResourcePrimaryData (
                 protectedResource.getDescription(),
                 protectedResource.getType(),
                 protectedResource.getResourceIdentifiers(),
-                List.of(),
+                protectedResource.getFeatures(),
                 protectedResource.getUpdatedAt()
         );
     }
