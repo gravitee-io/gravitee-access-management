@@ -155,7 +155,7 @@ public class OAuth2Request extends BaseRequest {
         this.permissions = other.permissions;
         this.pathParameters = other.pathParameters;
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
-        this.resources = other.resources;
+        this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
 
         //BaseRequest
         this.setId(other.getId());
