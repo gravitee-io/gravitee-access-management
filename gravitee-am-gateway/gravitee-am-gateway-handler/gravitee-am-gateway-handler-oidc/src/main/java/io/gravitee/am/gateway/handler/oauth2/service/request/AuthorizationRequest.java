@@ -114,12 +114,12 @@ public class AuthorizationRequest extends OAuth2Request {
 
     public Set<String> getResources() {
         if (parameters() == null) {
-            return null;
+            return java.util.Collections.emptySet();
         }
 
-        List<String> resourceList = parameters().get("resource");
+        List<String> resourceList = parameters().get(io.gravitee.am.common.oauth2.Parameters.RESOURCE);
         if (resourceList == null) {
-            return null;
+            return java.util.Collections.emptySet();
         }
 
         return new HashSet<>(resourceList);
