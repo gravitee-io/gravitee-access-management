@@ -15,29 +15,39 @@
  */
 import fetch from "cross-fetch";
 import {Domain} from "@management-models/Domain";
-import {afterAll, beforeAll, expect} from "@jest/globals";
+import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import {deleteDomain, setupDomainForTest} from "@management-commands/domain-management-commands";
+import { deleteDomain, setupDomainForTest, waitFor, waitForDomainSync } from '@management-commands/domain-management-commands';
 import {uniqueName} from "@utils-commands/misc";
 import faker from "faker";
-import {createApplication} from "@management-commands/application-management-commands";
+import {createApplication, updateApplication} from "@management-commands/application-management-commands";
 import {
     createProtectedResource,
     getMcpServer,
     getMcpServers
 } from "@management-commands/protected-resources-management-commands";
 import {NewProtectedResource} from "@management-models/NewProtectedResource";
+import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import {testCryptData} from '../gateway/ext-grant-jwt-bearer.jest.spec';
+import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
+import { found } from '@jridgewell/trace-mapping/src/binary-search';
 
 global.fetch = fetch;
+
+
+jest.setTimeout(200000);
 
 let accessToken: string;
 let domain: Domain;
 let domainTestSearch: Domain;
+let openIdConfiguration: any;
 
 beforeAll(async () => {
     accessToken = await requestAdminAccessToken();
-    domain = await setupDomainForTest(uniqueName('domain-protected-resources'), { accessToken }).then((it) => it.domain);
-    domainTestSearch = await setupDomainForTest(uniqueName('domain-protected-resources-search'), { accessToken }).then((it) => it.domain);
+    var domainResult = await setupDomainForTest(uniqueName('domain-protected-resources'), { accessToken, waitForStart:true });
+    domain = domainResult.domain;
+    openIdConfiguration = domainResult.oidcConfig;
+    domainTestSearch = await setupDomainForTest(uniqueName('domain-protected-resources-search'), { accessToken, waitForStart:true}).then((it) => it.domain);
 });
 
 afterAll(async () => {
@@ -233,6 +243,70 @@ describe('When creating protected resource', () => {
         createProtectedResource(domain.id, accessToken, anotherCorrectRequest)
           .catch(err => expect(err.response.status).toEqual(400))
 
+    });
+
+    it('Protected Resource can introspect token', async () => {
+      // Create an application which we can use to get a token from
+      const application = await createApplication(domain.id, accessToken, {
+        name: uniqueName('intro-app'),
+        type: 'SERVICE',
+        clientId: 'app',
+        clientSecret: 'app',
+      }).then((app) =>
+        updateApplication(
+          domain.id,
+          accessToken,
+          {
+            settings: {
+              oauth: {
+                grantTypes: ['client_credentials'],
+              },
+            },
+          },
+          app.id,
+        ).then((updatedApp) => {
+          updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+          updatedApp.settings.oauth.clientId = app.settings.oauth.clientId;
+          return updatedApp;
+        }),
+      );
+      expect(application).toBeDefined();
+
+      await waitFor(5000);
+
+      // First request to get a token
+      const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + applicationBase64Token(application),
+      }).expect(200);
+
+      const responseJwt = response.body.access_token;
+      expect(responseJwt).toBeDefined();
+
+      // Next request to introspect to token using the Application credentials
+      await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + applicationBase64Token(application),
+      }).expect(200);
+
+      // Now we create a Protected Resource which we can use to introspect the existing token
+      const request = {
+        name: faker.commerce.productName(),
+        type: 'MCP_SERVER',
+        resourceIdentifiers: ['https://other-something.com', 'https://other-something2.com'],
+      } as NewProtectedResource;
+
+      const createdResource = await createProtectedResource(domain.id, accessToken, request);
+      expect(createdResource).toBeDefined();
+
+      // Wait for the resource to be synced
+      await waitFor(5000);
+
+      // Make the request to introspect the token using the Protected Resource credentials
+      await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
+        'Content-type': 'application/x-www-form-urlencoded',
+        Authorization: 'Basic ' + getBase64BasicAuth(createdResource.clientId, createdResource.clientSecret),
+      }).expect(200);
     });
 
 });
