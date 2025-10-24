@@ -62,6 +62,7 @@ public class AuthorizationRequestParseRequiredParametersHandler extends Abstract
     private void parseRequestParameters(RoutingContext context) {
         // invalid_request if the request is missing a required parameter, includes an
         // invalid parameter value, includes a parameter more than once, or is otherwise malformed.
+        // resource is the only parameter allowed to occur mukltiple times to allow the resource to be set in the Authorization Code 
         MultiMap requestParameters = context.request().params();
         Set<String> requestParametersNames = requestParameters.names();
         requestParametersNames.forEach(requestParameterName -> {
