@@ -16,6 +16,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import type { AuthorizationModel } from "@openfga/sdk";
 
 import { AppConfig } from '../../config/app.config';
 
@@ -25,8 +26,16 @@ export class OpenFGAService {
 
   constructor(private http: HttpClient) {}
 
-  getAuthorizationModel(domainId: string, engineId: string): Observable<any> {
-    return this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/authorization-model`);
+  listAuthorizationModels(domainId: string, engineId: string, pageSize: number, continuationToken?: string): Observable<any> {
+    let params = `pageSize=${pageSize}`;
+    if (continuationToken) {
+      params += `&continuationToken=${continuationToken}`;
+    }
+    return this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/authorization-models?${params}`);
+  }
+
+  addAuthorizationModel(domainId: string, engineId: string, authorizationModel: Omit<AuthorizationModel, "id">): Observable<any> {
+    return this.http.post<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/authorization-models`, authorizationModel);
   }
 
   getStore(domainId: string, engineId: string): Observable<any> {
