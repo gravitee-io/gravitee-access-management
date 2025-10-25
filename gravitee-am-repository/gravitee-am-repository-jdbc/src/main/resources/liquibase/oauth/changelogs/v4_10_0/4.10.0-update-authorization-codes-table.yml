@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.0-update-authorization-codes-table
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: authorization_codes
+              columnName: resources
+      changes:
+        #######################
+        # authorization_codes #
+        #######################
+        - addColumn:
+            tableName: authorization_codes
+            columns:
+              - column: { name: resources, type: clob, constraints: { nullable: true } }

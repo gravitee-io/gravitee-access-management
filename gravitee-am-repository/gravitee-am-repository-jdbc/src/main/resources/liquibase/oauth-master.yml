@@ -11,3 +11,5 @@ databaseChangeLog:
       - file: liquibase/oauth/changelogs/v4_7_0/4.7.0-refresh-tokens-table.yml
   - include:
       - file: liquibase/oauth/changelogs/v4_7_0/4.7.0-request-objects-table.yml
+  - include:
+      - file: liquibase/oauth/changelogs/v4_10_0/4.10.0-update-authorization-codes-table.yml
