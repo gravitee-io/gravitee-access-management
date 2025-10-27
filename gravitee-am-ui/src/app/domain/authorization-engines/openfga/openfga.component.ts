@@ -21,6 +21,7 @@ import { graphBuilder } from '@openfga/frontend-utils';
 import { Subscription } from 'rxjs';
 import { filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { Network } from 'vis-network';
+import { decodeTime } from 'ulid';
 import './openfga-mode';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -29,6 +30,7 @@ import { AuthorizationEngineService } from '../../../services/authorization-engi
 import { SnackbarService } from '../../../services/snackbar.service';
 import { OrganizationService } from '../../../services/organization.service';
 import { DialogService } from '../../../services/dialog.service';
+import { PaginationService } from '../../../services/pagination.service';
 
 interface AuthorizationEngine {
   id?: string;
@@ -59,6 +61,12 @@ interface PermissionResult {
   allowed: boolean;
 }
 
+interface AuthorizationModel {
+  id: string;
+  dsl: string;
+  json: any;
+}
+
 @Component({
   selector: 'app-openfga',
   standalone: false,
@@ -84,25 +92,45 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
   authorizationModelDsl = '';
   authorizationModelJson: any | null = null;
   modelGraph: graphBuilder.GraphDefinition | null = null;
+  selectedModelId: string = '';
+  isEditing: boolean = false;
+  originalModelId: string = '';
+  editingModelDsl: string = '';
   private networkInstance: Network | null = null;
 
-  readonly codeMirrorOptions = {
-    lineNumbers: true,
-    theme: 'default',
-    mode: 'text/x-openfga',
-    readOnly: true,
-    lineWrapping: true,
-  };
+  get codeMirrorOptions() {
+    return {
+      lineNumbers: true,
+      theme: 'default',
+      mode: 'text/x-openfga',
+      readOnly: !this.isEditing,
+      lineWrapping: true,
+    };
+  }
 
-  tuples: Tuple[] = [];
-  isLoadingTuples = false;
+  get tuples(): Tuple[] {
+    return this.tuplePagination.getState().items;
+  }
+
+  get isLoadingTuples(): boolean {
+    return this.tuplePagination.getState().isLoading;
+  }
+
+  get hasNextTuplesPage(): boolean {
+    return this.tuplePagination.hasNextPage();
+  }
+
+  get hasPreviousTuplesPage(): boolean {
+    return this.tuplePagination.hasPreviousPage();
+  }
+
+  get authorizationModels(): AuthorizationModel[] {
+    return this.modelPagination.getState().items;
+  }
+
   readonly displayedColumns: string[] = ['user', 'relation', 'object', 'actions'];
-  readonly pageSize = 10;
-  continuationToken: string | null = null;
-  tokenHistory: string[] = [];
-  prefetchedData: Tuple[] | null = null;
-  prefetchedToken: string | null = null;
-  hasMorePages = false;
+  readonly tuplePageSize = 10;
+  readonly modelPageSize = 50;
 
   userControl = new FormControl('', [Validators.required, Validators.pattern(/.*:.+/)]);
   relationControl = new FormControl('', [Validators.required]);
@@ -118,6 +146,9 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
   private authorizationEnginePlugins: Record<string, Plugin> = {};
   private subscriptions = new Subscription();
 
+  private tuplePagination: PaginationService<Tuple>;
+  private modelPagination: PaginationService<AuthorizationModel>;
+
   constructor(
     private route: ActivatedRoute,
     private openFGAService: OpenFGAService,
@@ -125,7 +156,10 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
     private snackbarService: SnackbarService,
     private organizationService: OrganizationService,
     private dialogService: DialogService,
-  ) {}
+  ) {
+    this.tuplePagination = new PaginationService<Tuple>();
+    this.modelPagination = new PaginationService<AuthorizationModel>();
+  }
 
   ngOnInit() {
     this.domainId = this.route.snapshot.params['domainId'];
@@ -180,7 +214,8 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
     );
   }
 
-  loadAuthorizationModel() {
+  loadAuthorizationModel(continuationToken?: string) {
+    this.modelPagination.setLoading(true);
     this.subscriptions.add(
       this.openFGAService
         .getStore(this.domainId, this.engineId)
@@ -188,36 +223,40 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
           tap((store) => {
             this.storeInfo = store;
           }),
-          switchMap(() => this.openFGAService.getAuthorizationModel(this.domainId, this.engineId)),
+          switchMap(() => this.openFGAService.listAuthorizationModels(this.domainId, this.engineId, this.modelPageSize, continuationToken)),
         )
         .subscribe({
           next: (response) => {
-            if (response) {
-              try {
-                this.authorizationModelJson = response;
-                this.authorizationModelDsl = transformer.transformJSONStringToDSL(JSON.stringify(response));
+            this.modelPagination.setLoading(false);
+            if (!response?.data || !Array.isArray(response.data)) {
+              this.modelPagination.setItems([], null, this.modelPageSize);
+              this.deselectModel();
+              return;
+            }
+            const models = this.mapModels(response.data);
+            const token = response.info?.continuationToken || null;
+            this.modelPagination.setItems(models, token, this.modelPageSize);
 
-                if (this.authorizationModelJson) {
-                  const graphBuilderInstance = new graphBuilder.AuthorizationModelGraphBuilder(this.authorizationModelJson, {
-                    name: this.storeInfo?.name,
-                    id: this.storeInfo?.storeId,
-                  });
-                  this.modelGraph = graphBuilderInstance.graph;
+            // Prefetch next page if current page is full
+            if (models.length === this.modelPageSize && token) {
+              this.prefetchNextModelPage(token);
+            }
 
-                  setTimeout(() => this.renderGraph(), 100);
-                }
-              } catch (_error) {
-                this.snackbarService.open('Failed to transform JSON to DSL');
-                this.authorizationModelDsl = response;
+            if (models.length > 0) {
+              if (!this.selectedModelId) {
+                // Try to select the configured model, fallback to first (latest) model if not found
+                const modelToSelect = models.find((m) => m.id === this.authorizationModelId) || models[0];
+                this.selectedModelId = modelToSelect.id;
               }
+              this.selectModel(this.selectedModelId);
             } else {
-              this.authorizationModelDsl = '';
-              this.authorizationModelJson = null;
-              this.modelGraph = null;
+              this.deselectModel();
             }
           },
           error: () => {
-            this.snackbarService.open('Failed to load store or authorization model');
+            this.modelPagination.setLoading(false);
+            this.snackbarService.open('Failed to load store or authorization models');
+            this.modelPagination.setItems([], null, this.modelPageSize);
             this.authorizationModelDsl = '';
             this.authorizationModelJson = null;
             this.modelGraph = null;
@@ -226,26 +265,191 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
     );
   }
 
+  private mapModels(data: any[]): AuthorizationModel[] {
+    return data.map((model: any) => {
+      try {
+        return {
+          id: model.id,
+          dsl: transformer.transformJSONStringToDSL(JSON.stringify(model)),
+          json: model,
+        };
+      } catch (_error) {
+        return {
+          id: model.id,
+          dsl: JSON.stringify(model, null, 2),
+          json: model,
+        };
+      }
+    });
+  }
+
+  selectModel(modelId: string) {
+    const model = this.authorizationModels.find((m) => m.id === modelId);
+    if (model) {
+      this.selectedModelId = modelId;
+      this.authorizationModelDsl = model.dsl;
+      this.authorizationModelJson = model.json;
+
+      if (this.authorizationModelJson) {
+        const graphBuilderInstance = new graphBuilder.AuthorizationModelGraphBuilder(this.authorizationModelJson, {
+          name: this.storeInfo?.name,
+          id: this.storeInfo?.storeId,
+        });
+        this.modelGraph = graphBuilderInstance.graph;
+        setTimeout(() => this.renderGraph(), 100);
+      } else {
+        this.modelGraph = null;
+      }
+    }
+  }
+
+  deselectModel() {
+    this.selectedModelId = '';
+    this.authorizationModelDsl = '';
+    this.authorizationModelJson = null;
+    this.modelGraph = null;
+  }
+
+  reviseModel() {
+    if (this.isEditing) {
+      return; // Already editing
+    }
+
+    const currentModel = this.authorizationModels.find((m) => m.id === this.selectedModelId);
+    if (currentModel) {
+      this.isEditing = true;
+      this.originalModelId = this.selectedModelId;
+      this.editingModelDsl = currentModel.dsl;
+      this.authorizationModelDsl = this.editingModelDsl;
+    }
+  }
+
+  saveModel() {
+    if (!this.isEditing) {
+      return;
+    }
+
+    try {
+      // Transform DSL to JSON using the transformer
+      const jsonModel = transformer.transformDSLToJSONObject(this.authorizationModelDsl);
+
+      this.openFGAService.addAuthorizationModel(this.domainId, this.engineId, jsonModel).subscribe({
+        next: ({ authorizationModelId }) => {
+          console.log('Model saved successfully:', authorizationModelId);
+          this.snackbarService.open('Authorization model saved successfully');
+          this.stopEdit();
+          this.selectedModelId = authorizationModelId;
+          // Reset pagination state and reload the models to get the updated list
+          this.modelPagination.reset();
+          this.loadAuthorizationModel();
+        },
+        error: (error: unknown) => {
+          console.error('Error saving model:', error);
+          this.snackbarService.open('Failed to save authorization model');
+        },
+      });
+    } catch (error) {
+      this.snackbarService.open('Invalid DSL syntax. Please check your model definition.');
+      console.error('DSL transformation error:', error);
+    }
+  }
+
+  stopEdit() {
+    this.isEditing = false;
+    this.originalModelId = '';
+    this.editingModelDsl = '';
+  }
+
+  cancelEdit() {
+    if (!this.isEditing) {
+      return;
+    }
+
+    this.stopEdit();
+
+    // Restore the original model
+    this.selectModel(this.selectedModelId);
+  }
+
+  isCurrentModelActive(): boolean {
+    // If no model is explicitly configured as active, the first model of the first page is considered active
+    if (!this.authorizationModelId) {
+      return this.authorizationModels.length > 0 && this.selectedModelId === this.authorizationModels[0].id;
+    }
+    // Otherwise, check if the selected model matches the configured active model
+    return this.isCurrentModelExplicitlyActive();
+  }
+
+  isCurrentModelExplicitlyActive(): boolean {
+    return this.selectedModelId === this.authorizationModelId;
+  }
+
+  getSelectedModelTimestamp(): Date | null {
+    if (!this.selectedModelId) {
+      return null;
+    }
+    const timestamp = decodeTime(this.selectedModelId);
+    return new Date(timestamp);
+  }
+
+  applyModel() {
+    if (!this.selectedModelId || this.isCurrentModelExplicitlyActive()) {
+      return;
+    }
+
+    try {
+      const currentConfig = JSON.parse(this.authorizationEngine.configuration || '{}');
+      const updatedConfig = {
+        ...currentConfig,
+        authorizationModelId: this.selectedModelId,
+      };
+
+      const updatedEngine: AuthorizationEngine = {
+        ...this.authorizationEngine,
+        name: this.authorizationEngine.name,
+        configuration: JSON.stringify(updatedConfig),
+      };
+
+      this.subscriptions.add(
+        this.authorizationEngineService.update(this.domainId, this.engineId, updatedEngine).subscribe({
+          next: (engine) => {
+            this.authorizationEngine = engine;
+            const config = JSON.parse(engine.configuration || '{}');
+            this.configuration = { ...config };
+            this.originalConfiguration = JSON.stringify(config);
+            this.storeId = config.storeId;
+            this.authorizationModelId = config.authorizationModelId;
+            this.snackbarService.open('Authorization model applied successfully');
+          },
+          error: (error: unknown) => {
+            this.snackbarService.open('Failed to apply authorization model');
+            console.error('Error applying model:', error);
+          },
+        }),
+      );
+    } catch (error) {
+      this.snackbarService.open('Invalid configuration format');
+      console.error('Configuration parsing error:', error);
+    }
+  }
+
   loadTuples(continuationToken?: string) {
-    this.isLoadingTuples = true;
+    this.tuplePagination.setLoading(true);
     this.subscriptions.add(
-      this.openFGAService.listTuples(this.domainId, this.engineId, this.pageSize, continuationToken).subscribe({
+      this.openFGAService.listTuples(this.domainId, this.engineId, this.tuplePageSize, continuationToken).subscribe({
         next: (response) => {
-          this.tuples = response.data || [];
-          this.continuationToken = response.info?.continuationToken || null;
-          this.isLoadingTuples = false;
+          const tuples = response.data || [];
+          const token = response.info?.continuationToken || null;
+          this.tuplePagination.setItems(tuples, token, this.tuplePageSize);
+          this.tuplePagination.setLoading(false);
 
           // Prefetch next page if current page is full
-          if (this.tuples.length === this.pageSize && this.continuationToken) {
-            this.prefetchNextPage(this.continuationToken);
-          } else if (this.tuples.length < this.pageSize) {
-            this.hasMorePages = false;
-            this.prefetchedData = null;
-            this.prefetchedToken = null;
+          if (tuples.length === this.tuplePageSize && token) {
+            this.prefetchNextPage(token);
           }
         },
         error: () => {
-          this.isLoadingTuples = false;
+          this.tuplePagination.setLoading(false);
           this.snackbarService.open('Failed to load tuples');
         },
       }),
@@ -254,65 +458,120 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
 
   private prefetchNextPage(token: string) {
     this.subscriptions.add(
-      this.openFGAService.listTuples(this.domainId, this.engineId, this.pageSize, token).subscribe({
+      this.openFGAService.listTuples(this.domainId, this.engineId, this.tuplePageSize, token).subscribe({
         next: (response) => {
-          this.prefetchedData = response.data || [];
-          this.prefetchedToken = response.info?.continuationToken || null;
-          this.hasMorePages = this.prefetchedData.length > 0;
+          const prefetchedData = response.data || [];
+          const prefetchedToken = response.info?.continuationToken || null;
+          this.tuplePagination.setPrefetchedData(prefetchedData, prefetchedToken);
         },
         error: () => {
-          this.hasMorePages = false;
-          this.prefetchedData = null;
-          this.prefetchedToken = null;
+          this.tuplePagination.setPrefetchedData([], null);
+        },
+      }),
+    );
+  }
+
+  private prefetchNextModelPage(token: string) {
+    this.subscriptions.add(
+      this.openFGAService.listAuthorizationModels(this.domainId, this.engineId, this.modelPageSize, token).subscribe({
+        next: (response) => {
+          const prefetchedData = this.mapModels(response);
+          const prefetchedToken = response.info?.continuationToken || null;
+          this.modelPagination.setPrefetchedData(prefetchedData, prefetchedToken);
+        },
+        error: () => {
+          this.modelPagination.setPrefetchedData([], null);
         },
       }),
     );
   }
 
   nextPage() {
-    if (!this.hasMorePages) {
+    if (!this.hasNextTuplesPage) {
       return;
     }
 
-    // Use prefetched data if available
-    if (this.prefetchedData !== null) {
-      this.tokenHistory.push(this.continuationToken!);
-      this.tuples = this.prefetchedData;
-      this.continuationToken = this.prefetchedToken;
+    try {
+      this.tuplePagination
+        .nextPage(this.tuplePageSize, (token) => this.openFGAService.listTuples(this.domainId, this.engineId, this.tuplePageSize, token))
+        .subscribe({
+          next: (response) => {
+            const tuples = response.data || [];
+            const token = response.info?.continuationToken || null;
+            this.tuplePagination.setItems(tuples, token, this.tuplePageSize);
 
-      const nextToken = this.prefetchedToken;
-      this.prefetchedData = null;
-      this.prefetchedToken = null;
-
-      // Prefetch next page if current page is full
-      if (this.tuples.length === this.pageSize && nextToken) {
-        this.prefetchNextPage(nextToken);
-      } else {
-        this.hasMorePages = false;
-      }
-    } else if (this.continuationToken) {
-      this.tokenHistory.push(this.continuationToken);
-      this.loadTuples(this.continuationToken);
+            // Prefetch next page if current page is full
+            if (tuples.length === this.tuplePageSize && token) {
+              this.prefetchNextPage(token);
+            }
+          },
+          error: () => {
+            this.snackbarService.open('Failed to load next page');
+          },
+        });
+    } catch {
+      this.snackbarService.open('No more pages available');
     }
   }
 
   previousPage() {
-    this.tokenHistory.pop();
-    const previousToken = this.tokenHistory.length > 0 ? this.tokenHistory[this.tokenHistory.length - 1] : undefined;
-
-    // Clear prefetch when going back
-    this.prefetchedData = null;
-    this.prefetchedToken = null;
-
-    this.loadTuples(previousToken);
+    this.tuplePagination
+      .previousPage((token) => this.openFGAService.listTuples(this.domainId, this.engineId, this.tuplePageSize, token))
+      .subscribe({
+        next: (response) => {
+          const tuples = response.data || [];
+          const token = response.info?.continuationToken || null;
+          this.tuplePagination.setItems(tuples, token, this.tuplePageSize);
+        },
+        error: () => {
+          this.snackbarService.open('Failed to load previous page');
+        },
+      });
   }
 
-  hasNextPage(): boolean {
-    return this.hasMorePages;
+  nextModelPage() {
+    if (!this.hasNextTuplesPage) {
+      return;
+    }
+
+    try {
+      this.modelPagination
+        .nextPage(this.modelPageSize, (token) =>
+          this.openFGAService.listAuthorizationModels(this.domainId, this.engineId, this.modelPageSize, token),
+        )
+        .subscribe({
+          next: (response) => {
+            const models = this.mapModels(response.data || []);
+            const token = response.info?.continuationToken || null;
+            this.modelPagination.setItems(models, token, this.modelPageSize);
+
+            // Prefetch next page if current page is full
+            if (models.length === this.modelPageSize && token) {
+              this.prefetchNextModelPage(token);
+            }
+          },
+          error: () => {
+            this.snackbarService.open('Failed to load next page');
+          },
+        });
+    } catch {
+      this.snackbarService.open('No more pages available');
+    }
   }
 
-  hasPreviousPage(): boolean {
-    return this.tokenHistory.length > 0;
+  previousModelPage() {
+    this.modelPagination
+      .previousPage((token) => this.openFGAService.listAuthorizationModels(this.domainId, this.engineId, this.modelPageSize, token))
+      .subscribe({
+        next: (response) => {
+          const models = this.mapModels(response.data || []);
+          const token = response.info?.continuationToken || null;
+          this.modelPagination.setItems(models, token, this.modelPageSize);
+        },
+        error: () => {
+          this.snackbarService.open('Failed to load previous page');
+        },
+      });
   }
 
   isAddTupleValid(): boolean {
@@ -339,10 +598,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
 
     this.openFGAService.addTuple(this.domainId, this.engineId, tuple).subscribe({
       next: () => {
-        this.tokenHistory = [];
-        this.prefetchedData = null;
-        this.prefetchedToken = null;
-        this.hasMorePages = false;
+        this.tuplePagination.reset();
         this.loadTuples();
         this.userControl.reset();
         this.relationControl.reset();
@@ -372,10 +628,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: () => {
-          this.tokenHistory = [];
-          this.prefetchedData = null;
-          this.prefetchedToken = null;
-          this.hasMorePages = false;
+          this.tuplePagination.reset();
           this.loadTuples();
           this.snackbarService.open('Tuple deleted successfully');
         },
@@ -462,10 +715,8 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
             this.authorizationModelId = config.authorizationModelId;
             this.snackbarService.open('Configuration saved successfully');
 
-            this.tokenHistory = [];
-            this.prefetchedData = null;
-            this.prefetchedToken = null;
-            this.hasMorePages = false;
+            this.tuplePagination.reset();
+            this.modelPagination.reset();
             this.loadAuthorizationModel();
             this.loadTuples();
           },
