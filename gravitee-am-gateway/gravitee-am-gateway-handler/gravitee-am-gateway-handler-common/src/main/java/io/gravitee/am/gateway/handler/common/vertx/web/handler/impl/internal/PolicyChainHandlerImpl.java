@@ -34,6 +34,7 @@ import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -57,15 +58,17 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
     private final PolicyChainProcessorFactory policyChainProcessorFactory;
     private final ExecutionContextFactory executionContextFactory;
     private final ExtensionPoint extensionPoint;
+    private final boolean skipAllFlowsOnError;
 
     public PolicyChainHandlerImpl(FlowManager flowManager,
                                   PolicyChainProcessorFactory policyChainProcessorFactory,
                                   ExecutionContextFactory executionContextFactory,
-                                  ExtensionPoint extensionPoint) {
+                                  ExtensionPoint extensionPoint, boolean skipAllFlowsOnError) {
         this.flowManager = flowManager;
         this.policyChainProcessorFactory = policyChainProcessorFactory;
         this.executionContextFactory = executionContextFactory;
         this.extensionPoint = extensionPoint;
+        this.skipAllFlowsOnError = skipAllFlowsOnError;
     }
 
     @Override
@@ -73,10 +76,7 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
         // do not call the policy chain if there is error, success or warning parameters
         // it means that the policy chain has been already executed
         final HttpServerRequest request = context.request();
-        if (request.params() != null &&
-                (request.params().contains(ConstantKeys.ERROR_PARAM_KEY) ||
-                        request.params().contains(ConstantKeys.WARNING_PARAM_KEY) ||
-                        request.params().contains(ConstantKeys.SUCCESS_PARAM_KEY))) {
+        if (canSkipExecution(request)) {
             context.next();
             return;
         }
@@ -143,6 +143,21 @@ public class PolicyChainHandlerImpl implements Handler<RoutingContext> {
                 });
             });
         });
+    }
+
+    private boolean canSkipExecution(HttpServerRequest request) {
+        return isAllowedToSkip(request) && isSkipConditionMet(request);
+    }
+
+    private boolean isSkipConditionMet(HttpServerRequest request) {
+        return request.params() != null &&
+                (request.params().contains(ConstantKeys.ERROR_PARAM_KEY) ||
+                        request.params().contains(ConstantKeys.WARNING_PARAM_KEY) ||
+                        request.params().contains(ConstantKeys.SUCCESS_PARAM_KEY));
+    }
+
+    private boolean isAllowedToSkip(HttpServerRequest request) {
+        return skipAllFlowsOnError || request.method() == HttpMethod.GET;
     }
 
     private void resolve(ExecutionContext executionContext, Handler<AsyncResult<List<Policy>>> handler) {
