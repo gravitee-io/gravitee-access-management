@@ -33,9 +33,7 @@ export class McpToolsTableComponent {
   @Input() showEditIcon = false;
   @Input() showDeleteIcon = false;
 
-  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() edit = new EventEmitter<McpTool>();
-  // eslint-disable-next-line @angular-eslint/no-output-on-prefix
   @Output() delete = new EventEmitter<McpTool>();
 
   handleEdit(tool: McpTool): void {
