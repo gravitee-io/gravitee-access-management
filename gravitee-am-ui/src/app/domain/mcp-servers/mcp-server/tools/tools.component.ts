@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { ProtectedResource } from '../../../../services/protected-resource.service';
@@ -22,13 +22,12 @@ import { McpTool } from '../../../components/mcp-tools-table/mcp-tools-table.com
 @Component({
   selector: 'app-domain-mcp-server-tools',
   templateUrl: './tools.component.html',
-  styleUrl: './tools.component.scss',
+  styleUrls: ['./tools.component.scss'],
   standalone: false,
 })
 export class DomainMcpServerToolsComponent implements OnInit {
   domainId: string;
   protectedResource: ProtectedResource;
-  @ViewChild('copyText', { read: ElementRef, static: true }) copyText: ElementRef;
   features: McpTool[];
 
   constructor(private route: ActivatedRoute) {}
@@ -36,7 +35,10 @@ export class DomainMcpServerToolsComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.protectedResource = this.route.snapshot.data['mcpServer'];
-    // The features from the API include scopes at runtime (see mcp-servers.service.ts mapping)
-    this.features = this.protectedResource.features as any;
+    this.features = (this.protectedResource.features ?? []).map((feature) => ({
+      key: feature.key,
+      description: feature.description,
+      scopes: (feature as any).scopes ?? [],
+    }));
   }
 }

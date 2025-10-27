@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 
 export interface McpTool {
   key: string;
@@ -25,6 +25,7 @@ export interface McpTool {
   selector: 'mcp-tools-table',
   templateUrl: './mcp-tools-table.component.html',
   styleUrls: ['./mcp-tools-table.component.scss'],
+  encapsulation: ViewEncapsulation.None,
   standalone: false,
 })
 export class McpToolsTableComponent {
@@ -33,15 +34,15 @@ export class McpToolsTableComponent {
   @Input() showDeleteIcon = false;
 
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
-  @Output() onEdit = new EventEmitter<McpTool>();
+  @Output() edit = new EventEmitter<McpTool>();
   // eslint-disable-next-line @angular-eslint/no-output-on-prefix
-  @Output() onDelete = new EventEmitter<McpTool>();
+  @Output() delete = new EventEmitter<McpTool>();
 
   handleEdit(tool: McpTool): void {
-    this.onEdit.emit(tool);
+    this.edit.emit(tool);
   }
 
   handleDelete(tool: McpTool): void {
-    this.onDelete.emit(tool);
+    this.delete.emit(tool);
   }
 }
