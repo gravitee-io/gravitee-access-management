@@ -54,15 +54,15 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
         newProtectedResource.setResourceIdentifiers(List.of("https://something.pl"));
         newProtectedResource.setDescription("a description");
 
-        ProtectedResourceSecret protectedResource = new ProtectedResourceSecret();
-        protectedResource.setId("app-id");
-        protectedResource.setName("name");
-        protectedResource.setClientSecret("client-secret");
-        protectedResource.setClientId("client-id");
+        ProtectedResourceSecret protectedResourceSecret = new ProtectedResourceSecret();
+        protectedResourceSecret.setId("app-id");
+        protectedResourceSecret.setName("name");
+        protectedResourceSecret.setClientSecret("client-secret");
+        protectedResourceSecret.setClientId("client-id");
         newProtectedResource.setType("MCP_SERVER");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(protectedResource)).when(protectedResourceService).create(any(Domain.class), any(User.class), any(NewProtectedResource.class));
+        doReturn(Single.just(protectedResourceSecret)).when(protectedResourceService).create(any(Domain.class), any(User.class), any(NewProtectedResource.class));
 
         final Response response = target("domains")
                 .path(domainId)
@@ -70,10 +70,10 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
                 .request().post(Entity.json(newProtectedResource));
 
         ProtectedResourceSecret result = objectMapper.readValue(response.readEntity(String.class), ProtectedResourceSecret.class);
-        assertEquals(protectedResource.getName(), result.getName());
-        assertEquals(protectedResource.getId(), result.getId());
-        assertEquals(protectedResource.getClientId(), result.getClientId());
-        assertEquals(protectedResource.getClientSecret(), result.getClientSecret());
+        assertEquals(protectedResourceSecret.getName(), result.getName());
+        assertEquals(protectedResourceSecret.getId(), result.getId());
+        assertEquals(protectedResourceSecret.getClientId(), result.getClientId());
+        assertEquals(protectedResourceSecret.getClientSecret(), result.getClientSecret());
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
     }

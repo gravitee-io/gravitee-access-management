@@ -166,6 +166,23 @@
         </field>
     </mapping>
 
+    <mapping>
+        <class-a>io.gravitee.am.model.McpTool</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceFeature</class-b>
+
+        <field>
+            <a>key</a>
+            <b>keyName</b>
+        </field>
+
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.ListToStringConverter">
+            <a>scopes</a>
+            <b>scopes</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.List</a-hint>
+        </field>
+    </mapping>
+
     <mapping map-null="false">
         <class-a>io.gravitee.am.model.User</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcUser</class-b>
@@ -218,6 +235,11 @@
         <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.SetToStringConverter">
             <a>scopes</a>
             <b>scopes</b>
+            <a-hint>java.util.Set</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.oauth2.api.model.mapper.SetToStringConverter">
+            <a>resources</a>
+            <b>resources</b>
             <a-hint>java.util.Set</a-hint>
         </field>
     </mapping>

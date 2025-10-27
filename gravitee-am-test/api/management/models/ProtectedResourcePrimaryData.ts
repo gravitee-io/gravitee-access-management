@@ -26,6 +26,14 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+import type { ProtectedResourceFeature } from './ProtectedResourceFeature';
+import {
+    ProtectedResourceFeatureFromJSON,
+    ProtectedResourceFeatureFromJSONTyped,
+    ProtectedResourceFeatureToJSON,
+    ProtectedResourceFeatureToJSONTyped,
+} from './ProtectedResourceFeature';
+
 /**
  * 
  * @export
@@ -43,7 +51,25 @@ export interface ProtectedResourcePrimaryData {
      * @type {string}
      * @memberof ProtectedResourcePrimaryData
      */
+    clientId?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ProtectedResourcePrimaryData
+     */
     name?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ProtectedResourcePrimaryData
+     */
+    description?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ProtectedResourcePrimaryData
+     */
+    type?: ProtectedResourcePrimaryDataTypeEnum;
     /**
      * 
      * @type {Array<string>}
@@ -52,10 +78,10 @@ export interface ProtectedResourcePrimaryData {
     resourceIdentifiers?: Array<string>;
     /**
      * 
-     * @type {Array<string>}
+     * @type {Array<ProtectedResourceFeature>}
      * @memberof ProtectedResourcePrimaryData
      */
-    tools?: Array<string>;
+    features?: Array<ProtectedResourceFeature>;
     /**
      * 
      * @type {Date}
@@ -63,6 +89,16 @@ export interface ProtectedResourcePrimaryData {
      */
     updatedAt?: Date;
 }
+
+
+/**
+ * @export
+ */
+export const ProtectedResourcePrimaryDataTypeEnum = {
+    McpServer: 'MCP_SERVER'
+} as const;
+export type ProtectedResourcePrimaryDataTypeEnum = typeof ProtectedResourcePrimaryDataTypeEnum[keyof typeof ProtectedResourcePrimaryDataTypeEnum];
+
 
 /**
  * Check if a given object implements the ProtectedResourcePrimaryData interface.
@@ -82,9 +118,12 @@ export function ProtectedResourcePrimaryDataFromJSONTyped(json: any, ignoreDiscr
     return {
         
         'id': json['id'] == null ? undefined : json['id'],
+        'clientId': json['clientId'] == null ? undefined : json['clientId'],
         'name': json['name'] == null ? undefined : json['name'],
+        'description': json['description'] == null ? undefined : json['description'],
+        'type': json['type'] == null ? undefined : json['type'],
         'resourceIdentifiers': json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
-        'tools': json['tools'] == null ? undefined : json['tools'],
+        'features': json['features'] == null ? undefined : ((json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON)),
         'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
@@ -101,9 +140,12 @@ export function ProtectedResourcePrimaryDataToJSONTyped(value?: ProtectedResourc
     return {
         
         'id': value['id'],
+        'clientId': value['clientId'],
         'name': value['name'],
+        'description': value['description'],
+        'type': value['type'],
         'resourceIdentifiers': value['resourceIdentifiers'],
-        'tools': value['tools'],
+        'features': value['features'] == null ? undefined : ((value['features'] as Array<any>).map(ProtectedResourceFeatureToJSON)),
         'updatedAt': value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
     };
 }

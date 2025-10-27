@@ -33,6 +33,7 @@ import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/ut
 import { found } from '@jridgewell/trace-mapping/src/binary-search';
 
 global.fetch = fetch;
+jest.setTimeout(200000);
 
 
 jest.setTimeout(200000);
@@ -64,7 +65,18 @@ describe('When creating protected resource', () => {
         const request = {
             name: faker.commerce.productName(),
             type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something.com", "https://something2.com"]
+            resourceIdentifiers: ["https://something.com", "https://something2.com"],
+            features: [
+              {
+                  key: 'get_weather',
+                  type: 'MCP_TOOL',
+                  description: 'Description'
+              },
+              {
+                key: 'get_something',
+                type: 'MCP_TOOL',
+                description: 'Description 2'
+              }]
         } as NewProtectedResource;
 
         const createdResource = await createProtectedResource(domain.id, accessToken, request);
@@ -309,6 +321,117 @@ describe('When creating protected resource', () => {
       }).expect(200);
     });
 
+    it('Protected Resource must not be created when feature type is unknown', async () => {
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://unkownToolName.com"],
+            features: [
+                {
+                    key: 'key',
+                    type: 'ABC'
+                }
+            ]
+        } as NewProtectedResource;
+
+        await createProtectedResource(domain.id, accessToken, request)
+          .catch(err => expect(err.response.status).toEqual(400))
+    });
+
+    it('Protected Resource must not be created when feature type is missing', async () => {
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://unkownToolName.com"],
+            features: [
+                {
+                    key: 'key',
+                }
+            ]
+        } as NewProtectedResource;
+
+        await createProtectedResource(domain.id, accessToken, request)
+          .catch(err => expect(err.response.status).toEqual(400))
+    });
+
+    it('Protected Resource must not be created when keys are duplicated', async () => {
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://unkownToolName.com"],
+            features: [
+                {
+                    key: 'key',
+                    type: 'MCP_TOOL'
+                },
+                {
+                    key: 'key',
+                    type: 'MCP_TOOL'
+                }
+            ]
+        } as NewProtectedResource;
+
+        await createProtectedResource(domain.id, accessToken, request)
+          .catch(err => expect(err.response.status).toEqual(400))
+    });
+
+    it('Protected Resource must not be created when key is missing', async () => {
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://unkownToolName.com"],
+            features: [
+                {
+                    key: 'key',
+                    type: 'MCP_TOOL'
+                },
+                {
+                    type: 'MCP_TOOL'
+                }
+            ]
+        } as NewProtectedResource;
+
+        await createProtectedResource(domain.id, accessToken, request)
+          .catch(err => expect(err.response.status).toEqual(400))
+    });
+
+    it('Protected Resource must not be created when key doesnt follow regex pattern', async () => {
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://unkownToolName.com"],
+            features: [
+                {
+                    key: 'key$',
+                    type: 'MCP_TOOL'
+                },
+                {
+                    type: 'MCP_TOOL'
+                }
+            ]
+        } as NewProtectedResource;
+
+        await createProtectedResource(domain.id, accessToken, request)
+          .catch(err => expect(err.response.status).toEqual(400))
+
+        const request2 = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://unkownToolName.com"],
+            features: [
+                {
+                    key: 'key asdsad',
+                    type: 'MCP_TOOL'
+                },
+                {
+                    type: 'MCP_TOOL'
+                }
+            ]
+        } as NewProtectedResource;
+
+        await createProtectedResource(domain.id, accessToken, request2)
+          .catch(err => expect(err.response.status).toEqual(400))
+    });
 });
 
 describe('When admin created bunch of Protected Resources', () => {
@@ -317,7 +440,13 @@ describe('When admin created bunch of Protected Resources', () => {
             const request = {
                 name: faker.commerce.productName(),
                 type: "MCP_SERVER",
-                resourceIdentifiers: [`https://abc${i}.com`, `https://abc${i}a${i}.com`]
+                resourceIdentifiers: [`https://abc${i}.com`, `https://abc${i}a${i}.com`],
+                features: [
+                    {
+                        key: 'key',
+                        type: 'MCP_TOOL'
+                    }
+                ]
             } as NewProtectedResource;
             await createProtectedResource(domainTestSearch.id, accessToken, request);
         }

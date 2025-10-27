@@ -19,11 +19,8 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.common.utils.RandomString;
-import io.gravitee.am.model.Application;
-import io.gravitee.am.model.BotDetection;
-import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.*;
 import io.gravitee.am.model.ProtectedResource.Type;
-import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
@@ -164,6 +161,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         mongo.setType(other.getType().toString());
         mongo.setCreatedAt(other.getCreatedAt());
         mongo.setUpdatedAt(other.getUpdatedAt());
+        mongo.setFeatures(other.getFeatures() == null ? List.of() : other.getFeatures().stream().map(this::convert).toList());
         return mongo;
     }
 
@@ -180,6 +178,32 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setType(Type.valueOf(mongo.getType()));
         result.setCreatedAt(mongo.getCreatedAt());
         result.setUpdatedAt(mongo.getUpdatedAt());
+        result.setFeatures(mongo.getFeatures().stream().map(this::convert).toList());
+        return result;
+    }
+
+    private ProtectedResourceFeatureMongo convert(ProtectedResourceFeature feature) {
+        ProtectedResourceFeatureMongo mongo = new ProtectedResourceFeatureMongo();
+        mongo.setKey(feature.getKey());
+        mongo.setDescription(feature.getDescription());
+        mongo.setCreatedAt(feature.getCreatedAt());
+        mongo.setType(feature.getType().toString());
+        if(feature instanceof McpTool tool){
+            mongo.setScopes(tool.getScopes());
+        }
+        return mongo;
+    }
+
+    private ProtectedResourceFeature convert(ProtectedResourceFeatureMongo feature) {
+        ProtectedResourceFeature.Type type = ProtectedResourceFeature.Type.valueOf(feature.getType());
+        ProtectedResourceFeature result = new ProtectedResourceFeature();
+        result.setKey(feature.getKey());
+        result.setType(type);
+        result.setDescription(feature.getDescription());
+        result.setCreatedAt(feature.getCreatedAt());
+        if(type.equals(ProtectedResourceFeature.Type.MCP_TOOL)){
+            return new McpTool(result, feature.getScopes());
+        }
         return result;
     }
 }

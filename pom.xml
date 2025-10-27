@@ -95,7 +95,7 @@
         <jsoup.version>1.16.1</jsoup.version>
         <snakeyaml.version>2.0</snakeyaml.version>
         <angus-mail.version>2.0.4</angus-mail.version>
-        <angus-activation.version>2.0.2</angus-activation.version>
+        <angus-activation.version>2.0.3</angus-activation.version>
         <mongodb-driver-reactivestreams.version>4.11.5</mongodb-driver-reactivestreams.version>
         <embed.mongo.version>4.18.1</embed.mongo.version>
         <json-patch.version>1.9</json-patch.version>
@@ -103,7 +103,7 @@
         <zxing.version>3.4.1</zxing.version>
         <commons-codec.version>1.15</commons-codec.version>
         <swagger.version>2.2.34</swagger.version>
-        <hibernate-validator.version>8.0.2.Final</hibernate-validator.version>
+        <hibernate-validator.version>8.0.3.Final</hibernate-validator.version>
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.3.RELEASE</thymeleaf.version>
         <wiremock.version>3.0.4</wiremock.version>
@@ -176,6 +176,8 @@
         <gravitee-am-policy-mfa-challenge.version>2.0.0</gravitee-am-policy-mfa-challenge.version>
         <gravitee-am-policy-account-linking.version>2.0.0</gravitee-am-policy-account-linking.version>
         <gravitee-am-certificate-aws.version>3.0.0</gravitee-am-certificate-aws.version>
+        <gravitee-am-authorizationengine-openfga.version>1.0.0-alpha.2</gravitee-am-authorizationengine-openfga.version>
+        <gravitee-am-gateway-handler-authzen.version>1.0.0-alpha.2</gravitee-am-gateway-handler-authzen.version>
 
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>

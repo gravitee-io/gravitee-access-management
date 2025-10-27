@@ -471,6 +471,14 @@
             <scope>runtime</scope>
         </dependency>
 
+        <dependency>
+            <groupId>com.graviteesource.am.authorizationengine.openfga</groupId>
+            <artifactId>gravitee-am-authorizationengine-openfga</artifactId>
+            <version>${gravitee-am-authorizationengine-openfga.version}</version>
+            <type>zip</type>
+            <scope>runtime</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -921,6 +929,12 @@
                                     <groupId>com.graviteesource.am.policy</groupId>
                                     <artifactId>gravitee-am-policy-mfa-challenge</artifactId>
                                     <version>${gravitee-am-policy-mfa-challenge.version}</version>
+                                    <type>zip</type>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.graviteesource.am.authorizationengine.openfga</groupId>
+                                    <artifactId>gravitee-am-authorizationengine-openfga</artifactId>
+                                    <version>${gravitee-am-authorizationengine-openfga.version}</version>
                                     <type>zip</type>
                                 </artifactItem>
                             </artifactItems>
