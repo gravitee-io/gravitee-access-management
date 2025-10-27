@@ -25,40 +25,7 @@
           >Define the tools that this MCP Server provides. Tools can be tied to specific scopes</p
           >
           <div>
-            <div *ngIf="features.length !== 0" class="tools-table-card">
-              <ngx-datatable
-                class="material tools-table"
-                [columnMode]="'flex'"
-                [scrollbarV]="false"
-                [scrollbarH]="false"
-                [reorderable]="false"
-                [headerHeight]="50"
-                [footerHeight]="0"
-                [rowHeight]="70"
-                [rows]="features"
-              >
-                <ngx-datatable-column name="Name" [flexGrow]="2" [draggable]="false" [sortable]="false">
-                  <ng-template let-row="row" ngx-datatable-cell-template>
-                    <span class="tool-name">{{ row.key }}</span>
-                  </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="Description" [canAutoResize]="true" [flexGrow]="5" [draggable]="false" [sortable]="false">
-                  <ng-template let-row="row" ngx-datatable-cell-template>
-                    <span class="tool-description" title="{{row.description}}">{{ row.description }}</span>
-                  </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="Scopes" [flexGrow]="4" [draggable]="false" [sortable]="false">
-                  <ng-template let-row="row" ngx-datatable-cell-template>
-                    <div class="scopes-container">
-                      <span *ngFor="let scope of row.scopes.slice(0, 3)" class="scope-badge">
-                        {{ scope }}
-                      </span>
-                      <span *ngIf="row.scopes.length > 3" class="scope-badge scope-count">+{{ row.scopes.length - 3 }}</span>
-                    </div>
-                  </ng-template>
-                </ngx-datatable-column>
-              </ngx-datatable>
-            </div>
+            <mcp-tools-table [tools]="features"></mcp-tools-table>
         </div>
       </div>
     </div>

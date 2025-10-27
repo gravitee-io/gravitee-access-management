@@ -477,6 +477,7 @@ import {
   DomainNewMcpServerToolDialogComponent,
   DomainNewMcpServerToolDialogFactory,
 } from './domain/mcp-servers/mcp-server-new/tool-new-dialog/tool-new-dialog.component';
+import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-tools-table.component';
 
 @NgModule({
   declarations: [
@@ -743,6 +744,7 @@ import {
     AuthorizationEngineCreationStep1Component,
     AuthorizationEngineCreationStep2Component,
     OpenFGAComponent,
+    McpToolsTableComponent,
   ],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   bootstrap: [AppComponent],

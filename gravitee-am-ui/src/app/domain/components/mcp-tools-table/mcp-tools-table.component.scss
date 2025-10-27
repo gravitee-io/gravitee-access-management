@@ -1,0 +1,136 @@
+// Tools table card styling
+.tools-table-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+  ::ng-deep .tools-table {
+    // Remove all default borders
+    border: none !important;
+
+    .datatable-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #e0e0e0;
+      border-top: none;
+
+      .datatable-header-cell {
+        border: none !important;
+        border-right: none !important;
+        border-left: none !important;
+        font-weight: 600;
+        color: #424242;
+        font-size: 14px;
+        padding: 12px 16px;
+
+        .datatable-header-cell-label {
+          font-weight: 600;
+        }
+      }
+    }
+
+    .datatable-body {
+      .datatable-body-row {
+        border-bottom: 1px solid #e0e0e0 !important;
+        border-top: none !important;
+        border-left: none !important;
+        border-right: none !important;
+        background: #ffffff;
+
+        &:last-child {
+          border-bottom: none !important;
+        }
+
+        &:hover {
+          background: #fafafa;
+        }
+
+        .datatable-body-cell {
+          border: none !important;
+          border-right: none !important;
+          border-left: none !important;
+          padding: 12px 16px;
+          vertical-align: middle;
+        }
+      }
+    }
+
+    // Remove vertical borders between columns
+    .datatable-row-center {
+      background: transparent;
+      border: none !important;
+    }
+
+    // Remove any scroll wrapper borders
+    .datatable-scroll {
+      border: none !important;
+    }
+  }
+}
+
+// Tool name styling - monospace font
+.tool-name {
+  font-size: 14px;
+  color: #212121;
+}
+
+// Tool description styling
+.tool-description {
+  font-size: 14px;
+  color: #424242;
+  line-height: 1.5;
+  display: block;
+}
+
+// Scopes container
+.scopes-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+// Scope badge styling - pill-shaped tags
+.scope-badge {
+  display: inline-block;
+  background: #e8e8e8;
+  color: #424242;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &.scope-count {
+    background: #e8e8e8;
+    color: #424242;
+  }
+}
+
+// Action icons styling
+.action-icons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+
+  .action-icon {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    mat-icon {
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
+      color: #616161;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: #212121;
+      }
+    }
+  }
+}
+
