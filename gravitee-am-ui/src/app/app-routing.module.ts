@@ -261,7 +261,6 @@ import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 
-
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
 export const routes: Routes = [

@@ -80,11 +80,7 @@
             <span class="first-line">No tools configured yet</span>
             <span>Add tools to define what this MCP server provides</span>
           </div>
-          <mcp-tools-table
-            [tools]="newMcpServer.tools"
-            [showDeleteIcon]="true"
-            (onDelete)="removeTool($event.key)"
-          ></mcp-tools-table>
+          <mcp-tools-table [tools]="newMcpServer.tools" [showDeleteIcon]="true" (onDelete)="removeTool($event.key)"></mcp-tools-table>
         </div>
       </div>
       <div class="gv-form-section">

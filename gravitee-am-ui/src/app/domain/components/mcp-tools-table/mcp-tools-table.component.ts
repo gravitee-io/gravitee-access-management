@@ -45,4 +45,3 @@ export class McpToolsTableComponent {
     this.onDelete.emit(tool);
   }
 }
-

@@ -1,28 +1,28 @@
 // Tools table card styling
 .tools-table-card {
-  background: #ffffff;
+  overflow: hidden;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
 
   ::ng-deep .tools-table {
     // Remove all default borders
     border: none !important;
 
     .datatable-header {
-      background: #f8f9fa;
-      border-bottom: 1px solid #e0e0e0;
       border-top: none;
+      border-bottom: 1px solid #e0e0e0;
+      background: #f8f9fa;
 
       .datatable-header-cell {
+        padding: 12px 16px;
         border: none !important;
         border-right: none !important;
         border-left: none !important;
-        font-weight: 600;
         color: #424242;
         font-size: 14px;
-        padding: 12px 16px;
+        font-weight: 600;
 
         .datatable-header-cell-label {
           font-weight: 600;
@@ -32,11 +32,11 @@
 
     .datatable-body {
       .datatable-body-row {
-        border-bottom: 1px solid #e0e0e0 !important;
         border-top: none !important;
-        border-left: none !important;
         border-right: none !important;
-        background: #ffffff;
+        border-bottom: 1px solid #e0e0e0 !important;
+        border-left: none !important;
+        background: #fff;
 
         &:last-child {
           border-bottom: none !important;
@@ -47,10 +47,10 @@
         }
 
         .datatable-body-cell {
+          padding: 12px 16px;
           border: none !important;
           border-right: none !important;
           border-left: none !important;
-          padding: 12px 16px;
           vertical-align: middle;
         }
       }
@@ -58,8 +58,8 @@
 
     // Remove vertical borders between columns
     .datatable-row-center {
-      background: transparent;
       border: none !important;
+      background: transparent;
     }
 
     // Remove any scroll wrapper borders
@@ -71,33 +71,33 @@
 
 // Tool name styling - monospace font
 .tool-name {
-  font-size: 14px;
   color: #212121;
+  font-size: 14px;
 }
 
 // Tool description styling
 .tool-description {
-  font-size: 14px;
-  color: #424242;
-  line-height: 1.5;
   display: block;
+  color: #424242;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 // Scopes container
 .scopes-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
   align-items: center;
+  gap: 6px;
 }
 
 // Scope badge styling - pill-shaped tags
 .scope-badge {
   display: inline-block;
-  background: #e8e8e8;
-  color: #424242;
   padding: 4px 12px;
   border-radius: 16px;
+  background: #e8e8e8;
+  color: #424242;
   font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
@@ -111,20 +111,20 @@
 // Action icons styling
 .action-icons {
   display: flex;
-  gap: 12px;
   align-items: center;
   justify-content: flex-end;
+  gap: 12px;
 
   .action-icon {
-    cursor: pointer;
     display: flex;
     align-items: center;
+    cursor: pointer;
 
     mat-icon {
       width: 20px;
       height: 20px;
-      font-size: 20px;
       color: #616161;
+      font-size: 20px;
       transition: color 0.2s ease;
 
       &:hover {
@@ -133,4 +133,3 @@
     }
   }
 }
-
