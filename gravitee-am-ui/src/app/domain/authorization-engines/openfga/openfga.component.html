@@ -40,12 +40,55 @@
       <div fxLayout="row" fxLayoutGap="20px">
         <div fxLayout="column" fxFlex="70">
           <div class="gv-form-section">
-            <div class="gv-form-section-title">
-              <h5>Authorization Model (ID: {{ authorizationModelId }})</h5>
-              <mat-divider></mat-divider>
+            <div class="model-controls">
+              <div class="model-selector" *ngIf="authorizationModels.length > 0 && !isEditing">
+                <mat-form-field appearance="outline" class="model-dropdown">
+                  <mat-label>Select Authorization Model</mat-label>
+                  <mat-select [(value)]="selectedModelId" (selectionChange)="selectModel($event.value)">
+                    <mat-option *ngFor="let model of authorizationModels" [value]="model.id">
+                      {{ model.id }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <div class="active-indicator" *ngIf="isCurrentModelActive()">
+                  <mat-icon color="primary">check_circle</mat-icon>
+                  <span class="active-text">Active</span>
+                </div>
+              </div>
+              <div class="editing-title" *ngIf="isEditing">
+                <h5>Revising Authorization Model...</h5>
+              </div>
+              <div class="model-actions">
+                <button *ngIf="!isEditing" mat-raised-button color="primary" (click)="reviseModel()" [disabled]="!selectedModelId">
+                  <mat-icon>edit</mat-icon>
+                  Revise Model
+                </button>
+                <button
+                  *ngIf="!isEditing"
+                  mat-raised-button
+                  color="accent"
+                  (click)="applyModel()"
+                  [disabled]="!selectedModelId || isCurrentModelExplicitlyActive()"
+                >
+                  <mat-icon>check_circle</mat-icon>
+                  Apply
+                </button>
+                <button *ngIf="isEditing" mat-raised-button color="accent" (click)="saveModel()">
+                  <mat-icon>save</mat-icon>
+                  Save
+                </button>
+                <button *ngIf="isEditing" mat-button (click)="cancelEdit()">
+                  <mat-icon>cancel</mat-icon>
+                  Cancel
+                </button>
+              </div>
             </div>
             <div class="codemirror-wrapper">
               <ngx-codemirror [(ngModel)]="authorizationModelDsl" [options]="codeMirrorOptions" class="openfga-editor"> </ngx-codemirror>
+              <div class="model-timestamp" *ngIf="selectedModelId && !isEditing">
+                <mat-icon>schedule</mat-icon>
+                <span>Created: {{ getSelectedModelTimestamp() | date: 'medium' }}</span>
+              </div>
             </div>
           </div>
 
@@ -162,13 +205,13 @@ type document
               <p *ngIf="tuples.length === 0">No tuples defined yet.</p>
 
               <div class="pagination-controls">
-                <button mat-button (click)="previousPage()" [disabled]="!hasPreviousPage() || isLoadingTuples">
+                <button mat-button (click)="previousPage()" [disabled]="!hasPreviousTuplesPage || isLoadingTuples">
                   <span>
                     <mat-icon>chevron_left</mat-icon>
                     <span>Previous</span>
                   </span>
                 </button>
-                <button mat-button (click)="nextPage()" [disabled]="!hasNextPage() || isLoadingTuples">
+                <button mat-button (click)="nextPage()" [disabled]="!hasNextTuplesPage || isLoadingTuples">
                   <span>
                     <span>Next</span>
                     <mat-icon>chevron_right</mat-icon>

@@ -122,7 +122,92 @@ mat-tab-group {
   }
 }
 
-// Authorization model
+.model-timestamp {
+  @include flex-center($spacing-xs);
+
+  padding: $spacing-s $spacing-m;
+  background: $color-bg-light;
+  color: $color-text-secondary;
+  font-size: 12px;
+  font-weight: 500;
+
+  mat-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  span {
+    font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, monospace;
+  }
+}
+
+.model-controls {
+  display: flex;
+  min-height: 60px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-l;
+
+  .model-selector {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: $spacing-s;
+
+    .model-dropdown {
+      width: 300px;
+    }
+
+    .active-indicator {
+      @include flex-center($spacing-xs);
+
+      color: $color-success;
+      font-size: 14px;
+      font-weight: 500;
+
+      mat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 20px;
+      }
+
+      .active-text {
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+    }
+  }
+
+  .editing-title {
+    display: flex;
+    min-height: 40px;
+    flex: 1;
+    align-items: center;
+
+    h5 {
+      margin: 0;
+      color: $color-primary;
+      font-weight: 500;
+    }
+  }
+
+  .model-actions {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    margin-left: auto;
+    gap: $spacing-s;
+
+    button {
+      @include button-with-icon;
+    }
+  }
+}
+
 .codemirror-wrapper {
   overflow: hidden;
   border: 1px solid $color-border;
@@ -130,7 +215,6 @@ mat-tab-group {
 
   ::ng-deep .CodeMirror {
     height: auto;
-    min-height: 400px;
     font-family: Monaco, Menlo, 'Ubuntu Mono', Consolas, monospace;
     font-size: 14px;
     line-height: 1.5;
