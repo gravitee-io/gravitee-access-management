@@ -51,8 +51,8 @@ mcp-tools-table {
   }
 
   .tools-table-card {
-    min-width: 727px;
     overflow: hidden;
+    min-width: 727px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     background: #fff;
@@ -131,9 +131,9 @@ mcp-tools-table {
     color: #424242;
     font-size: 14px;
     line-height: 1.5;
+    overflow-wrap: break-word;
     white-space: normal;
     word-wrap: break-word;
-    overflow-wrap: break-word;
   }
 
   .scopes-container {
