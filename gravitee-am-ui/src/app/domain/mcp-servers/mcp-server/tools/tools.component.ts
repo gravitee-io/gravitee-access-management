@@ -16,8 +16,16 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ProtectedResource } from '../../../../services/protected-resource.service';
+import { ProtectedResource, ProtectedResourceFeature } from '../../../../services/protected-resource.service';
 import { McpTool } from '../../../components/mcp-tools-table/mcp-tools-table.component';
+
+/**
+ * Extended type for ProtectedResourceFeature that includes scopes.
+ * The API returns features with scopes for MCP tools, but the base type doesn't include it.
+ */
+interface ProtectedResourceFeatureWithScopes extends ProtectedResourceFeature {
+  scopes?: string[];
+}
 
 @Component({
   selector: 'app-domain-mcp-server-tools',
@@ -35,10 +43,17 @@ export class DomainMcpServerToolsComponent implements OnInit {
   ngOnInit(): void {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.protectedResource = this.route.snapshot.data['mcpServer'];
-    this.features = (this.protectedResource.features ?? []).map((feature) => ({
-      key: feature.key,
-      description: feature.description,
-      scopes: (feature as any).scopes ?? [],
-    }));
+    this.features = this.mapFeaturesToTools(this.protectedResource.features ?? []);
+  }
+
+  private mapFeaturesToTools(features: ProtectedResourceFeature[]): McpTool[] {
+    return features.map((feature) => {
+      const featureWithScopes = feature as ProtectedResourceFeatureWithScopes;
+      return {
+        key: feature.key,
+        description: feature.description,
+        scopes: featureWithScopes.scopes ?? [],
+      };
+    });
   }
 }
