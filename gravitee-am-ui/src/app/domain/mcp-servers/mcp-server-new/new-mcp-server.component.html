@@ -73,52 +73,7 @@
             </button>
           </div>
           <mat-divider></mat-divider>
-          <div *ngIf="newMcpServer.tools.length === 0" class="tools-empty-container">
-            <div>
-              <mat-icon>create_new_folder</mat-icon>
-            </div>
-            <span class="first-line">No tools configured yet</span>
-            <span>Add tools to define what this MCP server provides</span>
-          </div>
-          <div *ngIf="newMcpServer.tools.length !== 0">
-            <ngx-datatable
-              class="material"
-              [columnMode]="'flex'"
-              [scrollbarV]="false"
-              [scrollbarH]="false"
-              [reorderable]="false"
-              [headerHeight]="40"
-              [footerHeight]="0"
-              [rowHeight]="50"
-              [rows]="newMcpServer.tools"
-            >
-              <ngx-datatable-column name="Name" [flexGrow]="3" [draggable]="false" [sortable]="false">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.key }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Description" [canAutoResize]="true" [flexGrow]="9" [draggable]="false" [sortable]="false">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  {{ row.description }}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Scopes" [flexGrow]="9" [draggable]="false" [sortable]="false">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  <span *ngFor="let scope of row.scopes.slice(0, 3)" class="tool-badge">
-                    {{ scope }}
-                  </span>
-                  <span *ngIf="row.scopes.length > 3" class="tool-badge">+{{ row.scopes.length - 3 }}</span>
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column [flexGrow]="1" [draggable]="false" [sortable]="false">
-                <ng-template let-row="row" ngx-datatable-cell-template>
-                  <a (click)="removeTool(row.key)" style="margin: auto">
-                    <mat-icon svgIcon="gio:trash" matTooltip="Delete tool" class="tool-trash" />
-                  </a>
-                </ng-template>
-              </ngx-datatable-column>
-            </ngx-datatable>
-          </div>
+          <mcp-tools-table [tools]="newMcpServer.tools" [showDeleteIcon]="true" (delete)="removeTool($event.key)"></mcp-tools-table>
         </div>
       </div>
       <div class="gv-form-section">

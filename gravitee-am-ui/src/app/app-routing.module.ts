@@ -259,6 +259,7 @@ import { DomainNewMcpServerComponent } from './domain/mcp-servers/mcp-server-new
 import { DomainMcpServerComponent } from './domain/mcp-servers/mcp-server/domain-mcp-server.component';
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
+import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1508,6 +1509,20 @@ export const routes: Routes = [
                               menu: {
                                 label: 'Overview',
                                 section: 'Overview',
+                                level: 'level2',
+                              },
+                            },
+                            resolve: {
+                              entrypoint: DomainEntrypointResolver,
+                            },
+                          },
+                          {
+                            path: 'tools',
+                            component: DomainMcpServerToolsComponent,
+                            data: {
+                              menu: {
+                                label: 'Tools',
+                                section: 'Tools',
                                 level: 'level2',
                               },
                             },
