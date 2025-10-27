@@ -51,6 +51,7 @@ mcp-tools-table {
   }
 
   .tools-table-card {
+    min-width: 727px;
     overflow: hidden;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
@@ -93,12 +94,17 @@ mcp-tools-table {
           .datatable-body-cell {
             display: flex !important;
             overflow: visible;
-            height: 64px;
-            align-items: center;
-            padding: 10px 16px;
+            min-height: 64px;
+            align-items: flex-start;
+            padding: 16px;
             border: none !important;
             border-right: none !important;
             border-left: none !important;
+
+            > * {
+              flex: 1;
+              padding-top: 4px;
+            }
           }
         }
       }
@@ -117,6 +123,7 @@ mcp-tools-table {
   .tool-name {
     color: #212121;
     font-size: 14px;
+    white-space: nowrap;
   }
 
   .tool-description {
@@ -124,6 +131,9 @@ mcp-tools-table {
     color: #424242;
     font-size: 14px;
     line-height: 1.5;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .scopes-container {
