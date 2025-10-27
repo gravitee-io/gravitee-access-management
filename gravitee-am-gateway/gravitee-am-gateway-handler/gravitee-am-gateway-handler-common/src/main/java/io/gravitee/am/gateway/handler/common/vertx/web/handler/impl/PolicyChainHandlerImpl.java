@@ -23,6 +23,7 @@ import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 
 import java.util.Objects;
 
@@ -41,9 +42,15 @@ public class PolicyChainHandlerImpl implements PolicyChainHandler {
     @Autowired
     private ExecutionContextFactory executionContextFactory;
 
+    @Autowired
+    private Environment environment;
+
     @Override
     public Handler<RoutingContext> create(ExtensionPoint extensionPoint) {
         Objects.requireNonNull(extensionPoint, "An extension point is required");
-        return new io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, extensionPoint);
+        // AM-5886 evaluate the condition to no execute policies only on GET method.
+        //         in case of issue we introduce this feature flag to get back the previous change as it may have unexpected effects
+        final boolean skipAllFlowsOnError = environment.getProperty("legacy.flows.skipAllOnError", Boolean.class, false);
+        return new io.gravitee.am.gateway.handler.common.vertx.web.handler.impl.internal.PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, extensionPoint, skipAllFlowsOnError);
     }
 }
