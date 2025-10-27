@@ -472,6 +472,7 @@ import { AuthorizationEngineCreationStep2Component } from './domain/authorizatio
 import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga.component';
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
+import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
 import {
   DomainNewMcpServerToolDialogComponent,
   DomainNewMcpServerToolDialogFactory,
@@ -522,6 +523,7 @@ import {
     DomainMcpServerComponent,
     DomainNewMcpServerComponent,
     DomainMcpServerOverviewComponent,
+    DomainMcpServerToolsComponent,
     DomainNewMcpServerToolDialogComponent,
     ConfirmComponent,
     DictionaryDialogComponent,
