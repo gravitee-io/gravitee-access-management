@@ -15,6 +15,16 @@
     limitations under the License.
 
 -->
+<div *ngIf="tools.length === 0" class="tools-empty-state">
+  <div class="empty-state-content">
+    <div class="empty-state-icon">
+      <mat-icon>create_new_folder</mat-icon>
+    </div>
+    <h3 class="empty-state-title">No tools configured yet</h3>
+    <p class="empty-state-subtitle">Add tools to define what this MCP server provides</p>
+  </div>
+</div>
+
 <div *ngIf="tools.length !== 0" class="tools-table-card">
   <ngx-datatable
     class="material tools-table"

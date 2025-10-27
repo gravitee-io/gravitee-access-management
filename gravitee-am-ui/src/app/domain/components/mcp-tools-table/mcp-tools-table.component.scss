@@ -1,4 +1,55 @@
 mcp-tools-table {
+  .tools-empty-state {
+    overflow: hidden;
+    padding: 60px 40px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+
+    .empty-state-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .empty-state-icon {
+      display: flex;
+      width: 80px;
+      height: 80px;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #b2ebf2;
+      border-radius: 50%;
+      margin-bottom: 24px;
+      background: #e0f7fa;
+
+      mat-icon {
+        width: 48px;
+        height: 48px;
+        color: #00838f;
+        font-size: 48px;
+      }
+    }
+
+    .empty-state-title {
+      margin: 0 0 12px;
+      color: #424242;
+      font-size: 24px;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .empty-state-subtitle {
+      margin: 0;
+      color: #757575;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+  }
+
   .tools-table-card {
     overflow: hidden;
     border: 1px solid #e0e0e0;

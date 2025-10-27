@@ -73,13 +73,6 @@
             </button>
           </div>
           <mat-divider></mat-divider>
-          <div *ngIf="newMcpServer.tools.length === 0" class="tools-empty-container">
-            <div>
-              <mat-icon>create_new_folder</mat-icon>
-            </div>
-            <span class="first-line">No tools configured yet</span>
-            <span>Add tools to define what this MCP server provides</span>
-          </div>
           <mcp-tools-table [tools]="newMcpServer.tools" [showDeleteIcon]="true" (delete)="removeTool($event.key)"></mcp-tools-table>
         </div>
       </div>
