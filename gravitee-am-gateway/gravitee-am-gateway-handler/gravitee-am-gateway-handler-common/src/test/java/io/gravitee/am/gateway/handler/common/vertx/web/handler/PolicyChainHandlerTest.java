@@ -26,8 +26,11 @@ import io.gravitee.am.gateway.policy.PolicyChainProcessorFactory;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.core.Single;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.impl.headers.HeadersMultiMap;
+import io.vertx.rxjava3.core.MultiMap;
 import io.vertx.rxjava3.core.http.HttpServerRequest;
 import io.vertx.rxjava3.ext.web.RoutingContext;
+import org.apache.shiro.crypto.hash.Hash;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -35,6 +38,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.Mockito.*;
 
@@ -75,6 +80,8 @@ public class PolicyChainHandlerTest {
     @Mock
     private Processor<ExecutionContext> processor;
 
+    private boolean skipAllFlowsOnError = false;
+
     @Test
     public void shouldNotInvoke_noPolicies() {
         when(flowManager.findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class))).thenReturn(Single.just(Collections.emptyList()));
@@ -85,7 +92,7 @@ public class PolicyChainHandlerTest {
         when(executionContext.getAttributes()).thenReturn(Collections.emptyMap());
         when(executionContextFactory.create(any())).thenReturn(executionContext);
 
-        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT);
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT, skipAllFlowsOnError);
 
         when(routingContext.request()).thenReturn(request);
         policyChainHandler.handle(routingContext);
@@ -93,6 +100,63 @@ public class PolicyChainHandlerTest {
         verify(flowManager, times(1)).findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class));
         verify(policyChainProcessorFactory, never()).create(any(), any());
         verify(executionContextFactory).create(any());
+    }
+
+    @Test
+    public void shouldNotInvokePolicy_GET_Method_with_error_param() {
+        when(request.method()).thenReturn(HttpMethod.GET);
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
+        multiMap.add("error", "any_error");
+        when(request.params()).thenReturn(multiMap);
+        when(routingContext.request()).thenReturn(request);
+
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT, skipAllFlowsOnError);
+
+        policyChainHandler.handle(routingContext);
+
+        verify(flowManager, never()).findByExtensionPoint(eq(ExtensionPoint.PRE_CONSENT), eq(null), any(ExecutionPredicate.class));
+        verify(policyChainProcessorFactory, never()).create(any(), any());
+        verify(executionContextFactory, never()).create(any());
+    }
+
+    @Test
+    public void shouldNotInvokePolicy_POST_Method_with_error_param_BUT_skipAllFlowsOnError_is_true() {
+        lenient().when(request.method()).thenReturn(HttpMethod.POST);
+        MultiMap multiMap = MultiMap.caseInsensitiveMultiMap();
+        multiMap.add("error", "any_error");
+        when(request.params()).thenReturn(multiMap);
+        when(routingContext.request()).thenReturn(request);
+
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.POST_CONSENT, true);
+
+        policyChainHandler.handle(routingContext);
+
+        verify(flowManager, never()).findByExtensionPoint(eq(ExtensionPoint.POST_CONSENT), eq(null), any(ExecutionPredicate.class));
+        verify(policyChainProcessorFactory, never()).create(any(), any());
+        verify(executionContextFactory, never()).create(any());
+    }
+
+    @Test
+    public void shouldInvokePolicy_POST_Method_with_error_param() {
+        when(flowManager.findByExtensionPoint(eq(ExtensionPoint.POST_CONSENT), eq(null), any(ExecutionPredicate.class))).thenReturn(Single.just(Collections.singletonList(policy)));
+        when(delegateRequest.method()).thenReturn(HttpMethod.POST);
+        when(request.method()).thenReturn(HttpMethod.POST);
+        when(request.getDelegate()).thenReturn(delegateRequest);
+        when(request.getDelegate().response()).thenReturn(delegateResponse);
+        when(routingContext.request()).thenReturn(request);
+        when(executionContext.getAttributes()).thenReturn(Collections.emptyMap());
+        when(executionContextFactory.create(any())).thenReturn(executionContext);
+        when(processor.handler(any())).thenReturn(processor);
+        when(processor.errorHandler(any())).thenReturn(processor);
+        when(policyChainProcessorFactory.create(Collections.singletonList(policy), executionContext)).thenReturn(processor);
+
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.POST_CONSENT, skipAllFlowsOnError);
+
+        policyChainHandler.handle(routingContext);
+
+        verify(flowManager, times(1)).findByExtensionPoint(eq(ExtensionPoint.POST_CONSENT), eq(null), any(ExecutionPredicate.class));
+        verify(policyChainProcessorFactory, times(1)).create(any(), any());
+        verify(executionContextFactory, times(1)).create(any());
     }
 
     @Test
@@ -108,7 +172,7 @@ public class PolicyChainHandlerTest {
         when(processor.errorHandler(any())).thenReturn(processor);
         when(policyChainProcessorFactory.create(Collections.singletonList(policy), executionContext)).thenReturn(processor);
 
-        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT);
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT, skipAllFlowsOnError);
 
         policyChainHandler.handle(routingContext);
 
@@ -130,7 +194,7 @@ public class PolicyChainHandlerTest {
         when(processor.errorHandler(any())).thenReturn(processor);
         when(policyChainProcessorFactory.create(Arrays.asList(policy, policy), executionContext)).thenReturn(processor);
 
-        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT);
+        PolicyChainHandlerImpl policyChainHandler = new PolicyChainHandlerImpl(flowManager, policyChainProcessorFactory, executionContextFactory, ExtensionPoint.PRE_CONSENT, skipAllFlowsOnError);
 
         policyChainHandler.handle(routingContext);
 
