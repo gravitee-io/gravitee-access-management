@@ -47,13 +47,13 @@ mcp-tools-table {
 
           .datatable-body-cell {
             display: flex !important;
-            align-items: center;
+            overflow: visible;
             height: 64px;
+            align-items: center;
             padding: 10px 16px;
             border: none !important;
             border-right: none !important;
             border-left: none !important;
-            overflow: visible;
           }
         }
       }
@@ -115,8 +115,8 @@ mcp-tools-table {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 12px;
     padding: 4px 0;
+    gap: 12px;
 
     .action-icon {
       display: inline-flex;
