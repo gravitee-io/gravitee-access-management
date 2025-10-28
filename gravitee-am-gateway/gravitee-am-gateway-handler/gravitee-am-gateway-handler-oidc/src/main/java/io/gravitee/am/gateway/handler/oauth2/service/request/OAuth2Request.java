@@ -227,4 +227,17 @@ public class OAuth2Request extends BaseRequest {
     public Request customFrameHandler(Handler<HttpFrame> frameHandler) {
         return this;
     }
+
+    public Set<String> getResources() {
+        if (parameters() == null) {
+            return java.util.Collections.emptySet();
+        }
+
+        List<String> resourceList = parameters().get(io.gravitee.am.common.oauth2.Parameters.RESOURCE);
+        if (resourceList == null) {
+            return java.util.Collections.emptySet();
+        }
+
+        return new HashSet<>(resourceList);
+    }
 }

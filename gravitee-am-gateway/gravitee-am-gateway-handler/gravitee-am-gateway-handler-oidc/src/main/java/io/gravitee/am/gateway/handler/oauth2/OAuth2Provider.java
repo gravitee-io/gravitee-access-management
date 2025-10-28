@@ -58,6 +58,9 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.con
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentProcessHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.risk.RiskAssessmentHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.token.TokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.AuthorizationRequestResourceValidationHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.ResourceValidationService;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.TokenRequestResourceValidationHandler;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
@@ -115,6 +118,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
     @Autowired
     private ProtectedResourceSyncService protectedResourceSyncService;
+
+    @Autowired
+    private ResourceValidationService resourceValidationService;
 
     @Autowired
     private ClientAssertionService clientAssertionService;
@@ -280,6 +286,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
+                .handler(new AuthorizationRequestResourceValidationHandler(resourceValidationService, domain))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, domain))
@@ -326,6 +333,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(corsHandler)
                 .handler(new TokenRequestParseHandler())
                 .handler(clientAuthHandler)
+                .handler(new TokenRequestResourceValidationHandler(resourceValidationService, domain))
                 .handler(new TokenEndpoint(tokenGranter));
 
         // Introspection endpoint
