@@ -94,8 +94,8 @@ mcp-tools-table {
           .datatable-body-cell {
             display: flex !important;
             overflow: hidden;
-            min-height: 64px;
             min-width: 0;
+            min-height: 64px;
             align-items: flex-start;
             padding: 16px;
             border: none !important;
@@ -103,8 +103,8 @@ mcp-tools-table {
             border-left: none !important;
 
             > * {
-              flex: 1;
               min-width: 0;
+              flex: 1;
               padding-top: 4px;
             }
           }
