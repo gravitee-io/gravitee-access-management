@@ -128,13 +128,11 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             // For each protected resource, check if any resource identifiers match the request resources
             // and extract all scopes from matching protected resources (reactive)
             return protectedResourceManager.getScopesForResources(client.getDomain(), request.getResources())
-                    .flatMap(extractedScopes -> {
+                    .map(extractedScopes -> {
                         if (!extractedScopes.isEmpty()) {
                             request.setScopes(extractedScopes);
-                            return Single.just(request);
-                        } else {
-                            return Single.error(new InvalidScopeException("No scopes found for the requested resources"));
                         }
+                        return request;
                     });
         }
         return Single.just(request);
