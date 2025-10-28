@@ -116,6 +116,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
             logger.info("Identity providers loaded for domain {}", domain.getName());
         } catch (Exception e) {
             logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
+            throw new IllegalStateException("Failed to initialize identity providers for domain " + domain.getName(), e);
         }
     }
 
