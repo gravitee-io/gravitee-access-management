@@ -141,6 +141,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
         try {
             // use UriBuilder to sanitize the uri so non urlEncoded character will be encoded
             // to avoid URISyntaxException due to the space in the scope parameter value
+            LOGGER.info("Parsing logoutRedirectUrl {}", logoutRedirectUrl);
             URI uri = UriBuilder.fromURIString(logoutRedirectUrl).build();
             if(uri.getUserInfo() != null){
                 routingContext.fail(new RedirectMismatchException(String.format("The post_logout_redirect_uri [ %s ] MUST NOT contain userInfo part", logoutRedirectUrl)));
@@ -235,6 +236,7 @@ public abstract class AbstractLogoutEndpoint implements Handler<RoutingContext> 
     private void doRedirect0(RoutingContext routingContext, String url) {
         // state OPTIONAL. Opaque value used by the RP to maintain state between the logout request and the callback to the endpoint specified by the post_logout_redirect_uri parameter.
         // If included in the logout request, the OP passes this value back to the RP using the state parameter when redirecting the User Agent back to the RP.
+        LOGGER.info("Parsing final redirect url {}", url);
         UriBuilder uriBuilder = UriBuilder.fromURIString(url);
         final String state = routingContext.request().getParam(io.gravitee.am.common.oauth2.Parameters.STATE);
         if (StringUtils.hasText(state)) {
