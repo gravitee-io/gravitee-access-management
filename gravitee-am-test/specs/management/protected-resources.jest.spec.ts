@@ -35,9 +35,6 @@ import { found } from '@jridgewell/trace-mapping/src/binary-search';
 global.fetch = fetch;
 jest.setTimeout(200000);
 
-
-jest.setTimeout(200000);
-
 let accessToken: string;
 let domain: Domain;
 let domainTestSearch: Domain;

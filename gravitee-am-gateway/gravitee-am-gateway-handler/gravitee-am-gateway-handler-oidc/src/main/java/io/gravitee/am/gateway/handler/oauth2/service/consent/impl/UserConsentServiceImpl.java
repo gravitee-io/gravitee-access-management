@@ -81,12 +81,18 @@ public class UserConsentServiceImpl implements UserConsentService {
     @Override
     public Single<List<ScopeApproval>> saveConsent(Client client, List<ScopeApproval> approvals, User principal) {
         // compute expiry date for each approval
-        var scopeApprovals = client.getScopeSettings().stream()
-                .filter(s -> nonNull(s.getScopeApproval()))
-                .collect(Collectors.toMap(ApplicationScopeSettings::getScope, Function.identity()));
-        var parameterizedScopes = client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope)
-                .filter(scopeManager::isParameterizedScope)
-                .collect(Collectors.toList());
+        // Handle case where client.getScopeSettings() might be null or empty (e.g., scopes from protected resources)
+        var scopeApprovals = client.getScopeSettings() != null 
+                ? client.getScopeSettings().stream()
+                    .filter(s -> nonNull(s.getScopeApproval()))
+                    .collect(Collectors.toMap(ApplicationScopeSettings::getScope, Function.identity()))
+                : Map.<String, ApplicationScopeSettings>of();
+        
+        var parameterizedScopes = client.getScopeSettings() != null 
+                ? client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope)
+                    .filter(scopeManager::isParameterizedScope)
+                    .collect(Collectors.toList())
+                : List.<String>of();
 
         approvals.forEach(a -> a.setExpiresAt(computeExpiry(scopeApprovals, a.getScope(), parameterizedScopes)));
         // save consent
