@@ -19,7 +19,9 @@ import io.gravitee.am.common.event.EventManager;
 import io.gravitee.am.common.event.ProtectedResourceEvent;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.McpTool;
 import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ProtectedResourceFeature;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -28,14 +30,20 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class ProtectedResourceManagerImpl extends AbstractService implements ProtectedResourceManager, InitializingBean, EventListener<ProtectedResourceEvent, Payload> {
@@ -153,5 +161,26 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     @Override
     public ProtectedResource get(String protectedResourceId) {
         return protectedResourceId != null ? resources.get(protectedResourceId) : null;
+    }
+
+    @Override
+    public Single<Set<String>> getScopesForResources(String domainId, Set<String> requestedResources) {
+        return Single.<Set<String>>fromCallable(() -> {
+            if (requestedResources == null || requestedResources.isEmpty()) {
+                return Collections.emptySet();
+            }
+
+            return resources.values()
+                    .stream()
+                    .filter(resource -> resource.getDomainId() != null && resource.getDomainId().equals(domainId))
+                    .filter(resource -> resource.getResourceIdentifiers() != null
+                            && !Collections.disjoint(resource.getResourceIdentifiers(), requestedResources))
+                    .flatMap(resource -> resource.getFeatures() != null ? resource.getFeatures().stream() : java.util.stream.Stream.empty())
+                    .filter(feature -> feature.getType() == ProtectedResourceFeature.Type.MCP_TOOL)
+                    .map(feature -> ((McpTool) feature).getScopes())
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toSet());
+        }).subscribeOn(Schedulers.computation());
     }
 }

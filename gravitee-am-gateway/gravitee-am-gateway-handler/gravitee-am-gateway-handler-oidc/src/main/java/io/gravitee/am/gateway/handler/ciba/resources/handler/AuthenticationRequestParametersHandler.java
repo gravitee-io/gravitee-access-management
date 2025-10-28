@@ -22,6 +22,7 @@ import io.gravitee.am.common.oidc.Scope;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequestResolver;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
@@ -53,11 +54,11 @@ public class AuthenticationRequestParametersHandler implements Handler<RoutingCo
     private final CibaAuthenticationRequestResolver cibaRequestResolver;
     private final int bindingMessageMaxLength;
 
-    public AuthenticationRequestParametersHandler(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager) {
+    public AuthenticationRequestParametersHandler(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager, ProtectedResourceManager protectedResourceManager) {
         this.bindingMessageMaxLength = domain.getOidc().getCibaSettings().getBindingMessageLength();
 
         cibaRequestResolver = new CibaAuthenticationRequestResolver(domain, jwsService, jwkService, userService, subjectManager);
-        cibaRequestResolver.setScopeManager(scopeManager);
+        cibaRequestResolver.setManagers(scopeManager, protectedResourceManager);
     }
 
     @Override

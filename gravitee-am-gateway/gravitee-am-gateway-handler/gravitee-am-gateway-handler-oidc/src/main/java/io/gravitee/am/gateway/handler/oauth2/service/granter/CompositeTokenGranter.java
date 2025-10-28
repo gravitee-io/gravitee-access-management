@@ -21,6 +21,7 @@ import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.service.uma.UMAResourceGatewayService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
 import io.gravitee.am.gateway.handler.oauth2.exception.UnsupportedGrantTypeException;
@@ -100,6 +101,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     private ScopeManager scopeManager;
 
     @Autowired
+    private ProtectedResourceManager protectedResourceManager;
+
+    @Autowired
     private AuthenticationRequestService authenticationRequestService;
 
     @Autowired
@@ -148,7 +152,7 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
-        this.tokenRequestResolver.setScopeManager(this.scopeManager);
+        this.tokenRequestResolver.setManagers(this.scopeManager, this.protectedResourceManager);
         addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService, rulesEngine));
         addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, rulesEngine));
         addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, environment, rulesEngine));

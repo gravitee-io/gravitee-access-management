@@ -21,6 +21,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.api.AbstractProtocolProvider;
 import io.gravitee.am.gateway.handler.common.client.ClientSyncService;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceSyncService;
 import io.gravitee.am.gateway.handler.common.service.DeviceGatewayService;
 import io.gravitee.am.gateway.handler.common.service.UserActivityGatewayService;
@@ -201,6 +202,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
     private ScopeManager scopeManager;
 
     @Autowired
+    private ProtectedResourceManager protectedResourceManager;
+
+    @Autowired
     private DeviceGatewayService deviceService;
 
     @Autowired
@@ -284,7 +288,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(returnUrlValidationHandler)
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, domain))
                 .handler(authenticationFlowHandler.create())
-                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationRequestMFAPromptHandler())
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
@@ -297,7 +301,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
-                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)
@@ -309,7 +313,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseProviderConfigurationHandler(openIDDiscoveryService))
                 .handler(authenticationFlowContextHandler)
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
-                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, executionContextFactory))
+                .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(userConsentPrepareContextHandler)

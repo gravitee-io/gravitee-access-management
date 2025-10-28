@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
@@ -38,8 +39,11 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
 
     private ScopeManager scopeManager;
 
-    public void setScopeManager(ScopeManager scopeManager) {
+    private ProtectedResourceManager protectedResourceManager;
+
+    public void setManagers(ScopeManager scopeManager, ProtectedResourceManager protectedResourceManager) {
         this.scopeManager = scopeManager;
+        this.protectedResourceManager = protectedResourceManager;
     }
 
     /**
@@ -120,6 +124,19 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             request.setScopes(resolvedScopes);
         }
 
+        if (request.getResources() != null && !request.getResources().isEmpty()) {
+            // For each protected resource, check if any resource identifiers match the request resources
+            // and extract all scopes from matching protected resources (reactive)
+            return protectedResourceManager.getScopesForResources(client.getDomain(), request.getResources())
+                    .flatMap(extractedScopes -> {
+                        if (!extractedScopes.isEmpty()) {
+                            request.setScopes(extractedScopes);
+                            return Single.just(request);
+                        } else {
+                            return Single.error(new InvalidScopeException("No scopes found for the requested resources"));
+                        }
+                    });
+        }
         return Single.just(request);
     }
 
