@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.model.Role;
@@ -47,12 +48,15 @@ public class TokenRequestResolverTest {
     @Mock
     private ScopeManager scopeManager;
 
+    @Mock
+    private ProtectedResourceManager protectedResourceManager;
+
     private final TokenRequestResolver tokenRequestResolver = new TokenRequestResolver();
 
     @Before
     public void init() {
         reset(scopeManager);
-        tokenRequestResolver.setScopeManager(scopeManager);
+        tokenRequestResolver.setManagers(scopeManager, protectedResourceManager);
     }
     @Test
     public void shouldNotResolveTokenRequest_unknownScope() {

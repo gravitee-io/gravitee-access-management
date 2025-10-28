@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.identityprovider.api.SimpleAuthenticationContext;
@@ -33,6 +34,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
@@ -43,15 +45,18 @@ import static org.mockito.Mockito.when;
 @RunWith(MockitoJUnitRunner.class)
 public class AuthorizationRequestResolverTest {
 
-    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver(Mockito.mock());
+    private final AuthorizationRequestResolver authorizationRequestResolver = new AuthorizationRequestResolver(Mockito.mock(), Mockito.mock());
 
     @Mock
     private ScopeManager scopeManager;
 
+    @Mock
+    private ProtectedResourceManager protectedResourceManager;
+
     @Before
     public void init() {
         reset(scopeManager);
-        authorizationRequestResolver.setScopeManager(scopeManager);
+        authorizationRequestResolver.setManagers(scopeManager, protectedResourceManager);
     }
 
     @Test

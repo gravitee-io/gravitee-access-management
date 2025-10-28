@@ -18,7 +18,9 @@ package io.gravitee.am.gateway.handler.common.protectedresource;
 import io.gravitee.am.common.event.ProtectedResourceEvent;
 import io.gravitee.am.gateway.handler.common.protectedresource.impl.ProtectedResourceManagerImpl;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.McpTool;
 import io.gravitee.am.model.ProtectedResource;
+import io.gravitee.am.model.ProtectedResourceFeature;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
@@ -33,6 +35,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,10 +78,12 @@ public class ProtectedResourceManagerTest {
 
         ProtectedResource res1 = new ProtectedResource();
         res1.setId("resource1");
+        res1.setDomainId("domain_id");
         manager.deploy(res1);
 
         ProtectedResource res2 = new ProtectedResource();
         res2.setId("resource2");
+        res2.setDomainId("domain_id");
         manager.deploy(res2);
     }
 
@@ -307,5 +315,309 @@ public class ProtectedResourceManagerTest {
         await().pollDelay(100, TimeUnit.MILLISECONDS)
                 .atMost(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> assertThat(manager.entities().size()).isEqualTo(initialSize));
+    }
+
+    @Test
+    public void getScopesForResources_shouldReturnEmptySetWhenNoResourcesProvided() {
+        Set<String> scopes = manager.getScopesForResources("domain_id", Collections.emptySet()).blockingGet();
+        assertThat(scopes).isEmpty();
+    }
+
+    @Test
+    public void getScopesForResources_shouldReturnEmptySetWhenResourcesAreNull() {
+        Set<String> scopes = manager.getScopesForResources("domain_id", null).blockingGet();
+        assertThat(scopes).isEmpty();
+    }
+
+    @Test
+    public void getScopesForResources_shouldReturnScopesForMatchingResource() {
+        // Setup protected resource with matching resource identifiers
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1", "resource://api2"));
+
+        // Create MCP tool with scopes
+        McpTool tool = new McpTool();
+        tool.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool.setScopes(Arrays.asList("scope1", "scope2", "scope3"));
+
+        resource.setFeatures(Collections.singletonList(tool));
+
+        manager.deploy(resource);
+
+        // Request scopes for matching resource
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2", "scope3");
+    }
+
+    @Test
+    public void getScopesForResources_shouldReturnScopesFromMultipleMatchingResources() {
+        // Setup first protected resource
+        ProtectedResource resource1 = new ProtectedResource();
+        resource1.setId("resource1");
+        resource1.setDomainId("domain_id");
+        resource1.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        McpTool tool1 = new McpTool();
+        tool1.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool1.setScopes(Arrays.asList("scope1", "scope2"));
+        resource1.setFeatures(Collections.singletonList(tool1));
+
+        // Setup second protected resource
+        ProtectedResource resource2 = new ProtectedResource();
+        resource2.setId("resource2");
+        resource2.setDomainId("domain_id");
+        resource2.setResourceIdentifiers(Arrays.asList("resource://api2"));
+
+        McpTool tool2 = new McpTool();
+        tool2.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool2.setScopes(Arrays.asList("scope3", "scope4"));
+        resource2.setFeatures(Collections.singletonList(tool2));
+
+        manager.deploy(resource1);
+        manager.deploy(resource2);
+
+        // Request scopes for both resources
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1", "resource://api2"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2", "scope3", "scope4");
+    }
+
+    @Test
+    public void getScopesForResources_shouldReturnEmptySetWhenNoMatchingResources() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        McpTool tool = new McpTool();
+        tool.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool.setScopes(Arrays.asList("scope1", "scope2"));
+        resource.setFeatures(Collections.singletonList(tool));
+
+        manager.deploy(resource);
+
+        // Request scopes for non-matching resource
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api99"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).isEmpty();
+    }
+
+    @Test
+    public void getScopesForResources_shouldFilterByDomainId() {
+        // Setup resource in domain1
+        ProtectedResource resource1 = new ProtectedResource();
+        resource1.setId("resource1");
+        resource1.setDomainId("domain1");
+        resource1.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        McpTool tool1 = new McpTool();
+        tool1.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool1.setScopes(Arrays.asList("scope1", "scope2"));
+        resource1.setFeatures(Collections.singletonList(tool1));
+
+        // Setup resource in domain2
+        ProtectedResource resource2 = new ProtectedResource();
+        resource2.setId("resource2");
+        resource2.setDomainId("domain2");
+        resource2.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        McpTool tool2 = new McpTool();
+        tool2.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool2.setScopes(Arrays.asList("scope3", "scope4"));
+        resource2.setFeatures(Collections.singletonList(tool2));
+
+        manager.deploy(resource1);
+        manager.deploy(resource2);
+
+        // Request scopes for domain1 only
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
+        Set<String> scopes = manager.getScopesForResources("domain1", requestedResources).blockingGet();
+
+        assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2");
+    }
+
+    @Test
+    public void getScopesForResources_shouldHandleResourceWithMultipleFeatures() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        McpTool tool1 = new McpTool();
+        tool1.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool1.setScopes(Arrays.asList("scope1", "scope2"));
+
+        McpTool tool2 = new McpTool();
+        tool2.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool2.setScopes(Arrays.asList("scope3", "scope4"));
+
+        resource.setFeatures(Arrays.asList(tool1, tool2));
+
+        manager.deploy(resource);
+
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2", "scope3", "scope4");
+    }
+
+    @Test
+    public void getScopesForResources_shouldHandleNullFeatures() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1"));
+        resource.setFeatures(null);
+
+        manager.deploy(resource);
+
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).isEmpty();
+    }
+
+    @Test
+    public void getScopesForResources_shouldHandleEmptyFeatures() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1"));
+        resource.setFeatures(Collections.emptyList());
+
+        manager.deploy(resource);
+
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).isEmpty();
+    }
+
+    @Test
+    public void getScopesForResources_shouldHandleNullScopes() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        McpTool tool = new McpTool();
+        tool.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool.setScopes(null);
+
+        resource.setFeatures(Collections.singletonList(tool));
+
+        manager.deploy(resource);
+
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).isEmpty();
+    }
+
+    @Test
+    public void getScopesForResources_shouldHandleNullResourceIdentifiers() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(null);
+
+        McpTool tool = new McpTool();
+        tool.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool.setScopes(Arrays.asList("scope1", "scope2"));
+
+        resource.setFeatures(Collections.singletonList(tool));
+
+        manager.deploy(resource);
+
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).isEmpty();
+    }
+
+    @Test
+    public void getScopesForResources_shouldDeduplicateScopes() {
+        ProtectedResource resource1 = new ProtectedResource();
+        resource1.setId("resource1");
+        resource1.setDomainId("domain_id");
+        resource1.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        McpTool tool1 = new McpTool();
+        tool1.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool1.setScopes(Arrays.asList("scope1", "scope2"));
+        resource1.setFeatures(Collections.singletonList(tool1));
+
+        ProtectedResource resource2 = new ProtectedResource();
+        resource2.setId("resource2");
+        resource2.setDomainId("domain_id");
+        resource2.setResourceIdentifiers(Arrays.asList("resource://api2"));
+
+        McpTool tool2 = new McpTool();
+        tool2.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool2.setScopes(Arrays.asList("scope2", "scope3")); // scope2 is duplicate
+
+        resource2.setFeatures(Collections.singletonList(tool2));
+
+        manager.deploy(resource1);
+        manager.deploy(resource2);
+
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1", "resource://api2"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2", "scope3");
+    }
+
+    @Test
+    public void getScopesForResources_shouldOnlyIncludeMcpToolFeatures() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1"));
+
+        // Create an MCP_TOOL feature
+        McpTool mcpTool = new McpTool();
+        mcpTool.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        mcpTool.setScopes(Arrays.asList("scope1", "scope2"));
+
+        // Create a non-MCP_TOOL feature (using base class)
+        ProtectedResourceFeature otherFeature = new ProtectedResourceFeature();
+        otherFeature.setType(null); // Different type
+
+        resource.setFeatures(Arrays.asList(mcpTool, otherFeature));
+
+        manager.deploy(resource);
+
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        // Should only return scopes from MCP_TOOL feature
+        assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2");
+    }
+
+    @Test
+    public void getScopesForResources_shouldMatchPartialResourceIdentifiers() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("resource1");
+        resource.setDomainId("domain_id");
+        resource.setResourceIdentifiers(Arrays.asList("resource://api1", "resource://api2", "resource://api3"));
+
+        McpTool tool = new McpTool();
+        tool.setType(ProtectedResourceFeature.Type.MCP_TOOL);
+        tool.setScopes(Arrays.asList("scope1", "scope2"));
+        resource.setFeatures(Collections.singletonList(tool));
+
+        manager.deploy(resource);
+
+        // Request with only one matching identifier
+        Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api2", "resource://non-existent"));
+        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+
+        assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2");
     }
 }

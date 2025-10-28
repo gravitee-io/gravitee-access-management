@@ -30,6 +30,7 @@ import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.ciba.CIBAProvider;
 import io.gravitee.am.gateway.handler.ciba.service.request.CibaAuthenticationRequest;
 import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.user.UserGatewayService;
 import io.gravitee.am.gateway.handler.common.vertx.RxWebTestBase;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
@@ -83,6 +84,8 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
     private ScopeManager scopeManager;
     @Mock
     private SubjectManager subjectManager;
+    @Mock
+    private ProtectedResourceManager protectedResourceManager;
     private OpenIDProviderMetadata openIDProviderMetadata;
 
     private Client client;
@@ -95,7 +98,7 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
 
         when(domain.getOidc()).thenReturn(OIDCSettings.defaultSettings());
 
-        handlerUnderTest = new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager);
+        handlerUnderTest = new AuthenticationRequestParametersHandlerMock(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager);
         router.route(HttpMethod.POST, "/oidc/ciba/authenticate")
                 .handler(handlerUnderTest)
                 .handler(rc -> rc.response().end())
@@ -667,8 +670,8 @@ public class AuthenticationRequestParametersHandlerTest  extends RxWebTestBase {
     private class AuthenticationRequestParametersHandlerMock extends AuthenticationRequestParametersHandler {
         private CibaAuthenticationRequest cibaRequest;
 
-        public AuthenticationRequestParametersHandlerMock(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager) {
-            super(domain, jwsService, jwkService, userService, scopeManager, subjectManager);
+        public AuthenticationRequestParametersHandlerMock(Domain domain, JWSService jwsService, JWKService jwkService, UserGatewayService userService, ScopeManager scopeManager, SubjectManager subjectManager, ProtectedResourceManager protectedResourceManager) {
+            super(domain, jwsService, jwkService, userService, scopeManager, subjectManager, protectedResourceManager);
         }
 
         @Override
