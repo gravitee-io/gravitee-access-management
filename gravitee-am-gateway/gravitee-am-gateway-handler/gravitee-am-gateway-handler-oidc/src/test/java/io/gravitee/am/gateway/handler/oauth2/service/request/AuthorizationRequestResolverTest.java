@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
@@ -23,6 +24,8 @@ import io.gravitee.am.model.Role;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.application.ApplicationScopeSettings;
 import io.gravitee.am.model.oidc.Client;
+import io.gravitee.common.util.LinkedMultiValueMap;
+import io.gravitee.common.util.MultiValueMap;
 import io.gravitee.gateway.api.ExecutionContext;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -34,7 +37,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.util.*;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
@@ -371,6 +373,186 @@ public class AuthorizationRequestResolverTest {
 
         TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.evaluateELQueryParams(authorizationRequest, client, executionContext).test();
         testObserver.assertValue(value -> value.getRedirectUri().equals("https://test2.com/callback?param2=value2"));
+    }
+
+    @Test
+    public void shouldResolveAuthorizationRequest_withProtectedResourceScopes_requestedAll() {
+        final String scope = "read";
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2", "resource3");
+        final String redirectUri = "http://localhost:8080/callback";
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri(redirectUri);
+        
+        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.RESOURCE, "https://api.example.com");
+        authorizationRequest.setParameters(parameters);
+        
+        List<String> authScopes = new ArrayList<>();
+        authScopes.add(scope);
+        authScopes.addAll(protectedResourceScopes);
+        authorizationRequest.setScopes(new HashSet<>(authScopes));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        when(protectedResourceManager.getScopesForResources(Set.of("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Should have client scope + all requested protected resource scopes
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(scope);
+        expectedScopes.addAll(protectedResourceScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().size() == 4);
+    }
+
+    @Test
+    public void shouldResolveAuthorizationRequest_withProtectedResourceScopes_requestedSome() {
+        final String scope = "read";
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2", "resource3");
+        final String redirectUri = "http://localhost:8080/callback";
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri(redirectUri);
+        
+        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.RESOURCE, "https://api.example.com");
+        authorizationRequest.setParameters(parameters);
+        
+        List<String> authScopes = new ArrayList<>();
+        authScopes.add(scope);
+        authScopes.add(protectedResourceScopes.get(1)); // Request only the second protected resource scope
+        authorizationRequest.setScopes(new HashSet<>(authScopes));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        when(protectedResourceManager.getScopesForResources(Set.of("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Should only have client scope + the one requested protected resource scope
+        List<String> expectedScopes = Arrays.asList(scope, protectedResourceScopes.get(1));
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().size() == 2);
+    }
+
+    @Test
+    public void shouldNotResolveAuthorizationRequest_withProtectedResourceScopes_invalidScope() {
+        final String scope = "read";
+        final String invalidScope = "invalid";
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2", "resource3");
+        final String redirectUri = "http://localhost:8080/callback";
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri(redirectUri);
+        
+        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.RESOURCE, "https://api.example.com");
+        authorizationRequest.setParameters(parameters);
+        
+        authorizationRequest.setScopes(Set.of(scope, invalidScope));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        when(protectedResourceManager.getScopesForResources(Set.of("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidScopeException.class);
+    }
+
+    @Test
+    public void shouldResolveAuthorizationRequest_withProtectedResourceScopes_removesFromInvalidScopes() {
+        final String invalidScope = "invalidScope";
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2");
+        final String redirectUri = "http://localhost:8080/callback";
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri(redirectUri);
+        
+        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.RESOURCE, "https://api.example.com");
+        authorizationRequest.setParameters(parameters);
+        
+        // Request scopes that are not in client but ARE in protected resources
+        authorizationRequest.setScopes(Set.of("resource1", invalidScope));
+
+        Client client = new Client();
+        // Client has no scopes configured
+
+        when(protectedResourceManager.getScopesForResources(Set.of("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, null).test();
+        testObserver.assertNotComplete();
+        // Should fail because invalidScope is not in protected resources
+        testObserver.assertError(InvalidScopeException.class);
+    }
+
+    @Test
+    public void shouldResolveAuthorizationRequest_withProtectedResourceScopes_withUserScopes() {
+        final String clientScope = "read";
+        final List<String> userScopes = Arrays.asList("user1", "user2");
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2");
+        final String redirectUri = "http://localhost:8080/callback";
+
+        AuthorizationRequest authorizationRequest = new AuthorizationRequest();
+        authorizationRequest.setRedirectUri(redirectUri);
+        
+        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
+        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+        parameters.add(Parameters.RESOURCE, "https://api.example.com");
+        authorizationRequest.setParameters(parameters);
+
+        List<String> authScopes = new ArrayList<>();
+        authScopes.add(clientScope);
+        authScopes.addAll(userScopes);
+        authScopes.addAll(protectedResourceScopes);
+        authorizationRequest.setScopes(new HashSet<>(authScopes));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(clientScope);
+        client.setScopeSettings(Collections.singletonList(setting));
+        client.setEnhanceScopesWithUserPermissions(true);
+
+        User user = new User();
+        Role role = new Role();
+        role.setOauthScopes(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        when(protectedResourceManager.getScopesForResources(Set.of("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<AuthorizationRequest> testObserver = authorizationRequestResolver.resolve(authorizationRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Should have client scope + user scopes + requested protected resource scopes
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(clientScope);
+        expectedScopes.addAll(userScopes);
+        expectedScopes.addAll(protectedResourceScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().size() == 5);
     }
 
 

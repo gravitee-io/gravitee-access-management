@@ -319,13 +319,13 @@ public class ProtectedResourceManagerTest {
 
     @Test
     public void getScopesForResources_shouldReturnEmptySetWhenNoResourcesProvided() {
-        Set<String> scopes = manager.getScopesForResources("domain_id", Collections.emptySet()).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(Collections.emptySet());
         assertThat(scopes).isEmpty();
     }
 
     @Test
     public void getScopesForResources_shouldReturnEmptySetWhenResourcesAreNull() {
-        Set<String> scopes = manager.getScopesForResources("domain_id", null).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(null);
         assertThat(scopes).isEmpty();
     }
 
@@ -348,7 +348,7 @@ public class ProtectedResourceManagerTest {
 
         // Request scopes for matching resource
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2", "scope3");
     }
@@ -382,7 +382,7 @@ public class ProtectedResourceManagerTest {
 
         // Request scopes for both resources
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1", "resource://api2"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2", "scope3", "scope4");
     }
@@ -403,17 +403,17 @@ public class ProtectedResourceManagerTest {
 
         // Request scopes for non-matching resource
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api99"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).isEmpty();
     }
 
     @Test
     public void getScopesForResources_shouldFilterByDomainId() {
-        // Setup resource in domain1
+        // Setup resource in correct domain
         ProtectedResource resource1 = new ProtectedResource();
         resource1.setId("resource1");
-        resource1.setDomainId("domain1");
+        resource1.setDomainId("domain_id");
         resource1.setResourceIdentifiers(Arrays.asList("resource://api1"));
 
         McpTool tool1 = new McpTool();
@@ -421,10 +421,10 @@ public class ProtectedResourceManagerTest {
         tool1.setScopes(Arrays.asList("scope1", "scope2"));
         resource1.setFeatures(Collections.singletonList(tool1));
 
-        // Setup resource in domain2
+        // Setup resource in different domain (should be filtered out)
         ProtectedResource resource2 = new ProtectedResource();
         resource2.setId("resource2");
-        resource2.setDomainId("domain2");
+        resource2.setDomainId("other_domain");
         resource2.setResourceIdentifiers(Arrays.asList("resource://api1"));
 
         McpTool tool2 = new McpTool();
@@ -435,9 +435,9 @@ public class ProtectedResourceManagerTest {
         manager.deploy(resource1);
         manager.deploy(resource2);
 
-        // Request scopes for domain1 only
+        // Request scopes - should only return scopes from domain_id
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
-        Set<String> scopes = manager.getScopesForResources("domain1", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2");
     }
@@ -462,7 +462,7 @@ public class ProtectedResourceManagerTest {
         manager.deploy(resource);
 
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2", "scope3", "scope4");
     }
@@ -478,7 +478,7 @@ public class ProtectedResourceManagerTest {
         manager.deploy(resource);
 
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).isEmpty();
     }
@@ -494,7 +494,7 @@ public class ProtectedResourceManagerTest {
         manager.deploy(resource);
 
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).isEmpty();
     }
@@ -515,7 +515,7 @@ public class ProtectedResourceManagerTest {
         manager.deploy(resource);
 
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).isEmpty();
     }
@@ -536,7 +536,7 @@ public class ProtectedResourceManagerTest {
         manager.deploy(resource);
 
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).isEmpty();
     }
@@ -568,7 +568,7 @@ public class ProtectedResourceManagerTest {
         manager.deploy(resource2);
 
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1", "resource://api2"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2", "scope3");
     }
@@ -594,7 +594,7 @@ public class ProtectedResourceManagerTest {
         manager.deploy(resource);
 
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api1"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         // Should only return scopes from MCP_TOOL feature
         assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2");
@@ -616,7 +616,7 @@ public class ProtectedResourceManagerTest {
 
         // Request with only one matching identifier
         Set<String> requestedResources = new HashSet<>(Arrays.asList("resource://api2", "resource://non-existent"));
-        Set<String> scopes = manager.getScopesForResources("domain_id", requestedResources).blockingGet();
+        Set<String> scopes = manager.getScopesForResources(requestedResources);
 
         assertThat(scopes).containsExactlyInAnyOrder("scope1", "scope2");
     }

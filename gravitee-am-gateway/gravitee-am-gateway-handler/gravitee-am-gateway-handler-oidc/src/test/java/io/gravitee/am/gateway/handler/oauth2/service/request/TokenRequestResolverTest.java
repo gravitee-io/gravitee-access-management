@@ -344,4 +344,150 @@ public class TokenRequestResolverTest {
         testObserver.assertValue(request -> request.getScopes().iterator().next().equals(scope));
     }
 
+    @Test
+    public void shouldResolveTokenRequest_withProtectedResourceScopes_requestedAll() {
+        final String scope = "read";
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2", "resource3");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setResources(Collections.singleton("https://api.example.com"));
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(scope);
+        reqScopes.addAll(protectedResourceScopes);
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        when(protectedResourceManager.getScopesForResources(Collections.singleton("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Should have client scope + all requested protected resource scopes
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(scope);
+        expectedScopes.addAll(protectedResourceScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().size() == 4);
+    }
+
+    @Test
+    public void shouldResolveTokenRequest_withProtectedResourceScopes_requestedSome() {
+        final String scope = "read";
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2", "resource3");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setResources(Collections.singleton("https://api.example.com"));
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(scope);
+        reqScopes.add(protectedResourceScopes.get(1)); // Request only the second protected resource scope
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        when(protectedResourceManager.getScopesForResources(Collections.singleton("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Should only have client scope + the one requested protected resource scope
+        List<String> expectedScopes = Arrays.asList(scope, protectedResourceScopes.get(1));
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().size() == 2);
+    }
+
+    @Test
+    public void shouldNotResolveTokenRequest_withProtectedResourceScopes_invalidScope() {
+        final String scope = "read";
+        final String invalidScope = "invalid";
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2", "resource3");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setResources(Collections.singleton("https://api.example.com"));
+        tokenRequest.setScopes(new HashSet<>(Arrays.asList(scope, invalidScope)));
+
+        Client client = new Client();
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(scope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        when(protectedResourceManager.getScopesForResources(Collections.singleton("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, null).test();
+        testObserver.assertNotComplete();
+        testObserver.assertError(InvalidScopeException.class);
+    }
+
+    @Test
+    public void shouldResolveTokenRequest_withProtectedResourceScopes_removesFromInvalidScopes() {
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setResources(Collections.singleton("https://api.example.com"));
+        // Request scopes that are not in client but ARE in protected resources
+        tokenRequest.setScopes(Collections.singleton("resource1"));
+
+        Client client = new Client();
+        // Client has no scopes configured
+
+        when(protectedResourceManager.getScopesForResources(Collections.singleton("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, null).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Should have the protected resource scope that was requested
+        testObserver.assertValue(request -> request.getScopes().contains("resource1") && request.getScopes().size() == 1);
+    }
+
+    @Test
+    public void shouldResolveTokenRequest_withProtectedResourceScopes_withUserScopes() {
+        final String clientScope = "read";
+        final List<String> userScopes = Arrays.asList("user1", "user2");
+        final List<String> protectedResourceScopes = Arrays.asList("resource1", "resource2");
+
+        TokenRequest tokenRequest = new TokenRequest();
+        tokenRequest.setResources(Collections.singleton("https://api.example.com"));
+        List<String> reqScopes = new ArrayList<>();
+        reqScopes.add(clientScope);
+        reqScopes.addAll(userScopes);
+        reqScopes.addAll(protectedResourceScopes);
+        tokenRequest.setScopes(new HashSet<>(reqScopes));
+
+        Client client = new Client();
+        client.setEnhanceScopesWithUserPermissions(true);
+        ApplicationScopeSettings setting = new ApplicationScopeSettings();
+        setting.setScope(clientScope);
+        client.setScopeSettings(Collections.singletonList(setting));
+
+        User user = new User();
+        Role role = new Role();
+        role.setOauthScopes(userScopes);
+        user.setRolesPermissions(Collections.singleton(role));
+
+        when(protectedResourceManager.getScopesForResources(Collections.singleton("https://api.example.com")))
+                .thenReturn(new HashSet<>(protectedResourceScopes));
+
+        TestObserver<TokenRequest> testObserver = tokenRequestResolver.resolve(tokenRequest, client, user).test();
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+
+        // Should have client scope + user scopes + requested protected resource scopes
+        List<String> expectedScopes = new ArrayList<>();
+        expectedScopes.add(clientScope);
+        expectedScopes.addAll(userScopes);
+        expectedScopes.addAll(protectedResourceScopes);
+        testObserver.assertValue(request -> request.getScopes().containsAll(expectedScopes) && request.getScopes().size() == 5);
+    }
+
 }
