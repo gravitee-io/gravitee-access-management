@@ -21,10 +21,11 @@ import {
   HttpRequest,
   HttpResponse,
   HttpResponseBase,
+  HttpContextToken,
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { get } from 'lodash';
 
@@ -32,15 +33,20 @@ import { SnackbarService } from '../services/snackbar.service';
 import { AuthService } from '../services/auth.service';
 import { EnvironmentService } from '../services/environment.service';
 
+/**
+ * HTTP context token to skip 404 redirect for requests that handle 404s gracefully
+ */
+export const SKIP_404_REDIRECT = new HttpContextToken<boolean>(() => false);
+
 @Injectable()
 export class HttpRequestInterceptor implements HttpInterceptor {
   private xsrfToken: string;
 
   constructor(
-    private snackbarService: SnackbarService,
-    private authService: AuthService,
-    private environmentService: EnvironmentService,
-    private router: Router,
+    private readonly snackbarService: SnackbarService,
+    private readonly authService: AuthService,
+    private readonly environmentService: EnvironmentService,
+    private readonly router: Router,
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
@@ -55,6 +61,8 @@ export class HttpRequestInterceptor implements HttpInterceptor {
     if (this.environmentService.getCurrentEnvironment()) {
       envId = this.environmentService.getCurrentEnvironment().id;
     }
+
+    const shouldSkip404Redirect = request.context.get(SKIP_404_REDIRECT);
 
     request = request.clone({
       withCredentials: true,
@@ -71,6 +79,9 @@ export class HttpRequestInterceptor implements HttpInterceptor {
         },
         (err: unknown) => {
           if (get(err, 'status') === 404) {
+            if (shouldSkip404Redirect) {
+              return of(null);
+            }
             this.router.navigate(['/404']);
           }
           if (err instanceof HttpErrorResponse) {
