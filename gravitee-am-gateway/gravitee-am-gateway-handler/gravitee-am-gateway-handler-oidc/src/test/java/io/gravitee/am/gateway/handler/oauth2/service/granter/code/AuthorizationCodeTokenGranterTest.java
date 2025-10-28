@@ -75,7 +75,7 @@ public class AuthorizationCodeTokenGranterTest {
     @Before
     public void init() {
         Mockito.when(env.getProperty(any(), Mockito.eq(Boolean.class), any())).thenReturn(true);
-        granter = new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, env, rulesEngine);
+        granter = new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, null, env, rulesEngine);
     }
 
     @Test

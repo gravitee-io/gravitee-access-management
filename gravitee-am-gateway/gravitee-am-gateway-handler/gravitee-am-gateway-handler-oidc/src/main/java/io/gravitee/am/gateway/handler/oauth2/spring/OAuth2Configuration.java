@@ -44,6 +44,8 @@ import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenManagerImpl
 import io.gravitee.am.gateway.handler.oauth2.service.token.impl.TokenServiceImpl;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.ResourceValidationServiceImpl;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.ResourceConsistencyValidationService;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.ResourceConsistencyValidationServiceImpl;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -113,10 +115,15 @@ public class OAuth2Configuration implements ProtocolConfiguration {
         return new ScopeManagerImpl();
     }
 
-    @Bean
-    public ResourceValidationService resourceValidationService(ProtectedResourceManager protectedResourceManager) {
-        return new ResourceValidationServiceImpl(protectedResourceManager);
-    }
+        @Bean
+        public ResourceValidationService resourceValidationService(ProtectedResourceManager protectedResourceManager) {
+            return new ResourceValidationServiceImpl(protectedResourceManager);
+        }
+
+        @Bean
+        public ResourceConsistencyValidationService resourceConsistencyValidationService() {
+            return new ResourceConsistencyValidationServiceImpl();
+        }
 
     @Bean
     public ProtocolProvider oAuth2Provider() {
