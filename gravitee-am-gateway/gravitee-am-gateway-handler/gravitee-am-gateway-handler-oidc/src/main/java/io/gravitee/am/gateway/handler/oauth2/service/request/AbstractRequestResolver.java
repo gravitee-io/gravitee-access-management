@@ -106,6 +106,22 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             }
         }
 
+        // resource scopes
+        if (request.getResources() != null && !request.getResources().isEmpty()) {
+            Set<String> protectedResourceScopes = protectedResourceManager.getScopesForResources(request.getResources());
+            if (requestScopes != null) {
+                requestScopes.forEach(scope -> {
+                    if (!protectedResourceScopes.isEmpty() && protectedResourceScopes.contains(scope)) {
+                        resolvedScopes.add(scope);
+                        invalidScopes.remove(scope);
+                    } else if (!resolvedScopes.contains(scope) && !clientResolvedScopes.contains(scope)) {
+                        // Mark as invalid if not already resolved by client or user scopes
+                        invalidScopes.add(scope);
+                    }
+                });
+            }
+        }
+
         if (!invalidScopes.isEmpty()) {
             return Single.error(new InvalidScopeException("Invalid scope(s): " + String.join(SCOPE_DELIMITER, invalidScopes)));
         }
@@ -122,18 +138,6 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
                 || requestScopes.stream().allMatch(scope -> scope.equals(OPENID.getKey()))
                 || scopeManager.alwaysProvideEnhancedScopes()) {
             request.setScopes(resolvedScopes);
-        }
-
-        if (request.getResources() != null && !request.getResources().isEmpty()) {
-            // For each protected resource, check if any resource identifiers match the request resources
-            // and extract all scopes from matching protected resources (reactive)
-            return protectedResourceManager.getScopesForResources(client.getDomain(), request.getResources())
-                    .map(extractedScopes -> {
-                        if (!extractedScopes.isEmpty()) {
-                            request.setScopes(extractedScopes);
-                        }
-                        return request;
-                    });
         }
         return Single.just(request);
     }

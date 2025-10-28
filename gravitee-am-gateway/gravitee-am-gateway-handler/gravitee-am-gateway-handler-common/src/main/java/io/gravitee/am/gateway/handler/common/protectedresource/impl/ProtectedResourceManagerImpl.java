@@ -30,7 +30,6 @@ import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Flowable;
-import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
@@ -44,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class ProtectedResourceManagerImpl extends AbstractService implements ProtectedResourceManager, InitializingBean, EventListener<ProtectedResourceEvent, Payload> {
@@ -164,23 +164,21 @@ public class ProtectedResourceManagerImpl extends AbstractService implements Pro
     }
 
     @Override
-    public Single<Set<String>> getScopesForResources(String domainId, Set<String> requestedResources) {
-        return Single.<Set<String>>fromCallable(() -> {
-            if (requestedResources == null || requestedResources.isEmpty()) {
-                return Collections.emptySet();
-            }
+    public Set<String> getScopesForResources(Set<String> requestedResources) {
+        if (requestedResources == null || requestedResources.isEmpty()) {
+            return Collections.emptySet();
+        }
 
-            return resources.values()
-                    .stream()
-                    .filter(resource -> resource.getDomainId() != null && resource.getDomainId().equals(domainId))
-                    .filter(resource -> resource.getResourceIdentifiers() != null
-                            && !Collections.disjoint(resource.getResourceIdentifiers(), requestedResources))
-                    .flatMap(resource -> resource.getFeatures() != null ? resource.getFeatures().stream() : java.util.stream.Stream.empty())
-                    .filter(feature -> feature.getType() == ProtectedResourceFeature.Type.MCP_TOOL)
-                    .map(feature -> ((McpTool) feature).getScopes())
-                    .filter(Objects::nonNull)
-                    .flatMap(List::stream)
-                    .collect(Collectors.toSet());
-        }).subscribeOn(Schedulers.computation());
+        return resources.values()
+                .stream()
+                .filter(resource -> resource.getDomainId() != null && resource.getDomainId().equals(domain.getId()))
+                .filter(resource -> resource.getResourceIdentifiers() != null
+                        && !Collections.disjoint(resource.getResourceIdentifiers(), requestedResources))
+                .flatMap(resource -> Stream.ofNullable(resource.getFeatures()).flatMap(Collection::stream))
+                .filter(feature -> feature.getType() == ProtectedResourceFeature.Type.MCP_TOOL)
+                .map(feature -> ((McpTool) feature).getScopes())
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .collect(Collectors.toSet());
     }
 }

@@ -17,7 +17,6 @@ package io.gravitee.am.gateway.handler.common.protectedresource;
 
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.common.service.Service;
-import io.reactivex.rxjava3.core.Single;
 
 import java.util.Collection;
 import java.util.Set;
@@ -35,10 +34,9 @@ public interface ProtectedResourceManager extends Service {
     /**
      * Get scopes for the given resource identifiers from protected resources in the specified domain
      *
-     * @param domainId the domain ID
      * @param requestedResources the resource identifiers to match
-     * @return Single emitting set of scopes extracted from matching protected resources
+     * @return set of scopes extracted from matching protected resources
      */
-    Single<Set<String>> getScopesForResources(String domainId, Set<String> requestedResources);
+    Set<String> getScopesForResources(Set<String> requestedResources);
 
 }
