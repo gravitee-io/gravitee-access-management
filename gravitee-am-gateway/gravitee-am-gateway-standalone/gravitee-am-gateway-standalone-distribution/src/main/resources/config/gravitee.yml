@@ -176,7 +176,6 @@ services:
     delay: 5000
     unit: MILLISECONDS
 
-
 # Configuration of additional reporters
 #reporters:
 #  # settings about audit common to all reporters
@@ -334,6 +333,8 @@ handlers:
   oauth2:
     response:
       strict: false
+#    introspect: # Enables the inclusion of the audience claim in the introspection response.
+#      allowAudience: true
   scim:
     bulk:
       maxRequestLength: 1048576

@@ -14021,7 +14021,6 @@
 											"    pm.expect(body.active).to.eql(true);",
 											"    pm.expect(body.client_id).to.eql(pm.environment.get('crossClientClientId'));",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
-											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -14082,7 +14081,6 @@
 											"    pm.expect(body.active).to.eql(true);",
 											"    pm.expect(body.client_id).to.eql(pm.environment.get('crossClientClientId'));",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
-											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -15057,7 +15055,6 @@
 											"    pm.expect(body.client_id).to.eql(pm.environment.get('clientId1'));",
 											"    pm.expect(body.username).to.eql(\"user\");",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
-											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -15125,7 +15122,6 @@
 											"    pm.expect(body.client_id).to.eql(pm.environment.get('clientId2'));",
 											"    pm.expect(body.username).to.eql(\"user\");",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
-											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
@@ -15265,7 +15261,6 @@
 											"    pm.expect(body.client_id).to.eql(pm.environment.get('clientId2'));",
 											"    pm.expect(body.username).to.eql(\"user\");",
 											"    pm.expect(body.token_type).to.eql(\"bearer\");",
-											"    pm.expect(body).to.not.have.property('aud');",
 											"});"
 										],
 										"type": "text/javascript"
