@@ -53,6 +53,7 @@ import io.gravitee.common.http.HttpHeaders;
 import io.gravitee.common.http.MediaType;
 import io.gravitee.common.util.MultiValueMap;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.json.JsonObject;
 import io.vertx.rxjava3.core.buffer.Buffer;
 import io.vertx.rxjava3.ext.web.client.HttpRequest;
@@ -118,7 +119,9 @@ public abstract class AbstractOpenIDConnectAuthenticationProvider extends Abstra
         }
 
         return Maybe.fromCallable(() -> this.jwtProcessor.process(idToken, null))
+                .subscribeOn(Schedulers.io())
                 .onErrorResumeNext(ex -> Maybe.error(new BadCredentialsException(ex.getMessage())))
+                .observeOn(Schedulers.computation())
                 .map(jwtClaimsSet -> createUser(authContext, jwtClaimsSet.getClaims()));
     }
 
