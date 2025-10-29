@@ -19,6 +19,7 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.common.service.Service;
 
 import java.util.Collection;
+import java.util.Set;
 
 public interface ProtectedResourceManager extends Service {
 
@@ -29,5 +30,13 @@ public interface ProtectedResourceManager extends Service {
     Collection<ProtectedResource> entities();
 
     ProtectedResource get(String protectedResourceId);
+
+    /**
+     * Get scopes for the given resource identifiers from protected resources in the specified domain
+     *
+     * @param requestedResources the resource identifiers to match
+     * @return set of scopes extracted from matching protected resources
+     */
+    Set<String> getScopesForResources(Set<String> requestedResources);
 
 }
