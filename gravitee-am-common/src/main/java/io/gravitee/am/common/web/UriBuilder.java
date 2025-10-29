@@ -42,19 +42,19 @@ public class UriBuilder {
 
     private static final String USERINFO_REGEX = "([^@\\[/?#]*)";
 
-    private static final String HOST_IPV4_REGEX = "[^\\[/?#:]*";
+    private static final String HOST_IPV4_REGEX = "[^\\[/?#:]*+";
 
-    private static final String HOST_IPV6_REGEX = "\\[[\\p{XDigit}\\:\\.]*[%\\p{Alnum}]*\\]";
+    private static final String HOST_IPV6_REGEX = "(?>\\[[\\p{XDigit}\\:\\.]*+(?:%[\\p{Alnum}]+)?\\])";
 
     private static final String HOST_REGEX = "(" + HOST_IPV6_REGEX + "|" + HOST_IPV4_REGEX + ")";
 
     private static final String PORT_REGEX = "(\\d*(?:\\{[^/]+?\\})?)";
 
-    private static final String PATH_REGEX = "([^?#]*)";
+    private static final String PATH_REGEX = "([^?#]*+)";
 
-    private static final String QUERY_REGEX = "([^#]*)";
+    private static final String QUERY_REGEX = "([^#]*+)";
 
-    private static final String LAST_REGEX = "(.*)";
+    private static final String LAST_REGEX = "(.*+)";
 
     // Regex patterns that matches URIs. See RFC 3986, appendix B
     private static final Pattern URI_PATTERN = Pattern.compile(
