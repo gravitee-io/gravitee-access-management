@@ -286,7 +286,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new AuthorizationRequestParseRequestObjectHandler(requestObjectService, domain, parService, authenticationFlowContextService))
                 .handler(new AuthorizationRequestParseIdTokenHintHandler(idTokenService))
                 .handler(new AuthorizationRequestParseParametersHandler(domain))
-                .handler(new AuthorizationRequestResourceValidationHandler(resourceValidationService, domain))
+                .handler(new AuthorizationRequestResourceValidationHandler(resourceValidationService))
                 .handler(redirectUriValidationHandler)
                 .handler(returnUrlValidationHandler)
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, domain))
@@ -333,7 +333,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(corsHandler)
                 .handler(new TokenRequestParseHandler())
                 .handler(clientAuthHandler)
-                .handler(new TokenRequestResourceValidationHandler(resourceValidationService, domain))
+                .handler(new TokenRequestResourceValidationHandler(resourceValidationService))
                 .handler(new TokenEndpoint(tokenGranter));
 
         // Introspection endpoint

@@ -17,13 +17,9 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
 import io.gravitee.am.gateway.handler.oauth2.resources.request.TokenRequestFactory;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
-
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
  * Handler for validating resource parameters in OAuth2 token requests according to RFC 8707.
@@ -35,22 +31,19 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 public class TokenRequestResourceValidationHandler implements Handler<RoutingContext> {
 
 	private final ResourceValidationService resourceValidationService;
-	private final Domain domain;
 	private final TokenRequestFactory tokenRequestFactory = new TokenRequestFactory();
 
-	public TokenRequestResourceValidationHandler(ResourceValidationService resourceValidationService, Domain domain) {
+	public TokenRequestResourceValidationHandler(ResourceValidationService resourceValidationService) {
 		this.resourceValidationService = resourceValidationService;
-		this.domain = domain;
 	}
 
 	@Override
 	public void handle(RoutingContext context) {
 		// Build a normalized TokenRequest using the factory (consistent with codebase patterns)
 		final TokenRequest tokenRequest = tokenRequestFactory.create(context);
-		final Client client = context.get(CLIENT_CONTEXT_KEY);
 
 		// Validate resources
-		resourceValidationService.validate(tokenRequest, domain, client)
+		resourceValidationService.validate(tokenRequest)
 				.subscribe(
 						() -> {
 							log.debug("Resource validation successful for token request");

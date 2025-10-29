@@ -16,8 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Before;
@@ -27,7 +25,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -41,20 +38,13 @@ public class AuthorizationRequestResourceValidationHandlerTest {
     private ResourceValidationService resourceValidationService;
 
     @Mock
-    private Domain domain;
-
-    @Mock
     private RoutingContext routingContext;
-
-    @Mock
-    private Client client;
 
     private AuthorizationRequestResourceValidationHandler handler;
 
     @Before
     public void setUp() {
-        handler = new AuthorizationRequestResourceValidationHandler(resourceValidationService, domain);
-        when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
+        handler = new AuthorizationRequestResourceValidationHandler(resourceValidationService);
     }
 
     @Test
@@ -62,7 +52,7 @@ public class AuthorizationRequestResourceValidationHandlerTest {
         // Given
         AuthorizationRequest authRequest = new AuthorizationRequest();
         when(routingContext.get(AUTHORIZATION_REQUEST_CONTEXT_KEY)).thenReturn(authRequest);
-        when(resourceValidationService.validate(any(), any(), any()))
+        when(resourceValidationService.validate(any()))
             .thenReturn(Completable.complete());
 
         // When
@@ -79,7 +69,7 @@ public class AuthorizationRequestResourceValidationHandlerTest {
         AuthorizationRequest authRequest = new AuthorizationRequest();
         when(routingContext.get(AUTHORIZATION_REQUEST_CONTEXT_KEY)).thenReturn(authRequest);
         InvalidResourceException exception = new InvalidResourceException("Invalid resource");
-        when(resourceValidationService.validate(any(), any(), any()))
+        when(resourceValidationService.validate(any()))
             .thenReturn(Completable.error(exception));
 
         // When

@@ -16,8 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 
 /**
@@ -30,13 +28,12 @@ public interface ResourceValidationService {
 
     /**
      * Validate resource parameters for any OAuth2 request (authorization or token).
+     * Validates against domain-scoped ProtectedResource entities.
      *
      * @param request the request (resources read from request.getResources())
-     * @param domain the current domain
-     * @param client the requesting OAuth client
      * @return a Completable that completes on success or errors with InvalidResourceException
      */
-    Completable validate(OAuth2Request request, Domain domain, Client client);
+    Completable validate(OAuth2Request request);
 }
 
 

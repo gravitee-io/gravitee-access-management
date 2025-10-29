@@ -32,7 +32,7 @@ public final class OrigResourcesUtils {
      */
     public static Set<String> extractOrigResources(Map<String, Object> jwt) {
         Set<String> resources = new HashSet<>();
-        if (jwt == null || !jwt.containsKey(Claims.ORIG_RESOURCES)) {
+        if (jwt == null) {
             return resources;
         }
         Object claim = jwt.get(Claims.ORIG_RESOURCES);

@@ -17,8 +17,6 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -43,7 +41,8 @@ public class ResourceValidationServiceImpl implements ResourceValidationService 
     }
 
     @Override
-    public Completable validate(OAuth2Request request, Domain domain, Client client) {
+    public Completable validate(OAuth2Request request) {
+
         return Completable.fromCallable(() -> {
             Set<String> requestedResources = request.getResources();
             

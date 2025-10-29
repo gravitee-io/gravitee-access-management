@@ -17,14 +17,11 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
 
 import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 
 /**
  * Handler for validating resource parameters in OAuth2 authorization requests according to RFC 8707.
@@ -36,22 +33,19 @@ import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 public class AuthorizationRequestResourceValidationHandler implements Handler<RoutingContext> {
 
     private final ResourceValidationService resourceValidationService;
-    private final Domain domain;
     private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
 
-    public AuthorizationRequestResourceValidationHandler(ResourceValidationService resourceValidationService, Domain domain) {
+    public AuthorizationRequestResourceValidationHandler(ResourceValidationService resourceValidationService) {
         this.resourceValidationService = resourceValidationService;
-        this.domain = domain;
     }
 
     @Override
     public void handle(RoutingContext context) {
         // Get or create authorization request
         final AuthorizationRequest authorizationRequest = resolveAuthorizationRequest(context);
-        final Client client = context.get(CLIENT_CONTEXT_KEY);
 
         // Validate resources
-        resourceValidationService.validate(authorizationRequest, domain, client)
+        resourceValidationService.validate(authorizationRequest)
                 .subscribe(
                         () -> {
                             log.debug("Resource validation successful for authorization request");

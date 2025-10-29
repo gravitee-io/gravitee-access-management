@@ -17,9 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ProtectedResource;
-import io.gravitee.am.model.oidc.Client;
 import java.util.Set;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
@@ -45,12 +43,6 @@ public class ResourceValidationServiceImplTest {
     @Mock
     private ProtectedResourceManager protectedResourceManager;
 
-    @Mock
-    private Domain domain;
-
-    @Mock
-    private Client client;
-
     private ResourceValidationServiceImpl service;
 
     @Before
@@ -65,7 +57,7 @@ public class ResourceValidationServiceImplTest {
 
         when(protectedResourceManager.entities()).thenReturn(Collections.emptyList());
 
-        TestObserver<Void> observer = service.validate(request, domain, client).test();
+        TestObserver<Void> observer = service.validate(request).test();
         observer.awaitDone(1, TimeUnit.SECONDS);
         observer.assertError(t -> t instanceof InvalidResourceException &&
                 ((InvalidResourceException) t).getOAuth2ErrorCode().equals("invalid_target"));
@@ -82,7 +74,7 @@ public class ResourceValidationServiceImplTest {
 
         when(protectedResourceManager.entities()).thenReturn(List.of(known));
 
-        TestObserver<Void> observer = service.validate(request, domain, client).test();
+        TestObserver<Void> observer = service.validate(request).test();
         observer.awaitDone(1, TimeUnit.SECONDS);
         observer.assertComplete();
         observer.assertNoErrors();

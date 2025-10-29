@@ -15,8 +15,6 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
-import io.gravitee.am.model.Domain;
-import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpMethod;
@@ -32,7 +30,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.net.ssl.SSLSession;
 
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -46,16 +43,10 @@ public class TokenRequestResourceValidationHandlerTest {
     private ResourceValidationService resourceValidationService;
 
     @Mock
-    private Domain domain;
-
-    @Mock
     private RoutingContext routingContext;
 
     @Mock
     private HttpServerRequest httpRequest;
-
-    @Mock
-    private Client client;
 
     @Mock
     private io.vertx.core.http.HttpServerRequest coreRequest;
@@ -73,10 +64,9 @@ public class TokenRequestResourceValidationHandlerTest {
 
     @Before
     public void setUp() {
-        handler = new TokenRequestResourceValidationHandler(resourceValidationService, domain);
+        handler = new TokenRequestResourceValidationHandler(resourceValidationService);
         
         // Setup basic mocks
-        when(routingContext.get(CLIENT_CONTEXT_KEY)).thenReturn(client);
         when(routingContext.request()).thenReturn(httpRequest);
         
         // Setup RxJava MultiMap
@@ -93,7 +83,7 @@ public class TokenRequestResourceValidationHandlerTest {
     @Test
     public void shouldContinueWhenValidationSucceeds() {
         // Given
-        when(resourceValidationService.validate(any(), any(), any()))
+        when(resourceValidationService.validate(any()))
             .thenReturn(Completable.complete());
 
         // When
@@ -108,7 +98,7 @@ public class TokenRequestResourceValidationHandlerTest {
     public void shouldFailWhenValidationFails() {
         // Given
         InvalidResourceException exception = new InvalidResourceException("Invalid resource");
-        when(resourceValidationService.validate(any(), any(), any()))
+        when(resourceValidationService.validate(any()))
             .thenReturn(Completable.error(exception));
 
         // When
