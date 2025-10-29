@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.OrigResourcesUtils;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -69,6 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.Arrays;
 
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
@@ -502,26 +504,25 @@ public class TokenServiceImpl implements TokenService {
         // Try to read orig_resources from previous refresh token (refresh flow)
         try {
             Map<String, Object> previousRefreshToken = request.getRefreshToken();
-            if (previousRefreshToken != null && previousRefreshToken.containsKey(Claims.ORIG_RESOURCES)) {
-                Object origResourcesClaim = previousRefreshToken.get(Claims.ORIG_RESOURCES);
-                if (origResourcesClaim instanceof java.util.List) {
-                    for (Object v : (java.util.List<?>) origResourcesClaim) {
-                        if (v instanceof String) {
-                            origResources.add((String) v);
-                        }
-                    }
-                }
-            }
+            origResources.addAll(OrigResourcesUtils.extractOrigResources(previousRefreshToken));
         } catch (Exception e) {
             // best-effort; fall back below
             logger.debug("Unable to preserve '{}' from previous refresh token, falling back to current request resources", Claims.ORIG_RESOURCES, e);
         }
 
-        // Fallback to request resources (authorization code flow)
+        // Fallback to original authorization resources (authorization code flow)
         if (origResources.isEmpty()) {
-            Set<String> originalResources = request.getResources();
-            if (originalResources != null) {
-                origResources.addAll(originalResources);
+            Set<String> originalAuthorizationResources = request.getOriginalAuthorizationResources();
+            if (originalAuthorizationResources != null && !originalAuthorizationResources.isEmpty()) {
+                origResources.addAll(originalAuthorizationResources);
+                logger.debug("Using original authorization resources from request field: {}", origResources);
+            } else {
+                // Fallback to request resources if no original authorization resources available
+                Set<String> originalResources = request.getResources();
+                logger.debug("Falling back to request resources: {}", originalResources);
+                if (originalResources != null) {
+                    origResources.addAll(originalResources);
+                }
             }
         }
 

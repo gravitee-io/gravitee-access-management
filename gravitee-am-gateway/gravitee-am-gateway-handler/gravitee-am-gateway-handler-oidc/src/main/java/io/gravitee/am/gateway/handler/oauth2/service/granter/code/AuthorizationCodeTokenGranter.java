@@ -132,6 +132,10 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                                         // Validate resource consistency according to RFC 8707
                                         return resourceConsistencyValidationService.validateConsistency(tokenRequest1, authorizationCode.getResources())
                                                 .andThen(Single.fromCallable(() -> {
+                                                    // Preserve original authorization resources in a dedicated field
+                                                    tokenRequest1.setOriginalAuthorizationResources(authorizationCode.getResources());
+                                                    logger.debug("Preserved original authorization resources: {}", authorizationCode.getResources());
+                                                    
                                                     // Set resources for token creation:
                                                     // 1. If token request has resources, use them (already validated as subset)
                                                     // 2. If no token request resources, use authorization code resources

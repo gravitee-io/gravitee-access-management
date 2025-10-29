@@ -25,8 +25,7 @@ import io.gravitee.am.repository.oauth2.api.AuthorizationCodeRepository;
 import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
 import io.gravitee.am.repository.oauth2.model.AccessToken;
 import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
-import io.gravitee.common.util.LinkedMultiValueMap;
-import io.gravitee.common.util.MultiValueMap;
+import java.util.Set;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
@@ -89,10 +88,7 @@ public class AuthorizationCodeServiceTest {
         authorizationRequest.setClientId("my-client-id");
         var resourceOne = "https://my-resource-one.com/mcp";
         var resourceTwo = "https://my-resource-two.com/mcp";
-        MultiValueMap<String, String> requestParameters = new LinkedMultiValueMap<>(1);
-        requestParameters.add("resource", resourceOne);
-        requestParameters.add("resource", resourceTwo);
-        authorizationRequest.setParameters(requestParameters);
+        authorizationRequest.setResources(Set.of(resourceOne, resourceTwo));
 
         User user = new User();
         user.setUsername("my-username-id");

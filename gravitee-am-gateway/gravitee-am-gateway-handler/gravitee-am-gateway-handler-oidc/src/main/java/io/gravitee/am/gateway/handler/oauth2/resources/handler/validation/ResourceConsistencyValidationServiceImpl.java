@@ -30,24 +30,20 @@ public class ResourceConsistencyValidationServiceImpl implements ResourceConsist
 
     @Override
     public Completable validateConsistency(OAuth2Request tokenRequest, Set<String> authorizationResources) {
-        return Completable.fromCallable(() -> {
+        return Completable.fromAction(() -> {
             Set<String> tokenRequestResources = tokenRequest.getResources();
 
             // If no resources in token request, validation passes (will use authorization resources)
             if (tokenRequestResources == null || tokenRequestResources.isEmpty()) {
-                return null;
+                return;
             }
 
-            // Validate that all token request resources are in the authorization resources
-            for (String tokenResource : tokenRequestResources) {
-                if (authorizationResources == null || authorizationResources.isEmpty() || !authorizationResources.contains(tokenResource)) {
-                    throw new InvalidResourceException(
-                        "The requested resource is not recognized by this authorization server."
-                    );
-                }
+            // Token request resources must be a subset of the authorization resources
+            if (authorizationResources == null || !authorizationResources.containsAll(tokenRequestResources)) {
+                throw new InvalidResourceException(
+                    "The requested resource is not recognized by this authorization server."
+                );
             }
-
-            return null;
         });
     }
 }

@@ -16,8 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter.refresh;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
-import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.OrigResourcesUtils;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
@@ -37,7 +37,6 @@ import io.reactivex.rxjava3.core.Single;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -106,7 +105,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
                             tokenRequest1.setRefreshToken(refreshToken1.getAdditionalInformation());
                             
                             // Extract original resources from refresh token for RFC 8707 compliance
-                            Set<String> originalResources = extractResourcesFromRefreshToken(refreshToken1.getAdditionalInformation());
+                            Set<String> originalResources = OrigResourcesUtils.extractOrigResources(refreshToken1.getAdditionalInformation());
                             
                             // Validate resource consistency according to RFC 8707
                             return resourceConsistencyValidationService.validateConsistency(tokenRequest1, originalResources)
@@ -152,41 +151,6 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
     protected boolean isSupportRefreshToken(Client client) {
         // do not issue a new refresh token if token rotation is disabled
         return !client.isDisableRefreshTokenRotation() && super.isSupportRefreshToken(client);
-    }
-
-    /**
-     * Extract original resources from refresh token JWT for RFC 8707 compliance.
-     * The refresh token contains the orig_resources custom claim with the original authorization resources.
-     *
-     * @param refreshTokenJWT the refresh token JWT as additional information
-     * @return set of original resource identifiers, empty set if none
-     */
-    private Set<String> extractResourcesFromRefreshToken(Map<String, Object> refreshTokenJWT) {
-        if (refreshTokenJWT == null || !refreshTokenJWT.containsKey(Claims.ORIG_RESOURCES)) {
-            return new HashSet<>();
-        }
-
-        Object origResourcesClaim = refreshTokenJWT.get(Claims.ORIG_RESOURCES);
-        if (origResourcesClaim == null) {
-            return new HashSet<>();
-        }
-
-        Set<String> resources = new HashSet<>();
-        if (origResourcesClaim instanceof java.util.List) {
-            // Multiple resources (array)
-            @SuppressWarnings("unchecked")
-            java.util.List<Object> resourceList = (java.util.List<Object>) origResourcesClaim;
-            for (Object resource : resourceList) {
-                if (resource instanceof String) {
-                    resources.add((String) resource);
-                }
-            }
-        } else if (origResourcesClaim instanceof String) {
-            // Single resource (edge case, but handle it)
-            resources.add((String) origResourcesClaim);
-        }
-
-        return resources;
     }
 
     @Override

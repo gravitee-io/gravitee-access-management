@@ -98,6 +98,12 @@ public class OAuth2Request extends BaseRequest {
     private Set<String> resources = new HashSet<>();
 
     /**
+     * Original resources approved during the authorization step (RFC 8707)
+     * Used to preserve the initial grant when issuing refresh tokens
+     */
+    private Set<String> originalAuthorizationResources = new HashSet<>();
+
+    /**
      * Boolean indicates if the current request support OAuth 2.0 Refresh Token
      */
     private boolean supportRefreshToken;
@@ -156,6 +162,7 @@ public class OAuth2Request extends BaseRequest {
         this.pathParameters = other.pathParameters;
         this.confirmationMethodX5S256 = other.confirmationMethodX5S256;
         this.resources = other.resources != null ? new HashSet<>(other.resources) : new HashSet<>();
+        this.originalAuthorizationResources = other.originalAuthorizationResources != null ? new HashSet<>(other.originalAuthorizationResources) : new HashSet<>();
 
         //BaseRequest
         this.setId(other.getId());

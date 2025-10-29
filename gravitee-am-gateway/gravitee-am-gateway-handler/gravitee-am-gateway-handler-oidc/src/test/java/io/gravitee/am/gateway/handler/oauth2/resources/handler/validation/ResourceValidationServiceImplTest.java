@@ -15,14 +15,12 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
-import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.oidc.Client;
-import io.gravitee.common.util.LinkedMultiValueMap;
-import io.gravitee.common.util.MultiValueMap;
+import java.util.Set;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,9 +61,7 @@ public class ResourceValidationServiceImplTest {
     @Test
     public void shouldRejectUnknownResource_withInvalidTarget() {
         AuthorizationRequest request = new AuthorizationRequest();
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add(Parameters.RESOURCE, "https://api.example.com/unknown");
-        request.setParameters(params);
+        request.setResources(Set.of("https://api.example.com/unknown"));
 
         when(protectedResourceManager.entities()).thenReturn(Collections.emptyList());
 
@@ -78,9 +74,7 @@ public class ResourceValidationServiceImplTest {
     @Test
     public void shouldAcceptKnownResource() {
         AuthorizationRequest request = new AuthorizationRequest();
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add(Parameters.RESOURCE, "https://api.example.com/photos");
-        request.setParameters(params);
+        request.setResources(Set.of("https://api.example.com/photos"));
 
         ProtectedResource known = new ProtectedResource();
         known.setId("res-1");
