@@ -49,8 +49,8 @@ public class UriBuilderTest {
                 {"https://gravitee3.local/test?xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}#asd#asda", -1, new UriParts("https", "gravitee3.local", null, "/test", "xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", "asd#asda"), true},
                 {"https://gravitee3.local:2000?xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", 2000, new UriParts("https", "gravitee3.local", null, "", "xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", null), true},
                 {"http://gravitee3.local/?xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", -1, new UriParts("http", "gravitee3.local", null, "/", "xxx=123&param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", null), true},
-                {"https://gravitee3.local:2000?param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", 2000, new UriParts("https", "gravitee3.local", null, "", "param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", null), true}
-
+                {"https://gravitee3.local:2000?param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", 2000, new UriParts("https", "gravitee3.local", null, "", "param2={#context.attributes['client'].applicationType}&param3=321321&yyy={#test}", null), true},
+                {"https://[::1:2:3:4%eth0]:8080/callback", 8080, new UriParts("https", "[::1:2:3:4%eth0]", null, "/callback", null, null), true},
         });
     }
 
@@ -77,6 +77,17 @@ public class UriBuilderTest {
         assertEquals(isHttp, UriBuilder.isHttp(builtUri.getScheme()), "Scheme isHttp does not match");
     }
 
+    @Test
+    public void testFromUriString_longUri() {
+        String baseUri = "https://login.microsoftonline.com/12345678-90ab-cdef-1234-567890abcde/oauth2/v2.0/logout?post_logout_redirect_uri=https://my.gateway/my-domain/logout/callback&id_token_hint=";
+        String token = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.ANCf_8p1AE4ZQs7QuqGAyyfTEgYrKSjKWkhBk5cIn1_2QVr2jEjmM-1tu7EgnyOf_fAsvdFXva8Sv05iTGzETg";
+        var sb = new StringBuilder(baseUri);
+        sb.append(token.repeat(100));
+
+        UriBuilder uriBuilder = UriBuilder.fromURIString(sb.toString());
+
+        assertEquals(sb.toString(), uriBuilder.buildString());
+    }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("data")
