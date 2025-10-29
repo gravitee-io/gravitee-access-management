@@ -162,11 +162,11 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
      * @return set of original resource identifiers, empty set if none
      */
     private Set<String> extractResourcesFromRefreshToken(Map<String, Object> refreshTokenJWT) {
-        if (refreshTokenJWT == null || !refreshTokenJWT.containsKey("orig_resources")) {
+        if (refreshTokenJWT == null || !refreshTokenJWT.containsKey(Claims.ORIG_RESOURCES)) {
             return new HashSet<>();
         }
 
-        Object origResourcesClaim = refreshTokenJWT.get("orig_resources");
+        Object origResourcesClaim = refreshTokenJWT.get(Claims.ORIG_RESOURCES);
         if (origResourcesClaim == null) {
             return new HashSet<>();
         }

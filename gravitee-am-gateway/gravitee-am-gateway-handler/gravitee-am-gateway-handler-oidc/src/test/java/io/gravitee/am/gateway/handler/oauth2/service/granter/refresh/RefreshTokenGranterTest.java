@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.granter.refresh;
 
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
@@ -207,7 +208,7 @@ public class RefreshTokenGranterTest {
         Map<String, Object> refreshTokenJWT = new HashMap<>();
         JSONArray origResourcesArray = new JSONArray();
         origResourcesArray.addAll(origResources);
-        refreshTokenJWT.put("orig_resources", origResourcesArray);
+        refreshTokenJWT.put(Claims.ORIG_RESOURCES, origResourcesArray);
         refreshTokenJWT.put("sub", "user-123");
         
         RefreshToken refreshToken = new RefreshToken(refreshTokenValue);
@@ -240,7 +241,7 @@ public class RefreshTokenGranterTest {
         Set<String> capturedOrigResources = validationResourcesCaptor.getValue();
         
         assertNotNull("Original resources should not be null", capturedOrigResources);
-        assertEquals("Should validate against original resources extracted from refresh token orig_resources claim", 
+        assertEquals("Should validate against original resources extracted from refresh token " + Claims.ORIG_RESOURCES + " claim", 
                     origResources, capturedOrigResources);
         
         // Verify validation service was called (proves the flow reached the validation step)
@@ -271,7 +272,7 @@ public class RefreshTokenGranterTest {
         Map<String, Object> refreshTokenJWT = new HashMap<>();
         JSONArray origResourcesArray = new JSONArray();
         origResourcesArray.addAll(origResources);
-        refreshTokenJWT.put("orig_resources", origResourcesArray);
+        refreshTokenJWT.put(Claims.ORIG_RESOURCES, origResourcesArray);
         refreshTokenJWT.put("sub", "user-123");
         
         RefreshToken refreshToken = new RefreshToken(refreshTokenValue);
@@ -313,7 +314,7 @@ public class RefreshTokenGranterTest {
         Map<String, Object> refreshTokenJWT = new HashMap<>();
         JSONArray origResourcesArray = new JSONArray();
         origResourcesArray.addAll(origResources);
-        refreshTokenJWT.put("orig_resources", origResourcesArray);
+        refreshTokenJWT.put(Claims.ORIG_RESOURCES, origResourcesArray);
         refreshTokenJWT.put("sub", "user-123");
         
         RefreshToken refreshToken = new RefreshToken(refreshTokenValue);

@@ -128,6 +128,12 @@ public interface Claims {
      */
     String ECV = "ecv";
 
+    /**
+     * RFC 8707 Resource Indicators - Original resources claim in refresh tokens
+     * Stores the resources originally granted during authorization for consistency validation
+     */
+    String ORIG_RESOURCES = "orig_resources";
+
     static List<String> getAllClaims() {
         return Arrays.asList(ISS, SUB, AUD, EXP, NBF, IAT, AUTH_TIME, UPDATED_AT,
                 JTI, DOMAIN, CLAIMS, IP_ADDRESS, USER_AGENT, SCOPE, CNF);

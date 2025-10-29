@@ -38,16 +38,9 @@ public class ResourceConsistencyValidationServiceImpl implements ResourceConsist
                 return null;
             }
 
-            // If no authorization resources, any token request resources are invalid
-            if (authorizationResources == null || authorizationResources.isEmpty()) {
-                throw new InvalidResourceException(
-                    "The requested resource is not recognized by this authorization server."
-                );
-            }
-
             // Validate that all token request resources are in the authorization resources
             for (String tokenResource : tokenRequestResources) {
-                if (!authorizationResources.contains(tokenResource)) {
+                if (authorizationResources == null || authorizationResources.isEmpty() || !authorizationResources.contains(tokenResource)) {
                     throw new InvalidResourceException(
                         "The requested resource is not recognized by this authorization server."
                     );

@@ -512,8 +512,9 @@ public class TokenServiceImpl implements TokenService {
                     }
                 }
             }
-        } catch (Exception ignore) {
+        } catch (Exception e) {
             // best-effort; fall back below
+            logger.debug("Unable to preserve '{}' from previous refresh token, falling back to current request resources", Claims.ORIG_RESOURCES, e);
         }
 
         // Fallback to request resources (authorization code flow)
@@ -527,10 +528,10 @@ public class TokenServiceImpl implements TokenService {
         if (!origResources.isEmpty()) {
             var jsonArray = new JSONArray();
             jsonArray.addAll(origResources);
-            jwt.put("orig_resources", jsonArray);
-            logger.debug("Refresh token orig_resources stored: {}, JTI: {}", jsonArray, jwt.getJti());
+            jwt.put(Claims.ORIG_RESOURCES, jsonArray);
+            logger.debug("Refresh token {} stored: {}, JTI: {}", Claims.ORIG_RESOURCES, jsonArray, jwt.getJti());
         } else {
-            logger.debug("No orig_resources to store in refresh token, JTI: {}", jwt.getJti());
+            logger.debug("No {} to store in refresh token, JTI: {}", Claims.ORIG_RESOURCES, jwt.getJti());
         }
     }
 }
