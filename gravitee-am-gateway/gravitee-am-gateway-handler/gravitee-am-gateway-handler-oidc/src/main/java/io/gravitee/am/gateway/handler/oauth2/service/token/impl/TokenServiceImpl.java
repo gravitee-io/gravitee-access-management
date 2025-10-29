@@ -393,6 +393,9 @@ public class TokenServiceImpl implements TokenService {
         Map<String, Object> customClaims = new HashMap<>(accessToken);
         Claims.getAllClaims().forEach(customClaims::remove);
         jwt.putAll(customClaims);
+        
+        // Store originally granted resources in refresh token for RFC 8707 compliance
+        setOrigResourcesClaim(jwt, request);
 
         return jwt;
     }
@@ -483,5 +486,51 @@ public class TokenServiceImpl implements TokenService {
         }
 
         return executionContext;
+    }
+
+    /**
+     * Sets the orig_resources claim in the refresh token JWT for RFC 8707 compliance.
+     * - If this is a refresh flow, preserves the orig_resources from the previous refresh token
+     * - Otherwise (initial issuance), uses the current request resources (from authorization)
+     *
+     * @param jwt the JWT to add the claim to
+     * @param request the OAuth2 request containing resources
+     */
+    private void setOrigResourcesClaim(JWT jwt, OAuth2Request request) {
+        Set<String> origResources = new java.util.HashSet<>();
+
+        // Try to read orig_resources from previous refresh token (refresh flow)
+        try {
+            Map<String, Object> previousRefreshToken = request.getRefreshToken();
+            if (previousRefreshToken != null && previousRefreshToken.containsKey("orig_resources")) {
+                Object origResourcesClaim = previousRefreshToken.get("orig_resources");
+                if (origResourcesClaim instanceof java.util.List) {
+                    for (Object v : (java.util.List<?>) origResourcesClaim) {
+                        if (v instanceof String) {
+                            origResources.add((String) v);
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignore) {
+            // best-effort; fall back below
+        }
+
+        // Fallback to request resources (authorization code flow)
+        if (origResources.isEmpty()) {
+            Set<String> originalResources = request.getResources();
+            if (originalResources != null) {
+                origResources.addAll(originalResources);
+            }
+        }
+
+        if (!origResources.isEmpty()) {
+            var jsonArray = new JSONArray();
+            jsonArray.addAll(origResources);
+            jwt.put("orig_resources", jsonArray);
+            logger.debug("Refresh token orig_resources stored: {}, JTI: {}", jsonArray, jwt.getJti());
+        } else {
+            logger.debug("No orig_resources to store in refresh token, JTI: {}", jwt.getJti());
+        }
     }
 }

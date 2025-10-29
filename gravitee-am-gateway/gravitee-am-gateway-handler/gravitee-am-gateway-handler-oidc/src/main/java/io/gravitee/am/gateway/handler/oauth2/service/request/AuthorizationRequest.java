@@ -138,6 +138,7 @@ public class AuthorizationRequest extends OAuth2Request {
         oAuth2Request.setResponseType(getResponseType());
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());
         oAuth2Request.setState(getState());
+        oAuth2Request.setResources(getResources());
 
         return oAuth2Request;
     }

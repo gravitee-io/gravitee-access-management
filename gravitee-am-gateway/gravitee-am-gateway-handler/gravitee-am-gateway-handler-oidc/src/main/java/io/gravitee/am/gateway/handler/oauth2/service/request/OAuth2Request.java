@@ -229,6 +229,9 @@ public class OAuth2Request extends BaseRequest {
     }
 
     public Set<String> getResources() {
+        if (resources != null && !resources.isEmpty()) {
+            return resources;
+        }
         if (parameters() == null) {
             return java.util.Collections.emptySet();
         }
@@ -237,7 +240,8 @@ public class OAuth2Request extends BaseRequest {
         if (resourceList == null) {
             return java.util.Collections.emptySet();
         }
+        resources.addAll(resourceList);
 
-        return new HashSet<>(resourceList);
+        return resources;
     }
 }

@@ -16,10 +16,27 @@
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
+import io.gravitee.am.gateway.handler.common.jwt.JWTService;
+import io.gravitee.am.gateway.handler.common.jwt.SubjectManager;
 import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
+import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
+import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
+import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.gateway.api.context.SimpleExecutionContext;
+import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
+import io.gravitee.am.gateway.handler.oauth2.service.token.TokenEnhancer;
+import io.gravitee.am.model.User;
+import io.gravitee.am.model.oidc.Client;
+import io.gravitee.am.repository.oauth2.api.AccessTokenRepository;
+import io.gravitee.am.repository.oauth2.api.RefreshTokenRepository;
+import io.gravitee.am.service.AuditService;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -27,13 +44,51 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
+import org.mockito.ArgumentCaptor;
+import net.minidev.json.JSONArray;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TokenServiceImplTest {
 
     @Mock
     IntrospectionTokenFacade introspectionTokenFacade;
+
+    @Mock
+    private AccessTokenRepository accessTokenRepository;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Mock
+    private TokenEnhancer tokenEnhancer;
+
+    @Mock
+    private JWTService jwtService;
+
+    @Mock
+    private OpenIDDiscoveryService openIDDiscoveryService;
+
+    @Mock
+    private TokenManager tokenManager;
+
+    @Mock
+    private AuditService auditService;
+
+    @Mock
+    private SubjectManager subjectManager;
+
+    @Mock
+    private ExecutionContextFactory executionContextFactory;
 
     @InjectMocks
     TokenServiceImpl tokenService;
@@ -46,6 +101,101 @@ public class TokenServiceImplTest {
         Mockito.when(introspectionTokenFacade.introspectRefreshToken(Mockito.any())).thenReturn(Maybe.just(jwt));
         tokenService.introspect("token").test()
                 .assertValue(token -> token.getValue().equals("id"));
+    }
+
+    // ========== Helper Methods ==========
+
+    private AuthorizationRequest createAuthorizationRequest(String clientId, Set<String> resources, Map<String, Object> previousRefreshToken) {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setClientId(clientId);
+        request.setSupportRefreshToken(true);
+        request.setResources(resources);
+        request.setGrantType(GrantType.AUTHORIZATION_CODE);
+        request.setOrigin("https://auth.example.com"); // Set origin so getIssuer mock is used
+        if (previousRefreshToken != null) {
+            request.setRefreshToken(previousRefreshToken);
+        }
+        return request;
+    }
+
+    private Client createClient(String clientId) {
+        Client client = new Client();
+        client.setClientId(clientId);
+        client.setAccessTokenValiditySeconds(3600);
+        client.setRefreshTokenValiditySeconds(7200);
+        return client;
+    }
+
+    private User createUser(String userId) {
+        User user = new User();
+        user.setId(userId);
+        return user;
+    }
+
+    private void setupCommonMocks(AuthorizationRequest request) {
+        when(openIDDiscoveryService.getIssuer(anyString())).thenReturn("https://auth.example.com");
+        when(jwtService.encode(any(JWT.class), any(Client.class))).thenReturn(Single.just("encoded-jwt"));
+        when(tokenEnhancer.enhance(any(), any(), any(), any(), any())).thenReturn(Single.just(new AccessToken("access-token")));
+        when(tokenManager.storeAccessToken(any())).thenReturn(Completable.complete());
+        when(tokenManager.storeRefreshToken(any())).thenReturn(Completable.complete());
+        when(executionContextFactory.create(any())).thenReturn(new SimpleExecutionContext(request, null));
+    }
+
+    private Map<String, Object> createPreviousRefreshToken(Set<String> origResources) {
+        Map<String, Object> previousRefreshToken = new HashMap<>();
+        JSONArray prevOrig = new JSONArray();
+        prevOrig.addAll(origResources);
+        previousRefreshToken.put("orig_resources", prevOrig);
+        return previousRefreshToken;
+    }
+
+    private JWT captureRefreshTokenJWT() {
+        ArgumentCaptor<JWT> jwtCaptor = ArgumentCaptor.forClass(JWT.class);
+        verify(jwtService, Mockito.times(2)).encode(jwtCaptor.capture(), any(Client.class));
+        return jwtCaptor.getAllValues().get(1);
+    }
+
+    private void verifyRefreshTokenOrigResources(JWT refreshTokenJWT, Set<String> expectedResources, String expectedAudience) {
+        if (expectedResources == null || expectedResources.isEmpty()) {
+            assertThat(refreshTokenJWT.containsKey("orig_resources")).isFalse();
+        } else {
+            assertThat(refreshTokenJWT.containsKey("orig_resources")).isTrue();
+            Object origClaim = refreshTokenJWT.get("orig_resources");
+            assertThat(origClaim).isInstanceOf(JSONArray.class);
+            JSONArray origArr = (JSONArray) origClaim;
+            assertThat(origArr).containsExactlyInAnyOrderElementsOf(expectedResources);
+        }
+        assertThat(refreshTokenJWT.getAud()).isEqualTo(expectedAudience);
+    }
+
+    private TestObserver<Token> executeTokenCreation(AuthorizationRequest request, Client client, User user) {
+        TestObserver<Token> observer = tokenService.create(request, client, user).test();
+        observer.awaitDone(5, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+        return observer;
+    }
+
+    // ========== Test Cases ==========
+
+    @Test
+    public void when_rotating_refresh_token_should_preserve_orig_resources_from_previous_token() {
+        // Arrange: Previous refresh token had two resources (original grant)
+        Set<String> originalResources = Set.of("https://api.example.com/photos", "https://api.example.com/albums");
+        Set<String> requestedResources = Set.of("https://api.example.com/photos");
+
+        AuthorizationRequest request = createAuthorizationRequest("test-client", requestedResources, 
+                createPreviousRefreshToken(originalResources));
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(request);
+
+        // Act
+        executeTokenCreation(request, client, user);
+
+        // Assert: orig_resources must be preserved from previous token (not from requested subset)
+        JWT newRefreshJWT = captureRefreshTokenJWT();
+        verifyRefreshTokenOrigResources(newRefreshJWT, originalResources, "test-client");
     }
 
     @Test
@@ -129,6 +279,128 @@ public class TokenServiceImplTest {
         tokenService.introspect("token", TokenTypeHint.REFRESH_TOKEN).test()
                 .assertComplete()
                 .assertNoValues();
+    }
+
+    @Test
+    public void when_creating_tokens_with_authorization_resources_should_store_orig_resources_in_refresh_token() {
+        // Arrange: Auth code with multiple resources (original grant)
+        Set<String> authCodeResources = Set.of("https://api.example.com/photos", "https://api.example.com/albums");
+        
+        AuthorizationRequest authRequest = createAuthorizationRequest("test-client", authCodeResources, null);
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(authRequest);
+        
+        // Act: Create tokens
+        executeTokenCreation(authRequest, client, user);
+        
+        // Assert: Verify refresh token contains orig_resources claim
+        JWT refreshTokenJWT = captureRefreshTokenJWT();
+        verifyRefreshTokenOrigResources(refreshTokenJWT, authCodeResources, "test-client");
+    }
+
+    @Test
+    public void when_refresh_token_rotation_with_null_previous_token_should_fallback_to_request_resources() {
+        // Arrange: Previous refresh token is null
+        Set<String> requestedResources = Set.of("https://api.example.com/photos");
+        
+        AuthorizationRequest request = createAuthorizationRequest("test-client", requestedResources, null);
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(request);
+        
+        // Act
+        executeTokenCreation(request, client, user);
+        
+        // Assert: Should fallback to request resources
+        JWT newRefreshJWT = captureRefreshTokenJWT();
+        verifyRefreshTokenOrigResources(newRefreshJWT, requestedResources, "test-client");
+    }
+
+    @Test
+    public void when_refresh_token_rotation_with_no_orig_resources_should_fallback_to_request_resources() {
+        // Arrange: Previous refresh token exists but has no orig_resources claim
+        // Note: This tests fallback behavior during token creation. In practice, ResourceConsistencyValidationService
+        // should validate that requested resources are a subset of original resources before reaching this point.
+        Set<String> requestedResources = Set.of("https://api.example.com/photos");
+        Map<String, Object> previousRefreshToken = new HashMap<>(); // No orig_resources
+        
+        AuthorizationRequest request = createAuthorizationRequest("test-client", requestedResources, previousRefreshToken);
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(request);
+        
+        // Act
+        executeTokenCreation(request, client, user);
+        
+        // Assert: Should fallback to request resources when orig_resources is missing from previous token
+        JWT newRefreshJWT = captureRefreshTokenJWT();
+        verifyRefreshTokenOrigResources(newRefreshJWT, requestedResources, "test-client");
+    }
+
+    @Test
+    public void when_refresh_token_rotation_with_no_resources_should_not_store_orig_resources() {
+        // Arrange: No resources in request and no orig_resources in previous token
+        Map<String, Object> previousRefreshToken = new HashMap<>(); // No orig_resources
+        
+        AuthorizationRequest request = createAuthorizationRequest("test-client", null, previousRefreshToken);
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(request);
+        
+        // Act
+        executeTokenCreation(request, client, user);
+        
+        // Assert: Should not have orig_resources claim
+        JWT newRefreshJWT = captureRefreshTokenJWT();
+        verifyRefreshTokenOrigResources(newRefreshJWT, null, "test-client");
+    }
+
+    @Test
+    public void when_refresh_token_rotation_with_empty_resources_should_not_store_orig_resources() {
+        // Arrange: Empty resources set in request and no orig_resources in previous token
+        Map<String, Object> previousRefreshToken = new HashMap<>(); // No orig_resources
+        
+        AuthorizationRequest request = createAuthorizationRequest("test-client", Set.of(), previousRefreshToken);
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(request);
+        
+        // Act
+        executeTokenCreation(request, client, user);
+        
+        // Assert: Should not have orig_resources claim
+        JWT newRefreshJWT = captureRefreshTokenJWT();
+        verifyRefreshTokenOrigResources(newRefreshJWT, Set.of(), "test-client");
+    }
+
+    @Test
+    public void when_refresh_token_rotation_with_exception_reading_previous_token_should_fallback_to_request_resources() {
+        // Arrange: Previous refresh token will cause exception when accessed
+        // Note: This tests defensive programming - graceful handling of unexpected exceptions.
+        // In practice, proper validation should prevent corrupted tokens from reaching this point.
+        Set<String> requestedResources = Set.of("https://api.example.com/photos");
+        Map<String, Object> previousRefreshToken = new HashMap<String, Object>() {
+            @Override
+            public Object get(Object key) {
+                if ("orig_resources".equals(key)) {
+                    throw new RuntimeException("Simulated exception");
+                }
+                return super.get(key);
+            }
+        };
+        
+        AuthorizationRequest request = createAuthorizationRequest("test-client", requestedResources, previousRefreshToken);
+        Client client = createClient("test-client");
+        User user = createUser("user-123");
+        setupCommonMocks(request);
+        
+        // Act
+        executeTokenCreation(request, client, user);
+        
+        // Assert: Should fallback to request resources when exception occurs (defensive programming)
+        JWT newRefreshJWT = captureRefreshTokenJWT();
+        verifyRefreshTokenOrigResources(newRefreshJWT, requestedResources, "test-client");
     }
 
 }

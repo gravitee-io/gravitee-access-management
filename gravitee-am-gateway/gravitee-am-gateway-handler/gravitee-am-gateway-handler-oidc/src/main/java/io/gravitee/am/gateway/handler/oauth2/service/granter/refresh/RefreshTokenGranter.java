@@ -16,12 +16,14 @@
 package io.gravitee.am.gateway.handler.oauth2.service.granter.refresh;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
+import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -35,6 +37,7 @@ import io.reactivex.rxjava3.core.Single;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,6 +53,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class RefreshTokenGranter extends AbstractTokenGranter {
 
     private UserAuthenticationManager userAuthenticationManager;
+    private ResourceConsistencyValidationService resourceConsistencyValidationService;
 
     public RefreshTokenGranter() {
         super(GrantType.REFRESH_TOKEN);
@@ -58,12 +62,14 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
     public RefreshTokenGranter(TokenRequestResolver tokenRequestResolver,
                                TokenService tokenService,
                                UserAuthenticationManager userAuthenticationManager,
+                               ResourceConsistencyValidationService resourceConsistencyValidationService,
                                RulesEngine rulesEngine) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
         setRulesEngine(rulesEngine);
         this.userAuthenticationManager = userAuthenticationManager;
+        this.resourceConsistencyValidationService = resourceConsistencyValidationService;
     }
 
     @Override
@@ -76,7 +82,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
 
         return super.parseRequest(tokenRequest, client)
                 .flatMap(tokenRequest1 -> getTokenService().refresh(refreshToken, tokenRequest, client)
-                        .map(refreshToken1 -> {
+                        .flatMap(refreshToken1 -> {
                             // set resource owner
                             if (refreshToken1.getSubject() != null) {
                                 tokenRequest1.setSubject(refreshToken1.getSubject());
@@ -85,7 +91,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
                             // The requested scope MUST NOT include any scope
                             // not originally granted by the resource owner, and if omitted is
                             // treated as equal to the scope originally granted by the resource owner.
-                            final Set<String> originalScopes = (refreshToken1.getScope() != null ? new HashSet(Arrays.asList(refreshToken1.getScope().split("\\s+"))) : null);
+                            final Set<String> originalScopes = (refreshToken1.getScope() != null ? new HashSet<>(Arrays.asList(refreshToken1.getScope().split("\\s+"))) : null);
                             final Set<String> requestedScopes = tokenRequest1.getScopes();
                             if (requestedScopes == null || requestedScopes.isEmpty()) {
                                 tokenRequest1.setScopes(originalScopes);
@@ -98,7 +104,24 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
                             }
                             // set decoded refresh token to the current request
                             tokenRequest1.setRefreshToken(refreshToken1.getAdditionalInformation());
-                            return tokenRequest1;
+                            
+                            // Extract original resources from refresh token for RFC 8707 compliance
+                            Set<String> originalResources = extractResourcesFromRefreshToken(refreshToken1.getAdditionalInformation());
+                            
+                            // Validate resource consistency according to RFC 8707
+                            return resourceConsistencyValidationService.validateConsistency(tokenRequest1, originalResources)
+                                    .andThen(Single.fromCallable(() -> {
+                                        // Set resources for token creation:
+                                        // 1. If token request has resources, use them (already validated as subset)
+                                        // 2. If no token request resources, use original resources from refresh token
+                                        Set<String> finalResources = tokenRequest1.getResources();
+                                        if (finalResources == null || finalResources.isEmpty()) {
+                                            finalResources = originalResources;
+                                        }
+                                        tokenRequest1.setResources(finalResources);
+                                        
+                                        return tokenRequest1;
+                                    }));
                         }));
     }
 
@@ -129,6 +152,41 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
     protected boolean isSupportRefreshToken(Client client) {
         // do not issue a new refresh token if token rotation is disabled
         return !client.isDisableRefreshTokenRotation() && super.isSupportRefreshToken(client);
+    }
+
+    /**
+     * Extract original resources from refresh token JWT for RFC 8707 compliance.
+     * The refresh token contains the orig_resources custom claim with the original authorization resources.
+     *
+     * @param refreshTokenJWT the refresh token JWT as additional information
+     * @return set of original resource identifiers, empty set if none
+     */
+    private Set<String> extractResourcesFromRefreshToken(Map<String, Object> refreshTokenJWT) {
+        if (refreshTokenJWT == null || !refreshTokenJWT.containsKey("orig_resources")) {
+            return new HashSet<>();
+        }
+
+        Object origResourcesClaim = refreshTokenJWT.get("orig_resources");
+        if (origResourcesClaim == null) {
+            return new HashSet<>();
+        }
+
+        Set<String> resources = new HashSet<>();
+        if (origResourcesClaim instanceof java.util.List) {
+            // Multiple resources (array)
+            @SuppressWarnings("unchecked")
+            java.util.List<Object> resourceList = (java.util.List<Object>) origResourcesClaim;
+            for (Object resource : resourceList) {
+                if (resource instanceof String) {
+                    resources.add((String) resource);
+                }
+            }
+        } else if (origResourcesClaim instanceof String) {
+            // Single resource (edge case, but handle it)
+            resources.add((String) origResourcesClaim);
+        }
+
+        return resources;
     }
 
     @Override
