@@ -44,6 +44,7 @@ public class UriBuilderTest {
                 {"https://op-test:60001/requests/something?the=best#fragment", 60001,
                         new UriParts("https", "op-test", null, "/requests/something", "the=best", "fragment"), true},
                 {"com.google.app:/callback", -1, new UriParts("com.google.app", null, null, "/callback", null, null), false},
+                {"https://[::1:2:3:4%eth0]:8080/callback", 8080, new UriParts("https", "[::1:2:3:4%eth0]", null, "/callback", null, null), true},
         });
     }
 
@@ -70,6 +71,17 @@ public class UriBuilderTest {
         assertEquals(isHttp, UriBuilder.isHttp(builtUri.getScheme()), "Scheme isHttp does not match");
     }
 
+    @Test
+    public void testFromUriString_longUri() {
+        String baseUri = "https://login.microsoftonline.com/12345678-90ab-cdef-1234-567890abcde/oauth2/v2.0/logout?post_logout_redirect_uri=https://my.gateway/my-domain/logout/callback&id_token_hint=";
+        String token = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0.ANCf_8p1AE4ZQs7QuqGAyyfTEgYrKSjKWkhBk5cIn1_2QVr2jEjmM-1tu7EgnyOf_fAsvdFXva8Sv05iTGzETg";
+        var sb = new StringBuilder(baseUri);
+        sb.append(token.repeat(100));
+
+        UriBuilder uriBuilder = UriBuilder.fromURIString(sb.toString());
+
+        assertEquals(sb.toString(), uriBuilder.buildString());
+    }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("data")
