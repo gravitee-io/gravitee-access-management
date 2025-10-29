@@ -98,10 +98,7 @@ public class ResourceConsistencyValidationServiceImplTest {
     public void shouldRejectWhenTokenRequestHasResourcesNotInAuthorization() {
         // Given
         TokenRequest tokenRequest = new TokenRequest();
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add(Parameters.RESOURCE, "https://api.example.com/photos");
-        parameters.add(Parameters.RESOURCE, "https://api.example.com/unknown");
-        tokenRequest.setParameters(parameters);
+        tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/unknown")));
         Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
 
         // When
@@ -120,9 +117,7 @@ public class ResourceConsistencyValidationServiceImplTest {
     public void shouldRejectWhenAuthorizationHasNoResources() {
         // Given
         TokenRequest tokenRequest = new TokenRequest();
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add(Parameters.RESOURCE, "https://api.example.com/photos");
-        tokenRequest.setParameters(parameters);
+        tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos")));
         Set<String> authorizationResources = Collections.emptySet();
 
         // When

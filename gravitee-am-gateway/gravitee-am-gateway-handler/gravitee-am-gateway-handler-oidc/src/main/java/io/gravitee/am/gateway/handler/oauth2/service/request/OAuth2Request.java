@@ -228,20 +228,4 @@ public class OAuth2Request extends BaseRequest {
         return this;
     }
 
-    public Set<String> getResources() {
-        if (resources != null && !resources.isEmpty()) {
-            return resources;
-        }
-        if (parameters() == null) {
-            return java.util.Collections.emptySet();
-        }
-
-        List<String> resourceList = parameters().get(io.gravitee.am.common.oauth2.Parameters.RESOURCE);
-        if (resourceList == null) {
-            return java.util.Collections.emptySet();
-        }
-        resources.addAll(resourceList);
-
-        return resources;
-    }
 }

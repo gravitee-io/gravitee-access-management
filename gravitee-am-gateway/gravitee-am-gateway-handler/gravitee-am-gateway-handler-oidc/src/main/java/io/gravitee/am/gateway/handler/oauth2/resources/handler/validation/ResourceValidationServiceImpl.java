@@ -21,6 +21,7 @@ import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.reactivex.rxjava3.core.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +32,7 @@ import java.util.stream.Collectors;
  *
  * @author GraviteeSource Team
  */
+@Component
 public class ResourceValidationServiceImpl implements ResourceValidationService {
 
     private final ProtectedResourceManager protectedResourceManager;

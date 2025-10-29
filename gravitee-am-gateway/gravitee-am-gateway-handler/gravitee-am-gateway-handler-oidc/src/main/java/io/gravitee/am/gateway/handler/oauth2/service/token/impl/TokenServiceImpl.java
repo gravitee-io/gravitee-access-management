@@ -502,8 +502,8 @@ public class TokenServiceImpl implements TokenService {
         // Try to read orig_resources from previous refresh token (refresh flow)
         try {
             Map<String, Object> previousRefreshToken = request.getRefreshToken();
-            if (previousRefreshToken != null && previousRefreshToken.containsKey("orig_resources")) {
-                Object origResourcesClaim = previousRefreshToken.get("orig_resources");
+            if (previousRefreshToken != null && previousRefreshToken.containsKey(Claims.ORIG_RESOURCES)) {
+                Object origResourcesClaim = previousRefreshToken.get(Claims.ORIG_RESOURCES);
                 if (origResourcesClaim instanceof java.util.List) {
                     for (Object v : (java.util.List<?>) origResourcesClaim) {
                         if (v instanceof String) {
