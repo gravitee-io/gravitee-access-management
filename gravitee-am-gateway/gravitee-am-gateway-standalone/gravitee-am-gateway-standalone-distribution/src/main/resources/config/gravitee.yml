@@ -176,6 +176,9 @@ services:
     delay: 5000
     unit: MILLISECONDS
 
+# Enables the inclusion of the audience claim in the introspection response.
+#  introspection:
+#    allowAudience: true
 
 # Configuration of additional reporters
 #reporters:

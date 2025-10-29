@@ -29,6 +29,7 @@ import io.gravitee.am.model.User;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.Map;
 
@@ -44,6 +45,9 @@ public class IntrospectionServiceImpl implements IntrospectionService {
 
     @Autowired
     private SubjectManager subjectManager;
+
+    @Value("${services.introspection.allowAudience:true}")
+    private boolean allowAudience;
 
     @Override
     public Single<IntrospectionResponse> introspect(IntrospectionRequest request) {
@@ -102,9 +106,12 @@ public class IntrospectionServiceImpl implements IntrospectionService {
             }
         }
 
-        // remove "aud" claim due to some backend APIs unable to verify the "aud" value
-        // see <a href="https://github.com/gravitee-io/issues/issues/3111"></a>
-        introspectionResponse.remove(Claims.AUD);
+
+        if (!allowAudience) {
+            // remove "aud" claim due to some backend APIs unable to verify the "aud" value
+            // see <a href="https://github.com/gravitee-io/issues/issues/3111"></a>
+            introspectionResponse.remove(Claims.AUD);
+        }
         return introspectionResponse;
     }
 }
