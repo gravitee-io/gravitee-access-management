@@ -46,7 +46,7 @@ public class IntrospectionServiceImpl implements IntrospectionService {
     @Autowired
     private SubjectManager subjectManager;
 
-    @Value("${services.introspection.allowAudience:true}")
+    @Value("${handlers.oauth2.introspect.allowAudience:true}")
     private boolean allowAudience;
 
     @Override
