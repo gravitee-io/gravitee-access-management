@@ -106,7 +106,6 @@
         <javax.servlet-api.version>3.1.0</javax.servlet-api.version>
         <thymeleaf.version>3.1.3.RELEASE</thymeleaf.version>
         <wiremock.version>3.0.4</wiremock.version>
-        <reactor-netty.version>1.0.39</reactor-netty.version>
         <json-path.version>2.9.0</json-path.version>
         <commons-io.version>2.18.0</commons-io.version>
         <common-text.version>1.13.0</common-text.version>
@@ -117,9 +116,12 @@
         <liquibase.version>4.31.1</liquibase.version>
 
         <!-- R2DBC dependencies -->
-        <spring-data-r2dbc.version>3.2.2</spring-data-r2dbc.version>
-        <reactor-adapter.version>3.5.2</reactor-adapter.version>
-        <reactor-core.version>3.6.7</reactor-core.version>
+        <spring-data-r2dbc.version>3.4.5</spring-data-r2dbc.version>
+        <reactor-adapter.version>3.5.4</reactor-adapter.version>
+        <reactor-core.version>3.7.5</reactor-core.version>
+        <reactor.version>3.7.5</reactor.version>
+        <reactor-netty.version>1.2.11</reactor-netty.version>
+
         <!--
         JDBC driver version, used by TestContainer.
         JDBC drivers are not present in the final bundle
@@ -204,12 +206,10 @@
         <r2dbc-mssql.version>1.0.0.RELEASE</r2dbc-mssql.version>
         <r2dbc-mysql.version>1.0.2</r2dbc-mysql.version>
         <oracle-r2dbc.version>1.1.1</oracle-r2dbc.version>
-        <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
 
         <r2dbc-pool.version>1.0.2.RELEASE</r2dbc-pool.version>
         <r2dbc-proxy.version>1.1.6.RELEASE</r2dbc-proxy.version>
         <r2dbc-spi.version>1.0.0.RELEASE</r2dbc-spi.version>
-        <reactor.version>3.5.8</reactor.version>
 
         <jdk.version>21</jdk.version>
 
