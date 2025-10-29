@@ -107,19 +107,17 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
         }
 
         // resource scopes
-        if (request.getResources() != null && !request.getResources().isEmpty()) {
+        if (request.getResources() != null && !request.getResources().isEmpty() && requestScopes != null) {
             Set<String> protectedResourceScopes = protectedResourceManager.getScopesForResources(request.getResources());
-            if (requestScopes != null) {
-                requestScopes.forEach(scope -> {
-                    if (!protectedResourceScopes.isEmpty() && protectedResourceScopes.contains(scope)) {
-                        resolvedScopes.add(scope);
-                        invalidScopes.remove(scope);
-                    } else if (!resolvedScopes.contains(scope) && !clientResolvedScopes.contains(scope)) {
-                        // Mark as invalid if not already resolved by client or user scopes
-                        invalidScopes.add(scope);
-                    }
-                });
-            }
+            requestScopes.forEach(scope -> {
+                if (!protectedResourceScopes.isEmpty() && protectedResourceScopes.contains(scope)) {
+                    resolvedScopes.add(scope);
+                    invalidScopes.remove(scope);
+                } else if (!resolvedScopes.contains(scope) && !clientResolvedScopes.contains(scope)) {
+                    // Mark as invalid if not already resolved by client or user scopes
+                    invalidScopes.add(scope);
+                }
+            });
         }
 
         if (!invalidScopes.isEmpty()) {

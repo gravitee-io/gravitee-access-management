@@ -30,6 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils.getScopeBase;
 import static io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils.isParameterizedScope;
@@ -82,17 +84,16 @@ public class UserConsentServiceImpl implements UserConsentService {
     public Single<List<ScopeApproval>> saveConsent(Client client, List<ScopeApproval> approvals, User principal) {
         // compute expiry date for each approval
         // Handle case where client.getScopeSettings() might be null or empty (e.g., scopes from protected resources)
-        var scopeApprovals = client.getScopeSettings() != null 
-                ? client.getScopeSettings().stream()
-                    .filter(s -> nonNull(s.getScopeApproval()))
-                    .collect(Collectors.toMap(ApplicationScopeSettings::getScope, Function.identity()))
-                : Map.<String, ApplicationScopeSettings>of();
+        var scopeApprovals = Stream.ofNullable(client.getScopeSettings())
+                .flatMap(Collection::stream)
+                .filter(s -> nonNull(s.getScopeApproval()))
+                .collect(Collectors.toMap(ApplicationScopeSettings::getScope, Function.identity()));
         
-        var parameterizedScopes = client.getScopeSettings() != null 
-                ? client.getScopeSettings().stream().map(ApplicationScopeSettings::getScope)
-                    .filter(scopeManager::isParameterizedScope)
-                    .collect(Collectors.toList())
-                : List.<String>of();
+        var parameterizedScopes = Stream.ofNullable(client.getScopeSettings())
+                .flatMap(Collection::stream)
+                .map(ApplicationScopeSettings::getScope)
+                .filter(scopeManager::isParameterizedScope)
+                .collect(Collectors.toList());
 
         approvals.forEach(a -> a.setExpiresAt(computeExpiry(scopeApprovals, a.getScope(), parameterizedScopes)));
         // save consent
