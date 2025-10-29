@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.0-add-updated-at-to-protected-resource-features
+      author: GraviteeSource Team
+      preConditions:
+        onFail: MARK_RAN
+        not:
+          - columnExists:
+              tableName: protected_resource_features
+              columnName: updated_at
+      changes:
+        - addColumn:
+            tableName: protected_resource_features
+            columns:
+              - column:
+                  name: updated_at
+                  type: timestamp(6)
+                  constraints:
+                    nullable: true
+

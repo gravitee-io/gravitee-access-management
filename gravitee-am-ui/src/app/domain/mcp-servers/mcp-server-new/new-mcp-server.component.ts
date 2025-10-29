@@ -109,6 +109,34 @@ export class DomainNewMcpServerComponent implements OnInit {
     });
   }
 
+  editTool(tool: any): void {
+    this.newToolDialogFactory.openDialog(
+      {
+        scopes: this.scopes,
+        tool: tool, // Pass the existing tool data
+      },
+      (data) => {
+        if (!data.cancel) {
+          // Check if name changed and if new name already exists
+          if (tool.key !== data.name && this.newMcpServer.tools.find((t) => t.key === data.name)) {
+            this.snackbarService.open(`Tool with name ${data.name} already exists`);
+          } else {
+            // Update the tool in the array
+            this.newMcpServer.tools = this.newMcpServer.tools.map((t) =>
+              t.key === tool.key
+                ? {
+                    key: data.name,
+                    scopes: data.scopes,
+                    description: data.description,
+                  }
+                : t,
+            );
+          }
+        }
+      },
+    );
+  }
+
   removeTool(toolKey: string): void {
     this.newMcpServer.tools = this.newMcpServer.tools.filter((tool) => tool.key !== toolKey);
   }

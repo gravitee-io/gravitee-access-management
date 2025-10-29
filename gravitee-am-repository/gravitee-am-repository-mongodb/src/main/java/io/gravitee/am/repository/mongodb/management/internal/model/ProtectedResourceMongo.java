@@ -65,6 +65,8 @@ public class ProtectedResourceMongo extends Auditable {
 
         private Date createdAt;
 
+        private Date updatedAt;
+
         private List<String> scopes;
 
     }

@@ -82,7 +82,10 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
 
     @Override
     public Single<ProtectedResource> update(ProtectedResource item) {
-        return Single.just(item); // TODO AM-5756
+        ProtectedResourceMongo protectedResource = convert(item);
+        return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, protectedResource.getId()), protectedResource))
+                .flatMap(updateResult -> Single.just(item))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -187,6 +190,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         mongo.setKey(feature.getKey());
         mongo.setDescription(feature.getDescription());
         mongo.setCreatedAt(feature.getCreatedAt());
+        mongo.setUpdatedAt(feature.getUpdatedAt());
         mongo.setType(feature.getType().toString());
         if(feature instanceof McpTool tool){
             mongo.setScopes(tool.getScopes());
@@ -201,6 +205,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setType(type);
         result.setDescription(feature.getDescription());
         result.setCreatedAt(feature.getCreatedAt());
+        result.setUpdatedAt(feature.getUpdatedAt());
         if(type.equals(ProtectedResourceFeature.Type.MCP_TOOL)){
             return new McpTool(result, feature.getScopes());
         }

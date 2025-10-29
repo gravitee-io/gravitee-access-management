@@ -16,6 +16,7 @@
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceFeature;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
@@ -30,5 +31,7 @@ public interface SpringProtectedResourceFeatureRepository extends RxJava3CrudRep
     Flowable<JdbcProtectedResourceFeature> findAllByProtectedResourceId(String protectedResourceId);
 
     Flowable<JdbcProtectedResourceFeature> findAllByProtectedResourceIdIn(List<String> protectedResourceIds);
+
+    Completable deleteByProtectedResourceId(String protectedResourceId);
 }
 

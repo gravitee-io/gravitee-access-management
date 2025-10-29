@@ -38,6 +38,9 @@ public class ProtectedResourceFeature {
     @Schema(type = "java.lang.Long")
     private Date createdAt;
 
+    @Schema(type = "java.lang.Long")
+    private Date updatedAt;
+
     public ProtectedResourceFeature() {
     }
 
@@ -46,6 +49,7 @@ public class ProtectedResourceFeature {
         this.type = protectedResource.getType();
         this.description = protectedResource.getDescription();
         this.createdAt = protectedResource.getCreatedAt();
+        this.updatedAt = protectedResource.getUpdatedAt();
     }
 
 

@@ -34,6 +34,11 @@ export interface DialogData {
     name: string;
     description: string;
   }[];
+  tool?: {
+    key: string;
+    description?: string;
+    scopes?: string[];
+  };
 }
 
 export type DialogCallback = (data: DialogResult) => void;
@@ -52,11 +57,22 @@ export class DomainNewMcpServerToolDialogComponent {
   };
   filteredScopes: any[];
   scopeCtrl = new UntypedFormControl();
+  isEditMode: boolean;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
     public dialogRef: MatDialogRef<DomainNewMcpServerToolDialogComponent, NewTool>,
   ) {
+    // Pre-populate form if editing existing tool
+    this.isEditMode = !!data.tool;
+    if (data.tool) {
+      this.newTool = {
+        name: data.tool.key,
+        description: data.tool.description,
+        scopes: [...(data.tool.scopes || [])],
+      };
+    }
+
     this.scopeCtrl.valueChanges.subscribe((searchTerm: string) => {
       if (typeof searchTerm === 'string') {
         this.filteredScopes = data.scopes.filter((scope) => {
@@ -64,6 +80,7 @@ export class DomainNewMcpServerToolDialogComponent {
         });
       }
     });
+    this.filteredScopes = this.loadFilteredScopes();
   }
 
   accept(): void {

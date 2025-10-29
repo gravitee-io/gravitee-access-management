@@ -35,9 +35,12 @@ import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidRoleException;
+import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewMcpTool;
 import io.gravitee.am.service.model.NewProtectedResource;
+import io.gravitee.am.service.model.UpdateMcpTool;
+import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
@@ -52,6 +55,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.ProtectedResource.Type.valueOf;
 import static org.springframework.util.StringUtils.hasLength;
@@ -85,6 +89,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    private ScopeService scopeService;
 
     @Override
     public Maybe<ProtectedResource> findById(String id) {
@@ -140,6 +147,132 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     } else {
                         return Completable.complete();
                     }
+                });
+    }
+
+    @Override
+    public Single<ProtectedResource> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal) {
+        LOGGER.debug("Update ProtectedResource {} for domain {}", id, domain.getId());
+
+        return repository.findById(id)
+                .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
+                .toSingle()
+                .flatMap(oldProtectedResource -> {
+                    // Verify resource belongs to the domain
+                    if (!oldProtectedResource.getDomainId().equals(domain.getId())) {
+                        return Single.error(new ProtectedResourceNotFoundException(id));
+                    }
+
+                    // Build the updated resource
+                    ProtectedResource toUpdate = new ProtectedResource(oldProtectedResource);
+                    toUpdate.setName(updateProtectedResource.getName());
+                    toUpdate.setDescription(updateProtectedResource.getDescription());
+                    toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers().stream()
+                            .map(String::trim)
+                            .map(String::toLowerCase)
+                            .toList());
+                    toUpdate.setUpdatedAt(new Date());
+
+                    // Map features
+                    toUpdate.setFeatures(updateProtectedResource.getFeatures().stream().map(f -> {
+                        ProtectedResourceFeature feature = f.asFeature();
+                        // Keep original createdAt if feature key matches, otherwise set new date
+                        Date createdAt = oldProtectedResource.getFeatures().stream()
+                                .filter(old -> old.getKey().equals(feature.getKey()))
+                                .findFirst()
+                                .map(ProtectedResourceFeature::getCreatedAt)
+                                .orElse(toUpdate.getUpdatedAt());
+                        feature.setCreatedAt(createdAt);
+                        feature.setUpdatedAt(toUpdate.getUpdatedAt());
+                        return switch (f) {
+                            case UpdateMcpTool tool -> new McpTool(feature, tool.getScopes());
+                            default -> feature;
+                        };
+                    }).toList());
+
+                    // Validations
+                    return checkFeatureKeyUniqueness(toUpdate)
+                            .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldProtectedResource.getResourceIdentifiers(), toUpdate.getResourceIdentifiers()))
+                            .andThen(validateFeatureScopes(domain.getId(), toUpdate))
+                            .andThen(doUpdate(toUpdate, oldProtectedResource, principal, domain));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof io.gravitee.am.service.exception.AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to update protected resource %s", id), ex));
+                });
+    }
+
+    private Completable checkFeatureKeyUniqueness(ProtectedResource resource) {
+        List<String> featureKeys = resource.getFeatures().stream()
+                .map(ProtectedResourceFeature::getKey)
+                .map(String::trim)
+                .toList();
+        long uniqueCount = featureKeys.stream().distinct().count();
+        if (uniqueCount < featureKeys.size()) {
+            return Completable.error(new InvalidProtectedResourceException("Feature key names must be unique"));
+        }
+        return Completable.complete();
+    }
+
+    private Completable validateResourceIdentifiersUniqueness(String domainId, String resourceId, 
+                                                               List<String> oldIdentifiers, 
+                                                               List<String> newIdentifiers) {
+        // Check if identifiers changed
+        if (oldIdentifiers.equals(newIdentifiers)) {
+            return Completable.complete();
+        }
+        // Only check new identifiers that weren't in the old list
+        List<String> identifiersToCheck = newIdentifiers.stream()
+                .filter(identifier -> !oldIdentifiers.contains(identifier))
+                .toList();
+        if (identifiersToCheck.isEmpty()) {
+            return Completable.complete();
+        }
+        return checkResourceIdentifierUniqueness(domainId, identifiersToCheck);
+    }
+
+    private Completable validateFeatureScopes(String domainId, ProtectedResource resource) {
+        // Collect all scopes from all features
+        List<String> allScopes = resource.getFeatures().stream()
+                .filter(f -> f instanceof McpTool)
+                .map(f -> (McpTool) f)
+                .flatMap(tool -> tool.getScopes() != null ? tool.getScopes().stream() : java.util.stream.Stream.empty())
+                .distinct()
+                .toList();
+
+        if (allScopes.isEmpty()) {
+            return Completable.complete();
+        }
+
+        // Validate scopes exist in domain
+        return scopeService.validateScope(domainId, allScopes)
+                .flatMapCompletable(valid -> {
+                    if (!valid) {
+                        return Completable.error(new InvalidProtectedResourceException("One or more scopes are not valid"));
+                    }
+                    return Completable.complete();
+                });
+    }
+
+    private Single<ProtectedResource> doUpdate(ProtectedResource toUpdate, ProtectedResource oldResource, User principal, Domain domain) {
+        return repository.update(toUpdate)
+                .doOnSuccess(updated -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class)
+                        .protectedResource(updated)
+                        .principal(principal)
+                        .type(EventType.PROTECTED_RESOURCE_UPDATED)
+                        .oldValue(oldResource)))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class)
+                        .protectedResource(toUpdate)
+                        .principal(principal)
+                        .type(EventType.PROTECTED_RESOURCE_UPDATED)
+                        .throwable(throwable)))
+                .flatMap(protectedResource -> {
+                    Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(protectedResource.getId(), ReferenceType.DOMAIN, protectedResource.getDomainId(), Action.UPDATE));
+                    return eventService.create(event, domain).flatMap(e -> Single.just(protectedResource));
                 });
     }
 

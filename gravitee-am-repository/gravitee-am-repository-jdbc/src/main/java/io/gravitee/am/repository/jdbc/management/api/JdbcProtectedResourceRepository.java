@@ -121,7 +121,37 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
     @Override
     public Single<ProtectedResource> update(ProtectedResource item) {
-        return Single.just(item); // TODO AM-5756
+        LOGGER.debug("Update ProtectedResource with id {}", item.getId());
+
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+
+        Mono<ProtectedResource> updateWithChildrenUpdate = getTemplate().update(toJdbcEntity(item))
+                .map(this::toEntity)
+                // Delete existing features and insert new ones
+                .flatMap(stored -> Mono.fromCallable(() -> {
+                            featuresSpring.deleteByProtectedResourceId(stored.getId()).blockingAwait();
+                            return stored;
+                        }))
+                .flatMap(stored -> persistFeatures(item)
+                        .reduce(new ArrayList<ProtectedResourceFeature>(), (list, feature) -> {
+                            list.add(feature);
+                            return list;
+                        })
+                        .map(features -> {
+                            stored.setFeatures(features);
+                            return stored;
+                        }))
+                // Re-attach client secrets (they don't change on update, just read them back)
+                .flatMap(stored -> Mono.fromCallable(() -> {
+                            List<ClientSecret> secrets = clientSecretSpring.findAllByProtectedResourceId(stored.getId())
+                                    .map(jdbcSecret -> mapper.map(jdbcSecret, ClientSecret.class))
+                                    .toList()
+                                    .blockingGet();
+                            stored.setClientSecrets(secrets);
+                            return stored;
+                        }));
+
+        return monoToSingle(updateWithChildrenUpdate.as(trx::transactional));
     }
 
     @Override

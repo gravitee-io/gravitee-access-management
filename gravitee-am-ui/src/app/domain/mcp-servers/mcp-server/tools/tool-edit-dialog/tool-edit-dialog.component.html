@@ -15,21 +15,24 @@
     limitations under the License.
 
 -->
-<div class="new-tool-container">
-  <h3>{{ isEditMode ? 'Edit Tool' : 'Add New Tool' }}</h3>
-  <span>{{ isEditMode ? 'Update the tool details and associated scopes.' : 'Configure the tool details and associated scopes.' }}</span>
+<div class="edit-tool-container">
+  <h3>Edit Tool</h3>
+  <span>Update the tool details and associated scopes.</span>
   <form fxLayout="column">
     <mat-form-field appearance="outline" floatLabel="always">
-      <input matInput type="text" placeholder="Tool Name" name="toolName" [(ngModel)]="newTool.name" />
+      <mat-label>Tool Name</mat-label>
+      <input matInput type="text" placeholder="Tool Name" name="toolName" [(ngModel)]="tool.key" required />
     </mat-form-field>
 
     <mat-form-field appearance="outline" floatLabel="always">
-      <input matInput type="text" placeholder="Description" name="toolDescription" [(ngModel)]="newTool.description" />
+      <mat-label>Description</mat-label>
+      <input matInput type="text" placeholder="Description" name="toolDescription" [(ngModel)]="tool.description" />
     </mat-form-field>
 
     <mat-form-field>
+      <mat-label>Scopes</mat-label>
       <mat-chip-grid #chipList aria-label="Scopes selection">
-        <mat-chip-row *ngFor="let scope of newTool.scopes" [removable]="true" (removed)="remove(scope)">
+        <mat-chip-row *ngFor="let scope of tool.scopes" [removable]="true" (removed)="remove(scope)">
           {{ scope }}
           <mat-icon matChipRemove>cancel</mat-icon>
         </mat-chip-row>
@@ -52,10 +55,10 @@
       </mat-autocomplete>
     </mat-form-field>
   </form>
-  <div class="new-tool-actions">
+  <div class="edit-tool-actions">
     <button type="button" mat-button (click)="close()" style="margin-right: 10px">Cancel</button>
-    <button type="button" mat-raised-button (click)="accept()" color="primary" [disabled]="newTool.name === '' || !newTool.name">
-      {{ isEditMode ? 'Update Tool' : 'Add Tool' }}
+    <button type="button" mat-raised-button (click)="accept()" color="primary" [disabled]="!tool.key || tool.key === ''">
+      Update Tool
     </button>
   </div>
 </div>

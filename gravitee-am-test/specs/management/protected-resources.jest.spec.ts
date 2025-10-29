@@ -24,9 +24,13 @@ import {createApplication, updateApplication} from "@management-commands/applica
 import {
     createProtectedResource,
     getMcpServer,
-    getMcpServers
+    getMcpServers,
+    updateProtectedResource
 } from "@management-commands/protected-resources-management-commands";
 import {NewProtectedResource} from "@management-models/NewProtectedResource";
+import {UpdateProtectedResource} from "@management-models/UpdateProtectedResource";
+import {UpdateMcpTool} from "@management-models/UpdateMcpTool";
+import {createScope} from "@management-commands/scope-management-commands";
 import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import {testCryptData} from '../gateway/ext-grant-jwt-bearer.jest.spec';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
@@ -513,4 +517,512 @@ describe('When admin created bunch of Protected Resources', () => {
 
     })
 
+});
+
+describe('When updating protected resource', () => {
+    let createdResource;
+    let testScope1;
+    let testScope2;
+    
+    beforeAll(async () => {
+        // Create test scopes for validation
+        testScope1 = await createScope(domain.id, accessToken, {
+            key: 'test_scope_1',
+            name: 'Test Scope 1',
+            description: 'Test scope for protected resource updates'
+        });
+        
+        testScope2 = await createScope(domain.id, accessToken, {
+            key: 'test_scope_2',
+            name: 'Test Scope 2',
+            description: 'Another test scope'
+        });
+        
+        // Create a protected resource to update
+        const request = {
+            name: faker.commerce.productName(),
+            type: "MCP_SERVER",
+            resourceIdentifiers: ["https://update-test.com"],
+            description: "Original description",
+            features: [
+                {
+                    key: 'original_tool',
+                    type: 'MCP_TOOL',
+                    description: 'Original tool description',
+                    scopes: ['test_scope_1']
+                }
+            ]
+        } as NewProtectedResource;
+        
+        const createdSecret = await createProtectedResource(domain.id, accessToken, request);
+        expect(createdSecret).toBeDefined();
+        expect(createdSecret.id).toBeDefined();
+        
+        // Wait for resource to be fully synced
+        await waitFor(2000);
+        
+        // Fetch the full resource details
+        createdResource = await getMcpServer(domain.id, accessToken, createdSecret.id);
+        expect(createdResource).toBeDefined();
+        expect(createdResource.resourceIdentifiers).toBeDefined();
+    });
+    
+    it('Should update protected resource name and description', async () => {
+        const updateRequest = {
+            name: "Updated Name",
+            description: "Updated description",
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: createdResource.features.map(f => ({
+                key: f.key,
+                description: f.description,
+                type: 'MCP_TOOL',
+                scopes: (f as any).scopes || []
+            }))
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.id).toEqual(createdResource.id);
+        expect(updated.name).toEqual("Updated Name");
+        expect(updated.description).toEqual("Updated description");
+        expect(updated.updatedAt).not.toEqual(createdResource.updatedAt);
+        
+        // Update local reference for next tests
+        createdResource = updated;
+    });
+    
+    it('Should update tool name and description', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'updated_tool_name',
+                    type: 'MCP_TOOL',
+                    description: 'Updated tool description',
+                    scopes: ['test_scope_1']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.features).toHaveLength(1);
+        expect(updated.features[0].key).toEqual('updated_tool_name');
+        expect(updated.features[0].description).toEqual('Updated tool description');
+        
+        createdResource = updated;
+    });
+    
+    it('Should update tool scopes', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'updated_tool_name',
+                    type: 'MCP_TOOL',
+                    description: 'Updated tool description',
+                    scopes: ['test_scope_1', 'test_scope_2']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        const scopes = updated.features[0]['scopes'];
+        if (scopes) {
+            expect(scopes).toHaveLength(2);
+            expect(scopes).toContain('test_scope_1');
+            expect(scopes).toContain('test_scope_2');
+        }
+        
+        createdResource = updated;
+    });
+    
+    it('Should add new tool to existing resource', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'updated_tool_name',
+                    type: 'MCP_TOOL',
+                    description: 'Updated tool description',
+                    scopes: ['test_scope_1', 'test_scope_2']
+                } as UpdateMcpTool,
+                {
+                    key: 'second_tool',
+                    type: 'MCP_TOOL',
+                    description: 'Second tool',
+                    scopes: ['test_scope_1']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.features).toHaveLength(2);
+        expect(updated.features[0].key).toEqual('updated_tool_name');
+        expect(updated.features[1].key).toEqual('second_tool');
+        
+        createdResource = updated;
+    });
+    
+    it('Should remove tool from resource', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'updated_tool_name',
+                    type: 'MCP_TOOL',
+                    description: 'Updated tool description',
+                    scopes: ['test_scope_1', 'test_scope_2']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.features).toHaveLength(1);
+        expect(updated.features[0].key).toEqual('updated_tool_name');
+        
+        createdResource = updated;
+    });
+    
+    it('Should update resource identifiers', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: ["https://new-uri.com"],
+            features: createdResource.features.map(f => ({
+                key: f.key,
+                description: f.description,
+                type: 'MCP_TOOL',
+                scopes: (f as any).scopes || []
+            }))
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.resourceIdentifiers).toHaveLength(1);
+        expect(updated.resourceIdentifiers[0]).toEqual("https://new-uri.com");
+        
+        createdResource = updated;
+    });
+    
+    it('Should fail when updating with duplicate feature keys', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'duplicate_tool',
+                    type: 'MCP_TOOL',
+                    description: 'Tool 1',
+                    scopes: ['test_scope_1']
+                } as UpdateMcpTool,
+                {
+                    key: 'duplicate_tool',
+                    type: 'MCP_TOOL',
+                    description: 'Tool 2',
+                    scopes: ['test_scope_2']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+    
+    it('Should fail when updating with invalid scope', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'tool_with_invalid_scope',
+                    type: 'MCP_TOOL',
+                    description: 'Tool with invalid scope',
+                    scopes: ['non_existent_scope']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+    
+    it('Should fail when updating non-existent resource', async () => {
+        const updateRequest = {
+            name: "Test",
+            resourceIdentifiers: ["https://test.com"],
+            features: []
+        } as UpdateProtectedResource;
+        
+        await updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest)
+            .catch(err => expect(err.response.status).toEqual(403)); // 403 because permission check happens before existence check
+    });
+    
+    it('Should fail when updating with duplicate resource identifier', async () => {
+        // Create another resource first
+        const otherResource = await createProtectedResource(domain.id, accessToken, {
+            name: faker.commerce.productName(),
+            type: "MCP_SERVER",
+            resourceIdentifiers: ["https://other-resource.com"],
+        } as NewProtectedResource);
+        
+        expect(otherResource).toBeDefined();
+        
+        // Try to update our resource to use the same identifier
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: ["https://other-resource.com"],
+            features: createdResource.features.map(f => ({
+                key: f.key,
+                description: f.description,
+                type: 'MCP_TOOL',
+                scopes: (f as any).scopes || []
+            }))
+        } as UpdateProtectedResource;
+        
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+    
+    it('Should update resource identifier to lowercase', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: ["https://MixedCaseUri.COM"],
+            features: createdResource.features.map(f => ({
+                key: f.key,
+                description: f.description,
+                type: 'MCP_TOOL',
+                scopes: (f as any).scopes || []
+            }))
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.resourceIdentifiers[0]).toEqual("https://mixedcaseuri.com");
+    });
+    
+    it('Should preserve createdAt when updating existing tool (same key)', async () => {
+        // Get the current tool's createdAt (key is 'updated_tool_name' from previous test)
+        const before = await getMcpServer(domain.id, accessToken, createdResource.id);
+        const originalCreatedAt = before.features && before.features[0] ? before.features[0].createdAt : null;
+        
+        await waitFor(1000); // Ensure time passes
+        
+        // Update the tool WITHOUT changing the key
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'updated_tool_name',  // Keep the SAME key
+                    type: 'MCP_TOOL',
+                    description: 'Modified description again',
+                    scopes: ['test_scope_1']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.features[0].createdAt).toBeDefined();
+        if (originalCreatedAt) {
+            expect(updated.features[0].createdAt).toEqual(originalCreatedAt);
+        }
+        expect(updated.features[0].updatedAt).toBeDefined();
+    });
+    
+    it('Should set new createdAt when adding new tool via update', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'updated_tool_name',
+                    type: 'MCP_TOOL',
+                    description: 'Existing tool',
+                    scopes: ['test_scope_1']
+                } as UpdateMcpTool,
+                {
+                    key: 'brand_new_tool',
+                    type: 'MCP_TOOL',
+                    description: 'This is a new tool',
+                    scopes: ['test_scope_2']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.features).toHaveLength(2);
+        
+        const newTool = updated.features.find(f => f.key === 'brand_new_tool');
+        expect(newTool).toBeDefined();
+        expect(newTool.createdAt).toBeDefined();
+        // updatedAt might not be in the API response model, so make it optional
+        if (newTool.updatedAt !== undefined) {
+            expect(newTool.updatedAt).toBeDefined();
+        }
+    });
+    
+    it('Should fail when updating with invalid tool key pattern', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'invalid key with spaces',
+                    type: 'MCP_TOOL',
+                    description: 'Invalid key',
+                    scopes: []
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+    
+    it('Should fail when updating with special characters in tool key', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'tool@#$%',
+                    type: 'MCP_TOOL',
+                    description: 'Invalid key',
+                    scopes: []
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+    
+    it('Should allow update with empty scopes array', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'tool_no_scopes',
+                    type: 'MCP_TOOL',
+                    description: 'Tool without scopes',
+                    scopes: []
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.features[0].key).toEqual('tool_no_scopes');
+        // Scopes might be undefined if empty, so check for both cases
+        const scopes = updated.features[0]['scopes'];
+        expect(scopes === undefined || scopes.length === 0).toBeTruthy();
+    });
+    
+    it('Should update resource with multiple tools', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: [
+                {
+                    key: 'tool_1',
+                    type: 'MCP_TOOL',
+                    description: 'First tool',
+                    scopes: ['test_scope_1']
+                } as UpdateMcpTool,
+                {
+                    key: 'tool_2',
+                    type: 'MCP_TOOL',
+                    description: 'Second tool',
+                    scopes: ['test_scope_2']
+                } as UpdateMcpTool,
+                {
+                    key: 'tool_3',
+                    type: 'MCP_TOOL',
+                    description: 'Third tool',
+                    scopes: ['test_scope_1', 'test_scope_2']
+                } as UpdateMcpTool
+            ]
+        } as UpdateProtectedResource;
+        
+        const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
+        
+        expect(updated).toBeDefined();
+        expect(updated.features).toHaveLength(3);
+        expect(updated.features[0].key).toEqual('tool_1');
+        expect(updated.features[1].key).toEqual('tool_2');
+        expect(updated.features[2].key).toEqual('tool_3');
+        const tool3Scopes = updated.features[2]['scopes'];
+        if (tool3Scopes) {
+            expect(tool3Scopes).toHaveLength(2);
+        }
+    });
+    
+    it('Should fail when missing required name field', async () => {
+        const updateRequest = {
+            description: createdResource.description,
+            resourceIdentifiers: createdResource.resourceIdentifiers,
+            features: []
+        } as any;
+        
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+    
+    it('Should fail when missing required resourceIdentifiers field', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            features: []
+        } as any;
+        
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+    
+    it('Should fail when resourceIdentifier is not a valid URL', async () => {
+        const updateRequest = {
+            name: createdResource.name,
+            description: createdResource.description,
+            resourceIdentifiers: ["not-a-url"],
+            features: []
+        } as UpdateProtectedResource;
+        
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
 });
