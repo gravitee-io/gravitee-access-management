@@ -126,10 +126,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        // Pattern follows JdbcGroupRepository and JdbcApplicationRepository 
         Mono<Long> updateAction = getTemplate().update(toJdbcEntity(item)).map(updated -> 1L);
-        
-        // Delete existing features, then persist new ones 
+
         updateAction = deleteFeatures(item.getId()).then(updateAction);
         updateAction = persistFeatures(updateAction, item);
 
@@ -225,16 +223,16 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                         return Flowable.empty();
                     }
                     List<String> ids = resources.stream().map(ProtectedResource::getId).toList();
-                    return featuresSpring.findAllByProtectedResourceIdIn(ids)
+                    return featuresSpring.findAllByProtectedResourceIdInOrderByKeyName(ids)
                             .toList()
-                            .flatMapPublisher(secrets -> {
-                                Map<String, List<JdbcProtectedResourceFeature>> byResourceId = secrets
+                            .flatMapPublisher(features -> {
+                                Map<String, List<JdbcProtectedResourceFeature>> byResourceId = features
                                         .stream()
                                         .collect(Collectors.groupingBy(JdbcProtectedResourceFeature::getProtectedResourceId));
 
                                 resources.forEach(res -> {
-                                    List<JdbcProtectedResourceFeature> secretsForRes = byResourceId.get(res.getId());
-                                    List<McpTool> mapped = secretsForRes == null ? List.of() : secretsForRes.stream()
+                                    List<JdbcProtectedResourceFeature> featuresForRes = byResourceId.get(res.getId());
+                                    List<McpTool> mapped = featuresForRes == null ? List.of() : featuresForRes.stream()
                                             .map(feature ->  mapper.map(feature, McpTool.class))
                                             .toList();
                                     res.setFeatures(mapped);
@@ -308,7 +306,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                             app.setClientSecrets(secrets);
                             return app;
                         }))
-                .flatMap(app -> featuresSpring.findAllByProtectedResourceId(app.getId())
+                .flatMap(app -> featuresSpring.findAllByProtectedResourceIdOrderByKeyName(app.getId())
                         .map(feature -> mapper.map(feature, McpTool.class))
                         .toList()
                         .map(features -> {
