@@ -114,7 +114,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {}", referenceType, referenceId);
         return this.identityProviderRepository.findAll(referenceType.name(), referenceId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override

@@ -22,9 +22,13 @@ import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.UserIdFields;
 import io.gravitee.am.dataplane.jdbc.dialect.DatabaseDialectHelper;
 import io.gravitee.am.dataplane.jdbc.mapper.LocalDateConverter;
+import io.gravitee.am.repository.jdbc.exceptions.JdbcRepositoryExceptionMapper;
 import io.gravitee.am.repository.jdbc.provider.common.DateHelper;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +79,8 @@ public abstract class AbstractJdbcRepository {
     protected LocalDateConverter dateConverter = new LocalDateConverter();
 
     protected static final Mapper mapper = DozerBeanMapperBuilder.create().withMappingFiles(List.of("dozer.xml")).build();
+
+    private static final JdbcRepositoryExceptionMapper exceptionMapper = new JdbcRepositoryExceptionMapper();
 
     @Autowired
     protected MappingR2dbcConverter rowMapper;
@@ -189,5 +195,48 @@ public abstract class AbstractJdbcRepository {
                         (a, b) -> {
                             throw new UnsupportedOperationException("don't make this stream parallel");
                         });
+    }
+
+    /**
+     * Maps a throwable to a RepositoryConnectionException if it represents a connection error,
+     * otherwise returns the original throwable.
+     *
+     * @param throwable the exception to map
+     * @return a RepositoryConnectionException if it's a connection error, otherwise the original throwable
+     */
+    protected Throwable mapException(Throwable throwable) {
+        return exceptionMapper.map(throwable);
+    }
+
+    /**
+     * Maps a throwable to a RepositoryConnectionException in a Maybe error if it represents a connection error,
+     * otherwise returns the original throwable as a Maybe.
+     *
+     * @param error the exception to map
+     * @return a Maybe error if it's a connection error, otherwise the original throwable as a Maybe
+     */
+    protected <T> MaybeSource<T> mapExceptionAsMaybe(Throwable error) {
+        return Maybe.error(mapException(error));
+    }
+    /**
+     * Maps a throwable to a RepositoryConnectionException in a Flowable error if it represents a connection error,
+     * otherwise returns the original throwable as a Flowable.
+     *
+     * @param error the exception to map
+     * @return a Flowable error if it's a connection error, otherwise the original throwable as a Flowable
+     */
+    protected <T> Flowable<T> mapExceptionAsFlowable(Throwable error) {
+        return Flowable.fromMaybe(mapExceptionAsMaybe(error));
+    }
+
+    /**
+     * Maps a throwable to a RepositoryConnectionException in a Single error if it represents a connection error,
+     * otherwise returns the original throwable as a Single.
+     *
+     * @param error the exception to map
+     * @return a Single error if it's a connection error, otherwise the original throwable as a Single
+     */
+    protected <T> SingleSource<T> mapExceptionAsSingle(Throwable error) {
+        return Single.fromMaybe(mapExceptionAsMaybe(error));
     }
 }

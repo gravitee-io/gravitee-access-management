@@ -27,7 +27,6 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.repository.common.UserIdFields;
-import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.jdbc.provider.common.OffsetPageRequest;
 import io.gravitee.am.repository.jdbc.common.dialect.ScimSearch;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
@@ -45,18 +44,15 @@ import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRepos
 import io.gravitee.am.repository.jdbc.management.api.spring.user.SpringUserRoleRepository;
 import io.gravitee.am.repository.management.api.UserRepository;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.r2dbc.spi.R2dbcNonTransientResourceException;
 import io.r2dbc.spi.R2dbcTransientException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
-import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.dao.NonTransientDataAccessResourceException;
 import org.springframework.dao.TransientDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -603,7 +599,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findByUsername(ReferenceType.DOMAIN.name(), domain, username)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapExceptionAsMaybe);
     }
 
     public Maybe<User> findById(UserId id) {
@@ -619,7 +615,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findByUsernameAndSource(referenceType.name(), referenceId, username, source)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapExceptionAsMaybe);
     }
 
     @Override
@@ -629,7 +625,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .switchIfEmpty(Maybe.defer(() -> includeLinkedIdentities ? userRepository.findByUsernameAndLinkedIdentities(referenceType.name(), referenceId, username, source) : Maybe.empty()))
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapExceptionAsMaybe);
     }
 
     @Override
@@ -638,7 +634,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findByExternalIdAndSource(referenceType.name(), referenceId, externalId, source)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapExceptionAsMaybe);
     }
 
     @Override
@@ -650,7 +646,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findByIdIn(ids)
                 .map(this::toEntity)
                 .concatMap(user -> completeUser(user).toFlowable())
-                .onErrorResumeNext(err -> Flowable.fromMaybe(mapException(err)));
+                .onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override
@@ -661,16 +657,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return findOne(Query.query(criteria), JdbcUser.class)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
-    }
-
-    private MaybeSource<? extends User> mapException(Throwable error) {
-        if (error instanceof NonTransientDataAccessResourceException ||
-                error instanceof R2dbcNonTransientResourceException ||
-                error.getCause() instanceof R2dbcNonTransientResourceException) {
-            return Maybe.error(new RepositoryConnectionException(error));
-        }
-        return Maybe.error(error);
+                .onErrorResumeNext(this::mapExceptionAsMaybe);
     }
 
     private SingleSource<? extends User> mapExceptionAsSingle(Throwable error, User user, boolean fromUpdate) {
@@ -683,7 +670,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 return Single.error(error); // continue with the original error
             });
         }
-        return Single.fromMaybe(mapException(error));
+        return mapExceptionAsSingle(error);
     }
 
     private boolean isTransientDataException(Throwable error) {
@@ -778,7 +765,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findById(id)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapExceptionAsMaybe);
     }
 
     @Override
