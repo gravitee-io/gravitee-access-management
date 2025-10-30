@@ -44,6 +44,16 @@ interface ProtectedResourceFeatureWithScopes extends ProtectedResourceFeature {
   scopes?: string[];
 }
 
+/**
+ * Type for feature update request with all required fields.
+ */
+interface FeatureUpdateData {
+  key: string;
+  description: string;
+  type: ProtectedResourceFeatureType;
+  scopes?: string[];
+}
+
 @Component({
   selector: 'app-domain-mcp-server-tools',
   templateUrl: './tools.component.html',
@@ -140,16 +150,18 @@ export class DomainMcpServerToolsComponent implements OnInit {
     }
 
     // Add the new tool to the features list
-    const updatedFeatures = [
-      ...this.protectedResource.features.map((f) => ({
-        key: f.key,
-        description: f.description,
-        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
-        scopes: (f as any).scopes,
-      })),
+    const updatedFeatures: FeatureUpdateData[] = [
+      ...this.protectedResource.features.map(
+        (f): FeatureUpdateData => ({
+          key: f.key,
+          description: f.description || '',
+          type: 'MCP_TOOL' as ProtectedResourceFeatureType,
+          scopes: (f as ProtectedResourceFeatureWithScopes).scopes,
+        }),
+      ),
       {
         key: trimmedName,
-        description: trimmedDescription,
+        description: trimmedDescription || '',
         type: 'MCP_TOOL' as ProtectedResourceFeatureType,
         scopes: newTool.scopes,
       },
@@ -192,12 +204,14 @@ export class DomainMcpServerToolsComponent implements OnInit {
       name: this.protectedResource.name,
       resourceIdentifiers: this.protectedResource.resourceIdentifiers,
       description: this.protectedResource.description,
-      features: updatedFeatures.map((f) => ({
-        key: f.key,
-        description: f.description,
-        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
-        scopes: (f as any).scopes,
-      })),
+      features: updatedFeatures.map(
+        (f): FeatureUpdateData => ({
+          key: f.key,
+          description: f.description || '',
+          type: 'MCP_TOOL' as ProtectedResourceFeatureType,
+          scopes: (f as ProtectedResourceFeatureWithScopes).scopes,
+        }),
+      ),
     };
 
     this.protectedResourceService
@@ -227,20 +241,20 @@ export class DomainMcpServerToolsComponent implements OnInit {
     const trimmedDescription = updatedTool.description?.trim();
 
     // Update the tool in the features list
-    const updatedFeatures = this.protectedResource.features.map((feature) => {
+    const updatedFeatures: FeatureUpdateData[] = this.protectedResource.features.map((feature): FeatureUpdateData => {
       if (feature.key === originalKey) {
         return {
           key: trimmedKey,
-          description: trimmedDescription,
+          description: trimmedDescription || '',
           type: 'MCP_TOOL' as ProtectedResourceFeatureType,
           scopes: updatedTool.scopes,
         };
       }
       return {
         key: feature.key,
-        description: feature.description,
+        description: feature.description || '',
         type: 'MCP_TOOL' as ProtectedResourceFeatureType,
-        scopes: (feature as any).scopes,
+        scopes: (feature as ProtectedResourceFeatureWithScopes).scopes,
       };
     });
 
