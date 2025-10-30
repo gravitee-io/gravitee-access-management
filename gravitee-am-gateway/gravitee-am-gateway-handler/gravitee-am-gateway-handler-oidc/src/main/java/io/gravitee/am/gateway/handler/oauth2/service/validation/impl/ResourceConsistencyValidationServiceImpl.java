@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
+package io.gravitee.am.gateway.handler.oauth2.service.validation.impl;
 
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
-import io.reactivex.rxjava3.core.Completable;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 
 import java.util.Set;
 
-/**
- * Implementation of ResourceConsistencyValidationService that validates resource parameter
- * consistency between authorization and token requests according to RFC 8707.
- *
- * @author GraviteeSource Team
- */
 public class ResourceConsistencyValidationServiceImpl implements ResourceConsistencyValidationService {
     @Override
     public Set<String> resolveFinalResources(OAuth2Request tokenRequest, Set<String> authorizationResources) {
         final Set<String> requested = tokenRequest.getResources();
         if (requested == null || requested.isEmpty()) {
-            // No requested resources: use authorization resources (may be null/empty)
             return authorizationResources == null ? java.util.Collections.emptySet() : authorizationResources;
         }
 
@@ -44,3 +38,5 @@ public class ResourceConsistencyValidationServiceImpl implements ResourceConsist
         return requested;
     }
 }
+
+

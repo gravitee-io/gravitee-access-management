@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
+package io.gravitee.am.gateway.handler.oauth2.service.validation;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.reactivex.rxjava3.core.Completable;
 
 /**
  * Contract for validating RFC 8707 resource indicators in OAuth2 requests.
- * Implementations must validate the request's resource parameters against
- * configured ProtectedResource entities and signal an error with
- * {@link InvalidResourceException} (invalid_target) when unrecognized.
  */
 public interface ResourceValidationService {
 
     /**
      * Validate resource parameters for any OAuth2 request (authorization or token).
-     * Validates against domain-scoped ProtectedResource entities.
      *
      * @param request the request (resources read from request.getResources())
      * @return a Completable that completes on success or errors with InvalidResourceException

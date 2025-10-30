@@ -30,7 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.ciba.CibaTokenGrant
 import io.gravitee.am.gateway.handler.oauth2.service.granter.client.ClientCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.code.AuthorizationCodeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
-import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.ResourceConsistencyValidationService;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.refresh.RefreshTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.uma.UMATokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;

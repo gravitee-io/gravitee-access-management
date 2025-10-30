@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
+package io.gravitee.am.gateway.handler.oauth2.service.validation.impl;
 
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.model.ProtectedResource;
-import java.util.Set;
 import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,17 +26,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.when;
 
-/**
- * TDD for ResourceValidationServiceImpl: validates that requested resources
- * are recognized protected resources; otherwise errors with invalid_target.
- */
 @RunWith(MockitoJUnitRunner.class)
 public class ResourceValidationServiceImplTest {
 

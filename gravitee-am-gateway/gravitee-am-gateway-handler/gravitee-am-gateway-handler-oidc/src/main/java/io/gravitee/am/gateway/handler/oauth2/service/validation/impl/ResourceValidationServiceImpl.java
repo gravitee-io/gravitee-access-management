@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
+package io.gravitee.am.gateway.handler.oauth2.service.validation.impl;
 
 import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.reactivex.rxjava3.core.Completable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,12 +26,6 @@ import org.springframework.stereotype.Component;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * Implementation of ResourceValidationService that validates resource parameters
- * against configured ProtectedResource entities according to RFC 8707.
- *
- * @author GraviteeSource Team
- */
 @Component
 public class ResourceValidationServiceImpl implements ResourceValidationService {
 
@@ -42,19 +38,15 @@ public class ResourceValidationServiceImpl implements ResourceValidationService 
 
     @Override
     public Completable validate(OAuth2Request request) {
-
         return Completable.fromCallable(() -> {
             Set<String> requestedResources = request.getResources();
-            
-            // If no resources requested, validation passes
+
             if (requestedResources == null || requestedResources.isEmpty()) {
                 return null;
             }
 
-            // Get all configured protected resources
             var configuredResources = protectedResourceManager.entities();
 
-            // Build a Set of all resource identifiers for O(1) lookup
             Set<String> allResourceIdentifiers = configuredResources.stream()
                 .filter(protectedResource -> protectedResource.getResourceIdentifiers() != null)
                 .flatMap(protectedResource -> protectedResource.getResourceIdentifiers().stream())
@@ -70,3 +62,5 @@ public class ResourceValidationServiceImpl implements ResourceValidationService 
         });
     }
 }
+
+

@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
+package io.gravitee.am.gateway.handler.oauth2.exception;
 
 import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 
 /**
  * Exception thrown when a requested resource is not recognized by the authorization server.
- * 
+ *
  * According to RFC 8707, when the authorization server does not recognize the resource
  * parameter value, it should return an "invalid_target" error.
- * 
- * See <a href="https://tools.ietf.org/html/rfc8707#section-2">RFC 8707 Resource Indicators</a>
  *
- * @author GraviteeSource Team
+ * See <a href="https://tools.ietf.org/html/rfc8707#section-2">RFC 8707 Resource Indicators</a>
  */
 public class InvalidResourceException extends OAuth2Exception {
 
@@ -42,3 +40,5 @@ public class InvalidResourceException extends OAuth2Exception {
         return "invalid_target";
     }
 }
+
+

@@ -16,6 +16,8 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.reactivex.rxjava3.core.Completable;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import org.junit.Before;
