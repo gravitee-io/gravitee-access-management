@@ -16,7 +16,6 @@
 package io.gravitee.am.gateway.handler.oauth2.resources.handler.validation;
 
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
-import io.gravitee.am.gateway.handler.oauth2.resources.request.AuthorizationRequestFactory;
 import io.vertx.core.Handler;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,6 @@ import static io.gravitee.am.common.utils.ConstantKeys.AUTHORIZATION_REQUEST_CON
 public class AuthorizationRequestResourceValidationHandler implements Handler<RoutingContext> {
 
     private final ResourceValidationService resourceValidationService;
-    private final AuthorizationRequestFactory authorizationRequestFactory = new AuthorizationRequestFactory();
 
     public AuthorizationRequestResourceValidationHandler(ResourceValidationService resourceValidationService) {
         this.resourceValidationService = resourceValidationService;
@@ -41,8 +39,13 @@ public class AuthorizationRequestResourceValidationHandler implements Handler<Ro
 
     @Override
     public void handle(RoutingContext context) {
-        // Get or create authorization request
-        final AuthorizationRequest authorizationRequest = resolveAuthorizationRequest(context);
+        // Expect the authorization request to be already resolved and present in context
+        final AuthorizationRequest authorizationRequest = context.get(AUTHORIZATION_REQUEST_CONTEXT_KEY);
+        if (authorizationRequest == null) {
+            log.warn("Missing authorizationRequest in context; ensure AuthorizationRequestResolveHandler runs before validation");
+            context.fail(new IllegalStateException("authorizationRequest not resolved"));
+            return;
+        }
 
         // Validate resources
         resourceValidationService.validate(authorizationRequest)
@@ -56,14 +59,5 @@ public class AuthorizationRequestResourceValidationHandler implements Handler<Ro
                             context.fail(error);
                         }
                 );
-    }
-
-    private AuthorizationRequest resolveAuthorizationRequest(RoutingContext context) {
-        AuthorizationRequest authorizationRequest = context.get(AUTHORIZATION_REQUEST_CONTEXT_KEY);
-        if (authorizationRequest != null) {
-            return authorizationRequest;
-        }
-        // Create authorization request from context if not already present
-        return authorizationRequestFactory.create(context);
     }
 }

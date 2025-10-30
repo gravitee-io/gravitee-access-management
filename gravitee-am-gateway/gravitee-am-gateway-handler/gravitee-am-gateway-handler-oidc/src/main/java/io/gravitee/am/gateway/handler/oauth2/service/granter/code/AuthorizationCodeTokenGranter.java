@@ -129,25 +129,16 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                                         // {#context.attributes['authFlow']['entry']}
                                         tokenRequest1.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, ctx.getData());
 
-                                        // Validate resource consistency according to RFC 8707
-                                        return resourceConsistencyValidationService.validateConsistency(tokenRequest1, authorizationCode.getResources())
-                                                .andThen(Single.fromCallable(() -> {
+                                        // Resolve and validate final resources according to RFC 8707
+                                        return Single.fromCallable(() -> {
                                                     // Preserve original authorization resources in a dedicated field
                                                     tokenRequest1.setOriginalAuthorizationResources(authorizationCode.getResources());
                                                     logger.debug("Preserved original authorization resources: {}", authorizationCode.getResources());
-                                                    
-                                                    // Set resources for token creation:
-                                                    // 1. If token request has resources, use them (already validated as subset)
-                                                    // 2. If no token request resources, use authorization code resources
-                                                    Set<String> finalResources = tokenRequest1.getResources();
-                                                    if (finalResources == null || finalResources.isEmpty()) {
-                                                        finalResources = authorizationCode.getResources();
-                                                    }
+
+                                                    Set<String> finalResources = resourceConsistencyValidationService.resolveFinalResources(tokenRequest1, authorizationCode.getResources());
                                                     tokenRequest1.setResources(finalResources);
-                                                    
                                                     return tokenRequest1;
-                                                }))
-                                                .toMaybe();
+                                                }).toMaybe();
                                     })
                         ).toSingle());
     }

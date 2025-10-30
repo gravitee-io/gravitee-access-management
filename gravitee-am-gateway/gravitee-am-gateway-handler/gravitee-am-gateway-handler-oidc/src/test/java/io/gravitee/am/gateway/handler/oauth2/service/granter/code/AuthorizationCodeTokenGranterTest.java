@@ -95,7 +95,7 @@ public class AuthorizationCodeTokenGranterTest {
         Mockito.when(authorizationCodeService.remove(any(), any())).thenReturn(Maybe.just(authorizationCode));
         Mockito.when(authenticationFlowContextService.removeContext(any(), Mockito.anyInt())).thenReturn(Maybe.just(new AuthenticationFlowContext()));
         Mockito.when(userAuthenticationManager.loadPreAuthenticatedUser(any(), any())).thenReturn(Maybe.error(new RuntimeException("unknown error")));
-        Mockito.when(resourceConsistencyValidationService.validateConsistency(any(), any())).thenReturn(Completable.complete());
+        Mockito.when(resourceConsistencyValidationService.resolveFinalResources(any(), any())).thenReturn(java.util.Collections.emptySet());
         TokenRequest tokenRequest = Mockito.mock();
 
         LinkedMultiValueMap values = new LinkedMultiValueMap<>();
@@ -129,8 +129,8 @@ public class AuthorizationCodeTokenGranterTest {
 
         Mockito.when(authorizationCodeService.remove(any(), any())).thenReturn(Maybe.just(authorizationCode));
         Mockito.when(authenticationFlowContextService.removeContext(any(), Mockito.anyInt())).thenReturn(Maybe.just(new AuthenticationFlowContext()));
-        Mockito.when(resourceConsistencyValidationService.validateConsistency(any(TokenRequest.class), eq(authResources)))
-                .thenReturn(Completable.error(new InvalidResourceException("The requested resource is not recognized")));
+        Mockito.when(resourceConsistencyValidationService.resolveFinalResources(any(TokenRequest.class), eq(authResources)))
+                .thenThrow(new InvalidResourceException("The requested resource is not recognized"));
 
         // Act
         TestObserver<Token> testObserver = granter.grant(tokenRequest, client).test();

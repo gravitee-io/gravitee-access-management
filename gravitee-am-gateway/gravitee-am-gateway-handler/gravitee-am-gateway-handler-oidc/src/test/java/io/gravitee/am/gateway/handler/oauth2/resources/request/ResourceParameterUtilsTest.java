@@ -45,31 +45,24 @@ public class ResourceParameterUtilsTest {
     private MultiMap params;
 
     @Test
-    public void shouldReturnNullWhenNoResourceParameters() {
+    public void shouldReturnEmptyForEmptyCases() {
         // Given
         when(routingContext.request()).thenReturn(httpServerRequest);
         when(httpServerRequest.params()).thenReturn(params);
-        when(params.getAll(Parameters.RESOURCE)).thenReturn(null);
 
-        // When
-        Set<String> result = ResourceParameterUtils.parseResourceParameters(routingContext);
+        java.util.List<java.util.List<String>> cases = java.util.Arrays.asList(
+            null,
+            java.util.Collections.emptyList(),
+            java.util.Arrays.asList(null, null)
+        );
 
-        // Then
-        assertThat(result).isNull();
-    }
-
-    @Test
-    public void shouldReturnNullWhenEmptyResourceParameters() {
-        // Given
-        when(routingContext.request()).thenReturn(httpServerRequest);
-        when(httpServerRequest.params()).thenReturn(params);
-        when(params.getAll(Parameters.RESOURCE)).thenReturn(java.util.Collections.emptyList());
-
-        // When
-        Set<String> result = ResourceParameterUtils.parseResourceParameters(routingContext);
-
-        // Then
-        assertThat(result).isNull();
+        for (java.util.List<String> providedParams : cases) {
+            when(params.getAll(Parameters.RESOURCE)).thenReturn(providedParams);
+            // When
+            Set<String> result = ResourceParameterUtils.parseResourceParameters(routingContext);
+            // Then
+            assertThat(result).isEmpty();
+        }
     }
 
     @Test
@@ -156,7 +149,7 @@ public class ResourceParameterUtilsTest {
     }
 
     @Test
-    public void shouldReturnNullWhenAllResourceParametersAreNull() {
+    public void shouldReturnEmptyWhenAllResourceParametersAreNull() {
         // Given
         when(routingContext.request()).thenReturn(httpServerRequest);
         when(httpServerRequest.params()).thenReturn(params);
@@ -166,7 +159,7 @@ public class ResourceParameterUtilsTest {
         Set<String> result = ResourceParameterUtils.parseResourceParameters(routingContext);
 
         // Then
-        assertThat(result).isNull();
+        assertThat(result).isEmpty();
     }
 
     @Test
@@ -197,11 +190,12 @@ public class ResourceParameterUtilsTest {
         Set<String> result = ResourceParameterUtils.parseResourceParameters(routingContext);
 
         // Then
-        assertThat(result).containsExactlyInAnyOrder(
-            "https://api.example.com/photos",
-            "https://api.example.com/albums"
-        );
-        assertThat(result).hasSize(2); // Should only have 2 unique entries
+        assertThat(result)
+            .containsExactlyInAnyOrder(
+                "https://api.example.com/photos",
+                "https://api.example.com/albums"
+            )
+            .hasSize(2); // Should only have 2 unique entries
     }
 
     @Test
@@ -219,10 +213,11 @@ public class ResourceParameterUtilsTest {
         Set<String> result = ResourceParameterUtils.parseResourceParameters(routingContext);
 
         // Then
-        assertThat(result).containsExactlyInAnyOrder(
-            "https://api.example.com/photos",
-            "https://api.example.com/albums"
-        );
-        assertThat(result).hasSize(2); // Should only have 2 unique entries after trimming
+        assertThat(result)
+            .containsExactlyInAnyOrder(
+                "https://api.example.com/photos",
+                "https://api.example.com/albums"
+            )
+            .hasSize(2); // Should only have 2 unique entries after trimming
     }
 }

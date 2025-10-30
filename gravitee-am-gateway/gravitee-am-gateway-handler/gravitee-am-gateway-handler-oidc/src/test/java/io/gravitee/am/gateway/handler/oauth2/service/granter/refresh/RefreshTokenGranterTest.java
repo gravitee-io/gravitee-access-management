@@ -101,7 +101,7 @@ public class RefreshTokenGranterTest {
 
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.just(new RefreshToken(refreshToken)));
-        when(resourceConsistencyValidationService.validateConsistency(any(OAuth2Request.class), any())).thenReturn(Completable.complete());
+        when(resourceConsistencyValidationService.resolveFinalResources(any(OAuth2Request.class), any())).thenReturn(java.util.Set.of());
         // PRE_TOKEN request expects response object
         when(rulesEngine.fire(any(), any(), any(), any(), any())).thenReturn(Single.just(executionContext));
         // POST_TOKEN request does not
@@ -166,7 +166,6 @@ public class RefreshTokenGranterTest {
         ArgumentCaptor<OAuth2Request> oAuth2RequestArgumentCaptor = ArgumentCaptor.forClass(OAuth2Request.class);
         when(tokenService.create(oAuth2RequestArgumentCaptor.capture(), any(), any())).thenReturn(Single.just(accessToken));
         when(tokenService.refresh(refreshToken, tokenRequest, client)).thenReturn(Single.just(new RefreshToken(refreshToken)));
-        when(resourceConsistencyValidationService.validateConsistency(any(OAuth2Request.class), any())).thenReturn(Completable.complete());
         // PRE_TOKEN request expects response object
         when(rulesEngine.fire(any(), any(), any(), any(), any())).thenReturn(Single.just(executionContext));
         // POST_TOKEN request does not
@@ -216,7 +215,7 @@ public class RefreshTokenGranterTest {
         
         Token accessToken = new AccessToken("test-token");
         
-        // Capture the validation call to verify it's called with correct parameters
+        // Capture the resolver call to verify it's called with correct parameters
         ArgumentCaptor<TokenRequest> validationRequestCaptor = ArgumentCaptor.forClass(TokenRequest.class);
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Set<String>> validationResourcesCaptor = ArgumentCaptor.forClass((Class<Set<String>>) (Class<?>) Set.class);
@@ -224,8 +223,8 @@ public class RefreshTokenGranterTest {
         when(tokenRequest.parameters()).thenReturn(parameters);
         when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
         when(tokenService.refresh(refreshTokenValue, tokenRequest, client)).thenReturn(Single.just(refreshToken));
-        when(resourceConsistencyValidationService.validateConsistency(validationRequestCaptor.capture(), validationResourcesCaptor.capture()))
-                .thenReturn(Completable.complete());
+        when(resourceConsistencyValidationService.resolveFinalResources(validationRequestCaptor.capture(), validationResourcesCaptor.capture()))
+                .thenReturn(requestedResources);
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
         when(rulesEngine.fire(any(), any(), any(), any(), any())).thenReturn(Single.just(executionContext));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));
@@ -281,8 +280,8 @@ public class RefreshTokenGranterTest {
         when(tokenRequest.parameters()).thenReturn(parameters);
         // createOAuth2Request() is not called in the error path, so we don't need to mock it
         when(tokenService.refresh(refreshTokenValue, tokenRequest, client)).thenReturn(Single.just(refreshToken));
-        when(resourceConsistencyValidationService.validateConsistency(any(OAuth2Request.class), eq(origResources)))
-                .thenReturn(Completable.error(new InvalidResourceException("The requested resource is not recognized by this authorization server.")));
+        when(resourceConsistencyValidationService.resolveFinalResources(any(OAuth2Request.class), eq(origResources)))
+                .thenThrow(new InvalidResourceException("The requested resource is not recognized by this authorization server."));
         // Note: We don't mock tokenService.create() or rulesEngine.fire() since the test should fail before reaching them
         
         // Act
@@ -328,8 +327,8 @@ public class RefreshTokenGranterTest {
         when(tokenRequest.parameters()).thenReturn(parameters);
         when(tokenRequest.createOAuth2Request()).thenReturn(oAuth2Request);
         when(tokenService.refresh(refreshTokenValue, tokenRequest, client)).thenReturn(Single.just(refreshToken));
-        when(resourceConsistencyValidationService.validateConsistency(any(OAuth2Request.class), resourcesCaptor.capture()))
-                .thenReturn(Completable.complete());
+        when(resourceConsistencyValidationService.resolveFinalResources(any(OAuth2Request.class), resourcesCaptor.capture()))
+                .thenReturn(origResources);
         when(tokenService.create(any(), any(), any())).thenReturn(Single.just(accessToken));
         when(rulesEngine.fire(any(), any(), any(), any(), any())).thenReturn(Single.just(executionContext));
         when(rulesEngine.fire(any(), any(), any(), any())).thenReturn(Single.just(executionContext));

@@ -34,11 +34,14 @@ import java.util.Set;
 public interface ResourceConsistencyValidationService {
 
     /**
-     * Validate that token request resources are consistent with authorization resources.
-     * 
+     * Validates and resolves the final resources to be used for token issuance according to RFC 8707:
+     * - If token request provides resources, they must be a subset of authorization resources and are returned
+     * - If token request provides no resources, authorization resources are returned
+     *
      * @param tokenRequest the token request containing resource parameters
-     * @param authorizationResources the resources from the original authorization request
-     * @return a Completable that completes on success or errors with InvalidResourceException
+     * @param authorizationResources resources from the original authorization or refresh token
+     * @return the final set of resources to apply to the token
+     * @throws InvalidResourceException if the request resources are not a subset of authorization resources
      */
-    Completable validateConsistency(OAuth2Request tokenRequest, Set<String> authorizationResources);
+    Set<String> resolveFinalResources(OAuth2Request tokenRequest, Set<String> authorizationResources);
 }

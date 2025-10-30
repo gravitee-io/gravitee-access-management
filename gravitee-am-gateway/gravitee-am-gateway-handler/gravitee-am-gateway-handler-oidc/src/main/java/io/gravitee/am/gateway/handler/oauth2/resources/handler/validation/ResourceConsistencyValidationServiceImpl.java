@@ -27,23 +27,17 @@ import java.util.Set;
  * @author GraviteeSource Team
  */
 public class ResourceConsistencyValidationServiceImpl implements ResourceConsistencyValidationService {
-
     @Override
-    public Completable validateConsistency(OAuth2Request tokenRequest, Set<String> authorizationResources) {
-        return Completable.fromAction(() -> {
-            Set<String> tokenRequestResources = tokenRequest.getResources();
-
-            // If no resources in token request, validation passes (will use authorization resources)
-            if (tokenRequestResources == null || tokenRequestResources.isEmpty()) {
-                return;
-            }
-
-            // Token request resources must be a subset of the authorization resources
-            if (authorizationResources == null || !authorizationResources.containsAll(tokenRequestResources)) {
-                throw new InvalidResourceException(
-                    "The requested resource is not recognized by this authorization server."
-                );
-            }
-        });
+    public Set<String> resolveFinalResources(OAuth2Request tokenRequest, Set<String> authorizationResources) {
+        Set<String> tokenRequestResources = tokenRequest.getResources();
+        if (tokenRequestResources == null || tokenRequestResources.isEmpty()) {
+            return authorizationResources;
+        }
+        if (authorizationResources == null || !authorizationResources.containsAll(tokenRequestResources)) {
+            throw new InvalidResourceException(
+                "The requested resource is not recognized by this authorization server."
+            );
+        }
+        return tokenRequestResources;
     }
 }

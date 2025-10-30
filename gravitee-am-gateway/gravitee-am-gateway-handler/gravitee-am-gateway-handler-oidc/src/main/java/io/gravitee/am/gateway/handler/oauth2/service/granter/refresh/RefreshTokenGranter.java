@@ -104,23 +104,14 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
                             // set decoded refresh token to the current request
                             tokenRequest1.setRefreshToken(refreshToken1.getAdditionalInformation());
                             
-                            // Extract original resources from refresh token for RFC 8707 compliance
                             Set<String> originalResources = OrigResourcesUtils.extractOrigResources(refreshToken1.getAdditionalInformation());
                             
-                            // Validate resource consistency according to RFC 8707
-                            return resourceConsistencyValidationService.validateConsistency(tokenRequest1, originalResources)
-                                    .andThen(Single.fromCallable(() -> {
-                                        // Set resources for token creation:
-                                        // 1. If token request has resources, use them (already validated as subset)
-                                        // 2. If no token request resources, use original resources from refresh token
-                                        Set<String> finalResources = tokenRequest1.getResources();
-                                        if (finalResources == null || finalResources.isEmpty()) {
-                                            finalResources = originalResources;
-                                        }
+                            // Resolve and validate final resources according to RFC 8707
+                            return Single.fromCallable(() -> {
+                                        Set<String> finalResources = resourceConsistencyValidationService.resolveFinalResources(tokenRequest1, originalResources);
                                         tokenRequest1.setResources(finalResources);
-                                        
                                         return tokenRequest1;
-                                    }));
+                                    });
                         }));
     }
 

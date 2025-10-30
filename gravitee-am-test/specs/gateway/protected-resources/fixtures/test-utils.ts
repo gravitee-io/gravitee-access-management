@@ -16,6 +16,8 @@
 
 import { expect } from '@jest/globals';
 import { decodeJwt } from '@utils-commands/jwt';
+import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { login } from '@gateway-commands/login-commands';
 
 export function validateAudienceClaim(token: string, expectedResources: string[]): void {
   const decoded = decodeJwt(token);
@@ -43,6 +45,21 @@ export function validateErrorResponse(response: any, expectedError: string = 'in
   expect(response.body.error_description).toContain('not recognized');
   expect(response.body.access_token).toBeUndefined();
   expect(response.body.token_type).toBeUndefined();
+}
+
+export async function expectResourceValidationErrorAfterLogin(
+  firstResponse: any,
+  username: string,
+  clientId: string,
+  password: string,
+): Promise<string> {
+  const loginResponse = await login(firstResponse, username, clientId, password, false, false);
+  const authorizeResponse = await performGet(loginResponse.headers.location, '', { Cookie: loginResponse.headers['set-cookie'] }).expect(302);
+  const location = authorizeResponse.headers.location as string;
+  expect(location).toContain('error=invalid_target');
+  expect(location).toContain('error_description');
+  expect(location).toContain('not+recognized');
+  return location;
 }
 
 

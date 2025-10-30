@@ -17,8 +17,8 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
-import { ProtectedResourcesFixture, setupProtectedResourcesFixture } from './fixtures/protected-resources-fixture';
-import { buildAuthorizationUrlWithResources } from './fixtures/protected-resources-fixture';
+import { ProtectedResourcesFixture, setupProtectedResourcesFixture, buildAuthorizationUrlWithResources, PROTECTED_RESOURCES_TEST } from './fixtures/protected-resources-fixture';
+import { expectResourceValidationErrorAfterLogin } from './fixtures/test-utils';
 
 // RFC 8707 Authorization Endpoint: resource indicators handling and error redirects
 
@@ -99,7 +99,7 @@ describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
     expect(location).toContain('/login');
   });
 
-  it('should reject invalid resource with error redirect', async () => {
+  it('should reject invalid resource after login with error redirect', async () => {
     const invalidResource = 'https://unknown-api.com/invalid';
     const url = buildAuthorizationUrlWithResources(
       fixture.openIdConfiguration.authorization_endpoint,
@@ -107,19 +107,11 @@ describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
       fixture.redirectUri,
       [invalidResource]
     );
-    const response = await performGet(url).expect(302);
-
-    // Should redirect to error page
-    expect(response.headers.location).toBeDefined();
-    const location = response.headers.location;
-
-    // Should contain error parameters
-    expect(location).toContain('error=invalid_target');
-    expect(location).toContain('error_description');
-    expect(location).toContain('not+recognized');
+    const first = await performGet(url).expect(302);
+    await expectResourceValidationErrorAfterLogin(first, fixture.user.username, fixture.application.settings.oauth.clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD);
   });
 
-  it('should reject malformed resource URI with error redirect', async () => {
+  it('should reject malformed resource after login with error redirect', async () => {
     const malformedResource = 'not-a-valid-uri';
     const url = buildAuthorizationUrlWithResources(
       fixture.openIdConfiguration.authorization_endpoint,
@@ -127,49 +119,25 @@ describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
       fixture.redirectUri,
       [malformedResource]
     );
-    const response = await performGet(url).expect(302);
-
-    // Should redirect to error page
-    expect(response.headers.location).toBeDefined();
-    const location = response.headers.location;
-
-    // Should contain error parameters
-    expect(location).toContain('error=invalid_target');
-    expect(location).toContain('error_description');
-    expect(location).toContain('not+recognized');
+    const first = await performGet(url).expect(302);
+    await expectResourceValidationErrorAfterLogin(first, fixture.user.username, fixture.application.settings.oauth.clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD);
   });
 
-  it('should reject mixed valid and invalid resources with error redirect', async () => {
+  it('should reject mixed valid/invalid resources after login with error redirect', async () => {
     const url = buildAuthorizationUrlWithResources(
       fixture.openIdConfiguration.authorization_endpoint,
       fixture.application.settings.oauth.clientId,
       fixture.redirectUri,
       ['https://api.example.com/photos', 'https://unknown-api.com/invalid']
     );
-    const response = await performGet(url).expect(302);
-
-    // Should redirect to error page (any invalid resource should cause error)
-    expect(response.headers.location).toBeDefined();
-    const location = response.headers.location;
-
-    // Should contain error parameters
-    expect(location).toContain('error=invalid_target');
-    expect(location).toContain('error_description');
-    expect(location).toContain('not+recognized');
+    const first = await performGet(url).expect(302);
+    await expectResourceValidationErrorAfterLogin(first, fixture.user.username, fixture.application.settings.oauth.clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD);
   });
 
-  it('should reject empty resource parameter with error redirect', async () => {
-    const response = await performGet(
+  it('should reject empty resource after login with error redirect', async () => {
+    const firstResponse = await performGet(
       `${fixture.openIdConfiguration.authorization_endpoint}?response_type=code&client_id=${fixture.application.settings.oauth.clientId}&redirect_uri=${encodeURIComponent(fixture.redirectUri)}&resource=`
     ).expect(302);
-
-    // Should redirect to error page (empty resource is treated as invalid)
-    expect(response.headers.location).toBeDefined();
-    const location = response.headers.location;
-
-    // Should contain error parameters
-    expect(location).toContain('error=invalid_target');
-    expect(location).toContain('error_description');
-    expect(location).toContain('not+recognized');
+    await expectResourceValidationErrorAfterLogin(firstResponse, fixture.user.username, fixture.application.settings.oauth.clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD);
   });
 });

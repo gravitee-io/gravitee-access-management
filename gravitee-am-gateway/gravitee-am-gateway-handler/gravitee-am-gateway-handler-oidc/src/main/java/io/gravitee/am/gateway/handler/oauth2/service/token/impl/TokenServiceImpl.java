@@ -70,7 +70,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Arrays;
 
 import static io.gravitee.am.common.oidc.ResponseType.ID_TOKEN;
 import static io.gravitee.am.gateway.handler.common.jwt.JWTService.TokenType.ACCESS_TOKEN;
@@ -499,32 +498,7 @@ public class TokenServiceImpl implements TokenService {
      * @param request the OAuth2 request containing resources
      */
     private void setOrigResourcesClaim(JWT jwt, OAuth2Request request) {
-        Set<String> origResources = new java.util.HashSet<>();
-
-        // Try to read orig_resources from previous refresh token (refresh flow)
-        try {
-            Map<String, Object> previousRefreshToken = request.getRefreshToken();
-            origResources.addAll(OrigResourcesUtils.extractOrigResources(previousRefreshToken));
-        } catch (Exception e) {
-            // best-effort; fall back below
-            logger.debug("Unable to preserve '{}' from previous refresh token, falling back to current request resources", Claims.ORIG_RESOURCES, e);
-        }
-
-        // Fallback to original authorization resources (authorization code flow)
-        if (origResources.isEmpty()) {
-            Set<String> originalAuthorizationResources = request.getOriginalAuthorizationResources();
-            if (originalAuthorizationResources != null && !originalAuthorizationResources.isEmpty()) {
-                origResources.addAll(originalAuthorizationResources);
-                logger.debug("Using original authorization resources from request field: {}", origResources);
-            } else {
-                // Fallback to request resources if no original authorization resources available
-                Set<String> originalResources = request.getResources();
-                logger.debug("Falling back to request resources: {}", originalResources);
-                if (originalResources != null) {
-                    origResources.addAll(originalResources);
-                }
-            }
-        }
+        Set<String> origResources = determineOriginalResources(request);
 
         if (!origResources.isEmpty()) {
             var jsonArray = new JSONArray();
@@ -534,5 +508,32 @@ public class TokenServiceImpl implements TokenService {
         } else {
             logger.debug("No {} to store in refresh token, JTI: {}", Claims.ORIG_RESOURCES, jwt.getJti());
         }
+    }
+
+    /**
+     * Determines the original resources to persist into a refresh token, with early returns for clarity:
+     * 1) If present, reuse orig_resources from the previous refresh token (refresh flow)
+     * 2) Else, use original authorization resources captured on the request (authorization code flow)
+     * 3) Else, fall back to current request resources
+     */
+    private Set<String> determineOriginalResources(OAuth2Request request) {
+        // 1) Try to reuse from previous refresh token
+        Map<String, Object> previousRefreshToken = request.getRefreshToken();
+        Set<String> preserved = OrigResourcesUtils.extractOrigResources(previousRefreshToken);
+        if (preserved != null && !preserved.isEmpty()) {
+            return preserved;
+        }
+
+        // 2) Use original authorization resources captured on the request
+        Set<String> originalAuthorizationResources = request.getOriginalAuthorizationResources();
+        if (originalAuthorizationResources != null && !originalAuthorizationResources.isEmpty()) {
+            logger.debug("Using original authorization resources from request field: {}", originalAuthorizationResources);
+            return new java.util.LinkedHashSet<>(originalAuthorizationResources);
+        }
+
+        // 3) Fall back to current request resources
+        Set<String> originalResources = request.getResources();
+        logger.debug("Falling back to request resources: {}", originalResources);
+        return originalResources == null ? java.util.Set.of() : new java.util.LinkedHashSet<>(originalResources);
     }
 }

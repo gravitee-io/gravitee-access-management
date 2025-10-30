@@ -104,7 +104,6 @@ public class TokenRequest extends OAuth2Request {
         oAuth2Request.setRefreshToken(getRefreshToken());
         oAuth2Request.setAuthorizationCode(getAuthorizationCode());
         oAuth2Request.setResources(getResources());
-        // preserve original authorization resources for RFC 8707 compliance
         oAuth2Request.setOriginalAuthorizationResources(getOriginalAuthorizationResources());
 
         // set UMA 2.0 permissions

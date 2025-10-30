@@ -374,33 +374,5 @@ public class TokenServiceImplTest {
         verifyRefreshTokenOrigResources(newRefreshJWT, Set.of(), "test-client");
     }
 
-    @Test
-    public void when_refresh_token_rotation_with_exception_reading_previous_token_should_fallback_to_request_resources() {
-        // Arrange: Previous refresh token will cause exception when accessed
-        // Note: This tests defensive programming - graceful handling of unexpected exceptions.
-        // In practice, proper validation should prevent corrupted tokens from reaching this point.
-        Set<String> requestedResources = Set.of("https://api.example.com/photos");
-        Map<String, Object> previousRefreshToken = new HashMap<String, Object>() {
-            @Override
-            public Object get(Object key) {
-                if ("orig_resources".equals(key)) {
-                    throw new RuntimeException("Simulated exception");
-                }
-                return super.get(key);
-            }
-        };
-        
-        AuthorizationRequest request = createAuthorizationRequest("test-client", requestedResources, previousRefreshToken);
-        Client client = createClient("test-client");
-        User user = createUser("user-123");
-        setupCommonMocks(request);
-        
-        // Act
-        executeTokenCreation(request, client, user);
-        
-        // Assert: Should fallback to request resources when exception occurs (defensive programming)
-        JWT newRefreshJWT = captureRefreshTokenJWT();
-        verifyRefreshTokenOrigResources(newRefreshJWT, requestedResources, "test-client");
-    }
 
 }

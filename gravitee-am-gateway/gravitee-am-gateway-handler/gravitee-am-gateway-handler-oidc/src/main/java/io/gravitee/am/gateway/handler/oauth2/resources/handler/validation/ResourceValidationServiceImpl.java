@@ -64,7 +64,7 @@ public class ResourceValidationServiceImpl implements ResourceValidationService 
             for (String requestedResource : requestedResources) {
                 if (!allResourceIdentifiers.contains(requestedResource)) {
                     throw new InvalidResourceException(
-                        "The requested resource is not recognized by this authorization server."
+                        "The requested resource '" + requestedResource + "' is not recognized by this authorization server."
                     );
                 }
             }

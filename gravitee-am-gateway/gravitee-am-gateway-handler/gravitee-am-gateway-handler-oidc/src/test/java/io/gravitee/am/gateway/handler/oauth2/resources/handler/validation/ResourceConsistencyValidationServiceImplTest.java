@@ -19,7 +19,6 @@ import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.common.util.LinkedMultiValueMap;
 import io.gravitee.common.util.MultiValueMap;
-import io.reactivex.rxjava3.observers.TestObserver;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,104 +46,89 @@ public class ResourceConsistencyValidationServiceImplTest {
     }
 
     @Test
-    public void shouldPassWhenTokenRequestHasNoResources() {
+    public void shouldReturnAuthorizationResourcesWhenTokenRequestHasNoResources() {
         // Given
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setResources(Collections.emptySet());
         Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
 
         // When
-        TestObserver<Void> observer = service.validateConsistency(tokenRequest, authorizationResources).test();
+        Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
 
         // Then
-        observer.awaitDone(1, TimeUnit.SECONDS);
-        observer.assertComplete();
-        observer.assertNoErrors();
+        assertThat(result).isEqualTo(authorizationResources);
     }
 
     @Test
-    public void shouldPassWhenTokenRequestResourcesAreSubsetOfAuthorizationResources() {
+    public void shouldReturnTokenRequestResourcesWhenSubsetOfAuthorizationResources() {
         // Given
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos")));
         Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
 
         // When
-        TestObserver<Void> observer = service.validateConsistency(tokenRequest, authorizationResources).test();
+        Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
 
         // Then
-        observer.awaitDone(1, TimeUnit.SECONDS);
-        observer.assertComplete();
-        observer.assertNoErrors();
+        assertThat(result).isEqualTo(new HashSet<>(Arrays.asList("https://api.example.com/photos")));
     }
 
     @Test
-    public void shouldPassWhenTokenRequestResourcesAreIdenticalToAuthorizationResources() {
+    public void shouldReturnTokenRequestResourcesWhenIdenticalToAuthorizationResources() {
         // Given
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums")));
         Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
 
         // When
-        TestObserver<Void> observer = service.validateConsistency(tokenRequest, authorizationResources).test();
+        Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
 
         // Then
-        observer.awaitDone(1, TimeUnit.SECONDS);
-        observer.assertComplete();
-        observer.assertNoErrors();
+        assertThat(result).isEqualTo(new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums")));
     }
 
     @Test
-    public void shouldRejectWhenTokenRequestHasResourcesNotInAuthorization() {
+    public void shouldThrowWhenTokenRequestHasResourcesNotInAuthorization() {
         // Given
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/unknown")));
         Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
 
-        // When
-        TestObserver<Void> observer = service.validateConsistency(tokenRequest, authorizationResources).test();
-
         // Then
-        observer.awaitDone(1, TimeUnit.SECONDS);
-        observer.assertError(InvalidResourceException.class);
-        observer.assertError(ex -> {
-            assertThat(((InvalidResourceException) ex).getOAuth2ErrorCode()).isEqualTo("invalid_target");
-            return true;
-        });
+        try {
+            service.resolveFinalResources(tokenRequest, authorizationResources);
+            org.junit.Assert.fail("Expected InvalidResourceException");
+        } catch (InvalidResourceException ex) {
+            assertThat(ex.getOAuth2ErrorCode()).isEqualTo("invalid_target");
+        }
     }
 
     @Test
-    public void shouldRejectWhenAuthorizationHasNoResources() {
+    public void shouldThrowWhenAuthorizationHasNoResources() {
         // Given
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos")));
         Set<String> authorizationResources = Collections.emptySet();
 
-        // When
-        TestObserver<Void> observer = service.validateConsistency(tokenRequest, authorizationResources).test();
-
-        // Then
-        observer.awaitDone(1, TimeUnit.SECONDS);
-        observer.assertError(InvalidResourceException.class);
-        observer.assertError(ex -> {
-            assertThat(((InvalidResourceException) ex).getOAuth2ErrorCode()).isEqualTo("invalid_target");
-            return true;
-        });
+        try {
+            service.resolveFinalResources(tokenRequest, authorizationResources);
+            org.junit.Assert.fail("Expected InvalidResourceException");
+        } catch (InvalidResourceException ex) {
+            assertThat(ex.getOAuth2ErrorCode()).isEqualTo("invalid_target");
+        }
     }
 
     @Test
-    public void shouldPassWhenBothTokenRequestAndAuthorizationHaveNoResources() {
+    public void shouldReturnEmptyWhenBothTokenRequestAndAuthorizationHaveNoResources() {
         // Given
         TokenRequest tokenRequest = new TokenRequest();
         tokenRequest.setResources(Collections.emptySet());
         Set<String> authorizationResources = Collections.emptySet();
 
         // When
-        TestObserver<Void> observer = service.validateConsistency(tokenRequest, authorizationResources).test();
+        Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
 
         // Then
-        observer.awaitDone(1, TimeUnit.SECONDS);
-        observer.assertComplete();
-        observer.assertNoErrors();
+        assertThat(result).isEmpty();
     }
 }
