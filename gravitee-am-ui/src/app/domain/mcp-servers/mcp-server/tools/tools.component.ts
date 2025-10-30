@@ -114,14 +114,14 @@ export class DomainMcpServerToolsComponent implements OnInit {
         return {
           key: updatedTool.key,
           description: updatedTool.description,
-          type: ProtectedResourceFeatureType.MCP_TOOL,
+          type: 'MCP_TOOL' as ProtectedResourceFeatureType,
           scopes: updatedTool.scopes,
         };
       }
       return {
         key: feature.key,
         description: feature.description,
-        type: feature.type,
+        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
         scopes: (feature as any).scopes,
       };
     });
