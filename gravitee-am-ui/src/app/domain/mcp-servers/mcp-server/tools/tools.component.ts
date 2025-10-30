@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
-import { catchError } from 'rxjs/operators';
+import { catchError, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import {
@@ -31,6 +31,7 @@ import { McpTool } from '../../../components/mcp-tools-table/mcp-tools-table.com
 import { ScopeService } from '../../../../services/scope.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { AuthService } from '../../../../services/auth.service';
+import { DialogService } from '../../../../services/dialog.service';
 
 import { DomainMcpServerToolEditDialogComponent } from './tool-edit-dialog/tool-edit-dialog.component';
 
@@ -63,6 +64,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private dialog: MatDialog,
+    private dialogService: DialogService,
   ) {}
 
   ngOnInit(): void {
@@ -105,6 +107,53 @@ export class DomainMcpServerToolsComponent implements OnInit {
         this.updateTool(tool.key, result);
       }
     });
+  }
+
+  handleDelete(tool: McpTool): void {
+    this.dialogService
+      .confirm('Delete Tool', `Are you sure you want to delete the tool "${tool.key}"?`)
+      .pipe(filter((confirmed) => confirmed))
+      .subscribe(() => {
+        this.deleteTool(tool.key);
+      });
+  }
+
+  private deleteTool(toolKey: string): void {
+    // Remove the tool from the features list
+    const updatedFeatures = this.protectedResource.features.filter((feature) => feature.key !== toolKey);
+
+    // Map features to the update request format
+    const updateRequest: UpdateProtectedResourceRequest = {
+      name: this.protectedResource.name,
+      resourceIdentifiers: this.protectedResource.resourceIdentifiers,
+      description: this.protectedResource.description,
+      features: updatedFeatures.map((f) => ({
+        key: f.key,
+        description: f.description,
+        type: f.type,
+        scopes: (f as any).scopes,
+      })),
+    };
+
+    this.protectedResourceService
+      .update(this.domainId, this.protectedResource.id, updateRequest)
+      .pipe(
+        catchError((err: unknown) => {
+          this.snackbarService.open(
+            'Failed to delete tool: ' + ((err as HttpErrorResponse).error?.message || (err as HttpErrorResponse).message),
+          );
+          return of(null);
+        }),
+      )
+      .subscribe((updated) => {
+        if (updated) {
+          this.snackbarService.open(`Tool "${toolKey}" deleted successfully`);
+          this.protectedResource = updated;
+          this.features = this.mapFeaturesToTools(updated.features ?? []);
+          // Update the route snapshot data so other tabs see the updated data
+          this.route.snapshot.data['mcpServer'] = updated;
+        }
+      });
   }
 
   private updateTool(originalKey: string, updatedTool: { key: string; description?: string; scopes?: string[] }): void {

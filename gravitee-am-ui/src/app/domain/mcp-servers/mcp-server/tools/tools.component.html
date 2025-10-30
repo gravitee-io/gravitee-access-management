@@ -23,7 +23,13 @@
           <h2>Tools</h2>
           <p>Define the tools that this MCP Server provides. Tools can be tied to specific scopes</p>
           <div>
-            <mcp-tools-table [tools]="features" [showEditIcon]="canUpdate" (edit)="handleEdit($event)"></mcp-tools-table>
+            <mcp-tools-table
+              [tools]="features"
+              [showEditIcon]="canUpdate"
+              [showDeleteIcon]="canUpdate"
+              (edit)="handleEdit($event)"
+              (delete)="handleDelete($event)"
+            ></mcp-tools-table>
           </div>
         </div>
       </div>
