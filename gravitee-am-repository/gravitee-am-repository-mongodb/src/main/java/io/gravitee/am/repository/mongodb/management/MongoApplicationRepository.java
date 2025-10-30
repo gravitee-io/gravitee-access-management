@@ -140,7 +140,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     @Override
     public Flowable<Application> findAll() {
         return Flowable.fromPublisher(applicationsCollection.find()).map(MongoApplicationRepository::convert)
-                .observeOn(Schedulers.computation());
+                .observeOn(Schedulers.computation())
+                .onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override
@@ -158,7 +159,8 @@ public class MongoApplicationRepository extends AbstractManagementMongoRepositor
     @Override
     public Flowable<Application> findByDomain(String domain) {
         return Flowable.fromPublisher(withMaxTime(applicationsCollection.find(eq(FIELD_DOMAIN, domain)))).map(MongoApplicationRepository::convert)
-                .observeOn(Schedulers.computation());
+                .observeOn(Schedulers.computation())
+                .onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override

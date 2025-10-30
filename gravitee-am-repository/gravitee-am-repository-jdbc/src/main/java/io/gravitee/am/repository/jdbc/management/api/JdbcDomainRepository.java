@@ -88,7 +88,7 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     public Flowable<Domain> findAll() {
         LOGGER.debug("findAll()");
         Flowable<Domain> domains = domainRepository.findAll().map(this::toDomain);
-        return domains.flatMap(this::completeDomain);
+        return domains.flatMap(this::completeDomain).onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override
