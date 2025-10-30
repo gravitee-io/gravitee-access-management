@@ -384,10 +384,7 @@ public class AuthorizationRequestResolverTest {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         
-        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add(Parameters.RESOURCE, "https://api.example.com");
-        authorizationRequest.setParameters(parameters);
+        authorizationRequest.setResources(Set.of("https://api.example.com"));
         
         List<String> authScopes = new ArrayList<>();
         authScopes.add(scope);
@@ -422,10 +419,7 @@ public class AuthorizationRequestResolverTest {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         
-        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add(Parameters.RESOURCE, "https://api.example.com");
-        authorizationRequest.setParameters(parameters);
+        authorizationRequest.setResources(Set.of("https://api.example.com"));
         
         List<String> authScopes = new ArrayList<>();
         authScopes.add(scope);
@@ -459,10 +453,7 @@ public class AuthorizationRequestResolverTest {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         
-        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add(Parameters.RESOURCE, "https://api.example.com");
-        authorizationRequest.setParameters(parameters);
+        authorizationRequest.setResources(Set.of("https://api.example.com"));
         
         authorizationRequest.setScopes(Set.of(scope, invalidScope));
 
@@ -488,10 +479,7 @@ public class AuthorizationRequestResolverTest {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         
-        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add(Parameters.RESOURCE, "https://api.example.com");
-        authorizationRequest.setParameters(parameters);
+        authorizationRequest.setResources(Set.of("https://api.example.com"));
         
         // Request scopes that are not in client but ARE in protected resources
         authorizationRequest.setScopes(Set.of("resource1", invalidScope));
@@ -518,10 +506,7 @@ public class AuthorizationRequestResolverTest {
         AuthorizationRequest authorizationRequest = new AuthorizationRequest();
         authorizationRequest.setRedirectUri(redirectUri);
         
-        // Set resource in parameters (AuthorizationRequest.getResources() reads from parameters)
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add(Parameters.RESOURCE, "https://api.example.com");
-        authorizationRequest.setParameters(parameters);
+        authorizationRequest.setResources(Set.of("https://api.example.com"));
 
         List<String> authScopes = new ArrayList<>();
         authScopes.add(clientScope);

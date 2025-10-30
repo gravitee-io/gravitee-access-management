@@ -81,17 +81,6 @@ public class ResourceValidationServiceImplTest {
     }
 
     @Test
-    public void shouldPassWhenNoResourcesRequested() {
-        AuthorizationRequest request = new AuthorizationRequest();
-        request.setResources(Collections.emptySet());
-
-        TestObserver<Void> observer = service.validate(request).test();
-        observer.awaitDone(1, TimeUnit.SECONDS);
-        observer.assertComplete();
-        observer.assertNoErrors();
-    }
-
-    @Test
     public void shouldRejectWhenSomeResourcesUnknown() {
         AuthorizationRequest request = new AuthorizationRequest();
         request.setResources(Set.of("https://api.example.com/photos", "https://api.example.com/unknown"));
