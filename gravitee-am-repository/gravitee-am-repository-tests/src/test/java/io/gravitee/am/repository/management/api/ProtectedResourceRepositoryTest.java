@@ -387,6 +387,77 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .assertValue(true);
     }
 
+    @Test
+    public void shouldReturnFeaturesInAlphabeticalOrderByKey() {
+        // Create tools in non-alphabetical order
+        McpTool zebraTool = generateMcpTool("zebra_tool");
+        zebraTool.setDescription("Should be last");
+        
+        McpTool appleTool = generateMcpTool("apple_tool");
+        appleTool.setDescription("Should be first");
+        
+        McpTool middleTool = generateMcpTool("middle_tool");
+        middleTool.setDescription("Should be in middle");
+        
+        McpTool bananaTool = generateMcpTool("banana_tool");
+        bananaTool.setDescription("Should be second");
+        
+        // Add them in random order
+        List<ProtectedResourceFeature> toolsInRandomOrder = List.of(zebraTool, appleTool, middleTool, bananaTool);
+        
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource toSave = generateResource("ordering-test", "domain-ordering", "client-ordering", 
+                clientSecret, secretSettings, toolsInRandomOrder);
+
+        TestObserver<ProtectedResource> testObserver = repository.create(toSave)
+                .flatMapMaybe(created -> repository.findById(created.getId()))
+                .test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        
+        // Verify features are returned in alphabetical order by key
+        testObserver.assertValue(a -> a.getFeatures() != null && a.getFeatures().size() == 4);
+        testObserver.assertValue(a -> a.getFeatures().get(0).getKey().equals("apple_tool"));
+        testObserver.assertValue(a -> a.getFeatures().get(1).getKey().equals("banana_tool"));
+        testObserver.assertValue(a -> a.getFeatures().get(2).getKey().equals("middle_tool"));
+        testObserver.assertValue(a -> a.getFeatures().get(3).getKey().equals("zebra_tool"));
+    }
+    
+    @Test
+    public void shouldReturnFeaturesInAlphabeticalOrderAfterUpdate() {
+        // Create resource with initial tools
+        McpTool tool1 = generateMcpTool("tool_1");
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource toSave = generateResource(clientSecret, secretSettings, List.of(tool1));
+
+        ProtectedResource created = repository.create(toSave).blockingGet();
+        
+        // Update with tools in reverse alphabetical order
+        McpTool zebraTool = generateMcpTool("zebra_update");
+        McpTool appleTool = generateMcpTool("apple_update");
+        McpTool middleTool = generateMcpTool("middle_update");
+        
+        created.setFeatures(List.of(zebraTool, appleTool, middleTool));
+        
+        TestObserver<ProtectedResource> testObserver = repository.update(created)
+                .flatMapMaybe(updated -> repository.findById(updated.getId()))
+                .test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        
+        // Verify features are returned in alphabetical order after update
+        testObserver.assertValue(a -> a.getFeatures().size() == 3);
+        testObserver.assertValue(a -> a.getFeatures().get(0).getKey().equals("apple_update"));
+        testObserver.assertValue(a -> a.getFeatures().get(1).getKey().equals("middle_update"));
+        testObserver.assertValue(a -> a.getFeatures().get(2).getKey().equals("zebra_update"));
+    }
+
     private McpTool generateMcpTool(String key) {
         McpTool tool = new McpTool();
         tool.setKey(key);

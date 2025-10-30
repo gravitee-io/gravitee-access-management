@@ -84,7 +84,7 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
     public Single<ProtectedResource> update(ProtectedResource item) {
         ProtectedResourceMongo protectedResource = convert(item);
         return Single.fromPublisher(collection.replaceOne(eq(FIELD_ID, protectedResource.getId()), protectedResource))
-                .flatMap(updateResult -> Single.just(item))
+                .flatMap(updateResult -> Single.just(convert(protectedResource)))
                 .observeOn(Schedulers.computation());
     }
 
@@ -181,8 +181,12 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setType(Type.valueOf(mongo.getType()));
         result.setCreatedAt(mongo.getCreatedAt());
         result.setUpdatedAt(mongo.getUpdatedAt());
-        result.setFeatures(mongo.getFeatures().stream()
-                .sorted(java.util.Comparator.comparing(ProtectedResourceMongo.ProtectedResourceFeatureMongo::getKey))
+        // Sort features by key to match JDBC behavior (OrderByKeyName)
+        result.setFeatures(mongo.getFeatures() == null ? List.of() : 
+                mongo.getFeatures().stream()
+                .sorted(java.util.Comparator.comparing(
+                        ProtectedResourceMongo.ProtectedResourceFeatureMongo::getKey,
+                        java.util.Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
                 .map(this::convert)
                 .toList());
         return result;
