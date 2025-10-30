@@ -1,0 +1,23 @@
+.edit-tool-container {
+  padding: 20px;
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+
+  span {
+    display: block;
+    margin-bottom: 20px;
+    color: rgb(0 0 0 / 60%);
+  }
+
+  form {
+    margin-bottom: 20px;
+  }
+
+  .edit-tool-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+}

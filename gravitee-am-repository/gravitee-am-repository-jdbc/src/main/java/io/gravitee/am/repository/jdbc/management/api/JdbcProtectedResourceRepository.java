@@ -37,6 +37,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -121,7 +122,32 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
     @Override
     public Single<ProtectedResource> update(ProtectedResource item) {
-        return Single.just(item); // TODO AM-5756
+        LOGGER.debug("Update ProtectedResource with id {}", item.getId());
+
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+
+        Mono<Long> updateAction = getTemplate().update(toJdbcEntity(item)).map(updated -> 1L);
+
+        updateAction = deleteFeatures(item.getId()).then(updateAction);
+        updateAction = persistFeatures(updateAction, item);
+
+        return monoToSingle(updateAction.as(trx::transactional))
+                .flatMap(i -> this.findById(item.getId()).toSingle());
+    }
+
+    private Mono<Long> deleteFeatures(String protectedResourceId) {
+        final Query criteria = Query.query(where(JdbcProtectedResourceFeature.FIELD_PROTECTED_RESOURCE_ID).is(protectedResourceId));
+        return getTemplate().delete(criteria, JdbcProtectedResourceFeature.class);
+    }
+
+    private Mono<Long> persistFeatures(Mono<Long> actionFlow, ProtectedResource item) {
+        if (item.getFeatures() != null && !item.getFeatures().isEmpty()) {
+            return actionFlow.then(
+                    persistFeatures(item)
+                            .count()  // Count the features persisted
+            );
+        }
+        return actionFlow;
     }
 
     @Override
@@ -197,16 +223,16 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                         return Flowable.empty();
                     }
                     List<String> ids = resources.stream().map(ProtectedResource::getId).toList();
-                    return featuresSpring.findAllByProtectedResourceIdIn(ids)
+                    return featuresSpring.findAllByProtectedResourceIdInOrderByKeyName(ids)
                             .toList()
-                            .flatMapPublisher(secrets -> {
-                                Map<String, List<JdbcProtectedResourceFeature>> byResourceId = secrets
+                            .flatMapPublisher(features -> {
+                                Map<String, List<JdbcProtectedResourceFeature>> byResourceId = features
                                         .stream()
                                         .collect(Collectors.groupingBy(JdbcProtectedResourceFeature::getProtectedResourceId));
 
                                 resources.forEach(res -> {
-                                    List<JdbcProtectedResourceFeature> secretsForRes = byResourceId.get(res.getId());
-                                    List<McpTool> mapped = secretsForRes == null ? List.of() : secretsForRes.stream()
+                                    List<JdbcProtectedResourceFeature> featuresForRes = byResourceId.get(res.getId());
+                                    List<McpTool> mapped = featuresForRes == null ? List.of() : featuresForRes.stream()
                                             .map(feature ->  mapper.map(feature, McpTool.class))
                                             .toList();
                                     res.setFeatures(mapped);
@@ -280,7 +306,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                             app.setClientSecrets(secrets);
                             return app;
                         }))
-                .flatMap(app -> featuresSpring.findAllByProtectedResourceId(app.getId())
+                .flatMap(app -> featuresSpring.findAllByProtectedResourceIdOrderByKeyName(app.getId())
                         .map(feature -> mapper.map(feature, McpTool.class))
                         .toList()
                         .map(features -> {

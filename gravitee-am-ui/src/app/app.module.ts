@@ -477,6 +477,7 @@ import {
   DomainNewMcpServerToolDialogComponent,
   DomainNewMcpServerToolDialogFactory,
 } from './domain/mcp-servers/mcp-server-new/tool-new-dialog/tool-new-dialog.component';
+import { DomainMcpServerToolEditDialogComponent } from './domain/mcp-servers/mcp-server/tools/tool-edit-dialog/tool-edit-dialog.component';
 import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-tools-table.component';
 
 @NgModule({
@@ -526,6 +527,7 @@ import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-
     DomainMcpServerOverviewComponent,
     DomainMcpServerToolsComponent,
     DomainNewMcpServerToolDialogComponent,
+    DomainMcpServerToolEditDialogComponent,
     ConfirmComponent,
     DictionaryDialogComponent,
     EmptystateComponent,

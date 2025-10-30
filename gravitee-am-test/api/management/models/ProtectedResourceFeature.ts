@@ -56,6 +56,7 @@ export interface ProtectedResourceFeature {
      * @memberof ProtectedResourceFeature
      */
     createdAt?: Date;
+    updatedAt?: Date;
 }
 
 
@@ -89,6 +90,7 @@ export function ProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscrimin
         'description': json['description'] == null ? undefined : json['description'],
         'type': json['type'] == null ? undefined : json['type'],
         'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
+        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
     };
 }
 
@@ -107,5 +109,6 @@ export function ProtectedResourceFeatureToJSONTyped(value?: ProtectedResourceFea
         'description': value['description'],
         'type': value['type'],
         'createdAt': value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+        'updatedAt': value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
     };
 }

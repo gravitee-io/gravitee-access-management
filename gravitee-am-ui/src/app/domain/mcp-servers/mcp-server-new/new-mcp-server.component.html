@@ -73,7 +73,13 @@
             </button>
           </div>
           <mat-divider></mat-divider>
-          <mcp-tools-table [tools]="newMcpServer.tools" [showDeleteIcon]="true" (delete)="removeTool($event.key)"></mcp-tools-table>
+          <mcp-tools-table
+            [tools]="newMcpServer.tools"
+            [showEditIcon]="true"
+            [showDeleteIcon]="true"
+            (edit)="editTool($event)"
+            (delete)="removeTool($event.key)"
+          ></mcp-tools-table>
         </div>
       </div>
       <div class="gv-form-section">
