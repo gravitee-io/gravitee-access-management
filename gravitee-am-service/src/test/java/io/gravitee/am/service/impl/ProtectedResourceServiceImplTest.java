@@ -308,6 +308,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setFeatures(List.of(tool1, tool2));
 
         Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
         Domain domain = new Domain();
         domain.setId("domainId");
@@ -340,8 +341,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setFeatures(List.of(tool));
 
         Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        Mockito.when(repository.existsByResourceIdentifiers(eq("domainId"), any())).thenReturn(Single.just(false));
-        Mockito.when(scopeService.validateScope(eq("domainId"), any())).thenReturn(Single.just(false));
+        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(Single.just(false));
 
         Domain domain = new Domain();
         domain.setId("domainId");

@@ -196,7 +196,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     return checkFeatureKeyUniqueness(toUpdate)
                             .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldProtectedResource.getResourceIdentifiers(), toUpdate.getResourceIdentifiers()))
                             .andThen(validateFeatureScopes(domain.getId(), toUpdate))
-                            .andThen(doUpdate(toUpdate, oldProtectedResource, principal, domain));
+                            .andThen(Single.defer(() -> doUpdate(toUpdate, oldProtectedResource, principal, domain)));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
