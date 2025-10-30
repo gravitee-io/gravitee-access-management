@@ -2,6 +2,26 @@
   padding: 20px;
 }
 
+.tools-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+
+  h2 {
+    margin: 0 0 8px 0;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  .add-tool-button {
+    flex-shrink: 0;
+    margin-left: 16px;
+  }
+}
+
 .mcp-details {
   margin-bottom: 10px;
 

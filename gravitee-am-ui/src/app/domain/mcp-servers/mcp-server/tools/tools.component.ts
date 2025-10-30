@@ -34,6 +34,7 @@ import { AuthService } from '../../../../services/auth.service';
 import { DialogService } from '../../../../services/dialog.service';
 
 import { DomainMcpServerToolEditDialogComponent } from './tool-edit-dialog/tool-edit-dialog.component';
+import { DomainNewMcpServerToolDialogFactory } from '../../mcp-server-new/tool-new-dialog/tool-new-dialog.component';
 
 /**
  * Extended type for ProtectedResourceFeature that includes scopes.
@@ -65,6 +66,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
     private authService: AuthService,
     private dialog: MatDialog,
     private dialogService: DialogService,
+    private newToolDialogFactory: DomainNewMcpServerToolDialogFactory,
   ) {}
 
   ngOnInit(): void {
@@ -93,6 +95,14 @@ export class DomainMcpServerToolsComponent implements OnInit {
     });
   }
 
+  handleAdd(): void {
+    this.newToolDialogFactory.openDialog({ scopes: this.domainScopes }, (result) => {
+      if (!result.cancel) {
+        this.addTool(result);
+      }
+    });
+  }
+
   handleEdit(tool: McpTool): void {
     const dialogRef = this.dialog.open(DomainMcpServerToolEditDialogComponent, {
       width: '540px',
@@ -118,6 +128,57 @@ export class DomainMcpServerToolsComponent implements OnInit {
       });
   }
 
+  private addTool(newTool: { name?: string; description?: string; scopes?: string[] }): void {
+    // Check if tool with same name already exists
+    if (this.protectedResource.features.some((f) => f.key === newTool.name)) {
+      this.snackbarService.open(`Tool with name "${newTool.name}" already exists`);
+      return;
+    }
+
+    // Add the new tool to the features list
+    const updatedFeatures = [
+      ...this.protectedResource.features.map((f) => ({
+        key: f.key,
+        description: f.description,
+        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
+        scopes: (f as any).scopes,
+      })),
+      {
+        key: newTool.name,
+        description: newTool.description,
+        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
+        scopes: newTool.scopes,
+      },
+    ];
+
+    const updateRequest: UpdateProtectedResourceRequest = {
+      name: this.protectedResource.name,
+      resourceIdentifiers: this.protectedResource.resourceIdentifiers,
+      description: this.protectedResource.description,
+      features: updatedFeatures,
+    };
+
+    this.protectedResourceService
+      .update(this.domainId, this.protectedResource.id, updateRequest)
+      .pipe(
+        catchError((err: unknown) => {
+          this.snackbarService.open(
+            'Failed to add tool: ' + ((err as HttpErrorResponse).error?.message || (err as HttpErrorResponse).message),
+          );
+          return of(null);
+        }),
+      )
+      .subscribe((updated) => {
+        if (updated) {
+          this.snackbarService.open(`Tool "${newTool.name}" added successfully`);
+          this.protectedResource = updated;
+          this.features = this.mapFeaturesToTools(updated.features ?? []);
+          // Update the route snapshot data so other tabs see the updated data
+          this.route.snapshot.data['mcpServer'] = updated;
+        }
+      });
+  }
+
   private deleteTool(toolKey: string): void {
     // Remove the tool from the features list
     const updatedFeatures = this.protectedResource.features.filter((feature) => feature.key !== toolKey);
@@ -130,7 +191,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
       features: updatedFeatures.map((f) => ({
         key: f.key,
         description: f.description,
-        type: f.type,
+        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
         scopes: (f as any).scopes,
       })),
     };

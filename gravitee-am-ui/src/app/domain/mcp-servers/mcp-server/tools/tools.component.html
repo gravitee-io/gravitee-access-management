@@ -20,8 +20,20 @@
     <div>
       <div class="doc-content">
         <div>
-          <h2>Tools</h2>
-          <p>Define the tools that this MCP Server provides. Tools can be tied to specific scopes</p>
+          <div class="tools-header">
+            <div>
+              <h2>Tools</h2>
+              <p>Define the tools that this MCP Server provides. Tools can be tied to specific scopes</p>
+            </div>
+            <button
+              *ngIf="canUpdate"
+              mat-raised-button
+              class="add-tool-button"
+              color="primary"
+              (click)="handleAdd()">
+              <mat-icon>add</mat-icon> Add tool
+            </button>
+          </div>
           <div>
             <mcp-tools-table
               [tools]="features"
