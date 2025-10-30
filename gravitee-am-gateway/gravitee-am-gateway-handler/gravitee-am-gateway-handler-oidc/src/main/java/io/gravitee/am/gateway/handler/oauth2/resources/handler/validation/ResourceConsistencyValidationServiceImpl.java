@@ -29,15 +29,18 @@ import java.util.Set;
 public class ResourceConsistencyValidationServiceImpl implements ResourceConsistencyValidationService {
     @Override
     public Set<String> resolveFinalResources(OAuth2Request tokenRequest, Set<String> authorizationResources) {
-        Set<String> tokenRequestResources = tokenRequest.getResources();
-        if (tokenRequestResources == null || tokenRequestResources.isEmpty()) {
-            return authorizationResources;
+        final Set<String> requested = tokenRequest.getResources();
+        if (requested == null || requested.isEmpty()) {
+            // No requested resources: use authorization resources (may be null/empty)
+            return authorizationResources == null ? java.util.Collections.emptySet() : authorizationResources;
         }
-        if (authorizationResources == null || !authorizationResources.containsAll(tokenRequestResources)) {
+
+        final Set<String> authorized = authorizationResources == null ? java.util.Collections.emptySet() : authorizationResources;
+        if (!authorized.containsAll(requested)) {
             throw new InvalidResourceException(
                 "The requested resource is not recognized by this authorization server."
             );
         }
-        return tokenRequestResources;
+        return requested;
     }
 }

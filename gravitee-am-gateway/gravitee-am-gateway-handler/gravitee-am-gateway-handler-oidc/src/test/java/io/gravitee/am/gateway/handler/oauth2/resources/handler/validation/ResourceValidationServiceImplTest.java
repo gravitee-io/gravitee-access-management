@@ -79,6 +79,62 @@ public class ResourceValidationServiceImplTest {
         observer.assertComplete();
         observer.assertNoErrors();
     }
+
+    @Test
+    public void shouldPassWhenNoResourcesRequested() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Collections.emptySet());
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldRejectWhenSomeResourcesUnknown() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Set.of("https://api.example.com/photos", "https://api.example.com/unknown"));
+
+        ProtectedResource known = new ProtectedResource();
+        known.setId("res-1");
+        known.setResourceIdentifiers(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
+
+        when(protectedResourceManager.entities()).thenReturn(List.of(known));
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertError(t -> t instanceof InvalidResourceException &&
+                ((InvalidResourceException) t).getOAuth2ErrorCode().equals("invalid_target"));
+    }
+
+    @Test
+    public void shouldPassWhenAllRequestedAreKnown() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Set.of("https://api.example.com/photos", "https://api.example.com/albums"));
+
+        ProtectedResource known = new ProtectedResource();
+        known.setId("res-1");
+        known.setResourceIdentifiers(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
+
+        when(protectedResourceManager.entities()).thenReturn(List.of(known));
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldPassWhenNoProtectedResourcesAndNoRequestedResources() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Collections.emptySet());
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
 }
 
 

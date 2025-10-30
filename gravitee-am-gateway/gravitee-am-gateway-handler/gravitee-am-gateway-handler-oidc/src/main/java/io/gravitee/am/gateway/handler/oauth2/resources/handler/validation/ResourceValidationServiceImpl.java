@@ -60,13 +60,10 @@ public class ResourceValidationServiceImpl implements ResourceValidationService 
                 .flatMap(protectedResource -> protectedResource.getResourceIdentifiers().stream())
                 .collect(Collectors.toSet());
 
-            // Validate each requested resource with O(1) lookup
-            for (String requestedResource : requestedResources) {
-                if (!allResourceIdentifiers.contains(requestedResource)) {
-                    throw new InvalidResourceException(
-                        "The requested resource '" + requestedResource + "' is not recognized by this authorization server."
-                    );
-                }
+            if (!allResourceIdentifiers.containsAll(requestedResources)) {
+                throw new InvalidResourceException(
+                    "The requested resource is not recognized by this authorization server."
+                );
             }
 
             return null;

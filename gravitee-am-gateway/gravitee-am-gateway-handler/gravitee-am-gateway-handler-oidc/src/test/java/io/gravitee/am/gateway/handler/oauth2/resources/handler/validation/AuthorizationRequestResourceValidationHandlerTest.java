@@ -79,4 +79,18 @@ public class AuthorizationRequestResourceValidationHandlerTest {
         verify(routingContext).fail(exception);
         verify(routingContext, never()).next();
     }
+
+    @Test
+    public void shouldFailWhenAuthorizationRequestMissingInContext() {
+        // Given no authorizationRequest in context
+        when(routingContext.get(AUTHORIZATION_REQUEST_CONTEXT_KEY)).thenReturn(null);
+
+        // When
+        handler.handle(routingContext);
+
+        // Then
+        verify(routingContext).fail(any(IllegalStateException.class));
+        verify(routingContext, never()).next();
+        verifyNoInteractions(resourceValidationService);
+    }
 }
