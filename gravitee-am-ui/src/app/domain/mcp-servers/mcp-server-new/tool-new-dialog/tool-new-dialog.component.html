@@ -20,11 +20,17 @@
   <span>{{ isEditMode ? 'Update the tool details and associated scopes.' : 'Configure the tool details and associated scopes.' }}</span>
   <form fxLayout="column">
     <mat-form-field appearance="outline" floatLabel="always">
-      <input matInput type="text" placeholder="Tool Name" name="toolName" [(ngModel)]="newTool.name" />
+      <mat-label>Tool Name</mat-label>
+      <input matInput type="text" placeholder="Tool Name" name="toolName" [formControl]="toolNameCtrl" required />
+      <mat-error *ngIf="toolNameCtrl.hasError('required')"> Tool name is required </mat-error>
+      <mat-error *ngIf="toolNameCtrl.hasError('pattern')">
+        Tool name must contain only letters, numbers, hyphens, and underscores
+      </mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline" floatLabel="always">
-      <input matInput type="text" placeholder="Description" name="toolDescription" [(ngModel)]="newTool.description" />
+      <mat-label>Description</mat-label>
+      <input matInput type="text" placeholder="Description" name="toolDescription" [formControl]="toolDescriptionCtrl" />
     </mat-form-field>
 
     <mat-form-field>
@@ -54,7 +60,7 @@
   </form>
   <div class="new-tool-actions">
     <button type="button" mat-button (click)="close()" style="margin-right: 10px">Cancel</button>
-    <button type="button" mat-raised-button (click)="accept()" color="primary" [disabled]="newTool.name === '' || !newTool.name">
+    <button type="button" mat-raised-button (click)="accept()" color="primary" [disabled]="!isFormValid()">
       {{ isEditMode ? 'Update Tool' : 'Add Tool' }}
     </button>
   </div>

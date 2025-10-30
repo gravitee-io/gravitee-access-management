@@ -32,9 +32,9 @@ import { ScopeService } from '../../../../services/scope.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { AuthService } from '../../../../services/auth.service';
 import { DialogService } from '../../../../services/dialog.service';
+import { DomainNewMcpServerToolDialogFactory } from '../../mcp-server-new/tool-new-dialog/tool-new-dialog.component';
 
 import { DomainMcpServerToolEditDialogComponent } from './tool-edit-dialog/tool-edit-dialog.component';
-import { DomainNewMcpServerToolDialogFactory } from '../../mcp-server-new/tool-new-dialog/tool-new-dialog.component';
 
 /**
  * Extended type for ProtectedResourceFeature that includes scopes.
@@ -129,9 +129,13 @@ export class DomainMcpServerToolsComponent implements OnInit {
   }
 
   private addTool(newTool: { name?: string; description?: string; scopes?: string[] }): void {
+    // Trim the tool name and description
+    const trimmedName = newTool.name?.trim();
+    const trimmedDescription = newTool.description?.trim();
+
     // Check if tool with same name already exists
-    if (this.protectedResource.features.some((f) => f.key === newTool.name)) {
-      this.snackbarService.open(`Tool with name "${newTool.name}" already exists`);
+    if (this.protectedResource.features.some((f) => f.key === trimmedName)) {
+      this.snackbarService.open(`Tool with name "${trimmedName}" already exists`);
       return;
     }
 
@@ -144,8 +148,8 @@ export class DomainMcpServerToolsComponent implements OnInit {
         scopes: (f as any).scopes,
       })),
       {
-        key: newTool.name,
-        description: newTool.description,
+        key: trimmedName,
+        description: trimmedDescription,
         type: 'MCP_TOOL' as ProtectedResourceFeatureType,
         scopes: newTool.scopes,
       },
@@ -218,12 +222,16 @@ export class DomainMcpServerToolsComponent implements OnInit {
   }
 
   private updateTool(originalKey: string, updatedTool: { key: string; description?: string; scopes?: string[] }): void {
+    // Trim the tool key and description
+    const trimmedKey = updatedTool.key?.trim();
+    const trimmedDescription = updatedTool.description?.trim();
+
     // Update the tool in the features list
     const updatedFeatures = this.protectedResource.features.map((feature) => {
       if (feature.key === originalKey) {
         return {
-          key: updatedTool.key,
-          description: updatedTool.description,
+          key: trimmedKey,
+          description: trimmedDescription,
           type: 'MCP_TOOL' as ProtectedResourceFeatureType,
           scopes: updatedTool.scopes,
         };

@@ -43,8 +43,8 @@ public class UpdateProtectedResourceFeature {
 
     public ProtectedResourceFeature asFeature(){
         ProtectedResourceFeature feature = new ProtectedResourceFeature();
-        feature.setKey(getKey());
-        feature.setDescription(getDescription());
+        feature.setKey(getKey() != null ? getKey().trim() : null);
+        feature.setDescription(getDescription() != null ? getDescription().trim() : null);
         return feature;
     }
 
