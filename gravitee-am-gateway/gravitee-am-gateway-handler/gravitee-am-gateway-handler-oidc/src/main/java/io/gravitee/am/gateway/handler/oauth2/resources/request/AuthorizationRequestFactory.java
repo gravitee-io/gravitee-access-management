@@ -91,6 +91,9 @@ public final class AuthorizationRequestFactory {
         authorizationRequest.setAdditionalParameters(extractAdditionalParameters(request));
         authorizationRequest.setApproved(context.session() != null && Boolean.TRUE.equals(context.session().get(ConstantKeys.USER_CONSENT_APPROVED_KEY)));
 
+        // set RFC 8707 resource indicators
+        authorizationRequest.setResources(ResourceParameterUtils.parseResourceParameters(context));
+
         // set OIDC information
         String prompt = getOAuthParameter(context, io.gravitee.am.common.oidc.Parameters.PROMPT);
         authorizationRequest.setPrompts(prompt != null ? new HashSet<>(Arrays.asList(prompt.split("\\s+"))) : Collections.emptySet());

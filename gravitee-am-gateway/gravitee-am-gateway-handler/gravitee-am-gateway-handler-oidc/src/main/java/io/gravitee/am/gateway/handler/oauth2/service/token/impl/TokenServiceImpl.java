@@ -19,6 +19,7 @@ import io.gravitee.am.common.exception.jwt.JWTException;
 import io.gravitee.am.common.exception.oauth2.InvalidTokenException;
 import io.gravitee.am.common.jwt.Claims;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.OrigResourcesUtils;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
 import io.gravitee.am.common.oidc.Parameters;
 import io.gravitee.am.common.utils.ConstantKeys;
@@ -393,6 +394,9 @@ public class TokenServiceImpl implements TokenService {
         Map<String, Object> customClaims = new HashMap<>(accessToken);
         Claims.getAllClaims().forEach(customClaims::remove);
         jwt.putAll(customClaims);
+        
+        // Store originally granted resources in refresh token for RFC 8707 compliance
+        setOrigResourcesClaim(jwt, request);
 
         return jwt;
     }
@@ -483,5 +487,53 @@ public class TokenServiceImpl implements TokenService {
         }
 
         return executionContext;
+    }
+
+    /**
+     * Sets the orig_resources claim in the refresh token JWT for RFC 8707 compliance.
+     * - If this is a refresh flow, preserves the orig_resources from the previous refresh token
+     * - Otherwise (initial issuance), uses the current request resources (from authorization)
+     *
+     * @param jwt the JWT to add the claim to
+     * @param request the OAuth2 request containing resources
+     */
+    private void setOrigResourcesClaim(JWT jwt, OAuth2Request request) {
+        Set<String> origResources = determineOriginalResources(request);
+
+        if (!origResources.isEmpty()) {
+            var jsonArray = new JSONArray();
+            jsonArray.addAll(origResources);
+            jwt.put(Claims.ORIG_RESOURCES, jsonArray);
+            logger.debug("Refresh token {} stored: {}, JTI: {}", Claims.ORIG_RESOURCES, jsonArray, jwt.getJti());
+        } else {
+            logger.debug("No {} to store in refresh token, JTI: {}", Claims.ORIG_RESOURCES, jwt.getJti());
+        }
+    }
+
+    /**
+     * Determines the original resources to persist into a refresh token, with early returns for clarity:
+     * 1) If present, reuse orig_resources from the previous refresh token (refresh flow)
+     * 2) Else, use original authorization resources captured on the request (authorization code flow)
+     * 3) Else, fall back to current request resources
+     */
+    private Set<String> determineOriginalResources(OAuth2Request request) {
+        // 1) Try to reuse from previous refresh token
+        Map<String, Object> previousRefreshToken = request.getRefreshToken();
+        Set<String> preserved = OrigResourcesUtils.extractOrigResources(previousRefreshToken);
+        if (preserved != null && !preserved.isEmpty()) {
+            return preserved;
+        }
+
+        // 2) Use original authorization resources captured on the request
+        Set<String> originalAuthorizationResources = request.getOriginalAuthorizationResources();
+        if (originalAuthorizationResources != null && !originalAuthorizationResources.isEmpty()) {
+            logger.debug("Using original authorization resources from request field: {}", originalAuthorizationResources);
+            return new java.util.LinkedHashSet<>(originalAuthorizationResources);
+        }
+
+        // 3) Fall back to current request resources
+        Set<String> originalResources = request.getResources();
+        logger.debug("Falling back to request resources: {}", originalResources);
+        return originalResources == null ? java.util.Set.of() : new java.util.LinkedHashSet<>(originalResources);
     }
 }

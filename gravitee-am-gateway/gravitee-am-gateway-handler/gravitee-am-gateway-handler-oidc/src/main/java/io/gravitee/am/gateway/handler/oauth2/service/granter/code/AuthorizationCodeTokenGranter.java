@@ -25,6 +25,7 @@ import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
 import io.gravitee.am.gateway.handler.oauth2.service.code.AuthorizationCodeService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.pkce.PKCEUtils;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequestResolver;
@@ -44,6 +45,7 @@ import org.springframework.core.env.Environment;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -65,6 +67,8 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
 
     private AuthenticationFlowContextService authenticationFlowContextService;
 
+    private ResourceConsistencyValidationService resourceConsistencyValidationService;
+
     private boolean exitOnError;
     public AuthorizationCodeTokenGranter() {
         super(GrantType.AUTHORIZATION_CODE);
@@ -75,6 +79,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                                          AuthorizationCodeService authorizationCodeService,
                                          UserAuthenticationManager userAuthenticationManager,
                                          AuthenticationFlowContextService authenticationFlowContextService,
+                                         ResourceConsistencyValidationService resourceConsistencyValidationService,
                                          Environment env,
                                          RulesEngine rulesEngine) {
         this();
@@ -84,6 +89,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
         this.authorizationCodeService = authorizationCodeService;
         this.userAuthenticationManager = userAuthenticationManager;
         this.authenticationFlowContextService = authenticationFlowContextService;
+        this.resourceConsistencyValidationService = resourceConsistencyValidationService;
         this.exitOnError = env.getProperty("authenticationFlow.exitOnError", Boolean.class, Boolean.FALSE);
     }
 
@@ -101,7 +107,7 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                         .flatMap(authorizationCode ->
                                 authenticationFlowContextService.removeContext(authorizationCode.getTransactionId(), authorizationCode.getContextVersion())
                                     .onErrorResumeNext(error -> (exitOnError) ? Maybe.error(error) : Maybe.just(new AuthenticationFlowContext()))
-                                    .map(ctx -> {
+                                    .flatMap(ctx -> {
                                         checkRedirectUris(tokenRequest1, authorizationCode);
                                         checkPKCE( tokenRequest1, authorizationCode);
                                         // set resource owner
@@ -123,9 +129,16 @@ public class AuthorizationCodeTokenGranter extends AbstractTokenGranter {
                                         // {#context.attributes['authFlow']['entry']}
                                         tokenRequest1.getContext().put(ConstantKeys.AUTH_FLOW_CONTEXT_ATTRIBUTES_KEY, ctx.getData());
 
-                                        // store the resource so it can be used later in the token creation for aud
-                                        tokenRequest1.setResources(authorizationCode.getResources());
-                                        return tokenRequest1;
+                                        // Resolve and validate final resources according to RFC 8707
+                                        return Single.fromCallable(() -> {
+                                                    // Preserve original authorization resources in a dedicated field
+                                                    tokenRequest1.setOriginalAuthorizationResources(authorizationCode.getResources());
+                                                    logger.debug("Preserved original authorization resources: {}", authorizationCode.getResources());
+
+                                                    Set<String> finalResources = resourceConsistencyValidationService.resolveFinalResources(tokenRequest1, authorizationCode.getResources());
+                                                    tokenRequest1.setResources(finalResources);
+                                                    return tokenRequest1;
+                                                }).toMaybe();
                                     })
                         ).toSingle());
     }

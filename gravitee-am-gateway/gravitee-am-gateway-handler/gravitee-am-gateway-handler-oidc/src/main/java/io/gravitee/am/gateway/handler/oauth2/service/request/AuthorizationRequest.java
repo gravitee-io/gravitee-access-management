@@ -112,18 +112,6 @@ public class AuthorizationRequest extends OAuth2Request {
         this.responseMode = responseMode;
     }
 
-    public Set<String> getResources() {
-        if (parameters() == null) {
-            return java.util.Collections.emptySet();
-        }
-
-        List<String> resourceList = parameters().get(io.gravitee.am.common.oauth2.Parameters.RESOURCE);
-        if (resourceList == null) {
-            return java.util.Collections.emptySet();
-        }
-
-        return new HashSet<>(resourceList);
-    }
 
     public OAuth2Request createOAuth2Request() {
         AuthorizationRequest oAuth2Request = new AuthorizationRequest();
@@ -150,6 +138,7 @@ public class AuthorizationRequest extends OAuth2Request {
         oAuth2Request.setResponseType(getResponseType());
         oAuth2Request.setAdditionalParameters(getAdditionalParameters());
         oAuth2Request.setState(getState());
+        oAuth2Request.setResources(getResources());
 
         return oAuth2Request;
     }
