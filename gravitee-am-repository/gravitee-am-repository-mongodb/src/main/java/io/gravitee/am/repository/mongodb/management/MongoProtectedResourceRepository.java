@@ -181,7 +181,10 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
         result.setType(Type.valueOf(mongo.getType()));
         result.setCreatedAt(mongo.getCreatedAt());
         result.setUpdatedAt(mongo.getUpdatedAt());
-        result.setFeatures(mongo.getFeatures().stream().map(this::convert).toList());
+        result.setFeatures(mongo.getFeatures().stream()
+                .sorted(java.util.Comparator.comparing(ProtectedResourceMongo.ProtectedResourceFeatureMongo::getKey))
+                .map(this::convert)
+                .toList());
         return result;
     }
 

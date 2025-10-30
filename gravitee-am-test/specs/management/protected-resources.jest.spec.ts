@@ -984,6 +984,7 @@ describe('When updating protected resource', () => {
         
         expect(updated).toBeDefined();
         expect(updated.features).toHaveLength(3);
+        // Features are returned in alphabetical order by key
         expect(updated.features[0].key).toEqual('tool_1');
         expect(updated.features[1].key).toEqual('tool_2');
         expect(updated.features[2].key).toEqual('tool_3');
