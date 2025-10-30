@@ -125,33 +125,33 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
         TransactionalOperator trx = TransactionalOperator.create(tm);
 
-        Mono<ProtectedResource> updateWithChildrenUpdate = getTemplate().update(toJdbcEntity(item))
-                .map(this::toEntity)
-                // Delete existing features and insert new ones
-                .flatMap(stored -> Mono.fromCallable(() -> {
-                            featuresSpring.deleteByProtectedResourceId(stored.getId()).blockingAwait();
-                            return stored;
-                        }))
-                .flatMap(stored -> persistFeatures(item)
-                        .reduce(new ArrayList<ProtectedResourceFeature>(), (list, feature) -> {
-                            list.add(feature);
-                            return list;
-                        })
-                        .map(features -> {
-                            stored.setFeatures(features);
-                            return stored;
-                        }))
-                // Re-attach client secrets (they don't change on update, just read them back)
-                .flatMap(stored -> Mono.fromCallable(() -> {
-                            List<ClientSecret> secrets = clientSecretSpring.findAllByProtectedResourceId(stored.getId())
-                                    .map(jdbcSecret -> mapper.map(jdbcSecret, ClientSecret.class))
-                                    .toList()
-                                    .blockingGet();
-                            stored.setClientSecrets(secrets);
-                            return stored;
-                        }));
+        // Pattern follows JdbcGroupRepository and JdbcApplicationRepository 
+        Mono<Long> updateAction = getTemplate().update(toJdbcEntity(item)).map(updated -> 1L);
+        
+        // Delete existing features, then persist new ones 
+        updateAction = deleteFeatures(item.getId()).then(updateAction);
+        updateAction = persistFeaturesReactive(updateAction, item);
 
-        return monoToSingle(updateWithChildrenUpdate.as(trx::transactional));
+        return monoToSingle(updateAction.as(trx::transactional))
+                .flatMap(i -> this.findById(item.getId()).toSingle());
+    }
+
+    private Mono<Long> deleteFeatures(String protectedResourceId) {
+        final org.springframework.data.relational.core.query.Query criteria = 
+                org.springframework.data.relational.core.query.Query.query(
+                        where("protected_resource_id").is(protectedResourceId));
+        return getTemplate().delete(criteria, JdbcProtectedResourceFeature.class);
+    }
+
+    private Mono<Long> persistFeaturesReactive(Mono<Long> actionFlow, ProtectedResource item) {
+        if (item.getFeatures() != null && !item.getFeatures().isEmpty()) {
+            // Chain the persist operation after the update action
+            return actionFlow.then(
+                    persistFeatures(item)
+                            .count()  // Count the features persisted
+            );
+        }
+        return actionFlow;
     }
 
     @Override

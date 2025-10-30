@@ -73,7 +73,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
 
     // Load domain scopes for the edit dialog
     this.loadDomainScopes();
-    
+
     // Reload the protected resource from API to get latest data
     this.reloadProtectedResource();
   }
@@ -85,12 +85,10 @@ export class DomainMcpServerToolsComponent implements OnInit {
   }
 
   private reloadProtectedResource(): void {
-    this.protectedResourceService
-      .findById(this.domainId, this.protectedResource.id, this.protectedResource.type)
-      .subscribe((resource) => {
-        this.protectedResource = resource;
-        this.features = this.mapFeaturesToTools(resource.features ?? []);
-      });
+    this.protectedResourceService.findById(this.domainId, this.protectedResource.id, this.protectedResource.type).subscribe((resource) => {
+      this.protectedResource = resource;
+      this.features = this.mapFeaturesToTools(resource.features ?? []);
+    });
   }
 
   handleEdit(tool: McpTool): void {

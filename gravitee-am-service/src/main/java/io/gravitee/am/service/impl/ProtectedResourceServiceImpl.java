@@ -221,8 +221,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     private Completable validateResourceIdentifiersUniqueness(String domainId, String resourceId, 
                                                                List<String> oldIdentifiers, 
                                                                List<String> newIdentifiers) {
-        // Check if identifiers changed
-        if (oldIdentifiers.equals(newIdentifiers)) {
+        // Check if identifiers changed (order-insensitive comparison)
+        if (new java.util.HashSet<>(oldIdentifiers).equals(new java.util.HashSet<>(newIdentifiers))) {
             return Completable.complete();
         }
         // Only check new identifiers that weren't in the old list
