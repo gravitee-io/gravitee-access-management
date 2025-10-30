@@ -15,9 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
-import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
-import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.model.User;
 import io.gravitee.am.service.utils.EvaluableRedirectUri;
@@ -27,7 +26,6 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -35,8 +33,8 @@ import java.util.Optional;
  */
 public class AuthorizationRequestResolver extends AbstractRequestResolver<AuthorizationRequest> {
 
-    public AuthorizationRequestResolver(ScopeManager scopeManager) {
-        this.setScopeManager(scopeManager);
+    public AuthorizationRequestResolver(ScopeManager scopeManager, ProtectedResourceManager protectedResourceManager) {
+        this.setManagers(scopeManager, protectedResourceManager);
     }
 
     public Single<AuthorizationRequest> resolve(AuthorizationRequest authorizationRequest, Client client, User endUser) {

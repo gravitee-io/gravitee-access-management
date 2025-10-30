@@ -17,6 +17,7 @@ package io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization;
 
 import io.gravitee.am.common.utils.ConstantKeys;
 import io.gravitee.am.gateway.handler.common.http.NoOpResponse;
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.common.utils.RoutingContextUtils;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpServerRequest;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
@@ -54,10 +55,11 @@ public class AuthorizationRequestResolveHandler implements Handler<RoutingContex
 
     public AuthorizationRequestResolveHandler(Domain domain,
                                               ScopeManager scopeManager,
+                                              ProtectedResourceManager protectedResourceManager,
                                               ExecutionContextFactory executionContextFactory) {
         this.domain = domain;
         this.executionContextFactory = executionContextFactory;
-        this.authorizationRequestResolver = new AuthorizationRequestResolver(scopeManager);
+        this.authorizationRequestResolver = new AuthorizationRequestResolver(scopeManager, protectedResourceManager);
     }
 
     @Override

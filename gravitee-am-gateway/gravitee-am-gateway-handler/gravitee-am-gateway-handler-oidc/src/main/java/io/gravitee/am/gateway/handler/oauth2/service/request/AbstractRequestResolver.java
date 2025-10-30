@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.request;
 
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidScopeException;
 import io.gravitee.am.gateway.handler.oauth2.service.scope.ScopeManager;
 import io.gravitee.am.gateway.handler.oauth2.service.utils.ParameterizedScopeUtils;
@@ -38,8 +39,11 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
 
     private ScopeManager scopeManager;
 
-    public void setScopeManager(ScopeManager scopeManager) {
+    private ProtectedResourceManager protectedResourceManager;
+
+    public void setManagers(ScopeManager scopeManager, ProtectedResourceManager protectedResourceManager) {
         this.scopeManager = scopeManager;
+        this.protectedResourceManager = protectedResourceManager;
     }
 
     /**
@@ -102,6 +106,20 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
             }
         }
 
+        // resource scopes
+        if (request.getResources() != null && !request.getResources().isEmpty() && requestScopes != null) {
+            Set<String> protectedResourceScopes = protectedResourceManager.getScopesForResources(request.getResources());
+            requestScopes.forEach(scope -> {
+                if (!protectedResourceScopes.isEmpty() && protectedResourceScopes.contains(scope)) {
+                    resolvedScopes.add(scope);
+                    invalidScopes.remove(scope);
+                } else if (!resolvedScopes.contains(scope) && !clientResolvedScopes.contains(scope)) {
+                    // Mark as invalid if not already resolved by client or user scopes
+                    invalidScopes.add(scope);
+                }
+            });
+        }
+
         if (!invalidScopes.isEmpty()) {
             return Single.error(new InvalidScopeException("Invalid scope(s): " + String.join(SCOPE_DELIMITER, invalidScopes)));
         }
@@ -119,7 +137,6 @@ public abstract class AbstractRequestResolver<R extends OAuth2Request> {
                 || scopeManager.alwaysProvideEnhancedScopes()) {
             request.setScopes(resolvedScopes);
         }
-
         return Single.just(request);
     }
 

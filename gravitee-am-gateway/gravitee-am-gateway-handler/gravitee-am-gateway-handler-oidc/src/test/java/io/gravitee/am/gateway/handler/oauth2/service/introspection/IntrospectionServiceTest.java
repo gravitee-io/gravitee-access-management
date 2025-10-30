@@ -29,6 +29,7 @@ import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -153,5 +154,28 @@ public class IntrospectionServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(introspectionResponse -> !introspectionResponse.containsKey(Claims.AUD));
+    }
+
+
+    @Test
+    public void shouldReturnAudClaim_IfConfigSetTrue() {
+        final String token = "token";
+        AccessToken accessToken = new AccessToken(token);
+        accessToken.setSubject("client-id");
+        accessToken.setClientId("client-id");
+        accessToken.setCreatedAt(new Date());
+        accessToken.setExpireAt(new Date());
+        accessToken.setAdditionalInformation(Collections.singletonMap(Claims.AUD, "test-aud"));
+        when(tokenService.introspect(token)).thenReturn(Maybe.just(accessToken));
+
+        ReflectionTestUtils.setField(introspectionService, "allowAudience", true);
+
+        IntrospectionRequest introspectionRequest = IntrospectionRequest.withoutHint("token");
+        TestObserver<IntrospectionResponse> testObserver = introspectionService.introspect(introspectionRequest).test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(introspectionResponse -> introspectionResponse.containsKey(Claims.AUD));
     }
 }
