@@ -31,7 +31,5 @@ public interface SpringProtectedResourceFeatureRepository extends RxJava3CrudRep
     Flowable<JdbcProtectedResourceFeature> findAllByProtectedResourceId(String protectedResourceId);
 
     Flowable<JdbcProtectedResourceFeature> findAllByProtectedResourceIdIn(List<String> protectedResourceIds);
-
-    Completable deleteByProtectedResourceId(String protectedResourceId);
 }
 
