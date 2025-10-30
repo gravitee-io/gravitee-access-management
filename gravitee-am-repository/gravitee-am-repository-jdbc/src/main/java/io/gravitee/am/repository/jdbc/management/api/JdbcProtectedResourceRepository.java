@@ -37,6 +37,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
@@ -130,22 +131,19 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         
         // Delete existing features, then persist new ones 
         updateAction = deleteFeatures(item.getId()).then(updateAction);
-        updateAction = persistFeaturesReactive(updateAction, item);
+        updateAction = persistFeatures(updateAction, item);
 
         return monoToSingle(updateAction.as(trx::transactional))
                 .flatMap(i -> this.findById(item.getId()).toSingle());
     }
 
     private Mono<Long> deleteFeatures(String protectedResourceId) {
-        final org.springframework.data.relational.core.query.Query criteria = 
-                org.springframework.data.relational.core.query.Query.query(
-                        where("protected_resource_id").is(protectedResourceId));
+        final Query criteria = Query.query(where(JdbcProtectedResourceFeature.FIELD_PROTECTED_RESOURCE_ID).is(protectedResourceId));
         return getTemplate().delete(criteria, JdbcProtectedResourceFeature.class);
     }
 
-    private Mono<Long> persistFeaturesReactive(Mono<Long> actionFlow, ProtectedResource item) {
+    private Mono<Long> persistFeatures(Mono<Long> actionFlow, ProtectedResource item) {
         if (item.getFeatures() != null && !item.getFeatures().isEmpty()) {
-            // Chain the persist operation after the update action
             return actionFlow.then(
                     persistFeatures(item)
                             .count()  // Count the features persisted

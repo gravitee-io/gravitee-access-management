@@ -33,6 +33,7 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.*;
+import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
@@ -54,6 +55,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -197,7 +199,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                             .andThen(doUpdate(toUpdate, oldProtectedResource, principal, domain));
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof io.gravitee.am.service.exception.AbstractManagementException) {
+                    if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
@@ -222,7 +224,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                                                                List<String> oldIdentifiers, 
                                                                List<String> newIdentifiers) {
         // Check if identifiers changed (order-insensitive comparison)
-        if (new java.util.HashSet<>(oldIdentifiers).equals(new java.util.HashSet<>(newIdentifiers))) {
+        if (new HashSet<>(oldIdentifiers).equals(new HashSet<>(newIdentifiers))) {
             return Completable.complete();
         }
         // Only check new identifiers that weren't in the old list

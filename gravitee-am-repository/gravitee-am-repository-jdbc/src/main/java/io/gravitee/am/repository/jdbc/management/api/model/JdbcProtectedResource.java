@@ -101,6 +101,8 @@ public class JdbcProtectedResource {
     public static class JdbcProtectedResourceFeature {
         public static final String TABLE_NAME = "protected_resource_features";
 
+        public static final String FIELD_PROTECTED_RESOURCE_ID = "protected_resource_id";
+
         @Id
         private String id;
 

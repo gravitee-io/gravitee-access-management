@@ -16,7 +16,6 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
 import io.gravitee.am.identityprovider.api.User;
-import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.permissions.Permission;
