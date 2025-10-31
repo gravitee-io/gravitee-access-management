@@ -71,6 +71,7 @@ public class AlertNotifiersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "listAlertNotifiers",
             summary = "List alert notifiers",
             description = "List all the alert notifiers of the domain. " +
                     "User must have DOMAIN_ALERT_NOTIFIER[LIST] permission on the specified domain, environment or organization.")
@@ -96,6 +97,7 @@ public class AlertNotifiersResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "createAlertNotifier",
             summary = "Create an alert notifier",
             description = "Create a new alert notifier" +
                     "User must have DOMAIN_ALERT_NOTIFIER[CREATE] permission on the specified domain, environment or organization.")
@@ -120,6 +122,9 @@ public class AlertNotifiersResource extends AbstractResource {
     }
 
     @Path("/{notifierId}")
+    @Operation(
+            operationId = "getAlertNotifier",
+            summary = "Get an alert notifier")
     public AlertNotifierResource getApplicationResource() {
         return resourceContext.getResource(AlertNotifierResource.class);
     }

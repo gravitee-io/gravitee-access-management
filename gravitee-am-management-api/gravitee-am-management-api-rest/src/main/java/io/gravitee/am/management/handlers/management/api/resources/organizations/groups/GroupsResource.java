@@ -71,7 +71,9 @@ public class GroupsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List groups of the organization",
+    @Operation(
+            operationId = "listGroups",
+            summary = "List groups of the organization",
             description = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
                     "Each returned group is filtered and contains only basic information such as id and name.")
     @ApiResponses({
@@ -95,7 +97,9 @@ public class GroupsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a platform group",
+    @Operation(
+            operationId = "createGroup",
+            summary = "Create a platform group",
             description = "User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Group successfully created"),
@@ -114,6 +118,7 @@ public class GroupsResource extends AbstractResource {
     }
 
     @Path("{group}")
+    @Operation(summary = "Get a group by its identifier", operationId = "getGroup")
     public GroupResource getGroupResource() {
         return resourceContext.getResource(GroupResource.class);
     }

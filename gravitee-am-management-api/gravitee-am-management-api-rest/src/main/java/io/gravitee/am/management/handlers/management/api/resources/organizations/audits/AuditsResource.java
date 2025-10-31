@@ -67,7 +67,9 @@ public class AuditsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List audit logs for the organization",
+    @Operation(
+            operationId = "listOrganizationAudits",
+            summary = "List audit logs for the organization",
             description = "User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. " +
                     "Except if user has ORGANIZATION_AUDIT[READ] permission on the organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.")
     @ApiResponses({
@@ -106,6 +108,9 @@ public class AuditsResource extends AbstractResource {
     }
 
     @Path("{audit}")
+    @Operation(
+            operationId = "getOrganizationAudit",
+            summary = "Get an audit log for the organization")
     public AuditResource getAuditResource() {
         return resourceContext.getResource(AuditResource.class);
     }

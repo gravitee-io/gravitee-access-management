@@ -50,7 +50,9 @@ public class PoliciesPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List policy plugins",
+    @Operation(
+            operationId = "listPolicies",
+            summary = "List policy plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response, @QueryParam("expand") List<String> expand) {
 
@@ -62,6 +64,8 @@ public class PoliciesPluginResource {
     }
 
     @Path("{policy}")
+    @Operation(summary = "Get a policy plugin",
+            operationId = "getPolicyPlugin")
     public PolicyPluginResource getPolicyResource() {
         return resourceContext.getResource(PolicyPluginResource.class);
     }

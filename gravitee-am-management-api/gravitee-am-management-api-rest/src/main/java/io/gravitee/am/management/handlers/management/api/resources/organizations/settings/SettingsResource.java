@@ -53,7 +53,9 @@ public class SettingsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get organization main settings",
+    @Operation(
+            operationId = "getOrganizationSettings",
+            summary = "Get organization main settings",
             description = "User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Platform settings successfully fetched",
@@ -72,7 +74,9 @@ public class SettingsResource extends AbstractResource {
     @PATCH
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update platform main settings",
+    @Operation(
+            operationId = "patchOrganizationSettings",
+            summary = "Update platform main settings",
             description = "User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Platform settings successfully patched",

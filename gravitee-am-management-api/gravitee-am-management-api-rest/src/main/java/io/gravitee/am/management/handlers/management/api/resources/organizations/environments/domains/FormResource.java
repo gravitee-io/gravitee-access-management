@@ -64,7 +64,9 @@ public class FormResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update a form",
+    @Operation(
+            operationId = "updateDomainForm",
+            summary = "Update a form",
             description = "User must have the DOMAIN_FORM[UPDATE] permission on the specified domain " +
                     "or DOMAIN_FORM[UPDATE] permission on the specified environment " +
                     "or DOMAIN_FORM[UPDATE] permission on the specified organization")
@@ -90,7 +92,9 @@ public class FormResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete a form",
+    @Operation(
+            operationId = "deleteDomainForm",
+            summary = "Delete a form",
             description = "User must have the DOMAIN_FORM[DELETE] permission on the specified domain " +
                     "or DOMAIN_FORM[DELETE] permission on the specified environment " +
                     "or DOMAIN_FORM[DELETE] permission on the specified organization")

@@ -50,7 +50,9 @@ public class ApplicationMemberResource extends AbstractResource {
     private ApplicationService applicationService;
 
     @DELETE
-    @Operation(summary = "Remove a membership",
+    @Operation(
+            operationId = "removeApplicationMember",
+            summary = "Remove a membership",
             description = "User must have APPLICATION_MEMBER[DELETE] permission on the specified application " +
                     "or APPLICATION_MEMBER[DELETE] permission on the specified domain " +
                     "or APPLICATION_MEMBER[DELETE] permission on the specified environment " +

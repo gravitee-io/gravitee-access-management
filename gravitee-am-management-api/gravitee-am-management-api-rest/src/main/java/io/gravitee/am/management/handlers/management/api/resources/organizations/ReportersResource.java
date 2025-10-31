@@ -126,6 +126,7 @@ public class ReportersResource extends AbstractResource {
     }
 
     @Path("{reporterId}")
+    @Operation(summary = "Get a reporter by its identifier", operationId = "getReporter")
     public ReporterResource getReporterResource() {
         return resourceContext.getResource(ReporterResource.class);
     }

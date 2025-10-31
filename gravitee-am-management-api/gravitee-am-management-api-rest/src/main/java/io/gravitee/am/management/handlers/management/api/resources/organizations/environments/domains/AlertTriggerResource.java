@@ -55,6 +55,7 @@ public class AlertTriggerResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "updateAlertTrigger",
             summary = "Update an alert trigger",
             description = "Update an alert trigger" +
                     "User must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.")

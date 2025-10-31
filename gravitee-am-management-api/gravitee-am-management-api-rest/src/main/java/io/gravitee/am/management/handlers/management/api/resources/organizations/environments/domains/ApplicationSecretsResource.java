@@ -66,7 +66,9 @@ public class ApplicationSecretsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List secrets of an application",
+    @Operation(
+            operationId = "listSecrets",
+            summary = "List secrets of an application",
             description = "User must have APPLICATION_OPENID[LIST] permission on the specified application " +
                     "or APPLICATION_OPENID[LIST] permission on the specified domain " +
                     "or APPLICATION_OPENID[LIST] permission on the specified environment " +
@@ -95,7 +97,9 @@ public class ApplicationSecretsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a secret for an application",
+    @Operation(
+            operationId = "createSecret",
+            summary = "Create a secret for an application",
             description = "User must have APPLICATION_OPENID[CREATE] permission on the specified application " +
                     "or APPLICATION_OPENID[CREATE] permission on the specified domain " +
                     "or APPLICATION_OPENID[CREATE] permission on the specified environment " +

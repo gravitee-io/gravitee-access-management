@@ -47,7 +47,9 @@ public class ReportersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List reporter plugins",
+    @Operation(
+            operationId = "listReporterPlugins",
+            summary = "List reporter plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
 
@@ -59,6 +61,8 @@ public class ReportersPluginResource {
     }
 
     @Path("{reporter}")
+    @Operation(summary = "Get a reporter plugin",
+            operationId = "getReporterPlugin")
     public ReporterPluginResource getReporterResource() {
         return resourceContext.getResource(ReporterPluginResource.class);
     }

@@ -48,7 +48,9 @@ public class CertificatesPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List certificate plugins",
+    @Operation(
+            operationId = "listCertificatesPlugins",
+            summary = "List certificate plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
         certificatePluginService.findAll()

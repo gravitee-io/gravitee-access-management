@@ -61,7 +61,9 @@ public class TagResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a sharding tag",
+    @Operation(
+            operationId = "getTag",
+            summary = "Get a sharding tag",
             description = "User must have the ORGANIZATION_TAG[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Sharding tag",
@@ -81,7 +83,9 @@ public class TagResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update the sharding tag",
+    @Operation(
+            operationId = "updateTag",
+            summary = "Update the sharding tag",
             description = "User must have the ORGANIZATION_TAG[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Sharding tag successfully updated",
@@ -101,7 +105,9 @@ public class TagResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete the sharding tag",
+    @Operation(
+            operationId = "deleteTag",
+            summary = "Delete the sharding tag",
             description= "User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Sharding tag successfully deleted"),

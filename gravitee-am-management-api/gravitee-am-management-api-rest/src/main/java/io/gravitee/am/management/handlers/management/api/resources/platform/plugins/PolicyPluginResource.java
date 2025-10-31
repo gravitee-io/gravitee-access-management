@@ -49,7 +49,9 @@ public class PolicyPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a policy plugin",
+    @Operation(
+            operationId = "getPolicy",
+            summary = "Get a policy plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("policy") String policyId,
@@ -64,7 +66,9 @@ public class PolicyPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a policy plugin's schema")
+    @Operation(
+            operationId = "getPolicySchema",
+            summary = "Get a policy plugin's schema")
     public void getSchema(
             @PathParam("policy") String policyId,
             @Suspended final AsyncResponse response) {
@@ -81,7 +85,9 @@ public class PolicyPluginResource {
     @GET
     @Path("documentation")
     @Produces(MediaType.TEXT_PLAIN)
-    @Operation(summary = "Get a policy plugin's documentation")
+    @Operation(
+            operationId = "getPolicyDocumentation",
+            summary = "Get a policy plugin's documentation")
     public void getDocumentation(
         @PathParam("policy") String policyId,
         @Suspended final AsyncResponse response) {
