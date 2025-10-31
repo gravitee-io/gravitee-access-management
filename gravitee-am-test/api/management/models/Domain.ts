@@ -261,12 +261,6 @@ export interface Domain {
    * @type {boolean}
    * @memberof Domain
    */
-  redirectUriStrictMatching?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
   redirectUriLocalhostAllowed?: boolean;
   /**
    *
@@ -274,6 +268,12 @@ export interface Domain {
    * @memberof Domain
    */
   redirectUriWildcardAllowed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriStrictMatching?: boolean;
   /**
    *
    * @type {boolean}
@@ -376,9 +376,9 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
-    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     redirectUriLocalhostAllowed: json['redirectUriLocalhostAllowed'] == null ? undefined : json['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: json['redirectUriWildcardAllowed'] == null ? undefined : json['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled:
@@ -431,9 +431,9 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     corsSettings: CorsSettingsToJSON(value['corsSettings']),
     dataPlaneId: value['dataPlaneId'],
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
-    redirectUriStrictMatching: value['redirectUriStrictMatching'],
     redirectUriLocalhostAllowed: value['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: value['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: value['redirectUriStrictMatching'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
     redirectUriExpressionLanguageEnabled: value['redirectUriExpressionLanguageEnabled'],

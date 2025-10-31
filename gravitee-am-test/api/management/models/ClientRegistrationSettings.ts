@@ -73,13 +73,13 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  clientTemplateEnabled?: boolean;
+  allowedScopesEnabled?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  allowedScopesEnabled?: boolean;
+  clientTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -117,8 +117,8 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
     allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
-    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     allowedScopesEnabled: json['allowedScopesEnabled'] == null ? undefined : json['allowedScopesEnabled'],
+    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled:
@@ -145,8 +145,8 @@ export function ClientRegistrationSettingsToJSONTyped(
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: value['defaultScopes'],
     allowedScopes: value['allowedScopes'],
-    clientTemplateEnabled: value['clientTemplateEnabled'],
     allowedScopesEnabled: value['allowedScopesEnabled'],
+    clientTemplateEnabled: value['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
   };
