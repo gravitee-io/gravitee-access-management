@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Component;
@@ -73,12 +74,14 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
         LOGGER.debug("findByHrids({})", hrids);
 
         return organizationRepository.findByHrids(hrids)
-                .map(this::toOrganization);
+                .map(this::toOrganization)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> count() {
-        return organizationRepository.count();
+        return organizationRepository.count()
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -114,7 +117,8 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                     LOGGER.debug("findById({}) fetch {} hrids", organizationId, hrid.size());
                     org.setHrids(hrid);
                     return org;
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -134,7 +138,8 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                 .then(storeDomainRestrictions)
                 .then(storeHrids)
                 .as(trx::transactional)
-                .then(maybeToMono(findById(organization.getId()))));
+                .then(maybeToMono(findById(organization.getId()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -154,7 +159,8 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                 .then(storeDomainRestrictions)
                 .then(storeHrids)
                 .as(trx::transactional)
-                .then(maybeToMono(findById(organization.getId()))));
+                .then(maybeToMono(findById(organization.getId()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -170,7 +176,8 @@ public class JdbcOrganizationRepository extends AbstractJdbcRepository implement
                 .then(deleteDomainRestrictions)
                 .then(deleteIdentities)
                 .then(deleteHrids)
-                .as(trx::transactional));
+                .as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Void> storeIdentities(Organization organization, boolean deleteFirst) {
