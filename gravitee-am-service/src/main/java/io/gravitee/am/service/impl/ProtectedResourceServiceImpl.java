@@ -116,10 +116,11 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         return Completable.error(new ProtectedResourceNotFoundException(id));
                     }
                     Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.DELETE));
-                    return repository.delete(id)
+                    // Delete dependencies first to avoid orphaned references if resource deletion fails
+                    return membershipService.findByReference(resource.getId(), ReferenceType.APPLICATION)
+                            .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
+                            .andThen(repository.delete(id))
                             .andThen(Completable.fromSingle(eventService.create(event, domain)))
-                            .andThen(membershipService.findByReference(resource.getId(), ReferenceType.APPLICATION)
-                                    .flatMapCompletable(membership -> membershipService.delete(membership.getId())))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_DELETED).protectedResource(resource)))
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).protectedResource(resource).principal(principal).type(EventType.PROTECTED_RESOURCE_DELETED).throwable(throwable)));
                 })

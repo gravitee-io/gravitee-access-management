@@ -70,7 +70,10 @@ export const deleteProtectedResource = async (domainId: string, accessToken: str
     let body: any = '';
     try {
       body = await resp.text();
-    } catch (e) {}
+    } catch (e) {
+      // Log body read errors to ease debugging of failing tests
+      console.error('Failed to read error response body', e);
+    }
     const error = new Error(`Failed to delete protected resource: HTTP ${resp.status}`);
     (error as any).status = resp.status;
     (error as any).body = body;

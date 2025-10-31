@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
@@ -383,6 +384,32 @@ public class ProtectedResourceServiceImplTest {
         Mockito.verify(repository, Mockito.times(1)).delete("res-1");
         Mockito.verify(eventService, Mockito.times(1)).create(any(), eq(domain));
         Mockito.verify(auditService, Mockito.times(1)).report(any());
+    }
+
+    @Test
+    public void shouldDeleteProtectedResource_cleansMemberships() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("res-2");
+        resource.setDomainId("domainId");
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        Mockito.when(repository.findById("res-2")).thenReturn(Maybe.just(resource));
+        Mockito.when(repository.delete("res-2")).thenReturn(Completable.complete());
+        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        Mockito.when(membershipService.findByReference(eq("res-2"), eq(ReferenceType.APPLICATION)))
+                .thenReturn(Flowable.just(new Membership()));
+        Mockito.when(membershipService.delete(any())).thenReturn(Completable.complete());
+
+        service.delete(domain, "res-2", null, user)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        Mockito.verify(membershipService, Mockito.atLeastOnce()).delete(any());
     }
 
     @Test
