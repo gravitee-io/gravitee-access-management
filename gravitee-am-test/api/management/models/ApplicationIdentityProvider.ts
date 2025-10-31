@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,43 @@ export interface ApplicationIdentityProvider {
   priority?: number;
 }
 
+/**
+ * Check if a given object implements the ApplicationIdentityProvider interface.
+ */
+export function instanceOfApplicationIdentityProvider(value: object): value is ApplicationIdentityProvider {
+  return true;
+}
+
 export function ApplicationIdentityProviderFromJSON(json: any): ApplicationIdentityProvider {
   return ApplicationIdentityProviderFromJSONTyped(json, false);
 }
 
 export function ApplicationIdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationIdentityProvider {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    identity: !exists(json, 'identity') ? undefined : json['identity'],
-    selectionRule: !exists(json, 'selectionRule') ? undefined : json['selectionRule'],
-    priority: !exists(json, 'priority') ? undefined : json['priority'],
+    identity: json['identity'] == null ? undefined : json['identity'],
+    selectionRule: json['selectionRule'] == null ? undefined : json['selectionRule'],
+    priority: json['priority'] == null ? undefined : json['priority'],
   };
 }
 
-export function ApplicationIdentityProviderToJSON(value?: ApplicationIdentityProvider | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ApplicationIdentityProviderToJSON(json: any): ApplicationIdentityProvider {
+  return ApplicationIdentityProviderToJSONTyped(json, false);
+}
+
+export function ApplicationIdentityProviderToJSONTyped(
+  value?: ApplicationIdentityProvider | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    identity: value.identity,
-    selectionRule: value.selectionRule,
-    priority: value.priority,
+    identity: value['identity'],
+    selectionRule: value['selectionRule'],
+    priority: value['priority'],
   };
 }

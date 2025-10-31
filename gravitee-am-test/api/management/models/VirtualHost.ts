@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,40 @@ export interface VirtualHost {
   overrideEntrypoint?: boolean;
 }
 
+/**
+ * Check if a given object implements the VirtualHost interface.
+ */
+export function instanceOfVirtualHost(value: object): value is VirtualHost {
+  return true;
+}
+
 export function VirtualHostFromJSON(json: any): VirtualHost {
   return VirtualHostFromJSONTyped(json, false);
 }
 
 export function VirtualHostFromJSONTyped(json: any, ignoreDiscriminator: boolean): VirtualHost {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    host: !exists(json, 'host') ? undefined : json['host'],
-    path: !exists(json, 'path') ? undefined : json['path'],
-    overrideEntrypoint: !exists(json, 'overrideEntrypoint') ? undefined : json['overrideEntrypoint'],
+    host: json['host'] == null ? undefined : json['host'],
+    path: json['path'] == null ? undefined : json['path'],
+    overrideEntrypoint: json['overrideEntrypoint'] == null ? undefined : json['overrideEntrypoint'],
   };
 }
 
-export function VirtualHostToJSON(value?: VirtualHost | null): any {
-  if (value === undefined) {
-    return undefined;
+export function VirtualHostToJSON(json: any): VirtualHost {
+  return VirtualHostToJSONTyped(json, false);
+}
+
+export function VirtualHostToJSONTyped(value?: VirtualHost | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    host: value.host,
-    path: value.path,
-    overrideEntrypoint: value.overrideEntrypoint,
+    host: value['host'],
+    path: value['path'],
+    overrideEntrypoint: value['overrideEntrypoint'],
   };
 }

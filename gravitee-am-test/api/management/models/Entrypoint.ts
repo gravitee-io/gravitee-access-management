@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -88,43 +88,52 @@ export interface Entrypoint {
   updatedAt?: Date;
 }
 
+/**
+ * Check if a given object implements the Entrypoint interface.
+ */
+export function instanceOfEntrypoint(value: object): value is Entrypoint {
+  return true;
+}
+
 export function EntrypointFromJSON(json: any): Entrypoint {
   return EntrypointFromJSONTyped(json, false);
 }
 
 export function EntrypointFromJSONTyped(json: any, ignoreDiscriminator: boolean): Entrypoint {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    url: !exists(json, 'url') ? undefined : json['url'],
-    tags: !exists(json, 'tags') ? undefined : json['tags'],
-    organizationId: !exists(json, 'organizationId') ? undefined : json['organizationId'],
-    defaultEntrypoint: !exists(json, 'defaultEntrypoint') ? undefined : json['defaultEntrypoint'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    url: json['url'] == null ? undefined : json['url'],
+    tags: json['tags'] == null ? undefined : json['tags'],
+    organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
+    defaultEntrypoint: json['defaultEntrypoint'] == null ? undefined : json['defaultEntrypoint'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function EntrypointToJSON(value?: Entrypoint | null): any {
-  if (value === undefined) {
-    return undefined;
+export function EntrypointToJSON(json: any): Entrypoint {
+  return EntrypointToJSONTyped(json, false);
+}
+
+export function EntrypointToJSONTyped(value?: Entrypoint | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    description: value.description,
-    url: value.url,
-    tags: value.tags,
-    organizationId: value.organizationId,
-    defaultEntrypoint: value.defaultEntrypoint,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    name: value['name'],
+    description: value['description'],
+    url: value['url'],
+    tags: value['tags'],
+    organizationId: value['organizationId'],
+    defaultEntrypoint: value['defaultEntrypoint'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

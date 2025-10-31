@@ -25,9 +25,9 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { UpdateMcpTool, UpdateMcpToolFromJSON, UpdateMcpToolFromJSONTyped, UpdateMcpToolToJSON } from './UpdateMcpTool';
+import { mapValues } from '../runtime';
 
+import { type UpdateMcpTool, UpdateMcpToolFromJSONTyped, UpdateMcpToolToJSON, UpdateMcpToolToJSONTyped } from './UpdateMcpTool';
 /**
  *
  * @export
@@ -54,37 +54,59 @@ export interface UpdateProtectedResourceFeature {
   type: string;
 }
 
+/**
+ * Check if a given object implements the UpdateProtectedResourceFeature interface.
+ */
+export function instanceOfUpdateProtectedResourceFeature(value: object): value is UpdateProtectedResourceFeature {
+  if (!('key' in value) || value['key'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  return true;
+}
+
 export function UpdateProtectedResourceFeatureFromJSON(json: any): UpdateProtectedResourceFeature {
   return UpdateProtectedResourceFeatureFromJSONTyped(json, false);
 }
 
 export function UpdateProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateProtectedResourceFeature {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   if (!ignoreDiscriminator) {
     if (json['type'] === 'UpdateMcpTool') {
-      // @ts-ignore
-        return UpdateMcpToolFromJSONTyped(json, true);
+      return UpdateMcpToolFromJSONTyped(json, ignoreDiscriminator);
     }
   }
   return {
     key: json['key'],
-    description: !exists(json, 'description') ? undefined : json['description'],
+    description: json['description'] == null ? undefined : json['description'],
     type: json['type'],
   };
 }
 
-export function UpdateProtectedResourceFeatureToJSON(value?: UpdateProtectedResourceFeature | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateProtectedResourceFeatureToJSON(json: any): UpdateProtectedResourceFeature {
+  return UpdateProtectedResourceFeatureToJSONTyped(json, false);
+}
+
+export function UpdateProtectedResourceFeatureToJSONTyped(
+  value?: UpdateProtectedResourceFeature | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
+
+  if (!ignoreDiscriminator) {
+    switch (value['type']) {
+      case 'UpdateMcpTool':
+        return UpdateMcpToolToJSONTyped(value as UpdateMcpTool, ignoreDiscriminator);
+      default:
+        return value;
+    }
   }
+
   return {
-    key: value.key,
-    description: value.description,
-    type: value.type,
+    key: value['key'],
+    description: value['description'],
+    type: value['type'],
   };
 }

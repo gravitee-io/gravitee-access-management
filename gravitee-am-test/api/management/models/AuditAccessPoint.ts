@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,35 +64,44 @@ export interface AuditAccessPoint {
   userAgent?: string;
 }
 
+/**
+ * Check if a given object implements the AuditAccessPoint interface.
+ */
+export function instanceOfAuditAccessPoint(value: object): value is AuditAccessPoint {
+  return true;
+}
+
 export function AuditAccessPointFromJSON(json: any): AuditAccessPoint {
   return AuditAccessPointFromJSONTyped(json, false);
 }
 
 export function AuditAccessPointFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuditAccessPoint {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    alternativeId: !exists(json, 'alternativeId') ? undefined : json['alternativeId'],
-    displayName: !exists(json, 'displayName') ? undefined : json['displayName'],
-    ipAddress: !exists(json, 'ipAddress') ? undefined : json['ipAddress'],
-    userAgent: !exists(json, 'userAgent') ? undefined : json['userAgent'],
+    id: json['id'] == null ? undefined : json['id'],
+    alternativeId: json['alternativeId'] == null ? undefined : json['alternativeId'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    ipAddress: json['ipAddress'] == null ? undefined : json['ipAddress'],
+    userAgent: json['userAgent'] == null ? undefined : json['userAgent'],
   };
 }
 
-export function AuditAccessPointToJSON(value?: AuditAccessPoint | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AuditAccessPointToJSON(json: any): AuditAccessPoint {
+  return AuditAccessPointToJSONTyped(json, false);
+}
+
+export function AuditAccessPointToJSONTyped(value?: AuditAccessPoint | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    alternativeId: value.alternativeId,
-    displayName: value.displayName,
-    ipAddress: value.ipAddress,
-    userAgent: value.userAgent,
+    id: value['id'],
+    alternativeId: value['alternativeId'],
+    displayName: value['displayName'],
+    ipAddress: value['ipAddress'],
+    userAgent: value['userAgent'],
   };
 }

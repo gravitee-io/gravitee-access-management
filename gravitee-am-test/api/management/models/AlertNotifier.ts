@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -100,43 +100,52 @@ export const AlertNotifierReferenceTypeEnum = {
 } as const;
 export type AlertNotifierReferenceTypeEnum = typeof AlertNotifierReferenceTypeEnum[keyof typeof AlertNotifierReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the AlertNotifier interface.
+ */
+export function instanceOfAlertNotifier(value: object): value is AlertNotifier {
+  return true;
+}
+
 export function AlertNotifierFromJSON(json: any): AlertNotifier {
   return AlertNotifierFromJSONTyped(json, false);
 }
 
 export function AlertNotifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): AlertNotifier {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function AlertNotifierToJSON(value?: AlertNotifier | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AlertNotifierToJSON(json: any): AlertNotifier {
+  return AlertNotifierToJSONTyped(json, false);
+}
+
+export function AlertNotifierToJSONTyped(value?: AlertNotifier | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    type: value.type,
-    enabled: value.enabled,
-    configuration: value.configuration,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
+    enabled: value['enabled'],
+    configuration: value['configuration'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

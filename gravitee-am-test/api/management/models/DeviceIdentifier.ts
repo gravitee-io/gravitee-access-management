@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -94,41 +94,50 @@ export const DeviceIdentifierReferenceTypeEnum = {
 } as const;
 export type DeviceIdentifierReferenceTypeEnum = typeof DeviceIdentifierReferenceTypeEnum[keyof typeof DeviceIdentifierReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the DeviceIdentifier interface.
+ */
+export function instanceOfDeviceIdentifier(value: object): value is DeviceIdentifier {
+  return true;
+}
+
 export function DeviceIdentifierFromJSON(json: any): DeviceIdentifier {
   return DeviceIdentifierFromJSONTyped(json, false);
 }
 
 export function DeviceIdentifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): DeviceIdentifier {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function DeviceIdentifierToJSON(value?: DeviceIdentifier | null): any {
-  if (value === undefined) {
-    return undefined;
+export function DeviceIdentifierToJSON(json: any): DeviceIdentifier {
+  return DeviceIdentifierToJSONTyped(json, false);
+}
+
+export function DeviceIdentifierToJSONTyped(value?: DeviceIdentifier | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
-    referenceId: value.referenceId,
-    referenceType: value.referenceType,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,33 +58,42 @@ export interface InstallationEntity {
   updatedAt?: Date;
 }
 
+/**
+ * Check if a given object implements the InstallationEntity interface.
+ */
+export function instanceOfInstallationEntity(value: object): value is InstallationEntity {
+  return true;
+}
+
 export function InstallationEntityFromJSON(json: any): InstallationEntity {
   return InstallationEntityFromJSONTyped(json, false);
 }
 
 export function InstallationEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): InstallationEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    additionalInformation: !exists(json, 'additionalInformation') ? undefined : json['additionalInformation'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function InstallationEntityToJSON(value?: InstallationEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function InstallationEntityToJSON(json: any): InstallationEntity {
+  return InstallationEntityToJSONTyped(json, false);
+}
+
+export function InstallationEntityToJSONTyped(value?: InstallationEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    additionalInformation: value.additionalInformation,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    additionalInformation: value['additionalInformation'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

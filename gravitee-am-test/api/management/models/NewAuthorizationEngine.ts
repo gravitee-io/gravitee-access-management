@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,33 +58,45 @@ export interface NewAuthorizationEngine {
   configuration: string;
 }
 
+/**
+ * Check if a given object implements the NewAuthorizationEngine interface.
+ */
+export function instanceOfNewAuthorizationEngine(value: object): value is NewAuthorizationEngine {
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function NewAuthorizationEngineFromJSON(json: any): NewAuthorizationEngine {
   return NewAuthorizationEngineFromJSONTyped(json, false);
 }
 
 export function NewAuthorizationEngineFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewAuthorizationEngine {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
+    id: json['id'] == null ? undefined : json['id'],
     type: json['type'],
     name: json['name'],
     configuration: json['configuration'],
   };
 }
 
-export function NewAuthorizationEngineToJSON(value?: NewAuthorizationEngine | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewAuthorizationEngineToJSON(json: any): NewAuthorizationEngine {
+  return NewAuthorizationEngineToJSONTyped(json, false);
+}
+
+export function NewAuthorizationEngineToJSONTyped(value?: NewAuthorizationEngine | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    type: value.type,
-    name: value.name,
-    configuration: value.configuration,
+    id: value['id'],
+    type: value['type'],
+    name: value['name'],
+    configuration: value['configuration'],
   };
 }

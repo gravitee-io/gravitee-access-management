@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -94,51 +94,60 @@ export interface ClientRegistrationSettings {
   openDynamicClientRegistrationEnabled?: boolean;
 }
 
+/**
+ * Check if a given object implements the ClientRegistrationSettings interface.
+ */
+export function instanceOfClientRegistrationSettings(value: object): value is ClientRegistrationSettings {
+  return true;
+}
+
 export function ClientRegistrationSettingsFromJSON(json: any): ClientRegistrationSettings {
   return ClientRegistrationSettingsFromJSONTyped(json, false);
 }
 
 export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ClientRegistrationSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    allowLocalhostRedirectUri: !exists(json, 'allowLocalhostRedirectUri') ? undefined : json['allowLocalhostRedirectUri'],
-    allowHttpSchemeRedirectUri: !exists(json, 'allowHttpSchemeRedirectUri') ? undefined : json['allowHttpSchemeRedirectUri'],
-    allowWildCardRedirectUri: !exists(json, 'allowWildCardRedirectUri') ? undefined : json['allowWildCardRedirectUri'],
-    allowRedirectUriParamsExpressionLanguage: !exists(json, 'allowRedirectUriParamsExpressionLanguage')
-      ? undefined
-      : json['allowRedirectUriParamsExpressionLanguage'],
-    defaultScopes: !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
-    allowedScopes: !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
-    clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
-    allowedScopesEnabled: !exists(json, 'allowedScopesEnabled') ? undefined : json['allowedScopesEnabled'],
-    dynamicClientRegistrationEnabled: !exists(json, 'dynamicClientRegistrationEnabled')
-      ? undefined
-      : json['dynamicClientRegistrationEnabled'],
-    openDynamicClientRegistrationEnabled: !exists(json, 'openDynamicClientRegistrationEnabled')
-      ? undefined
-      : json['openDynamicClientRegistrationEnabled'],
+    allowLocalhostRedirectUri: json['allowLocalhostRedirectUri'] == null ? undefined : json['allowLocalhostRedirectUri'],
+    allowHttpSchemeRedirectUri: json['allowHttpSchemeRedirectUri'] == null ? undefined : json['allowHttpSchemeRedirectUri'],
+    allowWildCardRedirectUri: json['allowWildCardRedirectUri'] == null ? undefined : json['allowWildCardRedirectUri'],
+    allowRedirectUriParamsExpressionLanguage:
+      json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
+    defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
+    allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
+    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
+    allowedScopesEnabled: json['allowedScopesEnabled'] == null ? undefined : json['allowedScopesEnabled'],
+    dynamicClientRegistrationEnabled:
+      json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled:
+      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
-export function ClientRegistrationSettingsToJSON(value?: ClientRegistrationSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ClientRegistrationSettingsToJSON(json: any): ClientRegistrationSettings {
+  return ClientRegistrationSettingsToJSONTyped(json, false);
+}
+
+export function ClientRegistrationSettingsToJSONTyped(
+  value?: ClientRegistrationSettings | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    allowLocalhostRedirectUri: value.allowLocalhostRedirectUri,
-    allowHttpSchemeRedirectUri: value.allowHttpSchemeRedirectUri,
-    allowWildCardRedirectUri: value.allowWildCardRedirectUri,
-    allowRedirectUriParamsExpressionLanguage: value.allowRedirectUriParamsExpressionLanguage,
-    defaultScopes: value.defaultScopes,
-    allowedScopes: value.allowedScopes,
-    clientTemplateEnabled: value.clientTemplateEnabled,
-    allowedScopesEnabled: value.allowedScopesEnabled,
-    dynamicClientRegistrationEnabled: value.dynamicClientRegistrationEnabled,
-    openDynamicClientRegistrationEnabled: value.openDynamicClientRegistrationEnabled,
+    allowLocalhostRedirectUri: value['allowLocalhostRedirectUri'],
+    allowHttpSchemeRedirectUri: value['allowHttpSchemeRedirectUri'],
+    allowWildCardRedirectUri: value['allowWildCardRedirectUri'],
+    allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
+    defaultScopes: value['defaultScopes'],
+    allowedScopes: value['allowedScopes'],
+    clientTemplateEnabled: value['clientTemplateEnabled'],
+    allowedScopesEnabled: value['allowedScopesEnabled'],
+    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
   };
 }

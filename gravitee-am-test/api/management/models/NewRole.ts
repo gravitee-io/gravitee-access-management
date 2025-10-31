@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,31 +64,41 @@ export const NewRoleAssignableTypeEnum = {
 } as const;
 export type NewRoleAssignableTypeEnum = typeof NewRoleAssignableTypeEnum[keyof typeof NewRoleAssignableTypeEnum];
 
+/**
+ * Check if a given object implements the NewRole interface.
+ */
+export function instanceOfNewRole(value: object): value is NewRole {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  return true;
+}
+
 export function NewRoleFromJSON(json: any): NewRole {
   return NewRoleFromJSONTyped(json, false);
 }
 
 export function NewRoleFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewRole {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     name: json['name'],
-    assignableType: !exists(json, 'assignableType') ? undefined : json['assignableType'],
-    description: !exists(json, 'description') ? undefined : json['description'],
+    assignableType: json['assignableType'] == null ? undefined : json['assignableType'],
+    description: json['description'] == null ? undefined : json['description'],
   };
 }
 
-export function NewRoleToJSON(value?: NewRole | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewRoleToJSON(json: any): NewRole {
+  return NewRoleToJSONTyped(json, false);
+}
+
+export function NewRoleToJSONTyped(value?: NewRole | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    assignableType: value.assignableType,
-    description: value.description,
+    name: value['name'],
+    assignableType: value['assignableType'],
+    description: value['description'],
   };
 }

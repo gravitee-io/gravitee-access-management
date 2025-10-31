@@ -144,7 +144,6 @@ models/NewForm.ts
 models/NewGroup.ts
 models/NewIdentityProvider.ts
 models/NewMcpTool.ts
-models/NewMcpToolAllOf.ts
 models/NewMembership.ts
 models/NewOrganizationUser.ts
 models/NewPasswordPolicy.ts

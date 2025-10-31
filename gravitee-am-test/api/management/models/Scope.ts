@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -112,51 +112,60 @@ export interface Scope {
   parameterized?: boolean;
 }
 
+/**
+ * Check if a given object implements the Scope interface.
+ */
+export function instanceOfScope(value: object): value is Scope {
+  return true;
+}
+
 export function ScopeFromJSON(json: any): Scope {
   return ScopeFromJSONTyped(json, false);
 }
 
 export function ScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Scope {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    key: !exists(json, 'key') ? undefined : json['key'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    iconUri: !exists(json, 'iconUri') ? undefined : json['iconUri'],
-    domain: !exists(json, 'domain') ? undefined : json['domain'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
-    system: !exists(json, 'system') ? undefined : json['system'],
-    claims: !exists(json, 'claims') ? undefined : json['claims'],
-    expiresIn: !exists(json, 'expiresIn') ? undefined : json['expiresIn'],
-    discovery: !exists(json, 'discovery') ? undefined : json['discovery'],
-    parameterized: !exists(json, 'parameterized') ? undefined : json['parameterized'],
+    id: json['id'] == null ? undefined : json['id'],
+    key: json['key'] == null ? undefined : json['key'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    system: json['system'] == null ? undefined : json['system'],
+    claims: json['claims'] == null ? undefined : json['claims'],
+    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
+    discovery: json['discovery'] == null ? undefined : json['discovery'],
+    parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
   };
 }
 
-export function ScopeToJSON(value?: Scope | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ScopeToJSON(json: any): Scope {
+  return ScopeToJSONTyped(json, false);
+}
+
+export function ScopeToJSONTyped(value?: Scope | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    key: value.key,
-    name: value.name,
-    description: value.description,
-    iconUri: value.iconUri,
-    domain: value.domain,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
-    system: value.system,
-    claims: value.claims,
-    expiresIn: value.expiresIn,
-    discovery: value.discovery,
-    parameterized: value.parameterized,
+    id: value['id'],
+    key: value['key'],
+    name: value['name'],
+    description: value['description'],
+    iconUri: value['iconUri'],
+    domain: value['domain'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
+    system: value['system'],
+    claims: value['claims'],
+    expiresIn: value['expiresIn'],
+    discovery: value['discovery'],
+    parameterized: value['parameterized'],
   };
 }

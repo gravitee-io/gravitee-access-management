@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -106,45 +106,54 @@ export const FormReferenceTypeEnum = {
 } as const;
 export type FormReferenceTypeEnum = typeof FormReferenceTypeEnum[keyof typeof FormReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the Form interface.
+ */
+export function instanceOfForm(value: object): value is Form {
+  return true;
+}
+
 export function FormFromJSON(json: any): Form {
   return FormFromJSONTyped(json, false);
 }
 
 export function FormFromJSONTyped(json: any, ignoreDiscriminator: boolean): Form {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    client: !exists(json, 'client') ? undefined : json['client'],
-    template: !exists(json, 'template') ? undefined : json['template'],
-    content: !exists(json, 'content') ? undefined : json['content'],
-    assets: !exists(json, 'assets') ? undefined : json['assets'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    client: json['client'] == null ? undefined : json['client'],
+    template: json['template'] == null ? undefined : json['template'],
+    content: json['content'] == null ? undefined : json['content'],
+    assets: json['assets'] == null ? undefined : json['assets'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function FormToJSON(value?: Form | null): any {
-  if (value === undefined) {
-    return undefined;
+export function FormToJSON(json: any): Form {
+  return FormToJSONTyped(json, false);
+}
+
+export function FormToJSONTyped(value?: Form | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    enabled: value.enabled,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    client: value.client,
-    template: value.template,
-    content: value.content,
-    assets: value.assets,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    enabled: value['enabled'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    client: value['client'],
+    template: value['template'],
+    content: value['content'],
+    assets: value['assets'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

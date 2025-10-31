@@ -25,9 +25,9 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { NewMcpTool, NewMcpToolFromJSON, NewMcpToolFromJSONTyped, NewMcpToolToJSON } from './NewMcpTool';
+import { mapValues } from '../runtime';
 
+import { type NewMcpTool, NewMcpToolFromJSONTyped, NewMcpToolToJSON, NewMcpToolToJSONTyped } from './NewMcpTool';
 /**
  *
  * @export
@@ -54,37 +54,59 @@ export interface NewProtectedResourceFeature {
   type: string;
 }
 
+/**
+ * Check if a given object implements the NewProtectedResourceFeature interface.
+ */
+export function instanceOfNewProtectedResourceFeature(value: object): value is NewProtectedResourceFeature {
+  if (!('key' in value) || value['key'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  return true;
+}
+
 export function NewProtectedResourceFeatureFromJSON(json: any): NewProtectedResourceFeature {
   return NewProtectedResourceFeatureFromJSONTyped(json, false);
 }
 
 export function NewProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewProtectedResourceFeature {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   if (!ignoreDiscriminator) {
     if (json['type'] === 'NewMcpTool') {
-      // @ts-ignore
-        return NewMcpToolFromJSONTyped(json, true);
+      return NewMcpToolFromJSONTyped(json, ignoreDiscriminator);
     }
   }
   return {
     key: json['key'],
-    description: !exists(json, 'description') ? undefined : json['description'],
+    description: json['description'] == null ? undefined : json['description'],
     type: json['type'],
   };
 }
 
-export function NewProtectedResourceFeatureToJSON(value?: NewProtectedResourceFeature | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewProtectedResourceFeatureToJSON(json: any): NewProtectedResourceFeature {
+  return NewProtectedResourceFeatureToJSONTyped(json, false);
+}
+
+export function NewProtectedResourceFeatureToJSONTyped(
+  value?: NewProtectedResourceFeature | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
+
+  if (!ignoreDiscriminator) {
+    switch (value['type']) {
+      case 'NewMcpTool':
+        return NewMcpToolToJSONTyped(value as NewMcpTool, ignoreDiscriminator);
+      default:
+        return value;
+    }
   }
+
   return {
-    key: value.key,
-    description: value.description,
-    type: value.type,
+    key: value['key'],
+    description: value['description'],
+    type: value['type'],
   };
 }

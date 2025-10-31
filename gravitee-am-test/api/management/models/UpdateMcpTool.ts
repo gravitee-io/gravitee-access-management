@@ -25,16 +25,14 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { NewMcpToolAllOf, NewMcpToolAllOfFromJSON, NewMcpToolAllOfFromJSONTyped, NewMcpToolAllOfToJSON } from './NewMcpToolAllOf';
+import { mapValues } from '../runtime';
+import type { UpdateProtectedResourceFeature } from './UpdateProtectedResourceFeature';
 import {
-  UpdateProtectedResourceFeature,
   UpdateProtectedResourceFeatureFromJSON,
   UpdateProtectedResourceFeatureFromJSONTyped,
   UpdateProtectedResourceFeatureToJSON,
+  UpdateProtectedResourceFeatureToJSONTyped,
 } from './UpdateProtectedResourceFeature';
-
-import {} from './';
 
 /**
  *
@@ -64,33 +62,49 @@ export const UpdateMcpToolTypeEnum = {
 } as const;
 export type UpdateMcpToolTypeEnum = typeof UpdateMcpToolTypeEnum[keyof typeof UpdateMcpToolTypeEnum];
 
+/**
+ * Check if a given object implements the UpdateMcpTool interface.
+ */
+export function instanceOfUpdateMcpTool(value: object): value is UpdateMcpTool {
+  return true;
+}
+
 export function UpdateMcpToolFromJSON(json: any): UpdateMcpTool {
   return UpdateMcpToolFromJSONTyped(json, false);
 }
 
 export function UpdateMcpToolFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateMcpTool {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   if (!ignoreDiscriminator) {
   }
   return {
-    ...UpdateProtectedResourceFeatureFromJSONTyped(json, ignoreDiscriminator),
-    type: !exists(json, 'type') ? undefined : json['type'],
-    scopes: !exists(json, 'scopes') ? undefined : json['scopes'],
+    ...UpdateProtectedResourceFeatureFromJSONTyped(json, true),
+    type: json['type'] == null ? undefined : json['type'],
+    scopes: json['scopes'] == null ? undefined : json['scopes'],
   };
 }
 
-export function UpdateMcpToolToJSON(value?: UpdateMcpTool | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateMcpToolToJSON(json: any): UpdateMcpTool {
+  return UpdateMcpToolToJSONTyped(json, false);
+}
+
+export function UpdateMcpToolToJSONTyped(value?: UpdateMcpTool | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
+
+  if (!ignoreDiscriminator) {
+    switch (value['type']) {
+      default:
+        return value;
+    }
   }
+
   return {
-    ...UpdateProtectedResourceFeatureToJSON(value),
-    type: value.type,
-    scopes: value.scopes,
+    ...UpdateProtectedResourceFeatureToJSONTyped(value, true),
+    type: value['type'],
+    scopes: value['scopes'],
   };
 }

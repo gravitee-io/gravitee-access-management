@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -109,43 +109,52 @@ export const MembershipReferenceTypeEnum = {
 } as const;
 export type MembershipReferenceTypeEnum = typeof MembershipReferenceTypeEnum[keyof typeof MembershipReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the Membership interface.
+ */
+export function instanceOfMembership(value: object): value is Membership {
+  return true;
+}
+
 export function MembershipFromJSON(json: any): Membership {
   return MembershipFromJSONTyped(json, false);
 }
 
 export function MembershipFromJSONTyped(json: any, ignoreDiscriminator: boolean): Membership {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    domain: !exists(json, 'domain') ? undefined : json['domain'],
-    memberId: !exists(json, 'memberId') ? undefined : json['memberId'],
-    memberType: !exists(json, 'memberType') ? undefined : json['memberType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    roleId: !exists(json, 'roleId') ? undefined : json['roleId'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    memberId: json['memberId'] == null ? undefined : json['memberId'],
+    memberType: json['memberType'] == null ? undefined : json['memberType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    roleId: json['roleId'] == null ? undefined : json['roleId'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function MembershipToJSON(value?: Membership | null): any {
-  if (value === undefined) {
-    return undefined;
+export function MembershipToJSON(json: any): Membership {
+  return MembershipToJSONTyped(json, false);
+}
+
+export function MembershipToJSONTyped(value?: Membership | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    domain: value.domain,
-    memberId: value.memberId,
-    memberType: value.memberType,
-    referenceId: value.referenceId,
-    referenceType: value.referenceType,
-    roleId: value.roleId,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    domain: value['domain'],
+    memberId: value['memberId'],
+    memberType: value['memberType'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    roleId: value['roleId'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,37 +70,49 @@ export interface NewReporter {
   inherited?: boolean;
 }
 
+/**
+ * Check if a given object implements the NewReporter interface.
+ */
+export function instanceOfNewReporter(value: object): value is NewReporter {
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function NewReporterFromJSON(json: any): NewReporter {
   return NewReporterFromJSONTyped(json, false);
 }
 
 export function NewReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewReporter {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    id: json['id'] == null ? undefined : json['id'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     type: json['type'],
     name: json['name'],
     configuration: json['configuration'],
-    inherited: !exists(json, 'inherited') ? undefined : json['inherited'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
   };
 }
 
-export function NewReporterToJSON(value?: NewReporter | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewReporterToJSON(json: any): NewReporter {
+  return NewReporterToJSONTyped(json, false);
+}
+
+export function NewReporterToJSONTyped(value?: NewReporter | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    enabled: value.enabled,
-    type: value.type,
-    name: value.name,
-    configuration: value.configuration,
-    inherited: value.inherited,
+    id: value['id'],
+    enabled: value['enabled'],
+    type: value['type'],
+    name: value['name'],
+    configuration: value['configuration'],
+    inherited: value['inherited'],
   };
 }

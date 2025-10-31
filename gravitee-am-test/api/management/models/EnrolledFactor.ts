@@ -25,18 +25,20 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
+import type { EnrolledFactorChannel } from './EnrolledFactorChannel';
 import {
-  EnrolledFactorChannel,
   EnrolledFactorChannelFromJSON,
   EnrolledFactorChannelFromJSONTyped,
   EnrolledFactorChannelToJSON,
+  EnrolledFactorChannelToJSONTyped,
 } from './EnrolledFactorChannel';
+import type { EnrolledFactorSecurity } from './EnrolledFactorSecurity';
 import {
-  EnrolledFactorSecurity,
   EnrolledFactorSecurityFromJSON,
   EnrolledFactorSecurityFromJSONTyped,
   EnrolledFactorSecurityToJSON,
+  EnrolledFactorSecurityToJSONTyped,
 } from './EnrolledFactorSecurity';
 
 /**
@@ -106,41 +108,50 @@ export const EnrolledFactorStatusEnum = {
 } as const;
 export type EnrolledFactorStatusEnum = typeof EnrolledFactorStatusEnum[keyof typeof EnrolledFactorStatusEnum];
 
+/**
+ * Check if a given object implements the EnrolledFactor interface.
+ */
+export function instanceOfEnrolledFactor(value: object): value is EnrolledFactor {
+  return true;
+}
+
 export function EnrolledFactorFromJSON(json: any): EnrolledFactor {
   return EnrolledFactorFromJSONTyped(json, false);
 }
 
 export function EnrolledFactorFromJSONTyped(json: any, ignoreDiscriminator: boolean): EnrolledFactor {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    factorId: !exists(json, 'factorId') ? undefined : json['factorId'],
-    appId: !exists(json, 'appId') ? undefined : json['appId'],
-    status: !exists(json, 'status') ? undefined : json['status'],
-    security: !exists(json, 'security') ? undefined : EnrolledFactorSecurityFromJSON(json['security']),
-    channel: !exists(json, 'channel') ? undefined : EnrolledFactorChannelFromJSON(json['channel']),
-    primary: !exists(json, 'primary') ? undefined : json['primary'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    factorId: json['factorId'] == null ? undefined : json['factorId'],
+    appId: json['appId'] == null ? undefined : json['appId'],
+    status: json['status'] == null ? undefined : json['status'],
+    security: json['security'] == null ? undefined : EnrolledFactorSecurityFromJSON(json['security']),
+    channel: json['channel'] == null ? undefined : EnrolledFactorChannelFromJSON(json['channel']),
+    primary: json['primary'] == null ? undefined : json['primary'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function EnrolledFactorToJSON(value?: EnrolledFactor | null): any {
-  if (value === undefined) {
-    return undefined;
+export function EnrolledFactorToJSON(json: any): EnrolledFactor {
+  return EnrolledFactorToJSONTyped(json, false);
+}
+
+export function EnrolledFactorToJSONTyped(value?: EnrolledFactor | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    factorId: value.factorId,
-    appId: value.appId,
-    status: value.status,
-    security: EnrolledFactorSecurityToJSON(value.security),
-    channel: EnrolledFactorChannelToJSON(value.channel),
-    primary: value.primary,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    factorId: value['factorId'],
+    appId: value['appId'],
+    status: value['status'],
+    security: EnrolledFactorSecurityToJSON(value['security']),
+    channel: EnrolledFactorChannelToJSON(value['channel']),
+    primary: value['primary'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

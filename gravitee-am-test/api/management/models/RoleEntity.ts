@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -118,49 +118,58 @@ export const RoleEntityReferenceTypeEnum = {
 } as const;
 export type RoleEntityReferenceTypeEnum = typeof RoleEntityReferenceTypeEnum[keyof typeof RoleEntityReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the RoleEntity interface.
+ */
+export function instanceOfRoleEntity(value: object): value is RoleEntity {
+  return true;
+}
+
 export function RoleEntityFromJSON(json: any): RoleEntity {
   return RoleEntityFromJSONTyped(json, false);
 }
 
 export function RoleEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): RoleEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    assignableType: !exists(json, 'assignableType') ? undefined : json['assignableType'],
-    permissions: !exists(json, 'permissions') ? undefined : json['permissions'],
-    availablePermissions: !exists(json, 'availablePermissions') ? undefined : json['availablePermissions'],
-    system: !exists(json, 'system') ? undefined : json['system'],
-    defaultRole: !exists(json, 'defaultRole') ? undefined : json['defaultRole'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    assignableType: json['assignableType'] == null ? undefined : json['assignableType'],
+    permissions: json['permissions'] == null ? undefined : json['permissions'],
+    availablePermissions: json['availablePermissions'] == null ? undefined : json['availablePermissions'],
+    system: json['system'] == null ? undefined : json['system'],
+    defaultRole: json['defaultRole'] == null ? undefined : json['defaultRole'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function RoleEntityToJSON(value?: RoleEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function RoleEntityToJSON(json: any): RoleEntity {
+  return RoleEntityToJSONTyped(json, false);
+}
+
+export function RoleEntityToJSONTyped(value?: RoleEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    description: value.description,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    assignableType: value.assignableType,
-    permissions: value.permissions,
-    availablePermissions: value.availablePermissions,
-    system: value.system,
-    defaultRole: value.defaultRole,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    name: value['name'],
+    description: value['description'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    assignableType: value['assignableType'],
+    permissions: value['permissions'],
+    availablePermissions: value['availablePermissions'],
+    system: value['system'],
+    defaultRole: value['defaultRole'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

@@ -25,19 +25,21 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
+import type { PatchApplicationSettings } from './PatchApplicationSettings';
 import {
-  PatchApplicationIdentityProvider,
-  PatchApplicationIdentityProviderFromJSON,
-  PatchApplicationIdentityProviderFromJSONTyped,
-  PatchApplicationIdentityProviderToJSON,
-} from './PatchApplicationIdentityProvider';
-import {
-  PatchApplicationSettings,
   PatchApplicationSettingsFromJSON,
   PatchApplicationSettingsFromJSONTyped,
   PatchApplicationSettingsToJSON,
+  PatchApplicationSettingsToJSONTyped,
 } from './PatchApplicationSettings';
+import type { PatchApplicationIdentityProvider } from './PatchApplicationIdentityProvider';
+import {
+  PatchApplicationIdentityProviderFromJSON,
+  PatchApplicationIdentityProviderFromJSONTyped,
+  PatchApplicationIdentityProviderToJSON,
+  PatchApplicationIdentityProviderToJSONTyped,
+} from './PatchApplicationIdentityProvider';
 
 /**
  *
@@ -179,50 +181,60 @@ export const PatchApplicationRequiredPermissionsEnum = {
 export type PatchApplicationRequiredPermissionsEnum =
   typeof PatchApplicationRequiredPermissionsEnum[keyof typeof PatchApplicationRequiredPermissionsEnum];
 
+/**
+ * Check if a given object implements the PatchApplication interface.
+ */
+export function instanceOfPatchApplication(value: object): value is PatchApplication {
+  return true;
+}
+
 export function PatchApplicationFromJSON(json: any): PatchApplication {
   return PatchApplicationFromJSONTyped(json, false);
 }
 
 export function PatchApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchApplication {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    template: !exists(json, 'template') ? undefined : json['template'],
-    identityProviders: !exists(json, 'identityProviders')
-      ? undefined
-      : new Set((json['identityProviders'] as Array<any>).map(PatchApplicationIdentityProviderFromJSON)),
-    factors: !exists(json, 'factors') ? undefined : json['factors'],
-    certificate: !exists(json, 'certificate') ? undefined : json['certificate'],
-    metadata: !exists(json, 'metadata') ? undefined : json['metadata'],
-    settings: !exists(json, 'settings') ? undefined : PatchApplicationSettingsFromJSON(json['settings']),
-    requiredPermissions: !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    template: json['template'] == null ? undefined : json['template'],
+    identityProviders:
+      json['identityProviders'] == null
+        ? undefined
+        : new Set((json['identityProviders'] as Array<any>).map(PatchApplicationIdentityProviderFromJSON)),
+    factors: json['factors'] == null ? undefined : new Set(json['factors']),
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
+    metadata: json['metadata'] == null ? undefined : json['metadata'],
+    settings: json['settings'] == null ? undefined : PatchApplicationSettingsFromJSON(json['settings']),
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
 
-export function PatchApplicationToJSON(value?: PatchApplication | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchApplicationToJSON(json: any): PatchApplication {
+  return PatchApplicationToJSONTyped(json, false);
+}
+
+export function PatchApplicationToJSONTyped(value?: PatchApplication | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    description: value.description,
-    enabled: value.enabled,
-    template: value.template,
+    name: value['name'],
+    description: value['description'],
+    enabled: value['enabled'],
+    template: value['template'],
     identityProviders:
-      value.identityProviders === undefined
+      value['identityProviders'] == null
         ? undefined
-        : Array.from(value.identityProviders as Set<any>).map(PatchApplicationIdentityProviderToJSON),
-    factors: value.factors,
-    certificate: value.certificate,
-    metadata: value.metadata,
-    settings: PatchApplicationSettingsToJSON(value.settings),
-    requiredPermissions: value.requiredPermissions,
+        : Array.from(value['identityProviders'] as Set<any>).map(PatchApplicationIdentityProviderToJSON),
+    factors: value['factors'] == null ? undefined : Array.from(value['factors'] as Set<any>),
+    certificate: value['certificate'],
+    metadata: value['metadata'],
+    settings: PatchApplicationSettingsToJSON(value['settings']),
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,40 @@ export interface DataSource {
   description?: string;
 }
 
+/**
+ * Check if a given object implements the DataSource interface.
+ */
+export function instanceOfDataSource(value: object): value is DataSource {
+  return true;
+}
+
 export function DataSourceFromJSON(json: any): DataSource {
   return DataSourceFromJSONTyped(json, false);
 }
 
 export function DataSourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): DataSource {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
   };
 }
 
-export function DataSourceToJSON(value?: DataSource | null): any {
-  if (value === undefined) {
-    return undefined;
+export function DataSourceToJSON(json: any): DataSource {
+  return DataSourceToJSONTyped(json, false);
+}
+
+export function DataSourceToJSONTyped(value?: DataSource | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    description: value.description,
+    id: value['id'],
+    name: value['name'],
+    description: value['description'],
   };
 }

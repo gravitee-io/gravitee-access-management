@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -142,57 +142,66 @@ export const IdentityProviderReferenceTypeEnum = {
 } as const;
 export type IdentityProviderReferenceTypeEnum = typeof IdentityProviderReferenceTypeEnum[keyof typeof IdentityProviderReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the IdentityProvider interface.
+ */
+export function instanceOfIdentityProvider(value: object): value is IdentityProvider {
+  return true;
+}
+
 export function IdentityProviderFromJSON(json: any): IdentityProvider {
   return IdentityProviderFromJSONTyped(json, false);
 }
 
 export function IdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: boolean): IdentityProvider {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    system: !exists(json, 'system') ? undefined : json['system'],
-    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
-    mappers: !exists(json, 'mappers') ? undefined : json['mappers'],
-    roleMapper: !exists(json, 'roleMapper') ? undefined : json['roleMapper'],
-    groupMapper: !exists(json, 'groupMapper') ? undefined : json['groupMapper'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    external: !exists(json, 'external') ? undefined : json['external'],
-    domainWhitelist: !exists(json, 'domainWhitelist') ? undefined : json['domainWhitelist'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
-    passwordPolicy: !exists(json, 'passwordPolicy') ? undefined : json['passwordPolicy'],
-    dataPlaneId: !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    system: json['system'] == null ? undefined : json['system'],
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    mappers: json['mappers'] == null ? undefined : json['mappers'],
+    roleMapper: json['roleMapper'] == null ? undefined : json['roleMapper'],
+    groupMapper: json['groupMapper'] == null ? undefined : json['groupMapper'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    external: json['external'] == null ? undefined : json['external'],
+    domainWhitelist: json['domainWhitelist'] == null ? undefined : json['domainWhitelist'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
+    dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
   };
 }
 
-export function IdentityProviderToJSON(value?: IdentityProvider | null): any {
-  if (value === undefined) {
-    return undefined;
+export function IdentityProviderToJSON(json: any): IdentityProvider {
+  return IdentityProviderToJSONTyped(json, false);
+}
+
+export function IdentityProviderToJSONTyped(value?: IdentityProvider | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    type: value.type,
-    system: value.system,
-    configuration: value.configuration,
-    mappers: value.mappers,
-    roleMapper: value.roleMapper,
-    groupMapper: value.groupMapper,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    external: value.external,
-    domainWhitelist: value.domainWhitelist,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
-    passwordPolicy: value.passwordPolicy,
-    dataPlaneId: value.dataPlaneId,
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
+    system: value['system'],
+    configuration: value['configuration'],
+    mappers: value['mappers'],
+    roleMapper: value['roleMapper'],
+    groupMapper: value['groupMapper'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    external: value['external'],
+    domainWhitelist: value['domainWhitelist'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
+    passwordPolicy: value['passwordPolicy'],
+    dataPlaneId: value['dataPlaneId'],
   };
 }

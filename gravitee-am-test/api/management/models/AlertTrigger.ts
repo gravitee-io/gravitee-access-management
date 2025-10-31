@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -103,41 +103,50 @@ export const AlertTriggerReferenceTypeEnum = {
 } as const;
 export type AlertTriggerReferenceTypeEnum = typeof AlertTriggerReferenceTypeEnum[keyof typeof AlertTriggerReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the AlertTrigger interface.
+ */
+export function instanceOfAlertTrigger(value: object): value is AlertTrigger {
+  return true;
+}
+
 export function AlertTriggerFromJSON(json: any): AlertTrigger {
   return AlertTriggerFromJSONTyped(json, false);
 }
 
 export function AlertTriggerFromJSONTyped(json: any, ignoreDiscriminator: boolean): AlertTrigger {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    alertNotifiers: !exists(json, 'alertNotifiers') ? undefined : json['alertNotifiers'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    type: json['type'] == null ? undefined : json['type'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    alertNotifiers: json['alertNotifiers'] == null ? undefined : json['alertNotifiers'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function AlertTriggerToJSON(value?: AlertTrigger | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AlertTriggerToJSON(json: any): AlertTrigger {
+  return AlertTriggerToJSONTyped(json, false);
+}
+
+export function AlertTriggerToJSONTyped(value?: AlertTrigger | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    type: value.type,
-    enabled: value.enabled,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    alertNotifiers: value.alertNotifiers,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    type: value['type'],
+    enabled: value['enabled'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    alertNotifiers: value['alertNotifiers'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

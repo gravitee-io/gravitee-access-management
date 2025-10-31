@@ -25,16 +25,14 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { NewMcpToolAllOf, NewMcpToolAllOfFromJSON, NewMcpToolAllOfFromJSONTyped, NewMcpToolAllOfToJSON } from './NewMcpToolAllOf';
+import { mapValues } from '../runtime';
+import type { NewProtectedResourceFeature } from './NewProtectedResourceFeature';
 import {
-  NewProtectedResourceFeature,
   NewProtectedResourceFeatureFromJSON,
   NewProtectedResourceFeatureFromJSONTyped,
   NewProtectedResourceFeatureToJSON,
+  NewProtectedResourceFeatureToJSONTyped,
 } from './NewProtectedResourceFeature';
-
-import {} from './';
 
 /**
  *
@@ -64,33 +62,49 @@ export const NewMcpToolTypeEnum = {
 } as const;
 export type NewMcpToolTypeEnum = typeof NewMcpToolTypeEnum[keyof typeof NewMcpToolTypeEnum];
 
+/**
+ * Check if a given object implements the NewMcpTool interface.
+ */
+export function instanceOfNewMcpTool(value: object): value is NewMcpTool {
+  return true;
+}
+
 export function NewMcpToolFromJSON(json: any): NewMcpTool {
   return NewMcpToolFromJSONTyped(json, false);
 }
 
 export function NewMcpToolFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewMcpTool {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   if (!ignoreDiscriminator) {
   }
   return {
-    ...NewProtectedResourceFeatureFromJSONTyped(json, ignoreDiscriminator),
-    type: !exists(json, 'type') ? undefined : json['type'],
-    scopes: !exists(json, 'scopes') ? undefined : json['scopes'],
+    ...NewProtectedResourceFeatureFromJSONTyped(json, true),
+    type: json['type'] == null ? undefined : json['type'],
+    scopes: json['scopes'] == null ? undefined : json['scopes'],
   };
 }
 
-export function NewMcpToolToJSON(value?: NewMcpTool | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewMcpToolToJSON(json: any): NewMcpTool {
+  return NewMcpToolToJSONTyped(json, false);
+}
+
+export function NewMcpToolToJSONTyped(value?: NewMcpTool | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
+
+  if (!ignoreDiscriminator) {
+    switch (value['type']) {
+      default:
+        return value;
+    }
   }
+
   return {
-    ...NewProtectedResourceFeatureToJSON(value),
-    type: value.type,
-    scopes: value.scopes,
+    ...NewProtectedResourceFeatureToJSONTyped(value, true),
+    type: value['type'],
+    scopes: value['scopes'],
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -184,75 +184,85 @@ export interface NewOrganizationUser {
   serviceAccount?: boolean;
 }
 
+/**
+ * Check if a given object implements the NewOrganizationUser interface.
+ */
+export function instanceOfNewOrganizationUser(value: object): value is NewOrganizationUser {
+  if (!('username' in value) || value['username'] === undefined) return false;
+  return true;
+}
+
 export function NewOrganizationUserFromJSON(json: any): NewOrganizationUser {
   return NewOrganizationUserFromJSONTyped(json, false);
 }
 
 export function NewOrganizationUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewOrganizationUser {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     username: json['username'],
-    password: !exists(json, 'password') ? undefined : json['password'],
-    firstName: !exists(json, 'firstName') ? undefined : json['firstName'],
-    lastName: !exists(json, 'lastName') ? undefined : json['lastName'],
-    externalId: !exists(json, 'externalId') ? undefined : json['externalId'],
-    accountNonExpired: !exists(json, 'accountNonExpired') ? undefined : json['accountNonExpired'],
-    accountNonLocked: !exists(json, 'accountNonLocked') ? undefined : json['accountNonLocked'],
-    credentialsNonExpired: !exists(json, 'credentialsNonExpired') ? undefined : json['credentialsNonExpired'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    internal: !exists(json, 'internal') ? undefined : json['internal'],
-    preRegistration: !exists(json, 'preRegistration') ? undefined : json['preRegistration'],
-    registrationCompleted: !exists(json, 'registrationCompleted') ? undefined : json['registrationCompleted'],
-    domain: !exists(json, 'domain') ? undefined : json['domain'],
-    source: !exists(json, 'source') ? undefined : json['source'],
-    client: !exists(json, 'client') ? undefined : json['client'],
-    loginsCount: !exists(json, 'loginsCount') ? undefined : json['loginsCount'],
-    loggedAt: !exists(json, 'loggedAt') ? undefined : new Date(json['loggedAt']),
-    preferredLanguage: !exists(json, 'preferredLanguage') ? undefined : json['preferredLanguage'],
-    additionalInformation: !exists(json, 'additionalInformation') ? undefined : json['additionalInformation'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
-    forceResetPassword: !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
-    lastPasswordReset: !exists(json, 'lastPasswordReset') ? undefined : new Date(json['lastPasswordReset']),
-    email: !exists(json, 'email') ? undefined : json['email'],
-    serviceAccount: !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
+    password: json['password'] == null ? undefined : json['password'],
+    firstName: json['firstName'] == null ? undefined : json['firstName'],
+    lastName: json['lastName'] == null ? undefined : json['lastName'],
+    externalId: json['externalId'] == null ? undefined : json['externalId'],
+    accountNonExpired: json['accountNonExpired'] == null ? undefined : json['accountNonExpired'],
+    accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
+    credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    internal: json['internal'] == null ? undefined : json['internal'],
+    preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
+    registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    source: json['source'] == null ? undefined : json['source'],
+    client: json['client'] == null ? undefined : json['client'],
+    loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
+    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
+    additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
+    lastPasswordReset: json['lastPasswordReset'] == null ? undefined : new Date(json['lastPasswordReset']),
+    email: json['email'] == null ? undefined : json['email'],
+    serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
   };
 }
 
-export function NewOrganizationUserToJSON(value?: NewOrganizationUser | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewOrganizationUserToJSON(json: any): NewOrganizationUser {
+  return NewOrganizationUserToJSONTyped(json, false);
+}
+
+export function NewOrganizationUserToJSONTyped(value?: NewOrganizationUser | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    username: value.username,
-    password: value.password,
-    firstName: value.firstName,
-    lastName: value.lastName,
-    externalId: value.externalId,
-    accountNonExpired: value.accountNonExpired,
-    accountNonLocked: value.accountNonLocked,
-    credentialsNonExpired: value.credentialsNonExpired,
-    enabled: value.enabled,
-    internal: value.internal,
-    preRegistration: value.preRegistration,
-    registrationCompleted: value.registrationCompleted,
-    domain: value.domain,
-    source: value.source,
-    client: value.client,
-    loginsCount: value.loginsCount,
-    loggedAt: value.loggedAt === undefined ? undefined : value.loggedAt.toISOString(),
-    preferredLanguage: value.preferredLanguage,
-    additionalInformation: value.additionalInformation,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
-    forceResetPassword: value.forceResetPassword,
-    lastPasswordReset: value.lastPasswordReset === undefined ? undefined : value.lastPasswordReset.toISOString(),
-    email: value.email,
-    serviceAccount: value.serviceAccount,
+    username: value['username'],
+    password: value['password'],
+    firstName: value['firstName'],
+    lastName: value['lastName'],
+    externalId: value['externalId'],
+    accountNonExpired: value['accountNonExpired'],
+    accountNonLocked: value['accountNonLocked'],
+    credentialsNonExpired: value['credentialsNonExpired'],
+    enabled: value['enabled'],
+    internal: value['internal'],
+    preRegistration: value['preRegistration'],
+    registrationCompleted: value['registrationCompleted'],
+    domain: value['domain'],
+    source: value['source'],
+    client: value['client'],
+    loginsCount: value['loginsCount'],
+    loggedAt: value['loggedAt'] == null ? undefined : value['loggedAt'].toISOString(),
+    preferredLanguage: value['preferredLanguage'],
+    additionalInformation: value['additionalInformation'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
+    forceResetPassword: value['forceResetPassword'],
+    lastPasswordReset: value['lastPasswordReset'] == null ? undefined : value['lastPasswordReset'].toISOString(),
+    email: value['email'],
+    serviceAccount: value['serviceAccount'],
   };
 }

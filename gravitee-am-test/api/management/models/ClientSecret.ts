@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,37 +70,46 @@ export interface ClientSecret {
   expiresAt?: Date;
 }
 
+/**
+ * Check if a given object implements the ClientSecret interface.
+ */
+export function instanceOfClientSecret(value: object): value is ClientSecret {
+  return true;
+}
+
 export function ClientSecretFromJSON(json: any): ClientSecret {
   return ClientSecretFromJSONTyped(json, false);
 }
 
 export function ClientSecretFromJSONTyped(json: any, ignoreDiscriminator: boolean): ClientSecret {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    settingsId: !exists(json, 'settingsId') ? undefined : json['settingsId'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    secret: !exists(json, 'secret') ? undefined : json['secret'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    expiresAt: !exists(json, 'expiresAt') ? undefined : new Date(json['expiresAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    settingsId: json['settingsId'] == null ? undefined : json['settingsId'],
+    name: json['name'] == null ? undefined : json['name'],
+    secret: json['secret'] == null ? undefined : json['secret'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
   };
 }
 
-export function ClientSecretToJSON(value?: ClientSecret | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ClientSecretToJSON(json: any): ClientSecret {
+  return ClientSecretToJSONTyped(json, false);
+}
+
+export function ClientSecretToJSONTyped(value?: ClientSecret | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    settingsId: value.settingsId,
-    name: value.name,
-    secret: value.secret,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    expiresAt: value.expiresAt === undefined ? undefined : value.expiresAt.toISOString(),
+    id: value['id'],
+    settingsId: value['settingsId'],
+    name: value['name'],
+    secret: value['secret'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    expiresAt: value['expiresAt'] == null ? undefined : value['expiresAt'].toISOString(),
   };
 }

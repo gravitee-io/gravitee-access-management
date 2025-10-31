@@ -25,9 +25,16 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { Application, ApplicationFromJSON, ApplicationFromJSONTyped, ApplicationToJSON } from './Application';
-import { IdentityProvider, IdentityProviderFromJSON, IdentityProviderFromJSONTyped, IdentityProviderToJSON } from './IdentityProvider';
+import { mapValues } from '../runtime';
+import type { IdentityProvider } from './IdentityProvider';
+import {
+  IdentityProviderFromJSON,
+  IdentityProviderFromJSONTyped,
+  IdentityProviderToJSON,
+  IdentityProviderToJSONTyped,
+} from './IdentityProvider';
+import type { Application } from './Application';
+import { ApplicationFromJSON, ApplicationFromJSONTyped, ApplicationToJSON, ApplicationToJSONTyped } from './Application';
 
 /**
  *
@@ -108,48 +115,56 @@ export const CertificateEntityStatusEnum = {
 } as const;
 export type CertificateEntityStatusEnum = typeof CertificateEntityStatusEnum[keyof typeof CertificateEntityStatusEnum];
 
+/**
+ * Check if a given object implements the CertificateEntity interface.
+ */
+export function instanceOfCertificateEntity(value: object): value is CertificateEntity {
+  return true;
+}
+
 export function CertificateEntityFromJSON(json: any): CertificateEntity {
   return CertificateEntityFromJSONTyped(json, false);
 }
 
 export function CertificateEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): CertificateEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    expiresAt: !exists(json, 'expiresAt') ? undefined : new Date(json['expiresAt']),
-    system: !exists(json, 'system') ? undefined : json['system'],
-    status: !exists(json, 'status') ? undefined : json['status'],
-    usage: !exists(json, 'usage') ? undefined : json['usage'],
-    applications: !exists(json, 'applications') ? undefined : (json['applications'] as Array<any>).map(ApplicationFromJSON),
-    identityProviders: !exists(json, 'identityProviders')
-      ? undefined
-      : (json['identityProviders'] as Array<any>).map(IdentityProviderFromJSON),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
+    system: json['system'] == null ? undefined : json['system'],
+    status: json['status'] == null ? undefined : json['status'],
+    usage: json['usage'] == null ? undefined : json['usage'],
+    applications: json['applications'] == null ? undefined : (json['applications'] as Array<any>).map(ApplicationFromJSON),
+    identityProviders:
+      json['identityProviders'] == null ? undefined : (json['identityProviders'] as Array<any>).map(IdentityProviderFromJSON),
   };
 }
 
-export function CertificateEntityToJSON(value?: CertificateEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function CertificateEntityToJSON(json: any): CertificateEntity {
+  return CertificateEntityToJSONTyped(json, false);
+}
+
+export function CertificateEntityToJSONTyped(value?: CertificateEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    type: value.type,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    expiresAt: value.expiresAt === undefined ? undefined : value.expiresAt.toISOString(),
-    system: value.system,
-    status: value.status,
-    usage: value.usage,
-    applications: value.applications === undefined ? undefined : (value.applications as Array<any>).map(ApplicationToJSON),
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    expiresAt: value['expiresAt'] == null ? undefined : value['expiresAt'].toISOString(),
+    system: value['system'],
+    status: value['status'],
+    usage: value['usage'],
+    applications: value['applications'] == null ? undefined : (value['applications'] as Array<any>).map(ApplicationToJSON),
     identityProviders:
-      value.identityProviders === undefined ? undefined : (value.identityProviders as Array<any>).map(IdentityProviderToJSON),
+      value['identityProviders'] == null ? undefined : (value['identityProviders'] as Array<any>).map(IdentityProviderToJSON),
   };
 }

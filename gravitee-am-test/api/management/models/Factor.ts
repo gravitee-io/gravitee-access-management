@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -97,41 +97,50 @@ export const FactorFactorTypeEnum = {
 } as const;
 export type FactorFactorTypeEnum = typeof FactorFactorTypeEnum[keyof typeof FactorFactorTypeEnum];
 
+/**
+ * Check if a given object implements the Factor interface.
+ */
+export function instanceOfFactor(value: object): value is Factor {
+  return true;
+}
+
 export function FactorFromJSON(json: any): Factor {
   return FactorFromJSONTyped(json, false);
 }
 
 export function FactorFromJSONTyped(json: any, ignoreDiscriminator: boolean): Factor {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    factorType: !exists(json, 'factorType') ? undefined : json['factorType'],
-    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
-    domain: !exists(json, 'domain') ? undefined : json['domain'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    factorType: json['factorType'] == null ? undefined : json['factorType'],
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function FactorToJSON(value?: Factor | null): any {
-  if (value === undefined) {
-    return undefined;
+export function FactorToJSON(json: any): Factor {
+  return FactorToJSONTyped(json, false);
+}
+
+export function FactorToJSONTyped(value?: Factor | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    type: value.type,
-    factorType: value.factorType,
-    configuration: value.configuration,
-    domain: value.domain,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
+    factorType: value['factorType'],
+    configuration: value['configuration'],
+    domain: value['domain'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
   };
 }

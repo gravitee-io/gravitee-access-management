@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -85,7 +85,7 @@ export interface Role {
    * @type {{ [key: string]: Set<string>; }}
    * @memberof Role
    */
-  permissionAcls?: { [key: string]: Set<string> };
+  permissionAcls?: { [key: string]: Set<InnerEnum> };
   /**
    *
    * @type {Array<string>}
@@ -148,51 +148,60 @@ export const RolePermissionAclsEnum = {
 } as const;
 export type RolePermissionAclsEnum = typeof RolePermissionAclsEnum[keyof typeof RolePermissionAclsEnum];
 
+/**
+ * Check if a given object implements the Role interface.
+ */
+export function instanceOfRole(value: object): value is Role {
+  return true;
+}
+
 export function RoleFromJSON(json: any): Role {
   return RoleFromJSONTyped(json, false);
 }
 
 export function RoleFromJSONTyped(json: any, ignoreDiscriminator: boolean): Role {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    assignableType: !exists(json, 'assignableType') ? undefined : json['assignableType'],
-    system: !exists(json, 'system') ? undefined : json['system'],
-    defaultRole: !exists(json, 'defaultRole') ? undefined : json['defaultRole'],
-    permissionAcls: !exists(json, 'permissionAcls') ? undefined : json['permissionAcls'],
-    oauthScopes: !exists(json, 'oauthScopes') ? undefined : json['oauthScopes'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
-    internalOnly: !exists(json, 'internalOnly') ? undefined : json['internalOnly'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    assignableType: json['assignableType'] == null ? undefined : json['assignableType'],
+    system: json['system'] == null ? undefined : json['system'],
+    defaultRole: json['defaultRole'] == null ? undefined : json['defaultRole'],
+    permissionAcls: json['permissionAcls'] == null ? undefined : json['permissionAcls'],
+    oauthScopes: json['oauthScopes'] == null ? undefined : json['oauthScopes'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    internalOnly: json['internalOnly'] == null ? undefined : json['internalOnly'],
   };
 }
 
-export function RoleToJSON(value?: Role | null): any {
-  if (value === undefined) {
-    return undefined;
+export function RoleToJSON(json: any): Role {
+  return RoleToJSONTyped(json, false);
+}
+
+export function RoleToJSONTyped(value?: Role | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    description: value.description,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    assignableType: value.assignableType,
-    system: value.system,
-    defaultRole: value.defaultRole,
-    permissionAcls: value.permissionAcls,
-    oauthScopes: value.oauthScopes,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
-    internalOnly: value.internalOnly,
+    id: value['id'],
+    name: value['name'],
+    description: value['description'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    assignableType: value['assignableType'],
+    system: value['system'],
+    defaultRole: value['defaultRole'],
+    permissionAcls: value['permissionAcls'],
+    oauthScopes: value['oauthScopes'],
+    createdAt: value['createdAt'] == null ? undefined : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? undefined : value['updatedAt'].toISOString(),
+    internalOnly: value['internalOnly'],
   };
 }
