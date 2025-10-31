@@ -26,55 +26,50 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
-import { UpdateMcpTool, UpdateMcpToolFromJSON, UpdateMcpToolFromJSONTyped, UpdateMcpToolToJSON } from './UpdateMcpTool';
+import { Domain, DomainFromJSON, DomainFromJSONTyped, DomainToJSON } from './Domain';
 
 /**
  *
  * @export
- * @interface UpdateProtectedResourceFeature
+ * @interface DomainPage
  */
-export interface UpdateProtectedResourceFeature {
+export interface DomainPage {
   /**
    *
-   * @type {string}
-   * @memberof UpdateProtectedResourceFeature
+   * @type {Array<Domain>}
+   * @memberof DomainPage
    */
-  key: string;
+  data?: Array<Domain>;
   /**
    *
-   * @type {string}
-   * @memberof UpdateProtectedResourceFeature
+   * @type {number}
+   * @memberof DomainPage
    */
-  description?: string;
+  currentPage?: number;
   /**
    *
-   * @type {string}
-   * @memberof UpdateProtectedResourceFeature
+   * @type {number}
+   * @memberof DomainPage
    */
-  type: string;
+  totalCount?: number;
 }
 
-export function UpdateProtectedResourceFeatureFromJSON(json: any): UpdateProtectedResourceFeature {
-  return UpdateProtectedResourceFeatureFromJSONTyped(json, false);
+export function DomainPageFromJSON(json: any): DomainPage {
+  return DomainPageFromJSONTyped(json, false);
 }
 
-export function UpdateProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateProtectedResourceFeature {
+export function DomainPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): DomainPage {
   if (json === undefined || json === null) {
     return json;
   }
-  if (!ignoreDiscriminator) {
-    if (json['type'] === 'UpdateMcpTool') {
-      return UpdateMcpToolFromJSONTyped(json, true);
-    }
-  }
   return {
-    key: json['key'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    type: json['type'],
+    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(DomainFromJSON),
+    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
+    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
   };
 }
 
-export function UpdateProtectedResourceFeatureToJSON(value?: UpdateProtectedResourceFeature | null): any {
+export function DomainPageToJSON(value?: DomainPage | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -82,8 +77,8 @@ export function UpdateProtectedResourceFeatureToJSON(value?: UpdateProtectedReso
     return null;
   }
   return {
-    key: value.key,
-    description: value.description,
-    type: value.type,
+    data: value.data === undefined ? undefined : (value.data as Array<any>).map(DomainToJSON),
+    currentPage: value.currentPage,
+    totalCount: value.totalCount,
   };
 }

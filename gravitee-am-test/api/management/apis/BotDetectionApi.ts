@@ -53,10 +53,6 @@ export interface DeleteBotDetectionRequest {
   botDetection: string;
 }
 
-export interface Get26Request {
-  botDetection: string;
-}
-
 export interface GetBotDetectionRequest {
   organizationId: string;
   environmentId: string;
@@ -64,7 +60,11 @@ export interface GetBotDetectionRequest {
   botDetection: string;
 }
 
-export interface GetSchema1Request {
+export interface GetBotDetectionPluginRequest {
+  botDetection: string;
+}
+
+export interface GetBotDetectionPluginSchemaRequest {
   botDetection: string;
 }
 
@@ -242,57 +242,6 @@ export class BotDetectionApi extends runtime.BaseAPI {
   }
 
   /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a Bot Detection plugin
-   */
-  async get26Raw(
-    requestParameters: Get26Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
-      throw new runtime.RequiredError(
-        'botDetection',
-        'Required parameter requestParameters.botDetection was null or undefined when calling get26.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/bot-detections/{botDetection}`.replace(
-          `{${'botDetection'}}`,
-          encodeURIComponent(String(requestParameters.botDetection)),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a Bot Detection plugin
-   */
-  async get26(requestParameters: Get26Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get26Raw(requestParameters, initOverrides);
-  }
-
-  /**
    * User must have the DOMAIN_BOT_DETECTION[READ] permission on the specified domain or DOMAIN_BOT_DETECTION[READ] permission on the specified environment or DOMAIN_BOT_DETECTION[READ] permission on the specified organization
    * Get a bot detection
    */
@@ -371,16 +320,70 @@ export class BotDetectionApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get a Bot Detection plugin\'s schema
+   * Get a Bot Detection plugin
    */
-  async getSchema1Raw(
-    requestParameters: GetSchema1Request,
+  async getBotDetectionPluginRaw(
+    requestParameters: GetBotDetectionPluginRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
       throw new runtime.RequiredError(
         'botDetection',
-        'Required parameter requestParameters.botDetection was null or undefined when calling getSchema1.',
+        'Required parameter requestParameters.botDetection was null or undefined when calling getBotDetectionPlugin.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/bot-detections/{botDetection}`.replace(
+          `{${'botDetection'}}`,
+          encodeURIComponent(String(requestParameters.botDetection)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get a Bot Detection plugin
+   */
+  async getBotDetectionPlugin(
+    requestParameters: GetBotDetectionPluginRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getBotDetectionPluginRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get a Bot Detection plugin\'s schema
+   */
+  async getBotDetectionPluginSchemaRaw(
+    requestParameters: GetBotDetectionPluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.botDetection === null || requestParameters.botDetection === undefined) {
+      throw new runtime.RequiredError(
+        'botDetection',
+        'Required parameter requestParameters.botDetection was null or undefined when calling getBotDetectionPluginSchema.',
       );
     }
 
@@ -416,46 +419,11 @@ export class BotDetectionApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a Bot Detection plugin\'s schema
    */
-  async getSchema1(requestParameters: GetSchema1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema1Raw(requestParameters, initOverrides);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List bot detection plugins
-   */
-  async list25Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/bot-detections`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List bot detection plugins
-   */
-  async list25(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list25Raw(initOverrides);
+  async getBotDetectionPluginSchema(
+    requestParameters: GetBotDetectionPluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getBotDetectionPluginSchemaRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -525,6 +493,44 @@ export class BotDetectionApi extends runtime.BaseAPI {
   ): Promise<Array<BotDetection>> {
     const response = await this.listBotDetectionsRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List bot detection plugins
+   */
+  async listBotDetectionsPluginsRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/bot-detections`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List bot detection plugins
+   */
+  async listBotDetectionsPlugins(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.listBotDetectionsPluginsRaw(initOverrides);
   }
 
   /**

@@ -28,101 +28,101 @@
 
 import * as runtime from '../runtime';
 import {
-  NewServiceResource,
-  NewServiceResourceFromJSON,
-  NewServiceResourceToJSON,
-  ServiceResource,
-  ServiceResourceFromJSON,
-  ServiceResourceToJSON,
-  UpdateServiceResource,
-  UpdateServiceResourceFromJSON,
-  UpdateServiceResourceToJSON,
+  AuthorizationEngine,
+  AuthorizationEngineFromJSON,
+  AuthorizationEngineToJSON,
+  NewAuthorizationEngine,
+  NewAuthorizationEngineFromJSON,
+  NewAuthorizationEngineToJSON,
+  UpdateAuthorizationEngine,
+  UpdateAuthorizationEngineFromJSON,
+  UpdateAuthorizationEngineToJSON,
 } from '../models';
 
-export interface CreateResourceRequest {
+export interface CreateAuthorizationEngineRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
-  newServiceResource: NewServiceResource;
+  newAuthorizationEngine: NewAuthorizationEngine;
 }
 
-export interface DeleteResourceRequest {
+export interface DeleteAuthorizationEngineRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
-  resource: string;
+  engineId: string;
 }
 
-export interface GetResourceRequest {
+export interface FindAuthorizationEngineRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
-  resource: string;
+  engineId: string;
 }
 
-export interface GetResource1Request {
-  resource: string;
+export interface GetAuthorizationEnginePluginRequest {
+  authorizationEngine: string;
 }
 
-export interface GetResourceSchemaRequest {
-  resource: string;
+export interface GetAuthorizationEnginePluginSchemaRequest {
+  authorizationEngine: string;
 }
 
-export interface ListResourcePluginsRequest {
+export interface ListAuthorizationEnginePluginsRequest {
   expand?: Array<string>;
 }
 
-export interface ListResourcesRequest {
+export interface ListAuthorizationEnginesRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
 }
 
-export interface UpdateResourceRequest {
+export interface UpdateAuthorizationEngineRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
-  resource: string;
-  updateServiceResource: UpdateServiceResource;
+  engineId: string;
+  updateAuthorizationEngine: UpdateAuthorizationEngine;
 }
 
 /**
  *
  */
-export class ResourceApi extends runtime.BaseAPI {
+export class AuthorizationEngineApi extends runtime.BaseAPI {
   /**
-   * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
-   * Create a resource
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified organization
+   * Create an authorization engine
    */
-  async createResourceRaw(
-    requestParameters: CreateResourceRequest,
+  async createAuthorizationEngineRaw(
+    requestParameters: CreateAuthorizationEngineRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ServiceResource>> {
+  ): Promise<runtime.ApiResponse<AuthorizationEngine>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling createResource.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createAuthorizationEngine.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling createResource.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling createAuthorizationEngine.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
       throw new runtime.RequiredError(
         'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling createResource.',
+        'Required parameter requestParameters.domain was null or undefined when calling createAuthorizationEngine.',
       );
     }
 
-    if (requestParameters.newServiceResource === null || requestParameters.newServiceResource === undefined) {
+    if (requestParameters.newAuthorizationEngine === null || requestParameters.newAuthorizationEngine === undefined) {
       throw new runtime.RequiredError(
-        'newServiceResource',
-        'Required parameter requestParameters.newServiceResource was null or undefined when calling createResource.',
+        'newAuthorizationEngine',
+        'Required parameter requestParameters.newAuthorizationEngine was null or undefined when calling createAuthorizationEngine.',
       );
     }
 
@@ -142,66 +142,66 @@ export class ResourceApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources`
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines`
           .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
           .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
           .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
         method: 'POST',
         headers: headerParameters,
         query: queryParameters,
-        body: NewServiceResourceToJSON(requestParameters.newServiceResource),
+        body: NewAuthorizationEngineToJSON(requestParameters.newAuthorizationEngine),
       },
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => ServiceResourceFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationEngineFromJSON(jsonValue));
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
-   * Create a resource
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified organization
+   * Create an authorization engine
    */
-  async createResource(
-    requestParameters: CreateResourceRequest,
+  async createAuthorizationEngine(
+    requestParameters: CreateAuthorizationEngineRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ServiceResource> {
-    const response = await this.createResourceRaw(requestParameters, initOverrides);
+  ): Promise<AuthorizationEngine> {
+    const response = await this.createAuthorizationEngineRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain or DOMAIN_RESOURCE[DELETE] permission on the specified environment or DOMAIN_RESOURCE[DELETE] permission on the specified organization
-   * Delete a resource
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified organization
+   * Delete an authorization engine
    */
-  async deleteResourceRaw(
-    requestParameters: DeleteResourceRequest,
+  async deleteAuthorizationEngineRaw(
+    requestParameters: DeleteAuthorizationEngineRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling deleteResource.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteAuthorizationEngine.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling deleteResource.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteAuthorizationEngine.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
       throw new runtime.RequiredError(
         'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling deleteResource.',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteAuthorizationEngine.',
       );
     }
 
-    if (requestParameters.resource === null || requestParameters.resource === undefined) {
+    if (requestParameters.engineId === null || requestParameters.engineId === undefined) {
       throw new runtime.RequiredError(
-        'resource',
-        'Required parameter requestParameters.resource was null or undefined when calling deleteResource.',
+        'engineId',
+        'Required parameter requestParameters.engineId was null or undefined when calling deleteAuthorizationEngine.',
       );
     }
 
@@ -219,11 +219,11 @@ export class ResourceApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines/{engineId}`
           .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
           .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
           .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'resource'}}`, encodeURIComponent(String(requestParameters.resource))),
+          .replace(`{${'engineId'}}`, encodeURIComponent(String(requestParameters.engineId))),
         method: 'DELETE',
         headers: headerParameters,
         query: queryParameters,
@@ -235,46 +235,49 @@ export class ResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[DELETE] permission on the specified domain or DOMAIN_RESOURCE[DELETE] permission on the specified environment or DOMAIN_RESOURCE[DELETE] permission on the specified organization
-   * Delete a resource
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified organization
+   * Delete an authorization engine
    */
-  async deleteResource(requestParameters: DeleteResourceRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.deleteResourceRaw(requestParameters, initOverrides);
+  async deleteAuthorizationEngine(
+    requestParameters: DeleteAuthorizationEngineRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteAuthorizationEngineRaw(requestParameters, initOverrides);
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
-   * Get a resource
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified organization
+   * Get an authorization engine
    */
-  async getResourceRaw(
-    requestParameters: GetResourceRequest,
+  async findAuthorizationEngineRaw(
+    requestParameters: FindAuthorizationEngineRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ServiceResource>> {
+  ): Promise<runtime.ApiResponse<AuthorizationEngine>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling getResource.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling findAuthorizationEngine.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling getResource.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling findAuthorizationEngine.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
       throw new runtime.RequiredError(
         'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling getResource.',
+        'Required parameter requestParameters.domain was null or undefined when calling findAuthorizationEngine.',
       );
     }
 
-    if (requestParameters.resource === null || requestParameters.resource === undefined) {
+    if (requestParameters.engineId === null || requestParameters.engineId === undefined) {
       throw new runtime.RequiredError(
-        'resource',
-        'Required parameter requestParameters.resource was null or undefined when calling getResource.',
+        'engineId',
+        'Required parameter requestParameters.engineId was null or undefined when calling findAuthorizationEngine.',
       );
     }
 
@@ -292,11 +295,11 @@ export class ResourceApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines/{engineId}`
           .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
           .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
           .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'resource'}}`, encodeURIComponent(String(requestParameters.resource))),
+          .replace(`{${'engineId'}}`, encodeURIComponent(String(requestParameters.engineId))),
         method: 'GET',
         headers: headerParameters,
         query: queryParameters,
@@ -304,33 +307,33 @@ export class ResourceApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => ServiceResourceFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationEngineFromJSON(jsonValue));
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
-   * Get a resource
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified organization
+   * Get an authorization engine
    */
-  async getResource(
-    requestParameters: GetResourceRequest,
+  async findAuthorizationEngine(
+    requestParameters: FindAuthorizationEngineRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ServiceResource> {
-    const response = await this.getResourceRaw(requestParameters, initOverrides);
+  ): Promise<AuthorizationEngine> {
+    const response = await this.findAuthorizationEngineRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get a resource plugin
+   * Get an authorization engine plugin
    */
-  async getResource1Raw(
-    requestParameters: GetResource1Request,
+  async getAuthorizationEnginePluginRaw(
+    requestParameters: GetAuthorizationEnginePluginRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.resource === null || requestParameters.resource === undefined) {
+    if (requestParameters.authorizationEngine === null || requestParameters.authorizationEngine === undefined) {
       throw new runtime.RequiredError(
-        'resource',
-        'Required parameter requestParameters.resource was null or undefined when calling getResource1.',
+        'authorizationEngine',
+        'Required parameter requestParameters.authorizationEngine was null or undefined when calling getAuthorizationEnginePlugin.',
       );
     }
 
@@ -348,57 +351,9 @@ export class ResourceApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/platform/plugins/resources/{resource}`.replace(`{${'resource'}}`, encodeURIComponent(String(requestParameters.resource))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a resource plugin
-   */
-  async getResource1(requestParameters: GetResource1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getResource1Raw(requestParameters, initOverrides);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a resource plugin\'s schema
-   */
-  async getResourceSchemaRaw(
-    requestParameters: GetResourceSchemaRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.resource === null || requestParameters.resource === undefined) {
-      throw new runtime.RequiredError(
-        'resource',
-        'Required parameter requestParameters.resource was null or undefined when calling getResourceSchema.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/resources/{resource}/schema`.replace(
-          `{${'resource'}}`,
-          encodeURIComponent(String(requestParameters.resource)),
+        path: `/platform/plugins/authorization-engines/{authorizationEngine}`.replace(
+          `{${'authorizationEngine'}}`,
+          encodeURIComponent(String(requestParameters.authorizationEngine)),
         ),
         method: 'GET',
         headers: headerParameters,
@@ -412,21 +367,75 @@ export class ResourceApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get a resource plugin\'s schema
+   * Get an authorization engine plugin
    */
-  async getResourceSchema(
-    requestParameters: GetResourceSchemaRequest,
+  async getAuthorizationEnginePlugin(
+    requestParameters: GetAuthorizationEnginePluginRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
-    await this.getResourceSchemaRaw(requestParameters, initOverrides);
+    await this.getAuthorizationEnginePluginRaw(requestParameters, initOverrides);
   }
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * List resource plugins
+   * Get an authorization engine plugin\'s schema
    */
-  async listResourcePluginsRaw(
-    requestParameters: ListResourcePluginsRequest,
+  async getAuthorizationEnginePluginSchemaRaw(
+    requestParameters: GetAuthorizationEnginePluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.authorizationEngine === null || requestParameters.authorizationEngine === undefined) {
+      throw new runtime.RequiredError(
+        'authorizationEngine',
+        'Required parameter requestParameters.authorizationEngine was null or undefined when calling getAuthorizationEnginePluginSchema.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/authorization-engines/{authorizationEngine}/schema`.replace(
+          `{${'authorizationEngine'}}`,
+          encodeURIComponent(String(requestParameters.authorizationEngine)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get an authorization engine plugin\'s schema
+   */
+  async getAuthorizationEnginePluginSchema(
+    requestParameters: GetAuthorizationEnginePluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getAuthorizationEnginePluginSchemaRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List authorization engine plugins
+   */
+  async listAuthorizationEnginePluginsRaw(
+    requestParameters: ListAuthorizationEnginePluginsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     const queryParameters: any = {};
@@ -447,7 +456,7 @@ export class ResourceApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/platform/plugins/resources`,
+        path: `/platform/plugins/authorization-engines`,
         method: 'GET',
         headers: headerParameters,
         query: queryParameters,
@@ -460,41 +469,41 @@ export class ResourceApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * List resource plugins
+   * List authorization engine plugins
    */
-  async listResourcePlugins(
-    requestParameters: ListResourcePluginsRequest = {},
+  async listAuthorizationEnginePlugins(
+    requestParameters: ListAuthorizationEnginePluginsRequest = {},
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
-    await this.listResourcePluginsRaw(requestParameters, initOverrides);
+    await this.listAuthorizationEnginePluginsRaw(requestParameters, initOverrides);
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
-   * List registered resources for a security domain
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified organization.
+   * List registered authorization engines for a security domain
    */
-  async listResourcesRaw(
-    requestParameters: ListResourcesRequest,
+  async listAuthorizationEnginesRaw(
+    requestParameters: ListAuthorizationEnginesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<ServiceResource>>> {
+  ): Promise<runtime.ApiResponse<Array<AuthorizationEngine>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling listResources.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listAuthorizationEngines.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling listResources.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listAuthorizationEngines.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
       throw new runtime.RequiredError(
         'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling listResources.',
+        'Required parameter requestParameters.domain was null or undefined when calling listAuthorizationEngines.',
       );
     }
 
@@ -512,7 +521,7 @@ export class ResourceApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources`
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines`
           .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
           .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
           .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
@@ -523,61 +532,61 @@ export class ResourceApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceResourceFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuthorizationEngineFromJSON));
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[LIST] permission on the specified domain or DOMAIN_RESOURCE[LIST] permission on the specified environment or DOMAIN_RESOURCE[LIST] permission on the specified organization Each returned resource is filtered and contains only basic information such as id, name and resource type.
-   * List registered resources for a security domain
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified organization.
+   * List registered authorization engines for a security domain
    */
-  async listResources(
-    requestParameters: ListResourcesRequest,
+  async listAuthorizationEngines(
+    requestParameters: ListAuthorizationEnginesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<ServiceResource>> {
-    const response = await this.listResourcesRaw(requestParameters, initOverrides);
+  ): Promise<Array<AuthorizationEngine>> {
+    const response = await this.listAuthorizationEnginesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain or DOMAIN_RESOURCE[UPDATE] permission on the specified environment or DOMAIN_RESOURCE[UPDATE] permission on the specified organization
-   * Update a resource
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified organization
+   * Update an authorization engine
    */
-  async updateResourceRaw(
-    requestParameters: UpdateResourceRequest,
+  async updateAuthorizationEngineRaw(
+    requestParameters: UpdateAuthorizationEngineRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ServiceResource>> {
+  ): Promise<runtime.ApiResponse<AuthorizationEngine>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling updateResource.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateAuthorizationEngine.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling updateResource.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling updateAuthorizationEngine.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
       throw new runtime.RequiredError(
         'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling updateResource.',
+        'Required parameter requestParameters.domain was null or undefined when calling updateAuthorizationEngine.',
       );
     }
 
-    if (requestParameters.resource === null || requestParameters.resource === undefined) {
+    if (requestParameters.engineId === null || requestParameters.engineId === undefined) {
       throw new runtime.RequiredError(
-        'resource',
-        'Required parameter requestParameters.resource was null or undefined when calling updateResource.',
+        'engineId',
+        'Required parameter requestParameters.engineId was null or undefined when calling updateAuthorizationEngine.',
       );
     }
 
-    if (requestParameters.updateServiceResource === null || requestParameters.updateServiceResource === undefined) {
+    if (requestParameters.updateAuthorizationEngine === null || requestParameters.updateAuthorizationEngine === undefined) {
       throw new runtime.RequiredError(
-        'updateServiceResource',
-        'Required parameter requestParameters.updateServiceResource was null or undefined when calling updateResource.',
+        'updateAuthorizationEngine',
+        'Required parameter requestParameters.updateAuthorizationEngine was null or undefined when calling updateAuthorizationEngine.',
       );
     }
 
@@ -597,31 +606,31 @@ export class ResourceApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/resources/{resource}`
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines/{engineId}`
           .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
           .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
           .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'resource'}}`, encodeURIComponent(String(requestParameters.resource))),
+          .replace(`{${'engineId'}}`, encodeURIComponent(String(requestParameters.engineId))),
         method: 'PUT',
         headers: headerParameters,
         query: queryParameters,
-        body: UpdateServiceResourceToJSON(requestParameters.updateServiceResource),
+        body: UpdateAuthorizationEngineToJSON(requestParameters.updateAuthorizationEngine),
       },
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => ServiceResourceFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationEngineFromJSON(jsonValue));
   }
 
   /**
-   * User must have the DOMAIN_RESOURCE[UPDATE] permission on the specified domain or DOMAIN_RESOURCE[UPDATE] permission on the specified environment or DOMAIN_RESOURCE[UPDATE] permission on the specified organization
-   * Update a resource
+   * User must have the DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified organization
+   * Update an authorization engine
    */
-  async updateResource(
-    requestParameters: UpdateResourceRequest,
+  async updateAuthorizationEngine(
+    requestParameters: UpdateAuthorizationEngineRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ServiceResource> {
-    const response = await this.updateResourceRaw(requestParameters, initOverrides);
+  ): Promise<AuthorizationEngine> {
+    const response = await this.updateAuthorizationEngineRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

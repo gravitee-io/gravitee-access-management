@@ -103,13 +103,13 @@ export interface LoginSettings {
    * @type {boolean}
    * @memberof LoginSettings
    */
-  enforcePasswordPolicyEnabled?: boolean;
+  resetPasswordOnExpiration?: boolean;
   /**
    *
    * @type {boolean}
-   * @memberof UpdatePasswordPolicy
+   * @memberof LoginSettings
    */
-  resetPasswordOnExpiration?: boolean;
+  enforcePasswordPolicyEnabled?: boolean;
 }
 
 export function LoginSettingsFromJSON(json: any): LoginSettings {
@@ -138,8 +138,8 @@ export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boole
     passwordlessDeviceNamingEnabled: !exists(json, 'passwordlessDeviceNamingEnabled') ? undefined : json['passwordlessDeviceNamingEnabled'],
     hideForm: !exists(json, 'hideForm') ? undefined : json['hideForm'],
     identifierFirstEnabled: !exists(json, 'identifierFirstEnabled') ? undefined : json['identifierFirstEnabled'],
-    enforcePasswordPolicyEnabled: !exists(json, 'enforcePasswordPolicyEnabled') ? undefined : json['enforcePasswordPolicyEnabled'],
     resetPasswordOnExpiration: !exists(json, 'resetPasswordOnExpiration') ? undefined : json['resetPasswordOnExpiration'],
+    enforcePasswordPolicyEnabled: !exists(json, 'enforcePasswordPolicyEnabled') ? undefined : json['enforcePasswordPolicyEnabled'],
   };
 }
 
@@ -162,7 +162,7 @@ export function LoginSettingsToJSON(value?: LoginSettings | null): any {
     passwordlessDeviceNamingEnabled: value.passwordlessDeviceNamingEnabled,
     hideForm: value.hideForm,
     identifierFirstEnabled: value.identifierFirstEnabled,
-    enforcePasswordPolicyEnabled: value.enforcePasswordPolicyEnabled,
     resetPasswordOnExpiration: value.resetPasswordOnExpiration,
+    enforcePasswordPolicyEnabled: value.enforcePasswordPolicyEnabled,
   };
 }

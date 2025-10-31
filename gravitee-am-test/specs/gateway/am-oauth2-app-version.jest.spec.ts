@@ -996,8 +996,8 @@ async function mustMakeDomainMaster(createdDomain: Domain, accessToken: string):
   expect(patchedDomain.oidc.clientRegistrationSettings.allowLocalhostRedirectUri).toBeTruthy();
   expect(patchedDomain.oidc.clientRegistrationSettings.allowHttpSchemeRedirectUri).toBeTruthy();
   expect(patchedDomain.oidc.clientRegistrationSettings.allowWildCardRedirectUri).toBeTruthy();
-  expect(patchedDomain.oidc.clientRegistrationSettings.isDynamicClientRegistrationEnabled).toBeFalsy();
-  expect(patchedDomain.oidc.clientRegistrationSettings.isOpenDynamicClientRegistrationEnabled).toBeFalsy();
+  expect(patchedDomain.oidc.clientRegistrationSettings.dynamicClientRegistrationEnabled).toBeFalsy();
+  expect(patchedDomain.oidc.clientRegistrationSettings.openDynamicClientRegistrationEnabled).toBeFalsy();
 
   return patchedDomain;
 }

@@ -29,7 +29,7 @@
 import * as runtime from '../runtime';
 import { User, UserFromJSON, UserToJSON } from '../models';
 
-export interface Delete9Request {
+export interface DeleteUserDeviceRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -37,7 +37,7 @@ export interface Delete9Request {
   device: string;
 }
 
-export interface List13Request {
+export interface ListUserDevicesRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -52,34 +52,43 @@ export class DevicesApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
    * Delete a device
    */
-  async delete9Raw(
-    requestParameters: Delete9Request,
+  async deleteUserDeviceRaw(
+    requestParameters: DeleteUserDeviceRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete9.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteUserDevice.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete9.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteUserDevice.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete9.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteUserDevice.',
+      );
     }
 
     if (requestParameters.user === null || requestParameters.user === undefined) {
-      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete9.');
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling deleteUserDevice.',
+      );
     }
 
     if (requestParameters.device === null || requestParameters.device === undefined) {
-      throw new runtime.RequiredError('device', 'Required parameter requestParameters.device was null or undefined when calling delete9.');
+      throw new runtime.RequiredError(
+        'device',
+        'Required parameter requestParameters.device was null or undefined when calling deleteUserDevice.',
+      );
     }
 
     const queryParameters: any = {};
@@ -116,38 +125,47 @@ export class DevicesApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization
    * Delete a device
    */
-  async delete9(requestParameters: Delete9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete9Raw(requestParameters, initOverrides);
+  async deleteUserDevice(
+    requestParameters: DeleteUserDeviceRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteUserDeviceRaw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain or DOMAIN_USER_DEVICES[LIST] permission on the specified environment or DOMAIN_USER_DEVICES[LIST] permission on the specified organization.
    * List users for a security domain
    */
-  async list13Raw(
-    requestParameters: List13Request,
+  async listUserDevicesRaw(
+    requestParameters: ListUserDevicesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Array<User>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling list13.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listUserDevices.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling list13.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listUserDevices.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling list13.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listUserDevices.',
+      );
     }
 
     if (requestParameters.user === null || requestParameters.user === undefined) {
-      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling list13.');
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling listUserDevices.',
+      );
     }
 
     const queryParameters: any = {};
@@ -183,8 +201,11 @@ export class DevicesApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain or DOMAIN_USER_DEVICES[LIST] permission on the specified environment or DOMAIN_USER_DEVICES[LIST] permission on the specified organization.
    * List users for a security domain
    */
-  async list13(requestParameters: List13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<User>> {
-    const response = await this.list13Raw(requestParameters, initOverrides);
+  async listUserDevices(
+    requestParameters: ListUserDevicesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<User>> {
+    const response = await this.listUserDevicesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

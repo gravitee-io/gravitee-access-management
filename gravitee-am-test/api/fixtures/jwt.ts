@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 export interface JWT {
-    header: object,
-    payload: object,
-    signature: string
+  header: object;
+  payload: object;
+  signature: string;
 }
 
 export function parseJwt(jwt: string): JWT {
-    const split = jwt.split('.');
-    return {
-        header: JSON.parse(Buffer.from(split[0], 'base64').toString('binary')),
-        payload: JSON.parse(Buffer.from(split[1], 'base64').toString('binary')),
-        signature: split[2]
-    };
+  const split = jwt.split('.');
+  return {
+    header: JSON.parse(Buffer.from(split[0], 'base64').toString('binary')),
+    payload: JSON.parse(Buffer.from(split[1], 'base64').toString('binary')),
+    signature: split[2],
+  };
 }

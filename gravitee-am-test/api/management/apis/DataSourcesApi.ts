@@ -27,9 +27,9 @@
 /* eslint-disable */
 
 import * as runtime from '../runtime';
-import { DataPlane, DataPlaneFromJSON, DataPlaneToJSON } from '../models';
+import { DataSource, DataSourceFromJSON, DataSourceToJSON } from '../models';
 
-export interface ListDataPlanesRequest {
+export interface ListAllDataSourcesRequest {
   organizationId: string;
   environmentId: string;
 }
@@ -37,26 +37,26 @@ export interface ListDataPlanesRequest {
 /**
  *
  */
-export class DataPlaneApi extends runtime.BaseAPI {
+export class DataSourcesApi extends runtime.BaseAPI {
   /**
-   * List all the data planes accessible to the current user. User must have DATA_PLANE[READ] permission on the specified environment or organization
-   * List of data planes
+   * Returns all of the available data sources to be used in IDP creation
+   * List all the data sources
    */
-  async listDataPlanesRaw(
-    requestParameters: ListDataPlanesRequest,
+  async listAllDataSourcesRaw(
+    requestParameters: ListAllDataSourcesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<DataPlane>>> {
+  ): Promise<runtime.ApiResponse<Array<DataSource>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling listDataPlanes.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listAllDataSources.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling listDataPlanes.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listAllDataSources.',
       );
     }
 
@@ -74,7 +74,7 @@ export class DataPlaneApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/organizations/{organizationId}/environments/{environmentId}/data-planes`
+        path: `/organizations/{organizationId}/environments/{environmentId}/data-sources`
           .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
           .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId))),
         method: 'GET',
@@ -84,18 +84,18 @@ export class DataPlaneApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DataPlaneFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DataSourceFromJSON));
   }
 
   /**
-   * List all the data planes accessible to the current user. User must have DATA_PLANE[READ] permission on the specified environment or organization
-   * List of data planes
+   * Returns all of the available data sources to be used in IDP creation
+   * List all the data sources
    */
-  async listDataPlanes(
-    requestParameters: ListDataPlanesRequest,
+  async listAllDataSources(
+    requestParameters: ListAllDataSourcesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<DataPlane>> {
-    const response = await this.listDataPlanesRaw(requestParameters, initOverrides);
+  ): Promise<Array<DataSource>> {
+    const response = await this.listAllDataSourcesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

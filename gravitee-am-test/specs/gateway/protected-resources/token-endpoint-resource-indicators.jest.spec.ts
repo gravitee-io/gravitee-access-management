@@ -42,7 +42,7 @@ const TokenEndpointTestUtils = {
     // The audience should contain the resource parameters
     if (Array.isArray(aud)) {
       // Should contain exactly the resource parameters
-      expectedResources.forEach(resource => {
+      expectedResources.forEach((resource) => {
         expect(aud).toContain(resource);
       });
     } else {
@@ -53,15 +53,10 @@ const TokenEndpointTestUtils = {
 
   // Helper function to make token requests
   async makeTokenRequest(resourceParams: string, expectedStatus: number = 200) {
-    return await performPost(
-      fixture.openIdConfiguration.token_endpoint,
-      '',
-      `grant_type=client_credentials${resourceParams}`,
-      {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: 'Basic ' + applicationBase64Token(fixture.serviceApplication),
-      }
-    ).expect(expectedStatus);
+    return await performPost(fixture.openIdConfiguration.token_endpoint, '', `grant_type=client_credentials${resourceParams}`, {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + applicationBase64Token(fixture.serviceApplication),
+    }).expect(expectedStatus);
   },
 
   // Helper function to validate successful token response
@@ -84,7 +79,7 @@ const TokenEndpointTestUtils = {
     } else {
       expect(aud).toBe(fixture.serviceApplication.settings.oauth.clientId);
     }
-  }
+  },
 };
 
 beforeAll(async () => {
@@ -99,16 +94,14 @@ describe('Token Endpoint - Resource Indicators (RFC 8707)', () => {
   describe('Valid Resource Scenarios', () => {
     it('should issue access token with single valid resource', async () => {
       const validResource = 'https://api.example.com/photos';
-      const response = await TokenEndpointTestUtils.makeTokenRequest(
-        `&resource=${encodeURIComponent(validResource)}`
-      );
+      const response = await TokenEndpointTestUtils.makeTokenRequest(`&resource=${encodeURIComponent(validResource)}`);
 
       TokenEndpointTestUtils.validateSuccessfulTokenResponse(response, [validResource]);
     });
 
     it('should issue access token with multiple valid resources', async () => {
       const resources = ['https://api.example.com/photos', 'https://api.example.com/albums'];
-      const resourceParams = resources.map(r => `&resource=${encodeURIComponent(r)}`).join('');
+      const resourceParams = resources.map((r) => `&resource=${encodeURIComponent(r)}`).join('');
       const response = await TokenEndpointTestUtils.makeTokenRequest(resourceParams);
 
       TokenEndpointTestUtils.validateSuccessfulTokenResponse(response, resources);
@@ -123,7 +116,9 @@ describe('Token Endpoint - Resource Indicators (RFC 8707)', () => {
 
     it('should deduplicate duplicate resource parameters', async () => {
       const r = 'https://api.example.com/photos';
-      const response = await TokenEndpointTestUtils.makeTokenRequest(`&resource=${encodeURIComponent(r)}&resource=${encodeURIComponent(r)}`);
+      const response = await TokenEndpointTestUtils.makeTokenRequest(
+        `&resource=${encodeURIComponent(r)}&resource=${encodeURIComponent(r)}`,
+      );
       TokenEndpointTestUtils.validateSuccessfulTokenResponse(response, [r]);
     });
 
@@ -137,28 +132,24 @@ describe('Token Endpoint - Resource Indicators (RFC 8707)', () => {
   describe('Invalid Resource Scenarios', () => {
     it('should reject single invalid resource with invalid_target error', async () => {
       const invalidResource = 'https://unknown-api.com/invalid';
-      const response = await TokenEndpointTestUtils.makeTokenRequest(
-        `&resource=${encodeURIComponent(invalidResource)}`,
-        400
-      );
+      const response = await TokenEndpointTestUtils.makeTokenRequest(`&resource=${encodeURIComponent(invalidResource)}`, 400);
 
       TokenEndpointTestUtils.validateErrorResponse(response);
     });
 
     it('should reject malformed resource URI with invalid_target error', async () => {
       const malformedResource = 'not-a-valid-uri';
-      const response = await TokenEndpointTestUtils.makeTokenRequest(
-        `&resource=${encodeURIComponent(malformedResource)}`,
-        400
-      );
+      const response = await TokenEndpointTestUtils.makeTokenRequest(`&resource=${encodeURIComponent(malformedResource)}`, 400);
 
       TokenEndpointTestUtils.validateErrorResponse(response);
     });
 
     it('should reject when some resources are invalid (mixed valid/invalid)', async () => {
       const response = await TokenEndpointTestUtils.makeTokenRequest(
-        `&resource=${encodeURIComponent('https://api.example.com/photos')}&resource=${encodeURIComponent('https://unknown-api.com/invalid')}`,
-        400
+        `&resource=${encodeURIComponent('https://api.example.com/photos')}&resource=${encodeURIComponent(
+          'https://unknown-api.com/invalid',
+        )}`,
+        400,
       );
 
       TokenEndpointTestUtils.validateErrorResponse(response);

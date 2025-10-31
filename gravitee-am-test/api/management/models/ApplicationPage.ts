@@ -26,7 +26,12 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
-import { Application, ApplicationFromJSON, ApplicationFromJSONTyped, ApplicationToJSON } from './Application';
+import {
+  FilteredApplication,
+  FilteredApplicationFromJSON,
+  FilteredApplicationFromJSONTyped,
+  FilteredApplicationToJSON,
+} from './FilteredApplication';
 
 /**
  *
@@ -36,10 +41,10 @@ import { Application, ApplicationFromJSON, ApplicationFromJSONTyped, Application
 export interface ApplicationPage {
   /**
    *
-   * @type {Array<Application>}
+   * @type {Array<FilteredApplication>}
    * @memberof ApplicationPage
    */
-  data?: Array<Application>;
+  data?: Array<FilteredApplication>;
   /**
    *
    * @type {number}
@@ -63,7 +68,7 @@ export function ApplicationPageFromJSONTyped(json: any, ignoreDiscriminator: boo
     return json;
   }
   return {
-    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(ApplicationFromJSON),
+    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(FilteredApplicationFromJSON),
     currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
     totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
   };
@@ -77,7 +82,7 @@ export function ApplicationPageToJSON(value?: ApplicationPage | null): any {
     return null;
   }
   return {
-    data: value.data === undefined ? undefined : (value.data as Array<any>).map(ApplicationToJSON),
+    data: value.data === undefined ? undefined : (value.data as Array<any>).map(FilteredApplicationToJSON),
     currentPage: value.currentPage,
     totalCount: value.totalCount,
   };

@@ -28,19 +28,19 @@
 
 import * as runtime from '../runtime';
 
-export interface Get32Request {
+export interface GetPolicyRequest {
   policy: string;
 }
 
-export interface GetDocumentationRequest {
+export interface GetPolicyDocumentationRequest {
   policy: string;
 }
 
-export interface GetSchema7Request {
+export interface GetPolicySchemaRequest {
   policy: string;
 }
 
-export interface List31Request {
+export interface ListPoliciesRequest {
   expand?: Array<string>;
 }
 
@@ -52,12 +52,15 @@ export class PolicyApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a policy plugin
    */
-  async get32Raw(
-    requestParameters: Get32Request,
+  async getPolicyRaw(
+    requestParameters: GetPolicyRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.policy === null || requestParameters.policy === undefined) {
-      throw new runtime.RequiredError('policy', 'Required parameter requestParameters.policy was null or undefined when calling get32.');
+      throw new runtime.RequiredError(
+        'policy',
+        'Required parameter requestParameters.policy was null or undefined when calling getPolicy.',
+      );
     }
 
     const queryParameters: any = {};
@@ -89,21 +92,21 @@ export class PolicyApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a policy plugin
    */
-  async get32(requestParameters: Get32Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get32Raw(requestParameters, initOverrides);
+  async getPolicy(requestParameters: GetPolicyRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.getPolicyRaw(requestParameters, initOverrides);
   }
 
   /**
    * Get a policy plugin\'s documentation
    */
-  async getDocumentationRaw(
-    requestParameters: GetDocumentationRequest,
+  async getPolicyDocumentationRaw(
+    requestParameters: GetPolicyDocumentationRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.policy === null || requestParameters.policy === undefined) {
       throw new runtime.RequiredError(
         'policy',
-        'Required parameter requestParameters.policy was null or undefined when calling getDocumentation.',
+        'Required parameter requestParameters.policy was null or undefined when calling getPolicyDocumentation.',
       );
     }
 
@@ -138,24 +141,24 @@ export class PolicyApi extends runtime.BaseAPI {
   /**
    * Get a policy plugin\'s documentation
    */
-  async getDocumentation(
-    requestParameters: GetDocumentationRequest,
+  async getPolicyDocumentation(
+    requestParameters: GetPolicyDocumentationRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
-    await this.getDocumentationRaw(requestParameters, initOverrides);
+    await this.getPolicyDocumentationRaw(requestParameters, initOverrides);
   }
 
   /**
    * Get a policy plugin\'s schema
    */
-  async getSchema7Raw(
-    requestParameters: GetSchema7Request,
+  async getPolicySchemaRaw(
+    requestParameters: GetPolicySchemaRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.policy === null || requestParameters.policy === undefined) {
       throw new runtime.RequiredError(
         'policy',
-        'Required parameter requestParameters.policy was null or undefined when calling getSchema7.',
+        'Required parameter requestParameters.policy was null or undefined when calling getPolicySchema.',
       );
     }
 
@@ -187,16 +190,19 @@ export class PolicyApi extends runtime.BaseAPI {
   /**
    * Get a policy plugin\'s schema
    */
-  async getSchema7(requestParameters: GetSchema7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema7Raw(requestParameters, initOverrides);
+  async getPolicySchema(
+    requestParameters: GetPolicySchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getPolicySchemaRaw(requestParameters, initOverrides);
   }
 
   /**
    * There is no particular permission needed. User must be authenticated.
    * List policy plugins
    */
-  async list31Raw(
-    requestParameters: List31Request,
+  async listPoliciesRaw(
+    requestParameters: ListPoliciesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     const queryParameters: any = {};
@@ -232,7 +238,10 @@ export class PolicyApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * List policy plugins
    */
-  async list31(requestParameters: List31Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list31Raw(requestParameters, initOverrides);
+  async listPolicies(
+    requestParameters: ListPoliciesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.listPoliciesRaw(requestParameters, initOverrides);
   }
 }

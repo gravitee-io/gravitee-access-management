@@ -415,12 +415,6 @@ export interface UserEntity {
   lastIdentityInformation?: { [key: string]: any };
   /**
    *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
    * @type {string}
    * @memberof UserEntity
    */
@@ -467,6 +461,12 @@ export interface UserEntity {
    * @memberof UserEntity
    */
   fullId?: UserId;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  identitiesAsMap?: { [key: string]: any };
 }
 
 /**
@@ -552,7 +552,6 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     locale: !exists(json, 'locale') ? undefined : json['locale'],
     zoneInfo: !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
     lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
-    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
     middleName: !exists(json, 'middleName') ? undefined : json['middleName'],
     inactive: !exists(json, 'inactive') ? undefined : json['inactive'],
     profile: !exists(json, 'profile') ? undefined : json['profile'],
@@ -561,6 +560,7 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     disabled: !exists(json, 'disabled') ? undefined : json['disabled'],
     fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
+    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
   };
 }
 
@@ -634,7 +634,6 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
     locale: value.locale,
     zoneInfo: value.zoneInfo,
     lastIdentityInformation: value.lastIdentityInformation,
-    identitiesAsMap: value.identitiesAsMap,
     middleName: value.middleName,
     inactive: value.inactive,
     profile: value.profile,
@@ -643,5 +642,6 @@ export function UserEntityToJSON(value?: UserEntity | null): any {
     phoneNumber: value.phoneNumber,
     disabled: value.disabled,
     fullId: UserIdToJSON(value.fullId),
+    identitiesAsMap: value.identitiesAsMap,
   };
 }
