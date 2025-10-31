@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -90,7 +91,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByToken({})", token);
         return accessTokenRepository.findByToken(token, LocalDateTime.now(UTC))
                 .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve AccessToken", error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve AccessToken", error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -98,7 +100,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         accessToken.setId(accessToken.getId() == null ? RandomString.generate() : accessToken.getId());
         LOGGER.debug("Create accessToken with id {}", accessToken.getId());
         return monoToSingle(getTemplate().insert(toJdbcEntity(accessToken))).map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to create accessToken with id {}", accessToken.getId(), error));
+                .doOnError(error -> LOGGER.error("Unable to create accessToken with id {}", accessToken.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -107,7 +110,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         return Completable.fromMaybe(findByToken(token).flatMap(accessToken ->
                 monoToMaybe(getTemplate().delete(Query.query(where("token").is(token)), JdbcAccessToken.class)
                         .map(i -> accessToken)
-                ).doOnError(error -> LOGGER.error("Unable to delete AccessToken", error))));
+                ).doOnError(error -> LOGGER.error("Unable to delete AccessToken", error))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -117,7 +121,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                 .map(this::toEntity)
                 .toObservable()
                 .doOnError(error -> LOGGER.error("Unable to retrieve access tokens with client {} and subject {}",
-                        clientId, subject, error));
+                        clientId, subject, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -127,7 +132,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                 .map(this::toEntity)
                 .toObservable()
                 .doOnError(error -> LOGGER.error("Unable to retrieve access tokens with client {}",
-                        clientId, error));
+                        clientId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -137,12 +143,14 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                 .map(this::toEntity)
                 .toObservable()
                 .doOnError(error -> LOGGER.error("Unable to retrieve access tokens with authorization code {}",
-                        authorizationCode, error));
+                        authorizationCode, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByClientId(String clientId) {
-        return accessTokenRepository.countByClientId(clientId, LocalDateTime.now(UTC));
+        return accessTokenRepository.countByClientId(clientId, LocalDateTime.now(UTC))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -152,7 +160,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                 .matching(Query.query(where(SUBJECT).is(userId)))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with subject {}",
-                        userId, error));
+                        userId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -165,7 +174,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                                 .and(where("client").is(clientId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access token with domain {}, client {} and subject {}",
-                        domainId, clientId, userId, error));
+                        domainId, clientId, userId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -177,7 +187,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                                 .and(where("domain").is(domainId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access tokens with domain {} and subject {}",
-                        domainId, userId, error));
+                        domainId, userId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -188,7 +199,8 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
                         .and(where("client").is(clientId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete access token with domain {}, client {}",
-                        domainId, clientId, error));
+                        domainId, clientId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -197,6 +209,7 @@ public class JdbcAccessTokenRepository extends AbstractJdbcRepository implements
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToCompletable(getTemplate().delete(JdbcAccessToken.class)
                 .matching(Query.query(where("expire_at").lessThan(now))).all())
-                .doOnError(error -> LOGGER.error("Unable to purge access tokens", error));
+                .doOnError(error -> LOGGER.error("Unable to purge access tokens", error))
+                .observeOn(Schedulers.computation());
     }
 }

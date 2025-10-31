@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
@@ -98,7 +99,8 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
     @Override
     public Maybe<PasswordPolicy> findById(String id) {
         LOGGER.debug("Find password policy with id {}", id);
-        return passwordPolicyRepository.findById(id).map(this::toEntity);
+        return passwordPolicyRepository.findById(id).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -106,34 +108,40 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
         item.setId(item.getId() == null ? generate() : item.getId());
         LOGGER.debug("Create password policy with id {}", item.getId());
 
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<PasswordPolicy> update(PasswordPolicy item) {
         LOGGER.debug("Update password policy with id {}", item.getId());
-        return monoToSingle(getTemplate().update(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete password policy with id {}", id);
-        return passwordPolicyRepository.deleteById(id);
+        return passwordPolicyRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<PasswordPolicy> findByReference(ReferenceType referenceType, String referenceId) {
-        return passwordPolicyRepository.findByReference(referenceId, referenceType.name()).map(this::toEntity);
+        return passwordPolicyRepository.findByReference(referenceId, referenceType.name()).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<PasswordPolicy> findByReferenceAndId(ReferenceType referenceType, String referenceId, String id) {
-        return passwordPolicyRepository.findByReference(referenceId, referenceType.name(), id).map(this::toEntity);
+        return passwordPolicyRepository.findByReference(referenceId, referenceType.name(), id).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<PasswordPolicy> findByDefaultPolicy(ReferenceType referenceType, String referenceId) {
-        return passwordPolicyRepository.findByDefaultPolicy(referenceId, referenceType.name(), Boolean.TRUE).map(this::toEntity);
+        return passwordPolicyRepository.findByDefaultPolicy(referenceId, referenceType.name(), Boolean.TRUE).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -141,7 +149,8 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
         LOGGER.debug("delete password policy by reference {} / {}", referenceType.name(), referenceId);
         return monoToCompletable(getTemplate().delete(JdbcPasswordPolicy.class)
                 .matching(Query.query(where(REFERENCE_ID).is(referenceId).and(where(REFERENCE_TYPE).is(referenceType.name()))))
-                .all());
+                .all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -149,7 +158,8 @@ public class JdbcPasswordPolicyRepository extends AbstractJdbcRepository impleme
         return passwordPolicyRepository.findByReference(referenceId, referenceType.name())
                 .sorted(Comparator.comparing(JdbcPasswordPolicy::getCreatedAt))
                 .firstElement()
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     protected PasswordPolicy toEntity(JdbcPasswordPolicy entity) {

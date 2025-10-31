@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -55,14 +56,16 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
     public Flowable<Credential> findByUserId(ReferenceType referenceType, String referenceId, String userId) {
         LOGGER.debug("findByUserId({},{},{})", referenceType, referenceId, userId);
         return credentialRepository.findByUserId(referenceType.name(), referenceId, userId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Credential> findByUsername(ReferenceType referenceType, String referenceId, String username) {
         LOGGER.debug("findByUsername({},{},{})", referenceType, referenceId, username);
         return credentialRepository.findByUsername(referenceType.name(), referenceId, username)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -70,14 +73,16 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
         LOGGER.debug("findByUsername({},{},{},{})", referenceType, referenceId, username, limit);
         return credentialRepository.findByUsernameOrderByCreatedAt(referenceType.name(), referenceId, username)
                 .take(limit)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Credential> findByCredentialId(ReferenceType referenceType, String referenceId, String credentialId) {
         LOGGER.debug("findByCredentialId({},{},{})", referenceType, referenceId, credentialId);
         return credentialRepository.findByCredentialId(referenceType.name(), referenceId, credentialId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
 
     }
 
@@ -86,14 +91,16 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
         LOGGER.debug("findById({})", id);
         return credentialRepository.findById(id)
                 .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve credential for Id {}", id, error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve credential for Id {}", id, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Credential> create(Credential item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create credential with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -101,14 +108,16 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
         LOGGER.debug("update credential with id {}", item.getId());
         return this.credentialRepository.save(toJdbcEntity(item))
                 .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("unable to create credential with id {}", item.getId(), error));
+                .doOnError(error -> LOGGER.error("unable to create credential with id {}", item.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return credentialRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete credential for Id {}", id, error));
+                .doOnError(error -> LOGGER.error("Unable to delete credential for Id {}", id, error))
+                .observeOn(Schedulers.computation());
 
     }
 
@@ -121,7 +130,8 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
                                 .and(where("reference_id").is(referenceId))
                                 .and(where("user_id").is(userId))))
                 .all())
-                .doOnError(error -> LOGGER.error("Unable to delete credential for userId {}", userId, error));
+                .doOnError(error -> LOGGER.error("Unable to delete credential for userId {}", userId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -132,6 +142,7 @@ public class JdbcCredentialRepository extends AbstractJdbcRepository implements 
                         where("reference_type").is(referenceType.name())
                                 .and(where("reference_id").is(referenceId))))
                 .all())
-                .doOnError(error -> LOGGER.error("Unable to delete credential for reference {} - {}", referenceType.name(), referenceId, error));
+                .doOnError(error -> LOGGER.error("Unable to delete credential for reference {} - {}", referenceType.name(), referenceId, error))
+                .observeOn(Schedulers.computation());
     }
 }

@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
@@ -65,7 +66,8 @@ public class JdbcUserNotificationRepository extends AbstractJdbcRepository imple
         return monoToMaybe(this.getTemplate().select(JdbcUserNotification.class)
                 .matching(query(where(COL_ID).is(id)))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -73,20 +75,23 @@ public class JdbcUserNotificationRepository extends AbstractJdbcRepository imple
         LOGGER.debug("create({})", item);
         final JdbcUserNotification entity = toJdbcEntity(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<UserNotification> update(UserNotification item) {
         LOGGER.debug("update({})", item);
         final JdbcUserNotification entity = toJdbcEntity(item);
-        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(this.getTemplate().delete(JdbcUserNotification.class).matching(query(where(COL_ID).is(id))).all());
+        return monoToCompletable(this.getTemplate().delete(JdbcUserNotification.class).matching(query(where(COL_ID).is(id))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -97,7 +102,8 @@ public class JdbcUserNotificationRepository extends AbstractJdbcRepository imple
                         .and(where(COL_STATUS).is(status.name())))
                         .sort(Sort.by(COL_CREATED_AT))
                         .limit(NOTIFICATION_LIMIT))
-                .all()).map(this::toEntity);
+                .all()).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -105,6 +111,7 @@ public class JdbcUserNotificationRepository extends AbstractJdbcRepository imple
         return monoToCompletable(getTemplate().getDatabaseClient().sql("UPDATE user_notifications SET updated_at = :update, status = :status WHERE id = :id")
                 .bind("update", LocalDateTime.now(ZoneOffset.UTC))
                 .bind(COL_STATUS, status.name())
-                .bind("id", id).fetch().rowsUpdated());
+                .bind("id", id).fetch().rowsUpdated())
+                .observeOn(Schedulers.computation());
     }
 }
