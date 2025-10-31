@@ -68,7 +68,9 @@ public class MembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List members for a security domain",
+    @Operation(
+            operationId = "listMembers",
+            summary = "List members for a security domain",
             description = "User must have the DOMAIN_MEMBER[LIST] permission on the specified domain " +
                     "or DOMAIN_MEMBER[LIST] permission on the specified environment " +
                     "or DOMAIN_MEMBER[LIST] permission on the specified organization")
@@ -95,7 +97,9 @@ public class MembersResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Add or update an security domain member",
+    @Operation(
+            operationId = "addOrUpdateMember",
+            summary = "Add or update an security domain member",
             description = "User must have the DOMAIN_MEMBER[CREATE] permission on the specified domain " +
                     "or DOMAIN_MEMBER[CREATE] permission on the specified environment " +
                     "or DOMAIN_MEMBER[CREATE] permission on the specified organization")
@@ -132,7 +136,9 @@ public class MembersResource extends AbstractResource {
     @GET
     @Path("permissions")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List domain member's permissions",
+    @Operation(
+            operationId = "getPermissions",
+            summary = "List domain member's permissions",
             description = "User must have DOMAIN[READ] permission on the specified domain " +
                     "or DOMAIN[READ] permission on the specified environment " +
                     "or DOMAIN[READ] permission on the specified organization")

@@ -59,7 +59,9 @@ public class IdentityProviderResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an identity provider",
+    @Operation(
+            operationId = "getIdentityProvider",
+            summary = "Get an identity provider",
             description = "User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Identity provider",
@@ -79,7 +81,9 @@ public class IdentityProviderResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update an identity provider",
+    @Operation(
+            operationId = "updateIdentityProvider",
+            summary = "Update an identity provider",
             description = "User must have the ORGANIZATION_IDENTITY_PROVIDER[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Identity provider successfully updated",
@@ -99,7 +103,9 @@ public class IdentityProviderResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete an identity provider",
+    @Operation(
+            operationId = "deleteIdentityProvider",
+            summary = "Delete an identity provider",
             description = "User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Identity provider successfully deleted"),

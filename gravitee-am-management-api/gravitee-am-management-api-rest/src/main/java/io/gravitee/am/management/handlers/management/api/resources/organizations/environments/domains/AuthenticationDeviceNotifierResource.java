@@ -67,7 +67,9 @@ public class AuthenticationDeviceNotifierResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an Authentication Device Notifier",
+    @Operation(
+            operationId = "getAuthenticationDeviceNotifier",
+            summary = "Get an Authentication Device Notifier",
             description = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified domain " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified environment " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on the specified organization")
@@ -100,7 +102,9 @@ public class AuthenticationDeviceNotifierResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update an Authentication Device Notifier",
+    @Operation(
+            operationId = "updateAuthenticationDeviceNotifier",
+            summary = "Update an Authentication Device Notifier",
             description = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission on the specified organization")
@@ -126,7 +130,9 @@ public class AuthenticationDeviceNotifierResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete an Authentication Device Notifier",
+    @Operation(
+            operationId = "deleteAuthenticationDeviceNotifier",
+            summary = "Delete an Authentication Device Notifier",
             description = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified domain " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified environment " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission on the specified organization")

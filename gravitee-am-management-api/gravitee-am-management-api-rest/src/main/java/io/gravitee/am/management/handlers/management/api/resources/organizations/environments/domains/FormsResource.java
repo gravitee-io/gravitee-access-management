@@ -71,7 +71,9 @@ public class FormsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Find a form",
+    @Operation(
+            operationId = "findForm",
+            summary = "Find a form",
             description = "User must have the DOMAIN_FORM[READ] permission on the specified domain " +
                     "or DOMAIN_FORM[READ] permission on the specified environment " +
                     "or DOMAIN_FORM[READ] permission on the specified organization")
@@ -97,7 +99,9 @@ public class FormsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a form",
+    @Operation(
+            operationId = "createForm",
+            summary = "Create a form",
             description = "User must have the DOMAIN_FORM[CREATE] permission on the specified domain " +
                     "or DOMAIN_FORM[CREATE] permission on the specified environment " +
                     "or DOMAIN_FORM[CREATE] permission on the specified organization")

@@ -60,7 +60,9 @@ public class UserConsentsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a user consents",
+    @Operation(
+            operationId = "listUserConsents",
+            summary = "Get a user consents",
             description = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
                     "or DOMAIN_USER[READ] permission on the specified environment " +
                     "or DOMAIN_USER[READ] permission on the specified organization")
@@ -85,7 +87,9 @@ public class UserConsentsResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Revoke user consents",
+    @Operation(
+            operationId = "revokeUserConsents",
+            summary = "Revoke user consents",
             description = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")

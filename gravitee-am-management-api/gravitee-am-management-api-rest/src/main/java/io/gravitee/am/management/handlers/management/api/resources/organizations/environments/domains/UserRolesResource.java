@@ -73,7 +73,9 @@ public class UserRolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a user roles",
+    @Operation(
+            operationId = "listUserRoles",
+            summary = "Get a user roles",
             description = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
                     "or DOMAIN_USER[READ] permission on the specified environment " +
                     "or DOMAIN_USER[READ] permission on the specified organization")
@@ -108,7 +110,9 @@ public class UserRolesResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Assign roles to a user",
+    @Operation(
+            operationId = "assignRolesToUser",
+            summary = "Assign roles to a user",
             description = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")

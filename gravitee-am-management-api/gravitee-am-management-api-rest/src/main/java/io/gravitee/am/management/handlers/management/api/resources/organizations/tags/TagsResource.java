@@ -66,6 +66,7 @@ public class TagsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "listShardingTags",
             summary= "List sharding tags",
             description = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
             "Each returned tag is filtered and contains only basic information such as id and name.")
@@ -89,7 +90,9 @@ public class TagsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a sharding tags",
+    @Operation(
+            operationId = "createShardingTag",
+            summary = "Create a sharding tags",
             description = "User must have the ORGANIZATION_TAG[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Sharding tag successfully created"),
@@ -112,6 +115,7 @@ public class TagsResource extends AbstractResource {
     }
 
     @Path("{tag}")
+    @Operation(summary = "Get a sharding tag by its identifier", operationId = "getShardingTag")
     public TagResource getTagResource() {
         return resourceContext.getResource(TagResource.class);
     }

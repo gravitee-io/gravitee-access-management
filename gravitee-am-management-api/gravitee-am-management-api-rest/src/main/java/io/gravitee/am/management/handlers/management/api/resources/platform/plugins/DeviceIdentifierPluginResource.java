@@ -48,7 +48,9 @@ public class DeviceIdentifierPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a device identifier plugin",
+    @Operation(
+            operationId = "getDeviceIdentifierPlugin",
+            summary = "Get a device identifier plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(@PathParam("deviceIdentifier") String deviceIdentifierId, @Suspended final AsyncResponse response) {
 
@@ -61,7 +63,9 @@ public class DeviceIdentifierPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a device identifier plugin's schema",
+    @Operation(
+            operationId = "getDeviceIdentifierPluginSchema",
+            summary = "Get a device identifier plugin's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("deviceIdentifier") String deviceIdentifierId, @Suspended final AsyncResponse response) {
         deviceIdentifierPluginService.findById(deviceIdentifierId)

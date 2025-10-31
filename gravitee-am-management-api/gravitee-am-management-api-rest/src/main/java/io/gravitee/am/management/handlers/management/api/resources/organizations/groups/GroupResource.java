@@ -120,6 +120,8 @@ public class GroupResource extends AbstractResource {
     }
 
     @Path("members")
+    @Operation(summary = "Get members of a platform group",
+            operationId = "getOrganizationGroupMembers")
     public GroupMembersResource getGroupMembersResource() {
         return resourceContext.getResource(GroupMembersResource.class);
     }

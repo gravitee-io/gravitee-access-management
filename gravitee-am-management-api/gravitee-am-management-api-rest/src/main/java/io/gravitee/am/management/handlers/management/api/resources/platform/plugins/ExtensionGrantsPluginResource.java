@@ -48,7 +48,9 @@ public class ExtensionGrantsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List extension grant plugins",
+    @Operation(
+            operationId = "listExtensionGrants",
+            summary = "List extension grant plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
         extensionGrantPluginService.findAll()
@@ -59,6 +61,8 @@ public class ExtensionGrantsPluginResource {
     }
 
     @Path("{extensionGrant}")
+    @Operation(summary = "Get an extension grant plugin",
+            operationId = "getExtensionGrantPlugin")
     public ExtensionGrantPluginResource getTokenGranterPluginResource() {
         return resourceContext.getResource(ExtensionGrantPluginResource.class);
     }

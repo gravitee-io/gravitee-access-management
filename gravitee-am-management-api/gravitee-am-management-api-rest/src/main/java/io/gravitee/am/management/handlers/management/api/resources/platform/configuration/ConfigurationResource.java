@@ -54,7 +54,9 @@ public class ConfigurationResource {
     @GET
     @Path("/flow/schema")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get the Policy Studio flow schema",
+    @Operation(
+            operationId = "getPolicyStudioFlowSchema",
+            summary = "Get the Policy Studio flow schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
         flowService.getSchema()
@@ -64,7 +66,9 @@ public class ConfigurationResource {
     @GET
     @Path("alerts/status")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get the alert service status",
+    @Operation(
+            operationId = "getAlertServiceStatus",
+            summary = "Get the alert service status",
             description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Current alert service status",
@@ -81,7 +85,9 @@ public class ConfigurationResource {
     @GET
     @Path("spel/grammar")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get the spel grammar",
+    @Operation(
+            operationId = "getSpelGrammar",
+            summary = "Get the spel grammar",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSpelGrammar(@Suspended final AsyncResponse response) {
         spelService.getGrammar()
