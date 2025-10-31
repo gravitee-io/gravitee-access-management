@@ -24,6 +24,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
@@ -91,7 +92,8 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
         Mono<Long> insertAction = sql.fetch().rowsUpdated();
 
         return monoToSingle(insertAction.as(mono -> TransactionalOperator.create(tm).transactional(mono)))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -111,7 +113,8 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
         Mono<Long> updateAction = sql.fetch().rowsUpdated();
 
         return monoToSingle(updateAction.as(trx::transactional)).flatMap(i -> this.findById(item.getId()).toSingle())
-                .doOnError(error -> LOGGER.error("unable to update password history with id {}", item.getId(), error));
+                .doOnError(error -> LOGGER.error("unable to update password history with id {}", item.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -121,14 +124,16 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
         return monoToCompletable(getTemplate().delete(JdbcPasswordHistory.class)
                                          .matching(Query.query(where(ID).is(id)))
                                          .all()
-                                         .as(trx::transactional));
+                                         .as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<PasswordHistory> findById(String id) {
         LOGGER.debug("findById({})", id);
         return repository.findById(id)
-                         .map(this::toEntity);
+                         .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     protected PasswordHistory toEntity(JdbcPasswordHistory entity) {
@@ -138,21 +143,24 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
     @Override
     public Flowable<PasswordHistory> findByReference(Reference reference) {
         LOGGER.debug("findByReference({})", reference);
-        return repository.findByReference(reference.type().toString(), reference.id()).map(this::toEntity);
+        return repository.findByReference(reference.type().toString(), reference.id()).map(this::toEntity)
+                .observeOn(Schedulers.computation());
 
     }
 
     @Override
     public Flowable<PasswordHistory> findUserHistory(Reference reference, String userId) {
         LOGGER.debug("findUserHistory({}, {})", reference, userId);
-        return repository.findByUserId(reference.type().toString(), reference.id(), userId).map(this::toEntity);
+        return repository.findByUserId(reference.type().toString(), reference.id(), userId).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByUserId(String userId) {
         LOGGER.debug("deleteByUserId({})", userId);
         return monoToCompletable(this.getTemplate().delete(JdbcPasswordHistory.class).matching(
-                query(where(USER_ID).is(userId))).all());
+                query(where(USER_ID).is(userId))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -160,6 +168,7 @@ public class JdbcPasswordHistoryRepository extends AbstractJdbcRepository implem
         LOGGER.debug("deleteByReference({})", reference);
         return monoToCompletable(this.getTemplate().delete(JdbcPasswordHistory.class).matching(
                 query(where(REFERENCE_TYPE).is(reference.type().toString())
-                                           .and(where(REFERENCE_ID).is(reference.id())))).all());
+                                           .and(where(REFERENCE_ID).is(reference.id())))).all())
+                .observeOn(Schedulers.computation());
     }
 }
