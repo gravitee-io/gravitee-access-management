@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -116,10 +117,11 @@ public class JdbcScopeRepository extends AbstractJdbcRepository implements Scope
                                 .sort(SqlSort.unsafe(databaseDialectHelper.toSql(SqlIdentifier.quoted(COL_KEY))))
                                 .with(PageRequest.of(page, size)), JdbcScope.class))
                 .map(this::toEntity)
-                .flatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
+                .concatMap(scope -> completeWithClaims(Maybe.just(scope), scope.getId()).toFlowable())
                 .toList()
                 .flatMap(content -> countByDomain(domain)
-                        .map((count) -> new Page<>(content, page, count)));
+                        .map((count) -> new Page<>(content, page, count)))
+                .observeOn(Schedulers.computation());
     }
 
     private Single<Long> countByDomain(String domain) {

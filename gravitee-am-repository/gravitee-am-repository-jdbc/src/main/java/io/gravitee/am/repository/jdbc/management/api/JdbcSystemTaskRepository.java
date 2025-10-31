@@ -24,6 +24,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -89,7 +90,8 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
     public Maybe<SystemTask> findById(String id) {
         LOGGER.debug("findById({}, {}, {})", id);
         return monoToMaybe(getTemplate().select(Query.query(where(COL_ID).is(id)).limit(1), JdbcSystemTask.class).singleOrEmpty())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -108,7 +110,8 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         insertSpec = addQuotedField(insertSpec, COL_KIND, item.getKind(), String.class);
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -133,7 +136,8 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         updateSpec = addQuotedField(updateSpec, COL_OPERATION_ID + WHERE_SUFFIX, operationId, String.class);
 
         Mono<Long> action = updateSpec.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -141,12 +145,14 @@ public class JdbcSystemTaskRepository extends AbstractJdbcRepository implements 
         LOGGER.debug("Delete SystemTask with id {}", id);
         Mono<Long> delete = getTemplate().delete(JdbcSystemTask.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
-        return monoToCompletable(delete);
+        return monoToCompletable(delete)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<SystemTask> findByType(String type) {
         return fluxToFlowable(getTemplate().select(Query.query(where(COL_TYPE).is(type)), JdbcSystemTask.class))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 }
