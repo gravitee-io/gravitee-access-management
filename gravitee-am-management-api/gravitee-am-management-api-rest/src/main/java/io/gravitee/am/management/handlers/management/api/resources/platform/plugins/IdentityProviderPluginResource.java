@@ -49,7 +49,9 @@ public class IdentityProviderPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an identity provider",
+    @Operation(
+            operationId = "getIdentityProviderPlugin",
+            summary = "Get an identity provider",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("identity") String identityProviderId,
@@ -64,7 +66,9 @@ public class IdentityProviderPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an identity provider plugin's schema",
+    @Operation(
+            operationId = "getIdentityProviderPluginSchema",
+            summary = "Get an identity provider plugin's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(
             @PathParam("identity") String identityProviderId,

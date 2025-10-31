@@ -63,7 +63,9 @@ public class FormsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Find an organization form template",
+    @Operation(
+            operationId = "findOrganizationFormTemplate",
+            summary = "Find an organization form template",
             description = "User must have the ORGANIZATION_FORM[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Form successfully fetched"),
@@ -83,7 +85,9 @@ public class FormsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a form",
+    @Operation(
+            operationId = "createOrganizationForm",
+            summary = "Create a form",
             description = "User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Form successfully created"),
@@ -104,6 +108,9 @@ public class FormsResource extends AbstractResource {
     }
 
     @Path("{form}")
+    @Operation(
+            operationId = "getOrganizationForm",
+            summary = "Get a form")
     public FormResource getFormResource() {
         return resourceContext.getResource(FormResource.class);
     }

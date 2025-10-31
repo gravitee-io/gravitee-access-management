@@ -55,7 +55,9 @@ public class NotifiersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List all available notifier plugins",
+    @Operation(
+            operationId = "listNotifiers",
+            summary = "List all available notifier plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Notifier plugin list",
@@ -71,6 +73,8 @@ public class NotifiersPluginResource {
     }
 
     @Path("{notifierId}")
+    @Operation(summary = "Get a notifier plugin",
+            operationId = "getNotifierPlugin")
     public NotifierPluginResource getNotifierPluginResource() {
         return resourceContext.getResource(NotifierPluginResource.class);
     }

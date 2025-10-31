@@ -79,7 +79,9 @@ public class OrganizationUserResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a user",
+    @Operation(
+            operationId = "getOrganizationUser",
+            summary = "Get a user",
             description = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User successfully fetched",
@@ -125,7 +127,9 @@ public class OrganizationUserResource extends AbstractResource {
     @GET
     @Path("/tokens")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get tokens of a user",
+    @Operation(
+            operationId = "getOrganizationUserTokens",
+            summary = "Get tokens of a user",
             description = "User must have the ORGANIZATION_USER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User tokens successfully fetched",

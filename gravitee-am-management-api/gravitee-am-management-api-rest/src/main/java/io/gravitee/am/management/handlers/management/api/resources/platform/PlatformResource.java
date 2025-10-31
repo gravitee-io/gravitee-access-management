@@ -45,7 +45,9 @@ public class PlatformResource {
     @GET
     @Path("/audits/events")
     @Produces(jakarta.ws.rs.core.MediaType.APPLICATION_JSON)
-    @Operation(summary = "List audit event types",
+    @Operation(
+            operationId = "listAuditEventTypes",
+            summary = "List audit event types",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
         response.resume(EventType.types());

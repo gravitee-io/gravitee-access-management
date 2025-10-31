@@ -16,6 +16,7 @@
 package io.gravitee.am.management.handlers.management.api.resources.organizations;
 
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.container.ResourceContext;
 import jakarta.ws.rs.core.Context;
@@ -31,6 +32,7 @@ public class OrganizationsResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Path("/{organizationId}")
+    @Operation(summary = "Get an organization", operationId = "getOrganization")
     public OrganizationResource getOrganizationResource() {
         return resourceContext.getResource(OrganizationResource.class);
     }

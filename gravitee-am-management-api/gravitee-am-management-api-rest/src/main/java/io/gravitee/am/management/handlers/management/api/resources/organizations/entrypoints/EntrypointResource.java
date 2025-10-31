@@ -59,7 +59,9 @@ public class EntrypointResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a sharding entrypoint",
+    @Operation(
+            operationId = "getEntrypoint",
+            summary = "Get a sharding entrypoint",
             description = "User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Sharding entrypoint",
@@ -78,7 +80,9 @@ public class EntrypointResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update the sharding entrypoint",
+    @Operation(
+            operationId = "updateEntrypoint",
+            summary = "Update the sharding entrypoint",
             description = "User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Sharding entrypoint successfully updated",
@@ -98,7 +102,9 @@ public class EntrypointResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete the sharding entrypoint",
+    @Operation(
+            operationId = "deleteEntrypoint",
+            summary = "Delete the sharding entrypoint",
             description = "User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Sharding entrypoint successfully deleted"),

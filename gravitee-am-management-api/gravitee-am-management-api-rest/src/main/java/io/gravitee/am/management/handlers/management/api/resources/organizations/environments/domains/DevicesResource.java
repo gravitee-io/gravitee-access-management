@@ -64,7 +64,9 @@ public class DevicesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List users for a security domain",
+    @Operation(
+            operationId = "listUserDevices",
+            summary = "List users for a security domain",
             description = "User must have the DOMAIN_USER_DEVICES[LIST] permission on the specified domain " +
                     "or DOMAIN_USER_DEVICES[LIST] permission on the specified environment " +
                     "or DOMAIN_USER_DEVICES[LIST] permission on the specified organization. ")

@@ -65,6 +65,7 @@ public class EntrypointsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "listEntrypoints",
             summary = "List entrypoints",
             description = "User must have the ORGANIZATION[LIST] permission on the specified organization. " +
                     "Each returned entrypoint is filtered and contains only basic information such as id and name.")
@@ -88,7 +89,9 @@ public class EntrypointsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a entrypoint",
+    @Operation(
+            operationId = "createEntrypoint",
+            summary = "Create a entrypoint",
             description = "User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Entrypoint successfully created"),
@@ -110,6 +113,7 @@ public class EntrypointsResource extends AbstractResource {
     }
 
     @Path("{entrypointId}")
+    @Operation(summary = "Get an entrypoint by its identifier", operationId = "getEntrypoint")
     public EntrypointResource getEntrypointResource() {
         return resourceContext.getResource(EntrypointResource.class);
     }

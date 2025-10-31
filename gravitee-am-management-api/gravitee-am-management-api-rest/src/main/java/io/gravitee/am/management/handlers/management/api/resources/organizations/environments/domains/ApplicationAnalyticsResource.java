@@ -46,7 +46,9 @@ public class ApplicationAnalyticsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Find application analytics",
+    @Operation(
+            operationId = "getApplicationAnalytics",
+            summary = "Find application analytics",
             description = "User must have APPLICATION_ANALYTICS[READ] permission on the specified application " +
                     "or APPLICATION_ANALYTICS[READ] permission on the specified domain " +
                     "or APPLICATION_ANALYTICS[READ] permission on the specified environment " +

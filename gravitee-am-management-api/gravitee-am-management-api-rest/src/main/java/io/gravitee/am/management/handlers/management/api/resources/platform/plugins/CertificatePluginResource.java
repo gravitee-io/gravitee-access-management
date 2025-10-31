@@ -49,7 +49,9 @@ public class CertificatePluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an certificate plugin",
+    @Operation(
+            operationId = "getCertificatePlugin",
+            summary = "Get an certificate plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("certificate") String certificateId,
@@ -64,7 +66,9 @@ public class CertificatePluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an certificate's schema",
+    @Operation(
+            operationId = "getCertificatePluginSchema",
+            summary = "Get an certificate's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(
             @PathParam("certificate") String certificateId,

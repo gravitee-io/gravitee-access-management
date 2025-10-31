@@ -69,7 +69,9 @@ public class ApplicationEmailResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update an email for an application",
+    @Operation(
+            operationId = "updateApplicationEmail",
+            summary = "Update an email for an application",
             description = "User must have APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified application " +
                     "or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified domain " +
                     "or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission on the specified environment " +
@@ -99,7 +101,9 @@ public class ApplicationEmailResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete an email for an application",
+    @Operation(
+            operationId = "deleteApplicationEmail",
+            summary = "Delete an email for an application",
             description = "User must have APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified application " +
                     "or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified domain " +
                     "or APPLICATION_EMAIL_TEMPLATE[DELETE] permission on the specified environment " +
