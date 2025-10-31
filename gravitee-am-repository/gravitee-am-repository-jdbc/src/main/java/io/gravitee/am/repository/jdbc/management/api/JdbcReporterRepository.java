@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,40 +115,46 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     public Flowable<Reporter> findAll() {
         LOGGER.debug("findAll()");
         return reporterRepository.findAll()
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Reporter> findByReference(Reference reference) {
         LOGGER.debug("findByReference({})", reference);
         return reporterRepository.findByReferenceTypeAndReferenceId(reference.type(), reference.id())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Reporter> findById(String id) {
         LOGGER.debug("findById({})", id);
         return reporterRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Reporter> findInheritedFrom(Reference parentReference) {
         return reporterRepository.findByReferenceTypeAndReferenceIdAndInheritedTrue(parentReference.type(), parentReference.id())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Reporter> create(Reporter item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create Reporter with id {}", item.getId());
-        return createOrUpdate(item, getTemplate().getDatabaseClient().sql(insertStatement));
+        return createOrUpdate(item, getTemplate().getDatabaseClient().sql(insertStatement))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Reporter> update(Reporter item) {
         LOGGER.debug("Update reporter with id '{}'", item.getId());
-        return createOrUpdate(item, getTemplate().getDatabaseClient().sql(updateStatement));
+        return createOrUpdate(item, getTemplate().getDatabaseClient().sql(updateStatement))
+                .observeOn(Schedulers.computation());
     }
 
     Single<Reporter> createOrUpdate(Reporter item, DatabaseClient.GenericExecuteSpec spec) {
@@ -163,7 +170,8 @@ public class JdbcReporterRepository extends AbstractJdbcRepository implements Re
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return reporterRepository.deleteById(id);
+        return reporterRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
 }

@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.CompletableSource;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -61,7 +62,8 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
         LOGGER.debug("findByToken({})", token);
         return refreshTokenRepository.findByToken(token, LocalDateTime.now(UTC))
                 .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve RefreshToken", error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve RefreshToken", error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -69,7 +71,8 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
         refreshToken.setId(refreshToken.getId() == null ? RandomString.generate() : refreshToken.getId());
         LOGGER.debug("Create refreshToken with id {}", refreshToken.getId());
         return monoToSingle(getTemplate().insert(toJdbcEntity(refreshToken))).map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to create refreshToken with id {}", refreshToken.getId(), error));
+                .doOnError(error -> LOGGER.error("Unable to create refreshToken with id {}", refreshToken.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -77,7 +80,8 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
         LOGGER.debug("delete({})", token);
         return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
                 .matching(Query.query(where("token").is(token))).all())
-                .doOnError(error -> LOGGER.error("Unable to delete RefreshToken", error));
+                .doOnError(error -> LOGGER.error("Unable to delete RefreshToken", error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -86,7 +90,8 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
         return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class)
                 .matching(Query.query(where(SUBJECT).is(userId)))
                 .all())
-                .doOnError(error -> LOGGER.error("Unable to delete refresh token with subject {}", userId, error));
+                .doOnError(error -> LOGGER.error("Unable to delete refresh token with subject {}", userId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -97,7 +102,8 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
                         .and(where("domain").is(domainId))
                         .and(where("client").is(clientId)))).all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with domain {}, client {} and subject {}",
-                        domainId, clientId, userId, error));
+                        domainId, clientId, userId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -108,7 +114,8 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
                         .and(where("domain").is(domainId))))
                 .all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh token with domain {} and subject {}",
-                        domainId, userId, error));
+                        domainId, userId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -118,7 +125,8 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
                 .matching(Query.query(where("domain").is(domainId)
                         .and(where("client").is(clientId)))).all())
                 .doOnError(error -> LOGGER.error("Unable to delete refresh tokens with domain {}, client {}",
-                        domainId, clientId, error));
+                        domainId, clientId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -126,6 +134,7 @@ public class JdbcRefreshTokenRepository extends AbstractJdbcRepository implement
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToCompletable(getTemplate().delete(JdbcRefreshToken.class).matching(Query.query(where("expire_at").lessThan(now))).all())
-                .doOnError(error -> LOGGER.error("Unable to purge refresh tokens", error));
+                .doOnError(error -> LOGGER.error("Unable to purge refresh tokens", error))
+                .observeOn(Schedulers.computation());
     }
 }

@@ -31,6 +31,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
@@ -88,7 +89,8 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
     public Flowable<Domain> findAll() {
         LOGGER.debug("findAll()");
         Flowable<Domain> domains = domainRepository.findAll().map(this::toDomain);
-        return domains.flatMap(this::completeDomain);
+        return domains.concatMap(this::completeDomain)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -107,7 +109,8 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .matching(Query.query(whereClause))
                 .all())
                 .map(this::toDomain)
-                .flatMap(this::completeDomain);
+                .concatMap(this::completeDomain)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -117,28 +120,32 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
             return Flowable.empty();
         }
         Flowable<Domain> domains = domainRepository.findAllById(ids).map(this::toDomain);
-        return domains.flatMap(this::completeDomain);
+        return domains.concatMap(this::completeDomain)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Domain> findAllByReferenceId(String environmentId) {
         LOGGER.debug("findAllByReferenceId({})", environmentId);
         Flowable<Domain> domains = domainRepository.findAllByReferenceId(environmentId, ReferenceType.ENVIRONMENT.name()).map(this::toDomain);
-        return domains.flatMap(this::completeDomain);
+        return domains.concatMap(this::completeDomain)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Domain> findById(String id) {
         LOGGER.debug("findById({})", id);
         Flowable<Domain> domains = domainRepository.findById(id).map(this::toDomain).toFlowable();
-        return domains.flatMap(this::completeDomain).firstElement();
+        return domains.flatMap(this::completeDomain).firstElement()
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Domain> findByHrid(ReferenceType referenceType, String referenceId, String hrid) {
         LOGGER.debug("findByHrid({})", hrid);
         Flowable<Domain> domains = domainRepository.findByHrid(referenceId, referenceType.name(), hrid).map(this::toDomain).toFlowable();
-        return domains.flatMap(this::completeDomain).firstElement();
+        return domains.flatMap(this::completeDomain).firstElement()
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -152,7 +159,8 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
 
         return monoToSingle(insertAction
                 .as(trx::transactional)
-                .then(maybeToMono(findById(item.getId()))));
+                .then(maybeToMono(findById(item.getId()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -167,7 +175,8 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
 
         return monoToSingle(updateAction
                 .as(trx::transactional)
-                .then(maybeToMono(findById(item.getId()))));
+                .then(maybeToMono(findById(item.getId()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -179,7 +188,8 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .all()
                 .then(deleteChildEntities(domainId))
                 .as(trx::transactional))
-                .doOnError(error -> LOGGER.error("unable to delete Domain with id {}", domainId, error));
+                .doOnError(error -> LOGGER.error("unable to delete Domain with id {}", domainId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -203,21 +213,22 @@ public class JdbcDomainRepository extends AbstractJdbcRepository implements Doma
                 .map((row, rowMetadata) -> rowMapper.read(JdbcDomain.class, row))
                 .all())
                 .map(this::toDomain)
-                .flatMap(this::completeDomain);
+                .concatMap(this::completeDomain)
+                .observeOn(Schedulers.computation());
     }
 
     private Flowable<Domain> completeDomain(Domain entity) {
-        return Flowable.just(entity).flatMap(domain ->
+        return Flowable.just(entity).concatMap(domain ->
                 identitiesRepository.findAllByDomainId(domain.getId()).map(JdbcDomain.Identity::getIdentity).toList().toFlowable().map(idps -> {
                     domain.setIdentities(new HashSet<>(idps));
                     return domain;
                 })
-        ).flatMap(domain ->
+        ).concatMap(domain ->
                 tagRepository.findAllByDomainId(domain.getId()).map(JdbcDomain.Tag::getTag).toList().toFlowable().map(tags -> {
                     domain.setTags(new HashSet<>(tags));
                     return domain;
                 })
-        ).flatMap(domain ->
+        ).concatMap(domain ->
                 vHostsRepository.findAllByDomainId(domain.getId()).map(this::toVirtualHost).toList().toFlowable().map(vhosts -> {
                     domain.setVhosts(vhosts);
                     return domain;
