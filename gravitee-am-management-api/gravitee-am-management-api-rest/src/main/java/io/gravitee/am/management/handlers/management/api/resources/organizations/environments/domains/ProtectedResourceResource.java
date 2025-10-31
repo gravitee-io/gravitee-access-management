@@ -36,10 +36,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.container.AsyncResponse;
 import jakarta.ws.rs.container.Suspended;
+import jakarta.ws.rs.core.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static io.gravitee.am.model.Acl.READ;
 import static io.gravitee.am.model.Acl.UPDATE;
+import static io.gravitee.am.model.Acl.DELETE;
 import static io.gravitee.am.model.ProtectedResource.Type.fromString;
 
 public class ProtectedResourceResource extends AbstractDomainResource {
@@ -106,6 +108,38 @@ public class ProtectedResourceResource extends AbstractDomainResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> service.update(domain, protectedResourceId, updateProtectedResource, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "deleteProtectedResource",
+            summary = "Delete a Protected Resource",
+            description = "User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource " +
+                    "or PROTECTED_RESOURCE[DELETE] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE[DELETE] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE[DELETE] permission on the specified organization. ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Protected Resource successfully deleted"),
+            @ApiResponse(responseCode = "404", description = "Protected Resource not found"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void delete(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("protected-resource") String protectedResourceId,
+            @QueryParam("type") String type,
+            @Suspended final AsyncResponse response) {
+        ProtectedResource.Type resourceType = fromString(type);
+        final User authenticatedUser = getAuthenticatedUser();
+
+        checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, Permission.PROTECTED_RESOURCE, DELETE)
+                .andThen(checkDomainExists(domainId))
+                .flatMapCompletable(existingDomain -> service.findByDomainAndIdAndType(domainId, protectedResourceId, resourceType)
+                        .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(protectedResourceId)))
+                        .flatMapCompletable(__ -> service.delete(protectedResourceId, authenticatedUser, existingDomain)))
+                .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 
 }

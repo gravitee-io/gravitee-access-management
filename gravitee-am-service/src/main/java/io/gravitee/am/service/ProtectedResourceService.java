@@ -25,6 +25,8 @@ import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.model.UpdateProtectedResource;
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
@@ -48,5 +50,9 @@ public interface ProtectedResourceService {
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest);
 
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest);
+
+    Completable delete(String id, User principal, Domain domain);
+
+    Flowable<ProtectedResource> findByDomain(String domain);
 
 }

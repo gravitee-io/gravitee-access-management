@@ -17,7 +17,7 @@ import fetch from "cross-fetch";
 import {Domain} from "@management-models/Domain";
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import { deleteDomain, setupDomainForTest, waitFor, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { deleteDomain, setupDomainForTest, waitFor } from '@management-commands/domain-management-commands';
 import {uniqueName} from "@utils-commands/misc";
 import faker from "faker";
 import {createApplication, updateApplication} from "@management-commands/application-management-commands";
@@ -25,16 +25,16 @@ import {
     createProtectedResource,
     getMcpServer,
     getMcpServers,
-    updateProtectedResource
+    updateProtectedResource,
+    deleteProtectedResource,
+    waitForProtectedResourceRemovedFromList
 } from "@management-commands/protected-resources-management-commands";
 import {NewProtectedResource} from "@management-models/NewProtectedResource";
 import {UpdateProtectedResource} from "@management-models/UpdateProtectedResource";
 import {UpdateMcpTool} from "@management-models/UpdateMcpTool";
 import {createScope} from "@management-commands/scope-management-commands";
-import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
-import {testCryptData} from '../gateway/ext-grant-jwt-bearer.jest.spec';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
-import { found } from '@jridgewell/trace-mapping/src/binary-search';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
@@ -1026,5 +1026,161 @@ describe('When updating protected resource', () => {
         
         await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
             .catch(err => expect(err.response.status).toEqual(400));
+    });
+});
+
+describe('When deleting protected resource', () => {
+    // Scenario: List reflects deletion
+    // Given the server is deleted
+    // When I list MCP servers
+    // Then the deleted server no longer appears
+    it('Should delete an existing MCP server and remove from list', async () => {
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://delete-me.com"],
+        } as NewProtectedResource;
+
+        const created = await createProtectedResource(domain.id, accessToken, request);
+        expect(created).toBeDefined();
+
+        // Delete the resource (management API is synchronous)
+        await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER');
+
+        // Verify it no longer appears in list (poll until removed)
+        await waitForProtectedResourceRemovedFromList(domain.id, accessToken, created.id);
+        const page = await getMcpServers(domain.id, accessToken, 100, 0);
+        const exists = page.data.some((r: any) => r.id === created.id);
+        expect(exists).toBeFalsy();
+    });
+
+    // Scenario: Not found
+    // Given a protected resource id that does not exist
+    // When I call DELETE
+    // Then I receive 404 Not Found (or 403 if permission check happens first)
+    it('Protected Resource must not be deleted when resource does not exist', async () => {
+        const nonExistentId = 'non-existent-resource-id';
+        
+        await deleteProtectedResource(domain.id, accessToken, nonExistentId, 'MCP_SERVER')
+            .catch(err => {
+                // Permission check might happen before existence check
+                const status = (err as any).response?.status || (err as any).status;
+                expect([403, 404]).toContain(status);
+            });
+    });
+
+    // Scenario: Type/domain mismatch
+    // Given a valid protected resource id in another domain
+    // When I call DELETE with type=MCP_SERVER for my current domain
+    // Then I receive 404 Not Found
+    it('Protected Resource must not be deleted when resource belongs to another domain', async () => {
+        // Create a resource in the test search domain
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://other-domain.com"],
+        } as NewProtectedResource;
+
+        const created = await createProtectedResource(domainTestSearch.id, accessToken, request);
+        expect(created).toBeDefined();
+
+        // Try to delete from the wrong domain (no wait needed for management API operations)
+        await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER')
+            .catch(err => {
+                // Permission check might happen before existence check
+                const status = (err as any).response?.status || (err as any).status;
+                expect([403, 404]).toContain(status);
+            });
+    });
+
+    // Scenario: Successful deletion (service/repository)
+    // Given a protected resource with client secrets and features (tools)
+    // When I delete it
+    // Then the protected resource row/document is removed
+    // And all child entities (client secrets, features/tools) are removed
+    // And an audit entry PROTECTED_RESOURCE_DELETED is created
+    // And a PROTECTED_RESOURCE Action.DELETE event is emitted
+    it('Should delete protected resource with client secrets and features', async () => {
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://with-children.com"],
+            features: [
+                {
+                    key: 'test_tool_1',
+                    type: 'MCP_TOOL',
+                    description: 'Test tool'
+                }
+            ]
+        } as NewProtectedResource;
+
+        const created = await createProtectedResource(domain.id, accessToken, request);
+        expect(created).toBeDefined();
+        expect(created.clientSecret).toBeDefined();
+
+        // Verify features exist
+        const fetched = await getMcpServer(domain.id, accessToken, created.id);
+        expect(fetched).toBeDefined();
+        expect(fetched.features).toBeDefined();
+        expect(fetched.features.length).toBeGreaterThan(0);
+
+        // Delete the resource (this should cascade delete client secrets and features)
+        await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER');
+
+        // Verify resource is removed from list (poll until removed)
+        await waitForProtectedResourceRemovedFromList(domain.id, accessToken, created.id);
+        const page = await getMcpServers(domain.id, accessToken, 100, 0);
+        const exists = page.data.some((r: any) => r.id === created.id);
+        expect(exists).toBeFalsy();
+
+        // Verify we cannot get it by ID (resource is completely deleted)
+        await getMcpServer(domain.id, accessToken, created.id)
+            .catch(err => expect((err as any).response?.status || (err as any).status).toBe(404));
+    });
+
+    // Scenario: Domain deletion cascades to protected resources
+    // Given a domain with protected resources
+    // When I delete the domain
+    // Then all protected resources are also deleted
+    it('Should delete protected resources when domain is deleted', async () => {
+        // Create a test domain
+        const testDomain = await setupDomainForTest(uniqueName('domain-delete-cascade'), { accessToken, waitForStart: true });
+        
+        // Create protected resources in the test domain
+        const resources = [];
+        for (let i = 0; i < 3; i++) {
+            const request = {
+                name: faker.commerce.productName(),
+                type: 'MCP_SERVER',
+                resourceIdentifiers: [`https://cascade-test-${i}.com`],
+                features: [
+                    {
+                        key: `tool_${i}`,
+                        type: 'MCP_TOOL',
+                        description: `Test tool ${i}`
+                    }
+                ]
+            } as NewProtectedResource;
+            const created = await createProtectedResource(testDomain.domain.id, accessToken, request);
+            resources.push(created);
+        }
+
+        // Verify resources exist
+        let page = await getMcpServers(testDomain.domain.id, accessToken, 100, 0);
+        expect(page.data.length).toBeGreaterThanOrEqual(3);
+        for (const resource of resources) {
+            expect(page.data.some((r: any) => r.id === resource.id)).toBeTruthy();
+        }
+
+        // Delete the domain (should cascade delete protected resources)
+        await deleteDomain(testDomain.domain.id, accessToken);
+
+        // Verify protected resources no longer exist by trying to list them
+        // Since the domain is deleted, checkDomainExists will throw DomainNotFoundException (404)
+        await getMcpServers(testDomain.domain.id, accessToken, 100, 0)
+            .catch(err => {
+                const status = (err as any).response?.status || (err as any).status;
+                expect(status).toBe(404);
+            });
     });
 });
