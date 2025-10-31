@@ -1,3 +1,4 @@
+.openapi-generator-ignore
 apis/AlertsApi.ts
 apis/ApplicationApi.ts
 apis/AuditApi.ts
