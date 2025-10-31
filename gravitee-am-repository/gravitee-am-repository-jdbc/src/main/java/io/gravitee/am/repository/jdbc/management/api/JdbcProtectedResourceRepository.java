@@ -156,8 +156,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         LOGGER.debug("delete({})", s);
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> deleteChildren = Mono.when(
-                getTemplate().delete(query(where("protected_resource_id").is(s)), JdbcProtectedResourceClientSecret.class),
-                getTemplate().delete(query(where("protected_resource_id").is(s)), JdbcProtectedResourceFeature.class)
+                getTemplate().delete(query(where(JdbcProtectedResourceClientSecret.FIELD_PROTECTED_RESOURCE_ID).is(s)), JdbcProtectedResourceClientSecret.class),
+                getTemplate().delete(query(where(JdbcProtectedResourceFeature.FIELD_PROTECTED_RESOURCE_ID).is(s)), JdbcProtectedResourceFeature.class)
         ).thenReturn(0L);
         Mono<Long> deleteParent = getTemplate().delete(JdbcProtectedResource.class)
                 .matching(query(where(COLUMN_ID).is(s))).all();

@@ -373,7 +373,7 @@ public class ProtectedResourceServiceImplTest {
         Mockito.when(repository.delete("res-1")).thenReturn(Completable.complete());
         Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         Mockito.when(membershipService.findByReference(eq("res-1"), eq(ReferenceType.APPLICATION)))
-                .thenReturn(io.reactivex.rxjava3.core.Flowable.empty());
+                .thenReturn(Flowable.empty());
 
         service.delete(domain, "res-1", null, user)
                 .test()

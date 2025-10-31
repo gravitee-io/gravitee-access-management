@@ -95,9 +95,6 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
 
-        ProtectedResourcePrimaryData protectedResource = new ProtectedResourcePrimaryData(
-                "id", "clientId", "name", "desc", ProtectedResource.Type.MCP_SERVER, List.of("https://onet.pl"), List.of(), new Date());
-
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         // delete fails with not found (service validates domain/type)
@@ -119,9 +116,6 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
         mockDomain.setId(domainId);
-
-        ProtectedResourcePrimaryData protectedResource = new ProtectedResourcePrimaryData(
-                "id", "clientId", "name", "desc", ProtectedResource.Type.MCP_SERVER, List.of("https://onet.pl"), List.of(), new Date());
 
         // permission ok
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
@@ -162,26 +156,5 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
-    @Test
-    public void shouldDeleteProtectedResource_404_whenTypeOrDomainMismatch() {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        // delete returns not found due to type/domain mismatch
-        doReturn(Completable.error(new ProtectedResourceNotFoundException("id")))
-                .when(protectedResourceService).delete(eq(mockDomain), eq("id"), eq(ProtectedResource.Type.MCP_SERVER), any());
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("protected-resources")
-                .path("id")
-                .queryParam("type", "MCP_SERVER")
-                .request().delete();
-
-        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
-    }
 
 }
