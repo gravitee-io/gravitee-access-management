@@ -55,6 +55,12 @@ export interface RememberDeviceSettings {
    * @type {boolean}
    * @memberof RememberDeviceSettings
    */
+  skipChallengeWhenRememberDevice?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof RememberDeviceSettings
+   */
   skipRememberDevice?: boolean;
 }
 
@@ -70,6 +76,7 @@ export function RememberDeviceSettingsFromJSONTyped(json: any, ignoreDiscriminat
     active: !exists(json, 'active') ? undefined : json['active'],
     expirationTimeSeconds: !exists(json, 'expirationTimeSeconds') ? undefined : json['expirationTimeSeconds'],
     deviceIdentifierId: !exists(json, 'deviceIdentifierId') ? undefined : json['deviceIdentifierId'],
+    skipChallengeWhenRememberDevice: !exists(json, 'skipChallengeWhenRememberDevice') ? undefined : json['skipChallengeWhenRememberDevice'],
     skipRememberDevice: !exists(json, 'skipRememberDevice') ? undefined : json['skipRememberDevice'],
   };
 }
@@ -85,6 +92,7 @@ export function RememberDeviceSettingsToJSON(value?: RememberDeviceSettings | nu
     active: value.active,
     expirationTimeSeconds: value.expirationTimeSeconds,
     deviceIdentifierId: value.deviceIdentifierId,
+    skipChallengeWhenRememberDevice: value.skipChallengeWhenRememberDevice,
     skipRememberDevice: value.skipRememberDevice,
   };
 }

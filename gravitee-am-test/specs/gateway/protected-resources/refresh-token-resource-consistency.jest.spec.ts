@@ -41,9 +41,7 @@ describe('Refresh Token Flow - Resource Parameter Consistency (RFC 8707)', () =>
 
     // Refresh requesting subset
     const subset = ['https://api.example.com/photos'];
-    const refreshResp = await fixture
-      .exchangeRefreshToken(initialToken.body.refresh_token, subset)
-      .expect(200);
+    const refreshResp = await fixture.exchangeRefreshToken(initialToken.body.refresh_token, subset).expect(200);
 
     // Access token aud should be subset
     const at = decodeJwt(refreshResp.body.access_token);
@@ -74,9 +72,7 @@ describe('Refresh Token Flow - Resource Parameter Consistency (RFC 8707)', () =>
     const initialToken = await fixture.exchangeAuthCodeForTokenWithoutResources(code).expect(200);
 
     const invalid = ['https://api.example.com/photos', 'https://api.example.com/albums'];
-    const resp = await fixture
-      .exchangeRefreshToken(initialToken.body.refresh_token, invalid)
-      .expect(400);
+    const resp = await fixture.exchangeRefreshToken(initialToken.body.refresh_token, invalid).expect(400);
     expect(resp.body.error).toBe('invalid_target');
   });
 

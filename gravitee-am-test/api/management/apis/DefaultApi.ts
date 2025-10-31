@@ -45,38 +45,38 @@ import {
   PatchOrganizationToJSON,
 } from '../models';
 
-export interface AddOrUpdateMember2Request {
+export interface AddOrUpdateOrganizationMemberRequest {
   organizationId: string;
   newMembership: NewMembership;
-}
-
-export interface Get20Request {
-  organizationId: string;
 }
 
 export interface GetExternalGrammarRequest {
   path: string;
 }
 
-export interface GetMembers1Request {
+export interface GetOrganizationSettingsRequest {
   organizationId: string;
 }
 
-export interface List17Request {
-  organizationId: string;
-}
-
-export interface PatchRequest {
-  organizationId: string;
-  patchOrganization: PatchOrganization;
-}
-
-export interface Permissions2Request {
+export interface GetPermissions2Request {
   organizationId: string;
   environmentId: string;
 }
 
-export interface RemoveMember3Request {
+export interface ListEnvironmentsRequest {
+  organizationId: string;
+}
+
+export interface ListOrganizationMembersRequest {
+  organizationId: string;
+}
+
+export interface PatchOrganizationSettingsRequest {
+  organizationId: string;
+  patchOrganization: PatchOrganization;
+}
+
+export interface RemoveMember1Request {
   organizationId: string;
   member: string;
 }
@@ -89,21 +89,21 @@ export class DefaultApi extends runtime.BaseAPI {
    * User must have ORGANIZATION_MEMBER[READ] permission on the specified organization
    * Add or update an organization member
    */
-  async addOrUpdateMember2Raw(
-    requestParameters: AddOrUpdateMember2Request,
+  async addOrUpdateOrganizationMemberRaw(
+    requestParameters: AddOrUpdateOrganizationMemberRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling addOrUpdateMember2.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling addOrUpdateOrganizationMember.',
       );
     }
 
     if (requestParameters.newMembership === null || requestParameters.newMembership === undefined) {
       throw new runtime.RequiredError(
         'newMembership',
-        'Required parameter requestParameters.newMembership was null or undefined when calling addOrUpdateMember2.',
+        'Required parameter requestParameters.newMembership was null or undefined when calling addOrUpdateOrganizationMember.',
       );
     }
 
@@ -142,63 +142,11 @@ export class DefaultApi extends runtime.BaseAPI {
    * User must have ORGANIZATION_MEMBER[READ] permission on the specified organization
    * Add or update an organization member
    */
-  async addOrUpdateMember2(
-    requestParameters: AddOrUpdateMember2Request,
+  async addOrUpdateOrganizationMember(
+    requestParameters: AddOrUpdateOrganizationMemberRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
-    await this.addOrUpdateMember2Raw(requestParameters, initOverrides);
-  }
-
-  /**
-   * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
-   * Get organization main settings
-   */
-  async get20Raw(
-    requestParameters: Get20Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Domain>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling get20.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/settings`.replace(
-          `{${'organizationId'}}`,
-          encodeURIComponent(String(requestParameters.organizationId)),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => DomainFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
-   * Get organization main settings
-   */
-  async get20(requestParameters: Get20Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
-    const response = await this.get20Raw(requestParameters, initOverrides);
-    return await response.value();
+    await this.addOrUpdateOrganizationMemberRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -249,17 +197,17 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization
-   * List members for an organization
+   * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
+   * Get organization main settings
    */
-  async getMembers1Raw(
-    requestParameters: GetMembers1Request,
+  async getOrganizationSettingsRaw(
+    requestParameters: GetOrganizationSettingsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<MembershipListItem>> {
+  ): Promise<runtime.ApiResponse<Domain>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling getMembers1.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getOrganizationSettings.',
       );
     }
 
@@ -277,7 +225,7 @@ export class DefaultApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/organizations/{organizationId}/members`.replace(
+        path: `/organizations/{organizationId}/settings`.replace(
           `{${'organizationId'}}`,
           encodeURIComponent(String(requestParameters.organizationId)),
         ),
@@ -288,18 +236,79 @@ export class DefaultApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => MembershipListItemFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => DomainFromJSON(jsonValue));
   }
 
   /**
-   * User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization
-   * List members for an organization
+   * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
+   * Get organization main settings
    */
-  async getMembers1(
-    requestParameters: GetMembers1Request,
+  async getOrganizationSettings(
+    requestParameters: GetOrganizationSettingsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<MembershipListItem> {
-    const response = await this.getMembers1Raw(requestParameters, initOverrides);
+  ): Promise<Domain> {
+    const response = await this.getOrganizationSettingsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
+   * List environment member\'s permissions
+   */
+  async getPermissions2Raw(
+    requestParameters: GetPermissions2Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getPermissions2.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getPermissions2.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/members/permissions`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.TextApiResponse(response) as any;
+  }
+
+  /**
+   * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
+   * List environment member\'s permissions
+   */
+  async getPermissions2(
+    requestParameters: GetPermissions2Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<string> {
+    const response = await this.getPermissions2Raw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -341,14 +350,14 @@ export class DefaultApi extends runtime.BaseAPI {
    * User must have the ENVIRONMENT[LIST] permission on the specified organization AND either ENVIRONMENT[READ] permission on each environment or ENVIRONMENT[READ] permission on the specified organization.Each returned environment is filtered and contains only basic information such as id and name.
    * List all the environments
    */
-  async list17Raw(
-    requestParameters: List17Request,
+  async listEnvironmentsRaw(
+    requestParameters: ListEnvironmentsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Array<Environment>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling list17.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listEnvironments.',
       );
     }
 
@@ -384,8 +393,66 @@ export class DefaultApi extends runtime.BaseAPI {
    * User must have the ENVIRONMENT[LIST] permission on the specified organization AND either ENVIRONMENT[READ] permission on each environment or ENVIRONMENT[READ] permission on the specified organization.Each returned environment is filtered and contains only basic information such as id and name.
    * List all the environments
    */
-  async list17(requestParameters: List17Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Environment>> {
-    const response = await this.list17Raw(requestParameters, initOverrides);
+  async listEnvironments(
+    requestParameters: ListEnvironmentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Environment>> {
+    const response = await this.listEnvironmentsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization
+   * List members for an organization
+   */
+  async listOrganizationMembersRaw(
+    requestParameters: ListOrganizationMembersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<MembershipListItem>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listOrganizationMembers.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/members`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => MembershipListItemFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization
+   * List members for an organization
+   */
+  async listOrganizationMembers(
+    requestParameters: ListOrganizationMembersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<MembershipListItem> {
+    const response = await this.listOrganizationMembersRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -393,21 +460,21 @@ export class DefaultApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization
    * Update platform main settings
    */
-  async patchRaw(
-    requestParameters: PatchRequest,
+  async patchOrganizationSettingsRaw(
+    requestParameters: PatchOrganizationSettingsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Domain>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling patch.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling patchOrganizationSettings.',
       );
     }
 
     if (requestParameters.patchOrganization === null || requestParameters.patchOrganization === undefined) {
       throw new runtime.RequiredError(
         'patchOrganization',
-        'Required parameter requestParameters.patchOrganization was null or undefined when calling patch.',
+        'Required parameter requestParameters.patchOrganization was null or undefined when calling patchOrganizationSettings.',
       );
     }
 
@@ -446,66 +513,11 @@ export class DefaultApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization
    * Update platform main settings
    */
-  async patch(requestParameters: PatchRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Domain> {
-    const response = await this.patchRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
-   * List environment member\'s permissions
-   */
-  async permissions2Raw(
-    requestParameters: Permissions2Request,
+  async patchOrganizationSettings(
+    requestParameters: PatchOrganizationSettingsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<string>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling permissions2.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling permissions2.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/members/permissions`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.TextApiResponse(response) as any;
-  }
-
-  /**
-   * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
-   * List environment member\'s permissions
-   */
-  async permissions2(requestParameters: Permissions2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
-    const response = await this.permissions2Raw(requestParameters, initOverrides);
+  ): Promise<Domain> {
+    const response = await this.patchOrganizationSettingsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -513,21 +525,21 @@ export class DefaultApi extends runtime.BaseAPI {
    * User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization
    * Remove a membership of the organization
    */
-  async removeMember3Raw(
-    requestParameters: RemoveMember3Request,
+  async removeMember1Raw(
+    requestParameters: RemoveMember1Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling removeMember3.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling removeMember1.',
       );
     }
 
     if (requestParameters.member === null || requestParameters.member === undefined) {
       throw new runtime.RequiredError(
         'member',
-        'Required parameter requestParameters.member was null or undefined when calling removeMember3.',
+        'Required parameter requestParameters.member was null or undefined when calling removeMember1.',
       );
     }
 
@@ -562,7 +574,7 @@ export class DefaultApi extends runtime.BaseAPI {
    * User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization
    * Remove a membership of the organization
    */
-  async removeMember3(requestParameters: RemoveMember3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.removeMember3Raw(requestParameters, initOverrides);
+  async removeMember1(requestParameters: RemoveMember1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.removeMember1Raw(requestParameters, initOverrides);
   }
 }

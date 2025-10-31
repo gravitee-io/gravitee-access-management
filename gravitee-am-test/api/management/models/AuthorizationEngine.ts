@@ -26,72 +26,58 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
-import { Step, StepFromJSON, StepFromJSONTyped, StepToJSON } from './Step';
-
 /**
  *
  * @export
- * @interface FlowEntity
+ * @interface AuthorizationEngine
  */
-export interface FlowEntity {
+export interface AuthorizationEngine {
   /**
    *
    * @type {string}
-   * @memberof FlowEntity
+   * @memberof AuthorizationEngine
    */
   id?: string;
   /**
    *
    * @type {string}
-   * @memberof FlowEntity
+   * @memberof AuthorizationEngine
    */
   name?: string;
   /**
    *
-   * @type {Array<Step>}
-   * @memberof FlowEntity
+   * @type {string}
+   * @memberof AuthorizationEngine
    */
-  pre?: Array<Step>;
-  /**
-   *
-   * @type {Array<Step>}
-   * @memberof FlowEntity
-   */
-  post?: Array<Step>;
-  /**
-   *
-   * @type {boolean}
-   * @memberof FlowEntity
-   */
-  enabled?: boolean;
+  type?: string;
   /**
    *
    * @type {string}
-   * @memberof FlowEntity
+   * @memberof AuthorizationEngine
    */
-  type?: FlowEntityTypeEnum;
+  configuration?: string;
   /**
    *
    * @type {string}
-   * @memberof FlowEntity
+   * @memberof AuthorizationEngine
    */
-  condition?: string;
+  referenceType?: AuthorizationEngineReferenceTypeEnum;
   /**
    *
    * @type {string}
-   * @memberof FlowEntity
+   * @memberof AuthorizationEngine
    */
-  icon?: string;
+  referenceId?: string;
   /**
    *
    * @type {Date}
-   * @memberof FlowEntity
+   * @memberof AuthorizationEngine
    */
   createdAt?: Date;
   /**
    *
    * @type {Date}
-   * @memberof FlowEntity
+   * @memberof AuthorizationEngine
    */
   updatedAt?: Date;
 }
@@ -99,45 +85,37 @@ export interface FlowEntity {
 /**
  * @export
  */
-export const FlowEntityTypeEnum = {
-  Root: 'ROOT',
-  LoginIdentifier: 'LOGIN_IDENTIFIER',
-  Login: 'LOGIN',
-  Connect: 'CONNECT',
-  Consent: 'CONSENT',
-  Register: 'REGISTER',
-  ResetPassword: 'RESET_PASSWORD',
-  RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
-  Token: 'TOKEN',
-  WebauthnRegister: 'WEBAUTHN_REGISTER',
-  MfaChallenge: 'MFA_CHALLENGE',
-  MfaEnrollment: 'MFA_ENROLLMENT',
+export const AuthorizationEngineReferenceTypeEnum = {
+  Platform: 'PLATFORM',
+  Domain: 'DOMAIN',
+  Application: 'APPLICATION',
+  Organization: 'ORGANIZATION',
+  Environment: 'ENVIRONMENT',
 } as const;
-export type FlowEntityTypeEnum = typeof FlowEntityTypeEnum[keyof typeof FlowEntityTypeEnum];
+export type AuthorizationEngineReferenceTypeEnum =
+  typeof AuthorizationEngineReferenceTypeEnum[keyof typeof AuthorizationEngineReferenceTypeEnum];
 
-export function FlowEntityFromJSON(json: any): FlowEntity {
-  return FlowEntityFromJSONTyped(json, false);
+export function AuthorizationEngineFromJSON(json: any): AuthorizationEngine {
+  return AuthorizationEngineFromJSONTyped(json, false);
 }
 
-export function FlowEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): FlowEntity {
+export function AuthorizationEngineFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuthorizationEngine {
   if (json === undefined || json === null) {
     return json;
   }
   return {
     id: !exists(json, 'id') ? undefined : json['id'],
     name: !exists(json, 'name') ? undefined : json['name'],
-    pre: !exists(json, 'pre') ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
-    post: !exists(json, 'post') ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
     type: !exists(json, 'type') ? undefined : json['type'],
-    condition: !exists(json, 'condition') ? undefined : json['condition'],
-    icon: !exists(json, 'icon') ? undefined : json['icon'],
+    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
+    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
+    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
     createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
     updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function FlowEntityToJSON(value?: FlowEntity | null): any {
+export function AuthorizationEngineToJSON(value?: AuthorizationEngine | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -147,12 +125,10 @@ export function FlowEntityToJSON(value?: FlowEntity | null): any {
   return {
     id: value.id,
     name: value.name,
-    pre: value.pre === undefined ? undefined : (value.pre as Array<any>).map(StepToJSON),
-    post: value.post === undefined ? undefined : (value.post as Array<any>).map(StepToJSON),
-    enabled: value.enabled,
     type: value.type,
-    condition: value.condition,
-    icon: value.icon,
+    configuration: value.configuration,
+    referenceType: value.referenceType,
+    referenceId: value.referenceId,
     createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
     updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };

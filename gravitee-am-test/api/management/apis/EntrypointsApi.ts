@@ -39,26 +39,26 @@ import {
   UpdateEntrypointToJSON,
 } from '../models';
 
-export interface DeleteRequest {
-  organizationId: string;
-  entrypointId: string;
-}
-
-export interface CreateRequest {
+export interface CreateEntrypointRequest {
   organizationId: string;
   newEntrypoint: NewEntrypoint;
 }
 
-export interface Get2Request {
+export interface DeleteEntrypointRequest {
   organizationId: string;
   entrypointId: string;
 }
 
-export interface List1Request {
+export interface GetEntrypointRequest {
+  organizationId: string;
+  entrypointId: string;
+}
+
+export interface ListEntrypointsRequest {
   organizationId: string;
 }
 
-export interface UpdateRequest {
+export interface UpdateEntrypointRequest {
   organizationId: string;
   entrypointId: string;
   updateEntrypoint: UpdateEntrypoint;
@@ -69,81 +69,24 @@ export interface UpdateRequest {
  */
 export class EntrypointsApi extends runtime.BaseAPI {
   /**
-   * User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization
-   * Delete the sharding entrypoint
-   */
-  async _deleteRaw(
-    requestParameters: DeleteRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling _delete.',
-      );
-    }
-
-    if (requestParameters.entrypointId === null || requestParameters.entrypointId === undefined) {
-      throw new runtime.RequiredError(
-        'entrypointId',
-        'Required parameter requestParameters.entrypointId was null or undefined when calling _delete.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/entrypoints/{entrypointId}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'entrypointId'}}`, encodeURIComponent(String(requestParameters.entrypointId))),
-        method: 'DELETE',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization
-   * Delete the sharding entrypoint
-   */
-  async _delete(requestParameters: DeleteRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this._deleteRaw(requestParameters, initOverrides);
-  }
-
-  /**
    * User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization
    * Create a entrypoint
    */
-  async createRaw(
-    requestParameters: CreateRequest,
+  async createEntrypointRaw(
+    requestParameters: CreateEntrypointRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createEntrypoint.',
       );
     }
 
     if (requestParameters.newEntrypoint === null || requestParameters.newEntrypoint === undefined) {
       throw new runtime.RequiredError(
         'newEntrypoint',
-        'Required parameter requestParameters.newEntrypoint was null or undefined when calling create.',
+        'Required parameter requestParameters.newEntrypoint was null or undefined when calling createEntrypoint.',
       );
     }
 
@@ -182,29 +125,92 @@ export class EntrypointsApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization
    * Create a entrypoint
    */
-  async create(requestParameters: CreateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.createRaw(requestParameters, initOverrides);
+  async createEntrypoint(
+    requestParameters: CreateEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.createEntrypointRaw(requestParameters, initOverrides);
   }
 
   /**
-   * User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization
-   * Get a sharding entrypoint
+   * User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization
+   * Delete the sharding entrypoint
    */
-  async get2Raw(
-    requestParameters: Get2Request,
+  async deleteEntrypointRaw(
+    requestParameters: DeleteEntrypointRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Entrypoint>> {
+  ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling get2.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteEntrypoint.',
       );
     }
 
     if (requestParameters.entrypointId === null || requestParameters.entrypointId === undefined) {
       throw new runtime.RequiredError(
         'entrypointId',
-        'Required parameter requestParameters.entrypointId was null or undefined when calling get2.',
+        'Required parameter requestParameters.entrypointId was null or undefined when calling deleteEntrypoint.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/entrypoints/{entrypointId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'entrypointId'}}`, encodeURIComponent(String(requestParameters.entrypointId))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization
+   * Delete the sharding entrypoint
+   */
+  async deleteEntrypoint(
+    requestParameters: DeleteEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteEntrypointRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization
+   * Get a sharding entrypoint
+   */
+  async getEntrypointRaw(
+    requestParameters: GetEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Entrypoint>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getEntrypoint.',
+      );
+    }
+
+    if (requestParameters.entrypointId === null || requestParameters.entrypointId === undefined) {
+      throw new runtime.RequiredError(
+        'entrypointId',
+        'Required parameter requestParameters.entrypointId was null or undefined when calling getEntrypoint.',
       );
     }
 
@@ -239,8 +245,11 @@ export class EntrypointsApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization
    * Get a sharding entrypoint
    */
-  async get2(requestParameters: Get2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Entrypoint> {
-    const response = await this.get2Raw(requestParameters, initOverrides);
+  async getEntrypoint(
+    requestParameters: GetEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Entrypoint> {
+    const response = await this.getEntrypointRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -248,14 +257,14 @@ export class EntrypointsApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned entrypoint is filtered and contains only basic information such as id and name.
    * List entrypoints
    */
-  async list1Raw(
-    requestParameters: List1Request,
+  async listEntrypointsRaw(
+    requestParameters: ListEntrypointsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Array<Entrypoint>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling list1.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listEntrypoints.',
       );
     }
 
@@ -291,8 +300,11 @@ export class EntrypointsApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned entrypoint is filtered and contains only basic information such as id and name.
    * List entrypoints
    */
-  async list1(requestParameters: List1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Entrypoint>> {
-    const response = await this.list1Raw(requestParameters, initOverrides);
+  async listEntrypoints(
+    requestParameters: ListEntrypointsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Entrypoint>> {
+    const response = await this.listEntrypointsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -300,28 +312,28 @@ export class EntrypointsApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization
    * Update the sharding entrypoint
    */
-  async updateRaw(
-    requestParameters: UpdateRequest,
+  async updateEntrypointRaw(
+    requestParameters: UpdateEntrypointRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Entrypoint>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling update.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateEntrypoint.',
       );
     }
 
     if (requestParameters.entrypointId === null || requestParameters.entrypointId === undefined) {
       throw new runtime.RequiredError(
         'entrypointId',
-        'Required parameter requestParameters.entrypointId was null or undefined when calling update.',
+        'Required parameter requestParameters.entrypointId was null or undefined when calling updateEntrypoint.',
       );
     }
 
     if (requestParameters.updateEntrypoint === null || requestParameters.updateEntrypoint === undefined) {
       throw new runtime.RequiredError(
         'updateEntrypoint',
-        'Required parameter requestParameters.updateEntrypoint was null or undefined when calling update.',
+        'Required parameter requestParameters.updateEntrypoint was null or undefined when calling updateEntrypoint.',
       );
     }
 
@@ -359,8 +371,11 @@ export class EntrypointsApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization
    * Update the sharding entrypoint
    */
-  async update(requestParameters: UpdateRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Entrypoint> {
-    const response = await this.updateRaw(requestParameters, initOverrides);
+  async updateEntrypoint(
+    requestParameters: UpdateEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Entrypoint> {
+    const response = await this.updateEntrypointRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

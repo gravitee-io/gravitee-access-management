@@ -79,19 +79,19 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
+  dynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
   clientTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  isDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchClientRegistrationSettings
-   */
-  isOpenDynamicClientRegistrationEnabled?: boolean;
+  openDynamicClientRegistrationEnabled?: boolean;
 }
 
 export function PatchClientRegistrationSettingsFromJSON(json: any): PatchClientRegistrationSettings {
@@ -112,13 +112,13 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
     allowRedirectUriParamsExpressionLanguage: !exists(json, 'allowRedirectUriParamsExpressionLanguage')
       ? undefined
       : json['allowRedirectUriParamsExpressionLanguage'],
+    dynamicClientRegistrationEnabled: !exists(json, 'dynamicClientRegistrationEnabled')
+      ? undefined
+      : json['dynamicClientRegistrationEnabled'],
     clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
-    isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
+    openDynamicClientRegistrationEnabled: !exists(json, 'openDynamicClientRegistrationEnabled')
       ? undefined
-      : json['isDynamicClientRegistrationEnabled'],
-    isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
-      ? undefined
-      : json['isOpenDynamicClientRegistrationEnabled'],
+      : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -137,8 +137,8 @@ export function PatchClientRegistrationSettingsToJSON(value?: PatchClientRegistr
     isAllowedScopesEnabled: value.isAllowedScopesEnabled,
     allowedScopes: value.allowedScopes,
     allowRedirectUriParamsExpressionLanguage: value.allowRedirectUriParamsExpressionLanguage,
+    dynamicClientRegistrationEnabled: value.dynamicClientRegistrationEnabled,
     clientTemplateEnabled: value.clientTemplateEnabled,
-    isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
-    isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
+    openDynamicClientRegistrationEnabled: value.openDynamicClientRegistrationEnabled,
   };
 }

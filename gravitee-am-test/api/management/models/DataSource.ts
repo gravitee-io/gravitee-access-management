@@ -26,62 +26,48 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
-import {
-  UpdateProtectedResourceFeature,
-  UpdateProtectedResourceFeatureFromJSON,
-  UpdateProtectedResourceFeatureFromJSONTyped,
-  UpdateProtectedResourceFeatureToJSON,
-} from './UpdateProtectedResourceFeature';
-
 /**
  *
  * @export
- * @interface UpdateProtectedResource
+ * @interface DataSource
  */
-export interface UpdateProtectedResource {
+export interface DataSource {
   /**
    *
    * @type {string}
-   * @memberof UpdateProtectedResource
+   * @memberof DataSource
    */
-  name: string;
+  id?: string;
   /**
    *
    * @type {string}
-   * @memberof UpdateProtectedResource
+   * @memberof DataSource
+   */
+  name?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DataSource
    */
   description?: string;
-  /**
-   *
-   * @type {Array<string>}
-   * @memberof UpdateProtectedResource
-   */
-  resourceIdentifiers: Array<string>;
-  /**
-   *
-   * @type {Array<UpdateProtectedResourceFeature>}
-   * @memberof UpdateProtectedResource
-   */
-  features?: Array<UpdateProtectedResourceFeature>;
 }
 
-export function UpdateProtectedResourceFromJSON(json: any): UpdateProtectedResource {
-  return UpdateProtectedResourceFromJSONTyped(json, false);
+export function DataSourceFromJSON(json: any): DataSource {
+  return DataSourceFromJSONTyped(json, false);
 }
 
-export function UpdateProtectedResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateProtectedResource {
+export function DataSourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): DataSource {
   if (json === undefined || json === null) {
     return json;
   }
   return {
-    name: json['name'],
+    id: !exists(json, 'id') ? undefined : json['id'],
+    name: !exists(json, 'name') ? undefined : json['name'],
     description: !exists(json, 'description') ? undefined : json['description'],
-    resourceIdentifiers: json['resourceIdentifiers'],
-    features: !exists(json, 'features') ? undefined : (json['features'] as Array<any>).map(UpdateProtectedResourceFeatureFromJSON),
   };
 }
 
-export function UpdateProtectedResourceToJSON(value?: UpdateProtectedResource | null): any {
+export function DataSourceToJSON(value?: DataSource | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -89,9 +75,8 @@ export function UpdateProtectedResourceToJSON(value?: UpdateProtectedResource | 
     return null;
   }
   return {
+    id: value.id,
     name: value.name,
     description: value.description,
-    resourceIdentifiers: value.resourceIdentifiers,
-    features: value.features === undefined ? undefined : (value.features as Array<any>).map(UpdateProtectedResourceFeatureToJSON),
   };
 }

@@ -55,7 +55,7 @@ export const getUser = (domainId, accessToken, userId: string) =>
   });
 
 export const getUserFactors = (domainId, accessToken, userId: string) =>
-  getUserApi(accessToken).getUsersEnrolledFactors({
+  getUserApi(accessToken).listUserEnrolledFactors({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,

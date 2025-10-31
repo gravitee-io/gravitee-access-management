@@ -402,12 +402,6 @@ export interface User {
   lastIdentityInformation?: { [key: string]: any };
   /**
    *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
    * @type {string}
    * @memberof User
    */
@@ -454,6 +448,12 @@ export interface User {
    * @memberof User
    */
   fullId?: UserId;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  identitiesAsMap?: { [key: string]: any };
 }
 
 /**
@@ -537,7 +537,6 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     locale: !exists(json, 'locale') ? undefined : json['locale'],
     zoneInfo: !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
     lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
-    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
     middleName: !exists(json, 'middleName') ? undefined : json['middleName'],
     inactive: !exists(json, 'inactive') ? undefined : json['inactive'],
     profile: !exists(json, 'profile') ? undefined : json['profile'],
@@ -546,6 +545,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     disabled: !exists(json, 'disabled') ? undefined : json['disabled'],
     fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
+    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
   };
 }
 
@@ -617,7 +617,6 @@ export function UserToJSON(value?: User | null): any {
     locale: value.locale,
     zoneInfo: value.zoneInfo,
     lastIdentityInformation: value.lastIdentityInformation,
-    identitiesAsMap: value.identitiesAsMap,
     middleName: value.middleName,
     inactive: value.inactive,
     profile: value.profile,
@@ -626,5 +625,6 @@ export function UserToJSON(value?: User | null): any {
     phoneNumber: value.phoneNumber,
     disabled: value.disabled,
     fullId: UserIdToJSON(value.fullId),
+    identitiesAsMap: value.identitiesAsMap,
   };
 }
