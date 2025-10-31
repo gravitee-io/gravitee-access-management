@@ -137,7 +137,7 @@ public class MembersResource extends AbstractResource {
     @Path("permissions")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "getPermissions",
+            operationId = "getDomainMemberPermissions",
             summary = "List domain member's permissions",
             description = "User must have DOMAIN[READ] permission on the specified domain " +
                     "or DOMAIN[READ] permission on the specified environment " +

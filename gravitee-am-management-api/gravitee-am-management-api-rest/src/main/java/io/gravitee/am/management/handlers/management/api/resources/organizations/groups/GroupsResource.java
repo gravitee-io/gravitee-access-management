@@ -98,7 +98,7 @@ public class GroupsResource extends AbstractResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "createGroup",
+            operationId = "createPlatformGroup",
             summary = "Create a platform group",
             description = "User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization")
     @ApiResponses({

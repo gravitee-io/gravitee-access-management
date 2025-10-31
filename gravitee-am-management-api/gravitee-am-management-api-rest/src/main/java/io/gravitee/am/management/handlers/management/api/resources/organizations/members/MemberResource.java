@@ -45,7 +45,7 @@ public class MemberResource extends AbstractResource {
 
     @DELETE
     @Operation(
-            operationId = "removeMember",
+            operationId = "removeOrganizationMember",
             summary = "Remove a membership of the organization",
       description = "User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization")
     @ApiResponses({

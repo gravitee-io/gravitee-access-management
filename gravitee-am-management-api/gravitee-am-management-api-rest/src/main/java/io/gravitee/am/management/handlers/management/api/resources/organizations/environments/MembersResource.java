@@ -50,7 +50,7 @@ public class MembersResource extends AbstractResource {
     @Path("permissions")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "getPermissions",
+            operationId = "getMemberPermissions",
             summary = "List environment member's permissions",
             description = "User must have ENVIRONMENT[READ] permission on the specified environment " +
                     "or ENVIRONMENT[READ] permission on the specified organization")

@@ -150,7 +150,7 @@ public class ApplicationMembersResource extends AbstractResource {
     @Path("permissions")
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "getPermissions",
+            operationId = "getApplicationMemberPermissions",
             summary = "List application member's permissions",
             description = "User must have APPLICATION[READ] permission on the specified application " +
                     "or APPLICATION[READ] permission on the specified domain " +

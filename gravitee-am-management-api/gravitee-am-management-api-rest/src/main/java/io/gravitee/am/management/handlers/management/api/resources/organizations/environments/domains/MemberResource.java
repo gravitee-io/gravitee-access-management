@@ -46,7 +46,7 @@ public class MemberResource extends AbstractResource {
 
     @DELETE
     @Operation(
-            operationId = "removeMember",
+            operationId = "removeDomainMember",
             summary = "Remove a membership",
             description = "User must have the DOMAIN_MEMBER[DELETE] permission on the specified domain " +
                     "or DOMAIN_MEMBER[DELETE] permission on the specified environment " +
