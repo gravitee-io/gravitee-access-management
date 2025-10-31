@@ -25,10 +25,18 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { ApplicationEntity, ApplicationEntityFromJSON, ApplicationEntityFromJSONTyped, ApplicationEntityToJSON } from './ApplicationEntity';
-import { ScopeEntity, ScopeEntityFromJSON, ScopeEntityFromJSONTyped, ScopeEntityToJSON } from './ScopeEntity';
-import { UserId, UserIdFromJSON, UserIdFromJSONTyped, UserIdToJSON } from './UserId';
+import { mapValues } from '../runtime';
+import type { ScopeEntity } from './ScopeEntity';
+import { ScopeEntityFromJSON, ScopeEntityFromJSONTyped, ScopeEntityToJSON, ScopeEntityToJSONTyped } from './ScopeEntity';
+import type { ApplicationEntity } from './ApplicationEntity';
+import {
+  ApplicationEntityFromJSON,
+  ApplicationEntityFromJSONTyped,
+  ApplicationEntityToJSON,
+  ApplicationEntityToJSONTyped,
+} from './ApplicationEntity';
+import type { UserId } from './UserId';
+import { UserIdFromJSON, UserIdFromJSONTyped, UserIdToJSON, UserIdToJSONTyped } from './UserId';
 
 /**
  *
@@ -119,49 +127,58 @@ export const ScopeApprovalEntityStatusEnum = {
 } as const;
 export type ScopeApprovalEntityStatusEnum = typeof ScopeApprovalEntityStatusEnum[keyof typeof ScopeApprovalEntityStatusEnum];
 
+/**
+ * Check if a given object implements the ScopeApprovalEntity interface.
+ */
+export function instanceOfScopeApprovalEntity(value: object): value is ScopeApprovalEntity {
+  return true;
+}
+
 export function ScopeApprovalEntityFromJSON(json: any): ScopeApprovalEntity {
   return ScopeApprovalEntityFromJSONTyped(json, false);
 }
 
 export function ScopeApprovalEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): ScopeApprovalEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    transactionId: !exists(json, 'transactionId') ? undefined : json['transactionId'],
-    userId: !exists(json, 'userId') ? undefined : UserIdFromJSON(json['userId']),
-    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
-    domain: !exists(json, 'domain') ? undefined : json['domain'],
-    scope: !exists(json, 'scope') ? undefined : json['scope'],
-    status: !exists(json, 'status') ? undefined : json['status'],
-    expiresAt: !exists(json, 'expiresAt') ? undefined : new Date(json['expiresAt']),
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
-    clientEntity: !exists(json, 'clientEntity') ? undefined : ApplicationEntityFromJSON(json['clientEntity']),
-    scopeEntity: !exists(json, 'scopeEntity') ? undefined : ScopeEntityFromJSON(json['scopeEntity']),
+    id: json['id'] == null ? undefined : json['id'],
+    transactionId: json['transactionId'] == null ? undefined : json['transactionId'],
+    userId: json['userId'] == null ? undefined : UserIdFromJSON(json['userId']),
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    scope: json['scope'] == null ? undefined : json['scope'],
+    status: json['status'] == null ? undefined : json['status'],
+    expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    clientEntity: json['clientEntity'] == null ? undefined : ApplicationEntityFromJSON(json['clientEntity']),
+    scopeEntity: json['scopeEntity'] == null ? undefined : ScopeEntityFromJSON(json['scopeEntity']),
   };
 }
 
-export function ScopeApprovalEntityToJSON(value?: ScopeApprovalEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ScopeApprovalEntityToJSON(json: any): ScopeApprovalEntity {
+  return ScopeApprovalEntityToJSONTyped(json, false);
+}
+
+export function ScopeApprovalEntityToJSONTyped(value?: ScopeApprovalEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    transactionId: value.transactionId,
-    userId: UserIdToJSON(value.userId),
-    clientId: value.clientId,
-    domain: value.domain,
-    scope: value.scope,
-    status: value.status,
-    expiresAt: value.expiresAt === undefined ? undefined : value.expiresAt.toISOString(),
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
-    clientEntity: ApplicationEntityToJSON(value.clientEntity),
-    scopeEntity: ScopeEntityToJSON(value.scopeEntity),
+    id: value['id'],
+    transactionId: value['transactionId'],
+    userId: UserIdToJSON(value['userId']),
+    clientId: value['clientId'],
+    domain: value['domain'],
+    scope: value['scope'],
+    status: value['status'],
+    expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    clientEntity: ApplicationEntityToJSON(value['clientEntity']),
+    scopeEntity: ScopeEntityToJSON(value['scopeEntity']),
   };
 }

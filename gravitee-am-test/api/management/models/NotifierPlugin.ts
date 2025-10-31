@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -82,41 +82,50 @@ export interface NotifierPlugin {
   icon?: string;
 }
 
+/**
+ * Check if a given object implements the NotifierPlugin interface.
+ */
+export function instanceOfNotifierPlugin(value: object): value is NotifierPlugin {
+  return true;
+}
+
 export function NotifierPluginFromJSON(json: any): NotifierPlugin {
   return NotifierPluginFromJSONTyped(json, false);
 }
 
 export function NotifierPluginFromJSONTyped(json: any, ignoreDiscriminator: boolean): NotifierPlugin {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    version: !exists(json, 'version') ? undefined : json['version'],
-    deployed: !exists(json, 'deployed') ? undefined : json['deployed'],
-    feature: !exists(json, 'feature') ? undefined : json['feature'],
-    displayName: !exists(json, 'displayName') ? undefined : json['displayName'],
-    icon: !exists(json, 'icon') ? undefined : json['icon'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    version: json['version'] == null ? undefined : json['version'],
+    deployed: json['deployed'] == null ? undefined : json['deployed'],
+    feature: json['feature'] == null ? undefined : json['feature'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    icon: json['icon'] == null ? undefined : json['icon'],
   };
 }
 
-export function NotifierPluginToJSON(value?: NotifierPlugin | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NotifierPluginToJSON(json: any): NotifierPlugin {
+  return NotifierPluginToJSONTyped(json, false);
+}
+
+export function NotifierPluginToJSONTyped(value?: NotifierPlugin | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    description: value.description,
-    version: value.version,
-    deployed: value.deployed,
-    feature: value.feature,
-    displayName: value.displayName,
-    icon: value.icon,
+    id: value['id'],
+    name: value['name'],
+    description: value['description'],
+    version: value['version'],
+    deployed: value['deployed'],
+    feature: value['feature'],
+    displayName: value['displayName'],
+    icon: value['icon'],
   };
 }

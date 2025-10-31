@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -61,31 +61,40 @@ export const PreviewResponseTypeEnum = {
 } as const;
 export type PreviewResponseTypeEnum = typeof PreviewResponseTypeEnum[keyof typeof PreviewResponseTypeEnum];
 
+/**
+ * Check if a given object implements the PreviewResponse interface.
+ */
+export function instanceOfPreviewResponse(value: object): value is PreviewResponse {
+  return true;
+}
+
 export function PreviewResponseFromJSON(json: any): PreviewResponse {
   return PreviewResponseFromJSONTyped(json, false);
 }
 
 export function PreviewResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): PreviewResponse {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    content: !exists(json, 'content') ? undefined : json['content'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    template: !exists(json, 'template') ? undefined : json['template'],
+    content: json['content'] == null ? undefined : json['content'],
+    type: json['type'] == null ? undefined : json['type'],
+    template: json['template'] == null ? undefined : json['template'],
   };
 }
 
-export function PreviewResponseToJSON(value?: PreviewResponse | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PreviewResponseToJSON(json: any): PreviewResponse {
+  return PreviewResponseToJSONTyped(json, false);
+}
+
+export function PreviewResponseToJSONTyped(value?: PreviewResponse | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    content: value.content,
-    type: value.type,
-    template: value.template,
+    content: value['content'],
+    type: value['type'],
+    template: value['template'],
   };
 }

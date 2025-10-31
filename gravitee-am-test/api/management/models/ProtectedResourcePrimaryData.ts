@@ -25,12 +25,13 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
+import type { ProtectedResourceFeature } from './ProtectedResourceFeature';
 import {
-  ProtectedResourceFeature,
   ProtectedResourceFeatureFromJSON,
   ProtectedResourceFeatureFromJSONTyped,
   ProtectedResourceFeatureToJSON,
+  ProtectedResourceFeatureToJSONTyped,
 } from './ProtectedResourceFeature';
 
 /**
@@ -98,41 +99,53 @@ export const ProtectedResourcePrimaryDataTypeEnum = {
 export type ProtectedResourcePrimaryDataTypeEnum =
   typeof ProtectedResourcePrimaryDataTypeEnum[keyof typeof ProtectedResourcePrimaryDataTypeEnum];
 
+/**
+ * Check if a given object implements the ProtectedResourcePrimaryData interface.
+ */
+export function instanceOfProtectedResourcePrimaryData(value: object): value is ProtectedResourcePrimaryData {
+  return true;
+}
+
 export function ProtectedResourcePrimaryDataFromJSON(json: any): ProtectedResourcePrimaryData {
   return ProtectedResourcePrimaryDataFromJSONTyped(json, false);
 }
 
 export function ProtectedResourcePrimaryDataFromJSONTyped(json: any, ignoreDiscriminator: boolean): ProtectedResourcePrimaryData {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    resourceIdentifiers: !exists(json, 'resourceIdentifiers') ? undefined : json['resourceIdentifiers'],
-    features: !exists(json, 'features') ? undefined : (json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    type: json['type'] == null ? undefined : json['type'],
+    resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
+    features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function ProtectedResourcePrimaryDataToJSON(value?: ProtectedResourcePrimaryData | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ProtectedResourcePrimaryDataToJSON(json: any): ProtectedResourcePrimaryData {
+  return ProtectedResourcePrimaryDataToJSONTyped(json, false);
+}
+
+export function ProtectedResourcePrimaryDataToJSONTyped(
+  value?: ProtectedResourcePrimaryData | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    clientId: value.clientId,
-    name: value.name,
-    description: value.description,
-    type: value.type,
-    resourceIdentifiers: value.resourceIdentifiers,
-    features: value.features === undefined ? undefined : (value.features as Array<any>).map(ProtectedResourceFeatureToJSON),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    clientId: value['clientId'],
+    name: value['name'],
+    description: value['description'],
+    type: value['type'],
+    resourceIdentifiers: value['resourceIdentifiers'],
+    features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(ProtectedResourceFeatureToJSON),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

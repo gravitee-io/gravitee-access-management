@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -130,33 +130,42 @@ export const PatchSAMLSettingsRequiredPermissionsEnum = {
 export type PatchSAMLSettingsRequiredPermissionsEnum =
   typeof PatchSAMLSettingsRequiredPermissionsEnum[keyof typeof PatchSAMLSettingsRequiredPermissionsEnum];
 
+/**
+ * Check if a given object implements the PatchSAMLSettings interface.
+ */
+export function instanceOfPatchSAMLSettings(value: object): value is PatchSAMLSettings {
+  return true;
+}
+
 export function PatchSAMLSettingsFromJSON(json: any): PatchSAMLSettings {
   return PatchSAMLSettingsFromJSONTyped(json, false);
 }
 
 export function PatchSAMLSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchSAMLSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    entityId: !exists(json, 'entityId') ? undefined : json['entityId'],
-    certificate: !exists(json, 'certificate') ? undefined : json['certificate'],
-    requiredPermissions: !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    entityId: json['entityId'] == null ? undefined : json['entityId'],
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
 
-export function PatchSAMLSettingsToJSON(value?: PatchSAMLSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchSAMLSettingsToJSON(json: any): PatchSAMLSettings {
+  return PatchSAMLSettingsToJSONTyped(json, false);
+}
+
+export function PatchSAMLSettingsToJSONTyped(value?: PatchSAMLSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    enabled: value.enabled,
-    entityId: value.entityId,
-    certificate: value.certificate,
-    requiredPermissions: value.requiredPermissions,
+    enabled: value['enabled'],
+    entityId: value['entityId'],
+    certificate: value['certificate'],
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
   };
 }

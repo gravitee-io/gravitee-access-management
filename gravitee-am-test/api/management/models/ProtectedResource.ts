@@ -25,20 +25,23 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
+import type { ClientSecret } from './ClientSecret';
+import { ClientSecretFromJSON, ClientSecretFromJSONTyped, ClientSecretToJSON, ClientSecretToJSONTyped } from './ClientSecret';
+import type { ProtectedResourceFeature } from './ProtectedResourceFeature';
 import {
-  ApplicationSecretSettings,
-  ApplicationSecretSettingsFromJSON,
-  ApplicationSecretSettingsFromJSONTyped,
-  ApplicationSecretSettingsToJSON,
-} from './ApplicationSecretSettings';
-import { ClientSecret, ClientSecretFromJSON, ClientSecretFromJSONTyped, ClientSecretToJSON } from './ClientSecret';
-import {
-  ProtectedResourceFeature,
   ProtectedResourceFeatureFromJSON,
   ProtectedResourceFeatureFromJSONTyped,
   ProtectedResourceFeatureToJSON,
+  ProtectedResourceFeatureToJSONTyped,
 } from './ProtectedResourceFeature';
+import type { ApplicationSecretSettings } from './ApplicationSecretSettings';
+import {
+  ApplicationSecretSettingsFromJSON,
+  ApplicationSecretSettingsFromJSONTyped,
+  ApplicationSecretSettingsToJSON,
+  ApplicationSecretSettingsToJSONTyped,
+} from './ApplicationSecretSettings';
 
 /**
  *
@@ -128,52 +131,60 @@ export const ProtectedResourceTypeEnum = {
 } as const;
 export type ProtectedResourceTypeEnum = typeof ProtectedResourceTypeEnum[keyof typeof ProtectedResourceTypeEnum];
 
+/**
+ * Check if a given object implements the ProtectedResource interface.
+ */
+export function instanceOfProtectedResource(value: object): value is ProtectedResource {
+  return true;
+}
+
 export function ProtectedResourceFromJSON(json: any): ProtectedResource {
   return ProtectedResourceFromJSONTyped(json, false);
 }
 
 export function ProtectedResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): ProtectedResource {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
-    domainId: !exists(json, 'domainId') ? undefined : json['domainId'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    resourceIdentifiers: !exists(json, 'resourceIdentifiers') ? undefined : json['resourceIdentifiers'],
-    clientSecrets: !exists(json, 'clientSecrets') ? undefined : (json['clientSecrets'] as Array<any>).map(ClientSecretFromJSON),
-    secretSettings: !exists(json, 'secretSettings')
-      ? undefined
-      : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
-    features: !exists(json, 'features') ? undefined : (json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON),
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
+    domainId: json['domainId'] == null ? undefined : json['domainId'],
+    description: json['description'] == null ? undefined : json['description'],
+    type: json['type'] == null ? undefined : json['type'],
+    resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
+    clientSecrets: json['clientSecrets'] == null ? undefined : (json['clientSecrets'] as Array<any>).map(ClientSecretFromJSON),
+    secretSettings:
+      json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
+    features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON),
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function ProtectedResourceToJSON(value?: ProtectedResource | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ProtectedResourceToJSON(json: any): ProtectedResource {
+  return ProtectedResourceToJSONTyped(json, false);
+}
+
+export function ProtectedResourceToJSONTyped(value?: ProtectedResource | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    clientId: value.clientId,
-    domainId: value.domainId,
-    description: value.description,
-    type: value.type,
-    resourceIdentifiers: value.resourceIdentifiers,
-    clientSecrets: value.clientSecrets === undefined ? undefined : (value.clientSecrets as Array<any>).map(ClientSecretToJSON),
+    id: value['id'],
+    name: value['name'],
+    clientId: value['clientId'],
+    domainId: value['domainId'],
+    description: value['description'],
+    type: value['type'],
+    resourceIdentifiers: value['resourceIdentifiers'],
+    clientSecrets: value['clientSecrets'] == null ? undefined : (value['clientSecrets'] as Array<any>).map(ClientSecretToJSON),
     secretSettings:
-      value.secretSettings === undefined ? undefined : (value.secretSettings as Array<any>).map(ApplicationSecretSettingsToJSON),
-    features: value.features === undefined ? undefined : (value.features as Array<any>).map(ProtectedResourceFeatureToJSON),
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+      value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
+    features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(ProtectedResourceFeatureToJSON),
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

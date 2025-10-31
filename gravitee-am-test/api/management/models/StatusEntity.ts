@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,27 +40,36 @@ export interface StatusEntity {
   enabled?: boolean;
 }
 
+/**
+ * Check if a given object implements the StatusEntity interface.
+ */
+export function instanceOfStatusEntity(value: object): value is StatusEntity {
+  return true;
+}
+
 export function StatusEntityFromJSON(json: any): StatusEntity {
   return StatusEntityFromJSONTyped(json, false);
 }
 
 export function StatusEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): StatusEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
   };
 }
 
-export function StatusEntityToJSON(value?: StatusEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function StatusEntityToJSON(json: any): StatusEntity {
+  return StatusEntityToJSONTyped(json, false);
+}
+
+export function StatusEntityToJSONTyped(value?: StatusEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    enabled: value.enabled,
+    enabled: value['enabled'],
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -88,39 +88,48 @@ export const FilteredApplicationTypeEnum = {
 } as const;
 export type FilteredApplicationTypeEnum = typeof FilteredApplicationTypeEnum[keyof typeof FilteredApplicationTypeEnum];
 
+/**
+ * Check if a given object implements the FilteredApplication interface.
+ */
+export function instanceOfFilteredApplication(value: object): value is FilteredApplication {
+  return true;
+}
+
 export function FilteredApplicationFromJSON(json: any): FilteredApplication {
   return FilteredApplicationFromJSONTyped(json, false);
 }
 
 export function FilteredApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean): FilteredApplication {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    template: !exists(json, 'template') ? undefined : json['template'],
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    type: json['type'] == null ? undefined : json['type'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    template: json['template'] == null ? undefined : json['template'],
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function FilteredApplicationToJSON(value?: FilteredApplication | null): any {
-  if (value === undefined) {
-    return undefined;
+export function FilteredApplicationToJSON(json: any): FilteredApplication {
+  return FilteredApplicationToJSONTyped(json, false);
+}
+
+export function FilteredApplicationToJSONTyped(value?: FilteredApplication | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    description: value.description,
-    type: value.type,
-    enabled: value.enabled,
-    template: value.template,
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    name: value['name'],
+    description: value['description'],
+    type: value['type'],
+    enabled: value['enabled'],
+    template: value['template'],
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

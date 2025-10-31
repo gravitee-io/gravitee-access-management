@@ -129,7 +129,6 @@ export * from './NewForm';
 export * from './NewGroup';
 export * from './NewIdentityProvider';
 export * from './NewMcpTool';
-export * from './NewMcpToolAllOf';
 export * from './NewMembership';
 export * from './NewOrganizationUser';
 export * from './NewPasswordPolicy';

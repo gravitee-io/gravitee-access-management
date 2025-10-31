@@ -25,11 +25,20 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { AuditAccessPoint, AuditAccessPointFromJSON, AuditAccessPointFromJSONTyped, AuditAccessPointToJSON } from './AuditAccessPoint';
-import { AuditEntity, AuditEntityFromJSON, AuditEntityFromJSONTyped, AuditEntityToJSON } from './AuditEntity';
-import { AuditOutcome, AuditOutcomeFromJSON, AuditOutcomeFromJSONTyped, AuditOutcomeToJSON } from './AuditOutcome';
-import { Reference, ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON } from './Reference';
+import { mapValues } from '../runtime';
+import type { AuditEntity } from './AuditEntity';
+import { AuditEntityFromJSON, AuditEntityFromJSONTyped, AuditEntityToJSON, AuditEntityToJSONTyped } from './AuditEntity';
+import type { Reference } from './Reference';
+import { ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON, ReferenceToJSONTyped } from './Reference';
+import type { AuditOutcome } from './AuditOutcome';
+import { AuditOutcomeFromJSON, AuditOutcomeFromJSONTyped, AuditOutcomeToJSON, AuditOutcomeToJSONTyped } from './AuditOutcome';
+import type { AuditAccessPoint } from './AuditAccessPoint';
+import {
+  AuditAccessPointFromJSON,
+  AuditAccessPointFromJSONTyped,
+  AuditAccessPointToJSON,
+  AuditAccessPointToJSONTyped,
+} from './AuditAccessPoint';
 
 /**
  *
@@ -117,47 +126,56 @@ export const AuditReferenceTypeEnum = {
 } as const;
 export type AuditReferenceTypeEnum = typeof AuditReferenceTypeEnum[keyof typeof AuditReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the Audit interface.
+ */
+export function instanceOfAudit(value: object): value is Audit {
+  return true;
+}
+
 export function AuditFromJSON(json: any): Audit {
   return AuditFromJSONTyped(json, false);
 }
 
 export function AuditFromJSONTyped(json: any, ignoreDiscriminator: boolean): Audit {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    transactionId: !exists(json, 'transactionId') ? undefined : json['transactionId'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    accessPoint: !exists(json, 'accessPoint') ? undefined : AuditAccessPointFromJSON(json['accessPoint']),
-    actor: !exists(json, 'actor') ? undefined : AuditEntityFromJSON(json['actor']),
-    target: !exists(json, 'target') ? undefined : AuditEntityFromJSON(json['target']),
-    outcome: !exists(json, 'outcome') ? undefined : AuditOutcomeFromJSON(json['outcome']),
-    timestamp: !exists(json, 'timestamp') ? undefined : new Date(json['timestamp']),
-    reference: !exists(json, 'reference') ? undefined : ReferenceFromJSON(json['reference']),
+    id: json['id'] == null ? undefined : json['id'],
+    transactionId: json['transactionId'] == null ? undefined : json['transactionId'],
+    type: json['type'] == null ? undefined : json['type'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    accessPoint: json['accessPoint'] == null ? undefined : AuditAccessPointFromJSON(json['accessPoint']),
+    actor: json['actor'] == null ? undefined : AuditEntityFromJSON(json['actor']),
+    target: json['target'] == null ? undefined : AuditEntityFromJSON(json['target']),
+    outcome: json['outcome'] == null ? undefined : AuditOutcomeFromJSON(json['outcome']),
+    timestamp: json['timestamp'] == null ? undefined : new Date(json['timestamp']),
+    reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
   };
 }
 
-export function AuditToJSON(value?: Audit | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AuditToJSON(json: any): Audit {
+  return AuditToJSONTyped(json, false);
+}
+
+export function AuditToJSONTyped(value?: Audit | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    transactionId: value.transactionId,
-    type: value.type,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    accessPoint: AuditAccessPointToJSON(value.accessPoint),
-    actor: AuditEntityToJSON(value.actor),
-    target: AuditEntityToJSON(value.target),
-    outcome: AuditOutcomeToJSON(value.outcome),
-    timestamp: value.timestamp === undefined ? undefined : value.timestamp.toISOString(),
-    reference: ReferenceToJSON(value.reference),
+    id: value['id'],
+    transactionId: value['transactionId'],
+    type: value['type'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    accessPoint: AuditAccessPointToJSON(value['accessPoint']),
+    actor: AuditEntityToJSON(value['actor']),
+    target: AuditEntityToJSON(value['target']),
+    outcome: AuditOutcomeToJSON(value['outcome']),
+    timestamp: value['timestamp'] == null ? value['timestamp'] : value['timestamp'].toISOString(),
+    reference: ReferenceToJSON(value['reference']),
   };
 }

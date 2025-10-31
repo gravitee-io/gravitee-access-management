@@ -25,12 +25,13 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
+import type { PatchApplicationFactorSettings } from './PatchApplicationFactorSettings';
 import {
-  PatchApplicationFactorSettings,
   PatchApplicationFactorSettingsFromJSON,
   PatchApplicationFactorSettingsFromJSONTyped,
   PatchApplicationFactorSettingsToJSON,
+  PatchApplicationFactorSettingsToJSONTyped,
 } from './PatchApplicationFactorSettings';
 
 /**
@@ -53,34 +54,44 @@ export interface PatchFactorSettings {
   applicationFactors?: Array<PatchApplicationFactorSettings>;
 }
 
+/**
+ * Check if a given object implements the PatchFactorSettings interface.
+ */
+export function instanceOfPatchFactorSettings(value: object): value is PatchFactorSettings {
+  return true;
+}
+
 export function PatchFactorSettingsFromJSON(json: any): PatchFactorSettings {
   return PatchFactorSettingsFromJSONTyped(json, false);
 }
 
 export function PatchFactorSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchFactorSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    defaultFactorId: !exists(json, 'defaultFactorId') ? undefined : json['defaultFactorId'],
-    applicationFactors: !exists(json, 'applicationFactors')
-      ? undefined
-      : (json['applicationFactors'] as Array<any>).map(PatchApplicationFactorSettingsFromJSON),
+    defaultFactorId: json['defaultFactorId'] == null ? undefined : json['defaultFactorId'],
+    applicationFactors:
+      json['applicationFactors'] == null
+        ? undefined
+        : (json['applicationFactors'] as Array<any>).map(PatchApplicationFactorSettingsFromJSON),
   };
 }
 
-export function PatchFactorSettingsToJSON(value?: PatchFactorSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchFactorSettingsToJSON(json: any): PatchFactorSettings {
+  return PatchFactorSettingsToJSONTyped(json, false);
+}
+
+export function PatchFactorSettingsToJSONTyped(value?: PatchFactorSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    defaultFactorId: value.defaultFactorId,
+    defaultFactorId: value['defaultFactorId'],
     applicationFactors:
-      value.applicationFactors === undefined
+      value['applicationFactors'] == null
         ? undefined
-        : (value.applicationFactors as Array<any>).map(PatchApplicationFactorSettingsToJSON),
+        : (value['applicationFactors'] as Array<any>).map(PatchApplicationFactorSettingsToJSON),
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,33 +58,42 @@ export interface ProtectedResourceSecret {
   clientSecret?: string;
 }
 
+/**
+ * Check if a given object implements the ProtectedResourceSecret interface.
+ */
+export function instanceOfProtectedResourceSecret(value: object): value is ProtectedResourceSecret {
+  return true;
+}
+
 export function ProtectedResourceSecretFromJSON(json: any): ProtectedResourceSecret {
   return ProtectedResourceSecretFromJSONTyped(json, false);
 }
 
 export function ProtectedResourceSecretFromJSONTyped(json: any, ignoreDiscriminator: boolean): ProtectedResourceSecret {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
-    clientSecret: !exists(json, 'clientSecret') ? undefined : json['clientSecret'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
+    clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
   };
 }
 
-export function ProtectedResourceSecretToJSON(value?: ProtectedResourceSecret | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ProtectedResourceSecretToJSON(json: any): ProtectedResourceSecret {
+  return ProtectedResourceSecretToJSONTyped(json, false);
+}
+
+export function ProtectedResourceSecretToJSONTyped(value?: ProtectedResourceSecret | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    clientId: value.clientId,
-    clientSecret: value.clientSecret,
+    id: value['id'],
+    name: value['name'],
+    clientId: value['clientId'],
+    clientSecret: value['clientSecret'],
   };
 }

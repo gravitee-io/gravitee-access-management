@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,33 +58,42 @@ export interface PasswordPolicyEntity {
   idpsNames?: Array<string>;
 }
 
+/**
+ * Check if a given object implements the PasswordPolicyEntity interface.
+ */
+export function instanceOfPasswordPolicyEntity(value: object): value is PasswordPolicyEntity {
+  return true;
+}
+
 export function PasswordPolicyEntityFromJSON(json: any): PasswordPolicyEntity {
   return PasswordPolicyEntityFromJSONTyped(json, false);
 }
 
 export function PasswordPolicyEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): PasswordPolicyEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    isDefault: !exists(json, 'isDefault') ? undefined : json['isDefault'],
-    idpsNames: !exists(json, 'idpsNames') ? undefined : json['idpsNames'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    isDefault: json['isDefault'] == null ? undefined : json['isDefault'],
+    idpsNames: json['idpsNames'] == null ? undefined : json['idpsNames'],
   };
 }
 
-export function PasswordPolicyEntityToJSON(value?: PasswordPolicyEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PasswordPolicyEntityToJSON(json: any): PasswordPolicyEntity {
+  return PasswordPolicyEntityToJSONTyped(json, false);
+}
+
+export function PasswordPolicyEntityToJSONTyped(value?: PasswordPolicyEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    isDefault: value.isDefault,
-    idpsNames: value.idpsNames,
+    id: value['id'],
+    name: value['name'],
+    isDefault: value['isDefault'],
+    idpsNames: value['idpsNames'],
   };
 }

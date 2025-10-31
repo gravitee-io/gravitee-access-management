@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,33 +58,45 @@ export interface NewDeviceIdentifier {
   configuration: string;
 }
 
+/**
+ * Check if a given object implements the NewDeviceIdentifier interface.
+ */
+export function instanceOfNewDeviceIdentifier(value: object): value is NewDeviceIdentifier {
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function NewDeviceIdentifierFromJSON(json: any): NewDeviceIdentifier {
   return NewDeviceIdentifierFromJSONTyped(json, false);
 }
 
 export function NewDeviceIdentifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewDeviceIdentifier {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
+    id: json['id'] == null ? undefined : json['id'],
     type: json['type'],
     name: json['name'],
     configuration: json['configuration'],
   };
 }
 
-export function NewDeviceIdentifierToJSON(value?: NewDeviceIdentifier | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewDeviceIdentifierToJSON(json: any): NewDeviceIdentifier {
+  return NewDeviceIdentifierToJSONTyped(json, false);
+}
+
+export function NewDeviceIdentifierToJSONTyped(value?: NewDeviceIdentifier | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    type: value.type,
-    name: value.name,
-    configuration: value.configuration,
+    id: value['id'],
+    type: value['type'],
+    name: value['name'],
+    configuration: value['configuration'],
   };
 }
