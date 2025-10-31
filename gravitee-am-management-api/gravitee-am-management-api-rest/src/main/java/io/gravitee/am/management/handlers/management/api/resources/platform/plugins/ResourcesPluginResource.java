@@ -65,8 +65,6 @@ public class ResourcesPluginResource {
     }
 
     @Path("{resource}")
-    @Operation(summary = "Get a resource plugin",
-            operationId = "getResourcePlugin")
     public ResourcePluginResource getResourcePluginResource() {
         return resourceContext.getResource(ResourcePluginResource.class);
     }

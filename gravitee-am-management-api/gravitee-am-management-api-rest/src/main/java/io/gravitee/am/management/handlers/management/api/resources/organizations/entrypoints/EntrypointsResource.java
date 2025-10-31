@@ -113,7 +113,6 @@ public class EntrypointsResource extends AbstractResource {
     }
 
     @Path("{entrypointId}")
-    @Operation(summary = "Get an entrypoint by its identifier", operationId = "getEntrypoint")
     public EntrypointResource getEntrypointResource() {
         return resourceContext.getResource(EntrypointResource.class);
     }

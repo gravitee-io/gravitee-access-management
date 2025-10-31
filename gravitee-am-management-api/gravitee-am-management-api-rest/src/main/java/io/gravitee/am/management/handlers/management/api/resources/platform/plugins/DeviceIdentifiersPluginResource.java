@@ -63,8 +63,6 @@ public class DeviceIdentifiersPluginResource {
 
     @Path("{deviceIdentifier}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a device identifier plugin",
-            operationId = "getDeviceIdentifierPlugin")
     public DeviceIdentifierPluginResource getFactorPluginResource() {
         return resourceContext.getResource(DeviceIdentifierPluginResource.class);
     }

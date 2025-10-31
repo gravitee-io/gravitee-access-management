@@ -108,9 +108,6 @@ public class FormsResource extends AbstractResource {
     }
 
     @Path("{form}")
-    @Operation(
-            operationId = "getOrganizationForm",
-            summary = "Get a form")
     public FormResource getFormResource() {
         return resourceContext.getResource(FormResource.class);
     }

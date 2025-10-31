@@ -132,7 +132,6 @@ public class IdentityProvidersResource extends AbstractResource {
     }
 
     @Path("{identity}")
-    @Operation(summary = "Get an identity provider by its identifier", operationId = "getIdentityProvider")
     public IdentityProviderResource getIdentityProviderResource() {
         return resourceContext.getResource(IdentityProviderResource.class);
     }

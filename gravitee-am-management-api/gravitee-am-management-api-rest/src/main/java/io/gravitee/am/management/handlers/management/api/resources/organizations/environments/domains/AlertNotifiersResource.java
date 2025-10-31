@@ -122,9 +122,6 @@ public class AlertNotifiersResource extends AbstractResource {
     }
 
     @Path("/{notifierId}")
-    @Operation(
-            operationId = "getAlertNotifier",
-            summary = "Get an alert notifier")
     public AlertNotifierResource getApplicationResource() {
         return resourceContext.getResource(AlertNotifierResource.class);
     }

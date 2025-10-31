@@ -102,13 +102,11 @@ public class CurrentUserResource extends AbstractResource {
     }
 
     @Path("/newsletter")
-    @Operation(summary = "Get the newsletter resource", operationId = "getNewsletter")
     public NewsletterResource getNewsletterResource() {
         return resourceContext.getResource(NewsletterResource.class);
     }
 
     @Path("/notifications")
-    @Operation(summary = "Get the notifications resource", operationId = "getUserNotifications")
     public UserNotificationsResource getUserNotificationsResource() {
         return resourceContext.getResource(UserNotificationsResource.class);
     }

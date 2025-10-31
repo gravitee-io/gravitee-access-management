@@ -108,9 +108,6 @@ public class AuditsResource extends AbstractResource {
     }
 
     @Path("{audit}")
-    @Operation(
-            operationId = "getOrganizationAudit",
-            summary = "Get an audit log for the organization")
     public AuditResource getAuditResource() {
         return resourceContext.getResource(AuditResource.class);
     }

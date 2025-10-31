@@ -120,7 +120,6 @@ public class MembersResource extends AbstractResource {
     }
 
     @Path("{member}")
-    @Operation(summary = "Get a member by its identifier", operationId = "getMember")
     public MemberResource getMemberResource() {
         return resourceContext.getResource(MemberResource.class);
     }

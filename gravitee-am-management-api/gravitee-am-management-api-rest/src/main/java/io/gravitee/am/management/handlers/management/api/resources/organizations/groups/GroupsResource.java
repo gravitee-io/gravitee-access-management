@@ -118,7 +118,6 @@ public class GroupsResource extends AbstractResource {
     }
 
     @Path("{group}")
-    @Operation(summary = "Get a group by its identifier", operationId = "getGroup")
     public GroupResource getGroupResource() {
         return resourceContext.getResource(GroupResource.class);
     }

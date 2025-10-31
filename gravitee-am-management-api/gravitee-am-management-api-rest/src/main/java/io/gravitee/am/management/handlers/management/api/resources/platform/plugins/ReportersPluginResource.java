@@ -61,8 +61,6 @@ public class ReportersPluginResource {
     }
 
     @Path("{reporter}")
-    @Operation(summary = "Get a reporter plugin",
-            operationId = "getReporterPlugin")
     public ReporterPluginResource getReporterResource() {
         return resourceContext.getResource(ReporterPluginResource.class);
     }

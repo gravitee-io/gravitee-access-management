@@ -61,8 +61,6 @@ public class ExtensionGrantsPluginResource {
     }
 
     @Path("{extensionGrant}")
-    @Operation(summary = "Get an extension grant plugin",
-            operationId = "getExtensionGrantPlugin")
     public ExtensionGrantPluginResource getTokenGranterPluginResource() {
         return resourceContext.getResource(ExtensionGrantPluginResource.class);
     }

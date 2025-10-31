@@ -115,7 +115,6 @@ public class TagsResource extends AbstractResource {
     }
 
     @Path("{tag}")
-    @Operation(summary = "Get a sharding tag by its identifier", operationId = "getShardingTag")
     public TagResource getTagResource() {
         return resourceContext.getResource(TagResource.class);
     }
