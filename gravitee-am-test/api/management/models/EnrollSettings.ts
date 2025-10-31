@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -86,39 +86,48 @@ export const EnrollSettingsTypeEnum = {
 } as const;
 export type EnrollSettingsTypeEnum = typeof EnrollSettingsTypeEnum[keyof typeof EnrollSettingsTypeEnum];
 
+/**
+ * Check if a given object implements the EnrollSettings interface.
+ */
+export function instanceOfEnrollSettings(value: object): value is EnrollSettings {
+  return true;
+}
+
 export function EnrollSettingsFromJSON(json: any): EnrollSettings {
   return EnrollSettingsFromJSONTyped(json, false);
 }
 
 export function EnrollSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): EnrollSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    active: !exists(json, 'active') ? undefined : json['active'],
-    forceEnrollment: !exists(json, 'forceEnrollment') ? undefined : json['forceEnrollment'],
-    enrollmentRule: !exists(json, 'enrollmentRule') ? undefined : json['enrollmentRule'],
-    enrollmentSkipActive: !exists(json, 'enrollmentSkipActive') ? undefined : json['enrollmentSkipActive'],
-    enrollmentSkipRule: !exists(json, 'enrollmentSkipRule') ? undefined : json['enrollmentSkipRule'],
-    skipTimeSeconds: !exists(json, 'skipTimeSeconds') ? undefined : json['skipTimeSeconds'],
-    type: !exists(json, 'type') ? undefined : json['type'],
+    active: json['active'] == null ? undefined : json['active'],
+    forceEnrollment: json['forceEnrollment'] == null ? undefined : json['forceEnrollment'],
+    enrollmentRule: json['enrollmentRule'] == null ? undefined : json['enrollmentRule'],
+    enrollmentSkipActive: json['enrollmentSkipActive'] == null ? undefined : json['enrollmentSkipActive'],
+    enrollmentSkipRule: json['enrollmentSkipRule'] == null ? undefined : json['enrollmentSkipRule'],
+    skipTimeSeconds: json['skipTimeSeconds'] == null ? undefined : json['skipTimeSeconds'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
-export function EnrollSettingsToJSON(value?: EnrollSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function EnrollSettingsToJSON(json: any): EnrollSettings {
+  return EnrollSettingsToJSONTyped(json, false);
+}
+
+export function EnrollSettingsToJSONTyped(value?: EnrollSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    active: value.active,
-    forceEnrollment: value.forceEnrollment,
-    enrollmentRule: value.enrollmentRule,
-    enrollmentSkipActive: value.enrollmentSkipActive,
-    enrollmentSkipRule: value.enrollmentSkipRule,
-    skipTimeSeconds: value.skipTimeSeconds,
-    type: value.type,
+    active: value['active'],
+    forceEnrollment: value['forceEnrollment'],
+    enrollmentRule: value['enrollmentRule'],
+    enrollmentSkipActive: value['enrollmentSkipActive'],
+    enrollmentSkipRule: value['enrollmentSkipRule'],
+    skipTimeSeconds: value['skipTimeSeconds'],
+    type: value['type'],
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,12 +40,20 @@ export interface PasswordValue {
   password: string;
 }
 
+/**
+ * Check if a given object implements the PasswordValue interface.
+ */
+export function instanceOfPasswordValue(value: object): value is PasswordValue {
+  if (!('password' in value) || value['password'] === undefined) return false;
+  return true;
+}
+
 export function PasswordValueFromJSON(json: any): PasswordValue {
   return PasswordValueFromJSONTyped(json, false);
 }
 
 export function PasswordValueFromJSONTyped(json: any, ignoreDiscriminator: boolean): PasswordValue {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
@@ -53,14 +61,16 @@ export function PasswordValueFromJSONTyped(json: any, ignoreDiscriminator: boole
   };
 }
 
-export function PasswordValueToJSON(value?: PasswordValue | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PasswordValueToJSON(json: any): PasswordValue {
+  return PasswordValueToJSONTyped(json, false);
+}
+
+export function PasswordValueToJSONTyped(value?: PasswordValue | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    password: value.password,
+    password: value['password'],
   };
 }

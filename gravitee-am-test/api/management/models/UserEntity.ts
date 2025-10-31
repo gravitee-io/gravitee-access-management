@@ -25,15 +25,28 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { Address, AddressFromJSON, AddressFromJSONTyped, AddressToJSON } from './Address';
-import { ApplicationEntity, ApplicationEntityFromJSON, ApplicationEntityFromJSONTyped, ApplicationEntityToJSON } from './ApplicationEntity';
-import { Attribute, AttributeFromJSON, AttributeFromJSONTyped, AttributeToJSON } from './Attribute';
-import { Certificate, CertificateFromJSON, CertificateFromJSONTyped, CertificateToJSON } from './Certificate';
-import { EnrolledFactor, EnrolledFactorFromJSON, EnrolledFactorFromJSONTyped, EnrolledFactorToJSON } from './EnrolledFactor';
-import { Role, RoleFromJSON, RoleFromJSONTyped, RoleToJSON } from './Role';
-import { UserId, UserIdFromJSON, UserIdFromJSONTyped, UserIdToJSON } from './UserId';
-import { UserIdentity, UserIdentityFromJSON, UserIdentityFromJSONTyped, UserIdentityToJSON } from './UserIdentity';
+import { mapValues } from '../runtime';
+import type { Role } from './Role';
+import { RoleFromJSON, RoleFromJSONTyped, RoleToJSON, RoleToJSONTyped } from './Role';
+import type { Address } from './Address';
+import { AddressFromJSON, AddressFromJSONTyped, AddressToJSON, AddressToJSONTyped } from './Address';
+import type { Attribute } from './Attribute';
+import { AttributeFromJSON, AttributeFromJSONTyped, AttributeToJSON, AttributeToJSONTyped } from './Attribute';
+import type { ApplicationEntity } from './ApplicationEntity';
+import {
+  ApplicationEntityFromJSON,
+  ApplicationEntityFromJSONTyped,
+  ApplicationEntityToJSON,
+  ApplicationEntityToJSONTyped,
+} from './ApplicationEntity';
+import type { EnrolledFactor } from './EnrolledFactor';
+import { EnrolledFactorFromJSON, EnrolledFactorFromJSONTyped, EnrolledFactorToJSON, EnrolledFactorToJSONTyped } from './EnrolledFactor';
+import type { UserId } from './UserId';
+import { UserIdFromJSON, UserIdFromJSONTyped, UserIdToJSON, UserIdToJSONTyped } from './UserId';
+import type { UserIdentity } from './UserIdentity';
+import { UserIdentityFromJSON, UserIdentityFromJSONTyped, UserIdentityToJSON, UserIdentityToJSONTyped } from './UserIdentity';
+import type { Certificate } from './Certificate';
+import { CertificateFromJSON, CertificateFromJSONTyped, CertificateToJSON, CertificateToJSONTyped } from './Certificate';
 
 /**
  *
@@ -409,10 +422,10 @@ export interface UserEntity {
   zoneInfo?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {UserId}
    * @memberof UserEntity
    */
-  lastIdentityInformation?: { [key: string]: any };
+  fullId?: UserId;
   /**
    *
    * @type {string}
@@ -457,16 +470,16 @@ export interface UserEntity {
   disabled?: boolean;
   /**
    *
-   * @type {UserId}
+   * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
-  fullId?: UserId;
+  identitiesAsMap?: { [key: string]: any };
   /**
    *
    * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
-  identitiesAsMap?: { [key: string]: any };
+  lastIdentityInformation?: { [key: string]: any };
 }
 
 /**
@@ -481,167 +494,178 @@ export const UserEntityReferenceTypeEnum = {
 } as const;
 export type UserEntityReferenceTypeEnum = typeof UserEntityReferenceTypeEnum[keyof typeof UserEntityReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the UserEntity interface.
+ */
+export function instanceOfUserEntity(value: object): value is UserEntity {
+  return true;
+}
+
 export function UserEntityFromJSON(json: any): UserEntity {
   return UserEntityFromJSONTyped(json, false);
 }
 
 export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    externalId: !exists(json, 'externalId') ? undefined : json['externalId'],
-    username: !exists(json, 'username') ? undefined : json['username'],
-    password: !exists(json, 'password') ? undefined : json['password'],
-    email: !exists(json, 'email') ? undefined : json['email'],
-    displayName: !exists(json, 'displayName') ? undefined : json['displayName'],
-    nickName: !exists(json, 'nickName') ? undefined : json['nickName'],
-    firstName: !exists(json, 'firstName') ? undefined : json['firstName'],
-    lastName: !exists(json, 'lastName') ? undefined : json['lastName'],
-    title: !exists(json, 'title') ? undefined : json['title'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    preferredLanguage: !exists(json, 'preferredLanguage') ? undefined : json['preferredLanguage'],
-    picture: !exists(json, 'picture') ? undefined : json['picture'],
-    emails: !exists(json, 'emails') ? undefined : (json['emails'] as Array<any>).map(AttributeFromJSON),
-    phoneNumbers: !exists(json, 'phoneNumbers') ? undefined : (json['phoneNumbers'] as Array<any>).map(AttributeFromJSON),
-    ims: !exists(json, 'ims') ? undefined : (json['ims'] as Array<any>).map(AttributeFromJSON),
-    photos: !exists(json, 'photos') ? undefined : (json['photos'] as Array<any>).map(AttributeFromJSON),
-    entitlements: !exists(json, 'entitlements') ? undefined : json['entitlements'],
-    addresses: !exists(json, 'addresses') ? undefined : (json['addresses'] as Array<any>).map(AddressFromJSON),
-    roles: !exists(json, 'roles') ? undefined : json['roles'],
-    dynamicRoles: !exists(json, 'dynamicRoles') ? undefined : json['dynamicRoles'],
-    dynamicGroups: !exists(json, 'dynamicGroups') ? undefined : json['dynamicGroups'],
-    rolesPermissions: !exists(json, 'rolesPermissions') ? undefined : new Set((json['rolesPermissions'] as Array<any>).map(RoleFromJSON)),
-    groups: !exists(json, 'groups') ? undefined : json['groups'],
-    x509Certificates: !exists(json, 'x509Certificates') ? undefined : (json['x509Certificates'] as Array<any>).map(CertificateFromJSON),
-    accountNonExpired: !exists(json, 'accountNonExpired') ? undefined : json['accountNonExpired'],
-    accountNonLocked: !exists(json, 'accountNonLocked') ? undefined : json['accountNonLocked'],
-    accountLockedAt: !exists(json, 'accountLockedAt') ? undefined : new Date(json['accountLockedAt']),
-    accountLockedUntil: !exists(json, 'accountLockedUntil') ? undefined : new Date(json['accountLockedUntil']),
-    credentialsNonExpired: !exists(json, 'credentialsNonExpired') ? undefined : json['credentialsNonExpired'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    internal: !exists(json, 'internal') ? undefined : json['internal'],
-    preRegistration: !exists(json, 'preRegistration') ? undefined : json['preRegistration'],
-    registrationCompleted: !exists(json, 'registrationCompleted') ? undefined : json['registrationCompleted'],
-    newsletter: !exists(json, 'newsletter') ? undefined : json['newsletter'],
-    registrationUserUri: !exists(json, 'registrationUserUri') ? undefined : json['registrationUserUri'],
-    registrationAccessToken: !exists(json, 'registrationAccessToken') ? undefined : json['registrationAccessToken'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    source: !exists(json, 'source') ? undefined : json['source'],
-    client: !exists(json, 'client') ? undefined : json['client'],
-    loginsCount: !exists(json, 'loginsCount') ? undefined : json['loginsCount'],
-    factors: !exists(json, 'factors') ? undefined : (json['factors'] as Array<any>).map(EnrolledFactorFromJSON),
-    identities: !exists(json, 'identities') ? undefined : (json['identities'] as Array<any>).map(UserIdentityFromJSON),
-    lastIdentityUsed: !exists(json, 'lastIdentityUsed') ? undefined : json['lastIdentityUsed'],
-    additionalInformation: !exists(json, 'additionalInformation') ? undefined : json['additionalInformation'],
-    loggedAt: !exists(json, 'loggedAt') ? undefined : new Date(json['loggedAt']),
-    lastLoginWithCredentials: !exists(json, 'lastLoginWithCredentials') ? undefined : new Date(json['lastLoginWithCredentials']),
-    lastPasswordReset: !exists(json, 'lastPasswordReset') ? undefined : new Date(json['lastPasswordReset']),
-    lastUsernameReset: !exists(json, 'lastUsernameReset') ? undefined : new Date(json['lastUsernameReset']),
-    lastLogoutAt: !exists(json, 'lastLogoutAt') ? undefined : new Date(json['lastLogoutAt']),
-    mfaEnrollmentSkippedAt: !exists(json, 'mfaEnrollmentSkippedAt') ? undefined : new Date(json['mfaEnrollmentSkippedAt']),
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
-    forceResetPassword: !exists(json, 'forceResetPassword') ? undefined : json['forceResetPassword'],
-    serviceAccount: !exists(json, 'serviceAccount') ? undefined : json['serviceAccount'],
-    applicationEntity: !exists(json, 'applicationEntity') ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
-    sourceId: !exists(json, 'sourceId') ? undefined : json['sourceId'],
-    address: !exists(json, 'address') ? undefined : json['address'],
-    locale: !exists(json, 'locale') ? undefined : json['locale'],
-    zoneInfo: !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
-    lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
-    middleName: !exists(json, 'middleName') ? undefined : json['middleName'],
-    inactive: !exists(json, 'inactive') ? undefined : json['inactive'],
-    profile: !exists(json, 'profile') ? undefined : json['profile'],
-    website: !exists(json, 'website') ? undefined : json['website'],
-    birthdate: !exists(json, 'birthdate') ? undefined : json['birthdate'],
-    phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
-    disabled: !exists(json, 'disabled') ? undefined : json['disabled'],
-    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
-    identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
+    id: json['id'] == null ? undefined : json['id'],
+    externalId: json['externalId'] == null ? undefined : json['externalId'],
+    username: json['username'] == null ? undefined : json['username'],
+    password: json['password'] == null ? undefined : json['password'],
+    email: json['email'] == null ? undefined : json['email'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    nickName: json['nickName'] == null ? undefined : json['nickName'],
+    firstName: json['firstName'] == null ? undefined : json['firstName'],
+    lastName: json['lastName'] == null ? undefined : json['lastName'],
+    title: json['title'] == null ? undefined : json['title'],
+    type: json['type'] == null ? undefined : json['type'],
+    preferredLanguage: json['preferredLanguage'] == null ? undefined : json['preferredLanguage'],
+    picture: json['picture'] == null ? undefined : json['picture'],
+    emails: json['emails'] == null ? undefined : (json['emails'] as Array<any>).map(AttributeFromJSON),
+    phoneNumbers: json['phoneNumbers'] == null ? undefined : (json['phoneNumbers'] as Array<any>).map(AttributeFromJSON),
+    ims: json['ims'] == null ? undefined : (json['ims'] as Array<any>).map(AttributeFromJSON),
+    photos: json['photos'] == null ? undefined : (json['photos'] as Array<any>).map(AttributeFromJSON),
+    entitlements: json['entitlements'] == null ? undefined : json['entitlements'],
+    addresses: json['addresses'] == null ? undefined : (json['addresses'] as Array<any>).map(AddressFromJSON),
+    roles: json['roles'] == null ? undefined : json['roles'],
+    dynamicRoles: json['dynamicRoles'] == null ? undefined : json['dynamicRoles'],
+    dynamicGroups: json['dynamicGroups'] == null ? undefined : json['dynamicGroups'],
+    rolesPermissions: json['rolesPermissions'] == null ? undefined : new Set((json['rolesPermissions'] as Array<any>).map(RoleFromJSON)),
+    groups: json['groups'] == null ? undefined : json['groups'],
+    x509Certificates: json['x509Certificates'] == null ? undefined : (json['x509Certificates'] as Array<any>).map(CertificateFromJSON),
+    accountNonExpired: json['accountNonExpired'] == null ? undefined : json['accountNonExpired'],
+    accountNonLocked: json['accountNonLocked'] == null ? undefined : json['accountNonLocked'],
+    accountLockedAt: json['accountLockedAt'] == null ? undefined : new Date(json['accountLockedAt']),
+    accountLockedUntil: json['accountLockedUntil'] == null ? undefined : new Date(json['accountLockedUntil']),
+    credentialsNonExpired: json['credentialsNonExpired'] == null ? undefined : json['credentialsNonExpired'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    internal: json['internal'] == null ? undefined : json['internal'],
+    preRegistration: json['preRegistration'] == null ? undefined : json['preRegistration'],
+    registrationCompleted: json['registrationCompleted'] == null ? undefined : json['registrationCompleted'],
+    newsletter: json['newsletter'] == null ? undefined : json['newsletter'],
+    registrationUserUri: json['registrationUserUri'] == null ? undefined : json['registrationUserUri'],
+    registrationAccessToken: json['registrationAccessToken'] == null ? undefined : json['registrationAccessToken'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    source: json['source'] == null ? undefined : json['source'],
+    client: json['client'] == null ? undefined : json['client'],
+    loginsCount: json['loginsCount'] == null ? undefined : json['loginsCount'],
+    factors: json['factors'] == null ? undefined : (json['factors'] as Array<any>).map(EnrolledFactorFromJSON),
+    identities: json['identities'] == null ? undefined : (json['identities'] as Array<any>).map(UserIdentityFromJSON),
+    lastIdentityUsed: json['lastIdentityUsed'] == null ? undefined : json['lastIdentityUsed'],
+    additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
+    loggedAt: json['loggedAt'] == null ? undefined : new Date(json['loggedAt']),
+    lastLoginWithCredentials: json['lastLoginWithCredentials'] == null ? undefined : new Date(json['lastLoginWithCredentials']),
+    lastPasswordReset: json['lastPasswordReset'] == null ? undefined : new Date(json['lastPasswordReset']),
+    lastUsernameReset: json['lastUsernameReset'] == null ? undefined : new Date(json['lastUsernameReset']),
+    lastLogoutAt: json['lastLogoutAt'] == null ? undefined : new Date(json['lastLogoutAt']),
+    mfaEnrollmentSkippedAt: json['mfaEnrollmentSkippedAt'] == null ? undefined : new Date(json['mfaEnrollmentSkippedAt']),
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    forceResetPassword: json['forceResetPassword'] == null ? undefined : json['forceResetPassword'],
+    serviceAccount: json['serviceAccount'] == null ? undefined : json['serviceAccount'],
+    applicationEntity: json['applicationEntity'] == null ? undefined : ApplicationEntityFromJSON(json['applicationEntity']),
+    sourceId: json['sourceId'] == null ? undefined : json['sourceId'],
+    address: json['address'] == null ? undefined : json['address'],
+    locale: json['locale'] == null ? undefined : json['locale'],
+    zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
+    middleName: json['middleName'] == null ? undefined : json['middleName'],
+    inactive: json['inactive'] == null ? undefined : json['inactive'],
+    profile: json['profile'] == null ? undefined : json['profile'],
+    website: json['website'] == null ? undefined : json['website'],
+    birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
+    phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
+    disabled: json['disabled'] == null ? undefined : json['disabled'],
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
   };
 }
 
-export function UserEntityToJSON(value?: UserEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UserEntityToJSON(json: any): UserEntity {
+  return UserEntityToJSONTyped(json, false);
+}
+
+export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    externalId: value.externalId,
-    username: value.username,
-    password: value.password,
-    email: value.email,
-    displayName: value.displayName,
-    nickName: value.nickName,
-    firstName: value.firstName,
-    lastName: value.lastName,
-    title: value.title,
-    type: value.type,
-    preferredLanguage: value.preferredLanguage,
-    picture: value.picture,
-    emails: value.emails === undefined ? undefined : (value.emails as Array<any>).map(AttributeToJSON),
-    phoneNumbers: value.phoneNumbers === undefined ? undefined : (value.phoneNumbers as Array<any>).map(AttributeToJSON),
-    ims: value.ims === undefined ? undefined : (value.ims as Array<any>).map(AttributeToJSON),
-    photos: value.photos === undefined ? undefined : (value.photos as Array<any>).map(AttributeToJSON),
-    entitlements: value.entitlements,
-    addresses: value.addresses === undefined ? undefined : (value.addresses as Array<any>).map(AddressToJSON),
-    roles: value.roles,
-    dynamicRoles: value.dynamicRoles,
-    dynamicGroups: value.dynamicGroups,
-    rolesPermissions: value.rolesPermissions === undefined ? undefined : Array.from(value.rolesPermissions as Set<any>).map(RoleToJSON),
-    groups: value.groups,
-    x509Certificates: value.x509Certificates === undefined ? undefined : (value.x509Certificates as Array<any>).map(CertificateToJSON),
-    accountNonExpired: value.accountNonExpired,
-    accountNonLocked: value.accountNonLocked,
-    accountLockedAt: value.accountLockedAt === undefined ? undefined : value.accountLockedAt.toISOString(),
-    accountLockedUntil: value.accountLockedUntil === undefined ? undefined : value.accountLockedUntil.toISOString(),
-    credentialsNonExpired: value.credentialsNonExpired,
-    enabled: value.enabled,
-    internal: value.internal,
-    preRegistration: value.preRegistration,
-    registrationCompleted: value.registrationCompleted,
-    newsletter: value.newsletter,
-    registrationUserUri: value.registrationUserUri,
-    registrationAccessToken: value.registrationAccessToken,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    source: value.source,
-    client: value.client,
-    loginsCount: value.loginsCount,
-    factors: value.factors === undefined ? undefined : (value.factors as Array<any>).map(EnrolledFactorToJSON),
-    identities: value.identities === undefined ? undefined : (value.identities as Array<any>).map(UserIdentityToJSON),
-    lastIdentityUsed: value.lastIdentityUsed,
-    additionalInformation: value.additionalInformation,
-    loggedAt: value.loggedAt === undefined ? undefined : value.loggedAt.toISOString(),
-    lastLoginWithCredentials: value.lastLoginWithCredentials === undefined ? undefined : value.lastLoginWithCredentials.toISOString(),
-    lastPasswordReset: value.lastPasswordReset === undefined ? undefined : value.lastPasswordReset.toISOString(),
-    lastUsernameReset: value.lastUsernameReset === undefined ? undefined : value.lastUsernameReset.toISOString(),
-    lastLogoutAt: value.lastLogoutAt === undefined ? undefined : value.lastLogoutAt.toISOString(),
-    mfaEnrollmentSkippedAt: value.mfaEnrollmentSkippedAt === undefined ? undefined : value.mfaEnrollmentSkippedAt.toISOString(),
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
-    forceResetPassword: value.forceResetPassword,
-    serviceAccount: value.serviceAccount,
-    applicationEntity: ApplicationEntityToJSON(value.applicationEntity),
-    sourceId: value.sourceId,
-    address: value.address,
-    locale: value.locale,
-    zoneInfo: value.zoneInfo,
-    lastIdentityInformation: value.lastIdentityInformation,
-    middleName: value.middleName,
-    inactive: value.inactive,
-    profile: value.profile,
-    website: value.website,
-    birthdate: value.birthdate,
-    phoneNumber: value.phoneNumber,
-    disabled: value.disabled,
-    fullId: UserIdToJSON(value.fullId),
-    identitiesAsMap: value.identitiesAsMap,
+    id: value['id'],
+    externalId: value['externalId'],
+    username: value['username'],
+    password: value['password'],
+    email: value['email'],
+    displayName: value['displayName'],
+    nickName: value['nickName'],
+    firstName: value['firstName'],
+    lastName: value['lastName'],
+    title: value['title'],
+    type: value['type'],
+    preferredLanguage: value['preferredLanguage'],
+    picture: value['picture'],
+    emails: value['emails'] == null ? undefined : (value['emails'] as Array<any>).map(AttributeToJSON),
+    phoneNumbers: value['phoneNumbers'] == null ? undefined : (value['phoneNumbers'] as Array<any>).map(AttributeToJSON),
+    ims: value['ims'] == null ? undefined : (value['ims'] as Array<any>).map(AttributeToJSON),
+    photos: value['photos'] == null ? undefined : (value['photos'] as Array<any>).map(AttributeToJSON),
+    entitlements: value['entitlements'],
+    addresses: value['addresses'] == null ? undefined : (value['addresses'] as Array<any>).map(AddressToJSON),
+    roles: value['roles'],
+    dynamicRoles: value['dynamicRoles'],
+    dynamicGroups: value['dynamicGroups'],
+    rolesPermissions: value['rolesPermissions'] == null ? undefined : Array.from(value['rolesPermissions'] as Set<any>).map(RoleToJSON),
+    groups: value['groups'],
+    x509Certificates: value['x509Certificates'] == null ? undefined : (value['x509Certificates'] as Array<any>).map(CertificateToJSON),
+    accountNonExpired: value['accountNonExpired'],
+    accountNonLocked: value['accountNonLocked'],
+    accountLockedAt: value['accountLockedAt'] == null ? value['accountLockedAt'] : value['accountLockedAt'].toISOString(),
+    accountLockedUntil: value['accountLockedUntil'] == null ? value['accountLockedUntil'] : value['accountLockedUntil'].toISOString(),
+    credentialsNonExpired: value['credentialsNonExpired'],
+    enabled: value['enabled'],
+    internal: value['internal'],
+    preRegistration: value['preRegistration'],
+    registrationCompleted: value['registrationCompleted'],
+    newsletter: value['newsletter'],
+    registrationUserUri: value['registrationUserUri'],
+    registrationAccessToken: value['registrationAccessToken'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    source: value['source'],
+    client: value['client'],
+    loginsCount: value['loginsCount'],
+    factors: value['factors'] == null ? undefined : (value['factors'] as Array<any>).map(EnrolledFactorToJSON),
+    identities: value['identities'] == null ? undefined : (value['identities'] as Array<any>).map(UserIdentityToJSON),
+    lastIdentityUsed: value['lastIdentityUsed'],
+    additionalInformation: value['additionalInformation'],
+    loggedAt: value['loggedAt'] == null ? value['loggedAt'] : value['loggedAt'].toISOString(),
+    lastLoginWithCredentials:
+      value['lastLoginWithCredentials'] == null ? value['lastLoginWithCredentials'] : value['lastLoginWithCredentials'].toISOString(),
+    lastPasswordReset: value['lastPasswordReset'] == null ? value['lastPasswordReset'] : value['lastPasswordReset'].toISOString(),
+    lastUsernameReset: value['lastUsernameReset'] == null ? value['lastUsernameReset'] : value['lastUsernameReset'].toISOString(),
+    lastLogoutAt: value['lastLogoutAt'] == null ? value['lastLogoutAt'] : value['lastLogoutAt'].toISOString(),
+    mfaEnrollmentSkippedAt:
+      value['mfaEnrollmentSkippedAt'] == null ? value['mfaEnrollmentSkippedAt'] : value['mfaEnrollmentSkippedAt'].toISOString(),
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    forceResetPassword: value['forceResetPassword'],
+    serviceAccount: value['serviceAccount'],
+    applicationEntity: ApplicationEntityToJSON(value['applicationEntity']),
+    sourceId: value['sourceId'],
+    address: value['address'],
+    locale: value['locale'],
+    zoneInfo: value['zoneInfo'],
+    fullId: UserIdToJSON(value['fullId']),
+    middleName: value['middleName'],
+    inactive: value['inactive'],
+    profile: value['profile'],
+    website: value['website'],
+    birthdate: value['birthdate'],
+    phoneNumber: value['phoneNumber'],
+    disabled: value['disabled'],
+    identitiesAsMap: value['identitiesAsMap'],
+    lastIdentityInformation: value['lastIdentityInformation'],
   };
 }

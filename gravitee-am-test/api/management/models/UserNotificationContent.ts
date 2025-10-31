@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -73,35 +73,44 @@ export const UserNotificationContentStatusEnum = {
 } as const;
 export type UserNotificationContentStatusEnum = typeof UserNotificationContentStatusEnum[keyof typeof UserNotificationContentStatusEnum];
 
+/**
+ * Check if a given object implements the UserNotificationContent interface.
+ */
+export function instanceOfUserNotificationContent(value: object): value is UserNotificationContent {
+  return true;
+}
+
 export function UserNotificationContentFromJSON(json: any): UserNotificationContent {
   return UserNotificationContentFromJSONTyped(json, false);
 }
 
 export function UserNotificationContentFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserNotificationContent {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    status: !exists(json, 'status') ? undefined : json['status'],
-    title: !exists(json, 'title') ? undefined : json['title'],
-    message: !exists(json, 'message') ? undefined : json['message'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    status: json['status'] == null ? undefined : json['status'],
+    title: json['title'] == null ? undefined : json['title'],
+    message: json['message'] == null ? undefined : json['message'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
   };
 }
 
-export function UserNotificationContentToJSON(value?: UserNotificationContent | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UserNotificationContentToJSON(json: any): UserNotificationContent {
+  return UserNotificationContentToJSONTyped(json, false);
+}
+
+export function UserNotificationContentToJSONTyped(value?: UserNotificationContent | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    status: value.status,
-    title: value.title,
-    message: value.message,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    id: value['id'],
+    status: value['status'],
+    title: value['title'],
+    message: value['message'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
   };
 }

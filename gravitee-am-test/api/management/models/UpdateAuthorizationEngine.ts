@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,42 @@ export interface UpdateAuthorizationEngine {
   type?: string;
 }
 
+/**
+ * Check if a given object implements the UpdateAuthorizationEngine interface.
+ */
+export function instanceOfUpdateAuthorizationEngine(value: object): value is UpdateAuthorizationEngine {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function UpdateAuthorizationEngineFromJSON(json: any): UpdateAuthorizationEngine {
   return UpdateAuthorizationEngineFromJSONTyped(json, false);
 }
 
 export function UpdateAuthorizationEngineFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateAuthorizationEngine {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     name: json['name'],
     configuration: json['configuration'],
-    type: !exists(json, 'type') ? undefined : json['type'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
-export function UpdateAuthorizationEngineToJSON(value?: UpdateAuthorizationEngine | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateAuthorizationEngineToJSON(json: any): UpdateAuthorizationEngine {
+  return UpdateAuthorizationEngineToJSONTyped(json, false);
+}
+
+export function UpdateAuthorizationEngineToJSONTyped(value?: UpdateAuthorizationEngine | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    configuration: value.configuration,
-    type: value.type,
+    name: value['name'],
+    configuration: value['configuration'],
+    type: value['type'],
   };
 }

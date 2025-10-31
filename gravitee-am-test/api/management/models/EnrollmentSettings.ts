@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,29 +46,38 @@ export interface EnrollmentSettings {
   skipTimeSeconds?: number;
 }
 
+/**
+ * Check if a given object implements the EnrollmentSettings interface.
+ */
+export function instanceOfEnrollmentSettings(value: object): value is EnrollmentSettings {
+  return true;
+}
+
 export function EnrollmentSettingsFromJSON(json: any): EnrollmentSettings {
   return EnrollmentSettingsFromJSONTyped(json, false);
 }
 
 export function EnrollmentSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): EnrollmentSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    forceEnrollment: !exists(json, 'forceEnrollment') ? undefined : json['forceEnrollment'],
-    skipTimeSeconds: !exists(json, 'skipTimeSeconds') ? undefined : json['skipTimeSeconds'],
+    forceEnrollment: json['forceEnrollment'] == null ? undefined : json['forceEnrollment'],
+    skipTimeSeconds: json['skipTimeSeconds'] == null ? undefined : json['skipTimeSeconds'],
   };
 }
 
-export function EnrollmentSettingsToJSON(value?: EnrollmentSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function EnrollmentSettingsToJSON(json: any): EnrollmentSettings {
+  return EnrollmentSettingsToJSONTyped(json, false);
+}
+
+export function EnrollmentSettingsToJSONTyped(value?: EnrollmentSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    forceEnrollment: value.forceEnrollment,
-    skipTimeSeconds: value.skipTimeSeconds,
+    forceEnrollment: value['forceEnrollment'],
+    skipTimeSeconds: value['skipTimeSeconds'],
   };
 }

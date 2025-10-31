@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -76,39 +76,51 @@ export interface NewScope {
   parameterized?: boolean;
 }
 
+/**
+ * Check if a given object implements the NewScope interface.
+ */
+export function instanceOfNewScope(value: object): value is NewScope {
+  if (!('key' in value) || value['key'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('description' in value) || value['description'] === undefined) return false;
+  return true;
+}
+
 export function NewScopeFromJSON(json: any): NewScope {
   return NewScopeFromJSONTyped(json, false);
 }
 
 export function NewScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewScope {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     key: json['key'],
     name: json['name'],
     description: json['description'],
-    iconUri: !exists(json, 'iconUri') ? undefined : json['iconUri'],
-    expiresIn: !exists(json, 'expiresIn') ? undefined : json['expiresIn'],
-    discovery: !exists(json, 'discovery') ? undefined : json['discovery'],
-    parameterized: !exists(json, 'parameterized') ? undefined : json['parameterized'],
+    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
+    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
+    discovery: json['discovery'] == null ? undefined : json['discovery'],
+    parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
   };
 }
 
-export function NewScopeToJSON(value?: NewScope | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewScopeToJSON(json: any): NewScope {
+  return NewScopeToJSONTyped(json, false);
+}
+
+export function NewScopeToJSONTyped(value?: NewScope | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    key: value.key,
-    name: value.name,
-    description: value.description,
-    iconUri: value.iconUri,
-    expiresIn: value.expiresIn,
-    discovery: value.discovery,
-    parameterized: value.parameterized,
+    key: value['key'],
+    name: value['name'],
+    description: value['description'],
+    iconUri: value['iconUri'],
+    expiresIn: value['expiresIn'],
+    discovery: value['discovery'],
+    parameterized: value['parameterized'],
   };
 }

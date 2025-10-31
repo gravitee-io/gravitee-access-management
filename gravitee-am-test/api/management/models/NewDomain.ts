@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,42 @@ export interface NewDomain {
   dataPlaneId: string;
 }
 
+/**
+ * Check if a given object implements the NewDomain interface.
+ */
+export function instanceOfNewDomain(value: object): value is NewDomain {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('dataPlaneId' in value) || value['dataPlaneId'] === undefined) return false;
+  return true;
+}
+
 export function NewDomainFromJSON(json: any): NewDomain {
   return NewDomainFromJSONTyped(json, false);
 }
 
 export function NewDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewDomain {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     name: json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
+    description: json['description'] == null ? undefined : json['description'],
     dataPlaneId: json['dataPlaneId'],
   };
 }
 
-export function NewDomainToJSON(value?: NewDomain | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewDomainToJSON(json: any): NewDomain {
+  return NewDomainToJSONTyped(json, false);
+}
+
+export function NewDomainToJSONTyped(value?: NewDomain | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    description: value.description,
-    dataPlaneId: value.dataPlaneId,
+    name: value['name'],
+    description: value['description'],
+    dataPlaneId: value['dataPlaneId'],
   };
 }

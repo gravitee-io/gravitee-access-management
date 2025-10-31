@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,33 +58,43 @@ export interface UpdateGroup {
   roles?: Array<string>;
 }
 
+/**
+ * Check if a given object implements the UpdateGroup interface.
+ */
+export function instanceOfUpdateGroup(value: object): value is UpdateGroup {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  return true;
+}
+
 export function UpdateGroupFromJSON(json: any): UpdateGroup {
   return UpdateGroupFromJSONTyped(json, false);
 }
 
 export function UpdateGroupFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateGroup {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     name: json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    members: !exists(json, 'members') ? undefined : json['members'],
-    roles: !exists(json, 'roles') ? undefined : json['roles'],
+    description: json['description'] == null ? undefined : json['description'],
+    members: json['members'] == null ? undefined : json['members'],
+    roles: json['roles'] == null ? undefined : json['roles'],
   };
 }
 
-export function UpdateGroupToJSON(value?: UpdateGroup | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateGroupToJSON(json: any): UpdateGroup {
+  return UpdateGroupToJSONTyped(json, false);
+}
+
+export function UpdateGroupToJSONTyped(value?: UpdateGroup | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    description: value.description,
-    members: value.members,
-    roles: value.roles,
+    name: value['name'],
+    description: value['description'],
+    members: value['members'],
+    roles: value['roles'],
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -112,57 +112,63 @@ export interface LoginSettings {
   enforcePasswordPolicyEnabled?: boolean;
 }
 
+/**
+ * Check if a given object implements the LoginSettings interface.
+ */
+export function instanceOfLoginSettings(value: object): value is LoginSettings {
+  return true;
+}
+
 export function LoginSettingsFromJSON(json: any): LoginSettings {
   return LoginSettingsFromJSONTyped(json, false);
 }
 
 export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): LoginSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    inherited: !exists(json, 'inherited') ? undefined : json['inherited'],
-    forgotPasswordEnabled: !exists(json, 'forgotPasswordEnabled') ? undefined : json['forgotPasswordEnabled'],
-    registerEnabled: !exists(json, 'registerEnabled') ? undefined : json['registerEnabled'],
-    rememberMeEnabled: !exists(json, 'rememberMeEnabled') ? undefined : json['rememberMeEnabled'],
-    passwordlessEnabled: !exists(json, 'passwordlessEnabled') ? undefined : json['passwordlessEnabled'],
-    passwordlessRememberDeviceEnabled: !exists(json, 'passwordlessRememberDeviceEnabled')
-      ? undefined
-      : json['passwordlessRememberDeviceEnabled'],
-    passwordlessEnforcePasswordEnabled: !exists(json, 'passwordlessEnforcePasswordEnabled')
-      ? undefined
-      : json['passwordlessEnforcePasswordEnabled'],
-    passwordlessEnforcePasswordMaxAge: !exists(json, 'passwordlessEnforcePasswordMaxAge')
-      ? undefined
-      : json['passwordlessEnforcePasswordMaxAge'],
-    passwordlessDeviceNamingEnabled: !exists(json, 'passwordlessDeviceNamingEnabled') ? undefined : json['passwordlessDeviceNamingEnabled'],
-    hideForm: !exists(json, 'hideForm') ? undefined : json['hideForm'],
-    identifierFirstEnabled: !exists(json, 'identifierFirstEnabled') ? undefined : json['identifierFirstEnabled'],
-    resetPasswordOnExpiration: !exists(json, 'resetPasswordOnExpiration') ? undefined : json['resetPasswordOnExpiration'],
-    enforcePasswordPolicyEnabled: !exists(json, 'enforcePasswordPolicyEnabled') ? undefined : json['enforcePasswordPolicyEnabled'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
+    forgotPasswordEnabled: json['forgotPasswordEnabled'] == null ? undefined : json['forgotPasswordEnabled'],
+    registerEnabled: json['registerEnabled'] == null ? undefined : json['registerEnabled'],
+    rememberMeEnabled: json['rememberMeEnabled'] == null ? undefined : json['rememberMeEnabled'],
+    passwordlessEnabled: json['passwordlessEnabled'] == null ? undefined : json['passwordlessEnabled'],
+    passwordlessRememberDeviceEnabled:
+      json['passwordlessRememberDeviceEnabled'] == null ? undefined : json['passwordlessRememberDeviceEnabled'],
+    passwordlessEnforcePasswordEnabled:
+      json['passwordlessEnforcePasswordEnabled'] == null ? undefined : json['passwordlessEnforcePasswordEnabled'],
+    passwordlessEnforcePasswordMaxAge:
+      json['passwordlessEnforcePasswordMaxAge'] == null ? undefined : json['passwordlessEnforcePasswordMaxAge'],
+    passwordlessDeviceNamingEnabled: json['passwordlessDeviceNamingEnabled'] == null ? undefined : json['passwordlessDeviceNamingEnabled'],
+    hideForm: json['hideForm'] == null ? undefined : json['hideForm'],
+    identifierFirstEnabled: json['identifierFirstEnabled'] == null ? undefined : json['identifierFirstEnabled'],
+    resetPasswordOnExpiration: json['resetPasswordOnExpiration'] == null ? undefined : json['resetPasswordOnExpiration'],
+    enforcePasswordPolicyEnabled: json['enforcePasswordPolicyEnabled'] == null ? undefined : json['enforcePasswordPolicyEnabled'],
   };
 }
 
-export function LoginSettingsToJSON(value?: LoginSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function LoginSettingsToJSON(json: any): LoginSettings {
+  return LoginSettingsToJSONTyped(json, false);
+}
+
+export function LoginSettingsToJSONTyped(value?: LoginSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    inherited: value.inherited,
-    forgotPasswordEnabled: value.forgotPasswordEnabled,
-    registerEnabled: value.registerEnabled,
-    rememberMeEnabled: value.rememberMeEnabled,
-    passwordlessEnabled: value.passwordlessEnabled,
-    passwordlessRememberDeviceEnabled: value.passwordlessRememberDeviceEnabled,
-    passwordlessEnforcePasswordEnabled: value.passwordlessEnforcePasswordEnabled,
-    passwordlessEnforcePasswordMaxAge: value.passwordlessEnforcePasswordMaxAge,
-    passwordlessDeviceNamingEnabled: value.passwordlessDeviceNamingEnabled,
-    hideForm: value.hideForm,
-    identifierFirstEnabled: value.identifierFirstEnabled,
-    resetPasswordOnExpiration: value.resetPasswordOnExpiration,
-    enforcePasswordPolicyEnabled: value.enforcePasswordPolicyEnabled,
+    inherited: value['inherited'],
+    forgotPasswordEnabled: value['forgotPasswordEnabled'],
+    registerEnabled: value['registerEnabled'],
+    rememberMeEnabled: value['rememberMeEnabled'],
+    passwordlessEnabled: value['passwordlessEnabled'],
+    passwordlessRememberDeviceEnabled: value['passwordlessRememberDeviceEnabled'],
+    passwordlessEnforcePasswordEnabled: value['passwordlessEnforcePasswordEnabled'],
+    passwordlessEnforcePasswordMaxAge: value['passwordlessEnforcePasswordMaxAge'],
+    passwordlessDeviceNamingEnabled: value['passwordlessDeviceNamingEnabled'],
+    hideForm: value['hideForm'],
+    identifierFirstEnabled: value['identifierFirstEnabled'],
+    resetPasswordOnExpiration: value['resetPasswordOnExpiration'],
+    enforcePasswordPolicyEnabled: value['enforcePasswordPolicyEnabled'],
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,40 @@ export interface Page {
   totalCount?: number;
 }
 
+/**
+ * Check if a given object implements the Page interface.
+ */
+export function instanceOfPage(value: object): value is Page {
+  return true;
+}
+
 export function PageFromJSON(json: any): Page {
   return PageFromJSONTyped(json, false);
 }
 
 export function PageFromJSONTyped(json: any, ignoreDiscriminator: boolean): Page {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    data: !exists(json, 'data') ? undefined : json['data'],
-    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
-    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
+    data: json['data'] == null ? undefined : json['data'],
+    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
 
-export function PageToJSON(value?: Page | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PageToJSON(json: any): Page {
+  return PageToJSONTyped(json, false);
+}
+
+export function PageToJSONTyped(value?: Page | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    data: value.data,
-    currentPage: value.currentPage,
-    totalCount: value.totalCount,
+    data: value['data'],
+    currentPage: value['currentPage'],
+    totalCount: value['totalCount'],
   };
 }

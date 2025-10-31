@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -88,39 +88,48 @@ export const AuditEntityReferenceTypeEnum = {
 } as const;
 export type AuditEntityReferenceTypeEnum = typeof AuditEntityReferenceTypeEnum[keyof typeof AuditEntityReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the AuditEntity interface.
+ */
+export function instanceOfAuditEntity(value: object): value is AuditEntity {
+  return true;
+}
+
 export function AuditEntityFromJSON(json: any): AuditEntity {
   return AuditEntityFromJSONTyped(json, false);
 }
 
 export function AuditEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuditEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    alternativeId: !exists(json, 'alternativeId') ? undefined : json['alternativeId'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    displayName: !exists(json, 'displayName') ? undefined : json['displayName'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    attributes: !exists(json, 'attributes') ? undefined : json['attributes'],
+    id: json['id'] == null ? undefined : json['id'],
+    alternativeId: json['alternativeId'] == null ? undefined : json['alternativeId'],
+    type: json['type'] == null ? undefined : json['type'],
+    displayName: json['displayName'] == null ? undefined : json['displayName'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    attributes: json['attributes'] == null ? undefined : json['attributes'],
   };
 }
 
-export function AuditEntityToJSON(value?: AuditEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AuditEntityToJSON(json: any): AuditEntity {
+  return AuditEntityToJSONTyped(json, false);
+}
+
+export function AuditEntityToJSONTyped(value?: AuditEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    alternativeId: value.alternativeId,
-    type: value.type,
-    displayName: value.displayName,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    attributes: value.attributes,
+    id: value['id'],
+    alternativeId: value['alternativeId'],
+    type: value['type'],
+    displayName: value['displayName'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    attributes: value['attributes'],
   };
 }

@@ -25,34 +25,66 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { AccountSettings, AccountSettingsFromJSON, AccountSettingsFromJSONTyped, AccountSettingsToJSON } from './AccountSettings';
-import { CorsSettings, CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON } from './CorsSettings';
-import { LoginSettings, LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON } from './LoginSettings';
-import { PatchOIDCSettings, PatchOIDCSettingsFromJSON, PatchOIDCSettingsFromJSONTyped, PatchOIDCSettingsToJSON } from './PatchOIDCSettings';
+import { mapValues } from '../runtime';
+import type { AccountSettings } from './AccountSettings';
 import {
-  PatchPasswordSettings,
+  AccountSettingsFromJSON,
+  AccountSettingsFromJSONTyped,
+  AccountSettingsToJSON,
+  AccountSettingsToJSONTyped,
+} from './AccountSettings';
+import type { SCIMSettings } from './SCIMSettings';
+import { SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON, SCIMSettingsToJSONTyped } from './SCIMSettings';
+import type { PatchOIDCSettings } from './PatchOIDCSettings';
+import {
+  PatchOIDCSettingsFromJSON,
+  PatchOIDCSettingsFromJSONTyped,
+  PatchOIDCSettingsToJSON,
+  PatchOIDCSettingsToJSONTyped,
+} from './PatchOIDCSettings';
+import type { PatchPasswordSettings } from './PatchPasswordSettings';
+import {
   PatchPasswordSettingsFromJSON,
   PatchPasswordSettingsFromJSONTyped,
   PatchPasswordSettingsToJSON,
+  PatchPasswordSettingsToJSONTyped,
 } from './PatchPasswordSettings';
-import { PatchSAMLSettings, PatchSAMLSettingsFromJSON, PatchSAMLSettingsFromJSONTyped, PatchSAMLSettingsToJSON } from './PatchSAMLSettings';
-import { SCIMSettings, SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON } from './SCIMSettings';
+import type { SelfServiceAccountManagementSettings } from './SelfServiceAccountManagementSettings';
 import {
-  SecretExpirationSettings,
-  SecretExpirationSettingsFromJSON,
-  SecretExpirationSettingsFromJSONTyped,
-  SecretExpirationSettingsToJSON,
-} from './SecretExpirationSettings';
-import {
-  SelfServiceAccountManagementSettings,
   SelfServiceAccountManagementSettingsFromJSON,
   SelfServiceAccountManagementSettingsFromJSONTyped,
   SelfServiceAccountManagementSettingsToJSON,
+  SelfServiceAccountManagementSettingsToJSONTyped,
 } from './SelfServiceAccountManagementSettings';
-import { UMASettings, UMASettingsFromJSON, UMASettingsFromJSONTyped, UMASettingsToJSON } from './UMASettings';
-import { VirtualHost, VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON } from './VirtualHost';
-import { WebAuthnSettings, WebAuthnSettingsFromJSON, WebAuthnSettingsFromJSONTyped, WebAuthnSettingsToJSON } from './WebAuthnSettings';
+import type { CorsSettings } from './CorsSettings';
+import { CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON, CorsSettingsToJSONTyped } from './CorsSettings';
+import type { LoginSettings } from './LoginSettings';
+import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
+import type { SecretExpirationSettings } from './SecretExpirationSettings';
+import {
+  SecretExpirationSettingsFromJSON,
+  SecretExpirationSettingsFromJSONTyped,
+  SecretExpirationSettingsToJSON,
+  SecretExpirationSettingsToJSONTyped,
+} from './SecretExpirationSettings';
+import type { VirtualHost } from './VirtualHost';
+import { VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON, VirtualHostToJSONTyped } from './VirtualHost';
+import type { PatchSAMLSettings } from './PatchSAMLSettings';
+import {
+  PatchSAMLSettingsFromJSON,
+  PatchSAMLSettingsFromJSONTyped,
+  PatchSAMLSettingsToJSON,
+  PatchSAMLSettingsToJSONTyped,
+} from './PatchSAMLSettings';
+import type { WebAuthnSettings } from './WebAuthnSettings';
+import {
+  WebAuthnSettingsFromJSON,
+  WebAuthnSettingsFromJSONTyped,
+  WebAuthnSettingsToJSON,
+  WebAuthnSettingsToJSONTyped,
+} from './WebAuthnSettings';
+import type { UMASettings } from './UMASettings';
+import { UMASettingsFromJSON, UMASettingsFromJSONTyped, UMASettingsToJSON, UMASettingsToJSONTyped } from './UMASettings';
 
 /**
  *
@@ -265,71 +297,81 @@ export const PatchDomainRequiredPermissionsEnum = {
 } as const;
 export type PatchDomainRequiredPermissionsEnum = typeof PatchDomainRequiredPermissionsEnum[keyof typeof PatchDomainRequiredPermissionsEnum];
 
+/**
+ * Check if a given object implements the PatchDomain interface.
+ */
+export function instanceOfPatchDomain(value: object): value is PatchDomain {
+  return true;
+}
+
 export function PatchDomainFromJSON(json: any): PatchDomain {
   return PatchDomainFromJSONTyped(json, false);
 }
 
 export function PatchDomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchDomain {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    alertEnabled: !exists(json, 'alertEnabled') ? undefined : json['alertEnabled'],
-    path: !exists(json, 'path') ? undefined : json['path'],
-    vhostMode: !exists(json, 'vhostMode') ? undefined : json['vhostMode'],
-    vhosts: !exists(json, 'vhosts') ? undefined : (json['vhosts'] as Array<any>).map(VirtualHostFromJSON),
-    oidc: !exists(json, 'oidc') ? undefined : PatchOIDCSettingsFromJSON(json['oidc']),
-    uma: !exists(json, 'uma') ? undefined : UMASettingsFromJSON(json['uma']),
-    scim: !exists(json, 'scim') ? undefined : SCIMSettingsFromJSON(json['scim']),
-    loginSettings: !exists(json, 'loginSettings') ? undefined : LoginSettingsFromJSON(json['loginSettings']),
-    webAuthnSettings: !exists(json, 'webAuthnSettings') ? undefined : WebAuthnSettingsFromJSON(json['webAuthnSettings']),
-    accountSettings: !exists(json, 'accountSettings') ? undefined : AccountSettingsFromJSON(json['accountSettings']),
-    passwordSettings: !exists(json, 'passwordSettings') ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
-    selfServiceAccountManagementSettings: !exists(json, 'selfServiceAccountManagementSettings')
-      ? undefined
-      : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
-    tags: !exists(json, 'tags') ? undefined : json['tags'],
-    master: !exists(json, 'master') ? undefined : json['master'],
-    saml: !exists(json, 'saml') ? undefined : PatchSAMLSettingsFromJSON(json['saml']),
-    corsSettings: !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
-    dataPlaneId: !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
-    secretSettings: !exists(json, 'secretSettings') ? undefined : SecretExpirationSettingsFromJSON(json['secretSettings']),
-    requiredPermissions: !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    alertEnabled: json['alertEnabled'] == null ? undefined : json['alertEnabled'],
+    path: json['path'] == null ? undefined : json['path'],
+    vhostMode: json['vhostMode'] == null ? undefined : json['vhostMode'],
+    vhosts: json['vhosts'] == null ? undefined : (json['vhosts'] as Array<any>).map(VirtualHostFromJSON),
+    oidc: json['oidc'] == null ? undefined : PatchOIDCSettingsFromJSON(json['oidc']),
+    uma: json['uma'] == null ? undefined : UMASettingsFromJSON(json['uma']),
+    scim: json['scim'] == null ? undefined : SCIMSettingsFromJSON(json['scim']),
+    loginSettings: json['loginSettings'] == null ? undefined : LoginSettingsFromJSON(json['loginSettings']),
+    webAuthnSettings: json['webAuthnSettings'] == null ? undefined : WebAuthnSettingsFromJSON(json['webAuthnSettings']),
+    accountSettings: json['accountSettings'] == null ? undefined : AccountSettingsFromJSON(json['accountSettings']),
+    passwordSettings: json['passwordSettings'] == null ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
+    selfServiceAccountManagementSettings:
+      json['selfServiceAccountManagementSettings'] == null
+        ? undefined
+        : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
+    tags: json['tags'] == null ? undefined : new Set(json['tags']),
+    master: json['master'] == null ? undefined : json['master'],
+    saml: json['saml'] == null ? undefined : PatchSAMLSettingsFromJSON(json['saml']),
+    corsSettings: json['corsSettings'] == null ? undefined : CorsSettingsFromJSON(json['corsSettings']),
+    dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
+    secretSettings: json['secretSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretSettings']),
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
 
-export function PatchDomainToJSON(value?: PatchDomain | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchDomainToJSON(json: any): PatchDomain {
+  return PatchDomainToJSONTyped(json, false);
+}
+
+export function PatchDomainToJSONTyped(value?: PatchDomain | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    description: value.description,
-    enabled: value.enabled,
-    alertEnabled: value.alertEnabled,
-    path: value.path,
-    vhostMode: value.vhostMode,
-    vhosts: value.vhosts === undefined ? undefined : (value.vhosts as Array<any>).map(VirtualHostToJSON),
-    oidc: PatchOIDCSettingsToJSON(value.oidc),
-    uma: UMASettingsToJSON(value.uma),
-    scim: SCIMSettingsToJSON(value.scim),
-    loginSettings: LoginSettingsToJSON(value.loginSettings),
-    webAuthnSettings: WebAuthnSettingsToJSON(value.webAuthnSettings),
-    accountSettings: AccountSettingsToJSON(value.accountSettings),
-    passwordSettings: PatchPasswordSettingsToJSON(value.passwordSettings),
-    selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value.selfServiceAccountManagementSettings),
-    tags: value.tags,
-    master: value.master,
-    saml: PatchSAMLSettingsToJSON(value.saml),
-    corsSettings: CorsSettingsToJSON(value.corsSettings),
-    dataPlaneId: value.dataPlaneId,
-    secretSettings: SecretExpirationSettingsToJSON(value.secretSettings),
-    requiredPermissions: value.requiredPermissions,
+    name: value['name'],
+    description: value['description'],
+    enabled: value['enabled'],
+    alertEnabled: value['alertEnabled'],
+    path: value['path'],
+    vhostMode: value['vhostMode'],
+    vhosts: value['vhosts'] == null ? undefined : (value['vhosts'] as Array<any>).map(VirtualHostToJSON),
+    oidc: PatchOIDCSettingsToJSON(value['oidc']),
+    uma: UMASettingsToJSON(value['uma']),
+    scim: SCIMSettingsToJSON(value['scim']),
+    loginSettings: LoginSettingsToJSON(value['loginSettings']),
+    webAuthnSettings: WebAuthnSettingsToJSON(value['webAuthnSettings']),
+    accountSettings: AccountSettingsToJSON(value['accountSettings']),
+    passwordSettings: PatchPasswordSettingsToJSON(value['passwordSettings']),
+    selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value['selfServiceAccountManagementSettings']),
+    tags: value['tags'] == null ? undefined : Array.from(value['tags'] as Set<any>),
+    master: value['master'],
+    saml: PatchSAMLSettingsToJSON(value['saml']),
+    corsSettings: CorsSettingsToJSON(value['corsSettings']),
+    dataPlaneId: value['dataPlaneId'],
+    secretSettings: SecretExpirationSettingsToJSON(value['secretSettings']),
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
   };
 }

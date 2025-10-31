@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,40 @@ export interface EnrolledFactorSecurity {
   additionalData?: { [key: string]: any };
 }
 
+/**
+ * Check if a given object implements the EnrolledFactorSecurity interface.
+ */
+export function instanceOfEnrolledFactorSecurity(value: object): value is EnrolledFactorSecurity {
+  return true;
+}
+
 export function EnrolledFactorSecurityFromJSON(json: any): EnrolledFactorSecurity {
   return EnrolledFactorSecurityFromJSONTyped(json, false);
 }
 
 export function EnrolledFactorSecurityFromJSONTyped(json: any, ignoreDiscriminator: boolean): EnrolledFactorSecurity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    type: !exists(json, 'type') ? undefined : json['type'],
-    value: !exists(json, 'value') ? undefined : json['value'],
-    additionalData: !exists(json, 'additionalData') ? undefined : json['additionalData'],
+    type: json['type'] == null ? undefined : json['type'],
+    value: json['value'] == null ? undefined : json['value'],
+    additionalData: json['additionalData'] == null ? undefined : json['additionalData'],
   };
 }
 
-export function EnrolledFactorSecurityToJSON(value?: EnrolledFactorSecurity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function EnrolledFactorSecurityToJSON(json: any): EnrolledFactorSecurity {
+  return EnrolledFactorSecurityToJSONTyped(json, false);
+}
+
+export function EnrolledFactorSecurityToJSONTyped(value?: EnrolledFactorSecurity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    type: value.type,
-    value: value.value,
-    additionalData: value.additionalData,
+    type: value['type'],
+    value: value['value'],
+    additionalData: value['additionalData'],
   };
 }

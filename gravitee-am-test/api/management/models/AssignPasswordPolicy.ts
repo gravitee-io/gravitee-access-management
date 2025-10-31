@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,27 +40,36 @@ export interface AssignPasswordPolicy {
   passwordPolicy?: string;
 }
 
+/**
+ * Check if a given object implements the AssignPasswordPolicy interface.
+ */
+export function instanceOfAssignPasswordPolicy(value: object): value is AssignPasswordPolicy {
+  return true;
+}
+
 export function AssignPasswordPolicyFromJSON(json: any): AssignPasswordPolicy {
   return AssignPasswordPolicyFromJSONTyped(json, false);
 }
 
 export function AssignPasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssignPasswordPolicy {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    passwordPolicy: !exists(json, 'passwordPolicy') ? undefined : json['passwordPolicy'],
+    passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
   };
 }
 
-export function AssignPasswordPolicyToJSON(value?: AssignPasswordPolicy | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AssignPasswordPolicyToJSON(json: any): AssignPasswordPolicy {
+  return AssignPasswordPolicyToJSONTyped(json, false);
+}
+
+export function AssignPasswordPolicyToJSONTyped(value?: AssignPasswordPolicy | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    passwordPolicy: value.passwordPolicy,
+    passwordPolicy: value['passwordPolicy'],
   };
 }

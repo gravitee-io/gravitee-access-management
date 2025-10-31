@@ -25,12 +25,13 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
+import type { ProtectedResourcePrimaryData } from './ProtectedResourcePrimaryData';
 import {
-  ProtectedResourcePrimaryData,
   ProtectedResourcePrimaryDataFromJSON,
   ProtectedResourcePrimaryDataFromJSONTyped,
   ProtectedResourcePrimaryDataToJSON,
+  ProtectedResourcePrimaryDataToJSONTyped,
 } from './ProtectedResourcePrimaryData';
 
 /**
@@ -59,31 +60,40 @@ export interface ProtectedResourcePage {
   totalCount?: number;
 }
 
+/**
+ * Check if a given object implements the ProtectedResourcePage interface.
+ */
+export function instanceOfProtectedResourcePage(value: object): value is ProtectedResourcePage {
+  return true;
+}
+
 export function ProtectedResourcePageFromJSON(json: any): ProtectedResourcePage {
   return ProtectedResourcePageFromJSONTyped(json, false);
 }
 
 export function ProtectedResourcePageFromJSONTyped(json: any, ignoreDiscriminator: boolean): ProtectedResourcePage {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(ProtectedResourcePrimaryDataFromJSON),
-    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
-    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(ProtectedResourcePrimaryDataFromJSON),
+    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
 
-export function ProtectedResourcePageToJSON(value?: ProtectedResourcePage | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ProtectedResourcePageToJSON(json: any): ProtectedResourcePage {
+  return ProtectedResourcePageToJSONTyped(json, false);
+}
+
+export function ProtectedResourcePageToJSONTyped(value?: ProtectedResourcePage | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    data: value.data === undefined ? undefined : (value.data as Array<any>).map(ProtectedResourcePrimaryDataToJSON),
-    currentPage: value.currentPage,
-    totalCount: value.totalCount,
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(ProtectedResourcePrimaryDataToJSON),
+    currentPage: value['currentPage'],
+    totalCount: value['totalCount'],
   };
 }

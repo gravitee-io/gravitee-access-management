@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -72,35 +72,44 @@ export const ProtectedResourceFeatureTypeEnum = {
 } as const;
 export type ProtectedResourceFeatureTypeEnum = typeof ProtectedResourceFeatureTypeEnum[keyof typeof ProtectedResourceFeatureTypeEnum];
 
+/**
+ * Check if a given object implements the ProtectedResourceFeature interface.
+ */
+export function instanceOfProtectedResourceFeature(value: object): value is ProtectedResourceFeature {
+  return true;
+}
+
 export function ProtectedResourceFeatureFromJSON(json: any): ProtectedResourceFeature {
   return ProtectedResourceFeatureFromJSONTyped(json, false);
 }
 
 export function ProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscriminator: boolean): ProtectedResourceFeature {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    key: !exists(json, 'key') ? undefined : json['key'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    key: json['key'] == null ? undefined : json['key'],
+    description: json['description'] == null ? undefined : json['description'],
+    type: json['type'] == null ? undefined : json['type'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function ProtectedResourceFeatureToJSON(value?: ProtectedResourceFeature | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ProtectedResourceFeatureToJSON(json: any): ProtectedResourceFeature {
+  return ProtectedResourceFeatureToJSONTyped(json, false);
+}
+
+export function ProtectedResourceFeatureToJSONTyped(value?: ProtectedResourceFeature | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    key: value.key,
-    description: value.description,
-    type: value.type,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    key: value['key'],
+    description: value['description'],
+    type: value['type'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

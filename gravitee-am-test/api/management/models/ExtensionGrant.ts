@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -100,47 +100,56 @@ export interface ExtensionGrant {
   updatedAt?: Date;
 }
 
+/**
+ * Check if a given object implements the ExtensionGrant interface.
+ */
+export function instanceOfExtensionGrant(value: object): value is ExtensionGrant {
+  return true;
+}
+
 export function ExtensionGrantFromJSON(json: any): ExtensionGrant {
   return ExtensionGrantFromJSONTyped(json, false);
 }
 
 export function ExtensionGrantFromJSONTyped(json: any, ignoreDiscriminator: boolean): ExtensionGrant {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
-    domain: !exists(json, 'domain') ? undefined : json['domain'],
-    grantType: !exists(json, 'grantType') ? undefined : json['grantType'],
-    identityProvider: !exists(json, 'identityProvider') ? undefined : json['identityProvider'],
-    createUser: !exists(json, 'createUser') ? undefined : json['createUser'],
-    userExists: !exists(json, 'userExists') ? undefined : json['userExists'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    grantType: json['grantType'] == null ? undefined : json['grantType'],
+    identityProvider: json['identityProvider'] == null ? undefined : json['identityProvider'],
+    createUser: json['createUser'] == null ? undefined : json['createUser'],
+    userExists: json['userExists'] == null ? undefined : json['userExists'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function ExtensionGrantToJSON(value?: ExtensionGrant | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ExtensionGrantToJSON(json: any): ExtensionGrant {
+  return ExtensionGrantToJSONTyped(json, false);
+}
+
+export function ExtensionGrantToJSONTyped(value?: ExtensionGrant | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
-    domain: value.domain,
-    grantType: value.grantType,
-    identityProvider: value.identityProvider,
-    createUser: value.createUser,
-    userExists: value.userExists,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
+    domain: value['domain'],
+    grantType: value['grantType'],
+    identityProvider: value['identityProvider'],
+    createUser: value['createUser'],
+    userExists: value['userExists'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

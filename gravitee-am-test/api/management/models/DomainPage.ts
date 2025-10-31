@@ -25,8 +25,9 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { Domain, DomainFromJSON, DomainFromJSONTyped, DomainToJSON } from './Domain';
+import { mapValues } from '../runtime';
+import type { Domain } from './Domain';
+import { DomainFromJSON, DomainFromJSONTyped, DomainToJSON, DomainToJSONTyped } from './Domain';
 
 /**
  *
@@ -54,31 +55,40 @@ export interface DomainPage {
   totalCount?: number;
 }
 
+/**
+ * Check if a given object implements the DomainPage interface.
+ */
+export function instanceOfDomainPage(value: object): value is DomainPage {
+  return true;
+}
+
 export function DomainPageFromJSON(json: any): DomainPage {
   return DomainPageFromJSONTyped(json, false);
 }
 
 export function DomainPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): DomainPage {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(DomainFromJSON),
-    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
-    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(DomainFromJSON),
+    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
 
-export function DomainPageToJSON(value?: DomainPage | null): any {
-  if (value === undefined) {
-    return undefined;
+export function DomainPageToJSON(json: any): DomainPage {
+  return DomainPageToJSONTyped(json, false);
+}
+
+export function DomainPageToJSONTyped(value?: DomainPage | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    data: value.data === undefined ? undefined : (value.data as Array<any>).map(DomainToJSON),
-    currentPage: value.currentPage,
-    totalCount: value.totalCount,
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(DomainToJSON),
+    currentPage: value['currentPage'],
+    totalCount: value['totalCount'],
   };
 }

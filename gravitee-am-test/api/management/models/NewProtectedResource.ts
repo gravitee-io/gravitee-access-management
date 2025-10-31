@@ -25,12 +25,13 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
+import type { NewProtectedResourceFeature } from './NewProtectedResourceFeature';
 import {
-  NewProtectedResourceFeature,
   NewProtectedResourceFeatureFromJSON,
   NewProtectedResourceFeatureFromJSONTyped,
   NewProtectedResourceFeatureToJSON,
+  NewProtectedResourceFeatureToJSONTyped,
 } from './NewProtectedResourceFeature';
 
 /**
@@ -83,39 +84,51 @@ export interface NewProtectedResource {
   features?: Array<NewProtectedResourceFeature>;
 }
 
+/**
+ * Check if a given object implements the NewProtectedResource interface.
+ */
+export function instanceOfNewProtectedResource(value: object): value is NewProtectedResource {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('resourceIdentifiers' in value) || value['resourceIdentifiers'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  return true;
+}
+
 export function NewProtectedResourceFromJSON(json: any): NewProtectedResource {
   return NewProtectedResourceFromJSONTyped(json, false);
 }
 
 export function NewProtectedResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewProtectedResource {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     name: json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
+    description: json['description'] == null ? undefined : json['description'],
     resourceIdentifiers: json['resourceIdentifiers'],
-    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
-    clientSecret: !exists(json, 'clientSecret') ? undefined : json['clientSecret'],
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
+    clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
     type: json['type'],
-    features: !exists(json, 'features') ? undefined : (json['features'] as Array<any>).map(NewProtectedResourceFeatureFromJSON),
+    features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(NewProtectedResourceFeatureFromJSON),
   };
 }
 
-export function NewProtectedResourceToJSON(value?: NewProtectedResource | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewProtectedResourceToJSON(json: any): NewProtectedResource {
+  return NewProtectedResourceToJSONTyped(json, false);
+}
+
+export function NewProtectedResourceToJSONTyped(value?: NewProtectedResource | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    description: value.description,
-    resourceIdentifiers: value.resourceIdentifiers,
-    clientId: value.clientId,
-    clientSecret: value.clientSecret,
-    type: value.type,
-    features: value.features === undefined ? undefined : (value.features as Array<any>).map(NewProtectedResourceFeatureToJSON),
+    name: value['name'],
+    description: value['description'],
+    resourceIdentifiers: value['resourceIdentifiers'],
+    clientId: value['clientId'],
+    clientSecret: value['clientSecret'],
+    type: value['type'],
+    features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(NewProtectedResourceFeatureToJSON),
   };
 }

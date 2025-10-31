@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,37 +70,49 @@ export interface FilteredIdentityProviderInfo {
   passwordPolicy?: string;
 }
 
+/**
+ * Check if a given object implements the FilteredIdentityProviderInfo interface.
+ */
+export function instanceOfFilteredIdentityProviderInfo(value: object): value is FilteredIdentityProviderInfo {
+  return true;
+}
+
 export function FilteredIdentityProviderInfoFromJSON(json: any): FilteredIdentityProviderInfo {
   return FilteredIdentityProviderInfoFromJSONTyped(json, false);
 }
 
 export function FilteredIdentityProviderInfoFromJSONTyped(json: any, ignoreDiscriminator: boolean): FilteredIdentityProviderInfo {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    system: !exists(json, 'system') ? undefined : json['system'],
-    external: !exists(json, 'external') ? undefined : json['external'],
-    passwordPolicy: !exists(json, 'passwordPolicy') ? undefined : json['passwordPolicy'],
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    system: json['system'] == null ? undefined : json['system'],
+    external: json['external'] == null ? undefined : json['external'],
+    passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
   };
 }
 
-export function FilteredIdentityProviderInfoToJSON(value?: FilteredIdentityProviderInfo | null): any {
-  if (value === undefined) {
-    return undefined;
+export function FilteredIdentityProviderInfoToJSON(json: any): FilteredIdentityProviderInfo {
+  return FilteredIdentityProviderInfoToJSONTyped(json, false);
+}
+
+export function FilteredIdentityProviderInfoToJSONTyped(
+  value?: FilteredIdentityProviderInfo | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    type: value.type,
-    system: value.system,
-    external: value.external,
-    passwordPolicy: value.passwordPolicy,
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
+    system: value['system'],
+    external: value['external'],
+    passwordPolicy: value['passwordPolicy'],
   };
 }
