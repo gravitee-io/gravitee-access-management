@@ -39,6 +39,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -199,9 +200,6 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
     public static final String REF_TYPE = "refType";
     private static final UserIdFields USER_ID_FIELDS = new UserIdFields(USER_COL_ID, USER_COL_SOURCE, USER_COL_EXTERNAL_ID);
 
-
-    private static short concurrentFlatmap = 1;
-
     private String updateUserStatement;
     private String insertUserStatement;
     private String insertAddressStatement;
@@ -246,7 +244,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("findByReference({})", referenceId);
         return userRepository.findByReference(referenceType.name(), referenceId)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable());
+                .flatMap(user -> completeUser(user).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -259,10 +258,11 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                         .with(PageRequest.of(page, size))
                 ).all())
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable(), concurrentFlatmap)
+                .concatMap(user -> completeUser(user).toFlowable())
                 .toList()
                 .flatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
-                        .map((count) -> new Page<>(content, page, count)));
+                        .map((count) -> new Page<>(content, page, count)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -282,14 +282,15 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 .map((row, rowMetadata) -> rowMapper.read(JdbcOrganizationUser.class, row))
                 .all())
                 .map(this::toEntity)
-                .flatMap(app -> completeUser(app).toFlowable(), concurrentFlatmap) // single thread to keep order
+                .concatMap(app -> completeUser(app).toFlowable())
                 .toList()
                 .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
                         .bind(REF_ID, referenceId)
                         .bind(REF_TYPE, referenceType.name())
                         .map((row, rowMetadat) -> row.get(0, Long.class)).first())
-                        .map(total -> new Page<>(data, page, total)));
+                        .map(total -> new Page<>(data, page, total)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -319,7 +320,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toFlowable())
                 .toList()
-                .flatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)));
+                .flatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -339,7 +341,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
 
         return fluxToFlowable(userFlux)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable());
+                .flatMap(user -> completeUser(user).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -347,7 +350,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("findByUsernameAndSource({},{},{},{})", referenceType, referenceId, username, source);
         return userRepository.findByUsernameAndSource(referenceType.name(), referenceId, username, source)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe());
+                .flatMap(user -> completeUser(user).toMaybe())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -355,7 +359,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("findByExternalIdAndSource({},{},{},{})", referenceType, referenceId, externalId, source);
         return userRepository.findByExternalIdAndSource(referenceType.name(), referenceId, externalId, source)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe());
+                .flatMap(user -> completeUser(user).toMaybe())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -366,7 +371,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         }
         return userRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toFlowable(), concurrentFlatmap);
+                .concatMap(user -> completeUser(user).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -376,7 +382,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("findById({},{})", reference, userId);
         return findOne(Query.query(criteria), JdbcOrganizationUser.class)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe());
+                .flatMap(user -> completeUser(user).toMaybe())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -384,7 +391,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("findById({})", id);
         return userRepository.findById(id)
                 .map(this::toEntity)
-                .flatMap(user -> completeUser(user).toMaybe());
+                .flatMap(user -> completeUser(user).toMaybe())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -440,7 +448,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         insertAction = persistChildEntities(insertAction, item, UpdateActions.updateAll());
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap((i) -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -504,7 +513,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         }
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap((i) -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -513,7 +523,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> delete = getTemplate().delete(JdbcOrganizationUser.class).matching(Query.query(where(USER_COL_ID).is(id))).all();
 
-        return monoToCompletable(delete.then(deleteChildEntities(id, UpdateActions.updateAll())).as(trx::transactional));
+        return monoToCompletable(delete.then(deleteChildEntities(id, UpdateActions.updateAll())).as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -521,7 +532,8 @@ public class JdbcOrganizationUserRepository extends AbstractJdbcRepository imple
         LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM organization_users WHERE reference_type = :refType AND reference_id = :refId").bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId).fetch().rowsUpdated();
-        return monoToCompletable(deleteChildEntitiesByRef(referenceType.name(), referenceId).then(delete).as(trx::transactional));
+        return monoToCompletable(deleteChildEntitiesByRef(referenceType.name(), referenceId).then(delete).as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     @Override

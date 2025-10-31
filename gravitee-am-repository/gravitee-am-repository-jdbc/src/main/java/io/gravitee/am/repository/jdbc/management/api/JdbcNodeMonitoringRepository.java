@@ -23,6 +23,7 @@ import io.gravitee.node.api.NodeMonitoringRepository;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -54,7 +55,8 @@ public class JdbcNodeMonitoringRepository extends AbstractJdbcRepository impleme
     public Maybe<Monitoring> findByNodeIdAndType(String nodeId, String type) {
         LOGGER.debug("findByNodeIdAndType({}, {})", nodeId, type);
         return nodeMonitoringRepository.findByNodeIdAndType(nodeId, type)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -63,19 +65,22 @@ public class JdbcNodeMonitoringRepository extends AbstractJdbcRepository impleme
         return nodeMonitoringRepository.findByTypeAndTimeFrame(type,
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(from), UTC),
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(to), UTC))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Monitoring> create(Monitoring monitoring) {
         LOGGER.debug("Create Monitoring with id {}", monitoring.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(monitoring))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(monitoring))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Monitoring> update(Monitoring monitoring) {
         LOGGER.debug("Update monitoring with id '{}'", monitoring.getId());
         return nodeMonitoringRepository.save(toJdbcEntity(monitoring))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 }

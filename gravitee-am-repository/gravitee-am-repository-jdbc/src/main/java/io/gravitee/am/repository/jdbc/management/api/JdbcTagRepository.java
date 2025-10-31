@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -52,40 +53,46 @@ public class JdbcTagRepository extends AbstractJdbcRepository implements TagRepo
     public Maybe<Tag> findById(String id, String organizationId) {
         LOGGER.debug("findById({}, {})", id, organizationId);
         return tagRepository.findById(id, organizationId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Tag> findAll(String organizationId) {
         LOGGER.debug("findAll({})", organizationId);
         return tagRepository.findByOrganization(organizationId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Tag> findById(String id) {
         LOGGER.debug("findById({})", id);
         return tagRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Tag> create(Tag item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create tag with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Tag> update(Tag item) {
         LOGGER.debug("Update tag with id {}", item.getId());
         return tagRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return tagRepository.deleteById(id);
+        return tagRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 }

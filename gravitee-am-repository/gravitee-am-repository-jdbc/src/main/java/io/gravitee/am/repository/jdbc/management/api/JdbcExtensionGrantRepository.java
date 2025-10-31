@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -52,21 +53,24 @@ public class JdbcExtensionGrantRepository extends AbstractJdbcRepository impleme
     public Flowable<ExtensionGrant> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})", domain);
         return extensionGrantRepository.findByDomain(domain)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<ExtensionGrant> findByDomainAndName(String domain, String name) {
         LOGGER.debug("findByDomainAndName({}, {})", domain, name);
         return extensionGrantRepository.findByDomainAndName(domain, name)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<ExtensionGrant> findById(String id) {
         LOGGER.debug("findByDomainAndName({}, {})", id);
         return extensionGrantRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -74,19 +78,22 @@ public class JdbcExtensionGrantRepository extends AbstractJdbcRepository impleme
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create extension grants  with id {}", item.getId());
 
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ExtensionGrant> update(ExtensionGrant item) {
         LOGGER.debug("update extension grants  with id {}", item.getId());
         return this.extensionGrantRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return extensionGrantRepository.deleteById(id);
+        return extensionGrantRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 }

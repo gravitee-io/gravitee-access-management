@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
@@ -59,7 +60,8 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
         LOGGER.debug("findById({})", id);
 
         return this.alertNotifierRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -67,20 +69,23 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
         alertNotifier.setId(alertNotifier.getId() == null ? RandomString.generate() : alertNotifier.getId());
         LOGGER.debug("create alert notifier with id {}", alertNotifier.getId());
 
-        return monoToSingle(getTemplate().insert(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AlertNotifier> update(AlertNotifier alertNotifier) {
         LOGGER.debug("update alert notifier with id {}", alertNotifier.getId());
 
-        return monoToSingle(getTemplate().update(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(toJdbcAlertNotifier(alertNotifier))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return this.alertNotifierRepository.deleteById(id);
+        return this.alertNotifierRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -107,6 +112,7 @@ public class JdbcAlertNotifierRepository extends AbstractJdbcRepository implemen
 
         whereClause = whereClause.and(referenceClause.and(criteria.isLogicalOR() ? idsClause.or(enableClause) : idsClause.and(enableClause)));
 
-        return fluxToFlowable(getTemplate().select(Query.query(whereClause), JdbcAlertNotifier.class)).map(this::toEntity);
+        return fluxToFlowable(getTemplate().select(Query.query(whereClause), JdbcAlertNotifier.class)).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 }

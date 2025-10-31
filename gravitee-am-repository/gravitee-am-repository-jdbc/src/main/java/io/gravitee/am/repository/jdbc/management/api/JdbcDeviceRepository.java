@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -71,7 +72,8 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
                                 .and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))
                 ))
                 .all())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -94,7 +96,8 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
                         .and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))
                 ))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     protected JdbcDevice toJdbcEntity(Device entity) {
@@ -108,7 +111,8 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
         return monoToMaybe(getTemplate().select(JdbcDevice.class)
                 .matching(Query.query(where(ID_FIELD).is(id).and(where(EXPIRES_AT_FIELD).greaterThanOrEquals(now))))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -116,20 +120,23 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create remember device with id {}", item.getId());
 
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Device> update(Device item) {
         LOGGER.debug("update remember device with id {}", item.getId());
-        return monoToSingle(getTemplate().update(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return monoToCompletable(getTemplate().delete(JdbcDevice.class)
-                .matching(Query.query(where(ID_FIELD).is(id))).all());
+                .matching(Query.query(where(ID_FIELD).is(id))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -138,6 +145,7 @@ public class JdbcDeviceRepository extends AbstractJdbcRepository implements Devi
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToCompletable(
                 getTemplate().delete(JdbcDevice.class).matching(Query.query(where(EXPIRES_AT_FIELD).lessThan(now))).all()
-        ).doOnError(error -> LOGGER.error("Unable to purge Devices", error));
+        ).doOnError(error -> LOGGER.error("Unable to purge Devices", error))
+                .observeOn(Schedulers.computation());
     }
 }

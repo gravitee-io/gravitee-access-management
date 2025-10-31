@@ -24,6 +24,7 @@ import io.gravitee.am.repository.oauth2.model.PushedAuthorizationRequest;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -60,7 +61,8 @@ public class JdbcPushedAuthorizationRequestRepository extends AbstractJdbcReposi
         return parRepository.findById(id)
                 .filter(bean -> bean.getExpireAt() == null || bean.getExpireAt().isAfter(now))
                 .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve PushedAuthorizationRequest with id {}", id, error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve PushedAuthorizationRequest with id {}", id, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -68,14 +70,16 @@ public class JdbcPushedAuthorizationRequestRepository extends AbstractJdbcReposi
         par.setId(par.getId() == null ? RandomString.generate() : par.getId());
         LOGGER.debug("Create PushedAuthorizationRequest with id {}", par.getId());
         return monoToSingle(getTemplate().insert(toJdbcEntity(par))).map(this::toEntity)
-                .doOnError((error) -> LOGGER.error("Unable to create PushedAuthorizationRequest with id {}", par.getId(), error));
+                .doOnError((error) -> LOGGER.error("Unable to create PushedAuthorizationRequest with id {}", par.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return parRepository.deleteById(id)
-                .doOnError(error -> LOGGER.error("Unable to delete PushedAuthorizationRequest with id {}", id, error));
+                .doOnError(error -> LOGGER.error("Unable to delete PushedAuthorizationRequest with id {}", id, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -85,6 +89,7 @@ public class JdbcPushedAuthorizationRequestRepository extends AbstractJdbcReposi
         return monoToCompletable(getTemplate().delete(JdbcPushedAuthorizationRequest.class)
                 .matching(Query.query(where("expire_at")
                         .lessThan(now))).all())
-                .doOnError(error -> LOGGER.error("Unable to purge PushedAuthorizationRequest", error));
+                .doOnError(error -> LOGGER.error("Unable to purge PushedAuthorizationRequest", error))
+                .observeOn(Schedulers.computation());
     }
 }

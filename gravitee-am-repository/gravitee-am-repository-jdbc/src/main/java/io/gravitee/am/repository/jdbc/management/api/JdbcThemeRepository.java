@@ -25,6 +25,7 @@ import io.gravitee.am.repository.management.api.ThemeRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -52,32 +53,37 @@ public class JdbcThemeRepository extends AbstractJdbcRepository implements Theme
     public Maybe<Theme> findById(String id) {
         LOGGER.debug("findById({})", id);
         return themeRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Theme> create(Theme item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create theme with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Theme> update(Theme item) {
         LOGGER.debug("Update theme with id {}", item.getId());
         return themeRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return themeRepository.deleteById(id);
+        return themeRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Theme> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
-        return themeRepository.findByReference(referenceId, referenceType.name()).map(this::toEntity);
+        return themeRepository.findByReference(referenceId, referenceType.name()).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 }

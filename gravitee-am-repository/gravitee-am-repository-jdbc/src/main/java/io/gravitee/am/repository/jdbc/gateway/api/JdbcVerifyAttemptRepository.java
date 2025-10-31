@@ -27,6 +27,7 @@ import io.gravitee.am.repository.gateway.api.search.VerifyAttemptCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -61,34 +62,39 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
     public Maybe<VerifyAttempt> findById(String id) {
         LOGGER.debug("VerifyAttempt findById({})", id);
         return verifyAttemptRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<VerifyAttempt> findByCriteria(VerifyAttemptCriteria criteria) {
         Criteria whereClause = buildWhereClause(criteria);
         return monoToMaybe(getTemplate().select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcVerifyAttempt.class)
-                .singleOrEmpty()).map(this::toEntity);
+                .singleOrEmpty()).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<VerifyAttempt> create(VerifyAttempt item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create VerifyAttempt with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<VerifyAttempt> update(VerifyAttempt item) {
         LOGGER.debug("update VerifyAttempt with id '{}'", item.getId());
         return verifyAttemptRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete VerifyAttempt with id '{}'", id);
-        return verifyAttemptRepository.deleteById(id);
+        return verifyAttemptRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -97,7 +103,8 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
         Criteria whereClause = buildWhereClause(criteria);
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all())
+                    .observeOn(Schedulers.computation());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from VerifyAttempt with criteria");
@@ -113,7 +120,8 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
         }
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all())
+                    .observeOn(Schedulers.computation());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from VerifyAttempt with userId");
@@ -129,7 +137,8 @@ public class JdbcVerifyAttemptRepository extends AbstractJdbcRepository implemen
         }
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcVerifyAttempt.class).matching(Query.query(whereClause)).all())
+                    .observeOn(Schedulers.computation());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from VerifyAttempt with domainId");

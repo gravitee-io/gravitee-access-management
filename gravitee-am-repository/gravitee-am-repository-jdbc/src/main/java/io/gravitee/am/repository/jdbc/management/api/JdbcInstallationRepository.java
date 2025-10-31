@@ -24,6 +24,7 @@ import io.gravitee.am.repository.management.api.InstallationRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -83,14 +84,16 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
     public Maybe<Installation> find() {
         LOGGER.debug("find()");
         return this.installationRepository.findAll().firstElement()
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Installation> findById(String id) {
         LOGGER.debug("findById({})", id);
         return this.installationRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -106,7 +109,8 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
         insertSpec = databaseDialectHelper.addJsonField(insertSpec, COL_ADDITIONAL_INFORMATION, installation.getAdditionalInformation());
 
         return monoToCompletable(insertSpec.then())
-                .andThen(Single.defer(() -> this.findById(installation.getId()).toSingle()));
+                .andThen(Single.defer(() -> this.findById(installation.getId()).toSingle()))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -121,12 +125,14 @@ public class JdbcInstallationRepository extends AbstractJdbcRepository implement
         update = databaseDialectHelper.addJsonField(update, COL_ADDITIONAL_INFORMATION, installation.getAdditionalInformation());
 
         return monoToCompletable(update.fetch().rowsUpdated())
-                .andThen(Single.defer(() -> this.findById(installation.getId()).toSingle()));
+                .andThen(Single.defer(() -> this.findById(installation.getId()).toSingle()))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return this.installationRepository.deleteById(id);
+        return this.installationRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 }

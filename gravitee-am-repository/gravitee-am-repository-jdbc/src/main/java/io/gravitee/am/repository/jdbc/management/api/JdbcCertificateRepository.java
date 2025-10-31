@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -103,14 +104,16 @@ public class JdbcCertificateRepository extends AbstractJdbcRepository implements
     public Flowable<Certificate> findAll() {
         LOGGER.debug("findAll()");
         return this.certificateRepository.findAll()
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Certificate> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})", domain);
         return this.certificateRepository.findByDomain(domain)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override

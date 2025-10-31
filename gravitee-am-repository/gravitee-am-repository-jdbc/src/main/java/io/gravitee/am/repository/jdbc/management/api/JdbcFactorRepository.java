@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -52,40 +53,46 @@ public class JdbcFactorRepository extends AbstractJdbcRepository implements Fact
     public Flowable<Factor> findAll() {
         LOGGER.debug("findAll()");
         return factorRepository.findAll()
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Factor> findByDomain(String domain) {
         LOGGER.debug("findByDomain({})", domain);
         return factorRepository.findByDomain(domain)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Factor> findById(String id) {
         LOGGER.debug("findById({})", id);
         return factorRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Factor> create(Factor item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create factor with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Factor> update(Factor item) {
         LOGGER.debug("update factor with id {}", item.getId());
         return this.factorRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return factorRepository.deleteById(id);
+        return factorRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 }

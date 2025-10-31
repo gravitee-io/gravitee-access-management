@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.reactivestreams.Publisher;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,7 +110,8 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
         return roleRepository.findByReference(referenceType.name(), referenceId)
                 .map(this::toEntity)
-                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable());
+                .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -121,10 +123,11 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                         .sort(Sort.by(COL_NAME).ascending())
                         .with(PageRequest.of(page, size)), JdbcRole.class))
                 .map(this::toEntity)
-                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
+                .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
                 .flatMap(content -> roleRepository.countByReference(referenceType.name(), referenceId)
-                        .map(count -> new Page<>(content, page, count)));
+                        .map(count -> new Page<>(content, page, count)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -143,7 +146,7 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                 .bind("refType", referenceType.name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcRole.class, row)).all())
                 .map(this::toEntity)
-                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
+                .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
                 .toList()
                 .flatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind("value", wildcardSearch ? wildcardValue : query)
@@ -151,7 +154,8 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
                         .bind("refType", referenceType.name())
                         .map((row, rowMetadata) -> row.get(0, Long.class))
                         .first())
-                        .map(total -> new Page<Role>(data, page, total)));
+                        .map(total -> new Page<Role>(data, page, total)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -162,14 +166,16 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         }
         return roleRepository.findByIdIn(ids)
                 .map(this::toEntity)
-                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable());
+                .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Role> findById(ReferenceType referenceType, String referenceId, String role) {
         LOGGER.debug("findById({},{},{})", referenceType, referenceId, role);
         return completeWithScopes(roleRepository.findById(referenceType.name(), referenceId, role)
-                .map(this::toEntity), role);
+                .map(this::toEntity), role)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -177,7 +183,8 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("findByNameAndAssignableType({},{},{},{})", referenceType, referenceId, name, assignableType);
         return roleRepository.findByNameAndAssignableType(referenceType.name(), referenceId, name, assignableType.name())
                 .map(this::toEntity)
-                .flatMap(role -> completeWithScopes(Maybe.just(role), role.getId()));
+                .concatMap(role -> completeWithScopes(Maybe.just(role), role.getId()))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -185,14 +192,16 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         LOGGER.debug("findByNamesAndAssignableType({},{},{},{})", referenceType, referenceId, names, assignableType);
         return roleRepository.findByNamesAndAssignableType(referenceType.name(), referenceId, names, assignableType.name())
                 .map(this::toEntity)
-                .flatMapMaybe(role -> completeWithScopes(Maybe.just(role), role.getId()));
+                .concatMapMaybe(role -> completeWithScopes(Maybe.just(role), role.getId()))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Role> findById(String id) {
         LOGGER.debug("findById({})", id);
         return completeWithScopes(roleRepository.findById(id)
-                .map(this::toEntity), id);
+                .map(this::toEntity), id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -226,7 +235,8 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         }
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -260,7 +270,8 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         }
 
         return monoToSingle(deleteScopes.then(action).as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     private Function<String, Publisher<? extends Long>> insertScopr(Role item) {
@@ -282,7 +293,8 @@ public class JdbcRoleRepository extends AbstractJdbcRepository implements RoleRe
         Mono<Long> delete = getTemplate().delete(JdbcRole.class)
                 .matching(Query.query(where(COL_ID).is(id))).all();
 
-        return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)));
+        return monoToCompletable(delete.then(deleteScopes.as(trx::transactional)))
+                .observeOn(Schedulers.computation());
     }
 
     private Maybe<Role> completeWithScopes(Maybe<Role> maybeRole, String id) {

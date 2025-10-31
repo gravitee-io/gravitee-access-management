@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
@@ -104,7 +105,8 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         Mono<Long> insertAction = sql.fetch().rowsUpdated();
 
         return monoToSingle(insertAction.as(mono -> TransactionalOperator.create(tm).transactional(mono)))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -127,7 +129,8 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         updateAction = persistEntries(updateAction, item);
 
         return monoToSingle(updateAction.as(trx::transactional)).flatMap(i -> this.findById(item.getId()).toSingle())
-                .doOnError(error -> LOGGER.error("unable to update i18n dictionary with id {}", item.getId(), error));
+                .doOnError(error -> LOGGER.error("unable to update i18n dictionary with id {}", item.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> deleteEntries(String dictionaryId) {
@@ -166,7 +169,8 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
                                          .matching(Query.query(where(ID).is(id)))
                                          .all()
                                          .then(deleteEntries(id))
-                                         .as(trx::transactional));
+                                         .as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -174,7 +178,8 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         LOGGER.debug("findByLocale({}, {}, {})", referenceType, referenceId, locale);
         return repository.findByLocale(referenceType.toString(), referenceId, locale)
                          .map(this::toEntity)
-                         .flatMapSingle(this::completeDictionary);
+                         .flatMapSingle(this::completeDictionary)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -182,7 +187,8 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
         return repository.findAll(referenceType.toString(), referenceId)
                          .map(this::toEntity)
-                         .flatMap(dictionary -> completeDictionary(dictionary).toFlowable());
+                         .flatMap(dictionary -> completeDictionary(dictionary).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -190,7 +196,8 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         LOGGER.debug("findById({}, {}, {})", referenceType, referenceId, id);
         return repository.findById(referenceType.toString(), referenceId, id)
                          .map(this::toEntity)
-                         .flatMapSingle(this::completeDictionary);
+                         .flatMapSingle(this::completeDictionary)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -198,7 +205,8 @@ public class JdbcI18nDictionaryRepository extends AbstractJdbcRepository impleme
         LOGGER.debug("findById({})", id);
         return repository.findById(id)
                          .map(this::toEntity)
-                         .flatMapSingle(this::completeDictionary);
+                         .flatMapSingle(this::completeDictionary)
+                .observeOn(Schedulers.computation());
     }
 
     private Single<I18nDictionary> completeDictionary(I18nDictionary dictionary) {

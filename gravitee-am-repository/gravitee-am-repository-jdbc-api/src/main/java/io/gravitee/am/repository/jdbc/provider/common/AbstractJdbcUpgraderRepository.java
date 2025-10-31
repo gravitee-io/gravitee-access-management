@@ -19,6 +19,7 @@ import io.gravitee.node.api.upgrader.UpgradeRecord;
 import io.gravitee.node.api.upgrader.UpgraderRepository;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Mono;
 
@@ -40,7 +41,8 @@ abstract public class AbstractJdbcUpgraderRepository implements UpgraderReposito
                         row.get("id", String.class),
                         toDate(row.get("applied_at", LocalDateTime.class))))
                 .first();
-        return Maybe.fromPublisher(publisher);
+        return Maybe.fromPublisher(publisher)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -53,7 +55,8 @@ abstract public class AbstractJdbcUpgraderRepository implements UpgraderReposito
                 .flatMap(rowsInserted -> rowsInserted == 1 ?
                         Mono.just(upgradeRecord) :
                         Mono.error(new RuntimeException("Number of rows inserted should be 1 but is " + rowsInserted)));
-        return Single.fromPublisher(publisher);
+        return Single.fromPublisher(publisher)
+                .observeOn(Schedulers.computation());
     }
 
     public LocalDateTime toLocalDateTime(Date date) {

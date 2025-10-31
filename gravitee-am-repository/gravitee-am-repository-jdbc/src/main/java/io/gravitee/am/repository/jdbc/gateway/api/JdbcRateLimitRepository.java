@@ -27,6 +27,7 @@ import io.gravitee.am.repository.gateway.api.search.RateLimitCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -56,34 +57,39 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
     public Maybe<RateLimit> findById(String id) {
         LOGGER.debug("RateLimit findById({})", id);
         return rateLimitRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<RateLimit> findByCriteria(RateLimitCriteria criteria) {
         Criteria whereClause = buildWhereClause(criteria);
         return monoToMaybe(getTemplate().select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcRateLimit.class)
-                .singleOrEmpty()).map(this::toEntity);
+                .singleOrEmpty()).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<RateLimit> create(RateLimit item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create RateLimit with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<RateLimit> update(RateLimit item) {
         LOGGER.debug("update RateLimit with id '{}'", item.getId());
         return rateLimitRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete RateLimit with id '{}'", id);
-        return rateLimitRepository.deleteById(id);
+        return rateLimitRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -92,7 +98,8 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
         Criteria whereClause = buildWhereClause(criteria);
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all())
+                    .observeOn(Schedulers.computation());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from RateLimit with criteria");
@@ -108,7 +115,8 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
         }
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all())
+                    .observeOn(Schedulers.computation());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from RateLimit with userId");
@@ -124,7 +132,8 @@ public class JdbcRateLimitRepository extends AbstractJdbcRepository implements R
         }
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcRateLimit.class).matching(Query.query(whereClause)).all())
+                    .observeOn(Schedulers.computation());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from RateLimit with domainId");
