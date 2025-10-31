@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getProtectedResourcesApi, getDomainManagerUrl } from './service/utils';
+import { getProtectedResourcesApi } from './service/utils';
 import { NewProtectedResource } from "@management-models/NewProtectedResource";
 import { UpdateProtectedResource } from "@management-models/UpdateProtectedResource";
 import {ProtectedResourcePrimaryData, ProtectedResourceSecret} from "@management-models/index";
@@ -58,28 +58,14 @@ export const getMcpServer = (domainId: string, accessToken: string, id: string) 
       type: 'MCP_SERVER',
   });
 
-export const deleteProtectedResource = async (domainId: string, accessToken: string, id: string, type: string) : Promise<void> => {
-  const url = `${getDomainManagerUrl(domainId)}/protected-resources/${id}?type=${encodeURIComponent(type)}`;
-  const resp = await fetch(url, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-    },
+export const deleteProtectedResource = (domainId: string, accessToken: string, id: string, type: string): Promise<void> =>
+  getProtectedResourcesApi(accessToken).deleteProtectedResource({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: id,
+    type: type as 'MCP_SERVER',
   });
-  if (resp.status !== 204) {
-    let body: any = '';
-    try {
-      body = await resp.text();
-    } catch (e) {
-      // Log body read errors to ease debugging of failing tests
-      console.error('Failed to read error response body', e);
-    }
-    const error = new Error(`Failed to delete protected resource: HTTP ${resp.status}`);
-    (error as any).status = resp.status;
-    (error as any).body = body;
-    throw error;
-  }
-};
 
 /**
  * Polls until a protected resource appears in the list (useful for waiting for gateway sync)
