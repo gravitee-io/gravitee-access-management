@@ -50,6 +50,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.processors.PublishProcessor;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -235,7 +236,8 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
                 .toList()
                 .flatMap(content -> monoToSingle(total).map(value -> new Page<>(content, page, value)))
                 .doOnError(error -> LOGGER.error("Unable to retrieve reports for referenceType {} and referenceId {}",
-                        referenceType, referenceId, error));
+                        referenceType, referenceId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -244,13 +246,16 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
         switch (analyticsType) {
             case DATE_HISTO:
-                return executeHistogramAggregation(referenceType, referenceId, criteria);
+                return executeHistogramAggregation(referenceType, referenceId, criteria)
+                        .observeOn(Schedulers.computation());
             case GROUP_BY:
                 SearchQuery groupByQuery = dialectHelper.buildGroupByQuery(referenceType, referenceId, criteria);
-                return executeGroupBy(groupByQuery, criteria);
+                return executeGroupBy(groupByQuery, criteria)
+                        .observeOn(Schedulers.computation());
             case COUNT:
                 SearchQuery searchQuery = dialectHelper.buildSearchQuery(referenceType, referenceId, criteria);
-                return executeCount(searchQuery);
+                return executeCount(searchQuery)
+                        .observeOn(Schedulers.computation());
             default:
                 return Single.error(new IllegalArgumentException("Analytics [" + analyticsType + "] cannot be calculated"));
         }
@@ -359,7 +364,8 @@ public class JdbcAuditReporter extends AbstractService<Reporter> implements Audi
 
         return monoToMaybe(auditMono)
                 .doOnError(error -> LOGGER.error("Unable to retrieve the Report with referenceType {}, referenceId {} and id {}",
-                        referenceType, referenceId, id, error));
+                        referenceType, referenceId, id, error))
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Audit> fillWithActor(Audit audit) {
