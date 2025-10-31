@@ -35,6 +35,7 @@ import io.gravitee.am.identityprovider.jdbc.utils.ColumnMapRowMapper;
 import io.gravitee.am.identityprovider.jdbc.utils.ParametersUtils;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.util.StringUtils;
@@ -76,6 +77,7 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
                     }
                     return Flowable.fromIterable(users);
                 })
+                .observeOn(Schedulers.computation())
                 .map(result -> {
                     // check password
                     String password = String.valueOf(result.get(configuration.getPasswordAttribute()));
@@ -142,7 +144,8 @@ public class JdbcAuthenticationProvider extends JdbcAbstractProvider<Authenticat
     @Override
     public Maybe<User> loadUserByUsername(String username) {
         return selectUserByUsername(username)
-                .map(attributes -> createUser(new SimpleAuthenticationContext(), attributes));
+                .map(attributes -> createUser(new SimpleAuthenticationContext(), attributes))
+                .observeOn(Schedulers.computation());
     }
 
     private Maybe<Map<String, Object>> selectUserByUsername(String username) {
