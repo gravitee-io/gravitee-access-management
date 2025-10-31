@@ -106,9 +106,6 @@ public class GroupMembersResource extends AbstractResource {
     }
 
     @Path("{member}")
-    @Operation(
-            operationId = "getGroupMember",
-            summary = "Get a group member")
     public GroupMemberResource groupMemberResource() {
         return resourceContext.getResource(GroupMemberResource.class);
     }

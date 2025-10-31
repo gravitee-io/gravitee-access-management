@@ -77,8 +77,6 @@ public class IdentityProvidersPluginResource {
     }
 
     @Path("{identity}")
-    @Operation(summary = "Get an identity provider plugin",
-            operationId = "getIdentityProviderPlugin")
     public IdentityProviderPluginResource getIdentityProviderResource() {
         return resourceContext.getResource(IdentityProviderPluginResource.class);
     }

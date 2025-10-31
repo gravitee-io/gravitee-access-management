@@ -43,73 +43,61 @@ public class OrganizationResource extends AbstractResource {
     private ResourceContext resourceContext;
 
     @Path("environments")
-    @Operation(operationId = "getEnvironmentsResource", summary = "Get environments resource")
     public EnvironmentsResource getEnvironmentsResource() {
         return resourceContext.getResource(EnvironmentsResource.class);
     }
 
     @Path("audits")
-    @Operation(operationId = "getAuditsResource", summary = "Get audits resource")
     public AuditsResource getAuditsResource() {
         return resourceContext.getResource(AuditsResource.class);
     }
 
     @Path("reporters")
-    @Operation(operationId = "getReporters", summary = "Get reporters resource")
     public ReportersResource getReporters() {
         return resourceContext.getResource(ReportersResource.class);
     }
 
     @Path("members")
-    @Operation(operationId = "getMembersResource", summary = "Get members resource")
     public MembersResource getMembersResource() {
         return resourceContext.getResource(MembersResource.class);
     }
 
     @Path("tags")
-    @Operation(operationId = "getTagsResource", summary = "Get tags resource")
     public TagsResource getTagsResource() {
         return resourceContext.getResource(TagsResource.class);
     }
 
     @Path("entrypoints")
-    @Operation(operationId = "getEntrypointsResource", summary = "Get entrypoints resource")
     public EntrypointsResource getEntrypointsResource() {
         return resourceContext.getResource(EntrypointsResource.class);
     }
 
     @Path("roles")
-    @Operation(operationId = "getRolesResource", summary = "Get roles resource")
     public RolesResource getRolesResource() {
         return resourceContext.getResource(RolesResource.class);
     }
 
     @Path("groups")
-    @Operation(operationId = "getGroupsResource", summary = "Get groups resource")
     public GroupsResource getGroupsResource() {
         return resourceContext.getResource(GroupsResource.class);
     }
 
     @Path("identities")
-    @Operation(operationId = "getIdentityProvidersResource", summary = "Get identity providers resource")
     public IdentityProvidersResource getIdentityProvidersResource() {
         return resourceContext.getResource(IdentityProvidersResource.class);
     }
 
     @Path("users")
-    @Operation(operationId = "getUsersResource", summary = "Get users resource")
     public OrganizationUsersResource getUsersResource() {
         return resourceContext.getResource(OrganizationUsersResource.class);
     }
 
     @Path("settings")
-    @Operation(operationId = "getSettingsResource", summary = "Get settings resource")
     public SettingsResource getSettingsResource() {
         return resourceContext.getResource(SettingsResource.class);
     }
 
     @Path("forms")
-    @Operation(operationId = "getFormsResource", summary = "Get forms resource")
     public FormsResource getFormsResource() {
         return resourceContext.getResource(FormsResource.class);
     }

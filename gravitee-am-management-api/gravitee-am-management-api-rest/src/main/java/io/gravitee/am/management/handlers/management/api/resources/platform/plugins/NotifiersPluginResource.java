@@ -73,8 +73,6 @@ public class NotifiersPluginResource {
     }
 
     @Path("{notifierId}")
-    @Operation(summary = "Get a notifier plugin",
-            operationId = "getNotifierPlugin")
     public NotifierPluginResource getNotifierPluginResource() {
         return resourceContext.getResource(NotifierPluginResource.class);
     }

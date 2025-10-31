@@ -116,7 +116,6 @@ public class RolesResource extends AbstractResource {
     }
 
     @Path("{role}")
-    @Operation(summary = "Get a role by its identifier", operationId = "getRole")
     public RoleResource getRoleResource() {
         return resourceContext.getResource(RoleResource.class);
     }

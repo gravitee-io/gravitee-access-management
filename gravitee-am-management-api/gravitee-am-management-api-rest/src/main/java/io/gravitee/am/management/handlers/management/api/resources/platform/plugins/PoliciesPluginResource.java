@@ -64,8 +64,6 @@ public class PoliciesPluginResource {
     }
 
     @Path("{policy}")
-    @Operation(summary = "Get a policy plugin",
-            operationId = "getPolicyPlugin")
     public PolicyPluginResource getPolicyResource() {
         return resourceContext.getResource(PolicyPluginResource.class);
     }

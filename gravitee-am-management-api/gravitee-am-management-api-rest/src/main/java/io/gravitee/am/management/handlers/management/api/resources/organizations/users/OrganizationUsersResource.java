@@ -253,7 +253,6 @@ public class OrganizationUsersResource extends AbstractResource {
     }
 
     @Path("{user}")
-    @Operation(summary = "Get a platform user or Service Account", operationId = "getOrganisationUser")
     public OrganizationUserResource getUserResource() {
         return resourceContext.getResource(OrganizationUserResource.class);
     }

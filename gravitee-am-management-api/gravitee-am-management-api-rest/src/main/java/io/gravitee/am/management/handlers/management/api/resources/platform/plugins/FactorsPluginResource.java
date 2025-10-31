@@ -62,8 +62,6 @@ public class FactorsPluginResource {
     }
 
     @Path("{factor}")
-    @Operation(summary = "Get a factor plugin",
-            operationId = "getFactorPlugin")
     public FactorPluginResource getFactorPluginResource() {
         return resourceContext.getResource(FactorPluginResource.class);
     }
