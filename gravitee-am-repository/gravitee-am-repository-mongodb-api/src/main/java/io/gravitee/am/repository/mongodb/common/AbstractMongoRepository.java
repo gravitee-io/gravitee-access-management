@@ -19,8 +19,13 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import io.gravitee.am.model.UserId;
 import io.gravitee.am.repository.common.UserIdFields;
+import io.gravitee.am.repository.mongodb.exceptions.MongoRepositoryExceptionMapper;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.MaybeSource;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.core.SingleSource;
 import io.reactivex.rxjava3.functions.Function;
 import io.reactivex.rxjava3.functions.Predicate;
 import org.bson.Document;
@@ -35,6 +40,8 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.DEFAULT_USER_F
  * @author GraviteeSource Team
  */
 public abstract class AbstractMongoRepository {
+
+    private static final MongoRepositoryExceptionMapper exceptionMapper = new MongoRepositoryExceptionMapper();
 
     protected void init(MongoCollection<?> collection) {
         MongoUtils.init(collection);
@@ -58,5 +65,49 @@ public abstract class AbstractMongoRepository {
 
     protected Completable dropIndexes(MongoCollection<?> collection, Predicate<String> nameMatcher) {
         return MongoUtils.dropIndexes(collection, nameMatcher);
+    }
+
+    /**
+     * Maps a throwable to a RepositoryConnectionException if it represents a connection error,
+     * otherwise returns the original throwable.
+     *
+     * @param throwable the exception to map
+     * @return a RepositoryConnectionException if it's a connection error, otherwise the original throwable
+     */
+    protected Throwable mapException(Throwable throwable) {
+        return exceptionMapper.map(throwable);
+    }
+
+    /**
+     * Maps a throwable to a RepositoryConnectionException in a Maybe error if it represents a connection error,
+     * otherwise returns the original throwable as a Maybe.
+     *
+     * @param error the exception to map
+     * @return a Maybe error if it's a connection error, otherwise the original throwable as a Maybe
+     */
+    protected <T> MaybeSource<T> mapExceptionAsMaybe(Throwable error) {
+        return Maybe.error(mapException(error));
+    }
+
+    /**
+     * Maps a throwable to a RepositoryConnectionException in a Flowable error if it represents a connection error,
+     * otherwise returns the original throwable as a Flowable.
+     *
+     * @param error the exception to map
+     * @return a Flowable error if it's a connection error, otherwise the original throwable as a Flowable
+     */
+    protected <T> Flowable<T> mapExceptionAsFlowable(Throwable error) {
+        return Flowable.fromMaybe(mapExceptionAsMaybe(error));
+    }
+
+    /**
+     * Maps a throwable to a RepositoryConnectionException in a Single error if it represents a connection error,
+     * otherwise returns the original throwable as a Single.
+     *
+     * @param error the exception to map
+     * @return a Single error if it's a connection error, otherwise the original throwable as a Single
+     */
+    protected <T> SingleSource<T> mapExceptionAsSingle(Throwable error) {
+        return Single.fromMaybe(mapExceptionAsMaybe(error));
     }
 }

@@ -44,6 +44,30 @@ public class IdentityProviderRepositoryTest extends AbstractManagementTest {
     private IdentityProviderRepository identityProviderRepository;
 
     @Test
+    public void testFindAll() {
+        // baseline count
+        int beforeCount = identityProviderRepository.findAll().toList().blockingGet().size();
+
+        // create idps
+        IdentityProvider idp1 = buildIdentityProvider();
+        identityProviderRepository.create(idp1).blockingGet();
+
+        IdentityProvider idp2 = buildIdentityProvider();
+        identityProviderRepository.create(idp2).blockingGet();
+
+        // fetch all
+        TestObserver<List<IdentityProvider>> testObserver = identityProviderRepository.findAll().toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(idps -> idps.size() == beforeCount + 2);
+        testObserver.assertValue(idps -> idps.stream().map(IdentityProvider::getName)
+                .collect(Collectors.toSet())
+                .containsAll(Arrays.asList(idp1.getName(), idp2.getName())));
+    }
+
+    @Test
     public void testFindByDomain() {
         // create idp
         IdentityProvider identityProvider = buildIdentityProvider();

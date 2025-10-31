@@ -110,7 +110,8 @@ public class MongoDomainRepository extends AbstractManagementMongoRepository imp
     @Override
     public Flowable<Domain> findAll() {
         return Flowable.fromPublisher(withMaxTime(domainsCollection.find())).map(MongoDomainRepository::convert)
-                .observeOn(Schedulers.computation());
+                .observeOn(Schedulers.computation())
+                .onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override

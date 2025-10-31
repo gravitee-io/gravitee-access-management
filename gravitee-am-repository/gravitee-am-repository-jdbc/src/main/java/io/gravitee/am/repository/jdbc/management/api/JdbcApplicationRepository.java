@@ -175,7 +175,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findAll()");
         return applicationRepository.findAll()
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override
@@ -196,7 +197,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByDomain({})", domain);
         return applicationRepository.findByDomain(domain)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .flatMap(app -> completeApplication(app).toFlowable())
+                .onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override

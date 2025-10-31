@@ -24,6 +24,7 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.model.oidc.Client;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
+import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.management.api.ApplicationRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
@@ -67,18 +68,29 @@ public class ClientManagerImpl extends AbstractService implements ClientManager,
     public void afterPropertiesSet() throws Exception {
         logger.info("Initializing applications for domain {}", domain.getName());
         Flowable<Application> applicationsSource = domain.isMaster() ? applicationRepository.findAll() : applicationRepository.findByDomain(domain.getId());
-        applicationsSource
-                .map(Application::toClient)
-                .filter(Client::isEnabled)
-                .subscribeOn(Schedulers.io())
-                .subscribe(
-                        client -> {
-                            gatewayMetricProvider.incrementApp();
-                            clients.put(client.getId(), client);
-                            logger.info("Application {} loaded for domain {}", client.getClientName(), domain.getName());
-                        },
-                        error -> logger.error("An error has occurred when loading applications for domain {}", domain.getName(), error)
-                );
+        try {
+            applicationsSource
+                    .onErrorResumeNext(error -> {
+                        logger.error("Repository error while loading applications for domain {}", domain.getName(), error);
+                        if (error instanceof RepositoryConnectionException) {
+                            return Flowable.error(error);
+                        } else {
+                            return Flowable.empty();
+                        }
+                    })
+                    .map(Application::toClient)
+                    .filter(Client::isEnabled)
+                    .subscribeOn(Schedulers.io())
+                    .doOnNext(client -> {
+                        gatewayMetricProvider.incrementApp();
+                        clients.put(client.getId(), client);
+                        logger.info("Application {} loaded for domain {}", client.getClientName(), domain.getName());
+                    })
+                    .toList()
+                    .blockingGet();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to initialize applications for domain " + domain.getName(), e);
+        }
     }
 
     @Override

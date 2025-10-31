@@ -16,9 +16,6 @@
 package io.gravitee.am.dataplane.mongodb.repository;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.MongoServerUnavailableException;
-import com.mongodb.MongoSocketOpenException;
-import com.mongodb.MongoTimeoutException;
 import com.mongodb.client.model.Accumulators;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.IndexOptions;
@@ -44,10 +41,8 @@ import io.gravitee.am.model.scim.Address;
 import io.gravitee.am.model.scim.Attribute;
 import io.gravitee.am.model.scim.Certificate;
 import io.gravitee.am.repository.common.UserIdFields;
-import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.exceptions.TechnicalException;
 import io.gravitee.am.repository.management.api.search.FilterCriteria;
-import io.gravitee.am.repository.mongodb.common.FilterCriteriaParser;
 import io.gravitee.am.repository.mongodb.common.MongoUtils;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -253,7 +248,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                         .first())
                 .firstElement()
                 .map(this::convert)
-                .onErrorResumeNext(this::mapException)
+                .onErrorResumeNext(this::mapExceptionAsMaybe)
                 .observeOn(Schedulers.computation());
     }
 
@@ -266,7 +261,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                         .first())
                 .firstElement()
                 .map(this::convert)
-                .onErrorResumeNext(this::mapException)
+                .onErrorResumeNext(this::mapExceptionAsMaybe)
                 .observeOn(Schedulers.computation());
     }
 
@@ -281,7 +276,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         return Observable.fromPublisher(usersCollection.find(and(eq(FIELD_REFERENCE_TYPE, reference.type().name()), eq(FIELD_REFERENCE_ID, reference.id()), userIdMatches(userId, USER_ID_FIELDS))).first())
                 .firstElement()
                 .map(this::convert)
-                .onErrorResumeNext(this::mapException)
+                .onErrorResumeNext(this::mapExceptionAsMaybe)
                 .observeOn(Schedulers.computation());
     }
 
@@ -290,7 +285,7 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
         return Observable.fromPublisher(usersCollection.find(eq(FIELD_ID, userId)).first())
                 .firstElement()
                 .map(this::convert)
-                .onErrorResumeNext(this::mapException)
+                .onErrorResumeNext(this::mapExceptionAsMaybe)
                 .observeOn(Schedulers.computation());
     }
 
@@ -560,23 +555,6 @@ public class MongoUserRepository extends AbstractDataPlaneMongoRepository implem
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))))
                 .first(Collections.emptyMap())
                 .observeOn(Schedulers.computation());
-    }
-
-    private MaybeSource<? extends User> mapException(Throwable error) {
-        if (isConnectionError(error) || isConnectionError(error.getCause())) {
-            return Maybe.error(new RepositoryConnectionException(error));
-        }
-        return Maybe.error(error);
-    }
-
-    private SingleSource<? extends User> mapExceptionAsSingle(Throwable error) {
-        return Single.fromMaybe(mapException(error));
-    }
-
-    private static boolean isConnectionError(Throwable error) {
-        return error != null && (error instanceof MongoTimeoutException ||
-                error instanceof MongoServerUnavailableException ||
-                error instanceof MongoSocketOpenException);
     }
 
     protected boolean acceptUpsert() {
