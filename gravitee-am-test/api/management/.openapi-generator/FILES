@@ -24,6 +24,9 @@ apis/GroupApi.ts
 apis/IdentityProviderApi.ts
 apis/NewsletterApi.ts
 apis/NotifierApi.ts
+apis/OrganizationApi.ts
+apis/OrganizationUserApi.ts
+apis/OrganizationsApi.ts
 apis/PasswordPolicyApi.ts
 apis/PlatformApi.ts
 apis/PluginApi.ts

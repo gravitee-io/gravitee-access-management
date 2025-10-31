@@ -66,6 +66,3 @@ find "$SDK_OUTPUT_PATH" -name "*.ts" -exec sed -i.bak "/* The version of the Ope
 find "$SDK_OUTPUT_PATH" -name "*.ts.bak" -exec rm -f {} \;
 rm -f "$SDK_OUTPUT_PATH/index.ts"
 rm -f "$SDK_OUTPUT_PATH/apis/index.ts"
-
-# Format generated files with prettier
-npx prettier --write "$SDK_OUTPUT_PATH/**/*.ts"

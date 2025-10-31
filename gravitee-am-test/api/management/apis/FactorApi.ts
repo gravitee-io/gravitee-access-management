@@ -53,10 +53,6 @@ export interface DeleteFactorRequest {
   factor: string;
 }
 
-export interface Get29Request {
-  factor: string;
-}
-
 export interface GetFactorRequest {
   organizationId: string;
   environmentId: string;
@@ -64,7 +60,11 @@ export interface GetFactorRequest {
   factor: string;
 }
 
-export interface GetSchema4Request {
+export interface GetFactorPluginRequest {
+  factor: string;
+}
+
+export interface GetFactorPluginSchemaRequest {
   factor: string;
 }
 
@@ -236,51 +236,6 @@ export class FactorApi extends runtime.BaseAPI {
   }
 
   /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a factor plugin
-   */
-  async get29Raw(
-    requestParameters: Get29Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.factor === null || requestParameters.factor === undefined) {
-      throw new runtime.RequiredError('factor', 'Required parameter requestParameters.factor was null or undefined when calling get29.');
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/factors/{factor}`.replace(`{${'factor'}}`, encodeURIComponent(String(requestParameters.factor))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a factor plugin
-   */
-  async get29(requestParameters: Get29Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get29Raw(requestParameters, initOverrides);
-  }
-
-  /**
    * User must have the DOMAIN_FACTOR[READ] permission on the specified domain or DOMAIN_FACTOR[READ] permission on the specified environment or DOMAIN_FACTOR[READ] permission on the specified organization
    * Get a factor
    */
@@ -356,16 +311,67 @@ export class FactorApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get a factor plugin\'s schema
+   * Get a factor plugin
    */
-  async getSchema4Raw(
-    requestParameters: GetSchema4Request,
+  async getFactorPluginRaw(
+    requestParameters: GetFactorPluginRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.factor === null || requestParameters.factor === undefined) {
       throw new runtime.RequiredError(
         'factor',
-        'Required parameter requestParameters.factor was null or undefined when calling getSchema4.',
+        'Required parameter requestParameters.factor was null or undefined when calling getFactorPlugin.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/factors/{factor}`.replace(`{${'factor'}}`, encodeURIComponent(String(requestParameters.factor))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get a factor plugin
+   */
+  async getFactorPlugin(
+    requestParameters: GetFactorPluginRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getFactorPluginRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get a factor plugin\'s schema
+   */
+  async getFactorPluginSchemaRaw(
+    requestParameters: GetFactorPluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.factor === null || requestParameters.factor === undefined) {
+      throw new runtime.RequiredError(
+        'factor',
+        'Required parameter requestParameters.factor was null or undefined when calling getFactorPluginSchema.',
       );
     }
 
@@ -398,15 +404,18 @@ export class FactorApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a factor plugin\'s schema
    */
-  async getSchema4(requestParameters: GetSchema4Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema4Raw(requestParameters, initOverrides);
+  async getFactorPluginSchema(
+    requestParameters: GetFactorPluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getFactorPluginSchemaRaw(requestParameters, initOverrides);
   }
 
   /**
    * There is no particular permission needed. User must be authenticated.
    * List factor plugins
    */
-  async list28Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+  async listFactorPluginsRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
     const queryParameters: any = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -436,8 +445,8 @@ export class FactorApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * List factor plugins
    */
-  async list28(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list28Raw(initOverrides);
+  async listFactorPlugins(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.listFactorPluginsRaw(initOverrides);
   }
 
   /**

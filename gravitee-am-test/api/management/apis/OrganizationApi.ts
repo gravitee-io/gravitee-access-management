@@ -34,6 +34,9 @@ import {
   AccessPolicyListItem,
   AccessPolicyListItemFromJSON,
   AccessPolicyListItemToJSON,
+  AccountAccessToken,
+  AccountAccessTokenFromJSON,
+  AccountAccessTokenToJSON,
   AlertNotifier,
   AlertNotifierFromJSON,
   AlertNotifierToJSON,
@@ -79,6 +82,12 @@ import {
   Credential,
   CredentialFromJSON,
   CredentialToJSON,
+  DataPlane,
+  DataPlaneFromJSON,
+  DataPlaneToJSON,
+  DataSource,
+  DataSourceFromJSON,
+  DataSourceToJSON,
   DeviceIdentifier,
   DeviceIdentifierFromJSON,
   DeviceIdentifierToJSON,
@@ -100,6 +109,9 @@ import {
   Entrypoint,
   EntrypointFromJSON,
   EntrypointToJSON,
+  Environment,
+  EnvironmentFromJSON,
+  EnvironmentToJSON,
   ExtensionGrant,
   ExtensionGrantFromJSON,
   ExtensionGrantToJSON,
@@ -136,6 +148,9 @@ import {
   ModifiedCertificateEntity,
   ModifiedCertificateEntityFromJSON,
   ModifiedCertificateEntityToJSON,
+  NewAccountAccessToken,
+  NewAccountAccessTokenFromJSON,
+  NewAccountAccessTokenToJSON,
   NewAlertNotifier,
   NewAlertNotifierFromJSON,
   NewAlertNotifierToJSON,
@@ -169,6 +184,9 @@ import {
   NewEmail,
   NewEmailFromJSON,
   NewEmailToJSON,
+  NewEntrypoint,
+  NewEntrypointFromJSON,
+  NewEntrypointToJSON,
   NewExtensionGrant,
   NewExtensionGrantFromJSON,
   NewExtensionGrantToJSON,
@@ -187,6 +205,9 @@ import {
   NewMembership,
   NewMembershipFromJSON,
   NewMembershipToJSON,
+  NewOrganizationUser,
+  NewOrganizationUserFromJSON,
+  NewOrganizationUserToJSON,
   NewPasswordPolicy,
   NewPasswordPolicyFromJSON,
   NewPasswordPolicyToJSON,
@@ -205,12 +226,21 @@ import {
   NewServiceResource,
   NewServiceResourceFromJSON,
   NewServiceResourceToJSON,
+  NewTag,
+  NewTagFromJSON,
+  NewTagToJSON,
   NewTheme,
   NewThemeFromJSON,
   NewThemeToJSON,
   NewUser,
   NewUserFromJSON,
   NewUserToJSON,
+  OrganizationUserBulkRequest,
+  OrganizationUserBulkRequestFromJSON,
+  OrganizationUserBulkRequestToJSON,
+  Page,
+  PageFromJSON,
+  PageToJSON,
   PasswordPolicy,
   PasswordPolicyFromJSON,
   PasswordPolicyToJSON,
@@ -235,6 +265,9 @@ import {
   PatchDomain,
   PatchDomainFromJSON,
   PatchDomainToJSON,
+  PatchOrganization,
+  PatchOrganizationFromJSON,
+  PatchOrganizationToJSON,
   PatchScope,
   PatchScopeFromJSON,
   PatchScopeToJSON,
@@ -289,6 +322,9 @@ import {
   StatusEntity,
   StatusEntityFromJSON,
   StatusEntityToJSON,
+  Tag,
+  TagFromJSON,
+  TagToJSON,
   ThemeEntity,
   ThemeEntityFromJSON,
   ThemeEntityToJSON,
@@ -310,6 +346,9 @@ import {
   UpdateEmail,
   UpdateEmailFromJSON,
   UpdateEmailToJSON,
+  UpdateEntrypoint,
+  UpdateEntrypointFromJSON,
+  UpdateEntrypointToJSON,
   UpdateExtensionGrant,
   UpdateExtensionGrantFromJSON,
   UpdateExtensionGrantToJSON,
@@ -346,6 +385,9 @@ import {
   UpdateServiceResource,
   UpdateServiceResourceFromJSON,
   UpdateServiceResourceToJSON,
+  UpdateTag,
+  UpdateTagFromJSON,
+  UpdateTagToJSON,
   UpdateUser,
   UpdateUserFromJSON,
   UpdateUserToJSON,
@@ -374,6 +416,12 @@ export interface AddGroupMemberRequest {
   member: string;
 }
 
+export interface AddGroupMember1Request {
+  organizationId: string;
+  group: string;
+  member: string;
+}
+
 export interface AddOrUpdateMemberRequest {
   organizationId: string;
   environmentId: string;
@@ -386,6 +434,11 @@ export interface AddOrUpdateMember1Request {
   organizationId: string;
   environmentId: string;
   domain: string;
+  newMembership: NewMembership;
+}
+
+export interface AddOrUpdateOrganizationMemberRequest {
+  organizationId: string;
   newMembership: NewMembership;
 }
 
@@ -413,11 +466,22 @@ export interface AssignRolesToUserRequest {
   requestBody: Array<string>;
 }
 
+export interface BulkOrganisationUserOperationRequest {
+  organizationId: string;
+  organizationUserBulkRequest: OrganizationUserBulkRequest;
+}
+
 export interface BulkUserOperationRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   domainUserBulkRequest: DomainUserBulkRequest;
+}
+
+export interface CreateAccountAccessTokenRequest {
+  organizationId: string;
+  user: string;
+  newAccountAccessToken?: NewAccountAccessToken;
 }
 
 export interface CreateAlertNotifierRequest {
@@ -505,6 +569,11 @@ export interface CreateEmailRequest {
   newEmail: NewEmail;
 }
 
+export interface CreateEntrypointRequest {
+  organizationId: string;
+  newEntrypoint: NewEntrypoint;
+}
+
 export interface CreateExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
@@ -533,6 +602,11 @@ export interface CreateGroupRequest {
   newGroup: NewGroup;
 }
 
+export interface CreateGroup1Request {
+  organizationId: string;
+  newGroup: NewGroup;
+}
+
 export interface CreateI18nDictionaryRequest {
   organizationId: string;
   environmentId: string;
@@ -545,6 +619,26 @@ export interface CreateIdentityProviderRequest {
   environmentId: string;
   domain: string;
   newIdentityProvider: NewIdentityProvider;
+}
+
+export interface CreateIdentityProvider1Request {
+  organizationId: string;
+  newIdentityProvider: NewIdentityProvider;
+}
+
+export interface CreateOrgReporterRequest {
+  organizationId: string;
+  newReporter?: NewReporter;
+}
+
+export interface CreateOrganisationUserRequest {
+  organizationId: string;
+  newOrganizationUser: NewOrganizationUser;
+}
+
+export interface CreateOrganizationFormRequest {
+  organizationId: string;
+  newForm: NewForm;
 }
 
 export interface CreatePasswordPolicyRequest {
@@ -575,6 +669,11 @@ export interface CreateRoleRequest {
   newRole: NewRole;
 }
 
+export interface CreateRole1Request {
+  organizationId: string;
+  newRole: NewRole;
+}
+
 export interface CreateScopeRequest {
   organizationId: string;
   environmentId: string;
@@ -588,6 +687,11 @@ export interface CreateSecretRequest {
   domain: string;
   application: string;
   newClientSecret: NewClientSecret;
+}
+
+export interface CreateShardingTagRequest {
+  organizationId: string;
+  newTag: NewTag;
 }
 
 export interface CreateThemeRequest {
@@ -719,6 +823,11 @@ export interface DeleteDomainReporterRequest {
   reporter: string;
 }
 
+export interface DeleteEntrypointRequest {
+  organizationId: string;
+  entrypointId: string;
+}
+
 export interface DeleteExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
@@ -731,6 +840,11 @@ export interface DeleteFactorRequest {
   environmentId: string;
   domain: string;
   factor: string;
+}
+
+export interface DeleteFormRequest {
+  organizationId: string;
+  form: string;
 }
 
 export interface DeleteGroupRequest {
@@ -754,6 +868,26 @@ export interface DeleteIdentityProviderRequest {
   identity: string;
 }
 
+export interface DeleteIdentityProvider1Request {
+  organizationId: string;
+  identity: string;
+}
+
+export interface DeleteOrgReporterRequest {
+  organizationId: string;
+  reporterId: string;
+}
+
+export interface DeleteOrganizationGroupRequest {
+  organizationId: string;
+  group: string;
+}
+
+export interface DeleteOrganizationUserRequest {
+  organizationId: string;
+  user: string;
+}
+
 export interface DeletePasswordPolicyRequest {
   organizationId: string;
   environmentId: string;
@@ -775,11 +909,21 @@ export interface DeleteRoleRequest {
   role: string;
 }
 
+export interface DeleteRole1Request {
+  organizationId: string;
+  role: string;
+}
+
 export interface DeleteScopeRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   scope: string;
+}
+
+export interface DeleteTagRequest {
+  organizationId: string;
+  tag: string;
 }
 
 export interface DeleteThemeRequest {
@@ -913,6 +1057,11 @@ export interface FindIdentityProviderRequest {
   environmentId: string;
   domain: string;
   identity: string;
+}
+
+export interface FindOrganizationFormTemplateRequest {
+  organizationId: string;
+  template: FindOrganizationFormTemplateTemplateEnum;
 }
 
 export interface FindProtectedResourceRequest {
@@ -1067,6 +1216,11 @@ export interface GetEffectivePasswordPolicyRequest {
   identity?: string;
 }
 
+export interface GetEntrypointRequest {
+  organizationId: string;
+  entrypointId: string;
+}
+
 export interface GetExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
@@ -1097,11 +1251,49 @@ export interface GetI18nDictionaryRequest {
   dictionary: string;
 }
 
+export interface GetIdentityProviderRequest {
+  organizationId: string;
+  identity: string;
+}
+
 export interface GetMembersRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   application: string;
+}
+
+export interface GetOrgReporterRequest {
+  organizationId: string;
+  reporterId: string;
+}
+
+export interface GetOrgReportersRequest {
+  organizationId: string;
+}
+
+export interface GetOrganizationAuditRequest {
+  organizationId: string;
+  audit: string;
+}
+
+export interface GetOrganizationGroupRequest {
+  organizationId: string;
+  group: string;
+}
+
+export interface GetOrganizationSettingsRequest {
+  organizationId: string;
+}
+
+export interface GetOrganizationUserRequest {
+  organizationId: string;
+  user: string;
+}
+
+export interface GetOrganizationUserTokensRequest {
+  organizationId: string;
+  user: string;
 }
 
 export interface GetPasswordPolicyRequest {
@@ -1124,11 +1316,26 @@ export interface GetPermissions1Request {
   domain: string;
 }
 
+export interface GetPermissions2Request {
+  organizationId: string;
+  environmentId: string;
+}
+
 export interface GetResourceRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   resource: string;
+}
+
+export interface GetRoleRequest {
+  organizationId: string;
+  role: string;
+}
+
+export interface GetTagRequest {
+  organizationId: string;
+  tag: string;
 }
 
 export interface GetThemeRequest {
@@ -1172,6 +1379,11 @@ export interface ListAlertTriggersRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+}
+
+export interface ListAllDataSourcesRequest {
+  organizationId: string;
+  environmentId: string;
 }
 
 export interface ListAppFlowsRequest {
@@ -1232,6 +1444,11 @@ export interface ListCertificatesRequest {
   use?: string;
 }
 
+export interface ListDataPlanesRequest {
+  organizationId: string;
+  environmentId: string;
+}
+
 export interface ListDeviceIdentifiersRequest {
   organizationId: string;
   environmentId: string;
@@ -1272,6 +1489,14 @@ export interface ListDomainsRequest {
   q?: string;
 }
 
+export interface ListEntrypointsRequest {
+  organizationId: string;
+}
+
+export interface ListEnvironmentsRequest {
+  organizationId: string;
+}
+
 export interface ListExtensionGrantsRequest {
   organizationId: string;
   environmentId: string;
@@ -1284,10 +1509,23 @@ export interface ListFactorsRequest {
   domain: string;
 }
 
+export interface ListGroupMembersRequest {
+  organizationId: string;
+  group: string;
+  page?: number;
+  size?: number;
+}
+
 export interface ListGroupsRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+  page?: number;
+  size?: number;
+}
+
+export interface ListGroups1Request {
+  organizationId: string;
   page?: number;
   size?: number;
 }
@@ -1305,10 +1543,38 @@ export interface ListIdentityProvidersRequest {
   userProvider?: boolean;
 }
 
+export interface ListIdentityProviders1Request {
+  organizationId: string;
+  userProvider?: boolean;
+}
+
 export interface ListMembersRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+}
+
+export interface ListOrganisationUsersRequest {
+  organizationId: string;
+  q?: string;
+  filter?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface ListOrganizationAuditsRequest {
+  organizationId: string;
+  type?: string;
+  status?: string;
+  user?: string;
+  from?: number;
+  to?: number;
+  size?: number;
+  page?: number;
+}
+
+export interface ListOrganizationMembersRequest {
+  organizationId: string;
 }
 
 export interface ListPasswordPoliciesRequest {
@@ -1333,6 +1599,11 @@ export interface ListResourcesRequest {
   domain: string;
 }
 
+export interface ListRolesRequest {
+  organizationId: string;
+  type?: ListRolesTypeEnum;
+}
+
 export interface ListScopesRequest {
   organizationId: string;
   environmentId: string;
@@ -1347,6 +1618,10 @@ export interface ListSecretsRequest {
   environmentId: string;
   domain: string;
   application: string;
+}
+
+export interface ListShardingTagsRequest {
+  organizationId: string;
 }
 
 export interface ListThemesRequest {
@@ -1452,6 +1727,11 @@ export interface PatchDomainRequest {
   patchDomain: PatchDomain;
 }
 
+export interface PatchOrganizationSettingsRequest {
+  organizationId: string;
+  patchOrganization: PatchOrganization;
+}
+
 export interface PatchScopeRequest {
   organizationId: string;
   environmentId: string;
@@ -1484,10 +1764,21 @@ export interface RemoveGroupMemberRequest {
   member: string;
 }
 
+export interface RemoveGroupMember1Request {
+  organizationId: string;
+  group: string;
+  member: string;
+}
+
 export interface RemoveMemberRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+  member: string;
+}
+
+export interface RemoveMember1Request {
+  organizationId: string;
   member: string;
 }
 
@@ -1514,12 +1805,24 @@ export interface ReplaceI18nDictionaryEntriesRequest {
   requestBody: { [key: string]: string };
 }
 
+export interface ResetOrganizationUserPasswordRequest {
+  organizationId: string;
+  user: string;
+  passwordValue: PasswordValue;
+}
+
 export interface ResetPasswordRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   user: string;
   passwordValue: PasswordValue;
+}
+
+export interface RevokeAccountAccessTokenRequest {
+  organizationId: string;
+  user: string;
+  tokenId: string;
 }
 
 export interface RevokeRoleRequest {
@@ -1726,6 +2029,12 @@ export interface UpdateDomainReporterRequest {
   updateReporter: UpdateReporter;
 }
 
+export interface UpdateEntrypointRequest {
+  organizationId: string;
+  entrypointId: string;
+  updateEntrypoint: UpdateEntrypoint;
+}
+
 export interface UpdateExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
@@ -1742,6 +2051,12 @@ export interface UpdateFactorRequest {
   updateFactor: UpdateFactor;
 }
 
+export interface UpdateFormRequest {
+  organizationId: string;
+  form: string;
+  updateForm: UpdateForm;
+}
+
 export interface UpdateGroupRequest {
   organizationId: string;
   environmentId: string;
@@ -1756,6 +2071,42 @@ export interface UpdateIdentityProviderRequest {
   domain: string;
   identity: string;
   updateIdentityProvider: UpdateIdentityProvider;
+}
+
+export interface UpdateIdentityProvider1Request {
+  organizationId: string;
+  identity: string;
+  updateIdentityProvider: UpdateIdentityProvider;
+}
+
+export interface UpdateOrgReporterRequest {
+  organizationId: string;
+  reporterId: string;
+  updateReporter: UpdateReporter;
+}
+
+export interface UpdateOrganisationUsernameRequest {
+  organizationId: string;
+  user: string;
+  usernameEntity: UsernameEntity;
+}
+
+export interface UpdateOrganizationGroupRequest {
+  organizationId: string;
+  group: string;
+  updateGroup: UpdateGroup;
+}
+
+export interface UpdateOrganizationUserRequest {
+  organizationId: string;
+  user: string;
+  updateUser: UpdateUser;
+}
+
+export interface UpdateOrganizationUserStatusRequest {
+  organizationId: string;
+  user: string;
+  statusEntity: StatusEntity;
 }
 
 export interface UpdatePasswordPolicyRequest {
@@ -1790,12 +2141,24 @@ export interface UpdateRoleRequest {
   updateRole: UpdateRole;
 }
 
+export interface UpdateRole1Request {
+  organizationId: string;
+  role: string;
+  updateRole: UpdateRole;
+}
+
 export interface UpdateScopeRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   scope: string;
   updateScope: UpdateScope;
+}
+
+export interface UpdateTagRequest {
+  organizationId: string;
+  tag: string;
+  updateTag: UpdateTag;
 }
 
 export interface UpdateThemeRequest {
@@ -1833,7 +2196,7 @@ export interface UpdateUsernameRequest {
 /**
  *
  */
-export class DomainApi extends runtime.BaseAPI {
+export class OrganizationApi extends runtime.BaseAPI {
   /**
    * User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain or DOMAIN_GROUP[UPDATE] permission on the specified environment or DOMAIN_GROUP[UPDATE] permission on the specified organization
    * Add a group member
@@ -1913,6 +2276,74 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async addGroupMember(requestParameters: AddGroupMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.addGroupMemberRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization
+   * Add a group member
+   */
+  async addGroupMember1Raw(
+    requestParameters: AddGroupMember1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling addGroupMember1.',
+      );
+    }
+
+    if (requestParameters.group === null || requestParameters.group === undefined) {
+      throw new runtime.RequiredError(
+        'group',
+        'Required parameter requestParameters.group was null or undefined when calling addGroupMember1.',
+      );
+    }
+
+    if (requestParameters.member === null || requestParameters.member === undefined) {
+      throw new runtime.RequiredError(
+        'member',
+        'Required parameter requestParameters.member was null or undefined when calling addGroupMember1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/groups/{group}/members/{member}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'group'}}`, encodeURIComponent(String(requestParameters.group)))
+          .replace(`{${'member'}}`, encodeURIComponent(String(requestParameters.member))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization
+   * Add a group member
+   */
+  async addGroupMember1(
+    requestParameters: AddGroupMember1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.addGroupMember1Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -2077,6 +2508,70 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
     await this.addOrUpdateMember1Raw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have ORGANIZATION_MEMBER[READ] permission on the specified organization
+   * Add or update an organization member
+   */
+  async addOrUpdateOrganizationMemberRaw(
+    requestParameters: AddOrUpdateOrganizationMemberRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling addOrUpdateOrganizationMember.',
+      );
+    }
+
+    if (requestParameters.newMembership === null || requestParameters.newMembership === undefined) {
+      throw new runtime.RequiredError(
+        'newMembership',
+        'Required parameter requestParameters.newMembership was null or undefined when calling addOrUpdateOrganizationMember.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/members`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewMembershipToJSON(requestParameters.newMembership),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have ORGANIZATION_MEMBER[READ] permission on the specified organization
+   * Add or update an organization member
+   */
+  async addOrUpdateOrganizationMember(
+    requestParameters: AddOrUpdateOrganizationMemberRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.addOrUpdateOrganizationMemberRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -2338,6 +2833,71 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_USER[CREATE/UPDATE/DELETE] permission on the specified organization
+   * Create/update/delete platform users or Service Accounts
+   */
+  async bulkOrganisationUserOperationRaw(
+    requestParameters: BulkOrganisationUserOperationRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<BulkResponse>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling bulkOrganisationUserOperation.',
+      );
+    }
+
+    if (requestParameters.organizationUserBulkRequest === null || requestParameters.organizationUserBulkRequest === undefined) {
+      throw new runtime.RequiredError(
+        'organizationUserBulkRequest',
+        'Required parameter requestParameters.organizationUserBulkRequest was null or undefined when calling bulkOrganisationUserOperation.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/bulk`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: OrganizationUserBulkRequestToJSON(requestParameters.organizationUserBulkRequest),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => BulkResponseFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[CREATE/UPDATE/DELETE] permission on the specified organization
+   * Create/update/delete platform users or Service Accounts
+   */
+  async bulkOrganisationUserOperation(
+    requestParameters: BulkOrganisationUserOperationRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<BulkResponse> {
+    const response = await this.bulkOrganisationUserOperationRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_USER[CREATE/UPDATE/DELETE] permission on the specified domain, the environment, or the organization
    * Create/update/delete multiple users on the specified security domain
    */
@@ -2413,6 +2973,70 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<BulkResponse> {
     const response = await this.bulkUserOperationRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Generate an account access token for a user
+   */
+  async createAccountAccessTokenRaw(
+    requestParameters: CreateAccountAccessTokenRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<AccountAccessToken>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createAccountAccessToken.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling createAccountAccessToken.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}/tokens`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewAccountAccessTokenToJSON(requestParameters.newAccountAccessToken),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => AccountAccessTokenFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Generate an account access token for a user
+   */
+  async createAccountAccessToken(
+    requestParameters: CreateAccountAccessTokenRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<AccountAccessToken> {
+    const response = await this.createAccountAccessTokenRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -3356,6 +3980,70 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization
+   * Create a entrypoint
+   */
+  async createEntrypointRaw(
+    requestParameters: CreateEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createEntrypoint.',
+      );
+    }
+
+    if (requestParameters.newEntrypoint === null || requestParameters.newEntrypoint === undefined) {
+      throw new runtime.RequiredError(
+        'newEntrypoint',
+        'Required parameter requestParameters.newEntrypoint was null or undefined when calling createEntrypoint.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/entrypoints`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewEntrypointToJSON(requestParameters.newEntrypoint),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission on the specified organization
+   * Create a entrypoint
+   */
+  async createEntrypoint(
+    requestParameters: CreateEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.createEntrypointRaw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[CREATE] permission on the specified organization
    * Create a extension grant
    */
@@ -3662,6 +4350,67 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization
+   * Create a platform group
+   */
+  async createGroup1Raw(
+    requestParameters: CreateGroup1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createGroup1.',
+      );
+    }
+
+    if (requestParameters.newGroup === null || requestParameters.newGroup === undefined) {
+      throw new runtime.RequiredError(
+        'newGroup',
+        'Required parameter requestParameters.newGroup was null or undefined when calling createGroup1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/groups`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewGroupToJSON(requestParameters.newGroup),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization
+   * Create a platform group
+   */
+  async createGroup1(requestParameters: CreateGroup1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.createGroup1Raw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified domain or DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified environment or DOMAIN_I18N_DICTIONARY[CREATE] permission on the specified organization.
    * Create a new i18n dictionary for a supported language for a security domain
    */
@@ -3817,6 +4566,257 @@ export class DomainApi extends runtime.BaseAPI {
   ): Promise<IdentityProvider> {
     const response = await this.createIdentityProviderRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization
+   * Create an identity provider for the organization
+   */
+  async createIdentityProvider1Raw(
+    requestParameters: CreateIdentityProvider1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createIdentityProvider1.',
+      );
+    }
+
+    if (requestParameters.newIdentityProvider === null || requestParameters.newIdentityProvider === undefined) {
+      throw new runtime.RequiredError(
+        'newIdentityProvider',
+        'Required parameter requestParameters.newIdentityProvider was null or undefined when calling createIdentityProvider1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/identities`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewIdentityProviderToJSON(requestParameters.newIdentityProvider),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization
+   * Create an identity provider for the organization
+   */
+  async createIdentityProvider1(
+    requestParameters: CreateIdentityProvider1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.createIdentityProvider1Raw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[CREATE] permission on the specified organization
+   * Create a reporter for an organization
+   */
+  async createOrgReporterRaw(
+    requestParameters: CreateOrgReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Reporter>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createOrgReporter.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/reporters`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewReporterToJSON(requestParameters.newReporter),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ReporterFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[CREATE] permission on the specified organization
+   * Create a reporter for an organization
+   */
+  async createOrgReporter(
+    requestParameters: CreateOrgReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Reporter> {
+    const response = await this.createOrgReporterRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[READ] permission on the specified organization
+   * Create a platform user or Service Account
+   */
+  async createOrganisationUserRaw(
+    requestParameters: CreateOrganisationUserRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<User>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createOrganisationUser.',
+      );
+    }
+
+    if (requestParameters.newOrganizationUser === null || requestParameters.newOrganizationUser === undefined) {
+      throw new runtime.RequiredError(
+        'newOrganizationUser',
+        'Required parameter requestParameters.newOrganizationUser was null or undefined when calling createOrganisationUser.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewOrganizationUserToJSON(requestParameters.newOrganizationUser),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[READ] permission on the specified organization
+   * Create a platform user or Service Account
+   */
+  async createOrganisationUser(
+    requestParameters: CreateOrganisationUserRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<User> {
+    const response = await this.createOrganisationUserRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization
+   * Create a form
+   */
+  async createOrganizationFormRaw(
+    requestParameters: CreateOrganizationFormRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createOrganizationForm.',
+      );
+    }
+
+    if (requestParameters.newForm === null || requestParameters.newForm === undefined) {
+      throw new runtime.RequiredError(
+        'newForm',
+        'Required parameter requestParameters.newForm was null or undefined when calling createOrganizationForm.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/forms`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewFormToJSON(requestParameters.newForm),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_FORM[CREATE] permission on the specified organization
+   * Create a form
+   */
+  async createOrganizationForm(
+    requestParameters: CreateOrganizationFormRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.createOrganizationFormRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -4133,6 +5133,67 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization
+   * Create a role for the organization
+   */
+  async createRole1Raw(
+    requestParameters: CreateRole1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createRole1.',
+      );
+    }
+
+    if (requestParameters.newRole === null || requestParameters.newRole === undefined) {
+      throw new runtime.RequiredError(
+        'newRole',
+        'Required parameter requestParameters.newRole was null or undefined when calling createRole1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/roles`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewRoleToJSON(requestParameters.newRole),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization
+   * Create a role for the organization
+   */
+  async createRole1(requestParameters: CreateRole1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.createRole1Raw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_SCOPE[CREATE] permission on the specified domain or DOMAIN_SCOPE[CREATE] permission on the specified environment or DOMAIN_SCOPE[CREATE] permission on the specified organization
    * Create a scope
    */
@@ -4293,6 +5354,70 @@ export class DomainApi extends runtime.BaseAPI {
   ): Promise<ClientSecret> {
     const response = await this.createSecretRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_TAG[CREATE] permission on the specified organization
+   * Create a sharding tags
+   */
+  async createShardingTagRaw(
+    requestParameters: CreateShardingTagRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createShardingTag.',
+      );
+    }
+
+    if (requestParameters.newTag === null || requestParameters.newTag === undefined) {
+      throw new runtime.RequiredError(
+        'newTag',
+        'Required parameter requestParameters.newTag was null or undefined when calling createShardingTag.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/tags`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewTagToJSON(requestParameters.newTag),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_TAG[CREATE] permission on the specified organization
+   * Create a sharding tags
+   */
+  async createShardingTag(
+    requestParameters: CreateShardingTagRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.createShardingTagRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -5694,6 +6819,66 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization
+   * Delete the sharding entrypoint
+   */
+  async deleteEntrypointRaw(
+    requestParameters: DeleteEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteEntrypoint.',
+      );
+    }
+
+    if (requestParameters.entrypointId === null || requestParameters.entrypointId === undefined) {
+      throw new runtime.RequiredError(
+        'entrypointId',
+        'Required parameter requestParameters.entrypointId was null or undefined when calling deleteEntrypoint.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/entrypoints/{entrypointId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'entrypointId'}}`, encodeURIComponent(String(requestParameters.entrypointId))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission on the specified organization
+   * Delete the sharding entrypoint
+   */
+  async deleteEntrypoint(
+    requestParameters: DeleteEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteEntrypointRaw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[DELETE] permission on the specified organization
    * Delete a extension grant
    */
@@ -5840,6 +7025,60 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async deleteFactor(requestParameters: DeleteFactorRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.deleteFactorRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization
+   * Delete a form
+   */
+  async deleteFormRaw(
+    requestParameters: DeleteFormRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteForm.',
+      );
+    }
+
+    if (requestParameters.form === null || requestParameters.form === undefined) {
+      throw new runtime.RequiredError('form', 'Required parameter requestParameters.form was null or undefined when calling deleteForm.');
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/forms/{form}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'form'}}`, encodeURIComponent(String(requestParameters.form))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization
+   * Delete a form
+   */
+  async deleteForm(requestParameters: DeleteFormRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.deleteFormRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -6068,6 +7307,246 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization
+   * Delete an identity provider
+   */
+  async deleteIdentityProvider1Raw(
+    requestParameters: DeleteIdentityProvider1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteIdentityProvider1.',
+      );
+    }
+
+    if (requestParameters.identity === null || requestParameters.identity === undefined) {
+      throw new runtime.RequiredError(
+        'identity',
+        'Required parameter requestParameters.identity was null or undefined when calling deleteIdentityProvider1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/identities/{identity}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'identity'}}`, encodeURIComponent(String(requestParameters.identity))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization
+   * Delete an identity provider
+   */
+  async deleteIdentityProvider1(
+    requestParameters: DeleteIdentityProvider1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteIdentityProvider1Raw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[DELETE] permission on the specified organization
+   * Delete a reporter
+   */
+  async deleteOrgReporterRaw(
+    requestParameters: DeleteOrgReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteOrgReporter.',
+      );
+    }
+
+    if (requestParameters.reporterId === null || requestParameters.reporterId === undefined) {
+      throw new runtime.RequiredError(
+        'reporterId',
+        'Required parameter requestParameters.reporterId was null or undefined when calling deleteOrgReporter.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/reporters/{reporterId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'reporterId'}}`, encodeURIComponent(String(requestParameters.reporterId))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[DELETE] permission on the specified organization
+   * Delete a reporter
+   */
+  async deleteOrgReporter(
+    requestParameters: DeleteOrgReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteOrgReporterRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+   * Delete a platform group
+   */
+  async deleteOrganizationGroupRaw(
+    requestParameters: DeleteOrganizationGroupRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteOrganizationGroup.',
+      );
+    }
+
+    if (requestParameters.group === null || requestParameters.group === undefined) {
+      throw new runtime.RequiredError(
+        'group',
+        'Required parameter requestParameters.group was null or undefined when calling deleteOrganizationGroup.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/groups/{group}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'group'}}`, encodeURIComponent(String(requestParameters.group))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+   * Delete a platform group
+   */
+  async deleteOrganizationGroup(
+    requestParameters: DeleteOrganizationGroupRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteOrganizationGroupRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[DELETE] permission on the specified organization
+   * Delete a user
+   */
+  async deleteOrganizationUserRaw(
+    requestParameters: DeleteOrganizationUserRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteOrganizationUser.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling deleteOrganizationUser.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[DELETE] permission on the specified organization
+   * Delete a user
+   */
+  async deleteOrganizationUser(
+    requestParameters: DeleteOrganizationUserRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteOrganizationUserRaw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_SETTINGS[UPDATE] permission on the specified domain or DOMAIN_SETTINGS[UPDATE] permission on the specified environment or DOMAIN_SETTINGS[UPDATE] permission on the specified organization
    * Delete a password policy
    */
@@ -6287,6 +7766,60 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
+   * Delete a plaform role
+   */
+  async deleteRole1Raw(
+    requestParameters: DeleteRole1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteRole1.',
+      );
+    }
+
+    if (requestParameters.role === null || requestParameters.role === undefined) {
+      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling deleteRole1.');
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/roles/{role}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'role'}}`, encodeURIComponent(String(requestParameters.role))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
+   * Delete a plaform role
+   */
+  async deleteRole1(requestParameters: DeleteRole1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.deleteRole1Raw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_SCOPE[DELETE] permission on the specified domain or DOMAIN_SCOPE[DELETE] permission on the specified environment or DOMAIN_SCOPE[DELETE] permission on the specified organization
    * Delete a scope
    */
@@ -6357,6 +7890,60 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async deleteScope(requestParameters: DeleteScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.deleteScopeRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization
+   * Delete the sharding tag
+   */
+  async deleteTagRaw(
+    requestParameters: DeleteTagRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteTag.',
+      );
+    }
+
+    if (requestParameters.tag === null || requestParameters.tag === undefined) {
+      throw new runtime.RequiredError('tag', 'Required parameter requestParameters.tag was null or undefined when calling deleteTag.');
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/tags/{tag}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'tag'}}`, encodeURIComponent(String(requestParameters.tag))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization
+   * Delete the sharding tag
+   */
+  async deleteTag(requestParameters: DeleteTagRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.deleteTagRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -7750,6 +9337,71 @@ export class DomainApi extends runtime.BaseAPI {
   ): Promise<IdentityProvider> {
     const response = await this.findIdentityProviderRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_FORM[READ] permission on the specified organization
+   * Find an organization form template
+   */
+  async findOrganizationFormTemplateRaw(
+    requestParameters: FindOrganizationFormTemplateRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling findOrganizationFormTemplate.',
+      );
+    }
+
+    if (requestParameters.template === null || requestParameters.template === undefined) {
+      throw new runtime.RequiredError(
+        'template',
+        'Required parameter requestParameters.template was null or undefined when calling findOrganizationFormTemplate.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.template !== undefined) {
+      queryParameters['template'] = requestParameters.template;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/forms`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_FORM[READ] permission on the specified organization
+   * Find an organization form template
+   */
+  async findOrganizationFormTemplate(
+    requestParameters: FindOrganizationFormTemplateRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.findOrganizationFormTemplateRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -9313,6 +10965,67 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization
+   * Get a sharding entrypoint
+   */
+  async getEntrypointRaw(
+    requestParameters: GetEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Entrypoint>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getEntrypoint.',
+      );
+    }
+
+    if (requestParameters.entrypointId === null || requestParameters.entrypointId === undefined) {
+      throw new runtime.RequiredError(
+        'entrypointId',
+        'Required parameter requestParameters.entrypointId was null or undefined when calling getEntrypoint.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/entrypoints/{entrypointId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'entrypointId'}}`, encodeURIComponent(String(requestParameters.entrypointId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => EntrypointFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_ENTRYPOINT[READ] permission on the specified organization
+   * Get a sharding entrypoint
+   */
+  async getEntrypoint(
+    requestParameters: GetEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Entrypoint> {
+    const response = await this.getEntrypointRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization
    * Get a extension grant
    */
@@ -9626,6 +11339,67 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission on the specified organization
+   * Get an identity provider
+   */
+  async getIdentityProviderRaw(
+    requestParameters: GetIdentityProviderRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<IdentityProvider>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getIdentityProvider.',
+      );
+    }
+
+    if (requestParameters.identity === null || requestParameters.identity === undefined) {
+      throw new runtime.RequiredError(
+        'identity',
+        'Required parameter requestParameters.identity was null or undefined when calling getIdentityProvider.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/identities/{identity}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'identity'}}`, encodeURIComponent(String(requestParameters.identity))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => IdentityProviderFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission on the specified organization
+   * Get an identity provider
+   */
+  async getIdentityProvider(
+    requestParameters: GetIdentityProviderRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<IdentityProvider> {
+    const response = await this.getIdentityProviderRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have APPLICATION_MEMBER[LIST] permission on the specified application or APPLICATION_MEMBER[LIST] permission on the specified domain or APPLICATION_MEMBER[LIST] permission on the specified environment or APPLICATION_MEMBER[LIST] permission on the specified organization
    * List members for an application
    */
@@ -9699,6 +11473,421 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<MembershipListItem> {
     const response = await this.getMembersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[READ] permission on the organization
+   * Get a reporter
+   */
+  async getOrgReporterRaw(
+    requestParameters: GetOrgReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Reporter>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getOrgReporter.',
+      );
+    }
+
+    if (requestParameters.reporterId === null || requestParameters.reporterId === undefined) {
+      throw new runtime.RequiredError(
+        'reporterId',
+        'Required parameter requestParameters.reporterId was null or undefined when calling getOrgReporter.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/reporters/{reporterId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'reporterId'}}`, encodeURIComponent(String(requestParameters.reporterId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ReporterFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[READ] permission on the organization
+   * Get a reporter
+   */
+  async getOrgReporter(
+    requestParameters: GetOrgReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Reporter> {
+    const response = await this.getOrgReporterRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[LIST] permission on the specified organization. Except if user has ORGANIZATION_REPORTER[READ] permission on the organization, each returned reporter is filtered and contains only basic information such as id and name and type.
+   * List registered reporters for a security domain
+   */
+  async getOrgReportersRaw(
+    requestParameters: GetOrgReportersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<Reporter>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getOrgReporters.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/reporters`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReporterFromJSON));
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[LIST] permission on the specified organization. Except if user has ORGANIZATION_REPORTER[READ] permission on the organization, each returned reporter is filtered and contains only basic information such as id and name and type.
+   * List registered reporters for a security domain
+   */
+  async getOrgReporters(
+    requestParameters: GetOrgReportersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Reporter>> {
+    const response = await this.getOrgReportersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization
+   * Get an audit log
+   */
+  async getOrganizationAuditRaw(
+    requestParameters: GetOrganizationAuditRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Audit>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getOrganizationAudit.',
+      );
+    }
+
+    if (requestParameters.audit === null || requestParameters.audit === undefined) {
+      throw new runtime.RequiredError(
+        'audit',
+        'Required parameter requestParameters.audit was null or undefined when calling getOrganizationAudit.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/audits/{audit}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'audit'}}`, encodeURIComponent(String(requestParameters.audit))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => AuditFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization
+   * Get an audit log
+   */
+  async getOrganizationAudit(
+    requestParameters: GetOrganizationAuditRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Audit> {
+    const response = await this.getOrganizationAuditRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+   * Get a platform group
+   */
+  async getOrganizationGroupRaw(
+    requestParameters: GetOrganizationGroupRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Group>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getOrganizationGroup.',
+      );
+    }
+
+    if (requestParameters.group === null || requestParameters.group === undefined) {
+      throw new runtime.RequiredError(
+        'group',
+        'Required parameter requestParameters.group was null or undefined when calling getOrganizationGroup.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/groups/{group}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'group'}}`, encodeURIComponent(String(requestParameters.group))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => GroupFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+   * Get a platform group
+   */
+  async getOrganizationGroup(
+    requestParameters: GetOrganizationGroupRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Group> {
+    const response = await this.getOrganizationGroupRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
+   * Get organization main settings
+   */
+  async getOrganizationSettingsRaw(
+    requestParameters: GetOrganizationSettingsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Domain>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getOrganizationSettings.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/settings`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => DomainFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_SETTINGS[READ] permission on the specified organization
+   * Get organization main settings
+   */
+  async getOrganizationSettings(
+    requestParameters: GetOrganizationSettingsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Domain> {
+    const response = await this.getOrganizationSettingsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[READ] permission on the specified organization
+   * Get a user
+   */
+  async getOrganizationUserRaw(
+    requestParameters: GetOrganizationUserRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<UserEntity>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getOrganizationUser.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling getOrganizationUser.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserEntityFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[READ] permission on the specified organization
+   * Get a user
+   */
+  async getOrganizationUser(
+    requestParameters: GetOrganizationUserRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<UserEntity> {
+    const response = await this.getOrganizationUserRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[READ] permission on the specified organization
+   * Get tokens of a user
+   */
+  async getOrganizationUserTokensRaw(
+    requestParameters: GetOrganizationUserTokensRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<AccountAccessToken>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getOrganizationUserTokens.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling getOrganizationUserTokens.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}/tokens`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => AccountAccessTokenFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[READ] permission on the specified organization
+   * Get tokens of a user
+   */
+  async getOrganizationUserTokens(
+    requestParameters: GetOrganizationUserTokensRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<AccountAccessToken> {
+    const response = await this.getOrganizationUserTokensRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -9926,6 +12115,67 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
+   * List environment member\'s permissions
+   */
+  async getPermissions2Raw(
+    requestParameters: GetPermissions2Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getPermissions2.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getPermissions2.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/members/permissions`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.TextApiResponse(response) as any;
+  }
+
+  /**
+   * User must have ENVIRONMENT[READ] permission on the specified environment or ENVIRONMENT[READ] permission on the specified organization
+   * List environment member\'s permissions
+   */
+  async getPermissions2(
+    requestParameters: GetPermissions2Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<string> {
+    const response = await this.getPermissions2Raw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
    * Get a resource
    */
@@ -9999,6 +12249,116 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<ServiceResource> {
     const response = await this.getResourceRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[READ] permission on the specified organization
+   * Get a platform role
+   */
+  async getRoleRaw(
+    requestParameters: GetRoleRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<RoleEntity>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getRole.',
+      );
+    }
+
+    if (requestParameters.role === null || requestParameters.role === undefined) {
+      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling getRole.');
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/roles/{role}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'role'}}`, encodeURIComponent(String(requestParameters.role))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => RoleEntityFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[READ] permission on the specified organization
+   * Get a platform role
+   */
+  async getRole(requestParameters: GetRoleRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
+    const response = await this.getRoleRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_TAG[READ] permission on the specified organization
+   * Get a sharding tag
+   */
+  async getTagRaw(
+    requestParameters: GetTagRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Tag>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getTag.',
+      );
+    }
+
+    if (requestParameters.tag === null || requestParameters.tag === undefined) {
+      throw new runtime.RequiredError('tag', 'Required parameter requestParameters.tag was null or undefined when calling getTag.');
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/tags/{tag}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'tag'}}`, encodeURIComponent(String(requestParameters.tag))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => TagFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_TAG[READ] permission on the specified organization
+   * Get a sharding tag
+   */
+  async getTag(requestParameters: GetTagRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Tag> {
+    const response = await this.getTagRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -10463,6 +12823,67 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<AlertTrigger>> {
     const response = await this.listAlertTriggersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Returns all of the available data sources to be used in IDP creation
+   * List all the data sources
+   */
+  async listAllDataSourcesRaw(
+    requestParameters: ListAllDataSourcesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<DataSource>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listAllDataSources.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listAllDataSources.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/data-sources`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DataSourceFromJSON));
+  }
+
+  /**
+   * Returns all of the available data sources to be used in IDP creation
+   * List all the data sources
+   */
+  async listAllDataSources(
+    requestParameters: ListAllDataSourcesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<DataSource>> {
+    const response = await this.listAllDataSourcesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -11075,6 +13496,67 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * List all the data planes accessible to the current user. User must have DATA_PLANE[READ] permission on the specified environment or organization
+   * List of data planes
+   */
+  async listDataPlanesRaw(
+    requestParameters: ListDataPlanesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<DataPlane>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listDataPlanes.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listDataPlanes.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/data-planes`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DataPlaneFromJSON));
+  }
+
+  /**
+   * List all the data planes accessible to the current user. User must have DATA_PLANE[READ] permission on the specified environment or organization
+   * List of data planes
+   */
+  async listDataPlanes(
+    requestParameters: ListDataPlanesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<DataPlane>> {
+    const response = await this.listDataPlanesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified domain or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified environment or DOMAIN_DEVICE_IDENTIFIERS[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
    * List registered device identifiers for a security domain
    */
@@ -11456,6 +13938,116 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned entrypoint is filtered and contains only basic information such as id and name.
+   * List entrypoints
+   */
+  async listEntrypointsRaw(
+    requestParameters: ListEntrypointsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<Entrypoint>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listEntrypoints.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/entrypoints`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EntrypointFromJSON));
+  }
+
+  /**
+   * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned entrypoint is filtered and contains only basic information such as id and name.
+   * List entrypoints
+   */
+  async listEntrypoints(
+    requestParameters: ListEntrypointsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Entrypoint>> {
+    const response = await this.listEntrypointsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ENVIRONMENT[LIST] permission on the specified organization AND either ENVIRONMENT[READ] permission on each environment or ENVIRONMENT[READ] permission on the specified organization.Each returned environment is filtered and contains only basic information such as id and name.
+   * List all the environments
+   */
+  async listEnvironmentsRaw(
+    requestParameters: ListEnvironmentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<Environment>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listEnvironments.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EnvironmentFromJSON));
+  }
+
+  /**
+   * User must have the ENVIRONMENT[LIST] permission on the specified organization AND either ENVIRONMENT[READ] permission on each environment or ENVIRONMENT[READ] permission on the specified organization.Each returned environment is filtered and contains only basic information such as id and name.
+   * List all the environments
+   */
+  async listEnvironments(
+    requestParameters: ListEnvironmentsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Environment>> {
+    const response = await this.listEnvironmentsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_EXTENSION_GRANT[LIST] permission on the specified domain or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified environment or DOMAIN_EXTENSION_GRANT[LIST] permission on the specified organization. Each returned extension grant is filtered and contains only basic information such as id, name and type.
    * List registered extension grants for a security domain
    */
@@ -11594,6 +14186,75 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+   * List group members
+   */
+  async listGroupMembersRaw(
+    requestParameters: ListGroupMembersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<User>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listGroupMembers.',
+      );
+    }
+
+    if (requestParameters.group === null || requestParameters.group === undefined) {
+      throw new runtime.RequiredError(
+        'group',
+        'Required parameter requestParameters.group was null or undefined when calling listGroupMembers.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.size !== undefined) {
+      queryParameters['size'] = requestParameters.size;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/groups/{group}/members`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'group'}}`, encodeURIComponent(String(requestParameters.group))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+   * List group members
+   */
+  async listGroupMembers(
+    requestParameters: ListGroupMembersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<User> {
+    const response = await this.listGroupMembersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_GROUP[LIST] permission on the specified domain or DOMAIN_GROUP[LIST] permission on the specified environment or DOMAIN_GROUP[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
    * List groups for a security domain
    */
@@ -11664,6 +14325,69 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async listGroups(requestParameters: ListGroupsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<GroupPage> {
     const response = await this.listGroupsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
+   * List groups of the organization
+   */
+  async listGroups1Raw(
+    requestParameters: ListGroups1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<Group>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listGroups1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.size !== undefined) {
+      queryParameters['size'] = requestParameters.size;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/groups`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(GroupFromJSON));
+  }
+
+  /**
+   * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
+   * List groups of the organization
+   */
+  async listGroups1(
+    requestParameters: ListGroups1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Group>> {
+    const response = await this.listGroups1Raw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -11810,6 +14534,65 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission on the specified organization. Each returned identity provider is filtered and contains only basic information such as id, name, type and isExternal.
+   * List registered identity providers of the organization
+   */
+  async listIdentityProviders1Raw(
+    requestParameters: ListIdentityProviders1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<FilteredIdentityProviderInfo>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listIdentityProviders1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.userProvider !== undefined) {
+      queryParameters['userProvider'] = requestParameters.userProvider;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/identities`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FilteredIdentityProviderInfoFromJSON));
+  }
+
+  /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission on the specified organization. Each returned identity provider is filtered and contains only basic information such as id, name, type and isExternal.
+   * List registered identity providers of the organization
+   */
+  async listIdentityProviders1(
+    requestParameters: ListIdentityProviders1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<FilteredIdentityProviderInfo>> {
+    const response = await this.listIdentityProviders1Raw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_MEMBER[LIST] permission on the specified domain or DOMAIN_MEMBER[LIST] permission on the specified environment or DOMAIN_MEMBER[LIST] permission on the specified organization
    * List members for a security domain
    */
@@ -11875,6 +14658,215 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<MembershipListItem> {
     const response = await this.listMembersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[LIST] permission on the specified organization. Each returned user is filtered and contains only basic information such as id and username and displayname. Last login and identity provider name will be also returned if current user has ORGANIZATION_USER[READ] permission on the organization.
+   * List users of the organization
+   */
+  async listOrganisationUsersRaw(
+    requestParameters: ListOrganisationUsersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Page>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listOrganisationUsers.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.q !== undefined) {
+      queryParameters['q'] = requestParameters.q;
+    }
+
+    if (requestParameters.filter !== undefined) {
+      queryParameters['filter'] = requestParameters.filter;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.size !== undefined) {
+      queryParameters['size'] = requestParameters.size;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => PageFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[LIST] permission on the specified organization. Each returned user is filtered and contains only basic information such as id and username and displayname. Last login and identity provider name will be also returned if current user has ORGANIZATION_USER[READ] permission on the organization.
+   * List users of the organization
+   */
+  async listOrganisationUsers(
+    requestParameters: ListOrganisationUsersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Page> {
+    const response = await this.listOrganisationUsersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
+   * List audit logs for the organization
+   */
+  async listOrganizationAuditsRaw(
+    requestParameters: ListOrganizationAuditsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<Audit>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listOrganizationAudits.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.type !== undefined) {
+      queryParameters['type'] = requestParameters.type;
+    }
+
+    if (requestParameters.status !== undefined) {
+      queryParameters['status'] = requestParameters.status;
+    }
+
+    if (requestParameters.user !== undefined) {
+      queryParameters['user'] = requestParameters.user;
+    }
+
+    if (requestParameters.from !== undefined) {
+      queryParameters['from'] = requestParameters.from;
+    }
+
+    if (requestParameters.to !== undefined) {
+      queryParameters['to'] = requestParameters.to;
+    }
+
+    if (requestParameters.size !== undefined) {
+      queryParameters['size'] = requestParameters.size;
+    }
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/audits`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
+  }
+
+  /**
+   * User must have the ORGANIZATION_AUDIT[LIST] permission on the specified organization. Except if user has ORGANIZATION_AUDIT[READ] permission on the organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.
+   * List audit logs for the organization
+   */
+  async listOrganizationAudits(
+    requestParameters: ListOrganizationAuditsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Audit>> {
+    const response = await this.listOrganizationAuditsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization
+   * List members for an organization
+   */
+  async listOrganizationMembersRaw(
+    requestParameters: ListOrganizationMembersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<MembershipListItem>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listOrganizationMembers.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/members`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => MembershipListItemFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization
+   * List members for an organization
+   */
+  async listOrganizationMembers(
+    requestParameters: ListOrganizationMembersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<MembershipListItem> {
+    const response = await this.listOrganizationMembersRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -12102,6 +15094,65 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.
+   * List registered roles of the organization
+   */
+  async listRolesRaw(
+    requestParameters: ListRolesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<RoleEntity>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listRoles.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.type !== undefined) {
+      queryParameters['type'] = requestParameters.type;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/roles`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleEntityFromJSON));
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.
+   * List registered roles of the organization
+   */
+  async listRoles(
+    requestParameters: ListRolesRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<RoleEntity>> {
+    const response = await this.listRolesRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_SCOPE[LIST] permission on the specified domain or DOMAIN_SCOPE[LIST] permission on the specified environment or DOMAIN_SCOPE[LIST] permission on the specified organization Each returned scope is filtered and contains only basic information such as id, key, name, description, isSystem and isDiscovery.
    * List scopes for a security domain
    */
@@ -12253,6 +15304,61 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<ClientSecret>> {
     const response = await this.listSecretsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned tag is filtered and contains only basic information such as id and name.
+   * List sharding tags
+   */
+  async listShardingTagsRaw(
+    requestParameters: ListShardingTagsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<Domain>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listShardingTags.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/tags`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DomainFromJSON));
+  }
+
+  /**
+   * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned tag is filtered and contains only basic information such as id and name.
+   * List sharding tags
+   */
+  async listShardingTags(
+    requestParameters: ListShardingTagsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Domain>> {
+    const response = await this.listShardingTagsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -13296,6 +16402,71 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization
+   * Update platform main settings
+   */
+  async patchOrganizationSettingsRaw(
+    requestParameters: PatchOrganizationSettingsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Domain>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling patchOrganizationSettings.',
+      );
+    }
+
+    if (requestParameters.patchOrganization === null || requestParameters.patchOrganization === undefined) {
+      throw new runtime.RequiredError(
+        'patchOrganization',
+        'Required parameter requestParameters.patchOrganization was null or undefined when calling patchOrganizationSettings.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/settings`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: PatchOrganizationToJSON(requestParameters.patchOrganization),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => DomainFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_SETTINGS[UPDATE] permission on the specified organization
+   * Update platform main settings
+   */
+  async patchOrganizationSettings(
+    requestParameters: PatchOrganizationSettingsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Domain> {
+    const response = await this.patchOrganizationSettingsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain or DOMAIN_SCOPE[UPDATE] permission on the specified environment or DOMAIN_SCOPE[UPDATE] permission on the specified organization
    * Patch a scope
    */
@@ -13632,6 +16803,74 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization
+   * Remove a group member
+   */
+  async removeGroupMember1Raw(
+    requestParameters: RemoveGroupMember1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling removeGroupMember1.',
+      );
+    }
+
+    if (requestParameters.group === null || requestParameters.group === undefined) {
+      throw new runtime.RequiredError(
+        'group',
+        'Required parameter requestParameters.group was null or undefined when calling removeGroupMember1.',
+      );
+    }
+
+    if (requestParameters.member === null || requestParameters.member === undefined) {
+      throw new runtime.RequiredError(
+        'member',
+        'Required parameter requestParameters.member was null or undefined when calling removeGroupMember1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/groups/{group}/members/{member}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'group'}}`, encodeURIComponent(String(requestParameters.group)))
+          .replace(`{${'member'}}`, encodeURIComponent(String(requestParameters.member))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization
+   * Remove a group member
+   */
+  async removeGroupMember1(
+    requestParameters: RemoveGroupMember1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.removeGroupMember1Raw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_MEMBER[DELETE] permission on the specified domain or DOMAIN_MEMBER[DELETE] permission on the specified environment or DOMAIN_MEMBER[DELETE] permission on the specified organization
    * Remove a membership
    */
@@ -13702,6 +16941,63 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async removeMember(requestParameters: RemoveMemberRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.removeMemberRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization
+   * Remove a membership of the organization
+   */
+  async removeMember1Raw(
+    requestParameters: RemoveMember1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling removeMember1.',
+      );
+    }
+
+    if (requestParameters.member === null || requestParameters.member === undefined) {
+      throw new runtime.RequiredError(
+        'member',
+        'Required parameter requestParameters.member was null or undefined when calling removeMember1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/members/{member}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'member'}}`, encodeURIComponent(String(requestParameters.member))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have ORGANIZATION_MEMBER[DELETE] permission on the specified organization
+   * Remove a membership of the organization
+   */
+  async removeMember1(requestParameters: RemoveMember1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.removeMember1Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -13956,6 +17252,76 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Reset password
+   */
+  async resetOrganizationUserPasswordRaw(
+    requestParameters: ResetOrganizationUserPasswordRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling resetOrganizationUserPassword.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling resetOrganizationUserPassword.',
+      );
+    }
+
+    if (requestParameters.passwordValue === null || requestParameters.passwordValue === undefined) {
+      throw new runtime.RequiredError(
+        'passwordValue',
+        'Required parameter requestParameters.passwordValue was null or undefined when calling resetOrganizationUserPassword.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}/resetPassword`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: PasswordValueToJSON(requestParameters.passwordValue),
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Reset password
+   */
+  async resetOrganizationUserPassword(
+    requestParameters: ResetOrganizationUserPasswordRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.resetOrganizationUserPasswordRaw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
    * Reset password
    */
@@ -14036,6 +17402,74 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async resetPassword(requestParameters: ResetPasswordRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.resetPasswordRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Revoke an account access token
+   */
+  async revokeAccountAccessTokenRaw(
+    requestParameters: RevokeAccountAccessTokenRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling revokeAccountAccessToken.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling revokeAccountAccessToken.',
+      );
+    }
+
+    if (requestParameters.tokenId === null || requestParameters.tokenId === undefined) {
+      throw new runtime.RequiredError(
+        'tokenId',
+        'Required parameter requestParameters.tokenId was null or undefined when calling revokeAccountAccessToken.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}/tokens/{tokenId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
+          .replace(`{${'tokenId'}}`, encodeURIComponent(String(requestParameters.tokenId))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Revoke an account access token
+   */
+  async revokeAccountAccessToken(
+    requestParameters: RevokeAccountAccessTokenRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.revokeAccountAccessTokenRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -16221,6 +19655,77 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization
+   * Update the sharding entrypoint
+   */
+  async updateEntrypointRaw(
+    requestParameters: UpdateEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Entrypoint>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateEntrypoint.',
+      );
+    }
+
+    if (requestParameters.entrypointId === null || requestParameters.entrypointId === undefined) {
+      throw new runtime.RequiredError(
+        'entrypointId',
+        'Required parameter requestParameters.entrypointId was null or undefined when calling updateEntrypoint.',
+      );
+    }
+
+    if (requestParameters.updateEntrypoint === null || requestParameters.updateEntrypoint === undefined) {
+      throw new runtime.RequiredError(
+        'updateEntrypoint',
+        'Required parameter requestParameters.updateEntrypoint was null or undefined when calling updateEntrypoint.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/entrypoints/{entrypointId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'entrypointId'}}`, encodeURIComponent(String(requestParameters.entrypointId))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateEntrypointToJSON(requestParameters.updateEntrypoint),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => EntrypointFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission on the specified organization
+   * Update the sharding entrypoint
+   */
+  async updateEntrypoint(
+    requestParameters: UpdateEntrypointRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Entrypoint> {
+    const response = await this.updateEntrypointRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified domain or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified environment or DOMAIN_EXTENSION_GRANT[UPDATE] permission on the specified organization
    * Update an extension grant
    */
@@ -16392,6 +19897,71 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization
+   * Update a form
+   */
+  async updateFormRaw(
+    requestParameters: UpdateFormRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Form>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateForm.',
+      );
+    }
+
+    if (requestParameters.form === null || requestParameters.form === undefined) {
+      throw new runtime.RequiredError('form', 'Required parameter requestParameters.form was null or undefined when calling updateForm.');
+    }
+
+    if (requestParameters.updateForm === null || requestParameters.updateForm === undefined) {
+      throw new runtime.RequiredError(
+        'updateForm',
+        'Required parameter requestParameters.updateForm was null or undefined when calling updateForm.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/forms/{form}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'form'}}`, encodeURIComponent(String(requestParameters.form))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateFormToJSON(requestParameters.updateForm),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => FormFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization
+   * Update a form
+   */
+  async updateForm(requestParameters: UpdateFormRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Form> {
+    const response = await this.updateFormRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_GROUP[UPDATE] permission on the specified domain or DOMAIN_GROUP[UPDATE] permission on the specified environment or DOMAIN_GROUP[UPDATE] permission on the specified organization
    * Update a group
    */
@@ -16559,6 +20129,432 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<IdentityProvider> {
     const response = await this.updateIdentityProviderRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[UPDATE] permission on the specified organization
+   * Update an identity provider
+   */
+  async updateIdentityProvider1Raw(
+    requestParameters: UpdateIdentityProvider1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<IdentityProvider>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateIdentityProvider1.',
+      );
+    }
+
+    if (requestParameters.identity === null || requestParameters.identity === undefined) {
+      throw new runtime.RequiredError(
+        'identity',
+        'Required parameter requestParameters.identity was null or undefined when calling updateIdentityProvider1.',
+      );
+    }
+
+    if (requestParameters.updateIdentityProvider === null || requestParameters.updateIdentityProvider === undefined) {
+      throw new runtime.RequiredError(
+        'updateIdentityProvider',
+        'Required parameter requestParameters.updateIdentityProvider was null or undefined when calling updateIdentityProvider1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/identities/{identity}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'identity'}}`, encodeURIComponent(String(requestParameters.identity))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateIdentityProviderToJSON(requestParameters.updateIdentityProvider),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => IdentityProviderFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_IDENTITY_PROVIDER[UPDATE] permission on the specified organization
+   * Update an identity provider
+   */
+  async updateIdentityProvider1(
+    requestParameters: UpdateIdentityProvider1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<IdentityProvider> {
+    const response = await this.updateIdentityProvider1Raw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[UPDATE] permission on the specified organization
+   * Update a reporter
+   */
+  async updateOrgReporterRaw(
+    requestParameters: UpdateOrgReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Reporter>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateOrgReporter.',
+      );
+    }
+
+    if (requestParameters.reporterId === null || requestParameters.reporterId === undefined) {
+      throw new runtime.RequiredError(
+        'reporterId',
+        'Required parameter requestParameters.reporterId was null or undefined when calling updateOrgReporter.',
+      );
+    }
+
+    if (requestParameters.updateReporter === null || requestParameters.updateReporter === undefined) {
+      throw new runtime.RequiredError(
+        'updateReporter',
+        'Required parameter requestParameters.updateReporter was null or undefined when calling updateOrgReporter.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/reporters/{reporterId}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'reporterId'}}`, encodeURIComponent(String(requestParameters.reporterId))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateReporterToJSON(requestParameters.updateReporter),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ReporterFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_REPORTER[UPDATE] permission on the specified organization
+   * Update a reporter
+   */
+  async updateOrgReporter(
+    requestParameters: UpdateOrgReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Reporter> {
+    const response = await this.updateOrgReporterRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Update a user username
+   */
+  async updateOrganisationUsernameRaw(
+    requestParameters: UpdateOrganisationUsernameRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<User>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateOrganisationUsername.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling updateOrganisationUsername.',
+      );
+    }
+
+    if (requestParameters.usernameEntity === null || requestParameters.usernameEntity === undefined) {
+      throw new runtime.RequiredError(
+        'usernameEntity',
+        'Required parameter requestParameters.usernameEntity was null or undefined when calling updateOrganisationUsername.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}/username`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UsernameEntityToJSON(requestParameters.usernameEntity),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Update a user username
+   */
+  async updateOrganisationUsername(
+    requestParameters: UpdateOrganisationUsernameRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<User> {
+    const response = await this.updateOrganisationUsernameRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+   * Update a platform group
+   */
+  async updateOrganizationGroupRaw(
+    requestParameters: UpdateOrganizationGroupRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<User>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateOrganizationGroup.',
+      );
+    }
+
+    if (requestParameters.group === null || requestParameters.group === undefined) {
+      throw new runtime.RequiredError(
+        'group',
+        'Required parameter requestParameters.group was null or undefined when calling updateOrganizationGroup.',
+      );
+    }
+
+    if (requestParameters.updateGroup === null || requestParameters.updateGroup === undefined) {
+      throw new runtime.RequiredError(
+        'updateGroup',
+        'Required parameter requestParameters.updateGroup was null or undefined when calling updateOrganizationGroup.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/groups/{group}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'group'}}`, encodeURIComponent(String(requestParameters.group))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateGroupToJSON(requestParameters.updateGroup),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
+   * Update a platform group
+   */
+  async updateOrganizationGroup(
+    requestParameters: UpdateOrganizationGroupRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<User> {
+    const response = await this.updateOrganizationGroupRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Update a user
+   */
+  async updateOrganizationUserRaw(
+    requestParameters: UpdateOrganizationUserRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<User>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateOrganizationUser.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling updateOrganizationUser.',
+      );
+    }
+
+    if (requestParameters.updateUser === null || requestParameters.updateUser === undefined) {
+      throw new runtime.RequiredError(
+        'updateUser',
+        'Required parameter requestParameters.updateUser was null or undefined when calling updateOrganizationUser.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateUserToJSON(requestParameters.updateUser),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Update a user
+   */
+  async updateOrganizationUser(
+    requestParameters: UpdateOrganizationUserRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<User> {
+    const response = await this.updateOrganizationUserRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Update a user status
+   */
+  async updateOrganizationUserStatusRaw(
+    requestParameters: UpdateOrganizationUserStatusRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<User>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateOrganizationUserStatus.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling updateOrganizationUserStatus.',
+      );
+    }
+
+    if (requestParameters.statusEntity === null || requestParameters.statusEntity === undefined) {
+      throw new runtime.RequiredError(
+        'statusEntity',
+        'Required parameter requestParameters.statusEntity was null or undefined when calling updateOrganizationUserStatus.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/users/{user}/status`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: StatusEntityToJSON(requestParameters.statusEntity),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => UserFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_USER[UPDATE] permission on the specified organization
+   * Update a user status
+   */
+  async updateOrganizationUserStatus(
+    requestParameters: UpdateOrganizationUserStatusRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<User> {
+    const response = await this.updateOrganizationUserStatusRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -16905,6 +20901,71 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization
+   * Update a platform role
+   */
+  async updateRole1Raw(
+    requestParameters: UpdateRole1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<RoleEntity>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateRole1.',
+      );
+    }
+
+    if (requestParameters.role === null || requestParameters.role === undefined) {
+      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling updateRole1.');
+    }
+
+    if (requestParameters.updateRole === null || requestParameters.updateRole === undefined) {
+      throw new runtime.RequiredError(
+        'updateRole',
+        'Required parameter requestParameters.updateRole was null or undefined when calling updateRole1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/roles/{role}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'role'}}`, encodeURIComponent(String(requestParameters.role))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateRoleToJSON(requestParameters.updateRole),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => RoleEntityFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization
+   * Update a platform role
+   */
+  async updateRole1(requestParameters: UpdateRole1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
+    const response = await this.updateRole1Raw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the DOMAIN_SCOPE[UPDATE] permission on the specified domain or DOMAIN_SCOPE[UPDATE] permission on the specified environment or DOMAIN_SCOPE[UPDATE] permission on the specified organization
    * Update a scope
    */
@@ -16985,6 +21046,71 @@ export class DomainApi extends runtime.BaseAPI {
    */
   async updateScope(requestParameters: UpdateScopeRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Scope> {
     const response = await this.updateScopeRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the ORGANIZATION_TAG[UPDATE] permission on the specified organization
+   * Update the sharding tag
+   */
+  async updateTagRaw(
+    requestParameters: UpdateTagRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Tag>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateTag.',
+      );
+    }
+
+    if (requestParameters.tag === null || requestParameters.tag === undefined) {
+      throw new runtime.RequiredError('tag', 'Required parameter requestParameters.tag was null or undefined when calling updateTag.');
+    }
+
+    if (requestParameters.updateTag === null || requestParameters.updateTag === undefined) {
+      throw new runtime.RequiredError(
+        'updateTag',
+        'Required parameter requestParameters.updateTag was null or undefined when calling updateTag.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/tags/{tag}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'tag'}}`, encodeURIComponent(String(requestParameters.tag))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateTagToJSON(requestParameters.updateTag),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => TagFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_TAG[UPDATE] permission on the specified organization
+   * Update the sharding tag
+   */
+  async updateTag(requestParameters: UpdateTagRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Tag> {
+    const response = await this.updateTagRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -17436,3 +21562,42 @@ export const FindFormTemplateEnum = {
   VerifyAttempt: 'VERIFY_ATTEMPT',
 } as const;
 export type FindFormTemplateEnum = typeof FindFormTemplateEnum[keyof typeof FindFormTemplateEnum];
+/**
+ * @export
+ */
+export const FindOrganizationFormTemplateTemplateEnum = {
+  Login: 'LOGIN',
+  Registration: 'REGISTRATION',
+  RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
+  RegistrationVerify: 'REGISTRATION_VERIFY',
+  ForgotPassword: 'FORGOT_PASSWORD',
+  ResetPassword: 'RESET_PASSWORD',
+  Oauth2UserConsent: 'OAUTH2_USER_CONSENT',
+  MfaEnroll: 'MFA_ENROLL',
+  MfaChallenge: 'MFA_CHALLENGE',
+  MfaChallengeAlternatives: 'MFA_CHALLENGE_ALTERNATIVES',
+  MfaRecoveryCode: 'MFA_RECOVERY_CODE',
+  BlockedAccount: 'BLOCKED_ACCOUNT',
+  CompleteProfile: 'COMPLETE_PROFILE',
+  WebauthnRegister: 'WEBAUTHN_REGISTER',
+  WebauthnRegisterSuccess: 'WEBAUTHN_REGISTER_SUCCESS',
+  WebauthnLogin: 'WEBAUTHN_LOGIN',
+  IdentifierFirstLogin: 'IDENTIFIER_FIRST_LOGIN',
+  Error: 'ERROR',
+  CertificateExpiration: 'CERTIFICATE_EXPIRATION',
+  ClientSecretExpiration: 'CLIENT_SECRET_EXPIRATION',
+  VerifyAttempt: 'VERIFY_ATTEMPT',
+} as const;
+export type FindOrganizationFormTemplateTemplateEnum =
+  typeof FindOrganizationFormTemplateTemplateEnum[keyof typeof FindOrganizationFormTemplateTemplateEnum];
+/**
+ * @export
+ */
+export const ListRolesTypeEnum = {
+  Platform: 'PLATFORM',
+  Domain: 'DOMAIN',
+  Application: 'APPLICATION',
+  Organization: 'ORGANIZATION',
+  Environment: 'ENVIRONMENT',
+} as const;
+export type ListRolesTypeEnum = typeof ListRolesTypeEnum[keyof typeof ListRolesTypeEnum];

@@ -28,11 +28,11 @@
 
 import * as runtime from '../runtime';
 
-export interface Get28Request {
+export interface GetDeviceIdentifierPluginRequest {
   deviceIdentifier: string;
 }
 
-export interface GetSchema3Request {
+export interface GetDeviceIdentifierPluginSchemaRequest {
   deviceIdentifier: string;
 }
 
@@ -44,14 +44,14 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a device identifier plugin
    */
-  async get28Raw(
-    requestParameters: Get28Request,
+  async getDeviceIdentifierPluginRaw(
+    requestParameters: GetDeviceIdentifierPluginRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
       throw new runtime.RequiredError(
         'deviceIdentifier',
-        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling get28.',
+        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling getDeviceIdentifierPlugin.',
       );
     }
 
@@ -87,22 +87,25 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a device identifier plugin
    */
-  async get28(requestParameters: Get28Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get28Raw(requestParameters, initOverrides);
+  async getDeviceIdentifierPlugin(
+    requestParameters: GetDeviceIdentifierPluginRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getDeviceIdentifierPluginRaw(requestParameters, initOverrides);
   }
 
   /**
    * There is no particular permission needed. User must be authenticated.
    * Get a device identifier plugin\'s schema
    */
-  async getSchema3Raw(
-    requestParameters: GetSchema3Request,
+  async getDeviceIdentifierPluginSchemaRaw(
+    requestParameters: GetDeviceIdentifierPluginSchemaRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.deviceIdentifier === null || requestParameters.deviceIdentifier === undefined) {
       throw new runtime.RequiredError(
         'deviceIdentifier',
-        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling getSchema3.',
+        'Required parameter requestParameters.deviceIdentifier was null or undefined when calling getDeviceIdentifierPluginSchema.',
       );
     }
 
@@ -138,15 +141,18 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a device identifier plugin\'s schema
    */
-  async getSchema3(requestParameters: GetSchema3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema3Raw(requestParameters, initOverrides);
+  async getDeviceIdentifierPluginSchema(
+    requestParameters: GetDeviceIdentifierPluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getDeviceIdentifierPluginSchemaRaw(requestParameters, initOverrides);
   }
 
   /**
    * There is no particular permission needed. User must be authenticated.
    * List device identifier plugins
    */
-  async list27Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+  async listDeviceIdentifierPluginsRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
     const queryParameters: any = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -176,7 +182,7 @@ export class DeviceIdentifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * List device identifier plugins
    */
-  async list27(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list27Raw(initOverrides);
+  async listDeviceIdentifierPlugins(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.listDeviceIdentifierPluginsRaw(initOverrides);
   }
 }

@@ -44,4 +44,4 @@ export const deleteOrganisationUser = (accessToken, userId) =>
     user: userId,
   });
 
-export const getCurrentUser = (accessToken) => getUserApi(accessToken).get();
+export const getCurrentUser = (accessToken) => getUserApi(accessToken).getCurrentUser();

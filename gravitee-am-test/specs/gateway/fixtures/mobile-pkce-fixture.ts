@@ -197,31 +197,19 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
   // Helper functions
   const completeAuthorizationFlow = async (codeChallenge: string): Promise<string> => {
     const clientId = application.settings.oauth.clientId;
-    const authUrl = buildAuthorizationUrl(
-      openIdConfiguration.authorization_endpoint,
-      clientId,
-      redirectUri,
-      codeChallenge
-    );
-    
+    const authUrl = buildAuthorizationUrl(openIdConfiguration.authorization_endpoint, clientId, redirectUri, codeChallenge);
+
     const authResponse = await performGet(authUrl).expect(302);
-    const loginResponse = await login(
-      authResponse,
-      user.username,
-      clientId,
-      TEST_CONSTANTS.USER_PASSWORD,
-      false,
-      false
-    );
-    
+    const loginResponse = await login(authResponse, user.username, clientId, TEST_CONSTANTS.USER_PASSWORD, false, false);
+
     const authorizeResponse = await performGet(loginResponse.headers['location'], '', {
       Cookie: loginResponse.headers['set-cookie'],
     }).expect(302);
-    
+
     const redirectUrl = authorizeResponse.headers['location'];
     expect(redirectUrl).toContain(redirectUri);
     expect(redirectUrl).toContain('code=');
-    
+
     return extractAuthorizationCode(redirectUrl);
   };
 
@@ -233,15 +221,10 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
       code_verifier: codeVerifier,
     });
 
-    return performPost(
-      openIdConfiguration.token_endpoint,
-      '',
-      tokenParams.toString(),
-      {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${applicationBase64Token(application)}`,
-      }
-    );
+    return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${applicationBase64Token(application)}`,
+    });
   };
 
   const buildInvalidAuthUrl = (params: Record<string, string>): string => {
