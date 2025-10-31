@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.10.0-SNAPSHOT
+  version: 4.10.0-alpha.3-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -6197,6 +6197,65 @@ paths:
         "200":
           description: Result of evaluating the password against the policy
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources:
+    get:
+      tags:
+      - protected-resource
+      - domain
+      summary: List registered protected resources for a security domain
+      description: "User must have the PROTECTED_RESOURCE[LIST] permission on the\
+        \ specified domain, environment or organization AND either PROTECTED_RESOURCE[READ]\
+        \ permission on each domain's protected resource or PROTECTED_RESOURCE[READ]\
+        \ permission on the specified domain or PROTECTED_RESOURCE[READ] permission\
+        \ on the specified environment or PROTECTED_RESOURCE[READ] permission on the\
+        \ specified organization. Each returned protected resource is filtered and\
+        \ contains only basic information such as id, name, description and isEnabled."
+      operationId: listProtectedResources
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: updatedAt.desc
+      responses:
+        "200":
+          description: List registered protected resources for a security domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourcePage"
+        "500":
+          description: Internal server error
     post:
       tags:
       - protected-resource
@@ -6235,6 +6294,97 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProtectedResourceSecret"
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}:
+    get:
+      tags:
+      - protected-resource
+      - domain
+      summary: Get a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[READ] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[READ] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[READ] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[READ] permission on the specified organization. "
+      operationId: findProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Protected Resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        "500":
+          description: Internal server error
+    put:
+      tags:
+      - protected-resource
+      - domain
+      summary: Update a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[UPDATE] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified organization. "
+      operationId: updateProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProtectedResource"
+        required: true
+      responses:
+        "200":
+          description: Protected Resource successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResource"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters:
@@ -12006,13 +12156,13 @@ components:
           type: array
           items:
             type: string
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
         clientTemplateEnabled:
           type: boolean
         allowedScopesEnabled:
+          type: boolean
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -12234,21 +12384,21 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
+        redirectUriStrictMatching:
+          type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
-        redirectUriExpressionLanguageEnabled:
-          type: boolean
-        redirectUriUnsecuredHttpSchemeAllowed:
+        dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
         dynamicClientRegistrationTemplateEnabled:
           type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
+        redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
     DomainPage:
       type: object
@@ -13371,6 +13521,23 @@ components:
             type: string
         external:
           type: boolean
+    NewMcpTool:
+      required:
+      - key
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/NewProtectedResourceFeature"
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - MCP_TOOL
+          scopes:
+            type: array
+            items:
+              minLength: 1
+              type: string
     NewMembership:
       required:
       - memberId
@@ -13513,6 +13680,26 @@ components:
           minLength: 1
           pattern: ^MCP_SERVER$
           type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewProtectedResourceFeature"
+    NewProtectedResourceFeature:
+      required:
+      - key
+      - type
+      type: object
+      properties:
+        key:
+          minLength: 1
+          pattern: "^[a-zA-Z0-9_-]+$"
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+      discriminator:
+        propertyName: type
     NewReporter:
       required:
       - configuration
@@ -14337,13 +14524,13 @@ components:
             type: string
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
+        clientTemplateEnabled:
+          type: boolean
+          writeOnly: true
         dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         openDynamicClientRegistrationEnabled:
-          type: boolean
-          writeOnly: true
-        clientTemplateEnabled:
           type: boolean
           writeOnly: true
     PatchDomain:
@@ -14807,6 +14994,101 @@ components:
           - FORM
         template:
           type: string
+    ProtectedResource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        clientId:
+          type: string
+        domainId:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - MCP_SERVER
+        resourceIdentifiers:
+          type: array
+          items:
+            type: string
+        clientSecrets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientSecret"
+        secretSettings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationSecretSettings"
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectedResourceFeature"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProtectedResourceFeature:
+      type: object
+      properties:
+        key:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - MCP_TOOL
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProtectedResourcePage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        currentPage:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
+    ProtectedResourcePrimaryData:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - MCP_SERVER
+        resourceIdentifiers:
+          type: array
+          items:
+            type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectedResourceFeature"
+        updatedAt:
+          type: string
+          format: date-time
     ProtectedResourceSecret:
       type: object
       properties:
@@ -15601,6 +15883,23 @@ components:
             type: string
         passwordPolicy:
           type: string
+    UpdateMcpTool:
+      required:
+      - key
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - MCP_TOOL
+          scopes:
+            type: array
+            items:
+              minLength: 1
+              type: string
     UpdatePasswordPolicy:
       required:
       - name
@@ -15640,6 +15939,43 @@ components:
           format: int32
         defaultPolicy:
           type: boolean
+    UpdateProtectedResource:
+      required:
+      - name
+      - resourceIdentifiers
+      type: object
+      properties:
+        name:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        resourceIdentifiers:
+          minItems: 1
+          type: array
+          items:
+            minLength: 1
+            type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+    UpdateProtectedResourceFeature:
+      required:
+      - key
+      - type
+      type: object
+      properties:
+        key:
+          minLength: 1
+          pattern: "^[a-zA-Z0-9_-]+$"
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+      discriminator:
+        propertyName: type
     UpdateReporter:
       required:
       - configuration
@@ -15988,20 +16324,22 @@ components:
           type: object
           additionalProperties:
             type: object
-        fullId:
-          $ref: "#/components/schemas/UserId"
+        locale:
+          type: string
+        zoneInfo:
+          type: string
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
-        disabled:
-          type: boolean
-        middleName:
-          type: string
         identitiesAsMap:
           type: object
           additionalProperties:
             type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        middleName:
+          type: string
         inactive:
           type: boolean
         profile:
@@ -16010,12 +16348,10 @@ components:
           type: string
         birthdate:
           type: string
-        zoneInfo:
-          type: string
         phoneNumber:
           type: string
-        locale:
-          type: string
+        disabled:
+          type: boolean
     UserEntity:
       type: object
       properties:
@@ -16187,20 +16523,22 @@ components:
           type: object
           additionalProperties:
             type: object
-        fullId:
-          $ref: "#/components/schemas/UserId"
+        locale:
+          type: string
+        zoneInfo:
+          type: string
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
-        disabled:
-          type: boolean
-        middleName:
-          type: string
         identitiesAsMap:
           type: object
           additionalProperties:
             type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        middleName:
+          type: string
         inactive:
           type: boolean
         profile:
@@ -16209,12 +16547,10 @@ components:
           type: string
         birthdate:
           type: string
-        zoneInfo:
-          type: string
         phoneNumber:
           type: string
-        locale:
-          type: string
+        disabled:
+          type: boolean
     UserId:
       type: object
       properties:
