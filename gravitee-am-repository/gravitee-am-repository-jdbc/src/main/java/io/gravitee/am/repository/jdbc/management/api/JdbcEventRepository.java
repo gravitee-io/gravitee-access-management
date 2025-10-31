@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -101,7 +102,8 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
         return eventRepository.findByTimeFrame(
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(from), UTC),
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(to), UTC))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -111,13 +113,15 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(from), UTC),
                         LocalDateTime.ofInstant(Instant.ofEpochMilli(to), UTC),
                         dataPlaneId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Event> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return eventRepository.findById(id).map(this::toEntity);
+        return eventRepository.findById(id).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -138,7 +142,8 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -155,13 +160,15 @@ public class JdbcEventRepository extends AbstractJdbcRepository implements Event
         update = addQuotedField(update, COL_ENVIRONMENT_ID, item.getEnvironmentId(), String.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return eventRepository.deleteById(id);
+        return eventRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
