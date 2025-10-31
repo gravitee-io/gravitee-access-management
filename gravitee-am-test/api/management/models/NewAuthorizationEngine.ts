@@ -26,56 +26,55 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
-import { NewMcpTool, NewMcpToolFromJSON, NewMcpToolFromJSONTyped, NewMcpToolToJSON } from './NewMcpTool';
-
 /**
  *
  * @export
- * @interface NewProtectedResourceFeature
+ * @interface NewAuthorizationEngine
  */
-export interface NewProtectedResourceFeature {
+export interface NewAuthorizationEngine {
   /**
    *
    * @type {string}
-   * @memberof NewProtectedResourceFeature
+   * @memberof NewAuthorizationEngine
    */
-  key: string;
+  id?: string;
   /**
    *
    * @type {string}
-   * @memberof NewProtectedResourceFeature
-   */
-  description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewProtectedResourceFeature
+   * @memberof NewAuthorizationEngine
    */
   type: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewAuthorizationEngine
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof NewAuthorizationEngine
+   */
+  configuration: string;
 }
 
-export function NewProtectedResourceFeatureFromJSON(json: any): NewProtectedResourceFeature {
-  return NewProtectedResourceFeatureFromJSONTyped(json, false);
+export function NewAuthorizationEngineFromJSON(json: any): NewAuthorizationEngine {
+  return NewAuthorizationEngineFromJSONTyped(json, false);
 }
 
-export function NewProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewProtectedResourceFeature {
+export function NewAuthorizationEngineFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewAuthorizationEngine {
   if (json === undefined || json === null) {
     return json;
   }
-  if (!ignoreDiscriminator) {
-    if (json['type'] === 'NewMcpTool') {
-      // @ts-ignore
-        return NewMcpToolFromJSONTyped(json, true);
-    }
-  }
   return {
-    key: json['key'],
-    description: !exists(json, 'description') ? undefined : json['description'],
+    id: !exists(json, 'id') ? undefined : json['id'],
     type: json['type'],
+    name: json['name'],
+    configuration: json['configuration'],
   };
 }
 
-export function NewProtectedResourceFeatureToJSON(value?: NewProtectedResourceFeature | null): any {
+export function NewAuthorizationEngineToJSON(value?: NewAuthorizationEngine | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -83,8 +82,9 @@ export function NewProtectedResourceFeatureToJSON(value?: NewProtectedResourceFe
     return null;
   }
   return {
-    key: value.key,
-    description: value.description,
+    id: value.id,
     type: value.type,
+    name: value.name,
+    configuration: value.configuration,
   };
 }

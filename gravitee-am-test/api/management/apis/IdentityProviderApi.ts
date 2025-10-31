@@ -65,7 +65,7 @@ export interface CreateIdentityProviderRequest {
   newIdentityProvider: NewIdentityProvider;
 }
 
-export interface Delete13Request {
+export interface Delete12Request {
   organizationId: string;
   identity: string;
 }
@@ -364,21 +364,21 @@ export class IdentityProviderApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization
    * Delete an identity provider
    */
-  async delete13Raw(
-    requestParameters: Delete13Request,
+  async delete12Raw(
+    requestParameters: Delete12Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete13.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete12.',
       );
     }
 
     if (requestParameters.identity === null || requestParameters.identity === undefined) {
       throw new runtime.RequiredError(
         'identity',
-        'Required parameter requestParameters.identity was null or undefined when calling delete13.',
+        'Required parameter requestParameters.identity was null or undefined when calling delete12.',
       );
     }
 
@@ -413,8 +413,8 @@ export class IdentityProviderApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission on the specified organization
    * Delete an identity provider
    */
-  async delete13(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete13Raw(requestParameters, initOverrides);
+  async delete12(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete12Raw(requestParameters, initOverrides);
   }
 
   /**

@@ -27,6 +27,13 @@
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
 import {
+  ApplicationSecretSettings,
+  ApplicationSecretSettingsFromJSON,
+  ApplicationSecretSettingsFromJSONTyped,
+  ApplicationSecretSettingsToJSON,
+} from './ApplicationSecretSettings';
+import { ClientSecret, ClientSecretFromJSON, ClientSecretFromJSONTyped, ClientSecretToJSON } from './ClientSecret';
+import {
   ProtectedResourceFeature,
   ProtectedResourceFeatureFromJSON,
   ProtectedResourceFeatureFromJSONTyped,
@@ -36,55 +43,79 @@ import {
 /**
  *
  * @export
- * @interface ProtectedResourcePrimaryData
+ * @interface ProtectedResource
  */
-export interface ProtectedResourcePrimaryData {
+export interface ProtectedResource {
   /**
    *
    * @type {string}
-   * @memberof ProtectedResourcePrimaryData
+   * @memberof ProtectedResource
    */
   id?: string;
   /**
    *
    * @type {string}
-   * @memberof ProtectedResourcePrimaryData
-   */
-  clientId?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof ProtectedResourcePrimaryData
+   * @memberof ProtectedResource
    */
   name?: string;
   /**
    *
    * @type {string}
-   * @memberof ProtectedResourcePrimaryData
+   * @memberof ProtectedResource
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProtectedResource
+   */
+  domainId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProtectedResource
    */
   description?: string;
   /**
    *
    * @type {string}
-   * @memberof ProtectedResourcePrimaryData
+   * @memberof ProtectedResource
    */
-  type?: ProtectedResourcePrimaryDataTypeEnum;
+  type?: ProtectedResourceTypeEnum;
   /**
    *
    * @type {Array<string>}
-   * @memberof ProtectedResourcePrimaryData
+   * @memberof ProtectedResource
    */
   resourceIdentifiers?: Array<string>;
   /**
    *
+   * @type {Array<ClientSecret>}
+   * @memberof ProtectedResource
+   */
+  clientSecrets?: Array<ClientSecret>;
+  /**
+   *
+   * @type {Array<ApplicationSecretSettings>}
+   * @memberof ProtectedResource
+   */
+  secretSettings?: Array<ApplicationSecretSettings>;
+  /**
+   *
    * @type {Array<ProtectedResourceFeature>}
-   * @memberof ProtectedResourcePrimaryData
+   * @memberof ProtectedResource
    */
   features?: Array<ProtectedResourceFeature>;
   /**
    *
    * @type {Date}
-   * @memberof ProtectedResourcePrimaryData
+   * @memberof ProtectedResource
+   */
+  createdAt?: Date;
+  /**
+   *
+   * @type {Date}
+   * @memberof ProtectedResource
    */
   updatedAt?: Date;
 }
@@ -92,33 +123,38 @@ export interface ProtectedResourcePrimaryData {
 /**
  * @export
  */
-export const ProtectedResourcePrimaryDataTypeEnum = {
+export const ProtectedResourceTypeEnum = {
   McpServer: 'MCP_SERVER',
 } as const;
-export type ProtectedResourcePrimaryDataTypeEnum =
-  typeof ProtectedResourcePrimaryDataTypeEnum[keyof typeof ProtectedResourcePrimaryDataTypeEnum];
+export type ProtectedResourceTypeEnum = typeof ProtectedResourceTypeEnum[keyof typeof ProtectedResourceTypeEnum];
 
-export function ProtectedResourcePrimaryDataFromJSON(json: any): ProtectedResourcePrimaryData {
-  return ProtectedResourcePrimaryDataFromJSONTyped(json, false);
+export function ProtectedResourceFromJSON(json: any): ProtectedResource {
+  return ProtectedResourceFromJSONTyped(json, false);
 }
 
-export function ProtectedResourcePrimaryDataFromJSONTyped(json: any, ignoreDiscriminator: boolean): ProtectedResourcePrimaryData {
+export function ProtectedResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): ProtectedResource {
   if (json === undefined || json === null) {
     return json;
   }
   return {
     id: !exists(json, 'id') ? undefined : json['id'],
-    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
     name: !exists(json, 'name') ? undefined : json['name'],
+    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
+    domainId: !exists(json, 'domainId') ? undefined : json['domainId'],
     description: !exists(json, 'description') ? undefined : json['description'],
     type: !exists(json, 'type') ? undefined : json['type'],
     resourceIdentifiers: !exists(json, 'resourceIdentifiers') ? undefined : json['resourceIdentifiers'],
+    clientSecrets: !exists(json, 'clientSecrets') ? undefined : (json['clientSecrets'] as Array<any>).map(ClientSecretFromJSON),
+    secretSettings: !exists(json, 'secretSettings')
+      ? undefined
+      : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
     features: !exists(json, 'features') ? undefined : (json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON),
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
     updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function ProtectedResourcePrimaryDataToJSON(value?: ProtectedResourcePrimaryData | null): any {
+export function ProtectedResourceToJSON(value?: ProtectedResource | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -127,12 +163,17 @@ export function ProtectedResourcePrimaryDataToJSON(value?: ProtectedResourcePrim
   }
   return {
     id: value.id,
-    clientId: value.clientId,
     name: value.name,
+    clientId: value.clientId,
+    domainId: value.domainId,
     description: value.description,
     type: value.type,
     resourceIdentifiers: value.resourceIdentifiers,
+    clientSecrets: value.clientSecrets === undefined ? undefined : (value.clientSecrets as Array<any>).map(ClientSecretToJSON),
+    secretSettings:
+      value.secretSettings === undefined ? undefined : (value.secretSettings as Array<any>).map(ApplicationSecretSettingsToJSON),
     features: value.features === undefined ? undefined : (value.features as Array<any>).map(ProtectedResourceFeatureToJSON),
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
     updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };
 }

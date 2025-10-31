@@ -408,6 +408,12 @@ export interface User {
   identitiesAsMap?: { [key: string]: any };
   /**
    *
+   * @type {UserId}
+   * @memberof User
+   */
+  fullId?: UserId;
+  /**
+   *
    * @type {string}
    * @memberof User
    */
@@ -448,12 +454,6 @@ export interface User {
    * @memberof User
    */
   disabled?: boolean;
-  /**
-   *
-   * @type {UserId}
-   * @memberof User
-   */
-  fullId?: UserId;
 }
 
 /**
@@ -538,6 +538,7 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     zoneInfo: !exists(json, 'zoneInfo') ? undefined : json['zoneInfo'],
     lastIdentityInformation: !exists(json, 'lastIdentityInformation') ? undefined : json['lastIdentityInformation'],
     identitiesAsMap: !exists(json, 'identitiesAsMap') ? undefined : json['identitiesAsMap'],
+    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
     middleName: !exists(json, 'middleName') ? undefined : json['middleName'],
     inactive: !exists(json, 'inactive') ? undefined : json['inactive'],
     profile: !exists(json, 'profile') ? undefined : json['profile'],
@@ -545,7 +546,6 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     birthdate: !exists(json, 'birthdate') ? undefined : json['birthdate'],
     phoneNumber: !exists(json, 'phoneNumber') ? undefined : json['phoneNumber'],
     disabled: !exists(json, 'disabled') ? undefined : json['disabled'],
-    fullId: !exists(json, 'fullId') ? undefined : UserIdFromJSON(json['fullId']),
   };
 }
 
@@ -618,6 +618,7 @@ export function UserToJSON(value?: User | null): any {
     zoneInfo: value.zoneInfo,
     lastIdentityInformation: value.lastIdentityInformation,
     identitiesAsMap: value.identitiesAsMap,
+    fullId: UserIdToJSON(value.fullId),
     middleName: value.middleName,
     inactive: value.inactive,
     profile: value.profile,
@@ -625,6 +626,5 @@ export function UserToJSON(value?: User | null): any {
     birthdate: value.birthdate,
     phoneNumber: value.phoneNumber,
     disabled: value.disabled,
-    fullId: UserIdToJSON(value.fullId),
   };
 }

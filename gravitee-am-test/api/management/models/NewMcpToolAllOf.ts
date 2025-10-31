@@ -26,56 +26,49 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
-import { NewMcpTool, NewMcpToolFromJSON, NewMcpToolFromJSONTyped, NewMcpToolToJSON } from './NewMcpTool';
-
 /**
  *
  * @export
- * @interface NewProtectedResourceFeature
+ * @interface NewMcpToolAllOf
  */
-export interface NewProtectedResourceFeature {
+export interface NewMcpToolAllOf {
   /**
    *
    * @type {string}
-   * @memberof NewProtectedResourceFeature
+   * @memberof NewMcpToolAllOf
    */
-  key: string;
+  type?: NewMcpToolAllOfTypeEnum;
   /**
    *
-   * @type {string}
-   * @memberof NewProtectedResourceFeature
+   * @type {Array<string>}
+   * @memberof NewMcpToolAllOf
    */
-  description?: string;
-  /**
-   *
-   * @type {string}
-   * @memberof NewProtectedResourceFeature
-   */
-  type: string;
+  scopes?: Array<string>;
 }
 
-export function NewProtectedResourceFeatureFromJSON(json: any): NewProtectedResourceFeature {
-  return NewProtectedResourceFeatureFromJSONTyped(json, false);
+/**
+ * @export
+ */
+export const NewMcpToolAllOfTypeEnum = {
+  McpTool: 'MCP_TOOL',
+} as const;
+export type NewMcpToolAllOfTypeEnum = typeof NewMcpToolAllOfTypeEnum[keyof typeof NewMcpToolAllOfTypeEnum];
+
+export function NewMcpToolAllOfFromJSON(json: any): NewMcpToolAllOf {
+  return NewMcpToolAllOfFromJSONTyped(json, false);
 }
 
-export function NewProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewProtectedResourceFeature {
+export function NewMcpToolAllOfFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewMcpToolAllOf {
   if (json === undefined || json === null) {
     return json;
   }
-  if (!ignoreDiscriminator) {
-    if (json['type'] === 'NewMcpTool') {
-      // @ts-ignore
-        return NewMcpToolFromJSONTyped(json, true);
-    }
-  }
   return {
-    key: json['key'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    type: json['type'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+    scopes: !exists(json, 'scopes') ? undefined : json['scopes'],
   };
 }
 
-export function NewProtectedResourceFeatureToJSON(value?: NewProtectedResourceFeature | null): any {
+export function NewMcpToolAllOfToJSON(value?: NewMcpToolAllOf | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -83,8 +76,7 @@ export function NewProtectedResourceFeatureToJSON(value?: NewProtectedResourceFe
     return null;
   }
   return {
-    key: value.key,
-    description: value.description,
     type: value.type,
+    scopes: value.scopes,
   };
 }

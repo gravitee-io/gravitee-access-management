@@ -85,13 +85,13 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  isDynamicClientRegistrationEnabled?: boolean;
+  dynamicClientRegistrationEnabled?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  isOpenDynamicClientRegistrationEnabled?: boolean;
+  openDynamicClientRegistrationEnabled?: boolean;
 }
 
 export function PatchClientRegistrationSettingsFromJSON(json: any): PatchClientRegistrationSettings {
@@ -113,12 +113,12 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
       ? undefined
       : json['allowRedirectUriParamsExpressionLanguage'],
     clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
-    isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
+    dynamicClientRegistrationEnabled: !exists(json, 'dynamicClientRegistrationEnabled')
       ? undefined
-      : json['isDynamicClientRegistrationEnabled'],
-    isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
+      : json['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: !exists(json, 'openDynamicClientRegistrationEnabled')
       ? undefined
-      : json['isOpenDynamicClientRegistrationEnabled'],
+      : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -138,7 +138,7 @@ export function PatchClientRegistrationSettingsToJSON(value?: PatchClientRegistr
     allowedScopes: value.allowedScopes,
     allowRedirectUriParamsExpressionLanguage: value.allowRedirectUriParamsExpressionLanguage,
     clientTemplateEnabled: value.clientTemplateEnabled,
-    isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
-    isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
+    dynamicClientRegistrationEnabled: value.dynamicClientRegistrationEnabled,
+    openDynamicClientRegistrationEnabled: value.openDynamicClientRegistrationEnabled,
   };
 }

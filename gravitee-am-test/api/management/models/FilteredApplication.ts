@@ -26,97 +26,88 @@
 /* tslint:disable */
 /* eslint-disable */
 import { exists, mapValues } from '../runtime';
-import { Step, StepFromJSON, StepFromJSONTyped, StepToJSON } from './Step';
-
 /**
  *
  * @export
- * @interface Flow
+ * @interface FilteredApplication
  */
-export interface Flow {
+export interface FilteredApplication {
   /**
    *
    * @type {string}
-   * @memberof Flow
+   * @memberof FilteredApplication
    */
   id?: string;
   /**
    *
    * @type {string}
-   * @memberof Flow
+   * @memberof FilteredApplication
    */
-  name: string;
+  name?: string;
   /**
    *
-   * @type {Array<Step>}
-   * @memberof Flow
+   * @type {string}
+   * @memberof FilteredApplication
    */
-  pre?: Array<Step>;
+  description?: string;
   /**
    *
-   * @type {Array<Step>}
-   * @memberof Flow
+   * @type {string}
+   * @memberof FilteredApplication
    */
-  post?: Array<Step>;
+  type?: FilteredApplicationTypeEnum;
   /**
    *
    * @type {boolean}
-   * @memberof Flow
+   * @memberof FilteredApplication
    */
   enabled?: boolean;
   /**
    *
-   * @type {string}
-   * @memberof Flow
+   * @type {boolean}
+   * @memberof FilteredApplication
    */
-  type: FlowTypeEnum;
+  template?: boolean;
   /**
    *
-   * @type {string}
-   * @memberof Flow
+   * @type {Date}
+   * @memberof FilteredApplication
    */
-  condition?: string;
+  updatedAt?: Date;
 }
 
 /**
  * @export
  */
-export const FlowTypeEnum = {
-  Root: 'ROOT',
-  LoginIdentifier: 'LOGIN_IDENTIFIER',
-  Login: 'LOGIN',
-  Connect: 'CONNECT',
-  Consent: 'CONSENT',
-  Register: 'REGISTER',
-  ResetPassword: 'RESET_PASSWORD',
-  RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
-  Token: 'TOKEN',
-  WebauthnRegister: 'WEBAUTHN_REGISTER',
-  MfaChallenge: 'MFA_CHALLENGE',
-  MfaEnrollment: 'MFA_ENROLLMENT',
+export const FilteredApplicationTypeEnum = {
+  Web: 'WEB',
+  Native: 'NATIVE',
+  Browser: 'BROWSER',
+  Service: 'SERVICE',
+  ResourceServer: 'RESOURCE_SERVER',
 } as const;
-export type FlowTypeEnum = typeof FlowTypeEnum[keyof typeof FlowTypeEnum];
+export type FilteredApplicationTypeEnum = typeof FilteredApplicationTypeEnum[keyof typeof FilteredApplicationTypeEnum];
 
-export function FlowFromJSON(json: any): Flow {
-  return FlowFromJSONTyped(json, false);
+export function FilteredApplicationFromJSON(json: any): FilteredApplication {
+  return FilteredApplicationFromJSONTyped(json, false);
 }
 
-export function FlowFromJSONTyped(json: any, ignoreDiscriminator: boolean): Flow {
+export function FilteredApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean): FilteredApplication {
   if (json === undefined || json === null) {
     return json;
   }
   return {
     id: !exists(json, 'id') ? undefined : json['id'],
-    name: json['name'],
-    pre: !exists(json, 'pre') ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
-    post: !exists(json, 'post') ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
+    name: !exists(json, 'name') ? undefined : json['name'],
+    description: !exists(json, 'description') ? undefined : json['description'],
+    type: !exists(json, 'type') ? undefined : json['type'],
     enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    type: json['type'],
-    condition: !exists(json, 'condition') ? undefined : json['condition'],
+    template: !exists(json, 'template') ? undefined : json['template'],
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function FlowToJSON(value?: Flow | null): any {
+export function FilteredApplicationToJSON(value?: FilteredApplication | null): any {
   if (value === undefined) {
     return undefined;
   }
@@ -126,10 +117,10 @@ export function FlowToJSON(value?: Flow | null): any {
   return {
     id: value.id,
     name: value.name,
-    pre: value.pre === undefined ? undefined : (value.pre as Array<any>).map(StepToJSON),
-    post: value.post === undefined ? undefined : (value.post as Array<any>).map(StepToJSON),
-    enabled: value.enabled,
+    description: value.description,
     type: value.type,
-    condition: value.condition,
+    enabled: value.enabled,
+    template: value.template,
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };
 }
