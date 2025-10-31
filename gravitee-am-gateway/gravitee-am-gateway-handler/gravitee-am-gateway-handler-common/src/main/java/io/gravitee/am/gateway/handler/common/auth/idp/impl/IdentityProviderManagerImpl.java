@@ -107,7 +107,7 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
         try {
             identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
-                    .flatMapSingle(this::updateAuthenticationProvider)
+                    .concatMapSingle(this::updateAuthenticationProvider)
                     .map(provider -> {
                         gatewayMetricProvider.incrementIdp();
                         return provider;

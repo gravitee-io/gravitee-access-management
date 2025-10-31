@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -112,35 +113,40 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({}, {}", referenceType, referenceId);
         return this.identityProviderRepository.findAll(referenceType.name(), referenceId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType) {
         LOGGER.debug("findAll()");
         return this.identityProviderRepository.findAll(referenceType.name())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<IdentityProvider> findAll() {
         LOGGER.debug("findAll()");
         return this.identityProviderRepository.findAll()
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<IdentityProvider> findById(ReferenceType referenceType, String referenceId, String identityProviderId) {
         LOGGER.debug("findById({},{},{})", referenceType, referenceId, identityProviderId);
         return this.identityProviderRepository.findById(referenceType.name(), referenceId, identityProviderId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<IdentityProvider> findAllByPasswordPolicy(ReferenceType referenceType, String referenceId, String passwordPolicy) {
         LOGGER.debug("findAllByPasswordPolicy({},{},{})", referenceType, referenceId, passwordPolicy);
         return this.identityProviderRepository.findAllByPasswordPolicy(referenceType.name(), referenceId, passwordPolicy)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
 
@@ -148,7 +154,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
     public Maybe<IdentityProvider> findById(String id) {
         LOGGER.debug("findById({})", id);
         return this.identityProviderRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -177,7 +184,8 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -204,12 +212,14 @@ public class JdbcIdentityProviderRepository extends AbstractJdbcRepository imple
 
         Mono<Long> action = update.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return this.identityProviderRepository.deleteById(id);
+        return this.identityProviderRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 }
