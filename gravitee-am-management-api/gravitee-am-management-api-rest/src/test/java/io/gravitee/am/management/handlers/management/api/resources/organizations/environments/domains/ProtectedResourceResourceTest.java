@@ -100,12 +100,9 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
 
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        // pre-check ok
-        doReturn(Maybe.just(protectedResource))
-                .when(protectedResourceService).findByDomainAndIdAndType(eq(domainId), eq("id"), eq(ProtectedResource.Type.MCP_SERVER));
-        // delete fails with not found
+        // delete fails with not found (service validates domain/type)
         doReturn(Completable.error(new ProtectedResourceNotFoundException("id")))
-                .when(protectedResourceService).delete(eq("id"), any(), any(Domain.class));
+                .when(protectedResourceService).delete(eq(mockDomain), eq("id"), eq(ProtectedResource.Type.MCP_SERVER), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -129,12 +126,9 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         // permission ok
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        // pre-check type/domain
-        doReturn(Maybe.just(protectedResource))
-                .when(protectedResourceService).findByDomainAndIdAndType(eq(domainId), eq("id"), eq(ProtectedResource.Type.MCP_SERVER));
-        // delete
+        // delete (service validates domain/type)
         doReturn(Completable.complete())
-                .when(protectedResourceService).delete(eq("id"), any(), any(Domain.class));
+                .when(protectedResourceService).delete(eq(mockDomain), eq("id"), eq(ProtectedResource.Type.MCP_SERVER), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -176,9 +170,9 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
 
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        // pre-check fails
-        doReturn(Maybe.empty())
-                .when(protectedResourceService).findByDomainAndIdAndType(eq(domainId), eq("id"), eq(ProtectedResource.Type.MCP_SERVER));
+        // delete returns not found due to type/domain mismatch
+        doReturn(Completable.error(new ProtectedResourceNotFoundException("id")))
+                .when(protectedResourceService).delete(eq(mockDomain), eq("id"), eq(ProtectedResource.Type.MCP_SERVER), any());
 
         final Response response = target("domains")
                 .path(domainId)

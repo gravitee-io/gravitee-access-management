@@ -652,7 +652,7 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(serviceResourceService.deleteByDomain(domainId))
                             .andThen(deviceIdentifierService.deleteByDomain(domainId))
                             .andThen(protectedResourceService.findByDomain(domainId)
-                                    .flatMapCompletable(protectedResource -> protectedResourceService.delete(protectedResource.getId(), principal, domain))
+                                    .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))
                             )
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))

@@ -136,9 +136,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
 
         checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, Permission.PROTECTED_RESOURCE, DELETE)
                 .andThen(checkDomainExists(domainId))
-                .flatMapCompletable(existingDomain -> service.findByDomainAndIdAndType(domainId, protectedResourceId, resourceType)
-                        .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(protectedResourceId)))
-                        .flatMapCompletable(__ -> service.delete(protectedResourceId, authenticatedUser, existingDomain)))
+                .flatMapCompletable(domain -> service.delete(domain, protectedResourceId, resourceType, authenticatedUser))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

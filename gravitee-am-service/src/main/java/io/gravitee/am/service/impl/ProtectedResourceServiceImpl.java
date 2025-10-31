@@ -107,11 +107,14 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
-    public Completable delete(String id, User principal, Domain domain) {
-        LOGGER.debug("Delete protected resource {}", id);
+    public Completable delete(Domain domain, String id, ProtectedResource.Type expectedType, User principal) {
+        LOGGER.debug("Delete protected resource {} with domain/type validation", id);
         return repository.findById(id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .flatMapCompletable(resource -> {
+                    if (!resource.getDomainId().equals(domain.getId()) || (expectedType != null && resource.getType() != expectedType)) {
+                        return Completable.error(new ProtectedResourceNotFoundException(id));
+                    }
                     Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.DELETE));
                     return repository.delete(id)
                             .andThen(Completable.fromSingle(eventService.create(event, domain)))

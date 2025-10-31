@@ -375,7 +375,7 @@ public class ProtectedResourceServiceImplTest {
         Mockito.when(membershipService.findByReference(eq("res-1"), eq(ReferenceType.APPLICATION)))
                 .thenReturn(io.reactivex.rxjava3.core.Flowable.empty());
 
-        service.delete("res-1", user, domain)
+        service.delete(domain, "res-1", null, user)
                 .test()
                 .assertComplete()
                 .assertNoErrors();
@@ -394,7 +394,7 @@ public class ProtectedResourceServiceImplTest {
 
         Mockito.when(repository.findById("missing")).thenReturn(Maybe.empty());
 
-        service.delete("missing", user, domain)
+        service.delete(domain, "missing", null, user)
                 .test()
                 .assertError(throwable -> throwable instanceof ProtectedResourceNotFoundException);
 
