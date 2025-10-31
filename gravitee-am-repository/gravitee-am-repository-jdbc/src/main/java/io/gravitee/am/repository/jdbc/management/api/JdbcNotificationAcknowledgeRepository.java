@@ -23,6 +23,7 @@ import io.gravitee.node.api.notifier.NotificationAcknowledgeRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.stereotype.Repository;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -58,7 +59,8 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
         return monoToMaybe(this.getTemplate().select(JdbcNotificationAcknowledge.class)
                 .matching(query(where(COL_ID).is(id)))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -70,7 +72,8 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
                         .and(where(COL_TYPE).is(type))
                         .and(where(COL_AUDIENCE).is(audience))))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -78,14 +81,16 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
         LOGGER.debug("create({})", notificationAcknowledge);
         final JdbcNotificationAcknowledge entity = toJdbcEntity(notificationAcknowledge);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<NotificationAcknowledge> update(NotificationAcknowledge notificationAcknowledge) {
         LOGGER.debug("update({})", notificationAcknowledge);
         final JdbcNotificationAcknowledge entity = toJdbcEntity(notificationAcknowledge);
-        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -93,7 +98,8 @@ public class JdbcNotificationAcknowledgeRepository extends AbstractJdbcRepositor
         LOGGER.debug("deleteByResourceId({}, {})", resourceId, resourceType);
         return monoToCompletable(this.getTemplate().delete(JdbcNotificationAcknowledge.class)
                 .matching(query(where(COL_RESOURCE).is(resourceId).and(where(COL_RESOURCE_TYPE).is(resourceType))))
-                .all());
+                .all())
+                .observeOn(Schedulers.computation());
     }
 
 }

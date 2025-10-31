@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -101,59 +102,68 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
     public Flowable<Email> findAll() {
         LOGGER.debug("findAll()");
         return emailRepository.findAll()
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Email> findAll(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findAll({},{})", referenceType, referenceId);
         return emailRepository.findAllByReference(referenceId, referenceType.name())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<Email> findByClient(ReferenceType referenceType, String referenceId, String client) {
         LOGGER.debug("findByClient({}, {}, {})", referenceType, referenceId, client);
         return emailRepository.findAllByReferenceAndClient(referenceId, referenceType.name(), client)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Email> findByTemplate(ReferenceType referenceType, String referenceId, String template) {
         LOGGER.debug("findByTemplate({}, {}, {})", referenceType, referenceId, template);
         return emailRepository.findByTemplate(referenceId, referenceType.name(), template)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Email> findByDomainAndTemplate(String domain, String template) {
         LOGGER.debug("findByDomainAndTemplate({}, {})", domain, template);
-        return findByTemplate(ReferenceType.DOMAIN, domain, template);
+        return findByTemplate(ReferenceType.DOMAIN, domain, template)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Email> findByClientAndTemplate(ReferenceType referenceType, String referenceId, String client, String template) {
         LOGGER.debug("findByClientAndTemplate({}, {}, {}, {})", referenceType, referenceId, client, template);
         return emailRepository.findByClientAndTemplate(referenceId, referenceType.name(), client, template)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Email> findByDomainAndClientAndTemplate(String domain, String client, String template) {
         LOGGER.debug("findByClientAndTemplate({}, {}, {})", domain, client, template);
-        return findByClientAndTemplate(ReferenceType.DOMAIN, domain, client, template);
+        return findByClientAndTemplate(ReferenceType.DOMAIN, domain, client, template)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Email> findById(ReferenceType referenceType, String referenceId, String id) {
         LOGGER.debug("findById({}, {}, {})", referenceType, referenceId, id);
-        return emailRepository.findById(referenceId, referenceType.name(), id).map(this::toEntity);
+        return emailRepository.findById(referenceId, referenceType.name(), id).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Email> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return emailRepository.findById(id).map(this::toEntity);
+        return emailRepository.findById(id).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -178,7 +188,8 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
         insertSpec = addQuotedField(insertSpec, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -202,12 +213,14 @@ public class JdbcEmailRepository extends AbstractJdbcRepository implements Email
         update = addQuotedField(update, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
         Mono<Long> action = update.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return emailRepository.deleteById(id);
+        return emailRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 }

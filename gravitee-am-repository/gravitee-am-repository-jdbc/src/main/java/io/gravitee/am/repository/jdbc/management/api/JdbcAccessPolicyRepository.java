@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -100,32 +101,37 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
                                 .with(PageRequest.of(page, size))).all()).toList()
                 .map(content -> content.stream().map(this::toAccessPolicy).collect(Collectors.toList()))
                 .flatMap(content -> accessPolicyRepository.countByDomain(domain)
-                        .map(count -> new Page<>(content, page, count)));
+                        .map(count -> new Page<>(content, page, count)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<AccessPolicy> findByDomainAndResource(String domain, String resource) {
         LOGGER.debug("findByDomainAndResource(domain:{}, resources:{})", domain, resource);
-        return accessPolicyRepository.findByDomainAndResource(domain, resource).map(this::toAccessPolicy);
+        return accessPolicyRepository.findByDomainAndResource(domain, resource).map(this::toAccessPolicy)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<AccessPolicy> findByResources(List<String> resources) {
         LOGGER.debug("findByResources({})", resources);
-        return accessPolicyRepository.findByResourceIn(resources).map(this::toAccessPolicy);
+        return accessPolicyRepository.findByResourceIn(resources).map(this::toAccessPolicy)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByResource(String resource) {
         LOGGER.debug("countByResource({})", resource);
-        return accessPolicyRepository.countByResource(resource);
+        return accessPolicyRepository.countByResource(resource)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<AccessPolicy> findById(String id) {
         LOGGER.debug("findById({})", id);
         return accessPolicyRepository.findById(id)
-                .map(this::toAccessPolicy);
+                .map(this::toAccessPolicy)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -146,7 +152,8 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         sql = addQuotedField(sql, COL_CREATED_AT, dateConverter.convertTo(item.getCreatedAt(), null), LocalDateTime.class);
         sql = addQuotedField(sql, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null), LocalDateTime.class);
 
-        return monoToSingle(sql.fetch().rowsUpdated()).flatMap(i -> this.findById(item.getId()).toSingle());
+        return monoToSingle(sql.fetch().rowsUpdated()).flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -167,12 +174,14 @@ public class JdbcAccessPolicyRepository extends AbstractJdbcRepository implement
         updateFields = addQuotedField(updateFields, COL_UPDATED_AT, dateConverter.convertTo(item.getUpdatedAt(), null));
 
         return monoToSingle(getTemplate().update(query(where(COL_ID).is(item.getId())), Update.from(updateFields), JdbcAccessPolicy.class))
-                .flatMap(__ -> Single.defer(() -> this.findById(item.getId()).toSingle()));
+                .flatMap(__ -> Single.defer(() -> this.findById(item.getId()).toSingle()))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete AccessPolicy with id {}", id);
-        return accessPolicyRepository.deleteById(id);
+        return accessPolicyRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 }

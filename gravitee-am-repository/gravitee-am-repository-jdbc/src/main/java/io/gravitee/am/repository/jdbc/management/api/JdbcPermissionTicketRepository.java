@@ -24,6 +24,7 @@ import io.gravitee.am.repository.management.api.PermissionTicketRepository;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
@@ -90,7 +91,8 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         LocalDateTime now = LocalDateTime.now(UTC);
         return permissionTicketRepository.findById(id)
                 .filter(bean -> bean.getExpireAt() == null || bean.getExpireAt().isAfter(now))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -110,7 +112,8 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
 
         Mono<Long> action = insertSpec.fetch().rowsUpdated();
 
-        return monoToSingle(action).flatMap((i) -> permissionTicketRepository.findById(item.getId()).map(this::toEntity).toSingle());
+        return monoToSingle(action).flatMap((i) -> permissionTicketRepository.findById(item.getId()).map(this::toEntity).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -129,19 +132,22 @@ public class JdbcPermissionTicketRepository extends AbstractJdbcRepository imple
         update = databaseDialectHelper.addJsonField(update, COL_PERMISSION_REQUEST, item.getPermissionRequest());
 
         Mono<Long> action = update.fetch().rowsUpdated();
-        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle());
+        return monoToSingle(action).flatMap((i) -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return permissionTicketRepository.deleteById(id);
+        return permissionTicketRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(getTemplate().delete(JdbcPermissionTicket.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all());
+        return monoToCompletable(getTemplate().delete(JdbcPermissionTicket.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all())
+                .observeOn(Schedulers.computation());
     }
 }

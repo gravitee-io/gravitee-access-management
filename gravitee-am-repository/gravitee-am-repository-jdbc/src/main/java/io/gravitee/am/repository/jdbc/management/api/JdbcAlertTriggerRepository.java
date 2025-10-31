@@ -28,6 +28,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -91,7 +92,8 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
                     LOGGER.debug("findById({}) fetch {} alert triggers", alertTrigger.getId(), ids.size());
                     alertTrigger.setAlertNotifiers(ids);
                     return alertTrigger;
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -108,7 +110,8 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         return monoToSingle(insert
                 .then(storeAlertNotifiers)
                 .as(trx::transactional)
-                .then(maybeToMono(findById(alertTrigger.getId()))));
+                .then(maybeToMono(findById(alertTrigger.getId()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -123,18 +126,21 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
         return monoToSingle(update
                 .then(storeAlertNotifiers)
                 .as(trx::transactional)
-                .then(maybeToMono(findById(alertTrigger.getId()))));
+                .then(maybeToMono(findById(alertTrigger.getId()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return this.alertTriggerRepository.deleteById(id);
+        return this.alertTriggerRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<AlertTrigger> findAll(ReferenceType referenceType, String referenceId) {
-        return findByCriteria(referenceType, referenceId, new AlertTriggerCriteria());
+        return findByCriteria(referenceType, referenceId, new AlertTriggerCriteria())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -186,7 +192,8 @@ public class JdbcAlertTriggerRepository extends AbstractJdbcRepository implement
                 .map((row, rowMetadata) -> row.get(0, String.class)).all())
                 .flatMapMaybe(this::findById)
                 .doOnError(error -> LOGGER.error("Unable to retrieve AlertTrigger with referenceId {}, referenceType {} and criteria {}",
-                        referenceId, referenceType, criteria, error));
+                        referenceId, referenceType, criteria, error))
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Void> storeAlertNotifiers(AlertTrigger alertTrigger, boolean deleteFirst) {

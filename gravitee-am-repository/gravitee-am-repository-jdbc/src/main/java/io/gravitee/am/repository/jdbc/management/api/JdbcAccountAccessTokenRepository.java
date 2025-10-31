@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -41,17 +42,20 @@ public class JdbcAccountAccessTokenRepository extends AbstractJdbcRepository imp
     @Override
     public Maybe<AccountAccessToken> findById(String tokenId) {
         return accessTokenRepository.findById(tokenId)
-                .map(this::fromEntity);
+                .map(this::fromEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<AccountAccessToken> findByUserId(ReferenceType referenceType, String referenceId, String userId) {
-        return accessTokenRepository.findByUserId(referenceType.name(), referenceId, userId).map(this::fromEntity);
+        return accessTokenRepository.findByUserId(referenceType.name(), referenceId, userId).map(this::fromEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable deleteByUserId(ReferenceType referenceType, String referenceId, String userId) {
-        return accessTokenRepository.deleteByUserId(referenceType.name(), referenceId, userId).ignoreElement();
+        return accessTokenRepository.deleteByUserId(referenceType.name(), referenceId, userId).ignoreElement()
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -61,19 +65,22 @@ public class JdbcAccountAccessTokenRepository extends AbstractJdbcRepository imp
             entity.setId(RandomString.generate());
         }
         LOGGER.debug("Creating account access token with id {}", entity.getId());
-        return Single.fromPublisher(getTemplate().insert(entity).map(this::fromEntity));
+        return Single.fromPublisher(getTemplate().insert(entity).map(this::fromEntity))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AccountAccessToken> update(AccountAccessToken item) {
         LOGGER.debug("Updating account access token with id {}", item.tokenId());
         var entity = toEntity(item);
-        return accessTokenRepository.save(entity).map(this::fromEntity);
+        return accessTokenRepository.save(entity).map(this::fromEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String tokenId) {
-        return accessTokenRepository.deleteById(tokenId);
+        return accessTokenRepository.deleteById(tokenId)
+                .observeOn(Schedulers.computation());
     }
 
     private AccountAccessToken fromEntity(JdbcAccountAccessToken entity) {

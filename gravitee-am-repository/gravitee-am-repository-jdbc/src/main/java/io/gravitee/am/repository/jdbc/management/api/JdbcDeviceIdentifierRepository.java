@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
@@ -56,7 +57,8 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
         return fluxToFlowable(getTemplate().select(JdbcDeviceIdentifier.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
                 .all())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -64,7 +66,8 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
         LOGGER.debug("deleteByReference({})", reference);
         return monoToCompletable(getTemplate().delete(JdbcDeviceIdentifier.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(reference.id()).and(where(REF_TYPE_FIELD).is(reference.type().name()))))
-                .all());
+                .all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -73,7 +76,8 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
         return monoToMaybe(getTemplate().select(JdbcDeviceIdentifier.class)
                 .matching(Query.query(where(ID_FIELD).is(id)))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -81,13 +85,15 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create device identifier with id {}", item.getId());
 
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<DeviceIdentifier> update(DeviceIdentifier item) {
         LOGGER.debug("update device identifier with id {}", item.getId());
-        return monoToSingle( getTemplate().update(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle( getTemplate().update(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -95,6 +101,7 @@ public class JdbcDeviceIdentifierRepository extends AbstractJdbcRepository imple
         LOGGER.debug("delete({})", id);
         return monoToCompletable(getTemplate().delete(JdbcDeviceIdentifier.class)
                 .matching(Query.query(where(ID_FIELD).is(id)))
-                .all());
+                .all())
+                .observeOn(Schedulers.computation());
     }
 }

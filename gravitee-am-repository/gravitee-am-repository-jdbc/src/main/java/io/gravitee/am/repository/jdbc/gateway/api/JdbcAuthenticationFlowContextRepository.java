@@ -23,6 +23,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Query;
@@ -84,7 +85,8 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         }
         return monoToMaybe(getTemplate().select(JdbcAuthenticationFlowContext.class)
                 .matching(Query.query(where(COL_ID).is(id))).one())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -99,7 +101,8 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
                 .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_EXPIRE_AT).greaterThan(now)))
                         .sort(Sort.by(COL_VERSION).descending())
                 ).first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -113,7 +116,8 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         return fluxToFlowable(getTemplate().select(JdbcAuthenticationFlowContext.class)
                 .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_EXPIRE_AT).greaterThan(now)))
                         .sort(Sort.by(COL_VERSION).descending())).all())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -132,7 +136,8 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
 
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
         return monoToSingle(insertAction)
-                .flatMap(i -> this.findById(id).toSingle());
+                .flatMap(i -> this.findById(id).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -141,27 +146,31 @@ public class JdbcAuthenticationFlowContextRepository extends AbstractJdbcReposit
         return create(context)
                 .onErrorResumeWith(findById(id)
                         .doOnSuccess(x -> LOGGER.debug("AuthContext with id {} already exists", id))
-                        .switchIfEmpty(Single.error(new IllegalStateException("Couldn't store authFlowContext"))));
+                        .switchIfEmpty(Single.error(new IllegalStateException("Couldn't store authFlowContext"))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String transactionId) {
         LOGGER.debug("delete({})", transactionId);
         return monoToCompletable(getTemplate().delete(JdbcAuthenticationFlowContext.class)
-                .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId))).all());
+                .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String transactionId, int version) {
         LOGGER.debug("delete({}, {})", transactionId, version);
         return monoToCompletable(getTemplate().delete(JdbcAuthenticationFlowContext.class)
-                .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_VERSION).is(version)))).all());
+                .matching(Query.query(where(COL_TRANSACTION_ID).is(transactionId).and(where(COL_VERSION).is(version)))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(getTemplate().delete(JdbcAuthenticationFlowContext.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all().then()).doOnError(error -> LOGGER.error("Unable to purge authentication contexts", error));
+        return monoToCompletable(getTemplate().delete(JdbcAuthenticationFlowContext.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all().then()).doOnError(error -> LOGGER.error("Unable to purge authentication contexts", error))
+                .observeOn(Schedulers.computation());
     }
 }

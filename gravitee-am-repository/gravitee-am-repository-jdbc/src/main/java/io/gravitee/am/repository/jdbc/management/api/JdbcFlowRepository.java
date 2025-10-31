@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
@@ -128,7 +129,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         LOGGER.debug("findById({})", id);
         return flowRepository.findById(id)
                 .map(this::toEntity)
-                .flatMapSingle(this::completeFlow);
+                .flatMapSingle(this::completeFlow)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -156,7 +158,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         insertAction = persistChildEntities(insertAction, item);
 
         return monoToSingle(insertAction.as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Flow item) {
@@ -245,7 +248,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         updateAction = updateAction.then(deleteChildEntities(item.getId()));
         updateAction = persistChildEntities(updateAction, item);
 
-        return monoToSingle(updateAction.as(trx::transactional)).flatMap(i -> this.findById(item.getId()).toSingle());
+        return monoToSingle(updateAction.as(trx::transactional)).flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> deleteChildEntities(String flowId) {
@@ -260,7 +264,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
                 .matching(Query.query(where(COL_ID).is(id)))
                 .all()
                 .then(deleteChildEntities(id))
-                .as(trx::transactional));
+                .as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -268,7 +273,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         LOGGER.debug("findById({}, {}, {})", referenceType, referenceId, id);
         return flowRepository.findById(referenceType.name(), referenceId, id)
                 .map(this::toEntity)
-                .flatMap(flow -> completeFlow(flow).toMaybe());
+                .flatMap(flow -> completeFlow(flow).toMaybe())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -276,7 +282,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         LOGGER.debug("findAll({}, {})", referenceType, referenceId);
         return flowRepository.findAll(referenceType.name(), referenceId)
                 .map(this::toEntity)
-                .flatMap(flow -> completeFlow(flow).toFlowable());
+                .flatMap(flow -> completeFlow(flow).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -284,7 +291,8 @@ public class JdbcFlowRepository extends AbstractJdbcRepository implements FlowRe
         LOGGER.debug("findByApplication({}, {}, {})", referenceType, referenceId, application);
         return flowRepository.findByApplication(referenceType.name(), referenceId, application)
                 .map(this::toEntity)
-                .flatMap(flow -> completeFlow(flow).toFlowable());
+                .flatMap(flow -> completeFlow(flow).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     protected Single<Flow> completeFlow(Flow flow) {
