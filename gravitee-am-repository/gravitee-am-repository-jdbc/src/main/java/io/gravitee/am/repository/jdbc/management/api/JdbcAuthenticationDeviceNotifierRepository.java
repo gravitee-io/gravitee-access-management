@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
@@ -59,7 +60,8 @@ public class JdbcAuthenticationDeviceNotifierRepository extends AbstractJdbcRepo
         LOGGER.debug("findAll()");
         return fluxToFlowable(getTemplate().select(JdbcAuthenticationDeviceNotifier.class)
                 .all())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -67,7 +69,8 @@ public class JdbcAuthenticationDeviceNotifierRepository extends AbstractJdbcRepo
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
         return fluxToFlowable(getTemplate().select(Query.query(from(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name())))),
                         JdbcAuthenticationDeviceNotifier.class))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -75,25 +78,29 @@ public class JdbcAuthenticationDeviceNotifierRepository extends AbstractJdbcRepo
         LOGGER.debug("findById({})", id);
         return monoToMaybe(getTemplate().select(Query.query(from(where(ID_FIELD).is(id))),JdbcAuthenticationDeviceNotifier.class)
                 .singleOrEmpty())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AuthenticationDeviceNotifier> create(AuthenticationDeviceNotifier item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create authentication device notifier with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(this.toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(this.toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<AuthenticationDeviceNotifier> update(AuthenticationDeviceNotifier item) {
         LOGGER.debug("update authentication device notifier with id {}", item.getId());
-        return monoToSingle(getTemplate().update(this.toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(this.toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(getTemplate().delete(Query.query(from(where(ID_FIELD).is(id))), JdbcAuthenticationDeviceNotifier.class));
+        return monoToCompletable(getTemplate().delete(Query.query(from(where(ID_FIELD).is(id))), JdbcAuthenticationDeviceNotifier.class))
+                .observeOn(Schedulers.computation());
     }
 }

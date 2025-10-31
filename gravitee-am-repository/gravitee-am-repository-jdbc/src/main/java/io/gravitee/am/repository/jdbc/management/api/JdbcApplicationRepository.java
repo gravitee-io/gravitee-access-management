@@ -37,6 +37,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -70,8 +71,6 @@ import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
  */
 @Repository
 public class JdbcApplicationRepository extends AbstractJdbcRepository implements ApplicationRepository, InitializingBean {
-
-    public static final int MAX_CONCURRENCY = 1;
 
     public static final String COL_ID = "id";
     public static final String COL_TYPE = "type";
@@ -175,7 +174,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findAll()");
         return applicationRepository.findAll()
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -185,9 +185,10 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .matching(Query.empty().with(PageRequest.of(page, size, Sort.by(COL_ID))))
                 .all())
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
+                .concatMap(app -> completeApplication(app).toFlowable())
                 .toList()
                 .flatMap(data -> applicationRepository.count().map(total -> new Page<>(data, page, total)))
+                .observeOn(Schedulers.computation())
                 .doOnError(error -> LOGGER.error("Unable to retrieve all applications (page={}/size={})", page, size, error));
     }
 
@@ -196,7 +197,8 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
         LOGGER.debug("findByDomain({})", domain);
         return applicationRepository.findByDomain(domain)
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable());
+                .concatMap(app -> completeApplication(app).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -206,10 +208,11 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                 .matching(query(where(COL_DOMAIN).is(domain)).with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
                 .all())
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
+                .concatMap(app -> completeApplication(app).toFlowable())
                 .toList()
                 .flatMap(data -> applicationRepository.countByDomain(domain).map(total -> new Page<>(data, page, total)))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -223,10 +226,11 @@ public class JdbcApplicationRepository extends AbstractJdbcRepository implements
                         .with(PageRequest.of(page, size, Sort.by(COL_UPDATED_AT).descending())))
                 .all())
                 .map(this::toEntity)
-                .flatMap(app -> completeApplication(app).toFlowable(), MAX_CONCURRENCY)
+                .concatMap(app -> completeApplication(app).toFlowable())
                 .toList()
                 .flatMap(data -> applicationRepository.countByDomainAndApplicationIds(domain, applicationIds).map(total -> new Page<>(data, page, total)))
-                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve all applications with domain {} (page={}/size={})", domain, page, size, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override

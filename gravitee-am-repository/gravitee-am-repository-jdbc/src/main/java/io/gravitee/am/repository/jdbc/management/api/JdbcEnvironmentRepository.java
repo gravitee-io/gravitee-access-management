@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -74,7 +75,8 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 .flatMapSingle(this::retrieveDomainRestrictions)
                 .flatMapSingle(this::retrieveHrids);
 
-        return result.doOnError(error -> LOGGER.error("unable to retrieve all environments", error));
+        return result.doOnError(error -> LOGGER.error("unable to retrieve all environments", error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -86,7 +88,8 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 .flatMapSingle(this::retrieveDomainRestrictions)
                 .flatMapSingle(this::retrieveHrids);
 
-        return result.doOnError(error -> LOGGER.error("unable to retrieve Environments with organizationId {}", organizationId, error));
+        return result.doOnError(error -> LOGGER.error("unable to retrieve Environments with organizationId {}", organizationId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -96,13 +99,15 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
         return environmentRepository.findByIdAndOrganization(id, organizationId)
                 .map(this::toEnvironment)
                 .flatMap(environment -> retrieveDomainRestrictions(environment).toMaybe())
-                .flatMap(environment -> retrieveHrids(environment).toMaybe());
+                .flatMap(environment -> retrieveHrids(environment).toMaybe())
+                .observeOn(Schedulers.computation());
     }
 
 
     @Override
     public Single<Long> count() {
-        return this.environmentRepository.count();
+        return this.environmentRepository.count()
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -114,7 +119,8 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 .flatMap(environment -> retrieveDomainRestrictions(environment).toMaybe())
                 .flatMap(environment -> retrieveHrids(environment).toMaybe());
 
-        return result.doOnError(error -> LOGGER.error("unable to retrieve Environment with id {}", id, error));
+        return result.doOnError(error -> LOGGER.error("unable to retrieve Environment with id {}", id, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -133,7 +139,8 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 .then(storeDomainRestrictions)
                 .then(storeHrids)
                 .as(trx::transactional)
-                .then(maybeToMono(findById(environment.getId()))));
+                .then(maybeToMono(findById(environment.getId()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -148,7 +155,8 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
                 .then(storeDomainRestrictions(environment, true))
                 .then(storeHrids(environment, true))
                 .as(trx::transactional)
-                .then(maybeToMono(findById(environment.getId()))));
+                .then(maybeToMono(findById(environment.getId()))))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -162,7 +170,8 @@ public class JdbcEnvironmentRepository extends AbstractJdbcRepository implements
         return monoToCompletable(delete
                 .then(deleteDomainRestrictions)
                 .then(deleteHrids)
-                .as(trx::transactional));
+                .as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     private Single<Environment> retrieveDomainRestrictions(Environment environment) {

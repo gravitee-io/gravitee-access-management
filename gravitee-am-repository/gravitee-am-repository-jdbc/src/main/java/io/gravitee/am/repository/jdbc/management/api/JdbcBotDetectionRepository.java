@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
 
@@ -58,7 +59,8 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
         LOGGER.debug("findAll()");
         return fluxToFlowable(getTemplate().select(JdbcBotDetection.class)
                 .all())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -67,7 +69,8 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
         return fluxToFlowable(getTemplate().select(JdbcBotDetection.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(referenceId).and(where(REF_TYPE_FIELD).is(referenceType.name()))))
                 .all())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -76,7 +79,8 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
         return monoToMaybe(getTemplate().select(JdbcBotDetection.class)
                 .matching(Query.query(where(ID_FIELD).is(id)))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -84,19 +88,22 @@ public class JdbcBotDetectionRepository extends AbstractJdbcRepository implement
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create bot detection with id {}", item.getId());
 
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<BotDetection> update(BotDetection item) {
         LOGGER.debug("update bot detection with id {}", item.getId());
-        return monoToSingle(getTemplate().update(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().update(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
         return monoToCompletable(getTemplate().delete(JdbcBotDetection.class)
-                .matching(Query.query(where(ID_FIELD).is(id))).all().then());
+                .matching(Query.query(where(ID_FIELD).is(id))).all().then())
+                .observeOn(Schedulers.computation());
     }
 }
