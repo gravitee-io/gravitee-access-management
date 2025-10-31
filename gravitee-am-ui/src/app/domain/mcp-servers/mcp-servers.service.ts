@@ -30,7 +30,7 @@ import {
   providedIn: 'root',
 })
 export class McpServersService {
-  constructor(private service: ProtectedResourceService) {}
+  constructor(private readonly service: ProtectedResourceService) {}
 
   findByDomain(domainId: string, page: number, size: number, sort: Sort): Observable<Page<McpServer>> {
     return this.service.findByDomain(domainId, ProtectedResourceType.MCP_SERVER, page, size, sort).pipe(
@@ -72,6 +72,10 @@ export class McpServersService {
       })),
     } as NewProtectedResourceRequest;
     return this.service.create(domainId, request);
+  }
+
+  delete(domainId: string, id: string): Observable<any> {
+    return this.service.delete(domainId, id, ProtectedResourceType.MCP_SERVER);
   }
 }
 
