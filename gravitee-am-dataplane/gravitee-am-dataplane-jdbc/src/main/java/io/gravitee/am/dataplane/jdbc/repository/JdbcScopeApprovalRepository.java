@@ -25,6 +25,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Criteria;
@@ -70,7 +71,8 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                 .and(client(clientId))
                 .and(domain(domain))))
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                    .observeOn(Schedulers.computation());
     }
 
     private Flowable<JdbcScopeApproval> findAll(Query query) {
@@ -96,7 +98,8 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         LocalDateTime now = LocalDateTime.now(UTC);
         return findAll(Query.query(userIdMatches(userId).and(domain(domain))))
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -120,7 +123,8 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                         scopeApproval.setUpdatedAt(new Date());
                         return update(scopeApproval);
                     }
-                });
+                })
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -128,7 +132,8 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         LOGGER.debug("deleteByDomainAndScopeKey({}, {})", domain, scope);
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
                 .matching(Query.query(where(DOMAIN).is(domain)
-                        .and(where("scope").is(scope)))).all());
+                        .and(where("scope").is(scope)))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -139,7 +144,8 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
                         .and(userIdMatches(userId))
                         .and(client(client))))
                 .all()
-                .doOnNext(rows -> log.warn("deleteByDomainAndUserAndClient({},{},{}): {} deleted", domain, userId, client, rows)));
+                .doOnNext(rows -> log.warn("deleteByDomainAndUserAndClient({},{},{}): {} deleted", domain, userId, client, rows)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -149,7 +155,8 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class)
                 .matching(Query.query(domain(domain)
                         .and(userIdMatches(userId))))
-                .all());
+                .all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -158,33 +165,38 @@ public class JdbcScopeApprovalRepository extends AbstractJdbcRepository implemen
         LocalDateTime now = LocalDateTime.now(UTC);
         return scopeApprovalRepository.findById(id)
                 .filter(bean -> bean.getExpiresAt() == null || bean.getExpiresAt().isAfter(now))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ScopeApproval> create(ScopeApproval item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create ScopeApproval with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ScopeApproval> update(ScopeApproval item) {
         LOGGER.debug("Update ScopeApproval with id {}", item.getId());
         return scopeApprovalRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("Delete ScopeApproval with id {}", id);
-        return scopeApprovalRepository.deleteById(id);
+        return scopeApprovalRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class).matching(Query.query(where("expires_at").lessThan(now))).all());
+        return monoToCompletable(getTemplate().delete(JdbcScopeApproval.class).matching(Query.query(where("expires_at").lessThan(now))).all())
+                .observeOn(Schedulers.computation());
     }
 }
