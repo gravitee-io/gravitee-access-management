@@ -77,7 +77,7 @@ export interface CreateGroupRequest {
   newGroup: NewGroup;
 }
 
-export interface CreateGroup1Request {
+export interface CreatePlatformGroupRequest {
   organizationId: string;
   newGroup: NewGroup;
 }
@@ -122,6 +122,14 @@ export interface GetOrganizationGroupRequest {
   group: string;
 }
 
+export interface ListDomainGroupsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  page?: number;
+  size?: number;
+}
+
 export interface ListGroupMembersRequest {
   organizationId: string;
   group: string;
@@ -130,14 +138,6 @@ export interface ListGroupMembersRequest {
 }
 
 export interface ListGroupsRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  page?: number;
-  size?: number;
-}
-
-export interface ListGroups1Request {
   organizationId: string;
   page?: number;
   size?: number;
@@ -496,21 +496,21 @@ export class GroupApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization
    * Create a platform group
    */
-  async createGroup1Raw(
-    requestParameters: CreateGroup1Request,
+  async createPlatformGroupRaw(
+    requestParameters: CreatePlatformGroupRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling createGroup1.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createPlatformGroup.',
       );
     }
 
     if (requestParameters.newGroup === null || requestParameters.newGroup === undefined) {
       throw new runtime.RequiredError(
         'newGroup',
-        'Required parameter requestParameters.newGroup was null or undefined when calling createGroup1.',
+        'Required parameter requestParameters.newGroup was null or undefined when calling createPlatformGroup.',
       );
     }
 
@@ -549,8 +549,11 @@ export class GroupApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_GROUP[CREATE] permission on the specified organization
    * Create a platform group
    */
-  async createGroup1(requestParameters: CreateGroup1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.createGroup1Raw(requestParameters, initOverrides);
+  async createPlatformGroup(
+    requestParameters: CreatePlatformGroupRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.createPlatformGroupRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -981,6 +984,83 @@ export class GroupApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the DOMAIN_GROUP[LIST] permission on the specified domain or DOMAIN_GROUP[LIST] permission on the specified environment or DOMAIN_GROUP[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
+   * List groups for a security domain
+   */
+  async listDomainGroupsRaw(
+    requestParameters: ListDomainGroupsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<GroupPage>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listDomainGroups.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listDomainGroups.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listDomainGroups.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.page !== undefined) {
+      queryParameters['page'] = requestParameters.page;
+    }
+
+    if (requestParameters.size !== undefined) {
+      queryParameters['size'] = requestParameters.size;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/groups`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => GroupPageFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_GROUP[LIST] permission on the specified domain or DOMAIN_GROUP[LIST] permission on the specified environment or DOMAIN_GROUP[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
+   * List groups for a security domain
+   */
+  async listDomainGroups(
+    requestParameters: ListDomainGroupsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<GroupPage> {
+    const response = await this.listDomainGroupsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have the ORGANIZATION_GROUP[READ] permission on the specified organization
    * List group members
    */
@@ -1050,91 +1130,17 @@ export class GroupApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_GROUP[LIST] permission on the specified domain or DOMAIN_GROUP[LIST] permission on the specified environment or DOMAIN_GROUP[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
-   * List groups for a security domain
-   */
-  async listGroupsRaw(
-    requestParameters: ListGroupsRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<GroupPage>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling listGroups.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling listGroups.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling listGroups.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    if (requestParameters.page !== undefined) {
-      queryParameters['page'] = requestParameters.page;
-    }
-
-    if (requestParameters.size !== undefined) {
-      queryParameters['size'] = requestParameters.size;
-    }
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/groups`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => GroupPageFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the DOMAIN_GROUP[LIST] permission on the specified domain or DOMAIN_GROUP[LIST] permission on the specified environment or DOMAIN_GROUP[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
-   * List groups for a security domain
-   */
-  async listGroups(requestParameters: ListGroupsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<GroupPage> {
-    const response = await this.listGroupsRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
    * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
    * List groups of the organization
    */
-  async listGroups1Raw(
-    requestParameters: ListGroups1Request,
+  async listGroupsRaw(
+    requestParameters: ListGroupsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Array<Group>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling listGroups1.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listGroups.',
       );
     }
 
@@ -1178,11 +1184,8 @@ export class GroupApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION[LIST] permission on the specified organization. Each returned group is filtered and contains only basic information such as id and name.
    * List groups of the organization
    */
-  async listGroups1(
-    requestParameters: ListGroups1Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<Group>> {
-    const response = await this.listGroups1Raw(requestParameters, initOverrides);
+  async listGroups(requestParameters: ListGroupsRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Group>> {
+    const response = await this.listGroupsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

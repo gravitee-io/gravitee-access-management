@@ -218,6 +218,13 @@ export interface GetApplicationAnalyticsRequest {
   field?: string;
 }
 
+export interface GetApplicationMemberPermissionsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  application: string;
+}
+
 export interface GetApplicationResourceRequest {
   organizationId: string;
   environmentId: string;
@@ -236,13 +243,6 @@ export interface GetApplicationResourcePolicyRequest {
 }
 
 export interface GetMembersRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  application: string;
-}
-
-export interface GetPermissionsRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -1637,6 +1637,83 @@ export class ApplicationApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have APPLICATION[READ] permission on the specified application or APPLICATION[READ] permission on the specified domain or APPLICATION[READ] permission on the specified environment or APPLICATION[READ] permission on the specified organization
+   * List application member\'s permissions
+   */
+  async getApplicationMemberPermissionsRaw(
+    requestParameters: GetApplicationMemberPermissionsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<string>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getApplicationMemberPermissions.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getApplicationMemberPermissions.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getApplicationMemberPermissions.',
+      );
+    }
+
+    if (requestParameters.application === null || requestParameters.application === undefined) {
+      throw new runtime.RequiredError(
+        'application',
+        'Required parameter requestParameters.application was null or undefined when calling getApplicationMemberPermissions.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/members/permissions`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'application'}}`, encodeURIComponent(String(requestParameters.application))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.TextApiResponse(response) as any;
+  }
+
+  /**
+   * User must have APPLICATION[READ] permission on the specified application or APPLICATION[READ] permission on the specified domain or APPLICATION[READ] permission on the specified environment or APPLICATION[READ] permission on the specified organization
+   * List application member\'s permissions
+   */
+  async getApplicationMemberPermissions(
+    requestParameters: GetApplicationMemberPermissionsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<string> {
+    const response = await this.getApplicationMemberPermissionsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * User must have APPLICATION_RESOURCE[READ] permission on the specified application or APPLICATION_RESOURCE[READ] permission on the specified domain or APPLICATION_RESOURCE[READ] permission on the specified environment or APPLICATION_RESOURCE[READ] permission on the specified organization
    * Get a resource for an application
    */
@@ -1888,83 +1965,6 @@ export class ApplicationApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<MembershipListItem> {
     const response = await this.getMembersRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * User must have APPLICATION[READ] permission on the specified application or APPLICATION[READ] permission on the specified domain or APPLICATION[READ] permission on the specified environment or APPLICATION[READ] permission on the specified organization
-   * List application member\'s permissions
-   */
-  async getPermissionsRaw(
-    requestParameters: GetPermissionsRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<string>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling getPermissions.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling getPermissions.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling getPermissions.',
-      );
-    }
-
-    if (requestParameters.application === null || requestParameters.application === undefined) {
-      throw new runtime.RequiredError(
-        'application',
-        'Required parameter requestParameters.application was null or undefined when calling getPermissions.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/applications/{application}/members/permissions`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'application'}}`, encodeURIComponent(String(requestParameters.application))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.TextApiResponse(response) as any;
-  }
-
-  /**
-   * User must have APPLICATION[READ] permission on the specified application or APPLICATION[READ] permission on the specified domain or APPLICATION[READ] permission on the specified environment or APPLICATION[READ] permission on the specified organization
-   * List application member\'s permissions
-   */
-  async getPermissions(
-    requestParameters: GetPermissionsRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<string> {
-    const response = await this.getPermissionsRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
