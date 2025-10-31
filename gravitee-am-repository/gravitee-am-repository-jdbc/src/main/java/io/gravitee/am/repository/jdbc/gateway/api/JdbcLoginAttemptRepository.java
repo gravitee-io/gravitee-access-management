@@ -26,6 +26,7 @@ import io.gravitee.am.repository.management.api.search.LoginAttemptCriteria;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -71,7 +72,8 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
                 .or(where(EXPIRE_AT).isNull()));
 
         return monoToMaybe(getTemplate().select(Query.query(whereClause).with(PageRequest.of(0,1, Sort.by("id"))), JdbcLoginAttempt.class).singleOrEmpty())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     private Criteria buildWhereClause(LoginAttemptCriteria criteria) {
@@ -102,7 +104,8 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         Criteria whereClause = buildWhereClause(criteria);
 
         if (!whereClause.isEmpty()) {
-            return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class).matching(Query.query(whereClause)).all());
+            return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class).matching(Query.query(whereClause)).all())
+                    .observeOn(Schedulers.computation());
         }
 
         throw new RepositoryIllegalQueryException("Unable to delete from LoginAttempt without criteria");
@@ -114,33 +117,38 @@ public class JdbcLoginAttemptRepository extends AbstractJdbcRepository implement
         LocalDateTime now = LocalDateTime.now(UTC);
         return loginAttemptRepository.findById(id)
                 .filter(bean -> bean.getExpireAt() == null || bean.getExpireAt().isAfter(now))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<LoginAttempt> create(LoginAttempt item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("create LoginAttempt with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<LoginAttempt> update(LoginAttempt item) {
         LOGGER.debug("update loginAttempt with id '{}'", item.getId());
         return loginAttemptRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return loginAttemptRepository.deleteById(id);
+        return loginAttemptRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable purgeExpiredData() {
         LOGGER.debug("purgeExpiredData()");
         LocalDateTime now = LocalDateTime.now(UTC);
-        return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class).matching(Query.query(where(EXPIRE_AT).lessThan(now))).all());
+        return monoToCompletable(getTemplate().delete(JdbcLoginAttempt.class).matching(Query.query(where(EXPIRE_AT).lessThan(now))).all())
+                .observeOn(Schedulers.computation());
     }
 }

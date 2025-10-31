@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -72,7 +73,8 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
     public Single<Page<Resource>> findByDomain(String domain, int page, int size) {
         LOGGER.debug("findByDomain({}, {}, {})", domain, page, size);
         CriteriaDefinition whereClause = from(where("domain").is(domain));
-        return findResourcePage(domain, page, size, whereClause);
+        return findResourcePage(domain, page, size, whereClause)
+                .observeOn(Schedulers.computation());
     }
 
     private Single<Page<Resource>> findResourcePage(String domain, int page, int size, CriteriaDefinition whereClause) {
@@ -103,7 +105,8 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
     public Single<Page<Resource>> findByDomainAndClient(String domain, String client, int page, int size) {
         LOGGER.debug("findByDomainAndClient({}, {}, {}, {})", domain, client, page, size);
         CriteriaDefinition whereClause = from(where("domain").is(domain).and(where("client_id").is(client)));
-        return findResourcePage(domain, page, size, whereClause);
+        return findResourcePage(domain, page, size, whereClause)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -114,7 +117,8 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         }
         return resourceRepository.findByIdIn(resources)
                 .map(this::toEntity)
-                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable());
+                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -122,7 +126,8 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("findByDomainAndClientAndUser({},{},{})", domain, client, userId);
         return resourceRepository.findByDomainAndClientAndUser(domain, client, userId)
                 .map(this::toEntity)
-                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable());
+                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -130,20 +135,23 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         LOGGER.debug("findByDomainAndClientAndUser({},{},{})", domain, client, resources);
         return resourceRepository.findByDomainAndClientAndResources(domain, client, resources)
                 .map(this::toEntity)
-                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable());
+                .flatMap(resource -> completeWithScopes(Maybe.just(resource), resource.getId()).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Resource> findByDomainAndClientAndUserAndResource(String domain, String client, String userId, String resource) {
         LOGGER.debug("findByDomainAndClientAndUserAndResource({},{},{},{})", domain, client, userId, resource);
         return completeWithScopes(resourceRepository.findByDomainAndClientAndUserIdAndResource(domain, client, userId, resource)
-                .map(this::toEntity), resource);
+                .map(this::toEntity), resource)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<Resource> findById(String id) {
         LOGGER.debug("findById({})", id);
-        return completeWithScopes(resourceRepository.findById(id).map(this::toEntity), id);
+        return completeWithScopes(resourceRepository.findById(id).map(this::toEntity), id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -162,7 +170,8 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         }
 
         return monoToSingle(insertResult.as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -181,7 +190,8 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         }
 
         return monoToSingle(deleteScopes.then(updateResource).as(trx::transactional))
-                .flatMap((i) -> this.findById(item.getId()).toSingle());
+                .flatMap((i) -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> insertScope(Resource item, String scope) {
@@ -200,6 +210,7 @@ public class JdbcResourceRepository extends AbstractJdbcRepository implements Re
         Mono<Long> deleteScopes = getTemplate().delete(Query.query(where(RESOURCE_ID).is(id)), JdbcResource.Scope.class);
         Mono<Long> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcResource.class);
 
-        return monoToCompletable(delete.then(deleteScopes).as(trx::transactional));
+        return monoToCompletable(delete.then(deleteScopes).as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 }

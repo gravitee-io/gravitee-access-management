@@ -25,6 +25,7 @@ import io.gravitee.am.repository.oauth2.model.AuthorizationCode;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -117,7 +118,8 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         Mono<Long> insertAction = insertSpec.fetch().rowsUpdated();
 
         return monoToSingle(insertAction).flatMap(i -> authorizationCodeRepository.findById(authorizationCode.getId()).map(this::toEntity).toSingle())
-                .doOnError(error -> LOGGER.error("Unable to create authorizationCode with id {}", authorizationCode.getId(), error));
+                .doOnError(error -> LOGGER.error("Unable to create authorizationCode with id {}", authorizationCode.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -131,7 +133,8 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
                     } else {
                         return Mono.error(err);
                     }
-                }));
+                }))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -147,7 +150,8 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
                     }
                 })
                 .map(this::toEntity)
-                .doOnError(error -> LOGGER.error("Unable to retrieve AuthorizationCode with code {}", code));
+                .doOnError(error -> LOGGER.error("Unable to retrieve AuthorizationCode with code {}", code))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -164,13 +168,15 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
                     .first();
 
             return monoToMaybe(removedCode)
-                    .map(this::toEntity);
+                    .map(this::toEntity)
+                    .observeOn(Schedulers.computation());
 
         } else {
             return authorizationCodeRepository.findByCodeAndClientId(code, clientId, LocalDateTime.now(UTC))
                     .map(this::toEntity)
                     .flatMap(authCode -> authorizationCodeRepository.deleteByCodeAndClientId(authCode.getCode(), authCode.getClientId()).ignoreElement()
-                            .andThen(Maybe.just(authCode)));
+                            .andThen(Maybe.just(authCode)))
+                    .observeOn(Schedulers.computation());
         }
     }
 
@@ -180,6 +186,7 @@ public class JdbcAuthorizationCodeRepository extends AbstractJdbcRepository impl
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToCompletable(getTemplate().delete(JdbcAuthorizationCode.class)
                 .matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all())
-                .doOnError(error -> LOGGER.error("Unable to purge authorization tokens", error));
+                .doOnError(error -> LOGGER.error("Unable to purge authorization tokens", error))
+                .observeOn(Schedulers.computation());
     }
 }
