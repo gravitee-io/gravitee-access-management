@@ -30,6 +30,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
@@ -81,8 +82,6 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
     public static final String REF_ID = "refId";
     public static final String REF_TYPE = "refType";
 
-    private final int concurrentFlatmap = 1;
-
     private String insertStatement;
     private String updateStatement;
 
@@ -118,7 +117,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .all());
 
         return flow.map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap);
+                .concatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -133,7 +133,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .all());
 
         return flow.map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap);
+                .concatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -156,9 +157,10 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all())
                 .map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap)
+                .concatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable())
                 .toList()
-                .flatMap(content -> counter.map((count) -> new Page<Group>(content, pageFromOffset(offset, size), count)));
+                .flatMap(content -> counter.map((count) -> new Page<Group>(content, pageFromOffset(offset, size), count)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -189,10 +191,10 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
 
         return fluxToFlowable(groupFlux)
                 .map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap)
+                .concatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable())
                 .toList()
-                .flatMap(list -> monoToSingle(groupCount).map(total -> new Page<Group>(list, pageFromOffset(offset, size), total)));
-
+                .flatMap(list -> monoToSingle(groupCount).map(total -> new Page<Group>(list, pageFromOffset(offset, size), total)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -209,7 +211,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .all());
 
-        return flow.map(this::toEntity).flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable(), concurrentFlatmap);
+        return flow.map(this::toEntity).concatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -225,7 +228,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .first());
 
         return maybe.map(this::toEntity)
-                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()));
+                .flatMap(group -> completeWithMembersAndRole(Maybe.just(group), group.getId()))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -240,7 +244,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .first());
 
-        return completeWithMembersAndRole(maybe.map(this::toEntity), id);
+        return completeWithMembersAndRole(maybe.map(this::toEntity), id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -253,7 +258,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
                 .map((row, rowMetadata) ->rowMapper.read(JdbcGroup.class, row))
                 .first());
 
-        return completeWithMembersAndRole(maybe.map(this::toEntity), id);
+        return completeWithMembersAndRole(maybe.map(this::toEntity), id)
+                .observeOn(Schedulers.computation());
     }
 
     private Maybe<Group> completeWithMembersAndRole(Maybe<Group> maybeGroup, String id) {
@@ -300,7 +306,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         action = persistChildEntities(action, item);
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> persistChildEntities(Mono<Long> actionFlow, Group item) {
@@ -348,7 +355,8 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         action = persistChildEntities(action, item);
 
         return monoToSingle(action.as(trx::transactional))
-                .flatMap(i -> this.findById(item.getId()).toSingle());
+                .flatMap(i -> this.findById(item.getId()).toSingle())
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> deleteChildEntities(String groupId) {
@@ -363,6 +371,7 @@ public class JdbcGroupRepository extends AbstractJdbcRepository implements Group
         LOGGER.debug("delete Group with id {}", id);
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM " + databaseDialectHelper.toSql(quoted(GROUPS)) + " WHERE id = :id").bind(COL_ID, id).fetch().rowsUpdated();
-        return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional));
+        return monoToCompletable(delete.then(deleteChildEntities(id)).as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 }
