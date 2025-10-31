@@ -46,6 +46,7 @@ import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.management.ProtectedResourceAuditBuilder;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
@@ -57,7 +58,6 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.ProtectedResource.Type.valueOf;
 import static org.springframework.util.StringUtils.hasLength;
@@ -103,6 +103,34 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     LOGGER.error("An error occurs while trying to find protected resource by and id={}", id, ex);
                     return Maybe.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find protected resources by  and id=%s", id), ex));
+                });
+    }
+
+    @Override
+    public Completable delete(Domain domain, String id, ProtectedResource.Type expectedType, User principal) {
+        LOGGER.debug("Delete protected resource {} with domain/type validation", id);
+        return repository.findById(id)
+                .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
+                .flatMapCompletable(resource -> {
+                    if (!resource.getDomainId().equals(domain.getId()) || (expectedType != null && resource.getType() != expectedType)) {
+                        return Completable.error(new ProtectedResourceNotFoundException(id));
+                    }
+                    Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.DELETE));
+                    // Delete dependencies first to avoid orphaned references if resource deletion fails
+                    return membershipService.findByReference(resource.getId(), ReferenceType.APPLICATION)
+                            .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
+                            .andThen(repository.delete(id))
+                            .andThen(Completable.fromSingle(eventService.create(event, domain)))
+                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).principal(principal).type(EventType.PROTECTED_RESOURCE_DELETED).protectedResource(resource)))
+                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).protectedResource(resource).principal(principal).type(EventType.PROTECTED_RESOURCE_DELETED).throwable(throwable)));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Completable.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to delete protected resource: {}", id, ex);
+                    return Completable.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to delete protected resource: %s", id), ex));
                 });
     }
 
@@ -296,6 +324,17 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .onErrorResumeNext(ex -> {
                     LOGGER.error("An error occurs while trying to find protected resources by domainId={} and type={}", domain, type, ex);
                     return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to find protected resources by domain %s", domain), ex));
+                });
+    }
+
+    @Override
+    public Flowable<ProtectedResource> findByDomain(String domain) {
+        LOGGER.debug("Find protected resources by domainId={}", domain);
+        return repository.findByDomain(domain)
+                .onErrorResumeNext(ex -> {
+                    LOGGER.error("An error occurs while trying to find protected resources by domain {}", domain, ex);
+                    return Flowable.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to find protected resources by domain %s", domain), ex));
                 });
     }

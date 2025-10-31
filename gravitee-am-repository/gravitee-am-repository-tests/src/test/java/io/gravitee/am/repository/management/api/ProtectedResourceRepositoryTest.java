@@ -458,6 +458,27 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         testObserver.assertValue(a -> a.getFeatures().get(2).getKey().equals("zebra_update"));
     }
 
+    @Test
+    public void shouldDeleteResourceById() {
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource toSave = generateResource(clientSecret, secretSettings, List.of(generateMcpTool("key1")));
+
+        ProtectedResource created = repository.create(toSave).blockingGet();
+
+        repository.delete(created.getId())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        repository.findById(created.getId())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertNoValues()
+                .assertComplete();
+    }
+
     private McpTool generateMcpTool(String key) {
         McpTool tool = new McpTool();
         tool.setKey(key);

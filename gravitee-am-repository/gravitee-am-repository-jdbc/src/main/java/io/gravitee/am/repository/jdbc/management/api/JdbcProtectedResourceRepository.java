@@ -54,6 +54,7 @@ import static io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedR
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static reactor.adapter.rxjava.RxJava3Adapter.fluxToFlowable;
+import static reactor.adapter.rxjava.RxJava3Adapter.monoToCompletable;
 import static reactor.adapter.rxjava.RxJava3Adapter.monoToSingle;
 
 @Repository
@@ -152,7 +153,15 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
     @Override
     public Completable delete(String s) {
-        return Completable.complete(); // TODO AM-5757
+        LOGGER.debug("delete({})", s);
+        TransactionalOperator trx = TransactionalOperator.create(tm);
+        Mono<Long> deleteChildren = Mono.when(
+                getTemplate().delete(query(where(JdbcProtectedResourceClientSecret.FIELD_PROTECTED_RESOURCE_ID).is(s)), JdbcProtectedResourceClientSecret.class),
+                getTemplate().delete(query(where(JdbcProtectedResourceFeature.FIELD_PROTECTED_RESOURCE_ID).is(s)), JdbcProtectedResourceFeature.class)
+        ).thenReturn(0L);
+        Mono<Long> deleteParent = getTemplate().delete(JdbcProtectedResource.class)
+                .matching(query(where(COLUMN_ID).is(s))).all();
+        return monoToCompletable(deleteChildren.then(deleteParent).as(trx::transactional));
     }
 
 

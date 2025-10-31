@@ -49,6 +49,10 @@ export class ProtectedResourceService {
   findById(domainId: string, id: string, type: ProtectedResourceType): Observable<ProtectedResource> {
     return this.http.get<ProtectedResource>(this.baseURL + `${domainId}/protected-resources/${id}?type=${type}`);
   }
+
+  delete(domainId: string, id: string, type: ProtectedResourceType): Observable<any> {
+    return this.http.delete<any>(this.baseURL + `${domainId}/protected-resources/${id}?type=${type}`);
+  }
 }
 
 export enum ProtectedResourceType {
