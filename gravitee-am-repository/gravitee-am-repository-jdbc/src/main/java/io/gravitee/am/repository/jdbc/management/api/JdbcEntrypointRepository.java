@@ -26,6 +26,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -67,7 +68,8 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
                 .map(this::toEntity)
                 .flatMap(entrypoint -> completeTags(entrypoint).toMaybe())
                 .doOnError(error -> LOGGER.error("Unable to retrieve entrypoint with id={} and organization={}",
-                        id, organizationId, error));
+                        id, organizationId, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -76,7 +78,8 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
 
         return entrypointRepository.findAllByOrganization(organizationId).map(this::toEntity)
                 .flatMap(entrypoint -> completeTags(entrypoint).toFlowable())
-                .doOnError(error -> LOGGER.error("Unable to list all entrypoints with organization {}", organizationId, error));
+                .doOnError(error -> LOGGER.error("Unable to list all entrypoints with organization {}", organizationId, error))
+                .observeOn(Schedulers.computation());
     }
 
     private Single<Entrypoint> completeTags(Entrypoint entrypoint) {
@@ -93,7 +96,8 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         return entrypointRepository.findById(id)
                 .map(this::toEntity)
                 .flatMap(entrypoint -> completeTags(entrypoint).toMaybe())
-                .doOnError(error -> LOGGER.error("Unable to retrieve entrypoint with id={} ", id, error));
+                .doOnError(error -> LOGGER.error("Unable to retrieve entrypoint with id={} ", id, error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -110,7 +114,8 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
 
         return monoToSingle(action.as(trx::transactional))
                 .flatMap(i -> this.findById(item.getId()).toSingle())
-                .doOnError(error -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error));
+                .doOnError(error -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -127,7 +132,8 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
 
         return monoToSingle(deleteTags(item.getId()).then(action).as(trx::transactional))
                 .flatMap(i -> this.findById(item.getId()).toSingle())
-                .doOnError(error -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error));
+                .doOnError(error -> LOGGER.error("unable to create entrypoint with id {}", item.getId(), error))
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> insertTag(String tagValue, Entrypoint item) {
@@ -144,7 +150,8 @@ public class JdbcEntrypointRepository extends AbstractJdbcRepository implements 
         Mono<Long> delete = getTemplate().delete(Query.query(where("id").is(id)), JdbcEntrypoint.class);
 
         return monoToCompletable(deleteTags(id).then(delete).as(trx::transactional))
-                .doOnError(error -> LOGGER.error("Unable to delete entrypoint with id {}", id, error));
+                .doOnError(error -> LOGGER.error("Unable to delete entrypoint with id {}", id, error))
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> deleteTags(String id) {

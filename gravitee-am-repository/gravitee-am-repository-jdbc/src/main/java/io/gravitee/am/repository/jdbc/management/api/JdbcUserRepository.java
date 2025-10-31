@@ -53,6 +53,7 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.MaybeSource;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleSource;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -439,7 +440,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("findByReference({})", referenceId);
         return userRepository.findByReference(referenceType.name(), referenceId)
                 .map(this::toEntity)
-                .concatMap(user -> completeUser(user).toFlowable());
+                .concatMap(user -> completeUser(user).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -455,7 +457,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .concatMap(user -> completeUser(user).toFlowable())
                 .toList()
                 .concatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
-                        .map((count) -> new Page<>(content, page, count)));
+                        .map((count) -> new Page<>(content, page, count)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -472,7 +475,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .concatMap(user -> completeUser(user).toFlowable())
                 .toList()
                 .concatMap(content -> userRepository.countByReference(referenceType.name(), referenceId)
-                        .map((totalCount) -> new Page<>(content, pageable.getPageNumber(), totalCount)));
+                        .map((totalCount) -> new Page<>(content, pageable.getPageNumber(), totalCount)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -491,7 +495,7 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .bind(REF_TYPE, referenceType.name())
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row)).all())
                 .map(this::toEntity)
-                .concatMap(app -> completeUser(app).toFlowable()) // single thread to keep order
+                .concatMap(app -> completeUser(app).toFlowable())
                 .toList()
                 .concatMap(data -> monoToSingle(getTemplate().getDatabaseClient().sql(count)
                         .bind(ATTR_COL_VALUE, wildcardSearch ? wildcardValue : query)
@@ -499,7 +503,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         .bind(REF_TYPE, referenceType.name())
                         .map((row, rowMetadata) -> row.get(0, Long.class))
                         .first())
-                        .map(total -> new Page<>(data, page, total)));
+                        .map(total -> new Page<>(data, page, total)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -530,7 +535,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .map(this::toEntity)
                 .concatMap(user -> completeUser(user).toFlowable())
                 .toList()
-                .concatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)));
+                .concatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, page, total)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -561,7 +567,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .map(this::toEntity)
                 .concatMap(user -> completeUser(user).toFlowable())
                 .toList()
-                .concatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, pageFromOffset(startIndex, count), total)));
+                .concatMap(list -> monoToSingle(userCount).map(total -> new Page<User>(list, pageFromOffset(startIndex, count), total)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -582,7 +589,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         return fluxToFlowable(userFlux)
                 .map(this::toEntity)
-                .concatMap(user -> completeUser(user).toFlowable());
+                .concatMap(user -> completeUser(user).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -594,7 +602,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .map((row, rowMetadata) -> rowMapper.read(JdbcUser.class, row))
                 .all())
                 .map(this::toEntity)
-                .concatMap(user -> completeUser(user).toFlowable());
+                .concatMap(user -> completeUser(user).toFlowable())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -603,14 +612,16 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findByUsername(ReferenceType.DOMAIN.name(), domain, username)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     public Maybe<User> findById(UserId id) {
         return monoToMaybe(getTemplate().select(JdbcUser.class)
                 .matching(Query.query(userIdMatches(id)))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -619,7 +630,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findByUsernameAndSource(referenceType.name(), referenceId, username, source)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -629,7 +641,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                 .switchIfEmpty(Maybe.defer(() -> includeLinkedIdentities ? userRepository.findByUsernameAndLinkedIdentities(referenceType.name(), referenceId, username, source) : Maybe.empty()))
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -638,7 +651,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findByExternalIdAndSource(referenceType.name(), referenceId, externalId, source)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -650,7 +664,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findByIdIn(ids)
                 .map(this::toEntity)
                 .concatMap(user -> completeUser(user).toFlowable())
-                .onErrorResumeNext(err -> Flowable.fromMaybe(mapException(err)));
+                .onErrorResumeNext(err -> Flowable.fromMaybe(mapException(err)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -661,7 +676,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return findOne(Query.query(criteria), JdbcUser.class)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     private MaybeSource<? extends User> mapException(Throwable error) {
@@ -694,19 +710,23 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
     @Override
     public Single<Long> countByReference(ReferenceType refType, String domain) {
-        return userRepository.countByReference(refType.name(), domain);
+        return userRepository.countByReference(refType.name(), domain)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Long> countByApplication(String domain, String application) {
-        return userRepository.countByClient(ReferenceType.DOMAIN.name(), domain, application);
+        return userRepository.countByClient(ReferenceType.DOMAIN.name(), domain, application)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<Map<Object, Object>> statistics(AnalyticsQuery query) {
         return switch (query.getField()) {
-            case Field.USER_STATUS -> usersStatusRepartition(query);
-            case Field.USER_REGISTRATION -> registrationsStatusRepartition(query);
+            case Field.USER_STATUS -> usersStatusRepartition(query)
+                    .observeOn(Schedulers.computation());
+            case Field.USER_REGISTRATION -> registrationsStatusRepartition(query)
+                    .observeOn(Schedulers.computation());
             default -> Single.just(Collections.emptyMap());
         };
     }
@@ -778,7 +798,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         return userRepository.findById(id)
                 .map(this::toEntity)
                 .flatMap(user -> completeUser(user).toMaybe())
-                .onErrorResumeNext(this::mapException);
+                .onErrorResumeNext(this::mapException)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -837,7 +858,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
 
         return monoToSingle(insertAction.as(trx::transactional))
                 .flatMap((i) -> Single.just(item))
-                .onErrorResumeNext(err -> mapExceptionAsSingle(err, item, false));
+                .onErrorResumeNext(err -> mapExceptionAsSingle(err, item, false))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -909,7 +931,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
                         return Single.just(item);
                     }
                 })
-                .onErrorResumeNext(err -> mapExceptionAsSingle(err, item, true));
+                .onErrorResumeNext(err -> mapExceptionAsSingle(err, item, true))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -918,7 +941,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> delete = getTemplate().delete(JdbcUser.class).matching(Query.query(where("id").is(id))).all();
 
-        return monoToCompletable(delete.then(deleteChildEntities(id, UpdateActions.updateAll())).as(trx::transactional));
+        return monoToCompletable(delete.then(deleteChildEntities(id, UpdateActions.updateAll())).as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -926,7 +950,8 @@ public class JdbcUserRepository extends AbstractJdbcRepository implements UserRe
         LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> delete = getTemplate().getDatabaseClient().sql("DELETE FROM users WHERE reference_type = :refType AND reference_id = :refId").bind(REF_TYPE, referenceType.name()).bind(REF_ID, referenceId).fetch().rowsUpdated();
-        return monoToCompletable(deleteChildEntitiesByRef(referenceType.name(), referenceId).then(delete).as(trx::transactional));
+        return monoToCompletable(deleteChildEntitiesByRef(referenceType.name(), referenceId).then(delete).as(trx::transactional))
+                .observeOn(Schedulers.computation());
     }
 
     private Mono<Long> deleteChildEntitiesByRef(String refType, String refId) {

@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -72,7 +73,8 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
         return monoToMaybe(this.getTemplate().select(JdbcUserActivity.class)
                 .matching(query(where(COL_ID).is(id).and(where(COL_EXPIRE_AT).greaterThanOrEquals(now))))
                 .first())
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -80,20 +82,23 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
         LOGGER.debug("create({})", item);
         final JdbcUserActivity entity = toJdbcEntity(item);
         entity.setId(entity.getId() == null ? RandomString.generate() : entity.getId());
-        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().insert(entity)).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<UserActivity> update(UserActivity item) {
         LOGGER.debug("update({})", item);
         final JdbcUserActivity entity = toJdbcEntity(item);
-        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity);
+        return monoToSingle(this.getTemplate().update(entity)).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return monoToCompletable(this.getTemplate().delete(JdbcUserActivity.class).matching(query(where(COL_ID).is(id))).all());
+        return monoToCompletable(this.getTemplate().delete(JdbcUserActivity.class).matching(query(where(COL_ID).is(id))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -111,7 +116,8 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
             query = query.limit(limit);
         }
 
-        return fluxToFlowable(getTemplate().select(JdbcUserActivity.class).matching(query).all()).map(this::toEntity);
+        return fluxToFlowable(getTemplate().select(JdbcUserActivity.class).matching(query).all()).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -120,7 +126,8 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
         return monoToCompletable(this.getTemplate().delete(JdbcUserActivity.class).matching(
                 query(where(COL_REFERENCE_TYPE).is(referenceType)
                         .and(where(COL_REFERENCE_ID).is(referenceId))
-                        .and(where(COL_USER_ACTIVITY_KEY).is(key)))).all());
+                        .and(where(COL_USER_ACTIVITY_KEY).is(key)))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -128,7 +135,8 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
         LOGGER.debug("deleteByReference({}, {})", referenceType, referenceId);
         return monoToCompletable(this.getTemplate().delete(JdbcUserActivity.class).matching(
                 query(where(COL_REFERENCE_TYPE).is(referenceType)
-                        .and(where(COL_REFERENCE_ID).is(referenceId)))).all());
+                        .and(where(COL_REFERENCE_ID).is(referenceId)))).all())
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -137,6 +145,7 @@ public class JdbcUserActivityRepository extends AbstractJdbcRepository implement
         LocalDateTime now = LocalDateTime.now(UTC);
         return monoToCompletable(
                 getTemplate().delete(JdbcUserActivity.class).matching(Query.query(where(COL_EXPIRE_AT).lessThan(now))).all()
-        ).doOnError(error -> LOGGER.error("Unable to purge Devices", error));
+        ).doOnError(error -> LOGGER.error("Unable to purge Devices", error))
+                .observeOn(Schedulers.computation());
     }
 }
