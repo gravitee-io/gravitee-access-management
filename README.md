@@ -87,7 +87,3 @@ We welcome contributions! Please read the dedicated [CONTRIBUTING](./CONTRIBUTIN
 ## 📝 License
 
 Gravitee.io API Management is licensed under the [Apache License, Version 2.0](./LICENSE.txt).
-
-## WHITESPACE CHANGE FOR PR
-
-PR
