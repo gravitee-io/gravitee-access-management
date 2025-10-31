@@ -119,8 +119,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         var rawSecret = hasLength(newProtectedResource.getClientSecret()) ? newProtectedResource.getClientSecret() : SecureRandomString.generate();
 
         toCreate.setId(RandomString.generate());
-        toCreate.setName(newProtectedResource.getName());
-        toCreate.setDescription(newProtectedResource.getDescription());
+        toCreate.setName(newProtectedResource.getName() != null ? newProtectedResource.getName().trim() : null);
+        toCreate.setDescription(newProtectedResource.getDescription() != null ? newProtectedResource.getDescription().trim() : null);
         toCreate.setResourceIdentifiers(newProtectedResource.getResourceIdentifiers().stream().map(String::trim).map(String::toLowerCase).toList());
         toCreate.setClientId(hasLength(newProtectedResource.getClientId()) ? newProtectedResource.getClientId() : SecureRandomString.generate());
 
@@ -167,8 +167,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
                     // Build the updated resource
                     ProtectedResource toUpdate = new ProtectedResource(oldProtectedResource);
-                    toUpdate.setName(updateProtectedResource.getName());
-                    toUpdate.setDescription(updateProtectedResource.getDescription());
+                    toUpdate.setName(updateProtectedResource.getName() != null ? updateProtectedResource.getName().trim() : null);
+                    toUpdate.setDescription(updateProtectedResource.getDescription() != null ? updateProtectedResource.getDescription().trim() : null);
                     toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers().stream()
                             .map(String::trim)
                             .map(String::toLowerCase)
