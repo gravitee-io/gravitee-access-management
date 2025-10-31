@@ -27,6 +27,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Repository;
@@ -57,34 +58,39 @@ public class JdbcServiceResourceRepository extends AbstractJdbcRepository implem
     public Maybe<ServiceResource> findById(String id) {
         LOGGER.debug("findById({})", id);
         return serviceResourceRepository.findById(id)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ServiceResource> create(ServiceResource item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create Reporter with id {}", item.getId());
-        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity);
+        return monoToSingle(getTemplate().insert(toJdbcEntity(item))).map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Single<ServiceResource> update(ServiceResource item) {
         LOGGER.debug("Update resource with id '{}'", item.getId());
         return serviceResourceRepository.save(toJdbcEntity(item))
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Completable delete(String id) {
         LOGGER.debug("delete({})", id);
-        return serviceResourceRepository.deleteById(id);
+        return serviceResourceRepository.deleteById(id)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Flowable<ServiceResource> findByReference(ReferenceType referenceType, String referenceId) {
         LOGGER.debug("findByReference({}, {})", referenceType, referenceId);
         return serviceResourceRepository.findByReference(referenceType.name(), referenceId)
-                .map(this::toEntity);
+                .map(this::toEntity)
+                .observeOn(Schedulers.computation());
     }
 
     @Override
@@ -92,6 +98,7 @@ public class JdbcServiceResourceRepository extends AbstractJdbcRepository implem
         LOGGER.debug("deleteByReference({})", reference);
         return monoToCompletable(getTemplate().delete(JdbcServiceResource.class)
                 .matching(Query.query(where(REFERENCE_ID_FIELD).is(reference.id()).and(where(REF_TYPE_FIELD).is(reference.type().name()))))
-                .all());
+                .all())
+                .observeOn(Schedulers.computation());
     }
 }
