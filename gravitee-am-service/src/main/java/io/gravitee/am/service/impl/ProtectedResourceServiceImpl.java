@@ -182,7 +182,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
-    public Single<ProtectedResource> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal) {
+    public Single<ProtectedResourcePrimaryData> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal) {
         LOGGER.debug("Update ProtectedResource {} for domain {}", id, domain.getId());
 
         return repository.findById(id)
@@ -225,7 +225,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     return checkFeatureKeyUniqueness(toUpdate)
                             .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldProtectedResource.getResourceIdentifiers(), toUpdate.getResourceIdentifiers()))
                             .andThen(validateFeatureScopes(domain.getId(), toUpdate))
-                            .andThen(Single.defer(() -> doUpdate(toUpdate, oldProtectedResource, principal, domain)));
+                            .andThen(Single.defer(() -> doUpdate(toUpdate, oldProtectedResource, principal, domain)))
+                            .map(ProtectedResourcePrimaryData::of);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -238,7 +239,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
-    public Single<ProtectedResource> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal) {
+    public Single<ProtectedResourcePrimaryData> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal) {
         LOGGER.debug("Patch ProtectedResource {} for domain {}", id, domain.getId());
 
         return repository.findById(id)
@@ -281,7 +282,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     return checkFeatureKeyUniqueness(toPatch)
                             .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldProtectedResource.getResourceIdentifiers(), toPatch.getResourceIdentifiers()))
                             .andThen(validateFeatureScopes(domain.getId(), toPatch))
-                            .andThen(Single.defer(() -> doUpdate(toPatch, oldProtectedResource, principal, domain)));
+                            .andThen(Single.defer(() -> doUpdate(toPatch, oldProtectedResource, principal, domain)))
+                            .map(ProtectedResourcePrimaryData::of);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {

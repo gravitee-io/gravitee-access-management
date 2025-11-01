@@ -46,9 +46,9 @@ public interface ProtectedResourceService {
 
     Single<ProtectedResourceSecret> create(Domain domain, User user, NewProtectedResource protectedResource);
 
-    Single<ProtectedResource> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal);
+    Single<ProtectedResourcePrimaryData> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal);
 
-    Single<ProtectedResource> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal);
+    Single<ProtectedResourcePrimaryData> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal);
 
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest);
 

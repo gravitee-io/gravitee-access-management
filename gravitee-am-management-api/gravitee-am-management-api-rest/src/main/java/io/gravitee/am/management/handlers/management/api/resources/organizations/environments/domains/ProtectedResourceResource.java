@@ -95,7 +95,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Protected Resource successfully patched",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProtectedResource.class))),
+                            schema = @Schema(implementation = ProtectedResourcePrimaryData.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void patch(
             @PathParam("organizationId") String organizationId,
@@ -135,7 +135,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Protected Resource successfully updated",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProtectedResource.class))),
+                            schema = @Schema(implementation = ProtectedResourcePrimaryData.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,

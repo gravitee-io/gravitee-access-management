@@ -226,12 +226,12 @@ public class ProtectedResourceServiceImplTest {
         User user = new DefaultUser();
 
         // Execute update
-        var result = service.update(domain, "resource-id", updateRequest, user)
+        service.update(domain, "resource-id", updateRequest, user)
                 .test()
                 .assertComplete()
-                .assertValue(v -> v.getName().equals("New Name") && 
-                             v.getDescription().equals("New Description") &&
-                             v.getResourceIdentifiers().contains("https://new.example.com"));
+                .assertValue(v -> v.name().equals("New Name") && 
+                             v.description().equals("New Description") &&
+                             v.resourceIdentifiers().contains("https://new.example.com"));
 
         // Verify audit and event were called
         Mockito.verify(auditService, Mockito.times(1)).report(any());
@@ -515,9 +515,9 @@ public class ProtectedResourceServiceImplTest {
         service.patch(domain, "resource-id", patchRequest, user)
                 .test()
                 .assertComplete()
-                .assertValue(v -> v.getName().equals("New Name") && 
-                             v.getDescription().equals("New Description") &&
-                             v.getResourceIdentifiers().contains("https://old.example.com")); // Resource identifiers not updated
+                .assertValue(v -> v.name().equals("New Name") && 
+                             v.description().equals("New Description") &&
+                             v.resourceIdentifiers().contains("https://old.example.com")); // Resource identifiers not updated
 
         // Verify interactions
         Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
@@ -693,8 +693,8 @@ public class ProtectedResourceServiceImplTest {
         service.patch(domain, "resource-id", patchRequest, user)
                 .test()
                 .assertComplete()
-                .assertValue(v -> v.getName().equals("New Name") && 
-                             v.getDescription().equals("Old Description")); // Description unchanged
+                .assertValue(v -> v.name().equals("New Name") && 
+                             v.description().equals("Old Description")); // Description unchanged
 
         // Verify interactions
         Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
