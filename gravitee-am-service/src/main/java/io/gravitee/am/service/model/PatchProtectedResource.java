@@ -19,6 +19,9 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourceFeature;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
+import io.gravitee.am.service.validators.url.Url;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -35,9 +38,9 @@ import java.util.Set;
 @Setter
 public class PatchProtectedResource {
 
-    private Optional<String> name;
+    private Optional<@Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "MCP Server name can only contain letters, numbers, hyphens, and underscores") String> name;
     private Optional<String> description;
-    private Optional<List<String>> resourceIdentifiers;
+    private Optional<List<@NotBlank @Url String>> resourceIdentifiers;
     private Optional<List<UpdateProtectedResourceFeature>> features;
 
     public ProtectedResource patch(ProtectedResource _toPatch) {

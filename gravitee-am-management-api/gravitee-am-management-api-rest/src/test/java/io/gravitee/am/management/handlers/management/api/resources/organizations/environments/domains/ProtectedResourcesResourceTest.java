@@ -172,6 +172,53 @@ public class ProtectedResourcesResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldCreateProtectedResource_withValidName_201() throws JsonProcessingException {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        NewProtectedResource newProtectedResource = new NewProtectedResource();
+        newProtectedResource.setName("test-server");
+        newProtectedResource.setResourceIdentifiers(List.of("https://example.com"));
+        newProtectedResource.setType("MCP_SERVER");
+
+        ProtectedResourceSecret protectedResourceSecret = new ProtectedResourceSecret();
+        protectedResourceSecret.setId("resource-id");
+        protectedResourceSecret.setName("test-server");
+        protectedResourceSecret.setClientSecret("client-secret");
+        protectedResourceSecret.setClientId("client-id");
+
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(protectedResourceSecret)).when(protectedResourceService).create(any(Domain.class), any(User.class), any(NewProtectedResource.class));
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .request().post(Entity.json(newProtectedResource));
+
+        assertEquals("Valid name 'test-server' should return 201", HttpStatusCode.CREATED_201, response.getStatus());
+    }
+
+    @Test
+    public void shouldCreateProtectedResource_withInvalidPattern_400() throws JsonProcessingException {
+        final String domainId = "domain-1";
+
+        NewProtectedResource newProtectedResource = new NewProtectedResource();
+        newProtectedResource.setName("test server");
+        newProtectedResource.setResourceIdentifiers(List.of("https://example.com"));
+        newProtectedResource.setType("MCP_SERVER");
+
+        final Response response = target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .request().post(Entity.json(newProtectedResource));
+
+        Map map = response.readEntity(Map.class);
+        assertEquals("Invalid pattern 'test server' should return 400", HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        assertEquals(400, map.get("http_status"));
+    }
+
+    @Test
     public void shouldReturnBadRequest_missingType() throws JsonProcessingException {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
