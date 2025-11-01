@@ -48,7 +48,9 @@ public class DeviceIdentifiersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List device identifier plugins",
+    @Operation(
+            operationId = "listDeviceIdentifierPlugins",
+            summary = "List device identifier plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
 
@@ -60,6 +62,7 @@ public class DeviceIdentifiersPluginResource {
     }
 
     @Path("{deviceIdentifier}")
+    @Produces(MediaType.APPLICATION_JSON)
     public DeviceIdentifierPluginResource getFactorPluginResource() {
         return resourceContext.getResource(DeviceIdentifierPluginResource.class);
     }

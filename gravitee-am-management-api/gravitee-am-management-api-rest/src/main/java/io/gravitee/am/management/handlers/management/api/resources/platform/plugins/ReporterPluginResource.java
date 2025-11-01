@@ -48,7 +48,9 @@ public class ReporterPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a reporter plugin",
+    @Operation(
+            operationId = "getReporter",
+            summary = "Get a reporter plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("reporter") String reporterId,
@@ -63,7 +65,9 @@ public class ReporterPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a reporter plugin's schema")
+    @Operation(
+            operationId = "getReporterSchema",
+            summary = "Get a reporter plugin's schema")
     public void getSchema(
             @PathParam("reporter") String reporterId,
             @Suspended final AsyncResponse response) {

@@ -53,7 +53,9 @@ public class NotifierPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a notifier",
+    @Operation(
+            operationId = "getNotifier",
+            summary = "Get a notifier",
             description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Notifier plugin", content = @Content(mediaType = "application/json",
@@ -73,7 +75,9 @@ public class NotifierPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a notifier plugin's schema",
+    @Operation(
+            operationId = "getNotifierSchema",
+            summary = "Get a notifier plugin's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Notifier plugin schema", content = @Content(mediaType = "application/json",

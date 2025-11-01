@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,29 +46,38 @@ export interface PatchStepUpAuthentication {
   stepUpAuthenticationRule?: string;
 }
 
+/**
+ * Check if a given object implements the PatchStepUpAuthentication interface.
+ */
+export function instanceOfPatchStepUpAuthentication(value: object): value is PatchStepUpAuthentication {
+  return true;
+}
+
 export function PatchStepUpAuthenticationFromJSON(json: any): PatchStepUpAuthentication {
   return PatchStepUpAuthenticationFromJSONTyped(json, false);
 }
 
 export function PatchStepUpAuthenticationFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchStepUpAuthentication {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    active: !exists(json, 'active') ? undefined : json['active'],
-    stepUpAuthenticationRule: !exists(json, 'stepUpAuthenticationRule') ? undefined : json['stepUpAuthenticationRule'],
+    active: json['active'] == null ? undefined : json['active'],
+    stepUpAuthenticationRule: json['stepUpAuthenticationRule'] == null ? undefined : json['stepUpAuthenticationRule'],
   };
 }
 
-export function PatchStepUpAuthenticationToJSON(value?: PatchStepUpAuthentication | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchStepUpAuthenticationToJSON(json: any): PatchStepUpAuthentication {
+  return PatchStepUpAuthenticationToJSONTyped(json, false);
+}
+
+export function PatchStepUpAuthenticationToJSONTyped(value?: PatchStepUpAuthentication | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    active: value.active,
-    stepUpAuthenticationRule: value.stepUpAuthenticationRule,
+    active: value['active'],
+    stepUpAuthenticationRule: value['stepUpAuthenticationRule'],
   };
 }

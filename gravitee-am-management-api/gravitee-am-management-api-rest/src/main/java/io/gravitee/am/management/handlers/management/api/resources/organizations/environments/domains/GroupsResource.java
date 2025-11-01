@@ -76,7 +76,7 @@ public class GroupsResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            operationId = "listGroups",
+            operationId = "listDomainGroups",
             summary = "List groups for a security domain",
             description = "User must have the DOMAIN_GROUP[LIST] permission on the specified domain " +
                     "or DOMAIN_GROUP[LIST] permission on the specified environment " +

@@ -139,6 +139,7 @@ public class ApplicationFlowsResource extends AbstractResource {
     }
 
     @Path("{flow}")
+
     public ApplicationFlowResource getFlowResource() {
         return resourceContext.getResource(ApplicationFlowResource.class);
     }

@@ -66,7 +66,9 @@ public class AuditsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List audit logs for a security domain",
+    @Operation(
+            operationId = "listDomainAudits",
+            summary = "List audit logs for a security domain",
             description = "User must have the DOMAIN_AUDIT[LIST] permission on the specified domain, environment or organization. " +
                     "Except if user has ORGANIZATION_AUDIT[READ] permission on the domain, environment or organization, each returned audit is filtered and contains only basic information such as id, date, event, actor, target and status.")
     @ApiResponses({

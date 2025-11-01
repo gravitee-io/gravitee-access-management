@@ -25,12 +25,13 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
+import type { ApplicationFactorSettings } from './ApplicationFactorSettings';
 import {
-  ApplicationFactorSettings,
   ApplicationFactorSettingsFromJSON,
   ApplicationFactorSettingsFromJSONTyped,
   ApplicationFactorSettingsToJSON,
+  ApplicationFactorSettingsToJSONTyped,
 } from './ApplicationFactorSettings';
 
 /**
@@ -53,32 +54,40 @@ export interface FactorSettings {
   applicationFactors?: Array<ApplicationFactorSettings>;
 }
 
+/**
+ * Check if a given object implements the FactorSettings interface.
+ */
+export function instanceOfFactorSettings(value: object): value is FactorSettings {
+  return true;
+}
+
 export function FactorSettingsFromJSON(json: any): FactorSettings {
   return FactorSettingsFromJSONTyped(json, false);
 }
 
 export function FactorSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): FactorSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    defaultFactorId: !exists(json, 'defaultFactorId') ? undefined : json['defaultFactorId'],
-    applicationFactors: !exists(json, 'applicationFactors')
-      ? undefined
-      : (json['applicationFactors'] as Array<any>).map(ApplicationFactorSettingsFromJSON),
+    defaultFactorId: json['defaultFactorId'] == null ? undefined : json['defaultFactorId'],
+    applicationFactors:
+      json['applicationFactors'] == null ? undefined : (json['applicationFactors'] as Array<any>).map(ApplicationFactorSettingsFromJSON),
   };
 }
 
-export function FactorSettingsToJSON(value?: FactorSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function FactorSettingsToJSON(json: any): FactorSettings {
+  return FactorSettingsToJSONTyped(json, false);
+}
+
+export function FactorSettingsToJSONTyped(value?: FactorSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    defaultFactorId: value.defaultFactorId,
+    defaultFactorId: value['defaultFactorId'],
     applicationFactors:
-      value.applicationFactors === undefined ? undefined : (value.applicationFactors as Array<any>).map(ApplicationFactorSettingsToJSON),
+      value['applicationFactors'] == null ? undefined : (value['applicationFactors'] as Array<any>).map(ApplicationFactorSettingsToJSON),
   };
 }

@@ -49,7 +49,9 @@ public class AuditResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an audit log",
+    @Operation(
+            operationId = "getOrganizationAudit",
+            summary = "Get an audit log",
             description = "User must have the ORGANIZATION_AUDIT[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Audit log successfully fetched",

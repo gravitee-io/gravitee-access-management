@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,35 +64,47 @@ export interface UpdateReporter {
   inherited?: boolean;
 }
 
+/**
+ * Check if a given object implements the UpdateReporter interface.
+ */
+export function instanceOfUpdateReporter(value: object): value is UpdateReporter {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function UpdateReporterFromJSON(json: any): UpdateReporter {
   return UpdateReporterFromJSONTyped(json, false);
 }
 
 export function UpdateReporterFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateReporter {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     name: json['name'],
     type: json['type'],
     configuration: json['configuration'],
-    inherited: !exists(json, 'inherited') ? undefined : json['inherited'],
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
   };
 }
 
-export function UpdateReporterToJSON(value?: UpdateReporter | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateReporterToJSON(json: any): UpdateReporter {
+  return UpdateReporterToJSONTyped(json, false);
+}
+
+export function UpdateReporterToJSONTyped(value?: UpdateReporter | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    enabled: value.enabled,
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
-    inherited: value.inherited,
+    enabled: value['enabled'],
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
+    inherited: value['inherited'],
   };
 }

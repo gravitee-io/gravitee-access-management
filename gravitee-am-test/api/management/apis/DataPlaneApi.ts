@@ -39,7 +39,7 @@ export interface ListDataPlanesRequest {
  */
 export class DataPlaneApi extends runtime.BaseAPI {
   /**
-   * List all the data planes accessible to the current user. User must have DOMAIN[CREATE] permission on the specified environment or organization
+   * List all the data planes accessible to the current user. User must have DATA_PLANE[READ] permission on the specified environment or organization
    * List of data planes
    */
   async listDataPlanesRaw(
@@ -88,7 +88,7 @@ export class DataPlaneApi extends runtime.BaseAPI {
   }
 
   /**
-   * List all the data planes accessible to the current user. User must have DOMAIN[CREATE] permission on the specified environment or organization
+   * List all the data planes accessible to the current user. User must have DATA_PLANE[READ] permission on the specified environment or organization
    * List of data planes
    */
   async listDataPlanes(

@@ -50,7 +50,9 @@ public class AuthenticationDeviceNotifiersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List authentication device notifier plugins",
+    @Operation(
+            operationId = "listAuthenticationDeviceNotifierPlugins",
+            summary = "List authentication device notifier plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@QueryParam("expand") List<String> expand, @Suspended final AsyncResponse response) {
 

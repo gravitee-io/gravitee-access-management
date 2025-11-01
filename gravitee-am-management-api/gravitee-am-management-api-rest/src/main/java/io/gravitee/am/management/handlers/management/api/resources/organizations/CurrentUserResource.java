@@ -63,7 +63,9 @@ public class CurrentUserResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get the current user")
+    @Operation(
+            operationId = "getCurrentUser",
+            summary = "Get the current user")
     @ApiResponse(responseCode = "200", description = "Current user successfully fetched",
             content = @Content(mediaType = "application/json",
                     schema = @Schema(type="object", additionalPropertiesSchema = String.class)))

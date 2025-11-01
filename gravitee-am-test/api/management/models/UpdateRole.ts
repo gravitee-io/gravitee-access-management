@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,33 +58,43 @@ export interface UpdateRole {
   oauthScopes?: Array<string>;
 }
 
+/**
+ * Check if a given object implements the UpdateRole interface.
+ */
+export function instanceOfUpdateRole(value: object): value is UpdateRole {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  return true;
+}
+
 export function UpdateRoleFromJSON(json: any): UpdateRole {
   return UpdateRoleFromJSONTyped(json, false);
 }
 
 export function UpdateRoleFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateRole {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     name: json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    permissions: !exists(json, 'permissions') ? undefined : json['permissions'],
-    oauthScopes: !exists(json, 'oauthScopes') ? undefined : json['oauthScopes'],
+    description: json['description'] == null ? undefined : json['description'],
+    permissions: json['permissions'] == null ? undefined : json['permissions'],
+    oauthScopes: json['oauthScopes'] == null ? undefined : json['oauthScopes'],
   };
 }
 
-export function UpdateRoleToJSON(value?: UpdateRole | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateRoleToJSON(json: any): UpdateRole {
+  return UpdateRoleToJSONTyped(json, false);
+}
+
+export function UpdateRoleToJSONTyped(value?: UpdateRole | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    description: value.description,
-    permissions: value.permissions,
-    oauthScopes: value.oauthScopes,
+    name: value['name'],
+    description: value['description'],
+    permissions: value['permissions'],
+    oauthScopes: value['oauthScopes'],
   };
 }

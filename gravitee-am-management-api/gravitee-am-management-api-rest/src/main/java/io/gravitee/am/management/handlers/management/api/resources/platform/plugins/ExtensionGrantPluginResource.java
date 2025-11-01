@@ -49,7 +49,9 @@ public class ExtensionGrantPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an extension grant plugin",
+    @Operation(
+            operationId = "getExtensionGrant",
+            summary = "Get an extension grant plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(
             @PathParam("extensionGrant") String extensionGrantId,
@@ -64,7 +66,9 @@ public class ExtensionGrantPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an extension grant plugin's schema",
+    @Operation(
+            operationId = "getExtensionGrantSchema",
+            summary = "Get an extension grant plugin's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("extensionGrant") String extensionGrantId,
                           @Suspended final AsyncResponse response) {

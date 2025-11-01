@@ -74,10 +74,10 @@ describe('Entrypoints: CORS settings', () => {
 
     const corsSettings = patchedDomain.corsSettings;
     expect(corsSettings.enabled).toBe(true);
-    expect(corsSettings.allowedOrigins).toHaveLength(1);
-    expect(corsSettings.allowedOrigins).toContain('*');
-    expect(corsSettings.allowedHeaders).toHaveLength(0);
-    expect(corsSettings.allowedMethods).toHaveLength(0);
+    expect(corsSettings.allowedOrigins.size).toBe(1);
+    expect(corsSettings.allowedOrigins.has('*')).toBe(true);
+    expect(corsSettings.allowedHeaders.size).toBe(0);
+    expect(corsSettings.allowedMethods.size).toBe(0);
   });
 
   it('should disable CORS settings', async () => {
@@ -96,10 +96,10 @@ describe('Entrypoints: CORS settings', () => {
 
     const corsSettings = patchedDomain.corsSettings;
     expect(corsSettings.enabled).toBe(false);
-    expect(corsSettings.allowedOrigins).toHaveLength(1);
-    expect(corsSettings.allowedOrigins).toContain('*');
-    expect(corsSettings.allowedHeaders).toHaveLength(0);
-    expect(corsSettings.allowedMethods).toHaveLength(0);
+    expect(corsSettings.allowedOrigins.size).toBe(1);
+    expect(corsSettings.allowedOrigins.has('*')).toBe(true);
+    expect(corsSettings.allowedHeaders.size).toBe(0);
+    expect(corsSettings.allowedMethods.size).toBe(0);
   });
 
   it('should create custom CORS settings', async () => {
@@ -119,12 +119,15 @@ describe('Entrypoints: CORS settings', () => {
 
     const corsSettings = patchedDomain.corsSettings;
     expect(corsSettings.enabled).toBe(true);
-    expect(corsSettings.allowedOrigins).toHaveLength(1);
-    expect(corsSettings.allowedOrigins).toContain('https://foo.com, https://bar.com/*');
-    expect(corsSettings.allowedHeaders).toHaveLength(2);
-    expect(corsSettings.allowedHeaders).toEqual(expect.arrayContaining(['Authorization', 'Application-Json']));
-    expect(corsSettings.allowedMethods).toHaveLength(3);
-    expect(corsSettings.allowedMethods).toEqual(expect.arrayContaining(['OPTIONS', 'PUT', 'DELETE']));
+    expect(corsSettings.allowedOrigins.size).toBe(1);
+    expect(corsSettings.allowedOrigins.has('https://foo.com, https://bar.com/*')).toBe(true);
+    expect(corsSettings.allowedHeaders.size).toBe(2);
+    expect(corsSettings.allowedHeaders.has('Authorization')).toBe(true);
+    expect(corsSettings.allowedHeaders.has('Application-Json')).toBe(true);
+    expect(corsSettings.allowedMethods.size).toBe(3);
+    expect(corsSettings.allowedMethods.has('OPTIONS')).toBe(true);
+    expect(corsSettings.allowedMethods.has('PUT')).toBe(true);
+    expect(corsSettings.allowedMethods.has('DELETE')).toBe(true);
     expect(corsSettings.maxAge).toBe(50);
   });
 });

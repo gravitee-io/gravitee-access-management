@@ -29,7 +29,7 @@
 import * as runtime from '../runtime';
 import { UserNotificationContent, UserNotificationContentFromJSON, UserNotificationContentToJSON } from '../models';
 
-export interface MarkAsReadRequest {
+export interface MarkNotificationAsReadRequest {
   notificationId: string;
 }
 
@@ -79,14 +79,14 @@ export class UserNotificationsApi extends runtime.BaseAPI {
   /**
    * Mark User notification as read
    */
-  async markAsReadRaw(
-    requestParameters: MarkAsReadRequest,
+  async markNotificationAsReadRaw(
+    requestParameters: MarkNotificationAsReadRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.notificationId === null || requestParameters.notificationId === undefined) {
       throw new runtime.RequiredError(
         'notificationId',
-        'Required parameter requestParameters.notificationId was null or undefined when calling markAsRead.',
+        'Required parameter requestParameters.notificationId was null or undefined when calling markNotificationAsRead.',
       );
     }
 
@@ -121,7 +121,10 @@ export class UserNotificationsApi extends runtime.BaseAPI {
   /**
    * Mark User notification as read
    */
-  async markAsRead(requestParameters: MarkAsReadRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.markAsReadRaw(requestParameters, initOverrides);
+  async markNotificationAsRead(
+    requestParameters: MarkNotificationAsReadRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.markNotificationAsReadRaw(requestParameters, initOverrides);
   }
 }

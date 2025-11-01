@@ -16,9 +16,9 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain} from '@management-commands/domain-management-commands';
+import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
-import { 
+import {
   configureRateLimitPolicy,
   makeTokenRequests,
   makeConcurrentTokenRequests,
@@ -27,7 +27,7 @@ import {
   verifyRateLimitHeadersMissing,
   createServiceApplication,
   waitForRateLimitReset,
-  RateLimitConfig
+  RateLimitConfig,
 } from './fixtures/rate-limit-fixture';
 
 global.fetch = fetch;
@@ -52,13 +52,7 @@ beforeAll(async () => {
   await new Promise((r) => setTimeout(r, 10000));
 
   // Create backend-to-backend application using fixture
-  application = await createServiceApplication(
-    domain.id, 
-    accessToken, 
-    'rate-limit-b2b-app', 
-    'rate-limit-app', 
-    'rate-limit-app'
-  );
+  application = await createServiceApplication(domain.id, accessToken, 'rate-limit-b2b-app', 'rate-limit-app', 'rate-limit-app');
 
   // Get OpenID configuration
   const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
@@ -66,22 +60,21 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    if (domain && domain.id) {
-      await deleteDomain(domain.id, accessToken);
-    }
+  if (domain && domain.id) {
+    await deleteDomain(domain.id, accessToken);
+  }
 });
 
 /**
  * Default rate limit configuration for tests
  */
 const DEFAULT_RATE_LIMIT_CONFIG: RateLimitConfig = {
-    keyExpression: "{#request.headers['test-rate-limit-key']}",
-    limit: 2,
-    periodSeconds: 3
-  };
+  keyExpression: "{#request.headers['test-rate-limit-key']}",
+  limit: 2,
+  periodSeconds: 3,
+};
 
 describe('Rate Limiting Policy Tests', () => {
-
   it('Should enforce rate limiting when no rate limit key header is set', async () => {
     // Configure rate limiting policy
     await configureRateLimitPolicy(domain.id, accessToken, DEFAULT_RATE_LIMIT_CONFIG);
@@ -93,7 +86,7 @@ describe('Rate Limiting Policy Tests', () => {
     const results = analyzeRateLimitResults(requests);
     expect(results.successCount).toEqual(2);
     expect(results.rateLimitedCount).toEqual(2);
-    
+
     // Verify rate limit headers are present
     verifyRateLimitHeaders(requests, 2);
   });
@@ -104,14 +97,14 @@ describe('Rate Limiting Policy Tests', () => {
 
     // Make requests WITH the same rate limit key header
     const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4, {
-      headers: { 'test-rate-limit-key': 'key1' }
+      headers: { 'test-rate-limit-key': 'key1' },
     });
 
     // Should enforce rate limiting for this specific key
     const results = analyzeRateLimitResults(requests);
     expect(results.successCount).toEqual(2);
     expect(results.rateLimitedCount).toEqual(2);
-    
+
     // Verify rate limit headers are present
     verifyRateLimitHeaders(requests, 2);
   });
@@ -122,24 +115,24 @@ describe('Rate Limiting Policy Tests', () => {
 
     // Test key1: Make requests with 'key1' header
     const key1Requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 3, {
-      headers: { 'test-rate-limit-key': 'key1' }
+      headers: { 'test-rate-limit-key': 'key1' },
     });
 
-    // Test key2: Make requests with 'key2' header  
+    // Test key2: Make requests with 'key2' header
     const key2Requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 3, {
-      headers: { 'test-rate-limit-key': 'key2' }
+      headers: { 'test-rate-limit-key': 'key2' },
     });
 
     // Both keys should have their own independent rate limits
     const key1Results = analyzeRateLimitResults(key1Requests);
     const key2Results = analyzeRateLimitResults(key2Requests);
-    
+
     expect(key1Results.successCount).toEqual(2);
     expect(key1Results.rateLimitedCount).toEqual(1);
-    
+
     expect(key2Results.successCount).toEqual(2);
     expect(key2Results.rateLimitedCount).toEqual(1);
-    
+
     // Verify that each key has independent rate limiting with proper headers
     verifyRateLimitHeaders(key1Requests, 2);
     verifyRateLimitHeaders(key2Requests, 2);
@@ -152,7 +145,7 @@ describe('Rate Limiting Policy Tests', () => {
     // Phase 1: Exhaust the rate limit
     console.log('🔍 Phase 1: Exhausting rate limit...');
     const initialRequests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 3, {
-      headers: { 'test-rate-limit-key': 'recovery-test-key' }
+      headers: { 'test-rate-limit-key': 'recovery-test-key' },
     });
 
     const initialResults = analyzeRateLimitResults(initialRequests);
@@ -167,7 +160,7 @@ describe('Rate Limiting Policy Tests', () => {
     // Phase 3: Make new requests to verify rate limit has reset
     console.log('🔍 Phase 3: Testing rate limit recovery...');
     const recoveryRequests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 3, {
-      headers: { 'test-rate-limit-key': 'recovery-test-key' }
+      headers: { 'test-rate-limit-key': 'recovery-test-key' },
     });
 
     const recoveryResults = analyzeRateLimitResults(recoveryRequests);
@@ -189,22 +182,22 @@ describe('Rate Limiting Policy Tests', () => {
 
     // Make requests to test rate limiting behavior
     const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4, {
-      headers: { 'test-rate-limit-key': 'no-headers-test-key' }
+      headers: { 'test-rate-limit-key': 'no-headers-test-key' },
     });
 
     // Rate limiting should still work (2 success, 2 rate limited)
     const results = analyzeRateLimitResults(requests);
     expect(results.successCount).toEqual(2);
     expect(results.rateLimitedCount).toEqual(2);
-    
+
     // But headers should NOT be present when addHeaders is disabled
     verifyRateLimitHeadersMissing(requests);
-    
+
     // Error response should still be correct even without headers
-    const rateLimitedRequests = requests.filter(req => req.status === 429);
+    const rateLimitedRequests = requests.filter((req) => req.status === 429);
     expect(rateLimitedRequests[0].body.error).toBe('invalid_grant');
     expect(rateLimitedRequests[0].body.error_description).toContain('Rate limit exceeded');
-    
+
     console.log('✅ Rate limiting works without headers when addHeaders is disabled');
   });
 
@@ -214,27 +207,27 @@ describe('Rate Limiting Policy Tests', () => {
       keyExpression: "{#request.headers['test-rate-limit-key']}",
       limit: 0, // Must be 0 for dynamicLimit to work
       periodSeconds: 3,
-      dynamicLimit: '4'
+      dynamicLimit: '4',
     };
-    
+
     await configureRateLimitPolicy(domain.id, accessToken, dynamicConfig);
 
     // Make requests to test dynamic rate limiting
     const requests = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
-      headers: { 
-        'test-rate-limit-key': 'dynamic-limit-test'
-      }
+      headers: {
+        'test-rate-limit-key': 'dynamic-limit-test',
+      },
     });
 
     const results = analyzeRateLimitResults(requests);
     const firstRequest = requests[0];
     const actualLimit = parseInt(firstRequest.headers['x-rate-limit-limit']);
-    
+
     // Should use dynamicLimit value of 4
     expect(actualLimit).toBe(4);
     expect(results.successCount).toEqual(4);
     expect(results.rateLimitedCount).toEqual(2);
-    
+
     console.log('✅ Dynamic rate limiting works when limit is 0');
   });
 
@@ -244,7 +237,7 @@ describe('Rate Limiting Policy Tests', () => {
       keyExpression: "{#request.headers['test-rate-limit-key']}",
       limit: 0,
       periodSeconds: 3,
-      dynamicLimit: "{#request.headers['x-test-ratelimit']}"
+      dynamicLimit: "{#request.headers['x-test-ratelimit']}",
     };
 
     await configureRateLimitPolicy(domain.id, accessToken, headerDynamicConfig);
@@ -253,8 +246,8 @@ describe('Rate Limiting Policy Tests', () => {
     const requestsLimit5 = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
       headers: {
         'test-rate-limit-key': 'hdr-limit-5',
-        'x-test-ratelimit': '5'
-      }
+        'x-test-ratelimit': '5',
+      },
     });
 
     const resultLimit5 = analyzeRateLimitResults(requestsLimit5);
@@ -267,8 +260,8 @@ describe('Rate Limiting Policy Tests', () => {
     const requestsLimit2 = await makeTokenRequests(openIdConfiguration.token_endpoint, application, 4, {
       headers: {
         'test-rate-limit-key': 'hdr-limit-2',
-        'x-test-ratelimit': '2'
-      }
+        'x-test-ratelimit': '2',
+      },
     });
 
     const resultLimit2 = analyzeRateLimitResults(requestsLimit2);
@@ -284,13 +277,13 @@ describe('Rate Limiting Policy Tests', () => {
       keyExpression: "{#request.headers['test-rate-limit-key']}",
       limit: 2,
       periodSeconds: 3,
-      async: true
+      async: true,
     };
     await configureRateLimitPolicy(domain.id, accessToken, asyncConfig);
 
     // Fire 6 concurrent requests to ensure we exceed the limit and see blocking
     const asyncRequests = await makeConcurrentTokenRequests(openIdConfiguration.token_endpoint, application, 6, {
-      headers: { 'test-rate-limit-key': 'async-concurrent-test' }
+      headers: { 'test-rate-limit-key': 'async-concurrent-test' },
     });
     const asyncResults = analyzeRateLimitResults(asyncRequests);
 

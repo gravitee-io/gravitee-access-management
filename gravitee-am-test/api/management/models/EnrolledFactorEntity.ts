@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,35 +64,44 @@ export interface EnrolledFactorEntity {
   updatedAt?: Date;
 }
 
+/**
+ * Check if a given object implements the EnrolledFactorEntity interface.
+ */
+export function instanceOfEnrolledFactorEntity(value: object): value is EnrolledFactorEntity {
+  return true;
+}
+
 export function EnrolledFactorEntityFromJSON(json: any): EnrolledFactorEntity {
   return EnrolledFactorEntityFromJSONTyped(json, false);
 }
 
 export function EnrolledFactorEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): EnrolledFactorEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    type: json['type'] == null ? undefined : json['type'],
+    name: json['name'] == null ? undefined : json['name'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function EnrolledFactorEntityToJSON(value?: EnrolledFactorEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function EnrolledFactorEntityToJSON(json: any): EnrolledFactorEntity {
+  return EnrolledFactorEntityToJSONTyped(json, false);
+}
+
+export function EnrolledFactorEntityToJSONTyped(value?: EnrolledFactorEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    type: value.type,
-    name: value.name,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    type: value['type'],
+    name: value['name'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

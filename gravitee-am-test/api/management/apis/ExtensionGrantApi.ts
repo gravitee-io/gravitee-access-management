@@ -53,10 +53,6 @@ export interface DeleteExtensionGrantRequest {
   extensionGrant: string;
 }
 
-export interface Get35Request {
-  extensionGrant: string;
-}
-
 export interface GetExtensionGrantRequest {
   organizationId: string;
   environmentId: string;
@@ -64,7 +60,11 @@ export interface GetExtensionGrantRequest {
   extensionGrant: string;
 }
 
-export interface GetSchema10Request {
+export interface GetExtensionGrant1Request {
+  extensionGrant: string;
+}
+
+export interface GetExtensionGrantSchemaRequest {
   extensionGrant: string;
 }
 
@@ -242,57 +242,6 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
   }
 
   /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an extension grant plugin
-   */
-  async get35Raw(
-    requestParameters: Get35Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
-      throw new runtime.RequiredError(
-        'extensionGrant',
-        'Required parameter requestParameters.extensionGrant was null or undefined when calling get35.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/extensionGrants/{extensionGrant}`.replace(
-          `{${'extensionGrant'}}`,
-          encodeURIComponent(String(requestParameters.extensionGrant)),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an extension grant plugin
-   */
-  async get35(requestParameters: Get35Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get35Raw(requestParameters, initOverrides);
-  }
-
-  /**
    * User must have the DOMAIN_EXTENSION_GRANT[READ] permission on the specified domain or DOMAIN_EXTENSION_GRANT[READ] permission on the specified environment or DOMAIN_EXTENSION_GRANT[READ] permission on the specified organization
    * Get a extension grant
    */
@@ -371,16 +320,70 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get an extension grant plugin\'s schema
+   * Get an extension grant plugin
    */
-  async getSchema10Raw(
-    requestParameters: GetSchema10Request,
+  async getExtensionGrant1Raw(
+    requestParameters: GetExtensionGrant1Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
       throw new runtime.RequiredError(
         'extensionGrant',
-        'Required parameter requestParameters.extensionGrant was null or undefined when calling getSchema10.',
+        'Required parameter requestParameters.extensionGrant was null or undefined when calling getExtensionGrant1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/extensionGrants/{extensionGrant}`.replace(
+          `{${'extensionGrant'}}`,
+          encodeURIComponent(String(requestParameters.extensionGrant)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get an extension grant plugin
+   */
+  async getExtensionGrant1(
+    requestParameters: GetExtensionGrant1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getExtensionGrant1Raw(requestParameters, initOverrides);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get an extension grant plugin\'s schema
+   */
+  async getExtensionGrantSchemaRaw(
+    requestParameters: GetExtensionGrantSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.extensionGrant === null || requestParameters.extensionGrant === undefined) {
+      throw new runtime.RequiredError(
+        'extensionGrant',
+        'Required parameter requestParameters.extensionGrant was null or undefined when calling getExtensionGrantSchema.',
       );
     }
 
@@ -416,46 +419,11 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get an extension grant plugin\'s schema
    */
-  async getSchema10(requestParameters: GetSchema10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema10Raw(requestParameters, initOverrides);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List extension grant plugins
-   */
-  async list34Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/extensionGrants`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List extension grant plugins
-   */
-  async list34(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list34Raw(initOverrides);
+  async getExtensionGrantSchema(
+    requestParameters: GetExtensionGrantSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getExtensionGrantSchemaRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -525,6 +493,44 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
   ): Promise<Array<ExtensionGrant>> {
     const response = await this.listExtensionGrantsRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List extension grant plugins
+   */
+  async listExtensionGrants1Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/extensionGrants`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List extension grant plugins
+   */
+  async listExtensionGrants1(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.listExtensionGrants1Raw(initOverrides);
   }
 
   /**

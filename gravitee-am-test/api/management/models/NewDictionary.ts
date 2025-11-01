@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,12 +46,21 @@ export interface NewDictionary {
   locale: string;
 }
 
+/**
+ * Check if a given object implements the NewDictionary interface.
+ */
+export function instanceOfNewDictionary(value: object): value is NewDictionary {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('locale' in value) || value['locale'] === undefined) return false;
+  return true;
+}
+
 export function NewDictionaryFromJSON(json: any): NewDictionary {
   return NewDictionaryFromJSONTyped(json, false);
 }
 
 export function NewDictionaryFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewDictionary {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
@@ -60,15 +69,17 @@ export function NewDictionaryFromJSONTyped(json: any, ignoreDiscriminator: boole
   };
 }
 
-export function NewDictionaryToJSON(value?: NewDictionary | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewDictionaryToJSON(json: any): NewDictionary {
+  return NewDictionaryToJSONTyped(json, false);
+}
+
+export function NewDictionaryToJSONTyped(value?: NewDictionary | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    locale: value.locale,
+    name: value['name'],
+    locale: value['locale'],
   };
 }

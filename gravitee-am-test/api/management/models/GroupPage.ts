@@ -25,8 +25,9 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { Group, GroupFromJSON, GroupFromJSONTyped, GroupToJSON } from './Group';
+import { mapValues } from '../runtime';
+import type { Group } from './Group';
+import { GroupFromJSON, GroupFromJSONTyped, GroupToJSON, GroupToJSONTyped } from './Group';
 
 /**
  *
@@ -54,31 +55,40 @@ export interface GroupPage {
   totalCount?: number;
 }
 
+/**
+ * Check if a given object implements the GroupPage interface.
+ */
+export function instanceOfGroupPage(value: object): value is GroupPage {
+  return true;
+}
+
 export function GroupPageFromJSON(json: any): GroupPage {
   return GroupPageFromJSONTyped(json, false);
 }
 
 export function GroupPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): GroupPage {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(GroupFromJSON),
-    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
-    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
+    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(GroupFromJSON),
+    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
+    totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
   };
 }
 
-export function GroupPageToJSON(value?: GroupPage | null): any {
-  if (value === undefined) {
-    return undefined;
+export function GroupPageToJSON(json: any): GroupPage {
+  return GroupPageToJSONTyped(json, false);
+}
+
+export function GroupPageToJSONTyped(value?: GroupPage | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    data: value.data === undefined ? undefined : (value.data as Array<any>).map(GroupToJSON),
-    currentPage: value.currentPage,
-    totalCount: value.totalCount,
+    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(GroupToJSON),
+    currentPage: value['currentPage'],
+    totalCount: value['totalCount'],
   };
 }

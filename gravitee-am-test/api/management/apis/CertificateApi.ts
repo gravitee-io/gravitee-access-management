@@ -66,7 +66,11 @@ export interface FindCertificateRequest {
   certificate: string;
 }
 
-export interface Get27Request {
+export interface GetCertificatePluginRequest {
+  certificate: string;
+}
+
+export interface GetCertificatePluginSchemaRequest {
   certificate: string;
 }
 
@@ -81,10 +85,6 @@ export interface GetCertificatePublicKeysRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
-  certificate: string;
-}
-
-export interface GetSchema2Request {
   certificate: string;
 }
 
@@ -349,14 +349,14 @@ export class CertificateApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get an certificate plugin
    */
-  async get27Raw(
-    requestParameters: Get27Request,
+  async getCertificatePluginRaw(
+    requestParameters: GetCertificatePluginRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
       throw new runtime.RequiredError(
         'certificate',
-        'Required parameter requestParameters.certificate was null or undefined when calling get27.',
+        'Required parameter requestParameters.certificate was null or undefined when calling getCertificatePlugin.',
       );
     }
 
@@ -392,8 +392,65 @@ export class CertificateApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get an certificate plugin
    */
-  async get27(requestParameters: Get27Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get27Raw(requestParameters, initOverrides);
+  async getCertificatePlugin(
+    requestParameters: GetCertificatePluginRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getCertificatePluginRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get an certificate\'s schema
+   */
+  async getCertificatePluginSchemaRaw(
+    requestParameters: GetCertificatePluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
+      throw new runtime.RequiredError(
+        'certificate',
+        'Required parameter requestParameters.certificate was null or undefined when calling getCertificatePluginSchema.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/certificates/{certificate}/schema`.replace(
+          `{${'certificate'}}`,
+          encodeURIComponent(String(requestParameters.certificate)),
+        ),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get an certificate\'s schema
+   */
+  async getCertificatePluginSchema(
+    requestParameters: GetCertificatePluginSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getCertificatePluginSchemaRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -551,95 +608,6 @@ export class CertificateApi extends runtime.BaseAPI {
   }
 
   /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an certificate\'s schema
-   */
-  async getSchema2Raw(
-    requestParameters: GetSchema2Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.certificate === null || requestParameters.certificate === undefined) {
-      throw new runtime.RequiredError(
-        'certificate',
-        'Required parameter requestParameters.certificate was null or undefined when calling getSchema2.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/certificates/{certificate}/schema`.replace(
-          `{${'certificate'}}`,
-          encodeURIComponent(String(requestParameters.certificate)),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an certificate\'s schema
-   */
-  async getSchema2(requestParameters: GetSchema2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema2Raw(requestParameters, initOverrides);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List certificate plugins
-   */
-  async list26Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/certificates`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List certificate plugins
-   */
-  async list26(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list26Raw(initOverrides);
-  }
-
-  /**
    * User must have the DOMAIN_CERTIFICATE[LIST] permission on the specified domain or DOMAIN_CERTIFICATE[LIST] permission on the specified environment or DOMAIN_CERTIFICATE[LIST] permission on the specified organization. Each returned certificate is filtered and contains only basic information such as id, name and type.
    * List registered certificates for a security domain
    */
@@ -710,6 +678,44 @@ export class CertificateApi extends runtime.BaseAPI {
   ): Promise<Array<CertificateEntity>> {
     const response = await this.listCertificatesRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List certificate plugins
+   */
+  async listCertificatesPluginsRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/certificates`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List certificate plugins
+   */
+  async listCertificatesPlugins(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.listCertificatesPluginsRaw(initOverrides);
   }
 
   /**

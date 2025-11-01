@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -76,12 +76,14 @@ export const PatchSAMLSettingsRequiredPermissionsEnum = {
   OrganizationForm: 'ORGANIZATION_FORM',
   OrganizationMember: 'ORGANIZATION_MEMBER',
   Environment: 'ENVIRONMENT',
+  DataPlane: 'DATA_PLANE',
   Domain: 'DOMAIN',
   DomainSettings: 'DOMAIN_SETTINGS',
   DomainForm: 'DOMAIN_FORM',
   DomainEmailTemplate: 'DOMAIN_EMAIL_TEMPLATE',
   DomainExtensionPoint: 'DOMAIN_EXTENSION_POINT',
   DomainIdentityProvider: 'DOMAIN_IDENTITY_PROVIDER',
+  DomainAuthorizationEngine: 'DOMAIN_AUTHORIZATION_ENGINE',
   DomainAudit: 'DOMAIN_AUDIT',
   DomainCertificate: 'DOMAIN_CERTIFICATE',
   DomainUser: 'DOMAIN_USER',
@@ -121,39 +123,49 @@ export const PatchSAMLSettingsRequiredPermissionsEnum = {
   ApplicationResource: 'APPLICATION_RESOURCE',
   ApplicationAnalytics: 'APPLICATION_ANALYTICS',
   ApplicationFlow: 'APPLICATION_FLOW',
+  ProtectedResource: 'PROTECTED_RESOURCE',
   LicenseNotification: 'LICENSE_NOTIFICATION',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchSAMLSettingsRequiredPermissionsEnum =
   typeof PatchSAMLSettingsRequiredPermissionsEnum[keyof typeof PatchSAMLSettingsRequiredPermissionsEnum];
 
+/**
+ * Check if a given object implements the PatchSAMLSettings interface.
+ */
+export function instanceOfPatchSAMLSettings(value: object): value is PatchSAMLSettings {
+  return true;
+}
+
 export function PatchSAMLSettingsFromJSON(json: any): PatchSAMLSettings {
   return PatchSAMLSettingsFromJSONTyped(json, false);
 }
 
 export function PatchSAMLSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchSAMLSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    entityId: !exists(json, 'entityId') ? undefined : json['entityId'],
-    certificate: !exists(json, 'certificate') ? undefined : json['certificate'],
-    requiredPermissions: !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    entityId: json['entityId'] == null ? undefined : json['entityId'],
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
+    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
 
-export function PatchSAMLSettingsToJSON(value?: PatchSAMLSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchSAMLSettingsToJSON(json: any): PatchSAMLSettings {
+  return PatchSAMLSettingsToJSONTyped(json, false);
+}
+
+export function PatchSAMLSettingsToJSONTyped(value?: PatchSAMLSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    enabled: value.enabled,
-    entityId: value.entityId,
-    certificate: value.certificate,
-    requiredPermissions: value.requiredPermissions,
+    enabled: value['enabled'],
+    entityId: value['entityId'],
+    certificate: value['certificate'],
+    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
   };
 }

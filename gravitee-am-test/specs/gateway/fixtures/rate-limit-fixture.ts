@@ -36,7 +36,6 @@ export interface TokenRequestOptions {
   body?: string;
 }
 
-
 /**
  * Create a SERVICE application for client_credentials grant type
  */
@@ -45,7 +44,7 @@ export const createServiceApplication = async (
   accessToken: string,
   name: string,
   clientId: string,
-  clientSecret: string
+  clientSecret: string,
 ) => {
   const application = await createApplication(domainId, accessToken, {
     name,
@@ -83,11 +82,7 @@ export const createServiceApplication = async (
 /**
  * Configure rate limiting policy on a domain
  */
-export const configureRateLimitPolicy = async (
-  domainId: string,
-  accessToken: string,
-  config: RateLimitConfig
-) => {
+export const configureRateLimitPolicy = async (domainId: string, accessToken: string, config: RateLimitConfig) => {
   const flows = await getDomainFlows(domainId, accessToken);
   const rateLimitConfig = {
     async: config.async ?? false,
@@ -95,11 +90,11 @@ export const configureRateLimitPolicy = async (
     rate: {
       useKeyOnly: true,
       periodTime: config.periodSeconds ?? 3,
-      periodTimeUnit: "SECONDS",
+      periodTimeUnit: 'SECONDS',
       key: config.keyExpression,
       limit: config.limit ?? 2,
-      dynamicLimit: config.dynamicLimit ?? 2
-    }
+      dynamicLimit: config.dynamicLimit ?? 2,
+    },
   };
 
   lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.Token, 'pre', [
@@ -118,37 +113,23 @@ export const configureRateLimitPolicy = async (
   // Restart domain to apply policy
   const restartedDomain = await startDomain(domainId, accessToken);
   await new Promise((r) => setTimeout(r, 10000));
-  
+
   return restartedDomain;
 };
 
 /**
  * Make multiple token requests with specified options
  */
-export const makeTokenRequests = async (
-  tokenEndpoint: string,
-  application: any,
-  count: number,
-  options: TokenRequestOptions = {}
-) => {
+export const makeTokenRequests = async (tokenEndpoint: string, application: any, count: number, options: TokenRequestOptions = {}) => {
   const requests = [];
-  const {
-    grantType = 'client_credentials',
-    headers = {},
-    body = `grant_type=${grantType}`
-  } = options;
+  const { grantType = 'client_credentials', headers = {}, body = `grant_type=${grantType}` } = options;
 
   for (let i = 0; i < count; i++) {
-    const response = await performPost(
-      tokenEndpoint,
-      '',
-      body,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: 'Basic ' + applicationBase64Token(application),
-        ...headers,
-      }
-    );
+    const response = await performPost(tokenEndpoint, '', body, {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + applicationBase64Token(application),
+      ...headers,
+    });
     requests.push(response);
   }
   return requests;
@@ -161,25 +142,16 @@ export const makeConcurrentTokenRequests = async (
   tokenEndpoint: string,
   application: any,
   count: number,
-  options: TokenRequestOptions = {}
+  options: TokenRequestOptions = {},
 ) => {
-  const {
-    grantType = 'client_credentials',
-    headers = {},
-    body = `grant_type=${grantType}`
-  } = options;
+  const { grantType = 'client_credentials', headers = {}, body = `grant_type=${grantType}` } = options;
 
   const promises = Array.from({ length: count }).map(() =>
-    performPost(
-      tokenEndpoint,
-      '',
-      body,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: 'Basic ' + applicationBase64Token(application),
-        ...headers,
-      }
-    )
+    performPost(tokenEndpoint, '', body, {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + applicationBase64Token(application),
+      ...headers,
+    }),
   );
   return await Promise.all(promises);
 };
@@ -188,17 +160,17 @@ export const makeConcurrentTokenRequests = async (
  * Analyze rate limiting results from requests
  */
 export const analyzeRateLimitResults = (requests: any[]) => {
-  const successCount = requests.filter(req => req.status === 200).length;
-  const rateLimitedCount = requests.filter(req => req.status === 429).length;
-  const successfulRequests = requests.filter(req => req.status === 200);
-  const rateLimitedRequests = requests.filter(req => req.status === 429);
+  const successCount = requests.filter((req) => req.status === 200).length;
+  const rateLimitedCount = requests.filter((req) => req.status === 429).length;
+  const successfulRequests = requests.filter((req) => req.status === 200);
+  const rateLimitedRequests = requests.filter((req) => req.status === 429);
 
   return {
     successCount,
     rateLimitedCount,
     successfulRequests,
     rateLimitedRequests,
-    totalRequests: requests.length
+    totalRequests: requests.length,
   };
 };
 
@@ -206,8 +178,8 @@ export const analyzeRateLimitResults = (requests: any[]) => {
  * Verify rate limiting headers on successful requests
  */
 export const verifyRateLimitHeaders = (requests: any[], expectedLimit: number) => {
-  const successfulRequests = requests.filter(req => req.status === 200);
-  
+  const successfulRequests = requests.filter((req) => req.status === 200);
+
   if (successfulRequests.length > 0) {
     const firstRequest = successfulRequests[0];
     expect(firstRequest.headers['x-rate-limit-limit']).toBe(expectedLimit.toString());
@@ -220,16 +192,16 @@ export const verifyRateLimitHeaders = (requests: any[], expectedLimit: number) =
  * Verify that rate limit headers are missing from requests
  */
 export const verifyRateLimitHeadersMissing = (requests: any[]) => {
-  const successfulRequests = requests.filter(req => req.status === 200);
-  const rateLimitedRequests = requests.filter(req => req.status === 429);
-  
+  const successfulRequests = requests.filter((req) => req.status === 200);
+  const rateLimitedRequests = requests.filter((req) => req.status === 429);
+
   // Check that rate limit headers are missing from successful requests
   if (successfulRequests.length > 0) {
     expect(successfulRequests[0].headers['x-rate-limit-limit']).toBeUndefined();
     expect(successfulRequests[0].headers['x-rate-limit-remaining']).toBeUndefined();
     expect(successfulRequests[0].headers['x-rate-limit-reset']).toBeUndefined();
   }
-  
+
   // Check that rate limit headers are missing from rate limited requests
   if (rateLimitedRequests.length > 0) {
     expect(rateLimitedRequests[0].headers['x-rate-limit-limit']).toBeUndefined();

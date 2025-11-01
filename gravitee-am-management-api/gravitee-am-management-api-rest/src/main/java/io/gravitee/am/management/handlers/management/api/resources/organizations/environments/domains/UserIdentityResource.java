@@ -46,7 +46,9 @@ public class UserIdentityResource extends AbstractResource {
     private ManagementUserService userService;
 
     @DELETE
-    @Operation(summary = "Unlink user identity",
+    @Operation(
+            operationId = "unlinkUserIdentity",
+            summary = "Unlink user identity",
             description = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")

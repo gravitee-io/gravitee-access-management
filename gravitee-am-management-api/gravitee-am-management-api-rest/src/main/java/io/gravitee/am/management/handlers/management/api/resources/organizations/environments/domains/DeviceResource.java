@@ -46,7 +46,9 @@ public class DeviceResource extends AbstractResource {
     private DeviceManagementService deviceService;
 
     @DELETE
-    @Operation(summary = "Delete a device",
+    @Operation(
+            operationId = "deleteUserDevice",
+            summary = "Delete a device",
             description = "User must have the DOMAIN_USER_DEVICE[DELETE] permission on the specified domain " +
                     "or DOMAIN_USER_DEVICE[DELETE] permission on the specified environment " +
                     "or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization")

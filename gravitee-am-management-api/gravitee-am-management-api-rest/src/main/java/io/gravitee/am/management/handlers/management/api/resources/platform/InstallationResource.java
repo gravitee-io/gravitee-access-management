@@ -53,7 +53,9 @@ public class InstallationResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get installation information",
+    @Operation(
+            operationId = "getInstallation",
+            summary = "Get installation information",
             description = "User must have the INSTALLATION[READ] permission on the platform")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Installation successfully fetched",

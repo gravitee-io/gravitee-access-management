@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,12 +52,22 @@ export interface UpdateCertificate {
   configuration: string;
 }
 
+/**
+ * Check if a given object implements the UpdateCertificate interface.
+ */
+export function instanceOfUpdateCertificate(value: object): value is UpdateCertificate {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function UpdateCertificateFromJSON(json: any): UpdateCertificate {
   return UpdateCertificateFromJSONTyped(json, false);
 }
 
 export function UpdateCertificateFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateCertificate {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
@@ -67,16 +77,18 @@ export function UpdateCertificateFromJSONTyped(json: any, ignoreDiscriminator: b
   };
 }
 
-export function UpdateCertificateToJSON(value?: UpdateCertificate | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateCertificateToJSON(json: any): UpdateCertificate {
+  return UpdateCertificateToJSONTyped(json, false);
+}
+
+export function UpdateCertificateToJSONTyped(value?: UpdateCertificate | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
   };
 }

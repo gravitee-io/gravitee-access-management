@@ -66,7 +66,9 @@ public class ReporterResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a reporter",
+    @Operation(
+            operationId = "getDomainReporter",
+            summary = "Get a reporter",
             description = "User must have the DOMAIN_REPORTER[READ] permission on the specified domain " +
                     "or DOMAIN_REPORTER[READ] permission on the specified environment " +
                     "or DOMAIN_REPORTER[READ] permission on the specified organization")
@@ -99,7 +101,9 @@ public class ReporterResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update a reporter",
+    @Operation(
+            operationId = "updateDomainReporter",
+            summary = "Update a reporter",
             description = "User must have the DOMAIN_REPORTER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_REPORTER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_REPORTER[UPDATE] permission on the specified organization")
@@ -126,7 +130,9 @@ public class ReporterResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Delete a reporter",
+    @Operation(
+            operationId = "deleteDomainReporter",
+            summary = "Delete a reporter",
             description = "User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain " +
                     "or DOMAIN_REPORTER[DELETE] permission on the specified environment " +
                     "or DOMAIN_REPORTER[DELETE] permission on the specified organization")

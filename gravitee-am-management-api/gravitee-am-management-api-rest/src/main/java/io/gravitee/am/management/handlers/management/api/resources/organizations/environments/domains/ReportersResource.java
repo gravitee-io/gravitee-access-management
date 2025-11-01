@@ -75,7 +75,9 @@ public class ReportersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List registered reporters for a security domain",
+    @Operation(
+            operationId = "listDomainReporters",
+            summary = "List registered reporters for a security domain",
             description = "User must have the DOMAIN_REPORTER[LIST] permission on the specified domain " +
                     "or DOMAIN_REPORTER[LIST] permission on the specified environment " +
                     "or DOMAIN_REPORTER[LIST] permission on the specified organization. " +
@@ -114,7 +116,9 @@ public class ReportersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a reporter for a security domain",
+    @Operation(
+            operationId = "createDomainReporter",
+            summary = "Create a reporter for a security domain",
             description = "User must have the DOMAIN_REPORTER[CREATE] permission on the specified domain " +
                     "or DOMAIN_REPORTER[CREATE] permission on the specified environment " +
                     "or DOMAIN_REPORTER[CREATE] permission on the specified organization.")

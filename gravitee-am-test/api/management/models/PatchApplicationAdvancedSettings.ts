@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,29 +46,41 @@ export interface PatchApplicationAdvancedSettings {
   flowsInherited?: boolean;
 }
 
+/**
+ * Check if a given object implements the PatchApplicationAdvancedSettings interface.
+ */
+export function instanceOfPatchApplicationAdvancedSettings(value: object): value is PatchApplicationAdvancedSettings {
+  return true;
+}
+
 export function PatchApplicationAdvancedSettingsFromJSON(json: any): PatchApplicationAdvancedSettings {
   return PatchApplicationAdvancedSettingsFromJSONTyped(json, false);
 }
 
 export function PatchApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchApplicationAdvancedSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    skipConsent: !exists(json, 'skipConsent') ? undefined : json['skipConsent'],
-    flowsInherited: !exists(json, 'flowsInherited') ? undefined : json['flowsInherited'],
+    skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
+    flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
   };
 }
 
-export function PatchApplicationAdvancedSettingsToJSON(value?: PatchApplicationAdvancedSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchApplicationAdvancedSettingsToJSON(json: any): PatchApplicationAdvancedSettings {
+  return PatchApplicationAdvancedSettingsToJSONTyped(json, false);
+}
+
+export function PatchApplicationAdvancedSettingsToJSONTyped(
+  value?: PatchApplicationAdvancedSettings | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    skipConsent: value.skipConsent,
-    flowsInherited: value.flowsInherited,
+    skipConsent: value['skipConsent'],
+    flowsInherited: value['flowsInherited'],
   };
 }

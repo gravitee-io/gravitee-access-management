@@ -59,7 +59,9 @@ public class FormResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update a form",
+    @Operation(
+            operationId = "updateForm",
+            summary = "Update a form",
             description = "User must have the ORGANIZATION_FORM[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Form successfully updated",
@@ -79,7 +81,9 @@ public class FormResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete a form",
+    @Operation(
+            operationId = "deleteForm",
+            summary = "Delete a form",
             description = "User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Form successfully deleted"),

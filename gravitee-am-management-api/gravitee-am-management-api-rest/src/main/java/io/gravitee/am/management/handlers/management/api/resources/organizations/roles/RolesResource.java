@@ -67,7 +67,9 @@ public class RolesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List registered roles of the organization",
+    @Operation(
+            operationId = "listRoles",
+            summary = "List registered roles of the organization",
             description = "User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. " +
                     "Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.")
     @ApiResponses({
@@ -91,7 +93,9 @@ public class RolesResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a role for the organization",
+    @Operation(
+            operationId = "createRole",
+            summary = "Create a role for the organization",
             description = "User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Role successfully created"),

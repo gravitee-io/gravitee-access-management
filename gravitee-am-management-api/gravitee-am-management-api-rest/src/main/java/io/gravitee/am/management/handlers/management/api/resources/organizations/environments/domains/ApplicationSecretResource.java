@@ -89,7 +89,9 @@ public class ApplicationSecretResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete a secret of an application",
+    @Operation(
+            operationId = "deleteClientSecret",
+            summary = "Delete a secret of an application",
             description = "User must have APPLICATION_OPENID[DELETE] permission on the specified application " +
                     "or APPLICATION_OPENID[DELETE] permission on the specified domain " +
                     "or APPLICATION_OPENID[DELETE] permission on the specified environment " +

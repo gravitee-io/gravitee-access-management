@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -88,43 +88,52 @@ export interface JWK {
   x5tS256?: string;
 }
 
+/**
+ * Check if a given object implements the JWK interface.
+ */
+export function instanceOfJWK(value: object): value is JWK {
+  return true;
+}
+
 export function JWKFromJSON(json: any): JWK {
   return JWKFromJSONTyped(json, false);
 }
 
 export function JWKFromJSONTyped(json: any, ignoreDiscriminator: boolean): JWK {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    kty: !exists(json, 'kty') ? undefined : json['kty'],
-    use: !exists(json, 'use') ? undefined : json['use'],
-    keyOps: !exists(json, 'keyOps') ? undefined : json['keyOps'],
-    alg: !exists(json, 'alg') ? undefined : json['alg'],
-    kid: !exists(json, 'kid') ? undefined : json['kid'],
-    x5u: !exists(json, 'x5u') ? undefined : json['x5u'],
-    x5c: !exists(json, 'x5c') ? undefined : json['x5c'],
-    x5t: !exists(json, 'x5t') ? undefined : json['x5t'],
-    x5tS256: !exists(json, 'x5tS256') ? undefined : json['x5tS256'],
+    kty: json['kty'] == null ? undefined : json['kty'],
+    use: json['use'] == null ? undefined : json['use'],
+    keyOps: json['keyOps'] == null ? undefined : new Set(json['keyOps']),
+    alg: json['alg'] == null ? undefined : json['alg'],
+    kid: json['kid'] == null ? undefined : json['kid'],
+    x5u: json['x5u'] == null ? undefined : json['x5u'],
+    x5c: json['x5c'] == null ? undefined : new Set(json['x5c']),
+    x5t: json['x5t'] == null ? undefined : json['x5t'],
+    x5tS256: json['x5tS256'] == null ? undefined : json['x5tS256'],
   };
 }
 
-export function JWKToJSON(value?: JWK | null): any {
-  if (value === undefined) {
-    return undefined;
+export function JWKToJSON(json: any): JWK {
+  return JWKToJSONTyped(json, false);
+}
+
+export function JWKToJSONTyped(value?: JWK | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    kty: value.kty,
-    use: value.use,
-    keyOps: value.keyOps,
-    alg: value.alg,
-    kid: value.kid,
-    x5u: value.x5u,
-    x5c: value.x5c,
-    x5t: value.x5t,
-    x5tS256: value.x5tS256,
+    kty: value['kty'],
+    use: value['use'],
+    keyOps: value['keyOps'] == null ? undefined : Array.from(value['keyOps'] as Set<any>),
+    alg: value['alg'],
+    kid: value['kid'],
+    x5u: value['x5u'],
+    x5c: value['x5c'] == null ? undefined : Array.from(value['x5c'] as Set<any>),
+    x5t: value['x5t'],
+    x5tS256: value['x5tS256'],
   };
 }

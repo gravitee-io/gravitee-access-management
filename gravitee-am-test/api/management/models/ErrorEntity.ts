@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,29 +46,38 @@ export interface ErrorEntity {
   http_status?: number;
 }
 
+/**
+ * Check if a given object implements the ErrorEntity interface.
+ */
+export function instanceOfErrorEntity(value: object): value is ErrorEntity {
+  return true;
+}
+
 export function ErrorEntityFromJSON(json: any): ErrorEntity {
   return ErrorEntityFromJSONTyped(json, false);
 }
 
 export function ErrorEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): ErrorEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    message: !exists(json, 'message') ? undefined : json['message'],
-    http_status: !exists(json, 'http_status') ? undefined : json['http_status'],
+    message: json['message'] == null ? undefined : json['message'],
+    http_status: json['http_status'] == null ? undefined : json['http_status'],
   };
 }
 
-export function ErrorEntityToJSON(value?: ErrorEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ErrorEntityToJSON(json: any): ErrorEntity {
+  return ErrorEntityToJSONTyped(json, false);
+}
+
+export function ErrorEntityToJSONTyped(value?: ErrorEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    message: value.message,
-    http_status: value.http_status,
+    message: value['message'],
+    http_status: value['http_status'],
   };
 }

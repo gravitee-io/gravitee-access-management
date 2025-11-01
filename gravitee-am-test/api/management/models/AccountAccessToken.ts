@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -107,45 +107,54 @@ export const AccountAccessTokenReferenceTypeEnum = {
 export type AccountAccessTokenReferenceTypeEnum =
   typeof AccountAccessTokenReferenceTypeEnum[keyof typeof AccountAccessTokenReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the AccountAccessToken interface.
+ */
+export function instanceOfAccountAccessToken(value: object): value is AccountAccessToken {
+  return true;
+}
+
 export function AccountAccessTokenFromJSON(json: any): AccountAccessToken {
   return AccountAccessTokenFromJSONTyped(json, false);
 }
 
 export function AccountAccessTokenFromJSONTyped(json: any, ignoreDiscriminator: boolean): AccountAccessToken {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    tokenId: !exists(json, 'tokenId') ? undefined : json['tokenId'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    userId: !exists(json, 'userId') ? undefined : json['userId'],
-    issuerUsername: !exists(json, 'issuerUsername') ? undefined : json['issuerUsername'],
-    issuerId: !exists(json, 'issuerId') ? undefined : json['issuerId'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    token: !exists(json, 'token') ? undefined : json['token'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    tokenId: json['tokenId'] == null ? undefined : json['tokenId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    userId: json['userId'] == null ? undefined : json['userId'],
+    issuerUsername: json['issuerUsername'] == null ? undefined : json['issuerUsername'],
+    issuerId: json['issuerId'] == null ? undefined : json['issuerId'],
+    name: json['name'] == null ? undefined : json['name'],
+    token: json['token'] == null ? undefined : json['token'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function AccountAccessTokenToJSON(value?: AccountAccessToken | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AccountAccessTokenToJSON(json: any): AccountAccessToken {
+  return AccountAccessTokenToJSONTyped(json, false);
+}
+
+export function AccountAccessTokenToJSONTyped(value?: AccountAccessToken | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    tokenId: value.tokenId,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    userId: value.userId,
-    issuerUsername: value.issuerUsername,
-    issuerId: value.issuerId,
-    name: value.name,
-    token: value.token,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    tokenId: value['tokenId'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    userId: value['userId'],
+    issuerUsername: value['issuerUsername'],
+    issuerId: value['issuerId'],
+    name: value['name'],
+    token: value['token'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

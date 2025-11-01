@@ -42,7 +42,9 @@ public class LicenseResource extends AbstractResource {
     private boolean isLicenseExpirationNotifierEnabled = true;
 
     @GET
-    @Operation(summary = "Get current node License")
+    @Operation(
+            operationId = "getLicense",
+            summary = "Get current node License")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public void get(@Suspended final AsyncResponse response) {

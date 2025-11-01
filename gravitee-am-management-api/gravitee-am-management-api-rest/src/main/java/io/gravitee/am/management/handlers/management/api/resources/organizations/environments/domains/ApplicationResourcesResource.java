@@ -74,7 +74,9 @@ public class ApplicationResourcesResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List resources for an application",
+    @Operation(
+            operationId = "listApplicationResources",
+            summary = "List resources for an application",
             description = "User must have APPLICATION_RESOURCE[LIST] permission on the specified application " +
                     "or APPLICATION_RESOURCE[LIST] permission on the specified domain " +
                     "or APPLICATION_RESOURCE[LIST] permission on the specified environment " +

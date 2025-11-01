@@ -44,6 +44,9 @@ case $SDK_OUTPUT_PATH in
   *) SDK_OUTPUT_PATH="$SCRIPT_DIR/$SDK_OUTPUT_PATH";;
 esac
 
+echo "[INFO] OpenAPI Generator Version:"
+npx @openapitools/openapi-generator-cli version
+
 echo "[INFO] output path will be: $SDK_OUTPUT_PATH"
 
 npx @openapitools/openapi-generator-cli generate \
@@ -66,3 +69,7 @@ find "$SDK_OUTPUT_PATH" -name "*.ts" -exec sed -i.bak "/* The version of the Ope
 find "$SDK_OUTPUT_PATH" -name "*.ts.bak" -exec rm -f {} \;
 rm -f "$SDK_OUTPUT_PATH/index.ts"
 rm -f "$SDK_OUTPUT_PATH/apis/index.ts"
+
+# Format all generated TypeScript files with Prettier
+echo "[INFO] Formatting generated files with Prettier..."
+npx prettier --write "$SDK_OUTPUT_PATH/**/*.ts"

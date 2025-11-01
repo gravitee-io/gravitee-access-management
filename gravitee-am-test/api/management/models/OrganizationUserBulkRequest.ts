@@ -25,14 +25,17 @@
 
 /* tslint:disable */
 /* eslint-disable */
+import type { BulkCreateOrganizationUser } from './BulkCreateOrganizationUser';
 import {
-  BulkCreateOrganizationUser,
+  instanceOfBulkCreateOrganizationUser,
   BulkCreateOrganizationUserFromJSON,
   BulkCreateOrganizationUserFromJSONTyped,
   BulkCreateOrganizationUserToJSON,
 } from './BulkCreateOrganizationUser';
-import { BulkDeleteUser, BulkDeleteUserFromJSON, BulkDeleteUserFromJSONTyped, BulkDeleteUserToJSON } from './BulkDeleteUser';
-import { BulkUpdateUser, BulkUpdateUserFromJSON, BulkUpdateUserFromJSONTyped, BulkUpdateUserToJSON } from './BulkUpdateUser';
+import type { BulkDeleteUser } from './BulkDeleteUser';
+import { instanceOfBulkDeleteUser, BulkDeleteUserFromJSON, BulkDeleteUserFromJSONTyped, BulkDeleteUserToJSON } from './BulkDeleteUser';
+import type { BulkUpdateUser } from './BulkUpdateUser';
+import { instanceOfBulkUpdateUser, BulkUpdateUserFromJSON, BulkUpdateUserFromJSONTyped, BulkUpdateUserToJSON } from './BulkUpdateUser';
 
 /**
  * @type OrganizationUserBulkRequest
@@ -40,9 +43,6 @@ import { BulkUpdateUser, BulkUpdateUserFromJSON, BulkUpdateUserFromJSONTyped, Bu
  * @export
  */
 export type OrganizationUserBulkRequest =
-  | ({ action: 'BulkCreateOrganizationUser' } & BulkCreateOrganizationUser)
-  | ({ action: 'BulkDeleteUser' } & BulkDeleteUser)
-  | ({ action: 'BulkUpdateUser' } & BulkUpdateUser)
   | ({ action: 'CREATE' } & BulkCreateOrganizationUser)
   | ({ action: 'DELETE' } & BulkDeleteUser)
   | ({ action: 'UPDATE' } & BulkUpdateUser);
@@ -52,48 +52,40 @@ export function OrganizationUserBulkRequestFromJSON(json: any): OrganizationUser
 }
 
 export function OrganizationUserBulkRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): OrganizationUserBulkRequest {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   switch (json['action']) {
-    case 'BulkCreateOrganizationUser':
-      return { ...BulkCreateOrganizationUserFromJSONTyped(json, true), action: 'BulkCreateOrganizationUser' };
-    case 'BulkDeleteUser':
-      return { ...BulkDeleteUserFromJSONTyped(json, true), action: 'BulkDeleteUser' };
-    case 'BulkUpdateUser':
-      return { ...BulkUpdateUserFromJSONTyped(json, true), action: 'BulkUpdateUser' };
     case 'CREATE':
-      return { ...BulkCreateOrganizationUserFromJSONTyped(json, true), action: 'CREATE' };
+      return Object.assign({}, BulkCreateOrganizationUserFromJSONTyped(json, true), { action: 'CREATE' } as const);
     case 'DELETE':
-      return { ...BulkDeleteUserFromJSONTyped(json, true), action: 'DELETE' };
+      return Object.assign({}, BulkDeleteUserFromJSONTyped(json, true), { action: 'DELETE' } as const);
     case 'UPDATE':
-      return { ...BulkUpdateUserFromJSONTyped(json, true), action: 'UPDATE' };
+      return Object.assign({}, BulkUpdateUserFromJSONTyped(json, true), { action: 'UPDATE' } as const);
     default:
-      throw new Error(`No variant of OrganizationUserBulkRequest exists with 'action=${json['action']}'`);
+      return json;
   }
 }
 
-export function OrganizationUserBulkRequestToJSON(value?: OrganizationUserBulkRequest | null): any {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
+export function OrganizationUserBulkRequestToJSON(json: any): any {
+  return OrganizationUserBulkRequestToJSONTyped(json, false);
+}
+
+export function OrganizationUserBulkRequestToJSONTyped(
+  value?: OrganizationUserBulkRequest | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
   switch (value['action']) {
-    case 'BulkCreateOrganizationUser':
-      return BulkCreateOrganizationUserToJSON(value);
-    case 'BulkDeleteUser':
-      return BulkDeleteUserToJSON(value);
-    case 'BulkUpdateUser':
-      return BulkUpdateUserToJSON(value);
     case 'CREATE':
-      return BulkCreateOrganizationUserToJSON(value);
+      return Object.assign({}, BulkCreateOrganizationUserToJSON(value), { action: 'CREATE' } as const);
     case 'DELETE':
-      return BulkDeleteUserToJSON(value);
+      return Object.assign({}, BulkDeleteUserToJSON(value), { action: 'DELETE' } as const);
     case 'UPDATE':
-      return BulkUpdateUserToJSON(value);
+      return Object.assign({}, BulkUpdateUserToJSON(value), { action: 'UPDATE' } as const);
     default:
-      throw new Error(`No variant of OrganizationUserBulkRequest exists with 'action=${value['action']}'`);
+      return value;
   }
 }

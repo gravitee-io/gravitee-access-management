@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -124,51 +124,60 @@ export const ThemeEntityReferenceTypeEnum = {
 } as const;
 export type ThemeEntityReferenceTypeEnum = typeof ThemeEntityReferenceTypeEnum[keyof typeof ThemeEntityReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the ThemeEntity interface.
+ */
+export function instanceOfThemeEntity(value: object): value is ThemeEntity {
+  return true;
+}
+
 export function ThemeEntityFromJSON(json: any): ThemeEntity {
   return ThemeEntityFromJSONTyped(json, false);
 }
 
 export function ThemeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): ThemeEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    logoUrl: !exists(json, 'logoUrl') ? undefined : json['logoUrl'],
-    logoWidth: !exists(json, 'logoWidth') ? undefined : json['logoWidth'],
-    faviconUrl: !exists(json, 'faviconUrl') ? undefined : json['faviconUrl'],
-    primaryButtonColorHex: !exists(json, 'primaryButtonColorHex') ? undefined : json['primaryButtonColorHex'],
-    secondaryButtonColorHex: !exists(json, 'secondaryButtonColorHex') ? undefined : json['secondaryButtonColorHex'],
-    primaryTextColorHex: !exists(json, 'primaryTextColorHex') ? undefined : json['primaryTextColorHex'],
-    secondaryTextColorHex: !exists(json, 'secondaryTextColorHex') ? undefined : json['secondaryTextColorHex'],
-    css: !exists(json, 'css') ? undefined : json['css'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    logoUrl: json['logoUrl'] == null ? undefined : json['logoUrl'],
+    logoWidth: json['logoWidth'] == null ? undefined : json['logoWidth'],
+    faviconUrl: json['faviconUrl'] == null ? undefined : json['faviconUrl'],
+    primaryButtonColorHex: json['primaryButtonColorHex'] == null ? undefined : json['primaryButtonColorHex'],
+    secondaryButtonColorHex: json['secondaryButtonColorHex'] == null ? undefined : json['secondaryButtonColorHex'],
+    primaryTextColorHex: json['primaryTextColorHex'] == null ? undefined : json['primaryTextColorHex'],
+    secondaryTextColorHex: json['secondaryTextColorHex'] == null ? undefined : json['secondaryTextColorHex'],
+    css: json['css'] == null ? undefined : json['css'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function ThemeEntityToJSON(value?: ThemeEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ThemeEntityToJSON(json: any): ThemeEntity {
+  return ThemeEntityToJSONTyped(json, false);
+}
+
+export function ThemeEntityToJSONTyped(value?: ThemeEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    referenceId: value.referenceId,
-    referenceType: value.referenceType,
-    logoUrl: value.logoUrl,
-    logoWidth: value.logoWidth,
-    faviconUrl: value.faviconUrl,
-    primaryButtonColorHex: value.primaryButtonColorHex,
-    secondaryButtonColorHex: value.secondaryButtonColorHex,
-    primaryTextColorHex: value.primaryTextColorHex,
-    secondaryTextColorHex: value.secondaryTextColorHex,
-    css: value.css,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    logoUrl: value['logoUrl'],
+    logoWidth: value['logoWidth'],
+    faviconUrl: value['faviconUrl'],
+    primaryButtonColorHex: value['primaryButtonColorHex'],
+    secondaryButtonColorHex: value['secondaryButtonColorHex'],
+    primaryTextColorHex: value['primaryTextColorHex'],
+    secondaryTextColorHex: value['secondaryTextColorHex'],
+    css: value['css'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

@@ -54,7 +54,9 @@ public class GroupMemberResource extends AbstractResource {
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Add a group member",
+    @Operation(
+            operationId = "addGroupMember",
+            summary = "Add a group member",
             description = "User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Member has been added successfully"),
@@ -90,7 +92,9 @@ public class GroupMemberResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Remove a group member",
+    @Operation(
+            operationId = "removeGroupMember",
+            summary = "Remove a group member",
             description = "User must have the ORGANIZATION_GROUP[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Member has been removed successfully"),

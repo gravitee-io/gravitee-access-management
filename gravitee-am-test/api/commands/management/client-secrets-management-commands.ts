@@ -16,7 +16,7 @@
 import { getApplicationApi } from '@management-commands/service/utils';
 
 export const createClientSecret = (domainId, accessToken, application, newClientSecret) =>
-  getApplicationApi(accessToken).create1({
+  getApplicationApi(accessToken).createSecret({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
@@ -34,7 +34,7 @@ export const renewClientSecret = (domainId, accessToken, application, secret) =>
   });
 
 export const deleteClientSecret = (domainId, accessToken, application, secret) =>
-  getApplicationApi(accessToken).delete1({
+  getApplicationApi(accessToken).deleteClientSecret({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,
@@ -43,7 +43,7 @@ export const deleteClientSecret = (domainId, accessToken, application, secret) =
   });
 
 export const listClientSecrets = (domainId, accessToken, application) =>
-  getApplicationApi(accessToken).getSecrets({
+  getApplicationApi(accessToken).listSecrets({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
     domain: domainId,

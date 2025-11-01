@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -61,12 +61,22 @@ export const NewMembershipMemberTypeEnum = {
 } as const;
 export type NewMembershipMemberTypeEnum = typeof NewMembershipMemberTypeEnum[keyof typeof NewMembershipMemberTypeEnum];
 
+/**
+ * Check if a given object implements the NewMembership interface.
+ */
+export function instanceOfNewMembership(value: object): value is NewMembership {
+  if (!('memberId' in value) || value['memberId'] === undefined) return false;
+  if (!('memberType' in value) || value['memberType'] === undefined) return false;
+  if (!('role' in value) || value['role'] === undefined) return false;
+  return true;
+}
+
 export function NewMembershipFromJSON(json: any): NewMembership {
   return NewMembershipFromJSONTyped(json, false);
 }
 
 export function NewMembershipFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewMembership {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
@@ -76,16 +86,18 @@ export function NewMembershipFromJSONTyped(json: any, ignoreDiscriminator: boole
   };
 }
 
-export function NewMembershipToJSON(value?: NewMembership | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewMembershipToJSON(json: any): NewMembership {
+  return NewMembershipToJSONTyped(json, false);
+}
+
+export function NewMembershipToJSONTyped(value?: NewMembership | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    memberId: value.memberId,
-    memberType: value.memberType,
-    role: value.role,
+    memberId: value['memberId'],
+    memberType: value['memberType'],
+    role: value['role'],
   };
 }

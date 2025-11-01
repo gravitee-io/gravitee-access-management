@@ -563,7 +563,7 @@ const createMfaEnrollFlowApp = async (domain, accessToken, smsFactorId, callFact
 
   const flows = await getApplicationFlows(domain.id, accessToken, application.id);
 
-  lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.MfaEnroll, 'post', [
+  lookupFlowAndResetPolicies(flows, FlowEntityTypeEnum.MfaEnrollment, 'post', [
     {
       name: 'enrollMFAPostEnroll',
       policy: 'policy-am-enroll-mfa',

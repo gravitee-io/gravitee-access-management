@@ -74,7 +74,9 @@ public class ApplicationMembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List members for an application",
+    @Operation(
+            operationId = "getMembers",
+            summary = "List members for an application",
             description = "User must have APPLICATION_MEMBER[LIST] permission on the specified application " +
                     "or APPLICATION_MEMBER[LIST] permission on the specified domain " +
                     "or APPLICATION_MEMBER[LIST] permission on the specified environment " +
@@ -104,7 +106,9 @@ public class ApplicationMembersResource extends AbstractResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Add or update an application member",
+    @Operation(
+            operationId = "addOrUpdateMember",
+            summary = "Add or update an application member",
             description = "User must have APPLICATION_MEMBER[CREATE] permission on the specified application " +
                     "or APPLICATION_MEMBER[CREATE] permission on the specified domain " +
                     "or APPLICATION_MEMBER[CREATE] permission on the specified environment " +
@@ -145,7 +149,9 @@ public class ApplicationMembersResource extends AbstractResource {
     @GET
     @Path("permissions")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List application member's permissions",
+    @Operation(
+            operationId = "getApplicationMemberPermissions",
+            summary = "List application member's permissions",
             description = "User must have APPLICATION[READ] permission on the specified application " +
                     "or APPLICATION[READ] permission on the specified domain " +
                     "or APPLICATION[READ] permission on the specified environment " +

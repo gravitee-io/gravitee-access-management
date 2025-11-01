@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,33 +58,45 @@ export interface NewEntrypoint {
   tags: Array<string>;
 }
 
+/**
+ * Check if a given object implements the NewEntrypoint interface.
+ */
+export function instanceOfNewEntrypoint(value: object): value is NewEntrypoint {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('url' in value) || value['url'] === undefined) return false;
+  if (!('tags' in value) || value['tags'] === undefined) return false;
+  return true;
+}
+
 export function NewEntrypointFromJSON(json: any): NewEntrypoint {
   return NewEntrypointFromJSONTyped(json, false);
 }
 
 export function NewEntrypointFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewEntrypoint {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     name: json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
+    description: json['description'] == null ? undefined : json['description'],
     url: json['url'],
     tags: json['tags'],
   };
 }
 
-export function NewEntrypointToJSON(value?: NewEntrypoint | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewEntrypointToJSON(json: any): NewEntrypoint {
+  return NewEntrypointToJSONTyped(json, false);
+}
+
+export function NewEntrypointToJSONTyped(value?: NewEntrypoint | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    description: value.description,
-    url: value.url,
-    tags: value.tags,
+    name: value['name'],
+    description: value['description'],
+    url: value['url'],
+    tags: value['tags'],
   };
 }

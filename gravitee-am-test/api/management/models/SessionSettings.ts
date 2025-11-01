@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,27 +40,36 @@ export interface SessionSettings {
   persistent?: boolean;
 }
 
+/**
+ * Check if a given object implements the SessionSettings interface.
+ */
+export function instanceOfSessionSettings(value: object): value is SessionSettings {
+  return true;
+}
+
 export function SessionSettingsFromJSON(json: any): SessionSettings {
   return SessionSettingsFromJSONTyped(json, false);
 }
 
 export function SessionSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): SessionSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    persistent: !exists(json, 'persistent') ? undefined : json['persistent'],
+    persistent: json['persistent'] == null ? undefined : json['persistent'],
   };
 }
 
-export function SessionSettingsToJSON(value?: SessionSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function SessionSettingsToJSON(json: any): SessionSettings {
+  return SessionSettingsToJSONTyped(json, false);
+}
+
+export function SessionSettingsToJSONTyped(value?: SessionSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    persistent: value.persistent,
+    persistent: value['persistent'],
   };
 }

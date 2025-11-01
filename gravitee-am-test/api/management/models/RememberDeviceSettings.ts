@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -55,7 +55,20 @@ export interface RememberDeviceSettings {
    * @type {boolean}
    * @memberof RememberDeviceSettings
    */
+  skipChallengeWhenRememberDevice?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof RememberDeviceSettings
+   */
   skipRememberDevice?: boolean;
+}
+
+/**
+ * Check if a given object implements the RememberDeviceSettings interface.
+ */
+export function instanceOfRememberDeviceSettings(value: object): value is RememberDeviceSettings {
+  return true;
 }
 
 export function RememberDeviceSettingsFromJSON(json: any): RememberDeviceSettings {
@@ -63,28 +76,32 @@ export function RememberDeviceSettingsFromJSON(json: any): RememberDeviceSetting
 }
 
 export function RememberDeviceSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): RememberDeviceSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    active: !exists(json, 'active') ? undefined : json['active'],
-    expirationTimeSeconds: !exists(json, 'expirationTimeSeconds') ? undefined : json['expirationTimeSeconds'],
-    deviceIdentifierId: !exists(json, 'deviceIdentifierId') ? undefined : json['deviceIdentifierId'],
-    skipRememberDevice: !exists(json, 'skipRememberDevice') ? undefined : json['skipRememberDevice'],
+    active: json['active'] == null ? undefined : json['active'],
+    expirationTimeSeconds: json['expirationTimeSeconds'] == null ? undefined : json['expirationTimeSeconds'],
+    deviceIdentifierId: json['deviceIdentifierId'] == null ? undefined : json['deviceIdentifierId'],
+    skipChallengeWhenRememberDevice: json['skipChallengeWhenRememberDevice'] == null ? undefined : json['skipChallengeWhenRememberDevice'],
+    skipRememberDevice: json['skipRememberDevice'] == null ? undefined : json['skipRememberDevice'],
   };
 }
 
-export function RememberDeviceSettingsToJSON(value?: RememberDeviceSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function RememberDeviceSettingsToJSON(json: any): RememberDeviceSettings {
+  return RememberDeviceSettingsToJSONTyped(json, false);
+}
+
+export function RememberDeviceSettingsToJSONTyped(value?: RememberDeviceSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    active: value.active,
-    expirationTimeSeconds: value.expirationTimeSeconds,
-    deviceIdentifierId: value.deviceIdentifierId,
-    skipRememberDevice: value.skipRememberDevice,
+    active: value['active'],
+    expirationTimeSeconds: value['expirationTimeSeconds'],
+    deviceIdentifierId: value['deviceIdentifierId'],
+    skipChallengeWhenRememberDevice: value['skipChallengeWhenRememberDevice'],
+    skipRememberDevice: value['skipRememberDevice'],
   };
 }

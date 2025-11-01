@@ -67,7 +67,9 @@ public class MembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List members for an organization",
+    @Operation(
+            operationId = "listOrganizationMembers",
+            summary = "List members for an organization",
             description = "User must have ORGANIZATION_MEMBER[LIST] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List members for an organization",
@@ -88,7 +90,9 @@ public class MembersResource extends AbstractResource {
     @POST
     @Consumes(APPLICATION_JSON)
     @Produces(APPLICATION_JSON)
-    @Operation(summary = "Add or update an organization member",
+    @Operation(
+            operationId = "addOrUpdateOrganizationMember",
+            summary = "Add or update an organization member",
             description = "User must have ORGANIZATION_MEMBER[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Member has been added or updated successfully"),

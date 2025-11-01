@@ -77,7 +77,9 @@ public class ApplicationEmailsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Find a email for an application",
+    @Operation(
+            operationId = "findApplicationEmail",
+            summary = "Find a email for an application",
             description = "User must have APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified application " +
                     "or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified domain " +
                     "or APPLICATION_EMAIL_TEMPLATE[READ] permission on the specified environment " +
@@ -103,7 +105,9 @@ public class ApplicationEmailsResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create a email for an application",
+    @Operation(
+            operationId = "createApplicationEmail",
+            summary = "Create a email for an application",
             description = "User must have APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified application " +
                     "or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified domain " +
                     "or APPLICATION_EMAIL_TEMPLATE[CREATE] permission on the specified environment " +

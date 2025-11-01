@@ -48,7 +48,9 @@ public class AuthenticationDeviceNotifierPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a Authentication Device Notifier plugin",
+    @Operation(
+            operationId = "getAuthenticationDeviceNotifierPlugin",
+            summary = "Get a Authentication Device Notifier plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(@PathParam("authDeviceNotifierId") String authDeviceNotifierId,
                     @Suspended final AsyncResponse response) {
@@ -62,7 +64,9 @@ public class AuthenticationDeviceNotifierPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an Authentication Device Notifier plugin's schema",
+    @Operation(
+            operationId = "getAuthenticationDeviceNotifierPluginSchema",
+            summary = "Get an Authentication Device Notifier plugin's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("authDeviceNotifierId") String authDeviceNotifierId,
                           @Suspended final AsyncResponse response) {

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,29 +46,41 @@ export interface PatchSecurityProfileSettings {
   enableFapiBrazil?: boolean;
 }
 
+/**
+ * Check if a given object implements the PatchSecurityProfileSettings interface.
+ */
+export function instanceOfPatchSecurityProfileSettings(value: object): value is PatchSecurityProfileSettings {
+  return true;
+}
+
 export function PatchSecurityProfileSettingsFromJSON(json: any): PatchSecurityProfileSettings {
   return PatchSecurityProfileSettingsFromJSONTyped(json, false);
 }
 
 export function PatchSecurityProfileSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchSecurityProfileSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    enablePlainFapi: !exists(json, 'enablePlainFapi') ? undefined : json['enablePlainFapi'],
-    enableFapiBrazil: !exists(json, 'enableFapiBrazil') ? undefined : json['enableFapiBrazil'],
+    enablePlainFapi: json['enablePlainFapi'] == null ? undefined : json['enablePlainFapi'],
+    enableFapiBrazil: json['enableFapiBrazil'] == null ? undefined : json['enableFapiBrazil'],
   };
 }
 
-export function PatchSecurityProfileSettingsToJSON(value?: PatchSecurityProfileSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchSecurityProfileSettingsToJSON(json: any): PatchSecurityProfileSettings {
+  return PatchSecurityProfileSettingsToJSONTyped(json, false);
+}
+
+export function PatchSecurityProfileSettingsToJSONTyped(
+  value?: PatchSecurityProfileSettings | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    enablePlainFapi: value.enablePlainFapi,
-    enableFapiBrazil: value.enableFapiBrazil,
+    enablePlainFapi: value['enablePlainFapi'],
+    enableFapiBrazil: value['enableFapiBrazil'],
   };
 }

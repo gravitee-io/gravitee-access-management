@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -55,29 +55,38 @@ export const AuditOutcomeStatusEnum = {
 } as const;
 export type AuditOutcomeStatusEnum = typeof AuditOutcomeStatusEnum[keyof typeof AuditOutcomeStatusEnum];
 
+/**
+ * Check if a given object implements the AuditOutcome interface.
+ */
+export function instanceOfAuditOutcome(value: object): value is AuditOutcome {
+  return true;
+}
+
 export function AuditOutcomeFromJSON(json: any): AuditOutcome {
   return AuditOutcomeFromJSONTyped(json, false);
 }
 
 export function AuditOutcomeFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuditOutcome {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    status: !exists(json, 'status') ? undefined : json['status'],
-    message: !exists(json, 'message') ? undefined : json['message'],
+    status: json['status'] == null ? undefined : json['status'],
+    message: json['message'] == null ? undefined : json['message'],
   };
 }
 
-export function AuditOutcomeToJSON(value?: AuditOutcome | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AuditOutcomeToJSON(json: any): AuditOutcome {
+  return AuditOutcomeToJSONTyped(json, false);
+}
+
+export function AuditOutcomeToJSONTyped(value?: AuditOutcome | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    status: value.status,
-    message: value.message,
+    status: value['status'],
+    message: value['message'],
   };
 }

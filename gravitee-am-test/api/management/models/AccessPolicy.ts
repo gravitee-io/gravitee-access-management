@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -108,47 +108,56 @@ export const AccessPolicyTypeEnum = {
 } as const;
 export type AccessPolicyTypeEnum = typeof AccessPolicyTypeEnum[keyof typeof AccessPolicyTypeEnum];
 
+/**
+ * Check if a given object implements the AccessPolicy interface.
+ */
+export function instanceOfAccessPolicy(value: object): value is AccessPolicy {
+  return true;
+}
+
 export function AccessPolicyFromJSON(json: any): AccessPolicy {
   return AccessPolicyFromJSONTyped(json, false);
 }
 
 export function AccessPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolean): AccessPolicy {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    order: !exists(json, 'order') ? undefined : json['order'],
-    condition: !exists(json, 'condition') ? undefined : json['condition'],
-    domain: !exists(json, 'domain') ? undefined : json['domain'],
-    resource: !exists(json, 'resource') ? undefined : json['resource'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    type: json['type'] == null ? undefined : json['type'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    order: json['order'] == null ? undefined : json['order'],
+    condition: json['condition'] == null ? undefined : json['condition'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    resource: json['resource'] == null ? undefined : json['resource'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function AccessPolicyToJSON(value?: AccessPolicy | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AccessPolicyToJSON(json: any): AccessPolicy {
+  return AccessPolicyToJSONTyped(json, false);
+}
+
+export function AccessPolicyToJSONTyped(value?: AccessPolicy | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    type: value.type,
-    enabled: value.enabled,
-    name: value.name,
-    description: value.description,
-    order: value.order,
-    condition: value.condition,
-    domain: value.domain,
-    resource: value.resource,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    type: value['type'],
+    enabled: value['enabled'],
+    name: value['name'],
+    description: value['description'],
+    order: value['order'],
+    condition: value['condition'],
+    domain: value['domain'],
+    resource: value['resource'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

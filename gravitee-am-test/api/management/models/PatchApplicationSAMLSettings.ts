@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -76,39 +76,51 @@ export interface PatchApplicationSAMLSettings {
   responseBinding?: string;
 }
 
+/**
+ * Check if a given object implements the PatchApplicationSAMLSettings interface.
+ */
+export function instanceOfPatchApplicationSAMLSettings(value: object): value is PatchApplicationSAMLSettings {
+  return true;
+}
+
 export function PatchApplicationSAMLSettingsFromJSON(json: any): PatchApplicationSAMLSettings {
   return PatchApplicationSAMLSettingsFromJSONTyped(json, false);
 }
 
 export function PatchApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchApplicationSAMLSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    entityId: !exists(json, 'entityId') ? undefined : json['entityId'],
-    attributeConsumeServiceUrl: !exists(json, 'attributeConsumeServiceUrl') ? undefined : json['attributeConsumeServiceUrl'],
-    singleLogoutServiceUrl: !exists(json, 'singleLogoutServiceUrl') ? undefined : json['singleLogoutServiceUrl'],
-    certificate: !exists(json, 'certificate') ? undefined : json['certificate'],
-    wantResponseSigned: !exists(json, 'wantResponseSigned') ? undefined : json['wantResponseSigned'],
-    wantAssertionsSigned: !exists(json, 'wantAssertionsSigned') ? undefined : json['wantAssertionsSigned'],
-    responseBinding: !exists(json, 'responseBinding') ? undefined : json['responseBinding'],
+    entityId: json['entityId'] == null ? undefined : json['entityId'],
+    attributeConsumeServiceUrl: json['attributeConsumeServiceUrl'] == null ? undefined : json['attributeConsumeServiceUrl'],
+    singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
+    certificate: json['certificate'] == null ? undefined : json['certificate'],
+    wantResponseSigned: json['wantResponseSigned'] == null ? undefined : json['wantResponseSigned'],
+    wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
+    responseBinding: json['responseBinding'] == null ? undefined : json['responseBinding'],
   };
 }
 
-export function PatchApplicationSAMLSettingsToJSON(value?: PatchApplicationSAMLSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchApplicationSAMLSettingsToJSON(json: any): PatchApplicationSAMLSettings {
+  return PatchApplicationSAMLSettingsToJSONTyped(json, false);
+}
+
+export function PatchApplicationSAMLSettingsToJSONTyped(
+  value?: PatchApplicationSAMLSettings | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    entityId: value.entityId,
-    attributeConsumeServiceUrl: value.attributeConsumeServiceUrl,
-    singleLogoutServiceUrl: value.singleLogoutServiceUrl,
-    certificate: value.certificate,
-    wantResponseSigned: value.wantResponseSigned,
-    wantAssertionsSigned: value.wantAssertionsSigned,
-    responseBinding: value.responseBinding,
+    entityId: value['entityId'],
+    attributeConsumeServiceUrl: value['attributeConsumeServiceUrl'],
+    singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
+    certificate: value['certificate'],
+    wantResponseSigned: value['wantResponseSigned'],
+    wantAssertionsSigned: value['wantAssertionsSigned'],
+    responseBinding: value['responseBinding'],
   };
 }

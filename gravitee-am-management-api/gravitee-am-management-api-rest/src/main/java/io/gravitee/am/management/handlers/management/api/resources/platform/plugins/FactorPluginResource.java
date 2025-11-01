@@ -48,7 +48,9 @@ public class FactorPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a factor plugin",
+    @Operation(
+            operationId = "getFactorPlugin",
+            summary = "Get a factor plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(@PathParam("factor") String factorId,
                     @Suspended final AsyncResponse response) {
@@ -61,7 +63,9 @@ public class FactorPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a factor plugin's schema",
+    @Operation(
+            operationId = "getFactorPluginSchema",
+            summary = "Get a factor plugin's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("factor") String factorId,
                           @Suspended final AsyncResponse response) {

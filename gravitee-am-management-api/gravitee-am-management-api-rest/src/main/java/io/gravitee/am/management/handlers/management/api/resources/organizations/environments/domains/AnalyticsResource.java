@@ -50,7 +50,9 @@ public class AnalyticsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Find domain analytics",
+    @Operation(
+            operationId = "findDomainAnalytics",
+            summary = "Find domain analytics",
             description = "User must have DOMAIN_ANALYTICS[READ] permission on the specified domain " +
                     "or DOMAIN_ANALYTICS[READ] permission on the specified environment " +
                     "or DOMAIN_ANALYTICS[READ] permission on the specified organization")

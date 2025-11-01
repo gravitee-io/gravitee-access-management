@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -88,39 +88,50 @@ export const NewApplicationTypeEnum = {
 } as const;
 export type NewApplicationTypeEnum = typeof NewApplicationTypeEnum[keyof typeof NewApplicationTypeEnum];
 
+/**
+ * Check if a given object implements the NewApplication interface.
+ */
+export function instanceOfNewApplication(value: object): value is NewApplication {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  return true;
+}
+
 export function NewApplicationFromJSON(json: any): NewApplication {
   return NewApplicationFromJSONTyped(json, false);
 }
 
 export function NewApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewApplication {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
     name: json['name'],
     type: json['type'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
-    clientSecret: !exists(json, 'clientSecret') ? undefined : json['clientSecret'],
-    redirectUris: !exists(json, 'redirectUris') ? undefined : json['redirectUris'],
-    metadata: !exists(json, 'metadata') ? undefined : json['metadata'],
+    description: json['description'] == null ? undefined : json['description'],
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
+    clientSecret: json['clientSecret'] == null ? undefined : json['clientSecret'],
+    redirectUris: json['redirectUris'] == null ? undefined : json['redirectUris'],
+    metadata: json['metadata'] == null ? undefined : json['metadata'],
   };
 }
 
-export function NewApplicationToJSON(value?: NewApplication | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewApplicationToJSON(json: any): NewApplication {
+  return NewApplicationToJSONTyped(json, false);
+}
+
+export function NewApplicationToJSONTyped(value?: NewApplication | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    type: value.type,
-    description: value.description,
-    clientId: value.clientId,
-    clientSecret: value.clientSecret,
-    redirectUris: value.redirectUris,
-    metadata: value.metadata,
+    name: value['name'],
+    type: value['type'],
+    description: value['description'],
+    clientId: value['clientId'],
+    clientSecret: value['clientSecret'],
+    redirectUris: value['redirectUris'],
+    metadata: value['metadata'],
   };
 }

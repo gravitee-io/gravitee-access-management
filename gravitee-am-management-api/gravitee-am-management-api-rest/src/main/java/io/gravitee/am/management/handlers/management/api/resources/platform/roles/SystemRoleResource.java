@@ -55,7 +55,9 @@ public class SystemRoleResource extends AbstractResource {
     @GET
     @Path("{role}")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a system role",
+    @Operation(
+            operationId = "getSystemRole",
+            summary = "Get a system role",
             description = "There is no particular permission needed. User must be authenticated.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "System role successfully fetched",

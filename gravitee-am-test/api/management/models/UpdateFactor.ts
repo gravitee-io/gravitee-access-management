@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,12 +52,22 @@ export interface UpdateFactor {
   configuration: string;
 }
 
+/**
+ * Check if a given object implements the UpdateFactor interface.
+ */
+export function instanceOfUpdateFactor(value: object): value is UpdateFactor {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function UpdateFactorFromJSON(json: any): UpdateFactor {
   return UpdateFactorFromJSONTyped(json, false);
 }
 
 export function UpdateFactorFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateFactor {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
@@ -67,16 +77,18 @@ export function UpdateFactorFromJSONTyped(json: any, ignoreDiscriminator: boolea
   };
 }
 
-export function UpdateFactorToJSON(value?: UpdateFactor | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateFactorToJSON(json: any): UpdateFactor {
+  return UpdateFactorToJSONTyped(json, false);
+}
+
+export function UpdateFactorToJSONTyped(value?: UpdateFactor | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
   };
 }

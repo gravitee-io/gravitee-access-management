@@ -25,8 +25,14 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { SessionSettings, SessionSettingsFromJSON, SessionSettingsFromJSONTyped, SessionSettingsToJSON } from './SessionSettings';
+import { mapValues } from '../runtime';
+import type { SessionSettings } from './SessionSettings';
+import {
+  SessionSettingsFromJSON,
+  SessionSettingsFromJSONTyped,
+  SessionSettingsToJSON,
+  SessionSettingsToJSONTyped,
+} from './SessionSettings';
 
 /**
  *
@@ -48,29 +54,38 @@ export interface CookieSettings {
   session?: SessionSettings;
 }
 
+/**
+ * Check if a given object implements the CookieSettings interface.
+ */
+export function instanceOfCookieSettings(value: object): value is CookieSettings {
+  return true;
+}
+
 export function CookieSettingsFromJSON(json: any): CookieSettings {
   return CookieSettingsFromJSONTyped(json, false);
 }
 
 export function CookieSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): CookieSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    inherited: !exists(json, 'inherited') ? undefined : json['inherited'],
-    session: !exists(json, 'session') ? undefined : SessionSettingsFromJSON(json['session']),
+    inherited: json['inherited'] == null ? undefined : json['inherited'],
+    session: json['session'] == null ? undefined : SessionSettingsFromJSON(json['session']),
   };
 }
 
-export function CookieSettingsToJSON(value?: CookieSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function CookieSettingsToJSON(json: any): CookieSettings {
+  return CookieSettingsToJSONTyped(json, false);
+}
+
+export function CookieSettingsToJSONTyped(value?: CookieSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    inherited: value.inherited,
-    session: SessionSettingsToJSON(value.session),
+    inherited: value['inherited'],
+    session: SessionSettingsToJSON(value['session']),
   };
 }

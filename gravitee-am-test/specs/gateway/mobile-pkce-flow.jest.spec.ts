@@ -22,12 +22,12 @@ import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 
 // Fixtures
-import { 
-  setupMobilePKCEFixture, 
+import {
+  setupMobilePKCEFixture,
   validateTokenResponse,
   MobilePKCEFixture,
   TEST_CONSTANTS,
-  parseErrorFromLocation
+  parseErrorFromLocation,
 } from './fixtures/mobile-pkce-fixture';
 
 // Global setup
@@ -54,7 +54,6 @@ afterAll(async () => {
 
 describe('Mobile PKCE Flow', () => {
   it('should complete PKCE flow with custom URI scheme', async () => {
-
     const authCode = await fixture.completeAuthorizationFlow(CODE_CHALLENGE);
     const tokenResponse = await fixture.exchangeCodeForToken(authCode, CODE_VERIFIER).expect(200);
 
@@ -67,7 +66,7 @@ describe('Mobile PKCE Flow', () => {
 
       const response = await performGet(authUrl).expect(302);
       expect(response.headers['location']).toContain(fixture.redirectUri);
-      
+
       const { error, errorDescription } = parseErrorFromLocation(response.headers['location']);
       expect(error).toBe('invalid_request');
       expect(errorDescription).toContain('Missing parameter: code_challenge');
@@ -81,7 +80,7 @@ describe('Mobile PKCE Flow', () => {
 
       const response = await performGet(authUrl).expect(302);
       expect(response.headers['location']).toContain(fixture.redirectUri);
-      
+
       const { error, errorDescription } = parseErrorFromLocation(response.headers['location']);
       expect(error).toBe('invalid_request');
       expect(errorDescription).toContain('Invalid parameter: code_challenge_method');
@@ -97,15 +96,10 @@ describe('Mobile PKCE Flow', () => {
         // Missing code_verifier
       });
 
-      const response = await performPost(
-        fixture.openIdConfiguration.token_endpoint,
-        '',
-        tokenParams.toString(),
-        {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
-        }
-      ).expect(400);
+      const response = await performPost(fixture.openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
+      }).expect(400);
 
       expect(response.body.error).toBe('invalid_grant');
       expect(response.body.error_description).toContain('code_verifier');
@@ -122,15 +116,10 @@ describe('Mobile PKCE Flow', () => {
         code_verifier: codeVerifier,
       });
 
-      const response = await performPost(
-        fixture.openIdConfiguration.token_endpoint,
-        '',
-        tokenParams.toString(),
-        {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
-        }
-      ).expect(400);
+      const response = await performPost(fixture.openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
+      }).expect(400);
 
       expect(response.body.error).toBe('invalid_grant');
       expect(response.body.error_description).toContain('code_verifier');
@@ -184,15 +173,10 @@ describe('Mobile PKCE Flow', () => {
         code_verifier: CODE_VERIFIER,
       });
 
-      const response = await performPost(
-        fixture.openIdConfiguration.token_endpoint,
-        '',
-        tokenParams.toString(),
-        {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
-        }
-      ).expect(400);
+      const response = await performPost(fixture.openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${applicationBase64Token(fixture.application)}`,
+      }).expect(400);
 
       expect(response.body.error).toBe('invalid_grant');
       expect(response.body.error_description).toContain('Redirect URI mismatch');

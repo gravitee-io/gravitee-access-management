@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,37 +70,46 @@ export interface Step {
   condition?: string;
 }
 
+/**
+ * Check if a given object implements the Step interface.
+ */
+export function instanceOfStep(value: object): value is Step {
+  return true;
+}
+
 export function StepFromJSON(json: any): Step {
   return StepFromJSONTyped(json, false);
 }
 
 export function StepFromJSONTyped(json: any, ignoreDiscriminator: boolean): Step {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    name: !exists(json, 'name') ? undefined : json['name'],
-    policy: !exists(json, 'policy') ? undefined : json['policy'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    condition: !exists(json, 'condition') ? undefined : json['condition'],
+    name: json['name'] == null ? undefined : json['name'],
+    policy: json['policy'] == null ? undefined : json['policy'],
+    description: json['description'] == null ? undefined : json['description'],
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    condition: json['condition'] == null ? undefined : json['condition'],
   };
 }
 
-export function StepToJSON(value?: Step | null): any {
-  if (value === undefined) {
-    return undefined;
+export function StepToJSON(json: any): Step {
+  return StepToJSONTyped(json, false);
+}
+
+export function StepToJSONTyped(value?: Step | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    policy: value.policy,
-    description: value.description,
-    configuration: value.configuration,
-    enabled: value.enabled,
-    condition: value.condition,
+    name: value['name'],
+    policy: value['policy'],
+    description: value['description'],
+    configuration: value['configuration'],
+    enabled: value['enabled'],
+    condition: value['condition'],
   };
 }

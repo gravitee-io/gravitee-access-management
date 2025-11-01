@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -86,39 +86,48 @@ export const PatchEnrollSettingsTypeEnum = {
 } as const;
 export type PatchEnrollSettingsTypeEnum = typeof PatchEnrollSettingsTypeEnum[keyof typeof PatchEnrollSettingsTypeEnum];
 
+/**
+ * Check if a given object implements the PatchEnrollSettings interface.
+ */
+export function instanceOfPatchEnrollSettings(value: object): value is PatchEnrollSettings {
+  return true;
+}
+
 export function PatchEnrollSettingsFromJSON(json: any): PatchEnrollSettings {
   return PatchEnrollSettingsFromJSONTyped(json, false);
 }
 
 export function PatchEnrollSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchEnrollSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    active: !exists(json, 'active') ? undefined : json['active'],
-    forceEnrollment: !exists(json, 'forceEnrollment') ? undefined : json['forceEnrollment'],
-    skipTimeSeconds: !exists(json, 'skipTimeSeconds') ? undefined : json['skipTimeSeconds'],
-    enrollmentRule: !exists(json, 'enrollmentRule') ? undefined : json['enrollmentRule'],
-    enrollmentSkipActive: !exists(json, 'enrollmentSkipActive') ? undefined : json['enrollmentSkipActive'],
-    enrollmentSkipRule: !exists(json, 'enrollmentSkipRule') ? undefined : json['enrollmentSkipRule'],
-    type: !exists(json, 'type') ? undefined : json['type'],
+    active: json['active'] == null ? undefined : json['active'],
+    forceEnrollment: json['forceEnrollment'] == null ? undefined : json['forceEnrollment'],
+    skipTimeSeconds: json['skipTimeSeconds'] == null ? undefined : json['skipTimeSeconds'],
+    enrollmentRule: json['enrollmentRule'] == null ? undefined : json['enrollmentRule'],
+    enrollmentSkipActive: json['enrollmentSkipActive'] == null ? undefined : json['enrollmentSkipActive'],
+    enrollmentSkipRule: json['enrollmentSkipRule'] == null ? undefined : json['enrollmentSkipRule'],
+    type: json['type'] == null ? undefined : json['type'],
   };
 }
 
-export function PatchEnrollSettingsToJSON(value?: PatchEnrollSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchEnrollSettingsToJSON(json: any): PatchEnrollSettings {
+  return PatchEnrollSettingsToJSONTyped(json, false);
+}
+
+export function PatchEnrollSettingsToJSONTyped(value?: PatchEnrollSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    active: value.active,
-    forceEnrollment: value.forceEnrollment,
-    skipTimeSeconds: value.skipTimeSeconds,
-    enrollmentRule: value.enrollmentRule,
-    enrollmentSkipActive: value.enrollmentSkipActive,
-    enrollmentSkipRule: value.enrollmentSkipRule,
-    type: value.type,
+    active: value['active'],
+    forceEnrollment: value['forceEnrollment'],
+    skipTimeSeconds: value['skipTimeSeconds'],
+    enrollmentRule: value['enrollmentRule'],
+    enrollmentSkipActive: value['enrollmentSkipActive'],
+    enrollmentSkipRule: value['enrollmentSkipRule'],
+    type: value['type'],
   };
 }

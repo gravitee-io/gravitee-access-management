@@ -36,15 +36,15 @@ import {
   NotifierPluginToJSON,
 } from '../models';
 
-export interface Get31Request {
+export interface GetNotifierRequest {
   notifierId: string;
 }
 
-export interface GetSchema6Request {
+export interface GetNotifierSchemaRequest {
   notifierId: string;
 }
 
-export interface List30Request {
+export interface ListNotifiersRequest {
   expand?: Array<string>;
 }
 
@@ -56,14 +56,14 @@ export class NotifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a notifier
    */
-  async get31Raw(
-    requestParameters: Get31Request,
+  async getNotifierRaw(
+    requestParameters: GetNotifierRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<NotifierPlugin>> {
     if (requestParameters.notifierId === null || requestParameters.notifierId === undefined) {
       throw new runtime.RequiredError(
         'notifierId',
-        'Required parameter requestParameters.notifierId was null or undefined when calling get31.',
+        'Required parameter requestParameters.notifierId was null or undefined when calling getNotifier.',
       );
     }
 
@@ -99,8 +99,11 @@ export class NotifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a notifier
    */
-  async get31(requestParameters: Get31Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<NotifierPlugin> {
-    const response = await this.get31Raw(requestParameters, initOverrides);
+  async getNotifier(
+    requestParameters: GetNotifierRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<NotifierPlugin> {
+    const response = await this.getNotifierRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -108,14 +111,14 @@ export class NotifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a notifier plugin\'s schema
    */
-  async getSchema6Raw(
-    requestParameters: GetSchema6Request,
+  async getNotifierSchemaRaw(
+    requestParameters: GetNotifierSchemaRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<string>> {
     if (requestParameters.notifierId === null || requestParameters.notifierId === undefined) {
       throw new runtime.RequiredError(
         'notifierId',
-        'Required parameter requestParameters.notifierId was null or undefined when calling getSchema6.',
+        'Required parameter requestParameters.notifierId was null or undefined when calling getNotifierSchema.',
       );
     }
 
@@ -151,8 +154,11 @@ export class NotifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a notifier plugin\'s schema
    */
-  async getSchema6(requestParameters: GetSchema6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<string> {
-    const response = await this.getSchema6Raw(requestParameters, initOverrides);
+  async getNotifierSchema(
+    requestParameters: GetNotifierSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<string> {
+    const response = await this.getNotifierSchemaRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -160,8 +166,8 @@ export class NotifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * List all available notifier plugins
    */
-  async list30Raw(
-    requestParameters: List30Request,
+  async listNotifiersRaw(
+    requestParameters: ListNotifiersRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Array<NotifierPlugin>>> {
     const queryParameters: any = {};
@@ -197,11 +203,11 @@ export class NotifierApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * List all available notifier plugins
    */
-  async list30(
-    requestParameters: List30Request = {},
+  async listNotifiers(
+    requestParameters: ListNotifiersRequest = {},
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<NotifierPlugin>> {
-    const response = await this.list30Raw(requestParameters, initOverrides);
+    const response = await this.listNotifiersRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

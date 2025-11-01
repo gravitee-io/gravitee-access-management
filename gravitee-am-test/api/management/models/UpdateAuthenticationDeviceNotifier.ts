@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,6 +52,16 @@ export interface UpdateAuthenticationDeviceNotifier {
   configuration: string;
 }
 
+/**
+ * Check if a given object implements the UpdateAuthenticationDeviceNotifier interface.
+ */
+export function instanceOfUpdateAuthenticationDeviceNotifier(value: object): value is UpdateAuthenticationDeviceNotifier {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function UpdateAuthenticationDeviceNotifierFromJSON(json: any): UpdateAuthenticationDeviceNotifier {
   return UpdateAuthenticationDeviceNotifierFromJSONTyped(json, false);
 }
@@ -60,7 +70,7 @@ export function UpdateAuthenticationDeviceNotifierFromJSONTyped(
   json: any,
   ignoreDiscriminator: boolean,
 ): UpdateAuthenticationDeviceNotifier {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
@@ -70,16 +80,21 @@ export function UpdateAuthenticationDeviceNotifierFromJSONTyped(
   };
 }
 
-export function UpdateAuthenticationDeviceNotifierToJSON(value?: UpdateAuthenticationDeviceNotifier | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateAuthenticationDeviceNotifierToJSON(json: any): UpdateAuthenticationDeviceNotifier {
+  return UpdateAuthenticationDeviceNotifierToJSONTyped(json, false);
+}
+
+export function UpdateAuthenticationDeviceNotifierToJSONTyped(
+  value?: UpdateAuthenticationDeviceNotifier | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
   };
 }
