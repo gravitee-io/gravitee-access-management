@@ -26,6 +26,7 @@ import {
     getMcpServer,
     getMcpServers,
     updateProtectedResource,
+    patchProtectedResource,
     deleteProtectedResource,
     waitForProtectedResourceRemovedFromList
 } from "@management-commands/protected-resources-management-commands";
@@ -1027,6 +1028,189 @@ describe('When updating protected resource', () => {
 
         await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
             .catch(err => expect(err.response.status).toEqual(400));
+    });
+});
+
+describe('When patching protected resource', () => {
+    let createdResource;
+    let testScope1;
+    let testScope2;
+
+    beforeAll(async () => {
+        // Create test scopes for validation
+        testScope1 = await createScope(domain.id, accessToken, {
+            key: 'patch_scope_1',
+            name: 'Patch Test Scope 1',
+            description: 'Test scope for protected resource patches'
+        });
+
+        testScope2 = await createScope(domain.id, accessToken, {
+            key: 'patch_scope_2',
+            name: 'Patch Test Scope 2',
+            description: 'Another test scope for patches'
+        });
+
+        // Create a protected resource to patch
+        const request = {
+            name: faker.commerce.productName(),
+            type: "MCP_SERVER",
+            resourceIdentifiers: ["https://patch-test.com"],
+            description: "Original description",
+            features: [
+                {
+                    key: 'original_tool',
+                    type: 'MCP_TOOL',
+                    description: 'Original tool description',
+                    scopes: ['patch_scope_1']
+                }
+            ]
+        } as NewProtectedResource;
+
+        const createdSecret = await createProtectedResource(domain.id, accessToken, request);
+        expect(createdSecret).toBeDefined();
+        expect(createdSecret.id).toBeDefined();
+
+        // Wait for resource to be fully synced
+        await waitFor(2000);
+
+        // Fetch the full resource details
+        createdResource = await getMcpServer(domain.id, accessToken, createdSecret.id);
+        expect(createdResource).toBeDefined();
+        expect(createdResource.resourceIdentifiers).toBeDefined();
+    });
+
+    // Scenario: Successful partial update
+    // Given a protected resource exists
+    // When I PATCH with partial fields (name and description)
+    // Then the specified fields are updated and other fields remain unchanged
+    it('Should patch protected resource with partial fields', async () => {
+        const patchRequest = {
+            name: "Patched Name",
+            description: "Patched Description"
+        };
+
+        const patched = await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest);
+
+        expect(patched).toBeDefined();
+        expect(patched.id).toEqual(createdResource.id);
+        expect(patched.name).toEqual("Patched Name");
+        expect(patched.description).toEqual("Patched Description");
+        expect(patched.resourceIdentifiers).toEqual(createdResource.resourceIdentifiers); // Unchanged
+        expect(patched.updatedAt).not.toEqual(createdResource.updatedAt);
+
+        // Update local reference for next tests
+        createdResource = patched;
+    });
+
+    // Scenario: Resource identifier update
+    // Given a protected resource exists
+    // When I PATCH with new resourceIdentifiers
+    // Then the resourceIdentifiers are updated and normalized (lowercase, trimmed)
+    it('Should patch protected resource resourceIdentifiers', async () => {
+        const patchRequest = {
+            resourceIdentifiers: ["https://patched.com", "  https://MixedCase.COM  "]
+        };
+
+        const patched = await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest);
+
+        expect(patched).toBeDefined();
+        expect(patched.resourceIdentifiers).toContain("https://patched.com");
+        expect(patched.resourceIdentifiers).toContain("https://mixedcase.com"); // Normalized to lowercase
+        expect(patched.updatedAt).not.toEqual(createdResource.updatedAt);
+
+        createdResource = patched;
+    });
+
+    // Scenario: Empty patch request
+    // Given a protected resource exists
+    // When I PATCH with empty request body
+    // Then I receive 400 Bad Request
+    it('Should fail when patching with empty request body', async () => {
+        const patchRequest = {};
+
+        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+
+    // Scenario: Non-existent resource
+    // Given a protected resource id that does not exist
+    // When I call PATCH
+    // Then I receive 404 Not Found (or 403 if permission check happens first)
+    it('Should fail when patching non-existent resource', async () => {
+        const patchRequest = {
+            name: "Test"
+        };
+
+        await patchProtectedResource(domain.id, accessToken, 'non-existent-id', patchRequest)
+            .catch(err => {
+                const status = err.response?.status || err.status;
+                expect([403, 404]).toContain(status);
+            });
+    });
+
+    // Scenario: Invalid resource identifier format
+    // Given a protected resource exists
+    // When I PATCH with invalid resource identifier (not a valid URL)
+    // Then I receive 400 Bad Request
+    it('Should fail when resource identifier is not a valid URL', async () => {
+        const patchRequest = {
+            resourceIdentifiers: ["not-a-valid-url"]
+        };
+
+        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+
+    // Scenario: Duplicate resource identifier
+    // Given two protected resources exist in the same domain
+    // When I PATCH one resource to use the same resourceIdentifier as the other
+    // Then I receive 400 Bad Request
+    // Note: ResourceIdentifiers must be unique because they are OAuth2 resource indicators (RFC 8707)
+    // Unlike application redirect URIs (which can be duplicated), resourceIdentifiers uniquely identify which protected resource is being requested
+    it('Should fail when patching with duplicate resource identifier', async () => {
+        // Create another resource first
+        const otherResource = await createProtectedResource(domain.id, accessToken, {
+            name: faker.commerce.productName(),
+            type: "MCP_SERVER",
+            resourceIdentifiers: ["https://duplicate-test.com"],
+        } as NewProtectedResource);
+
+        expect(otherResource).toBeDefined();
+
+        // Try to patch our resource to use the same identifier
+        const patchRequest = {
+            resourceIdentifiers: ["https://duplicate-test.com"]
+        };
+
+        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+            .catch(err => expect(err.response.status).toEqual(400));
+    });
+
+    // Scenario: Domain mismatch
+    // Given a protected resource exists in domain A
+    // When I PATCH using domain B's context
+    // Then I receive 404 Not Found
+    it('Should fail when patching resource from another domain', async () => {
+        // Create a resource in the test search domain
+        const request = {
+            name: faker.commerce.productName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://other-domain-patch.com"],
+        } as NewProtectedResource;
+
+        const created = await createProtectedResource(domainTestSearch.id, accessToken, request);
+        expect(created).toBeDefined();
+
+        // Try to patch from the wrong domain
+        const patchRequest = {
+            name: "Test"
+        };
+
+        await patchProtectedResource(domain.id, accessToken, created.id, patchRequest)
+            .catch(err => {
+                const status = (err as any).response?.status || (err as any).status;
+                expect([403, 404]).toContain(status);
+            });
     });
 });
 

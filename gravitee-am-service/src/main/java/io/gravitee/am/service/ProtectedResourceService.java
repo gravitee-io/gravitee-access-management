@@ -24,6 +24,7 @@ import io.gravitee.am.model.ProtectedResourceSecret;
 import io.gravitee.am.model.common.Page;
 import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.service.model.NewProtectedResource;
+import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
@@ -46,6 +47,8 @@ public interface ProtectedResourceService {
     Single<ProtectedResourceSecret> create(Domain domain, User user, NewProtectedResource protectedResource);
 
     Single<ProtectedResource> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal);
+
+    Single<ProtectedResource> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal);
 
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndType(String domain, Type type, PageSortRequest pageSortRequest);
 

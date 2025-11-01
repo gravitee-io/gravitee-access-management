@@ -22,9 +22,13 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
+import jakarta.ws.rs.BadRequestException;
+import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.common.http.MediaType;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import java.util.Set;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -76,6 +80,46 @@ public class ProtectedResourceResource extends AbstractDomainResource {
                 .andThen(service.findByDomainAndIdAndType(domainId, protectedResourceId, resourceType)
                         .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(protectedResourceId))))
                 .subscribe(response::resume, response::resume);
+    }
+
+    @PATCH
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "patchProtectedResource",
+            summary = "Patch a Protected Resource",
+            description = "User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource " +
+                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified organization. ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Protected Resource successfully patched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProtectedResource.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void patch(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("protected-resource") String protectedResourceId,
+            @Parameter(name = "protected-resource", required = true)
+            @Valid @NotNull final PatchProtectedResource patchProtectedResource,
+            @Suspended final AsyncResponse response) {
+        User authenticatedUser = getAuthenticatedUser();
+        Set<Permission> requiredPermissions = patchProtectedResource.getRequiredPermissions();
+
+        if (requiredPermissions.isEmpty()) {
+            // If there is no required permission, it means there is nothing to update. This is not a valid request.
+            response.resume(new BadRequestException("You need to specify at least one value to update."));
+        } else {
+            Completable.merge(requiredPermissions.stream()
+                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, permission, UPDATE))
+                    .toList())
+                    .andThen(domainService.findById(domainId)
+                            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                            .flatMapSingle(domain -> service.patch(domain, protectedResourceId, patchProtectedResource, authenticatedUser)))
+                    .subscribe(response::resume, response::resume);
+        }
     }
 
     @PUT

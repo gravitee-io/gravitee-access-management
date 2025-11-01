@@ -40,6 +40,7 @@ import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewMcpTool;
 import io.gravitee.am.service.model.NewProtectedResource;
+import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateMcpTool;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -236,7 +237,66 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 });
     }
 
+    @Override
+    public Single<ProtectedResource> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal) {
+        LOGGER.debug("Patch ProtectedResource {} for domain {}", id, domain.getId());
+
+        return repository.findById(id)
+                .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
+                .toSingle()
+                .flatMap(oldProtectedResource -> {
+                    // Verify resource belongs to the domain
+                    if (!oldProtectedResource.getDomainId().equals(domain.getId())) {
+                        return Single.error(new ProtectedResourceNotFoundException(id));
+                    }
+
+                    // Apply patch
+                    ProtectedResource toPatch = patchProtectedResource.patch(oldProtectedResource);
+                    toPatch.setUpdatedAt(new Date());
+
+                    // Normalize resourceIdentifiers if they were updated (trim and lowercase)
+                    if (toPatch.getResourceIdentifiers() != null) {
+                        toPatch.setResourceIdentifiers(toPatch.getResourceIdentifiers().stream()
+                                .map(String::trim)
+                                .map(String::toLowerCase)
+                                .toList());
+                    }
+
+                    // Handle features with createdAt preservation if features were updated
+                    if (toPatch.getFeatures() != null && oldProtectedResource.getFeatures() != null) {
+                        toPatch.setFeatures(toPatch.getFeatures().stream().map(feature -> {
+                            // Keep original createdAt if feature key matches, otherwise set new date
+                            Date createdAt = oldProtectedResource.getFeatures().stream()
+                                    .filter(old -> old.getKey().equals(feature.getKey()))
+                                    .findFirst()
+                                    .map(ProtectedResourceFeature::getCreatedAt)
+                                    .orElse(toPatch.getUpdatedAt());
+                            feature.setCreatedAt(createdAt);
+                            feature.setUpdatedAt(toPatch.getUpdatedAt());
+                            return feature;
+                        }).toList());
+                    }
+
+                    // Validations
+                    return checkFeatureKeyUniqueness(toPatch)
+                            .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldProtectedResource.getResourceIdentifiers(), toPatch.getResourceIdentifiers()))
+                            .andThen(validateFeatureScopes(domain.getId(), toPatch))
+                            .andThen(Single.defer(() -> doUpdate(toPatch, oldProtectedResource, principal, domain)));
+                })
+                .onErrorResumeNext(ex -> {
+                    if (ex instanceof AbstractManagementException) {
+                        return Single.error(ex);
+                    }
+                    LOGGER.error("An error occurs while trying to patch protected resource {}", id, ex);
+                    return Single.error(new TechnicalManagementException(
+                            String.format("An error occurs while trying to patch protected resource %s", id), ex));
+                });
+    }
+
     private Completable checkFeatureKeyUniqueness(ProtectedResource resource) {
+        if (resource.getFeatures() == null || resource.getFeatures().isEmpty()) {
+            return Completable.complete();
+        }
         List<String> featureKeys = resource.getFeatures().stream()
                 .map(ProtectedResourceFeature::getKey)
                 .map(String::trim)
@@ -266,6 +326,9 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     private Completable validateFeatureScopes(String domainId, ProtectedResource resource) {
+        if (resource.getFeatures() == null || resource.getFeatures().isEmpty()) {
+            return Completable.complete();
+        }
         // Collect all scopes from all features
         List<String> allScopes = resource.getFeatures().stream()
                 .filter(f -> f instanceof McpTool)

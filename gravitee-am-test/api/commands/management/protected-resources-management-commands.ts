@@ -19,6 +19,7 @@ import { NewProtectedResource } from "@management-models/NewProtectedResource";
 import { UpdateProtectedResource } from "@management-models/UpdateProtectedResource";
 import {ProtectedResourcePrimaryData, ProtectedResourceSecret} from "@management-models/index";
 import {ProtectedResourcePage} from "@management-models/ProtectedResourcePage";
+import {PatchProtectedResource} from "@management-apis/ProtectedResourceApi";
 import { retryUntil } from '@utils-commands/retry';
 
 export const createProtectedResource = (domainId: string, accessToken: string, body: NewProtectedResource) : Promise<ProtectedResourceSecret> =>
@@ -36,6 +37,20 @@ export const updateProtectedResource = (domainId: string, accessToken: string, r
     domain: domainId,
     protectedResource: resourceId,
     updateProtectedResource: body,
+  });
+
+export const patchProtectedResource = (
+  domainId: string,
+  accessToken: string,
+  resourceId: string,
+  body: PatchProtectedResource
+): Promise<ProtectedResourcePrimaryData> =>
+  getProtectedResourcesApi(accessToken).patchProtectedResource({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: resourceId,
+    patchProtectedResource: body,
   });
 
 export const getMcpServers = (domainId: string, accessToken: string, size = 10, page = 0, sort?: string) : Promise<ProtectedResourcePage> =>

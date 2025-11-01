@@ -19,25 +19,47 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
+import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
+import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import java.io.IOException;
+
+import static jakarta.ws.rs.HttpMethod.PATCH;
+import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
 import org.junit.jupiter.api.Test;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 
 class ProtectedResourceResourceTest extends JerseySpringTest {
+
+    private Response patch(WebTarget webTarget, PatchProtectedResource patchRequest) {
+        try {
+            String jsonBody = objectMapper.writeValueAsString(patchRequest);
+            return webTarget.request()
+                    .property(SET_METHOD_WORKAROUND, true)
+                    .method(PATCH, Entity.entity(jsonBody, MediaType.APPLICATION_JSON_TYPE));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Test
     public void shouldReturnProtectedResource(){
@@ -51,7 +73,7 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.just(protectedResource))
-                .when(protectedResourceService).findByDomainAndIdAndType(eq(domainId), eq("id"), eq(ProtectedResource.Type.MCP_SERVER));
+                .when(protectedResourceService).findByDomainAndIdAndType(domainId, "id", ProtectedResource.Type.MCP_SERVER);
 
 
         final Response response = target("domains")
@@ -61,7 +83,8 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 .queryParam("type", "MCP_SERVER")
                 .request().get();
 
-        Map data = response.readEntity(Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> data = response.readEntity(Map.class);
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
         assertEquals("id", data.get("id"));
         assertEquals("name", data.get("name"));
@@ -76,7 +99,7 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Maybe.empty())
-                .when(protectedResourceService).findByDomainAndIdAndType(eq(domainId), eq("id"), eq(ProtectedResource.Type.MCP_SERVER));
+                .when(protectedResourceService).findByDomainAndIdAndType(domainId, "id", ProtectedResource.Type.MCP_SERVER);
 
 
         final Response response = target("domains")
@@ -156,5 +179,91 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
     }
 
+    @Test
+    public void shouldPatchProtectedResource_basicTest() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        ProtectedResource updatedResource = new ProtectedResource();
+        updatedResource.setId("resource-id");
+        updatedResource.setDomainId(domainId);
+        updatedResource.setName("New Name");
+        updatedResource.setResourceIdentifiers(List.of("https://example.com")); // Must have resourceIdentifiers for validation
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setName(Optional.of("New Name"));
+
+        // permission ok
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+        doReturn(Single.just(updatedResource))
+                .when(protectedResourceService).patch(any(Domain.class), eq("resource-id"), any(PatchProtectedResource.class), any());
+
+        final Response response = patch(target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("resource-id"), patchRequest);
+
+        assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        ProtectedResource result = readEntity(response, ProtectedResource.class);
+        assertEquals("resource-id", result.getId());
+        assertEquals("New Name", result.getName());
+    }
+
+    @Test
+    public void shouldPatchProtectedResource_404_domainNotFound() {
+        final String domainId = "domain-1";
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setName(Optional.of("New Name"));
+
+        // permission ok
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.empty()).when(domainService).findById(domainId);
+
+        final Response response = patch(target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("resource-id"), patchRequest);
+
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+    }
+
+    @Test
+    public void shouldPatchProtectedResource_403_forbidden() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setName(Optional.of("New Name"));
+
+        // permission denied
+        doReturn(Single.just(false)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = patch(target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("resource-id"), patchRequest);
+
+        assertEquals(HttpStatusCode.FORBIDDEN_403, response.getStatus());
+    }
+
+    @Test
+    public void shouldPatchProtectedResource_400_badRequest() {
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+
+        final Response response = patch(target("domains")
+                .path("domain-id")
+                .path("protected-resources")
+                .path("resource-id"), patchRequest);
+
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
 
 }
