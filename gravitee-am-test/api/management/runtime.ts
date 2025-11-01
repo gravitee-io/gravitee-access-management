@@ -26,6 +26,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
+import fetch from 'cross-fetch';
+
 export const BASE_PATH = 'http://localhost:8093/management'.replace(/\/+$/, '');
 
 export interface ConfigurationParameters {

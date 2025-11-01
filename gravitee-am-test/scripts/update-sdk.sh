@@ -44,6 +44,9 @@ case $SDK_OUTPUT_PATH in
   *) SDK_OUTPUT_PATH="$SCRIPT_DIR/$SDK_OUTPUT_PATH";;
 esac
 
+echo "[INFO] OpenAPI Generator Version:"
+npx @openapitools/openapi-generator-cli version
+
 echo "[INFO] output path will be: $SDK_OUTPUT_PATH"
 
 npx @openapitools/openapi-generator-cli generate \

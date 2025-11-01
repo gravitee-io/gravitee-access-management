@@ -79,12 +79,6 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  openDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchClientRegistrationSettings
-   */
   clientTemplateEnabled?: boolean;
   /**
    *
@@ -92,6 +86,12 @@ export interface PatchClientRegistrationSettings {
    * @memberof PatchClientRegistrationSettings
    */
   dynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  openDynamicClientRegistrationEnabled?: boolean;
 }
 
 /**
@@ -118,11 +118,11 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
     allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
     allowRedirectUriParamsExpressionLanguage:
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
-    openDynamicClientRegistrationEnabled:
-      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
     clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled:
+      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
@@ -146,8 +146,8 @@ export function PatchClientRegistrationSettingsToJSONTyped(
     isAllowedScopesEnabled: value['isAllowedScopesEnabled'],
     allowedScopes: value['allowedScopes'],
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
-    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
     clientTemplateEnabled: value['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
   };
 }
