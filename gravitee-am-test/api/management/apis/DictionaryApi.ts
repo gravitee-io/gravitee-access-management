@@ -372,7 +372,7 @@ export class DictionaryApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(I18nDictionaryFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(I18nDictionaryFromJSON));
   }
 
   /**

@@ -77,11 +77,13 @@ beforeAll(async () => {
     },
   });
   cibaUser = await createUser(cibaDomain.id, accessToken, buildTestUser(0));
-  await delay(6000);
+  await delay(10000);
+
 });
 
 describe('Create CIBA application', () => {
   it('INVALID - CIBA App forbiden not CIBA domain', async () => {
+      console.log('jwt', jwt.decode(accessToken));
     const response = await performPost(
       `${process.env.AM_GATEWAY_URL}/${nonCibaDomain.hrid}/oidc/register`,
       '',

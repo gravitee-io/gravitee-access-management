@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -82,41 +82,50 @@ export interface Environment {
   updatedAt?: Date;
 }
 
+/**
+ * Check if a given object implements the Environment interface.
+ */
+export function instanceOfEnvironment(value: object): value is Environment {
+  return true;
+}
+
 export function EnvironmentFromJSON(json: any): Environment {
   return EnvironmentFromJSONTyped(json, false);
 }
 
 export function EnvironmentFromJSONTyped(json: any, ignoreDiscriminator: boolean): Environment {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    hrids: !exists(json, 'hrids') ? undefined : json['hrids'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    domainRestrictions: !exists(json, 'domainRestrictions') ? undefined : json['domainRestrictions'],
-    organizationId: !exists(json, 'organizationId') ? undefined : json['organizationId'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    hrids: json['hrids'] == null ? undefined : json['hrids'],
+    name: json['name'] == null ? undefined : json['name'],
+    description: json['description'] == null ? undefined : json['description'],
+    domainRestrictions: json['domainRestrictions'] == null ? undefined : json['domainRestrictions'],
+    organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function EnvironmentToJSON(value?: Environment | null): any {
-  if (value === undefined) {
-    return undefined;
+export function EnvironmentToJSON(json: any): Environment {
+  return EnvironmentToJSONTyped(json, false);
+}
+
+export function EnvironmentToJSONTyped(value?: Environment | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    hrids: value.hrids,
-    name: value.name,
-    description: value.description,
-    domainRestrictions: value.domainRestrictions,
-    organizationId: value.organizationId,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    hrids: value['hrids'],
+    name: value['name'],
+    description: value['description'],
+    domainRestrictions: value['domainRestrictions'],
+    organizationId: value['organizationId'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -104,18 +104,30 @@ export const NewEmailTemplateEnum = {
 } as const;
 export type NewEmailTemplateEnum = typeof NewEmailTemplateEnum[keyof typeof NewEmailTemplateEnum];
 
+/**
+ * Check if a given object implements the NewEmail interface.
+ */
+export function instanceOfNewEmail(value: object): value is NewEmail {
+  if (!('from' in value) || value['from'] === undefined) return false;
+  if (!('subject' in value) || value['subject'] === undefined) return false;
+  if (!('content' in value) || value['content'] === undefined) return false;
+  if (!('expiresAfter' in value) || value['expiresAfter'] === undefined) return false;
+  if (!('template' in value) || value['template'] === undefined) return false;
+  return true;
+}
+
 export function NewEmailFromJSON(json: any): NewEmail {
   return NewEmailFromJSONTyped(json, false);
 }
 
 export function NewEmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewEmail {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
     from: json['from'],
-    fromName: !exists(json, 'fromName') ? undefined : json['fromName'],
+    fromName: json['fromName'] == null ? undefined : json['fromName'],
     subject: json['subject'],
     content: json['content'],
     expiresAfter: json['expiresAfter'],
@@ -123,20 +135,22 @@ export function NewEmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
   };
 }
 
-export function NewEmailToJSON(value?: NewEmail | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewEmailToJSON(json: any): NewEmail {
+  return NewEmailToJSONTyped(json, false);
+}
+
+export function NewEmailToJSONTyped(value?: NewEmail | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    enabled: value.enabled,
-    from: value.from,
-    fromName: value.fromName,
-    subject: value.subject,
-    content: value.content,
-    expiresAfter: value.expiresAfter,
-    template: value.template,
+    enabled: value['enabled'],
+    from: value['from'],
+    fromName: value['fromName'],
+    subject: value['subject'],
+    content: value['content'],
+    expiresAfter: value['expiresAfter'],
+    template: value['template'],
   };
 }

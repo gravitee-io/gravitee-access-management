@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,40 @@ export interface UserId {
   source?: string;
 }
 
+/**
+ * Check if a given object implements the UserId interface.
+ */
+export function instanceOfUserId(value: object): value is UserId {
+  return true;
+}
+
 export function UserIdFromJSON(json: any): UserId {
   return UserIdFromJSONTyped(json, false);
 }
 
 export function UserIdFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserId {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    externalId: !exists(json, 'externalId') ? undefined : json['externalId'],
-    source: !exists(json, 'source') ? undefined : json['source'],
+    id: json['id'] == null ? undefined : json['id'],
+    externalId: json['externalId'] == null ? undefined : json['externalId'],
+    source: json['source'] == null ? undefined : json['source'],
   };
 }
 
-export function UserIdToJSON(value?: UserId | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UserIdToJSON(json: any): UserId {
+  return UserIdToJSONTyped(json, false);
+}
+
+export function UserIdToJSONTyped(value?: UserId | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    externalId: value.externalId,
-    source: value.source,
+    id: value['id'],
+    externalId: value['externalId'],
+    source: value['source'],
   };
 }

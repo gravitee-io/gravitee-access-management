@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -79,19 +79,26 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
+  dynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
   clientTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  isDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof PatchClientRegistrationSettings
-   */
-  isOpenDynamicClientRegistrationEnabled?: boolean;
+  openDynamicClientRegistrationEnabled?: boolean;
+}
+
+/**
+ * Check if a given object implements the PatchClientRegistrationSettings interface.
+ */
+export function instanceOfPatchClientRegistrationSettings(value: object): value is PatchClientRegistrationSettings {
+  return true;
 }
 
 export function PatchClientRegistrationSettingsFromJSON(json: any): PatchClientRegistrationSettings {
@@ -99,46 +106,48 @@ export function PatchClientRegistrationSettingsFromJSON(json: any): PatchClientR
 }
 
 export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchClientRegistrationSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    allowLocalhostRedirectUri: !exists(json, 'allowLocalhostRedirectUri') ? undefined : json['allowLocalhostRedirectUri'],
-    allowHttpSchemeRedirectUri: !exists(json, 'allowHttpSchemeRedirectUri') ? undefined : json['allowHttpSchemeRedirectUri'],
-    allowWildCardRedirectUri: !exists(json, 'allowWildCardRedirectUri') ? undefined : json['allowWildCardRedirectUri'],
-    defaultScopes: !exists(json, 'defaultScopes') ? undefined : json['defaultScopes'],
-    isAllowedScopesEnabled: !exists(json, 'isAllowedScopesEnabled') ? undefined : json['isAllowedScopesEnabled'],
-    allowedScopes: !exists(json, 'allowedScopes') ? undefined : json['allowedScopes'],
-    allowRedirectUriParamsExpressionLanguage: !exists(json, 'allowRedirectUriParamsExpressionLanguage')
-      ? undefined
-      : json['allowRedirectUriParamsExpressionLanguage'],
-    clientTemplateEnabled: !exists(json, 'clientTemplateEnabled') ? undefined : json['clientTemplateEnabled'],
-    isDynamicClientRegistrationEnabled: !exists(json, 'isDynamicClientRegistrationEnabled')
-      ? undefined
-      : json['isDynamicClientRegistrationEnabled'],
-    isOpenDynamicClientRegistrationEnabled: !exists(json, 'isOpenDynamicClientRegistrationEnabled')
-      ? undefined
-      : json['isOpenDynamicClientRegistrationEnabled'],
+    allowLocalhostRedirectUri: json['allowLocalhostRedirectUri'] == null ? undefined : json['allowLocalhostRedirectUri'],
+    allowHttpSchemeRedirectUri: json['allowHttpSchemeRedirectUri'] == null ? undefined : json['allowHttpSchemeRedirectUri'],
+    allowWildCardRedirectUri: json['allowWildCardRedirectUri'] == null ? undefined : json['allowWildCardRedirectUri'],
+    defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
+    isAllowedScopesEnabled: json['isAllowedScopesEnabled'] == null ? undefined : json['isAllowedScopesEnabled'],
+    allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
+    allowRedirectUriParamsExpressionLanguage:
+      json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
+    dynamicClientRegistrationEnabled:
+      json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
+    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
+    openDynamicClientRegistrationEnabled:
+      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
   };
 }
 
-export function PatchClientRegistrationSettingsToJSON(value?: PatchClientRegistrationSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchClientRegistrationSettingsToJSON(json: any): PatchClientRegistrationSettings {
+  return PatchClientRegistrationSettingsToJSONTyped(json, false);
+}
+
+export function PatchClientRegistrationSettingsToJSONTyped(
+  value?: PatchClientRegistrationSettings | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    allowLocalhostRedirectUri: value.allowLocalhostRedirectUri,
-    allowHttpSchemeRedirectUri: value.allowHttpSchemeRedirectUri,
-    allowWildCardRedirectUri: value.allowWildCardRedirectUri,
-    defaultScopes: value.defaultScopes,
-    isAllowedScopesEnabled: value.isAllowedScopesEnabled,
-    allowedScopes: value.allowedScopes,
-    allowRedirectUriParamsExpressionLanguage: value.allowRedirectUriParamsExpressionLanguage,
-    clientTemplateEnabled: value.clientTemplateEnabled,
-    isDynamicClientRegistrationEnabled: value.isDynamicClientRegistrationEnabled,
-    isOpenDynamicClientRegistrationEnabled: value.isOpenDynamicClientRegistrationEnabled,
+    allowLocalhostRedirectUri: value['allowLocalhostRedirectUri'],
+    allowHttpSchemeRedirectUri: value['allowHttpSchemeRedirectUri'],
+    allowWildCardRedirectUri: value['allowWildCardRedirectUri'],
+    defaultScopes: value['defaultScopes'],
+    isAllowedScopesEnabled: value['isAllowedScopesEnabled'],
+    allowedScopes: value['allowedScopes'],
+    allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
+    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
+    clientTemplateEnabled: value['clientTemplateEnabled'],
+    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
   };
 }

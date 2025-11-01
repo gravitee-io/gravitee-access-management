@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,12 +52,22 @@ export interface UpdateDeviceIdentifier {
   configuration: string;
 }
 
+/**
+ * Check if a given object implements the UpdateDeviceIdentifier interface.
+ */
+export function instanceOfUpdateDeviceIdentifier(value: object): value is UpdateDeviceIdentifier {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function UpdateDeviceIdentifierFromJSON(json: any): UpdateDeviceIdentifier {
   return UpdateDeviceIdentifierFromJSONTyped(json, false);
 }
 
 export function UpdateDeviceIdentifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateDeviceIdentifier {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
@@ -67,16 +77,18 @@ export function UpdateDeviceIdentifierFromJSONTyped(json: any, ignoreDiscriminat
   };
 }
 
-export function UpdateDeviceIdentifierToJSON(value?: UpdateDeviceIdentifier | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateDeviceIdentifierToJSON(json: any): UpdateDeviceIdentifier {
+  return UpdateDeviceIdentifierToJSONTyped(json, false);
+}
+
+export function UpdateDeviceIdentifierToJSONTyped(value?: UpdateDeviceIdentifier | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
   };
 }

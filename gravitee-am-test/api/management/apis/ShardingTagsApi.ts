@@ -47,7 +47,7 @@ export interface Create12Request {
   newTag: NewTag;
 }
 
-export interface Delete15Request {
+export interface Delete14Request {
   organizationId: string;
   tag: string;
 }
@@ -133,19 +133,19 @@ export class ShardingTagsApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization
    * Delete the sharding tag
    */
-  async delete15Raw(
-    requestParameters: Delete15Request,
+  async delete14Raw(
+    requestParameters: Delete14Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete15.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete14.',
       );
     }
 
     if (requestParameters.tag === null || requestParameters.tag === undefined) {
-      throw new runtime.RequiredError('tag', 'Required parameter requestParameters.tag was null or undefined when calling delete15.');
+      throw new runtime.RequiredError('tag', 'Required parameter requestParameters.tag was null or undefined when calling delete14.');
     }
 
     const queryParameters: any = {};
@@ -179,8 +179,8 @@ export class ShardingTagsApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_TAG[DELETE] permission on the specified organization
    * Delete the sharding tag
    */
-  async delete15(requestParameters: Delete15Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete15Raw(requestParameters, initOverrides);
+  async delete14(requestParameters: Delete14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete14Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -278,7 +278,7 @@ export class ShardingTagsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DomainFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(DomainFromJSON));
   }
 
   /**

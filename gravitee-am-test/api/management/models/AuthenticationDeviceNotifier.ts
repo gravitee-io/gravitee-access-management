@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -95,41 +95,53 @@ export const AuthenticationDeviceNotifierReferenceTypeEnum = {
 export type AuthenticationDeviceNotifierReferenceTypeEnum =
   typeof AuthenticationDeviceNotifierReferenceTypeEnum[keyof typeof AuthenticationDeviceNotifierReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the AuthenticationDeviceNotifier interface.
+ */
+export function instanceOfAuthenticationDeviceNotifier(value: object): value is AuthenticationDeviceNotifier {
+  return true;
+}
+
 export function AuthenticationDeviceNotifierFromJSON(json: any): AuthenticationDeviceNotifier {
   return AuthenticationDeviceNotifierFromJSONTyped(json, false);
 }
 
 export function AuthenticationDeviceNotifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): AuthenticationDeviceNotifier {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function AuthenticationDeviceNotifierToJSON(value?: AuthenticationDeviceNotifier | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AuthenticationDeviceNotifierToJSON(json: any): AuthenticationDeviceNotifier {
+  return AuthenticationDeviceNotifierToJSONTyped(json, false);
+}
+
+export function AuthenticationDeviceNotifierToJSONTyped(
+  value?: AuthenticationDeviceNotifier | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
-    referenceId: value.referenceId,
-    referenceType: value.referenceType,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }

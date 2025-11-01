@@ -535,7 +535,7 @@ export class CertificateApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CertificateKeyFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(CertificateKeyFromJSON));
   }
 
   /**
@@ -697,7 +697,7 @@ export class CertificateApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CertificateEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(CertificateEntityFromJSON));
   }
 
   /**

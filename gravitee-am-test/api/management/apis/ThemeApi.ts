@@ -345,7 +345,7 @@ export class ThemeApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ThemeEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(ThemeEntityFromJSON));
   }
 
   /**

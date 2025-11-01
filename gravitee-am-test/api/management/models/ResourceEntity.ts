@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -112,51 +112,60 @@ export interface ResourceEntity {
   updatedAt?: Date;
 }
 
+/**
+ * Check if a given object implements the ResourceEntity interface.
+ */
+export function instanceOfResourceEntity(value: object): value is ResourceEntity {
+  return true;
+}
+
 export function ResourceEntityFromJSON(json: any): ResourceEntity {
   return ResourceEntityFromJSONTyped(json, false);
 }
 
 export function ResourceEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): ResourceEntity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    resourceScopes: !exists(json, 'resourceScopes') ? undefined : json['resourceScopes'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    iconUri: !exists(json, 'iconUri') ? undefined : json['iconUri'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    domain: !exists(json, 'domain') ? undefined : json['domain'],
-    userId: !exists(json, 'userId') ? undefined : json['userId'],
-    userDisplayName: !exists(json, 'userDisplayName') ? undefined : json['userDisplayName'],
-    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
-    policies: !exists(json, 'policies') ? undefined : json['policies'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    id: json['id'] == null ? undefined : json['id'],
+    resourceScopes: json['resourceScopes'] == null ? undefined : json['resourceScopes'],
+    description: json['description'] == null ? undefined : json['description'],
+    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
+    name: json['name'] == null ? undefined : json['name'],
+    type: json['type'] == null ? undefined : json['type'],
+    domain: json['domain'] == null ? undefined : json['domain'],
+    userId: json['userId'] == null ? undefined : json['userId'],
+    userDisplayName: json['userDisplayName'] == null ? undefined : json['userDisplayName'],
+    clientId: json['clientId'] == null ? undefined : json['clientId'],
+    policies: json['policies'] == null ? undefined : json['policies'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function ResourceEntityToJSON(value?: ResourceEntity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ResourceEntityToJSON(json: any): ResourceEntity {
+  return ResourceEntityToJSONTyped(json, false);
+}
+
+export function ResourceEntityToJSONTyped(value?: ResourceEntity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    resourceScopes: value.resourceScopes,
-    description: value.description,
-    iconUri: value.iconUri,
-    name: value.name,
-    type: value.type,
-    domain: value.domain,
-    userId: value.userId,
-    userDisplayName: value.userDisplayName,
-    clientId: value.clientId,
-    policies: value.policies,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    id: value['id'],
+    resourceScopes: value['resourceScopes'],
+    description: value['description'],
+    iconUri: value['iconUri'],
+    name: value['name'],
+    type: value['type'],
+    domain: value['domain'],
+    userId: value['userId'],
+    userDisplayName: value['userDisplayName'],
+    clientId: value['clientId'],
+    policies: value['policies'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
   };
 }
