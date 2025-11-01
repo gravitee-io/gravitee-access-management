@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -86,44 +86,33 @@ export const NewFormTemplateEnum = {
 } as const;
 export type NewFormTemplateEnum = typeof NewFormTemplateEnum[keyof typeof NewFormTemplateEnum];
 
-/**
- * Check if a given object implements the NewForm interface.
- */
-export function instanceOfNewForm(value: object): value is NewForm {
-  if (!('template' in value) || value['template'] === undefined) return false;
-  if (!('content' in value) || value['content'] === undefined) return false;
-  return true;
-}
-
 export function NewFormFromJSON(json: any): NewForm {
   return NewFormFromJSONTyped(json, false);
 }
 
 export function NewFormFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewForm {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
     template: json['template'],
     content: json['content'],
-    assets: json['assets'] == null ? undefined : json['assets'],
+    assets: !exists(json, 'assets') ? undefined : json['assets'],
   };
 }
 
-export function NewFormToJSON(json: any): NewForm {
-  return NewFormToJSONTyped(json, false);
-}
-
-export function NewFormToJSONTyped(value?: NewForm | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewFormToJSON(value?: NewForm | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    template: value['template'],
-    content: value['content'],
-    assets: value['assets'],
+    enabled: value.enabled,
+    template: value.template,
+    content: value.content,
+    assets: value.assets,
   };
 }

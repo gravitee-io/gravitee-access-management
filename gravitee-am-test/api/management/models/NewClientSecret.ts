@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,20 +40,12 @@ export interface NewClientSecret {
   name: string;
 }
 
-/**
- * Check if a given object implements the NewClientSecret interface.
- */
-export function instanceOfNewClientSecret(value: object): value is NewClientSecret {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  return true;
-}
-
 export function NewClientSecretFromJSON(json: any): NewClientSecret {
   return NewClientSecretFromJSONTyped(json, false);
 }
 
 export function NewClientSecretFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewClientSecret {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
@@ -61,16 +53,14 @@ export function NewClientSecretFromJSONTyped(json: any, ignoreDiscriminator: boo
   };
 }
 
-export function NewClientSecretToJSON(json: any): NewClientSecret {
-  return NewClientSecretToJSONTyped(json, false);
-}
-
-export function NewClientSecretToJSONTyped(value?: NewClientSecret | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewClientSecretToJSON(value?: NewClientSecret | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
+    name: value.name,
   };
 }

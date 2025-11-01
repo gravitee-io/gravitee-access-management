@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -106,59 +106,51 @@ export interface PatchPasswordSettings {
   oldPasswords?: number;
 }
 
-/**
- * Check if a given object implements the PatchPasswordSettings interface.
- */
-export function instanceOfPatchPasswordSettings(value: object): value is PatchPasswordSettings {
-  return true;
-}
-
 export function PatchPasswordSettingsFromJSON(json: any): PatchPasswordSettings {
   return PatchPasswordSettingsFromJSONTyped(json, false);
 }
 
 export function PatchPasswordSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchPasswordSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    inherited: json['inherited'] == null ? undefined : json['inherited'],
-    minLength: json['minLength'] == null ? undefined : json['minLength'],
-    maxLength: json['maxLength'] == null ? undefined : json['maxLength'],
-    includeNumbers: json['includeNumbers'] == null ? undefined : json['includeNumbers'],
-    includeSpecialCharacters: json['includeSpecialCharacters'] == null ? undefined : json['includeSpecialCharacters'],
-    lettersInMixedCase: json['lettersInMixedCase'] == null ? undefined : json['lettersInMixedCase'],
-    maxConsecutiveLetters: json['maxConsecutiveLetters'] == null ? undefined : json['maxConsecutiveLetters'],
-    excludePasswordsInDictionary: json['excludePasswordsInDictionary'] == null ? undefined : json['excludePasswordsInDictionary'],
-    excludeUserProfileInfoInPassword:
-      json['excludeUserProfileInfoInPassword'] == null ? undefined : json['excludeUserProfileInfoInPassword'],
-    expiryDuration: json['expiryDuration'] == null ? undefined : json['expiryDuration'],
-    passwordHistoryEnabled: json['passwordHistoryEnabled'] == null ? undefined : json['passwordHistoryEnabled'],
-    oldPasswords: json['oldPasswords'] == null ? undefined : json['oldPasswords'],
+    inherited: !exists(json, 'inherited') ? undefined : json['inherited'],
+    minLength: !exists(json, 'minLength') ? undefined : json['minLength'],
+    maxLength: !exists(json, 'maxLength') ? undefined : json['maxLength'],
+    includeNumbers: !exists(json, 'includeNumbers') ? undefined : json['includeNumbers'],
+    includeSpecialCharacters: !exists(json, 'includeSpecialCharacters') ? undefined : json['includeSpecialCharacters'],
+    lettersInMixedCase: !exists(json, 'lettersInMixedCase') ? undefined : json['lettersInMixedCase'],
+    maxConsecutiveLetters: !exists(json, 'maxConsecutiveLetters') ? undefined : json['maxConsecutiveLetters'],
+    excludePasswordsInDictionary: !exists(json, 'excludePasswordsInDictionary') ? undefined : json['excludePasswordsInDictionary'],
+    excludeUserProfileInfoInPassword: !exists(json, 'excludeUserProfileInfoInPassword')
+      ? undefined
+      : json['excludeUserProfileInfoInPassword'],
+    expiryDuration: !exists(json, 'expiryDuration') ? undefined : json['expiryDuration'],
+    passwordHistoryEnabled: !exists(json, 'passwordHistoryEnabled') ? undefined : json['passwordHistoryEnabled'],
+    oldPasswords: !exists(json, 'oldPasswords') ? undefined : json['oldPasswords'],
   };
 }
 
-export function PatchPasswordSettingsToJSON(json: any): PatchPasswordSettings {
-  return PatchPasswordSettingsToJSONTyped(json, false);
-}
-
-export function PatchPasswordSettingsToJSONTyped(value?: PatchPasswordSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchPasswordSettingsToJSON(value?: PatchPasswordSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    inherited: value['inherited'],
-    minLength: value['minLength'],
-    maxLength: value['maxLength'],
-    includeNumbers: value['includeNumbers'],
-    includeSpecialCharacters: value['includeSpecialCharacters'],
-    lettersInMixedCase: value['lettersInMixedCase'],
-    maxConsecutiveLetters: value['maxConsecutiveLetters'],
-    excludePasswordsInDictionary: value['excludePasswordsInDictionary'],
-    excludeUserProfileInfoInPassword: value['excludeUserProfileInfoInPassword'],
-    expiryDuration: value['expiryDuration'],
-    passwordHistoryEnabled: value['passwordHistoryEnabled'],
-    oldPasswords: value['oldPasswords'],
+    inherited: value.inherited,
+    minLength: value.minLength,
+    maxLength: value.maxLength,
+    includeNumbers: value.includeNumbers,
+    includeSpecialCharacters: value.includeSpecialCharacters,
+    lettersInMixedCase: value.lettersInMixedCase,
+    maxConsecutiveLetters: value.maxConsecutiveLetters,
+    excludePasswordsInDictionary: value.excludePasswordsInDictionary,
+    excludeUserProfileInfoInPassword: value.excludeUserProfileInfoInPassword,
+    expiryDuration: value.expiryDuration,
+    passwordHistoryEnabled: value.passwordHistoryEnabled,
+    oldPasswords: value.oldPasswords,
   };
 }

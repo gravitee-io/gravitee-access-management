@@ -25,37 +25,27 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { ApplicationSettings } from './ApplicationSettings';
+import { exists, mapValues } from '../runtime';
 import {
-  ApplicationSettingsFromJSON,
-  ApplicationSettingsFromJSONTyped,
-  ApplicationSettingsToJSON,
-  ApplicationSettingsToJSONTyped,
-} from './ApplicationSettings';
-import type { ClientSecret } from './ClientSecret';
-import { ClientSecretFromJSON, ClientSecretFromJSONTyped, ClientSecretToJSON, ClientSecretToJSONTyped } from './ClientSecret';
-import type { ApplicationIdentityProvider } from './ApplicationIdentityProvider';
-import {
+  ApplicationIdentityProvider,
   ApplicationIdentityProviderFromJSON,
   ApplicationIdentityProviderFromJSONTyped,
   ApplicationIdentityProviderToJSON,
-  ApplicationIdentityProviderToJSONTyped,
 } from './ApplicationIdentityProvider';
-import type { PasswordSettings } from './PasswordSettings';
 import {
-  PasswordSettingsFromJSON,
-  PasswordSettingsFromJSONTyped,
-  PasswordSettingsToJSON,
-  PasswordSettingsToJSONTyped,
-} from './PasswordSettings';
-import type { ApplicationSecretSettings } from './ApplicationSecretSettings';
-import {
+  ApplicationSecretSettings,
   ApplicationSecretSettingsFromJSON,
   ApplicationSecretSettingsFromJSONTyped,
   ApplicationSecretSettingsToJSON,
-  ApplicationSecretSettingsToJSONTyped,
 } from './ApplicationSecretSettings';
+import {
+  ApplicationSettings,
+  ApplicationSettingsFromJSON,
+  ApplicationSettingsFromJSONTyped,
+  ApplicationSettingsToJSON,
+} from './ApplicationSettings';
+import { ClientSecret, ClientSecretFromJSON, ClientSecretFromJSONTyped, ClientSecretToJSON } from './ClientSecret';
+import { PasswordSettings, PasswordSettingsFromJSON, PasswordSettingsFromJSONTyped, PasswordSettingsToJSON } from './PasswordSettings';
 
 /**
  *
@@ -179,76 +169,67 @@ export const ApplicationTypeEnum = {
 } as const;
 export type ApplicationTypeEnum = typeof ApplicationTypeEnum[keyof typeof ApplicationTypeEnum];
 
-/**
- * Check if a given object implements the Application interface.
- */
-export function instanceOfApplication(value: object): value is Application {
-  return true;
-}
-
 export function ApplicationFromJSON(json: any): Application {
   return ApplicationFromJSONTyped(json, false);
 }
 
 export function ApplicationFromJSONTyped(json: any, ignoreDiscriminator: boolean): Application {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    description: json['description'] == null ? undefined : json['description'],
-    domain: json['domain'] == null ? undefined : json['domain'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    template: json['template'] == null ? undefined : json['template'],
-    factors: json['factors'] == null ? undefined : new Set(json['factors']),
-    certificate: json['certificate'] == null ? undefined : json['certificate'],
-    metadata: json['metadata'] == null ? undefined : json['metadata'],
-    settings: json['settings'] == null ? undefined : ApplicationSettingsFromJSON(json['settings']),
-    identityProviders:
-      json['identityProviders'] == null
-        ? undefined
-        : new Set((json['identityProviders'] as Array<any>).map(ApplicationIdentityProviderFromJSON)),
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    secretSettings:
-      json['secretSettings'] == null ? undefined : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
-    secrets: json['secrets'] == null ? undefined : (json['secrets'] as Array<any>).map(ClientSecretFromJSON),
-    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+    description: !exists(json, 'description') ? undefined : json['description'],
+    domain: !exists(json, 'domain') ? undefined : json['domain'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    template: !exists(json, 'template') ? undefined : json['template'],
+    factors: !exists(json, 'factors') ? undefined : json['factors'],
+    certificate: !exists(json, 'certificate') ? undefined : json['certificate'],
+    metadata: !exists(json, 'metadata') ? undefined : json['metadata'],
+    settings: !exists(json, 'settings') ? undefined : ApplicationSettingsFromJSON(json['settings']),
+    identityProviders: !exists(json, 'identityProviders')
+      ? undefined
+      : new Set((json['identityProviders'] as Array<any>).map(ApplicationIdentityProviderFromJSON)),
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    secretSettings: !exists(json, 'secretSettings')
+      ? undefined
+      : (json['secretSettings'] as Array<any>).map(ApplicationSecretSettingsFromJSON),
+    secrets: !exists(json, 'secrets') ? undefined : (json['secrets'] as Array<any>).map(ClientSecretFromJSON),
+    passwordSettings: !exists(json, 'passwordSettings') ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
   };
 }
 
-export function ApplicationToJSON(json: any): Application {
-  return ApplicationToJSONTyped(json, false);
-}
-
-export function ApplicationToJSONTyped(value?: Application | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ApplicationToJSON(value?: Application | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    name: value['name'],
-    type: value['type'],
-    description: value['description'],
-    domain: value['domain'],
-    enabled: value['enabled'],
-    template: value['template'],
-    factors: value['factors'] == null ? undefined : Array.from(value['factors'] as Set<any>),
-    certificate: value['certificate'],
-    metadata: value['metadata'],
-    settings: ApplicationSettingsToJSON(value['settings']),
+    id: value.id,
+    name: value.name,
+    type: value.type,
+    description: value.description,
+    domain: value.domain,
+    enabled: value.enabled,
+    template: value.template,
+    factors: value.factors,
+    certificate: value.certificate,
+    metadata: value.metadata,
+    settings: ApplicationSettingsToJSON(value.settings),
     identityProviders:
-      value['identityProviders'] == null
+      value.identityProviders === undefined
         ? undefined
-        : Array.from(value['identityProviders'] as Set<any>).map(ApplicationIdentityProviderToJSON),
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+        : Array.from(value.identityProviders as Set<any>).map(ApplicationIdentityProviderToJSON),
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
     secretSettings:
-      value['secretSettings'] == null ? undefined : (value['secretSettings'] as Array<any>).map(ApplicationSecretSettingsToJSON),
-    secrets: value['secrets'] == null ? undefined : (value['secrets'] as Array<any>).map(ClientSecretToJSON),
-    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
+      value.secretSettings === undefined ? undefined : (value.secretSettings as Array<any>).map(ApplicationSecretSettingsToJSON),
+    secrets: value.secrets === undefined ? undefined : (value.secrets as Array<any>).map(ClientSecretToJSON),
+    passwordSettings: PasswordSettingsToJSON(value.passwordSettings),
   };
 }

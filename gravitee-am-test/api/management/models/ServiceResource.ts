@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -94,50 +94,41 @@ export const ServiceResourceReferenceTypeEnum = {
 } as const;
 export type ServiceResourceReferenceTypeEnum = typeof ServiceResourceReferenceTypeEnum[keyof typeof ServiceResourceReferenceTypeEnum];
 
-/**
- * Check if a given object implements the ServiceResource interface.
- */
-export function instanceOfServiceResource(value: object): value is ServiceResource {
-  return true;
-}
-
 export function ServiceResourceFromJSON(json: any): ServiceResource {
   return ServiceResourceFromJSONTyped(json, false);
 }
 
 export function ServiceResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): ServiceResource {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
+    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function ServiceResourceToJSON(json: any): ServiceResource {
-  return ServiceResourceToJSONTyped(json, false);
-}
-
-export function ServiceResourceToJSONTyped(value?: ServiceResource | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ServiceResourceToJSON(value?: ServiceResource | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    name: value['name'],
-    type: value['type'],
-    configuration: value['configuration'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    id: value.id,
+    referenceType: value.referenceType,
+    referenceId: value.referenceId,
+    name: value.name,
+    type: value.type,
+    configuration: value.configuration,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };
 }

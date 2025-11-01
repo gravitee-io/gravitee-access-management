@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,46 +70,37 @@ export interface CorsSettings {
   allowCredentials?: boolean;
 }
 
-/**
- * Check if a given object implements the CorsSettings interface.
- */
-export function instanceOfCorsSettings(value: object): value is CorsSettings {
-  return true;
-}
-
 export function CorsSettingsFromJSON(json: any): CorsSettings {
   return CorsSettingsFromJSONTyped(json, false);
 }
 
 export function CorsSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): CorsSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    allowedOrigins: json['allowedOrigins'] == null ? undefined : new Set(json['allowedOrigins']),
-    allowedMethods: json['allowedMethods'] == null ? undefined : new Set(json['allowedMethods']),
-    allowedHeaders: json['allowedHeaders'] == null ? undefined : new Set(json['allowedHeaders']),
-    maxAge: json['maxAge'] == null ? undefined : json['maxAge'],
-    allowCredentials: json['allowCredentials'] == null ? undefined : json['allowCredentials'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    allowedOrigins: !exists(json, 'allowedOrigins') ? undefined : json['allowedOrigins'],
+    allowedMethods: !exists(json, 'allowedMethods') ? undefined : json['allowedMethods'],
+    allowedHeaders: !exists(json, 'allowedHeaders') ? undefined : json['allowedHeaders'],
+    maxAge: !exists(json, 'maxAge') ? undefined : json['maxAge'],
+    allowCredentials: !exists(json, 'allowCredentials') ? undefined : json['allowCredentials'],
   };
 }
 
-export function CorsSettingsToJSON(json: any): CorsSettings {
-  return CorsSettingsToJSONTyped(json, false);
-}
-
-export function CorsSettingsToJSONTyped(value?: CorsSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function CorsSettingsToJSON(value?: CorsSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    allowedOrigins: value['allowedOrigins'] == null ? undefined : Array.from(value['allowedOrigins'] as Set<any>),
-    allowedMethods: value['allowedMethods'] == null ? undefined : Array.from(value['allowedMethods'] as Set<any>),
-    allowedHeaders: value['allowedHeaders'] == null ? undefined : Array.from(value['allowedHeaders'] as Set<any>),
-    maxAge: value['maxAge'],
-    allowCredentials: value['allowCredentials'],
+    enabled: value.enabled,
+    allowedOrigins: value.allowedOrigins,
+    allowedMethods: value.allowedMethods,
+    allowedHeaders: value.allowedHeaders,
+    maxAge: value.maxAge,
+    allowCredentials: value.allowCredentials,
   };
 }

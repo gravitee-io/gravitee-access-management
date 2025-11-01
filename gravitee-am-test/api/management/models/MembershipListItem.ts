@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { Membership } from './Membership';
-import { MembershipFromJSON, MembershipFromJSONTyped, MembershipToJSON, MembershipToJSONTyped } from './Membership';
+import { exists, mapValues } from '../runtime';
+import { Membership, MembershipFromJSON, MembershipFromJSONTyped, MembershipToJSON } from './Membership';
 
 /**
  *
@@ -49,38 +48,29 @@ export interface MembershipListItem {
   metadata?: { [key: string]: { [key: string]: any } };
 }
 
-/**
- * Check if a given object implements the MembershipListItem interface.
- */
-export function instanceOfMembershipListItem(value: object): value is MembershipListItem {
-  return true;
-}
-
 export function MembershipListItemFromJSON(json: any): MembershipListItem {
   return MembershipListItemFromJSONTyped(json, false);
 }
 
 export function MembershipListItemFromJSONTyped(json: any, ignoreDiscriminator: boolean): MembershipListItem {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    memberships: json['memberships'] == null ? undefined : (json['memberships'] as Array<any>).map(MembershipFromJSON),
-    metadata: json['metadata'] == null ? undefined : json['metadata'],
+    memberships: !exists(json, 'memberships') ? undefined : (json['memberships'] as Array<any>).map(MembershipFromJSON),
+    metadata: !exists(json, 'metadata') ? undefined : json['metadata'],
   };
 }
 
-export function MembershipListItemToJSON(json: any): MembershipListItem {
-  return MembershipListItemToJSONTyped(json, false);
-}
-
-export function MembershipListItemToJSONTyped(value?: MembershipListItem | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function MembershipListItemToJSON(value?: MembershipListItem | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    memberships: value['memberships'] == null ? undefined : (value['memberships'] as Array<any>).map(MembershipToJSON),
-    metadata: value['metadata'],
+    memberships: value.memberships === undefined ? undefined : (value.memberships as Array<any>).map(MembershipToJSON),
+    metadata: value.metadata,
   };
 }

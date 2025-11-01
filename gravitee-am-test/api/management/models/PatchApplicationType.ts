@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,20 +52,12 @@ export const PatchApplicationTypeTypeEnum = {
 } as const;
 export type PatchApplicationTypeTypeEnum = typeof PatchApplicationTypeTypeEnum[keyof typeof PatchApplicationTypeTypeEnum];
 
-/**
- * Check if a given object implements the PatchApplicationType interface.
- */
-export function instanceOfPatchApplicationType(value: object): value is PatchApplicationType {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  return true;
-}
-
 export function PatchApplicationTypeFromJSON(json: any): PatchApplicationType {
   return PatchApplicationTypeFromJSONTyped(json, false);
 }
 
 export function PatchApplicationTypeFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchApplicationType {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
@@ -73,16 +65,14 @@ export function PatchApplicationTypeFromJSONTyped(json: any, ignoreDiscriminator
   };
 }
 
-export function PatchApplicationTypeToJSON(json: any): PatchApplicationType {
-  return PatchApplicationTypeToJSONTyped(json, false);
-}
-
-export function PatchApplicationTypeToJSONTyped(value?: PatchApplicationType | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchApplicationTypeToJSON(value?: PatchApplicationType | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    type: value['type'],
+    type: value.type,
   };
 }

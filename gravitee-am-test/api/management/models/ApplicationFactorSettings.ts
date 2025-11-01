@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,38 +46,29 @@ export interface ApplicationFactorSettings {
   selectionRule?: string;
 }
 
-/**
- * Check if a given object implements the ApplicationFactorSettings interface.
- */
-export function instanceOfApplicationFactorSettings(value: object): value is ApplicationFactorSettings {
-  return true;
-}
-
 export function ApplicationFactorSettingsFromJSON(json: any): ApplicationFactorSettings {
   return ApplicationFactorSettingsFromJSONTyped(json, false);
 }
 
 export function ApplicationFactorSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationFactorSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    selectionRule: json['selectionRule'] == null ? undefined : json['selectionRule'],
+    id: !exists(json, 'id') ? undefined : json['id'],
+    selectionRule: !exists(json, 'selectionRule') ? undefined : json['selectionRule'],
   };
 }
 
-export function ApplicationFactorSettingsToJSON(json: any): ApplicationFactorSettings {
-  return ApplicationFactorSettingsToJSONTyped(json, false);
-}
-
-export function ApplicationFactorSettingsToJSONTyped(value?: ApplicationFactorSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ApplicationFactorSettingsToJSON(value?: ApplicationFactorSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    selectionRule: value['selectionRule'],
+    id: value.id,
+    selectionRule: value.selectionRule,
   };
 }

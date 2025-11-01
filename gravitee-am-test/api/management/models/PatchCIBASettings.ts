@@ -25,13 +25,12 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { CIBASettingNotifier } from './CIBASettingNotifier';
+import { exists, mapValues } from '../runtime';
 import {
+  CIBASettingNotifier,
   CIBASettingNotifierFromJSON,
   CIBASettingNotifierFromJSONTyped,
   CIBASettingNotifierToJSON,
-  CIBASettingNotifierToJSONTyped,
 } from './CIBASettingNotifier';
 
 /**
@@ -72,44 +71,37 @@ export interface PatchCIBASettings {
   deviceNotifiers?: Array<CIBASettingNotifier>;
 }
 
-/**
- * Check if a given object implements the PatchCIBASettings interface.
- */
-export function instanceOfPatchCIBASettings(value: object): value is PatchCIBASettings {
-  return true;
-}
-
 export function PatchCIBASettingsFromJSON(json: any): PatchCIBASettings {
   return PatchCIBASettingsFromJSONTyped(json, false);
 }
 
 export function PatchCIBASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchCIBASettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    authReqExpiry: json['authReqExpiry'] == null ? undefined : json['authReqExpiry'],
-    tokenReqInterval: json['tokenReqInterval'] == null ? undefined : json['tokenReqInterval'],
-    bindingMessageLength: json['bindingMessageLength'] == null ? undefined : json['bindingMessageLength'],
-    deviceNotifiers: json['deviceNotifiers'] == null ? undefined : (json['deviceNotifiers'] as Array<any>).map(CIBASettingNotifierFromJSON),
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    authReqExpiry: !exists(json, 'authReqExpiry') ? undefined : json['authReqExpiry'],
+    tokenReqInterval: !exists(json, 'tokenReqInterval') ? undefined : json['tokenReqInterval'],
+    bindingMessageLength: !exists(json, 'bindingMessageLength') ? undefined : json['bindingMessageLength'],
+    deviceNotifiers: !exists(json, 'deviceNotifiers')
+      ? undefined
+      : (json['deviceNotifiers'] as Array<any>).map(CIBASettingNotifierFromJSON),
   };
 }
 
-export function PatchCIBASettingsToJSON(json: any): PatchCIBASettings {
-  return PatchCIBASettingsToJSONTyped(json, false);
-}
-
-export function PatchCIBASettingsToJSONTyped(value?: PatchCIBASettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchCIBASettingsToJSON(value?: PatchCIBASettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    authReqExpiry: value['authReqExpiry'],
-    tokenReqInterval: value['tokenReqInterval'],
-    bindingMessageLength: value['bindingMessageLength'],
-    deviceNotifiers: value['deviceNotifiers'] == null ? undefined : (value['deviceNotifiers'] as Array<any>).map(CIBASettingNotifierToJSON),
+    enabled: value.enabled,
+    authReqExpiry: value.authReqExpiry,
+    tokenReqInterval: value.tokenReqInterval,
+    bindingMessageLength: value.bindingMessageLength,
+    deviceNotifiers: value.deviceNotifiers === undefined ? undefined : (value.deviceNotifiers as Array<any>).map(CIBASettingNotifierToJSON),
   };
 }

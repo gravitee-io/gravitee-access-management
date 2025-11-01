@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -154,70 +154,61 @@ export const CredentialReferenceTypeEnum = {
 } as const;
 export type CredentialReferenceTypeEnum = typeof CredentialReferenceTypeEnum[keyof typeof CredentialReferenceTypeEnum];
 
-/**
- * Check if a given object implements the Credential interface.
- */
-export function instanceOfCredential(value: object): value is Credential {
-  return true;
-}
-
 export function CredentialFromJSON(json: any): Credential {
   return CredentialFromJSONTyped(json, false);
 }
 
 export function CredentialFromJSONTyped(json: any, ignoreDiscriminator: boolean): Credential {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    userId: json['userId'] == null ? undefined : json['userId'],
-    username: json['username'] == null ? undefined : json['username'],
-    credentialId: json['credentialId'] == null ? undefined : json['credentialId'],
-    publicKey: json['publicKey'] == null ? undefined : json['publicKey'],
-    counter: json['counter'] == null ? undefined : json['counter'],
-    aaguid: json['aaguid'] == null ? undefined : json['aaguid'],
-    attestationStatementFormat: json['attestationStatementFormat'] == null ? undefined : json['attestationStatementFormat'],
-    attestationStatement: json['attestationStatement'] == null ? undefined : json['attestationStatement'],
-    ipAddress: json['ipAddress'] == null ? undefined : json['ipAddress'],
-    userAgent: json['userAgent'] == null ? undefined : json['userAgent'],
-    deviceName: json['deviceName'] == null ? undefined : json['deviceName'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    accessedAt: json['accessedAt'] == null ? undefined : new Date(json['accessedAt']),
-    lastCheckedAt: json['lastCheckedAt'] == null ? undefined : new Date(json['lastCheckedAt']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
+    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
+    userId: !exists(json, 'userId') ? undefined : json['userId'],
+    username: !exists(json, 'username') ? undefined : json['username'],
+    credentialId: !exists(json, 'credentialId') ? undefined : json['credentialId'],
+    publicKey: !exists(json, 'publicKey') ? undefined : json['publicKey'],
+    counter: !exists(json, 'counter') ? undefined : json['counter'],
+    aaguid: !exists(json, 'aaguid') ? undefined : json['aaguid'],
+    attestationStatementFormat: !exists(json, 'attestationStatementFormat') ? undefined : json['attestationStatementFormat'],
+    attestationStatement: !exists(json, 'attestationStatement') ? undefined : json['attestationStatement'],
+    ipAddress: !exists(json, 'ipAddress') ? undefined : json['ipAddress'],
+    userAgent: !exists(json, 'userAgent') ? undefined : json['userAgent'],
+    deviceName: !exists(json, 'deviceName') ? undefined : json['deviceName'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    accessedAt: !exists(json, 'accessedAt') ? undefined : new Date(json['accessedAt']),
+    lastCheckedAt: !exists(json, 'lastCheckedAt') ? undefined : new Date(json['lastCheckedAt']),
   };
 }
 
-export function CredentialToJSON(json: any): Credential {
-  return CredentialToJSONTyped(json, false);
-}
-
-export function CredentialToJSONTyped(value?: Credential | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function CredentialToJSON(value?: Credential | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    userId: value['userId'],
-    username: value['username'],
-    credentialId: value['credentialId'],
-    publicKey: value['publicKey'],
-    counter: value['counter'],
-    aaguid: value['aaguid'],
-    attestationStatementFormat: value['attestationStatementFormat'],
-    attestationStatement: value['attestationStatement'],
-    ipAddress: value['ipAddress'],
-    userAgent: value['userAgent'],
-    deviceName: value['deviceName'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    accessedAt: value['accessedAt'] == null ? value['accessedAt'] : value['accessedAt'].toISOString(),
-    lastCheckedAt: value['lastCheckedAt'] == null ? value['lastCheckedAt'] : value['lastCheckedAt'].toISOString(),
+    id: value.id,
+    referenceType: value.referenceType,
+    referenceId: value.referenceId,
+    userId: value.userId,
+    username: value.username,
+    credentialId: value.credentialId,
+    publicKey: value.publicKey,
+    counter: value.counter,
+    aaguid: value.aaguid,
+    attestationStatementFormat: value.attestationStatementFormat,
+    attestationStatement: value.attestationStatement,
+    ipAddress: value.ipAddress,
+    userAgent: value.userAgent,
+    deviceName: value.deviceName,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    accessedAt: value.accessedAt === undefined ? undefined : value.accessedAt.toISOString(),
+    lastCheckedAt: value.lastCheckedAt === undefined ? undefined : value.lastCheckedAt.toISOString(),
   };
 }

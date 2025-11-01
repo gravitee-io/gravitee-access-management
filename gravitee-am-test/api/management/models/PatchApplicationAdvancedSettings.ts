@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,41 +46,29 @@ export interface PatchApplicationAdvancedSettings {
   flowsInherited?: boolean;
 }
 
-/**
- * Check if a given object implements the PatchApplicationAdvancedSettings interface.
- */
-export function instanceOfPatchApplicationAdvancedSettings(value: object): value is PatchApplicationAdvancedSettings {
-  return true;
-}
-
 export function PatchApplicationAdvancedSettingsFromJSON(json: any): PatchApplicationAdvancedSettings {
   return PatchApplicationAdvancedSettingsFromJSONTyped(json, false);
 }
 
 export function PatchApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchApplicationAdvancedSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
-    flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
+    skipConsent: !exists(json, 'skipConsent') ? undefined : json['skipConsent'],
+    flowsInherited: !exists(json, 'flowsInherited') ? undefined : json['flowsInherited'],
   };
 }
 
-export function PatchApplicationAdvancedSettingsToJSON(json: any): PatchApplicationAdvancedSettings {
-  return PatchApplicationAdvancedSettingsToJSONTyped(json, false);
-}
-
-export function PatchApplicationAdvancedSettingsToJSONTyped(
-  value?: PatchApplicationAdvancedSettings | null,
-  ignoreDiscriminator: boolean = false,
-): any {
-  if (value == null) {
-    return value;
+export function PatchApplicationAdvancedSettingsToJSON(value?: PatchApplicationAdvancedSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    skipConsent: value['skipConsent'],
-    flowsInherited: value['flowsInherited'],
+    skipConsent: value.skipConsent,
+    flowsInherited: value.flowsInherited,
   };
 }

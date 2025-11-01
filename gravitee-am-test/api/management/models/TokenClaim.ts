@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -62,40 +62,31 @@ export const TokenClaimTokenTypeEnum = {
 } as const;
 export type TokenClaimTokenTypeEnum = typeof TokenClaimTokenTypeEnum[keyof typeof TokenClaimTokenTypeEnum];
 
-/**
- * Check if a given object implements the TokenClaim interface.
- */
-export function instanceOfTokenClaim(value: object): value is TokenClaim {
-  return true;
-}
-
 export function TokenClaimFromJSON(json: any): TokenClaim {
   return TokenClaimFromJSONTyped(json, false);
 }
 
 export function TokenClaimFromJSONTyped(json: any, ignoreDiscriminator: boolean): TokenClaim {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    tokenType: json['tokenType'] == null ? undefined : json['tokenType'],
-    claimName: json['claimName'] == null ? undefined : json['claimName'],
-    claimValue: json['claimValue'] == null ? undefined : json['claimValue'],
+    tokenType: !exists(json, 'tokenType') ? undefined : json['tokenType'],
+    claimName: !exists(json, 'claimName') ? undefined : json['claimName'],
+    claimValue: !exists(json, 'claimValue') ? undefined : json['claimValue'],
   };
 }
 
-export function TokenClaimToJSON(json: any): TokenClaim {
-  return TokenClaimToJSONTyped(json, false);
-}
-
-export function TokenClaimToJSONTyped(value?: TokenClaim | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function TokenClaimToJSON(value?: TokenClaim | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    tokenType: value['tokenType'],
-    claimName: value['claimName'],
-    claimValue: value['claimValue'],
+    tokenType: value.tokenType,
+    claimName: value.claimName,
+    claimValue: value.claimValue,
   };
 }

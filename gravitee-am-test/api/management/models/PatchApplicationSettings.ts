@@ -25,67 +25,47 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { AccountSettings } from './AccountSettings';
+import { exists, mapValues } from '../runtime';
+import { AccountSettings, AccountSettingsFromJSON, AccountSettingsFromJSONTyped, AccountSettingsToJSON } from './AccountSettings';
+import { CookieSettings, CookieSettingsFromJSON, CookieSettingsFromJSONTyped, CookieSettingsToJSON } from './CookieSettings';
+import { LoginSettings, LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON } from './LoginSettings';
 import {
-  AccountSettingsFromJSON,
-  AccountSettingsFromJSONTyped,
-  AccountSettingsToJSON,
-  AccountSettingsToJSONTyped,
-} from './AccountSettings';
-import type { CookieSettings } from './CookieSettings';
-import { CookieSettingsFromJSON, CookieSettingsFromJSONTyped, CookieSettingsToJSON, CookieSettingsToJSONTyped } from './CookieSettings';
-import type { RiskAssessmentSettings } from './RiskAssessmentSettings';
-import {
-  RiskAssessmentSettingsFromJSON,
-  RiskAssessmentSettingsFromJSONTyped,
-  RiskAssessmentSettingsToJSON,
-  RiskAssessmentSettingsToJSONTyped,
-} from './RiskAssessmentSettings';
-import type { PatchPasswordSettings } from './PatchPasswordSettings';
-import {
-  PatchPasswordSettingsFromJSON,
-  PatchPasswordSettingsFromJSONTyped,
-  PatchPasswordSettingsToJSON,
-  PatchPasswordSettingsToJSONTyped,
-} from './PatchPasswordSettings';
-import type { PatchApplicationAdvancedSettings } from './PatchApplicationAdvancedSettings';
-import {
+  PatchApplicationAdvancedSettings,
   PatchApplicationAdvancedSettingsFromJSON,
   PatchApplicationAdvancedSettingsFromJSONTyped,
   PatchApplicationAdvancedSettingsToJSON,
-  PatchApplicationAdvancedSettingsToJSONTyped,
 } from './PatchApplicationAdvancedSettings';
-import type { LoginSettings } from './LoginSettings';
-import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
-import type { PatchApplicationOAuthSettings } from './PatchApplicationOAuthSettings';
 import {
+  PatchApplicationOAuthSettings,
   PatchApplicationOAuthSettingsFromJSON,
   PatchApplicationOAuthSettingsFromJSONTyped,
   PatchApplicationOAuthSettingsToJSON,
-  PatchApplicationOAuthSettingsToJSONTyped,
 } from './PatchApplicationOAuthSettings';
-import type { PatchMFASettings } from './PatchMFASettings';
 import {
-  PatchMFASettingsFromJSON,
-  PatchMFASettingsFromJSONTyped,
-  PatchMFASettingsToJSON,
-  PatchMFASettingsToJSONTyped,
-} from './PatchMFASettings';
-import type { SecretExpirationSettings } from './SecretExpirationSettings';
-import {
-  SecretExpirationSettingsFromJSON,
-  SecretExpirationSettingsFromJSONTyped,
-  SecretExpirationSettingsToJSON,
-  SecretExpirationSettingsToJSONTyped,
-} from './SecretExpirationSettings';
-import type { PatchApplicationSAMLSettings } from './PatchApplicationSAMLSettings';
-import {
+  PatchApplicationSAMLSettings,
   PatchApplicationSAMLSettingsFromJSON,
   PatchApplicationSAMLSettingsFromJSONTyped,
   PatchApplicationSAMLSettingsToJSON,
-  PatchApplicationSAMLSettingsToJSONTyped,
 } from './PatchApplicationSAMLSettings';
+import { PatchMFASettings, PatchMFASettingsFromJSON, PatchMFASettingsFromJSONTyped, PatchMFASettingsToJSON } from './PatchMFASettings';
+import {
+  PatchPasswordSettings,
+  PatchPasswordSettingsFromJSON,
+  PatchPasswordSettingsFromJSONTyped,
+  PatchPasswordSettingsToJSON,
+} from './PatchPasswordSettings';
+import {
+  RiskAssessmentSettings,
+  RiskAssessmentSettingsFromJSON,
+  RiskAssessmentSettingsFromJSONTyped,
+  RiskAssessmentSettingsToJSON,
+} from './RiskAssessmentSettings';
+import {
+  SecretExpirationSettings,
+  SecretExpirationSettingsFromJSON,
+  SecretExpirationSettingsFromJSONTyped,
+  SecretExpirationSettingsToJSON,
+} from './SecretExpirationSettings';
 
 /**
  *
@@ -179,14 +159,12 @@ export const PatchApplicationSettingsRequiredPermissionsEnum = {
   OrganizationForm: 'ORGANIZATION_FORM',
   OrganizationMember: 'ORGANIZATION_MEMBER',
   Environment: 'ENVIRONMENT',
-  DataPlane: 'DATA_PLANE',
   Domain: 'DOMAIN',
   DomainSettings: 'DOMAIN_SETTINGS',
   DomainForm: 'DOMAIN_FORM',
   DomainEmailTemplate: 'DOMAIN_EMAIL_TEMPLATE',
   DomainExtensionPoint: 'DOMAIN_EXTENSION_POINT',
   DomainIdentityProvider: 'DOMAIN_IDENTITY_PROVIDER',
-  DomainAuthorizationEngine: 'DOMAIN_AUTHORIZATION_ENGINE',
   DomainAudit: 'DOMAIN_AUDIT',
   DomainCertificate: 'DOMAIN_CERTIFICATE',
   DomainUser: 'DOMAIN_USER',
@@ -226,64 +204,55 @@ export const PatchApplicationSettingsRequiredPermissionsEnum = {
   ApplicationResource: 'APPLICATION_RESOURCE',
   ApplicationAnalytics: 'APPLICATION_ANALYTICS',
   ApplicationFlow: 'APPLICATION_FLOW',
-  ProtectedResource: 'PROTECTED_RESOURCE',
   LicenseNotification: 'LICENSE_NOTIFICATION',
   Installation: 'INSTALLATION',
 } as const;
 export type PatchApplicationSettingsRequiredPermissionsEnum =
   typeof PatchApplicationSettingsRequiredPermissionsEnum[keyof typeof PatchApplicationSettingsRequiredPermissionsEnum];
 
-/**
- * Check if a given object implements the PatchApplicationSettings interface.
- */
-export function instanceOfPatchApplicationSettings(value: object): value is PatchApplicationSettings {
-  return true;
-}
-
 export function PatchApplicationSettingsFromJSON(json: any): PatchApplicationSettings {
   return PatchApplicationSettingsFromJSONTyped(json, false);
 }
 
 export function PatchApplicationSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchApplicationSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
-    login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
-    oauth: json['oauth'] == null ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
-    saml: json['saml'] == null ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
-    advanced: json['advanced'] == null ? undefined : PatchApplicationAdvancedSettingsFromJSON(json['advanced']),
-    passwordSettings: json['passwordSettings'] == null ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
-    mfa: json['mfa'] == null ? undefined : PatchMFASettingsFromJSON(json['mfa']),
-    cookieSettings: json['cookieSettings'] == null ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
-    riskAssessment: json['riskAssessment'] == null ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
-    secretExpirationSettings:
-      json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
+    account: !exists(json, 'account') ? undefined : AccountSettingsFromJSON(json['account']),
+    login: !exists(json, 'login') ? undefined : LoginSettingsFromJSON(json['login']),
+    oauth: !exists(json, 'oauth') ? undefined : PatchApplicationOAuthSettingsFromJSON(json['oauth']),
+    saml: !exists(json, 'saml') ? undefined : PatchApplicationSAMLSettingsFromJSON(json['saml']),
+    advanced: !exists(json, 'advanced') ? undefined : PatchApplicationAdvancedSettingsFromJSON(json['advanced']),
+    passwordSettings: !exists(json, 'passwordSettings') ? undefined : PatchPasswordSettingsFromJSON(json['passwordSettings']),
+    mfa: !exists(json, 'mfa') ? undefined : PatchMFASettingsFromJSON(json['mfa']),
+    cookieSettings: !exists(json, 'cookieSettings') ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
+    riskAssessment: !exists(json, 'riskAssessment') ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
+    secretExpirationSettings: !exists(json, 'secretExpirationSettings')
+      ? undefined
+      : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
+    requiredPermissions: !exists(json, 'requiredPermissions') ? undefined : json['requiredPermissions'],
   };
 }
 
-export function PatchApplicationSettingsToJSON(json: any): PatchApplicationSettings {
-  return PatchApplicationSettingsToJSONTyped(json, false);
-}
-
-export function PatchApplicationSettingsToJSONTyped(value?: PatchApplicationSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchApplicationSettingsToJSON(value?: PatchApplicationSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    account: AccountSettingsToJSON(value['account']),
-    login: LoginSettingsToJSON(value['login']),
-    oauth: PatchApplicationOAuthSettingsToJSON(value['oauth']),
-    saml: PatchApplicationSAMLSettingsToJSON(value['saml']),
-    advanced: PatchApplicationAdvancedSettingsToJSON(value['advanced']),
-    passwordSettings: PatchPasswordSettingsToJSON(value['passwordSettings']),
-    mfa: PatchMFASettingsToJSON(value['mfa']),
-    cookieSettings: CookieSettingsToJSON(value['cookieSettings']),
-    riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
-    secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
-    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
+    account: AccountSettingsToJSON(value.account),
+    login: LoginSettingsToJSON(value.login),
+    oauth: PatchApplicationOAuthSettingsToJSON(value.oauth),
+    saml: PatchApplicationSAMLSettingsToJSON(value.saml),
+    advanced: PatchApplicationAdvancedSettingsToJSON(value.advanced),
+    passwordSettings: PatchPasswordSettingsToJSON(value.passwordSettings),
+    mfa: PatchMFASettingsToJSON(value.mfa),
+    cookieSettings: CookieSettingsToJSON(value.cookieSettings),
+    riskAssessment: RiskAssessmentSettingsToJSON(value.riskAssessment),
+    secretExpirationSettings: SecretExpirationSettingsToJSON(value.secretExpirationSettings),
+    requiredPermissions: value.requiredPermissions,
   };
 }

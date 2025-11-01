@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,46 +70,37 @@ export interface UserIdentityEntity {
   providerName?: string;
 }
 
-/**
- * Check if a given object implements the UserIdentityEntity interface.
- */
-export function instanceOfUserIdentityEntity(value: object): value is UserIdentityEntity {
-  return true;
-}
-
 export function UserIdentityEntityFromJSON(json: any): UserIdentityEntity {
   return UserIdentityEntityFromJSONTyped(json, false);
 }
 
 export function UserIdentityEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserIdentityEntity {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    userId: json['userId'] == null ? undefined : json['userId'],
-    username: json['username'] == null ? undefined : json['username'],
-    providerId: json['providerId'] == null ? undefined : json['providerId'],
-    additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
-    linkedAt: json['linkedAt'] == null ? undefined : new Date(json['linkedAt']),
-    providerName: json['providerName'] == null ? undefined : json['providerName'],
+    userId: !exists(json, 'userId') ? undefined : json['userId'],
+    username: !exists(json, 'username') ? undefined : json['username'],
+    providerId: !exists(json, 'providerId') ? undefined : json['providerId'],
+    additionalInformation: !exists(json, 'additionalInformation') ? undefined : json['additionalInformation'],
+    linkedAt: !exists(json, 'linkedAt') ? undefined : new Date(json['linkedAt']),
+    providerName: !exists(json, 'providerName') ? undefined : json['providerName'],
   };
 }
 
-export function UserIdentityEntityToJSON(json: any): UserIdentityEntity {
-  return UserIdentityEntityToJSONTyped(json, false);
-}
-
-export function UserIdentityEntityToJSONTyped(value?: UserIdentityEntity | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UserIdentityEntityToJSON(value?: UserIdentityEntity | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    userId: value['userId'],
-    username: value['username'],
-    providerId: value['providerId'],
-    additionalInformation: value['additionalInformation'],
-    linkedAt: value['linkedAt'] == null ? value['linkedAt'] : value['linkedAt'].toISOString(),
-    providerName: value['providerName'],
+    userId: value.userId,
+    username: value.username,
+    providerId: value.providerId,
+    additionalInformation: value.additionalInformation,
+    linkedAt: value.linkedAt === undefined ? undefined : value.linkedAt.toISOString(),
+    providerName: value.providerName,
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,45 +58,33 @@ export interface NewServiceResource {
   configuration: string;
 }
 
-/**
- * Check if a given object implements the NewServiceResource interface.
- */
-export function instanceOfNewServiceResource(value: object): value is NewServiceResource {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
-  return true;
-}
-
 export function NewServiceResourceFromJSON(json: any): NewServiceResource {
   return NewServiceResourceFromJSONTyped(json, false);
 }
 
 export function NewServiceResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewServiceResource {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
+    id: !exists(json, 'id') ? undefined : json['id'],
     name: json['name'],
     type: json['type'],
     configuration: json['configuration'],
   };
 }
 
-export function NewServiceResourceToJSON(json: any): NewServiceResource {
-  return NewServiceResourceToJSONTyped(json, false);
-}
-
-export function NewServiceResourceToJSONTyped(value?: NewServiceResource | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewServiceResourceToJSON(value?: NewServiceResource | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    name: value['name'],
-    type: value['type'],
-    configuration: value['configuration'],
+    id: value.id,
+    name: value.name,
+    type: value.type,
+    configuration: value.configuration,
   };
 }

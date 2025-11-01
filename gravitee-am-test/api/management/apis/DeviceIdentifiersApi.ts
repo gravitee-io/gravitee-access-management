@@ -364,7 +364,7 @@ export class DeviceIdentifiersApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(DeviceIdentifierFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DeviceIdentifierFromJSON));
   }
 
   /**

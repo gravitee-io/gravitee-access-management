@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -94,54 +94,45 @@ export interface ModifiedCertificateEntity {
   system?: boolean;
 }
 
-/**
- * Check if a given object implements the ModifiedCertificateEntity interface.
- */
-export function instanceOfModifiedCertificateEntity(value: object): value is ModifiedCertificateEntity {
-  return true;
-}
-
 export function ModifiedCertificateEntityFromJSON(json: any): ModifiedCertificateEntity {
   return ModifiedCertificateEntityFromJSONTyped(json, false);
 }
 
 export function ModifiedCertificateEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): ModifiedCertificateEntity {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    type: json['type'] == null ? undefined : json['type'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
-    domain: json['domain'] == null ? undefined : json['domain'],
-    metadata: json['metadata'] == null ? undefined : json['metadata'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    expiresAt: json['expiresAt'] == null ? undefined : new Date(json['expiresAt']),
-    system: json['system'] == null ? undefined : json['system'],
+    id: !exists(json, 'id') ? undefined : json['id'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
+    domain: !exists(json, 'domain') ? undefined : json['domain'],
+    metadata: !exists(json, 'metadata') ? undefined : json['metadata'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    expiresAt: !exists(json, 'expiresAt') ? undefined : new Date(json['expiresAt']),
+    system: !exists(json, 'system') ? undefined : json['system'],
   };
 }
 
-export function ModifiedCertificateEntityToJSON(json: any): ModifiedCertificateEntity {
-  return ModifiedCertificateEntityToJSONTyped(json, false);
-}
-
-export function ModifiedCertificateEntityToJSONTyped(value?: ModifiedCertificateEntity | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ModifiedCertificateEntityToJSON(value?: ModifiedCertificateEntity | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    name: value['name'],
-    type: value['type'],
-    configuration: value['configuration'],
-    domain: value['domain'],
-    metadata: value['metadata'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    expiresAt: value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
-    system: value['system'],
+    id: value.id,
+    name: value.name,
+    type: value.type,
+    configuration: value.configuration,
+    domain: value.domain,
+    metadata: value.metadata,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    expiresAt: value.expiresAt === undefined ? undefined : value.expiresAt.toISOString(),
+    system: value.system,
   };
 }

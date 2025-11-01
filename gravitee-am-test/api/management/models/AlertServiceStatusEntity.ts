@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,36 +40,27 @@ export interface AlertServiceStatusEntity {
   available?: boolean;
 }
 
-/**
- * Check if a given object implements the AlertServiceStatusEntity interface.
- */
-export function instanceOfAlertServiceStatusEntity(value: object): value is AlertServiceStatusEntity {
-  return true;
-}
-
 export function AlertServiceStatusEntityFromJSON(json: any): AlertServiceStatusEntity {
   return AlertServiceStatusEntityFromJSONTyped(json, false);
 }
 
 export function AlertServiceStatusEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): AlertServiceStatusEntity {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    available: json['available'] == null ? undefined : json['available'],
+    available: !exists(json, 'available') ? undefined : json['available'],
   };
 }
 
-export function AlertServiceStatusEntityToJSON(json: any): AlertServiceStatusEntity {
-  return AlertServiceStatusEntityToJSONTyped(json, false);
-}
-
-export function AlertServiceStatusEntityToJSONTyped(value?: AlertServiceStatusEntity | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function AlertServiceStatusEntityToJSON(value?: AlertServiceStatusEntity | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    available: value['available'],
+    available: value.available,
   };
 }

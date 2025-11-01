@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { NewUser } from './NewUser';
-import { NewUserFromJSON, NewUserFromJSONTyped, NewUserToJSON, NewUserToJSONTyped } from './NewUser';
+import { exists, mapValues } from '../runtime';
+import { NewUser, NewUserFromJSON, NewUserFromJSONTyped, NewUserToJSON } from './NewUser';
 
 /**
  *
@@ -65,42 +64,31 @@ export const BulkCreateUserActionEnum = {
 } as const;
 export type BulkCreateUserActionEnum = typeof BulkCreateUserActionEnum[keyof typeof BulkCreateUserActionEnum];
 
-/**
- * Check if a given object implements the BulkCreateUser interface.
- */
-export function instanceOfBulkCreateUser(value: object): value is BulkCreateUser {
-  if (!('action' in value) || value['action'] === undefined) return false;
-  if (!('items' in value) || value['items'] === undefined) return false;
-  return true;
-}
-
 export function BulkCreateUserFromJSON(json: any): BulkCreateUser {
   return BulkCreateUserFromJSONTyped(json, false);
 }
 
 export function BulkCreateUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): BulkCreateUser {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     action: json['action'],
-    failOnErrors: json['failOnErrors'] == null ? undefined : json['failOnErrors'],
+    failOnErrors: !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
     items: (json['items'] as Array<any>).map(NewUserFromJSON),
   };
 }
 
-export function BulkCreateUserToJSON(json: any): BulkCreateUser {
-  return BulkCreateUserToJSONTyped(json, false);
-}
-
-export function BulkCreateUserToJSONTyped(value?: BulkCreateUser | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function BulkCreateUserToJSON(value?: BulkCreateUser | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    action: value['action'],
-    failOnErrors: value['failOnErrors'],
-    items: (value['items'] as Array<any>).map(NewUserToJSON),
+    action: value.action,
+    failOnErrors: value.failOnErrors,
+    items: (value.items as Array<any>).map(NewUserToJSON),
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -61,41 +61,31 @@ export const PatchAlertTriggerTypeEnum = {
 } as const;
 export type PatchAlertTriggerTypeEnum = typeof PatchAlertTriggerTypeEnum[keyof typeof PatchAlertTriggerTypeEnum];
 
-/**
- * Check if a given object implements the PatchAlertTrigger interface.
- */
-export function instanceOfPatchAlertTrigger(value: object): value is PatchAlertTrigger {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  return true;
-}
-
 export function PatchAlertTriggerFromJSON(json: any): PatchAlertTrigger {
   return PatchAlertTriggerFromJSONTyped(json, false);
 }
 
 export function PatchAlertTriggerFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchAlertTrigger {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    alertNotifiers: json['alertNotifiers'] == null ? undefined : json['alertNotifiers'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    alertNotifiers: !exists(json, 'alertNotifiers') ? undefined : json['alertNotifiers'],
     type: json['type'],
   };
 }
 
-export function PatchAlertTriggerToJSON(json: any): PatchAlertTrigger {
-  return PatchAlertTriggerToJSONTyped(json, false);
-}
-
-export function PatchAlertTriggerToJSONTyped(value?: PatchAlertTrigger | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchAlertTriggerToJSON(value?: PatchAlertTrigger | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    alertNotifiers: value['alertNotifiers'],
-    type: value['type'],
+    enabled: value.enabled,
+    alertNotifiers: value.alertNotifiers,
+    type: value.type,
   };
 }

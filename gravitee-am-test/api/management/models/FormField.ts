@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,40 +52,31 @@ export interface FormField {
   type?: string;
 }
 
-/**
- * Check if a given object implements the FormField interface.
- */
-export function instanceOfFormField(value: object): value is FormField {
-  return true;
-}
-
 export function FormFieldFromJSON(json: any): FormField {
   return FormFieldFromJSONTyped(json, false);
 }
 
 export function FormFieldFromJSONTyped(json: any, ignoreDiscriminator: boolean): FormField {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    key: json['key'] == null ? undefined : json['key'],
-    label: json['label'] == null ? undefined : json['label'],
-    type: json['type'] == null ? undefined : json['type'],
+    key: !exists(json, 'key') ? undefined : json['key'],
+    label: !exists(json, 'label') ? undefined : json['label'],
+    type: !exists(json, 'type') ? undefined : json['type'],
   };
 }
 
-export function FormFieldToJSON(json: any): FormField {
-  return FormFieldToJSONTyped(json, false);
-}
-
-export function FormFieldToJSONTyped(value?: FormField | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function FormFieldToJSON(value?: FormField | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    key: value['key'],
-    label: value['label'],
-    type: value['type'],
+    key: value.key,
+    label: value.label,
+    type: value.type,
   };
 }

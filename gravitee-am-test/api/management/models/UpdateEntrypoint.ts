@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,45 +58,33 @@ export interface UpdateEntrypoint {
   tags: Array<string>;
 }
 
-/**
- * Check if a given object implements the UpdateEntrypoint interface.
- */
-export function instanceOfUpdateEntrypoint(value: object): value is UpdateEntrypoint {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('url' in value) || value['url'] === undefined) return false;
-  if (!('tags' in value) || value['tags'] === undefined) return false;
-  return true;
-}
-
 export function UpdateEntrypointFromJSON(json: any): UpdateEntrypoint {
   return UpdateEntrypointFromJSONTyped(json, false);
 }
 
 export function UpdateEntrypointFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateEntrypoint {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     name: json['name'],
-    description: json['description'] == null ? undefined : json['description'],
+    description: !exists(json, 'description') ? undefined : json['description'],
     url: json['url'],
     tags: json['tags'],
   };
 }
 
-export function UpdateEntrypointToJSON(json: any): UpdateEntrypoint {
-  return UpdateEntrypointToJSONTyped(json, false);
-}
-
-export function UpdateEntrypointToJSONTyped(value?: UpdateEntrypoint | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UpdateEntrypointToJSON(value?: UpdateEntrypoint | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
-    description: value['description'],
-    url: value['url'],
-    tags: value['tags'],
+    name: value.name,
+    description: value.description,
+    url: value.url,
+    tags: value.tags,
   };
 }

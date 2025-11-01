@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,44 +64,35 @@ export interface BulkOperationResultObject {
   success?: boolean;
 }
 
-/**
- * Check if a given object implements the BulkOperationResultObject interface.
- */
-export function instanceOfBulkOperationResultObject(value: object): value is BulkOperationResultObject {
-  return true;
-}
-
 export function BulkOperationResultObjectFromJSON(json: any): BulkOperationResultObject {
   return BulkOperationResultObjectFromJSONTyped(json, false);
 }
 
 export function BulkOperationResultObjectFromJSONTyped(json: any, ignoreDiscriminator: boolean): BulkOperationResultObject {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    index: json['index'] == null ? undefined : json['index'],
-    httpStatus: json['httpStatus'] == null ? undefined : json['httpStatus'],
-    body: json['body'] == null ? undefined : json['body'],
-    errorDetails: json['errorDetails'] == null ? undefined : json['errorDetails'],
-    success: json['success'] == null ? undefined : json['success'],
+    index: !exists(json, 'index') ? undefined : json['index'],
+    httpStatus: !exists(json, 'httpStatus') ? undefined : json['httpStatus'],
+    body: !exists(json, 'body') ? undefined : json['body'],
+    errorDetails: !exists(json, 'errorDetails') ? undefined : json['errorDetails'],
+    success: !exists(json, 'success') ? undefined : json['success'],
   };
 }
 
-export function BulkOperationResultObjectToJSON(json: any): BulkOperationResultObject {
-  return BulkOperationResultObjectToJSONTyped(json, false);
-}
-
-export function BulkOperationResultObjectToJSONTyped(value?: BulkOperationResultObject | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function BulkOperationResultObjectToJSON(value?: BulkOperationResultObject | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    index: value['index'],
-    httpStatus: value['httpStatus'],
-    body: value['body'],
-    errorDetails: value['errorDetails'],
-    success: value['success'],
+    index: value.index,
+    httpStatus: value.httpStatus,
+    body: value.body,
+    errorDetails: value.errorDetails,
+    success: value.success,
   };
 }

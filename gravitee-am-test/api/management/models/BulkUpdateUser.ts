@@ -25,14 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { UpdateUserWithId } from './UpdateUserWithId';
-import {
-  UpdateUserWithIdFromJSON,
-  UpdateUserWithIdFromJSONTyped,
-  UpdateUserWithIdToJSON,
-  UpdateUserWithIdToJSONTyped,
-} from './UpdateUserWithId';
+import { exists, mapValues } from '../runtime';
+import { UpdateUserWithId, UpdateUserWithIdFromJSON, UpdateUserWithIdFromJSONTyped, UpdateUserWithIdToJSON } from './UpdateUserWithId';
 
 /**
  *
@@ -70,42 +64,31 @@ export const BulkUpdateUserActionEnum = {
 } as const;
 export type BulkUpdateUserActionEnum = typeof BulkUpdateUserActionEnum[keyof typeof BulkUpdateUserActionEnum];
 
-/**
- * Check if a given object implements the BulkUpdateUser interface.
- */
-export function instanceOfBulkUpdateUser(value: object): value is BulkUpdateUser {
-  if (!('action' in value) || value['action'] === undefined) return false;
-  if (!('items' in value) || value['items'] === undefined) return false;
-  return true;
-}
-
 export function BulkUpdateUserFromJSON(json: any): BulkUpdateUser {
   return BulkUpdateUserFromJSONTyped(json, false);
 }
 
 export function BulkUpdateUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): BulkUpdateUser {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     action: json['action'],
-    failOnErrors: json['failOnErrors'] == null ? undefined : json['failOnErrors'],
+    failOnErrors: !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
     items: (json['items'] as Array<any>).map(UpdateUserWithIdFromJSON),
   };
 }
 
-export function BulkUpdateUserToJSON(json: any): BulkUpdateUser {
-  return BulkUpdateUserToJSONTyped(json, false);
-}
-
-export function BulkUpdateUserToJSONTyped(value?: BulkUpdateUser | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function BulkUpdateUserToJSON(value?: BulkUpdateUser | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    action: value['action'],
-    failOnErrors: value['failOnErrors'],
-    items: (value['items'] as Array<any>).map(UpdateUserWithIdToJSON),
+    action: value.action,
+    failOnErrors: value.failOnErrors,
+    items: (value.items as Array<any>).map(UpdateUserWithIdToJSON),
   };
 }

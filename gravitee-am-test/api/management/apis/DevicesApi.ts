@@ -176,7 +176,7 @@ export class DevicesApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(UserFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserFromJSON));
   }
 
   /**

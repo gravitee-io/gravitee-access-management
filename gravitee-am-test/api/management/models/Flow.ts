@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { Step } from './Step';
-import { StepFromJSON, StepFromJSONTyped, StepToJSON, StepToJSONTyped } from './Step';
+import { exists, mapValues } from '../runtime';
+import { Step, StepFromJSON, StepFromJSONTyped, StepToJSON } from './Step';
 
 /**
  *
@@ -93,55 +92,42 @@ export const FlowTypeEnum = {
   RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
   Token: 'TOKEN',
   WebauthnRegister: 'WEBAUTHN_REGISTER',
-  MfaChallenge: 'MFA_CHALLENGE',
-  MfaEnrollment: 'MFA_ENROLLMENT',
 } as const;
 export type FlowTypeEnum = typeof FlowTypeEnum[keyof typeof FlowTypeEnum];
-
-/**
- * Check if a given object implements the Flow interface.
- */
-export function instanceOfFlow(value: object): value is Flow {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('type' in value) || value['type'] === undefined) return false;
-  return true;
-}
 
 export function FlowFromJSON(json: any): Flow {
   return FlowFromJSONTyped(json, false);
 }
 
 export function FlowFromJSONTyped(json: any, ignoreDiscriminator: boolean): Flow {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
+    id: !exists(json, 'id') ? undefined : json['id'],
     name: json['name'],
-    pre: json['pre'] == null ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
-    post: json['post'] == null ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    pre: !exists(json, 'pre') ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
+    post: !exists(json, 'post') ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
     type: json['type'],
-    condition: json['condition'] == null ? undefined : json['condition'],
+    condition: !exists(json, 'condition') ? undefined : json['condition'],
   };
 }
 
-export function FlowToJSON(json: any): Flow {
-  return FlowToJSONTyped(json, false);
-}
-
-export function FlowToJSONTyped(value?: Flow | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function FlowToJSON(value?: Flow | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    name: value['name'],
-    pre: value['pre'] == null ? undefined : (value['pre'] as Array<any>).map(StepToJSON),
-    post: value['post'] == null ? undefined : (value['post'] as Array<any>).map(StepToJSON),
-    enabled: value['enabled'],
-    type: value['type'],
-    condition: value['condition'],
+    id: value.id,
+    name: value.name,
+    pre: value.pre === undefined ? undefined : (value.pre as Array<any>).map(StepToJSON),
+    post: value.post === undefined ? undefined : (value.post as Array<any>).map(StepToJSON),
+    enabled: value.enabled,
+    type: value.type,
+    condition: value.condition,
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,48 +70,37 @@ export interface UpdateScope {
   iconUri?: string;
 }
 
-/**
- * Check if a given object implements the UpdateScope interface.
- */
-export function instanceOfUpdateScope(value: object): value is UpdateScope {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('description' in value) || value['description'] === undefined) return false;
-  return true;
-}
-
 export function UpdateScopeFromJSON(json: any): UpdateScope {
   return UpdateScopeFromJSONTyped(json, false);
 }
 
 export function UpdateScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateScope {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     name: json['name'],
     description: json['description'],
-    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
-    discovery: json['discovery'] == null ? undefined : json['discovery'],
-    parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
-    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
+    expiresIn: !exists(json, 'expiresIn') ? undefined : json['expiresIn'],
+    discovery: !exists(json, 'discovery') ? undefined : json['discovery'],
+    parameterized: !exists(json, 'parameterized') ? undefined : json['parameterized'],
+    iconUri: !exists(json, 'iconUri') ? undefined : json['iconUri'],
   };
 }
 
-export function UpdateScopeToJSON(json: any): UpdateScope {
-  return UpdateScopeToJSONTyped(json, false);
-}
-
-export function UpdateScopeToJSONTyped(value?: UpdateScope | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UpdateScopeToJSON(value?: UpdateScope | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
-    description: value['description'],
-    expiresIn: value['expiresIn'],
-    discovery: value['discovery'],
-    parameterized: value['parameterized'],
-    iconUri: value['iconUri'],
+    name: value.name,
+    description: value.description,
+    expiresIn: value.expiresIn,
+    discovery: value.discovery,
+    parameterized: value.parameterized,
+    iconUri: value.iconUri,
   };
 }

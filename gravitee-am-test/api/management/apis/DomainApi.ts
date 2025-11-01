@@ -58,9 +58,6 @@ import {
   AuthenticationDeviceNotifier,
   AuthenticationDeviceNotifierFromJSON,
   AuthenticationDeviceNotifierToJSON,
-  AuthorizationEngine,
-  AuthorizationEngineFromJSON,
-  AuthorizationEngineToJSON,
   BotDetection,
   BotDetectionFromJSON,
   BotDetectionToJSON,
@@ -85,9 +82,6 @@ import {
   Domain,
   DomainFromJSON,
   DomainToJSON,
-  DomainPage,
-  DomainPageFromJSON,
-  DomainPageToJSON,
   DomainUserBulkRequest,
   DomainUserBulkRequestFromJSON,
   DomainUserBulkRequestToJSON,
@@ -145,9 +139,6 @@ import {
   NewAuthenticationDeviceNotifier,
   NewAuthenticationDeviceNotifierFromJSON,
   NewAuthenticationDeviceNotifierToJSON,
-  NewAuthorizationEngine,
-  NewAuthorizationEngineFromJSON,
-  NewAuthorizationEngineToJSON,
   NewBotDetection,
   NewBotDetectionFromJSON,
   NewBotDetectionToJSON,
@@ -190,9 +181,6 @@ import {
   NewPasswordPolicy,
   NewPasswordPolicyFromJSON,
   NewPasswordPolicyToJSON,
-  NewProtectedResource,
-  NewProtectedResourceFromJSON,
-  NewProtectedResourceToJSON,
   NewReporter,
   NewReporterFromJSON,
   NewReporterToJSON,
@@ -244,18 +232,6 @@ import {
   PreviewResponse,
   PreviewResponseFromJSON,
   PreviewResponseToJSON,
-  ProtectedResource,
-  ProtectedResourceFromJSON,
-  ProtectedResourceToJSON,
-  ProtectedResourcePage,
-  ProtectedResourcePageFromJSON,
-  ProtectedResourcePageToJSON,
-  ProtectedResourcePrimaryData,
-  ProtectedResourcePrimaryDataFromJSON,
-  ProtectedResourcePrimaryDataToJSON,
-  ProtectedResourceSecret,
-  ProtectedResourceSecretFromJSON,
-  ProtectedResourceSecretToJSON,
   Reporter,
   ReporterFromJSON,
   ReporterToJSON,
@@ -295,9 +271,6 @@ import {
   UpdateAuthenticationDeviceNotifier,
   UpdateAuthenticationDeviceNotifierFromJSON,
   UpdateAuthenticationDeviceNotifierToJSON,
-  UpdateAuthorizationEngine,
-  UpdateAuthorizationEngineFromJSON,
-  UpdateAuthorizationEngineToJSON,
   UpdateBotDetection,
   UpdateBotDetectionFromJSON,
   UpdateBotDetectionToJSON,
@@ -331,9 +304,6 @@ import {
   UpdatePasswordPolicy,
   UpdatePasswordPolicyFromJSON,
   UpdatePasswordPolicyToJSON,
-  UpdateProtectedResource,
-  UpdateProtectedResourceFromJSON,
-  UpdateProtectedResourceToJSON,
   UpdateReporter,
   UpdateReporterFromJSON,
   UpdateReporterToJSON,
@@ -486,13 +456,6 @@ export interface CreateApplicationRequest {
   newApplication: NewApplication;
 }
 
-export interface CreateAuthorizationEngineRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  newAuthorizationEngine: NewAuthorizationEngine;
-}
-
 export interface CreateBotDetectionRequest {
   organizationId: string;
   environmentId: string;
@@ -562,13 +525,6 @@ export interface CreatePasswordPolicyRequest {
   newPasswordPolicy: NewPasswordPolicy;
 }
 
-export interface CreateProtectedResourceRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  newProtectedResource: NewProtectedResource;
-}
-
 export interface CreateResourceRequest {
   organizationId: string;
   environmentId: string;
@@ -628,6 +584,14 @@ export interface Delete1Request {
 }
 
 export interface Delete10Request {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  factor: string;
+}
+
+export interface Delete11Request {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -707,13 +671,6 @@ export interface DeleteApplicationRequest {
   environmentId: string;
   domain: string;
   application: string;
-}
-
-export interface DeleteAuthorizationEngineRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  engineId: string;
 }
 
 export interface DeleteBotDetectionRequest {
@@ -820,14 +777,6 @@ export interface DeleteUserRequest {
   user: string;
 }
 
-export interface DeleteUserFactorRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  user: string;
-  factor: string;
-}
-
 export interface EvaluatePolicyRequest {
   organizationId: string;
   environmentId: string;
@@ -840,13 +789,6 @@ export interface FindApplicationRequest {
   environmentId: string;
   domain: string;
   application: string;
-}
-
-export interface FindAuthorizationEngineRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  engineId: string;
 }
 
 export interface FindCertificateRequest {
@@ -887,14 +829,6 @@ export interface FindIdentityProviderRequest {
   environmentId: string;
   domain: string;
   identity: string;
-}
-
-export interface FindProtectedResourceRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  protectedResource: string;
-  type?: string;
 }
 
 export interface FindRoleRequest {
@@ -1313,12 +1247,6 @@ export interface ListApplicationsRequest {
   q?: string;
 }
 
-export interface ListAuthorizationEnginesRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-}
-
 export interface ListBotDetectionsRequest {
   organizationId: string;
   environmentId: string;
@@ -1389,16 +1317,6 @@ export interface ListPasswordPoliciesRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
-}
-
-export interface ListProtectedResourcesRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  type?: string;
-  page?: number;
-  size?: number;
-  sort?: string;
 }
 
 export interface ListResourcesRequest {
@@ -1679,14 +1597,6 @@ export interface UpdateApplicationTypeRequest {
   patchApplicationType: PatchApplicationType;
 }
 
-export interface UpdateAuthorizationEngineRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  engineId: string;
-  updateAuthorizationEngine: UpdateAuthorizationEngine;
-}
-
 export interface UpdateBotDetectionRequest {
   organizationId: string;
   environmentId: string;
@@ -1764,14 +1674,6 @@ export interface UpdatePasswordPolicyRequest {
   domain: string;
   policy: string;
   updatePasswordPolicy: UpdatePasswordPolicy;
-}
-
-export interface UpdateProtectedResourceRequest {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  protectedResource: string;
-  updateProtectedResource: UpdateProtectedResource;
 }
 
 export interface UpdateResourceRequest {
@@ -3089,85 +2991,6 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified organization
-   * Create an authorization engine
-   */
-  async createAuthorizationEngineRaw(
-    requestParameters: CreateAuthorizationEngineRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<AuthorizationEngine>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling createAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling createAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling createAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.newAuthorizationEngine === null || requestParameters.newAuthorizationEngine === undefined) {
-      throw new runtime.RequiredError(
-        'newAuthorizationEngine',
-        'Required parameter requestParameters.newAuthorizationEngine was null or undefined when calling createAuthorizationEngine.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: NewAuthorizationEngineToJSON(requestParameters.newAuthorizationEngine),
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationEngineFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[CREATE] permission on the specified organization
-   * Create an authorization engine
-   */
-  async createAuthorizationEngine(
-    requestParameters: CreateAuthorizationEngineRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<AuthorizationEngine> {
-    const response = await this.createAuthorizationEngineRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
    * User must have the DOMAIN_BOT_DETECTION[CREATE] permission on the specified domain or DOMAIN_BOT_DETECTION[CREATE] permission on the specified environment or DOMAIN_BOT_DETECTION[CREATE] permission on the specified organization
    * Create a bot detection
    */
@@ -3941,85 +3764,6 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have PROTECTED_RESOURCE[CREATE] permission on the specified domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment or PROTECTED_RESOURCE[CREATE] permission on the specified organization
-   * Create a Protected Resource definition
-   */
-  async createProtectedResourceRaw(
-    requestParameters: CreateProtectedResourceRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ProtectedResourceSecret>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling createProtectedResource.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling createProtectedResource.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling createProtectedResource.',
-      );
-    }
-
-    if (requestParameters.newProtectedResource === null || requestParameters.newProtectedResource === undefined) {
-      throw new runtime.RequiredError(
-        'newProtectedResource',
-        'Required parameter requestParameters.newProtectedResource was null or undefined when calling createProtectedResource.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: NewProtectedResourceToJSON(requestParameters.newProtectedResource),
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => ProtectedResourceSecretFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have PROTECTED_RESOURCE[CREATE] permission on the specified domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment or PROTECTED_RESOURCE[CREATE] permission on the specified organization
-   * Create a Protected Resource definition
-   */
-  async createProtectedResource(
-    requestParameters: CreateProtectedResourceRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ProtectedResourceSecret> {
-    const response = await this.createProtectedResourceRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
    * User must have the DOMAIN_RESOURCE[CREATE] permission on the specified domain or DOMAIN_RESOURCE[CREATE] permission on the specified environment or DOMAIN_RESOURCE[CREATE] permission on the specified organization
    * Create a resource
    */
@@ -4477,7 +4221,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(FlowEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
   }
 
   /**
@@ -4556,7 +4300,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(FlowEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
   }
 
   /**
@@ -4648,7 +4392,7 @@ export class DomainApi extends runtime.BaseAPI {
 
   /**
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-   * Unlink user identity
+   * Revoke user factor
    */
   async delete10Raw(
     requestParameters: Delete10Request,
@@ -4676,10 +4420,82 @@ export class DomainApi extends runtime.BaseAPI {
       throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete10.');
     }
 
+    if (requestParameters.factor === null || requestParameters.factor === undefined) {
+      throw new runtime.RequiredError('factor', 'Required parameter requestParameters.factor was null or undefined when calling delete10.');
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/factors/{factor}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
+          .replace(`{${'factor'}}`, encodeURIComponent(String(requestParameters.factor))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke user factor
+   */
+  async delete10(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete10Raw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Unlink user identity
+   */
+  async delete11Raw(
+    requestParameters: Delete11Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete11.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling delete11.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete11.');
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError('user', 'Required parameter requestParameters.user was null or undefined when calling delete11.');
+    }
+
     if (requestParameters.identity === null || requestParameters.identity === undefined) {
       throw new runtime.RequiredError(
         'identity',
-        'Required parameter requestParameters.identity was null or undefined when calling delete10.',
+        'Required parameter requestParameters.identity was null or undefined when calling delete11.',
       );
     }
 
@@ -4717,8 +4533,8 @@ export class DomainApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
    * Unlink user identity
    */
-  async delete10(requestParameters: Delete10Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete10Raw(requestParameters, initOverrides);
+  async delete11(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete11Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -5438,82 +5254,6 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<void> {
     await this.deleteApplicationRaw(requestParameters, initOverrides);
-  }
-
-  /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified organization
-   * Delete an authorization engine
-   */
-  async deleteAuthorizationEngineRaw(
-    requestParameters: DeleteAuthorizationEngineRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling deleteAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling deleteAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling deleteAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.engineId === null || requestParameters.engineId === undefined) {
-      throw new runtime.RequiredError(
-        'engineId',
-        'Required parameter requestParameters.engineId was null or undefined when calling deleteAuthorizationEngine.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines/{engineId}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'engineId'}}`, encodeURIComponent(String(requestParameters.engineId))),
-        method: 'DELETE',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[DELETE] permission on the specified organization
-   * Delete an authorization engine
-   */
-  async deleteAuthorizationEngine(
-    requestParameters: DeleteAuthorizationEngineRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<void> {
-    await this.deleteAuthorizationEngineRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -6619,90 +6359,6 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-   * Revoke user factor
-   */
-  async deleteUserFactorRaw(
-    requestParameters: DeleteUserFactorRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling deleteUserFactor.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling deleteUserFactor.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling deleteUserFactor.',
-      );
-    }
-
-    if (requestParameters.user === null || requestParameters.user === undefined) {
-      throw new runtime.RequiredError(
-        'user',
-        'Required parameter requestParameters.user was null or undefined when calling deleteUserFactor.',
-      );
-    }
-
-    if (requestParameters.factor === null || requestParameters.factor === undefined) {
-      throw new runtime.RequiredError(
-        'factor',
-        'Required parameter requestParameters.factor was null or undefined when calling deleteUserFactor.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/factors/{factor}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
-          .replace(`{${'factor'}}`, encodeURIComponent(String(requestParameters.factor))),
-        method: 'DELETE',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
-   * Revoke user factor
-   */
-  async deleteUserFactor(
-    requestParameters: DeleteUserFactorRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<void> {
-    await this.deleteUserFactorRaw(requestParameters, initOverrides);
-  }
-
-  /**
    */
   async evaluatePolicyRaw(
     requestParameters: EvaluatePolicyRequest,
@@ -6845,83 +6501,6 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Application> {
     const response = await this.findApplicationRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified organization
-   * Get an authorization engine
-   */
-  async findAuthorizationEngineRaw(
-    requestParameters: FindAuthorizationEngineRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<AuthorizationEngine>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling findAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling findAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling findAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.engineId === null || requestParameters.engineId === undefined) {
-      throw new runtime.RequiredError(
-        'engineId',
-        'Required parameter requestParameters.engineId was null or undefined when calling findAuthorizationEngine.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines/{engineId}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'engineId'}}`, encodeURIComponent(String(requestParameters.engineId))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationEngineFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[READ] permission on the specified organization
-   * Get an authorization engine
-   */
-  async findAuthorizationEngine(
-    requestParameters: FindAuthorizationEngineRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<AuthorizationEngine> {
-    const response = await this.findAuthorizationEngineRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -7270,7 +6849,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(RoleFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleFromJSON));
   }
 
   /**
@@ -7359,87 +6938,6 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<IdentityProvider> {
     const response = await this.findIdentityProviderRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * User must have the PROTECTED_RESOURCE[READ] permission on the specified resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization.
-   * Get a Protected Resource
-   */
-  async findProtectedResourceRaw(
-    requestParameters: FindProtectedResourceRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ProtectedResourcePrimaryData>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling findProtectedResource.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling findProtectedResource.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling findProtectedResource.',
-      );
-    }
-
-    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
-      throw new runtime.RequiredError(
-        'protectedResource',
-        'Required parameter requestParameters.protectedResource was null or undefined when calling findProtectedResource.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    if (requestParameters.type !== undefined) {
-      queryParameters['type'] = requestParameters.type;
-    }
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => ProtectedResourcePrimaryDataFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the PROTECTED_RESOURCE[READ] permission on the specified resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization.
-   * Get a Protected Resource
-   */
-  async findProtectedResource(
-    requestParameters: FindProtectedResourceRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ProtectedResourcePrimaryData> {
-    const response = await this.findProtectedResourceRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -9182,7 +8680,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(CertificateKeyFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CertificateKeyFromJSON));
   }
 
   /**
@@ -9328,7 +8826,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(EntrypointFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EntrypointFromJSON));
   }
 
   /**
@@ -10094,7 +9592,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(ClientSecretFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ClientSecretFromJSON));
   }
 
   /**
@@ -10260,7 +9758,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
   }
 
   /**
@@ -10468,7 +9966,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(UserFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserFromJSON));
   }
 
   /**
@@ -10536,7 +10034,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(EnrolledFactorEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EnrolledFactorEntityFromJSON));
   }
 
   /**
@@ -10607,7 +10105,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(UserIdentityEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserIdentityEntityFromJSON));
   }
 
   /**
@@ -10682,7 +10180,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(RoleFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleFromJSON));
   }
 
   /**
@@ -10745,7 +10243,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AlertTriggerFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
   }
 
   /**
@@ -10818,7 +10316,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AlertTriggerFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
   }
 
   /**
@@ -10897,7 +10395,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AccessPolicyListItemFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AccessPolicyListItemFromJSON));
   }
 
   /**
@@ -11070,7 +10568,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
   }
 
   /**
@@ -11133,7 +10631,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AuthenticationDeviceNotifierFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuthenticationDeviceNotifierFromJSON));
   }
 
   /**
@@ -11266,7 +10764,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(ReporterFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ReporterFromJSON));
   }
 
   /**
@@ -11332,7 +10830,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AlertNotifierFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertNotifierFromJSON));
   }
 
   /**
@@ -11409,7 +10907,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(FlowEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
   }
 
   /**
@@ -11506,75 +11004,6 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified organization.
-   * List registered authorization engines for a security domain
-   */
-  async listAuthorizationEnginesRaw(
-    requestParameters: ListAuthorizationEnginesRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<AuthorizationEngine>>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling listAuthorizationEngines.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling listAuthorizationEngines.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling listAuthorizationEngines.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AuthorizationEngineFromJSON));
-  }
-
-  /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[LIST] permission on the specified organization.
-   * List registered authorization engines for a security domain
-   */
-  async listAuthorizationEngines(
-    requestParameters: ListAuthorizationEnginesRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<AuthorizationEngine>> {
-    const response = await this.listAuthorizationEnginesRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
    * User must have the DOMAIN_BOT_DETECTION[LIST] permission on the specified domain or DOMAIN_BOT_DETECTION[LIST] permission on the specified environment or DOMAIN_BOT_DETECTION[LIST] permission on the specified organization Each returned bot detections is filtered and contains only basic information such as id, name.
    * List registered bot detections for a security domain
    */
@@ -11628,7 +11057,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(BotDetectionFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(BotDetectionFromJSON));
   }
 
   /**
@@ -11701,7 +11130,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(CertificateEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CertificateEntityFromJSON));
   }
 
   /**
@@ -11770,7 +11199,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(DeviceIdentifierFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DeviceIdentifierFromJSON));
   }
 
   /**
@@ -11839,7 +11268,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(FlowEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
   }
 
   /**
@@ -11861,7 +11290,7 @@ export class DomainApi extends runtime.BaseAPI {
   async listDomainsRaw(
     requestParameters: ListDomainsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<DomainPage>>> {
+  ): Promise<runtime.ApiResponse<Array<Domain>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -11912,7 +11341,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(DomainPageFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(DomainFromJSON));
   }
 
   /**
@@ -11922,7 +11351,7 @@ export class DomainApi extends runtime.BaseAPI {
   async listDomains(
     requestParameters: ListDomainsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<Array<DomainPage>> {
+  ): Promise<Array<Domain>> {
     const response = await this.listDomainsRaw(requestParameters, initOverrides);
     return await response.value();
   }
@@ -11981,7 +11410,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(ExtensionGrantFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ExtensionGrantFromJSON));
   }
 
   /**
@@ -12050,7 +11479,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(FactorFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FactorFromJSON));
   }
 
   /**
@@ -12193,7 +11622,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(I18nDictionaryFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(I18nDictionaryFromJSON));
   }
 
   /**
@@ -12266,7 +11695,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(FilteredIdentityProviderInfoFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FilteredIdentityProviderInfoFromJSON));
   }
 
   /**
@@ -12335,7 +11764,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(PasswordPolicyEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PasswordPolicyEntityFromJSON));
   }
 
   /**
@@ -12347,91 +11776,6 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<PasswordPolicyEntity>> {
     const response = await this.listPasswordPoliciesRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * User must have the PROTECTED_RESOURCE[LIST] permission on the specified domain, environment or organization AND either PROTECTED_RESOURCE[READ] permission on each domain\'s protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization. Each returned protected resource is filtered and contains only basic information such as id, name, description and isEnabled.
-   * List registered protected resources for a security domain
-   */
-  async listProtectedResourcesRaw(
-    requestParameters: ListProtectedResourcesRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ProtectedResourcePage>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling listProtectedResources.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling listProtectedResources.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling listProtectedResources.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    if (requestParameters.type !== undefined) {
-      queryParameters['type'] = requestParameters.type;
-    }
-
-    if (requestParameters.page !== undefined) {
-      queryParameters['page'] = requestParameters.page;
-    }
-
-    if (requestParameters.size !== undefined) {
-      queryParameters['size'] = requestParameters.size;
-    }
-
-    if (requestParameters.sort !== undefined) {
-      queryParameters['sort'] = requestParameters.sort;
-    }
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => ProtectedResourcePageFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the PROTECTED_RESOURCE[LIST] permission on the specified domain, environment or organization AND either PROTECTED_RESOURCE[READ] permission on each domain\'s protected resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization. Each returned protected resource is filtered and contains only basic information such as id, name, description and isEnabled.
-   * List registered protected resources for a security domain
-   */
-  async listProtectedResources(
-    requestParameters: ListProtectedResourcesRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ProtectedResourcePage> {
-    const response = await this.listProtectedResourcesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -12489,7 +11833,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(ServiceResourceFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ServiceResourceFromJSON));
   }
 
   /**
@@ -12636,7 +11980,7 @@ export class DomainApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(ThemeEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ThemeEntityFromJSON));
   }
 
   /**
@@ -15284,93 +14628,6 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified organization
-   * Update an authorization engine
-   */
-  async updateAuthorizationEngineRaw(
-    requestParameters: UpdateAuthorizationEngineRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<AuthorizationEngine>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling updateAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling updateAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling updateAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.engineId === null || requestParameters.engineId === undefined) {
-      throw new runtime.RequiredError(
-        'engineId',
-        'Required parameter requestParameters.engineId was null or undefined when calling updateAuthorizationEngine.',
-      );
-    }
-
-    if (requestParameters.updateAuthorizationEngine === null || requestParameters.updateAuthorizationEngine === undefined) {
-      throw new runtime.RequiredError(
-        'updateAuthorizationEngine',
-        'Required parameter requestParameters.updateAuthorizationEngine was null or undefined when calling updateAuthorizationEngine.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/authorization-engines/{engineId}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'engineId'}}`, encodeURIComponent(String(requestParameters.engineId))),
-        method: 'PUT',
-        headers: headerParameters,
-        query: queryParameters,
-        body: UpdateAuthorizationEngineToJSON(requestParameters.updateAuthorizationEngine),
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => AuthorizationEngineFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified domain or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified environment or DOMAIN_AUTHORIZATION_ENGINE[UPDATE] permission on the specified organization
-   * Update an authorization engine
-   */
-  async updateAuthorizationEngine(
-    requestParameters: UpdateAuthorizationEngineRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<AuthorizationEngine> {
-    const response = await this.updateAuthorizationEngineRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
    * User must have the DOMAIN_BOT_DETECTION[UPDATE] permission on the specified domain or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified environment or DOMAIN_BOT_DETECTION[UPDATE] permission on the specified organization
    * Update a bot detection
    */
@@ -16220,93 +15477,6 @@ export class DomainApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<PasswordPolicy> {
     const response = await this.updatePasswordPolicyRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
-   * Update a Protected Resource
-   */
-  async updateProtectedResourceRaw(
-    requestParameters: UpdateProtectedResourceRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ProtectedResource>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling updateProtectedResource.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling updateProtectedResource.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError(
-        'domain',
-        'Required parameter requestParameters.domain was null or undefined when calling updateProtectedResource.',
-      );
-    }
-
-    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
-      throw new runtime.RequiredError(
-        'protectedResource',
-        'Required parameter requestParameters.protectedResource was null or undefined when calling updateProtectedResource.',
-      );
-    }
-
-    if (requestParameters.updateProtectedResource === null || requestParameters.updateProtectedResource === undefined) {
-      throw new runtime.RequiredError(
-        'updateProtectedResource',
-        'Required parameter requestParameters.updateProtectedResource was null or undefined when calling updateProtectedResource.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
-          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
-        method: 'PUT',
-        headers: headerParameters,
-        query: queryParameters,
-        body: UpdateProtectedResourceToJSON(requestParameters.updateProtectedResource),
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => ProtectedResourceFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
-   * Update a Protected Resource
-   */
-  async updateProtectedResource(
-    requestParameters: UpdateProtectedResourceRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ProtectedResource> {
-    const response = await this.updateProtectedResourceRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

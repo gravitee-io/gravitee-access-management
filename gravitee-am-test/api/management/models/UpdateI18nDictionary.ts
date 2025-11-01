@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,40 +52,31 @@ export interface UpdateI18nDictionary {
   entries?: { [key: string]: string };
 }
 
-/**
- * Check if a given object implements the UpdateI18nDictionary interface.
- */
-export function instanceOfUpdateI18nDictionary(value: object): value is UpdateI18nDictionary {
-  return true;
-}
-
 export function UpdateI18nDictionaryFromJSON(json: any): UpdateI18nDictionary {
   return UpdateI18nDictionaryFromJSONTyped(json, false);
 }
 
 export function UpdateI18nDictionaryFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateI18nDictionary {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    name: json['name'] == null ? undefined : json['name'],
-    locale: json['locale'] == null ? undefined : json['locale'],
-    entries: json['entries'] == null ? undefined : json['entries'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    locale: !exists(json, 'locale') ? undefined : json['locale'],
+    entries: !exists(json, 'entries') ? undefined : json['entries'],
   };
 }
 
-export function UpdateI18nDictionaryToJSON(json: any): UpdateI18nDictionary {
-  return UpdateI18nDictionaryToJSONTyped(json, false);
-}
-
-export function UpdateI18nDictionaryToJSONTyped(value?: UpdateI18nDictionary | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UpdateI18nDictionaryToJSON(value?: UpdateI18nDictionary | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
-    locale: value['locale'],
-    entries: value['entries'],
+    name: value.name,
+    locale: value.locale,
+    entries: value.entries,
   };
 }

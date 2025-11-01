@@ -25,39 +25,28 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { ChallengeSettings } from './ChallengeSettings';
+import { exists, mapValues } from '../runtime';
+import { ChallengeSettings, ChallengeSettingsFromJSON, ChallengeSettingsFromJSONTyped, ChallengeSettingsToJSON } from './ChallengeSettings';
+import { EnrollSettings, EnrollSettingsFromJSON, EnrollSettingsFromJSONTyped, EnrollSettingsToJSON } from './EnrollSettings';
 import {
-  ChallengeSettingsFromJSON,
-  ChallengeSettingsFromJSONTyped,
-  ChallengeSettingsToJSON,
-  ChallengeSettingsToJSONTyped,
-} from './ChallengeSettings';
-import type { RememberDeviceSettings } from './RememberDeviceSettings';
-import {
-  RememberDeviceSettingsFromJSON,
-  RememberDeviceSettingsFromJSONTyped,
-  RememberDeviceSettingsToJSON,
-  RememberDeviceSettingsToJSONTyped,
-} from './RememberDeviceSettings';
-import type { StepUpAuthenticationSettings } from './StepUpAuthenticationSettings';
-import {
-  StepUpAuthenticationSettingsFromJSON,
-  StepUpAuthenticationSettingsFromJSONTyped,
-  StepUpAuthenticationSettingsToJSON,
-  StepUpAuthenticationSettingsToJSONTyped,
-} from './StepUpAuthenticationSettings';
-import type { EnrollSettings } from './EnrollSettings';
-import { EnrollSettingsFromJSON, EnrollSettingsFromJSONTyped, EnrollSettingsToJSON, EnrollSettingsToJSONTyped } from './EnrollSettings';
-import type { EnrollmentSettings } from './EnrollmentSettings';
-import {
+  EnrollmentSettings,
   EnrollmentSettingsFromJSON,
   EnrollmentSettingsFromJSONTyped,
   EnrollmentSettingsToJSON,
-  EnrollmentSettingsToJSONTyped,
 } from './EnrollmentSettings';
-import type { FactorSettings } from './FactorSettings';
-import { FactorSettingsFromJSON, FactorSettingsFromJSONTyped, FactorSettingsToJSON, FactorSettingsToJSONTyped } from './FactorSettings';
+import { FactorSettings, FactorSettingsFromJSON, FactorSettingsFromJSONTyped, FactorSettingsToJSON } from './FactorSettings';
+import {
+  RememberDeviceSettings,
+  RememberDeviceSettingsFromJSON,
+  RememberDeviceSettingsFromJSONTyped,
+  RememberDeviceSettingsToJSON,
+} from './RememberDeviceSettings';
+import {
+  StepUpAuthenticationSettings,
+  StepUpAuthenticationSettingsFromJSON,
+  StepUpAuthenticationSettingsFromJSONTyped,
+  StepUpAuthenticationSettingsToJSON,
+} from './StepUpAuthenticationSettings';
 
 /**
  *
@@ -121,53 +110,45 @@ export interface MFASettings {
   enroll?: EnrollSettings;
 }
 
-/**
- * Check if a given object implements the MFASettings interface.
- */
-export function instanceOfMFASettings(value: object): value is MFASettings {
-  return true;
-}
-
 export function MFASettingsFromJSON(json: any): MFASettings {
   return MFASettingsFromJSONTyped(json, false);
 }
 
 export function MFASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): MFASettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    loginRule: json['loginRule'] == null ? undefined : json['loginRule'],
-    factor: json['factor'] == null ? undefined : FactorSettingsFromJSON(json['factor']),
-    stepUpAuthenticationRule: json['stepUpAuthenticationRule'] == null ? undefined : json['stepUpAuthenticationRule'],
-    stepUpAuthentication:
-      json['stepUpAuthentication'] == null ? undefined : StepUpAuthenticationSettingsFromJSON(json['stepUpAuthentication']),
-    adaptiveAuthenticationRule: json['adaptiveAuthenticationRule'] == null ? undefined : json['adaptiveAuthenticationRule'],
-    rememberDevice: json['rememberDevice'] == null ? undefined : RememberDeviceSettingsFromJSON(json['rememberDevice']),
-    enrollment: json['enrollment'] == null ? undefined : EnrollmentSettingsFromJSON(json['enrollment']),
-    challenge: json['challenge'] == null ? undefined : ChallengeSettingsFromJSON(json['challenge']),
-    enroll: json['enroll'] == null ? undefined : EnrollSettingsFromJSON(json['enroll']),
+    loginRule: !exists(json, 'loginRule') ? undefined : json['loginRule'],
+    factor: !exists(json, 'factor') ? undefined : FactorSettingsFromJSON(json['factor']),
+    stepUpAuthenticationRule: !exists(json, 'stepUpAuthenticationRule') ? undefined : json['stepUpAuthenticationRule'],
+    stepUpAuthentication: !exists(json, 'stepUpAuthentication')
+      ? undefined
+      : StepUpAuthenticationSettingsFromJSON(json['stepUpAuthentication']),
+    adaptiveAuthenticationRule: !exists(json, 'adaptiveAuthenticationRule') ? undefined : json['adaptiveAuthenticationRule'],
+    rememberDevice: !exists(json, 'rememberDevice') ? undefined : RememberDeviceSettingsFromJSON(json['rememberDevice']),
+    enrollment: !exists(json, 'enrollment') ? undefined : EnrollmentSettingsFromJSON(json['enrollment']),
+    challenge: !exists(json, 'challenge') ? undefined : ChallengeSettingsFromJSON(json['challenge']),
+    enroll: !exists(json, 'enroll') ? undefined : EnrollSettingsFromJSON(json['enroll']),
   };
 }
 
-export function MFASettingsToJSON(json: any): MFASettings {
-  return MFASettingsToJSONTyped(json, false);
-}
-
-export function MFASettingsToJSONTyped(value?: MFASettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function MFASettingsToJSON(value?: MFASettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    loginRule: value['loginRule'],
-    factor: FactorSettingsToJSON(value['factor']),
-    stepUpAuthenticationRule: value['stepUpAuthenticationRule'],
-    stepUpAuthentication: StepUpAuthenticationSettingsToJSON(value['stepUpAuthentication']),
-    adaptiveAuthenticationRule: value['adaptiveAuthenticationRule'],
-    rememberDevice: RememberDeviceSettingsToJSON(value['rememberDevice']),
-    enrollment: EnrollmentSettingsToJSON(value['enrollment']),
-    challenge: ChallengeSettingsToJSON(value['challenge']),
-    enroll: EnrollSettingsToJSON(value['enroll']),
+    loginRule: value.loginRule,
+    factor: FactorSettingsToJSON(value.factor),
+    stepUpAuthenticationRule: value.stepUpAuthenticationRule,
+    stepUpAuthentication: StepUpAuthenticationSettingsToJSON(value.stepUpAuthentication),
+    adaptiveAuthenticationRule: value.adaptiveAuthenticationRule,
+    rememberDevice: RememberDeviceSettingsToJSON(value.rememberDevice),
+    enrollment: EnrollmentSettingsToJSON(value.enrollment),
+    challenge: ChallengeSettingsToJSON(value.challenge),
+    enroll: EnrollSettingsToJSON(value.enroll),
   };
 }

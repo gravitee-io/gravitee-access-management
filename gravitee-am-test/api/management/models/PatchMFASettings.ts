@@ -25,48 +25,42 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { PatchEnrollSettings } from './PatchEnrollSettings';
+import { exists, mapValues } from '../runtime';
 import {
-  PatchEnrollSettingsFromJSON,
-  PatchEnrollSettingsFromJSONTyped,
-  PatchEnrollSettingsToJSON,
-  PatchEnrollSettingsToJSONTyped,
-} from './PatchEnrollSettings';
-import type { PatchRememberDeviceSettings } from './PatchRememberDeviceSettings';
-import {
-  PatchRememberDeviceSettingsFromJSON,
-  PatchRememberDeviceSettingsFromJSONTyped,
-  PatchRememberDeviceSettingsToJSON,
-  PatchRememberDeviceSettingsToJSONTyped,
-} from './PatchRememberDeviceSettings';
-import type { PatchChallengeSettings } from './PatchChallengeSettings';
-import {
+  PatchChallengeSettings,
   PatchChallengeSettingsFromJSON,
   PatchChallengeSettingsFromJSONTyped,
   PatchChallengeSettingsToJSON,
-  PatchChallengeSettingsToJSONTyped,
 } from './PatchChallengeSettings';
-import type { PatchEnrollmentSettings } from './PatchEnrollmentSettings';
 import {
+  PatchEnrollSettings,
+  PatchEnrollSettingsFromJSON,
+  PatchEnrollSettingsFromJSONTyped,
+  PatchEnrollSettingsToJSON,
+} from './PatchEnrollSettings';
+import {
+  PatchEnrollmentSettings,
   PatchEnrollmentSettingsFromJSON,
   PatchEnrollmentSettingsFromJSONTyped,
   PatchEnrollmentSettingsToJSON,
-  PatchEnrollmentSettingsToJSONTyped,
 } from './PatchEnrollmentSettings';
-import type { PatchFactorSettings } from './PatchFactorSettings';
 import {
+  PatchFactorSettings,
   PatchFactorSettingsFromJSON,
   PatchFactorSettingsFromJSONTyped,
   PatchFactorSettingsToJSON,
-  PatchFactorSettingsToJSONTyped,
 } from './PatchFactorSettings';
-import type { PatchStepUpAuthentication } from './PatchStepUpAuthentication';
 import {
+  PatchRememberDeviceSettings,
+  PatchRememberDeviceSettingsFromJSON,
+  PatchRememberDeviceSettingsFromJSONTyped,
+  PatchRememberDeviceSettingsToJSON,
+} from './PatchRememberDeviceSettings';
+import {
+  PatchStepUpAuthentication,
   PatchStepUpAuthenticationFromJSON,
   PatchStepUpAuthenticationFromJSONTyped,
   PatchStepUpAuthenticationToJSON,
-  PatchStepUpAuthenticationToJSONTyped,
 } from './PatchStepUpAuthentication';
 
 /**
@@ -131,53 +125,45 @@ export interface PatchMFASettings {
   challenge?: PatchChallengeSettings;
 }
 
-/**
- * Check if a given object implements the PatchMFASettings interface.
- */
-export function instanceOfPatchMFASettings(value: object): value is PatchMFASettings {
-  return true;
-}
-
 export function PatchMFASettingsFromJSON(json: any): PatchMFASettings {
   return PatchMFASettingsFromJSONTyped(json, false);
 }
 
 export function PatchMFASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchMFASettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    loginRule: json['loginRule'] == null ? undefined : json['loginRule'],
-    factor: json['factor'] == null ? undefined : PatchFactorSettingsFromJSON(json['factor']),
-    stepUpAuthenticationRule: json['stepUpAuthenticationRule'] == null ? undefined : json['stepUpAuthenticationRule'],
-    stepUpAuthentication:
-      json['stepUpAuthentication'] == null ? undefined : PatchStepUpAuthenticationFromJSON(json['stepUpAuthentication']),
-    adaptiveAuthenticationRule: json['adaptiveAuthenticationRule'] == null ? undefined : json['adaptiveAuthenticationRule'],
-    rememberDevice: json['rememberDevice'] == null ? undefined : PatchRememberDeviceSettingsFromJSON(json['rememberDevice']),
-    enrollment: json['enrollment'] == null ? undefined : PatchEnrollmentSettingsFromJSON(json['enrollment']),
-    enroll: json['enroll'] == null ? undefined : PatchEnrollSettingsFromJSON(json['enroll']),
-    challenge: json['challenge'] == null ? undefined : PatchChallengeSettingsFromJSON(json['challenge']),
+    loginRule: !exists(json, 'loginRule') ? undefined : json['loginRule'],
+    factor: !exists(json, 'factor') ? undefined : PatchFactorSettingsFromJSON(json['factor']),
+    stepUpAuthenticationRule: !exists(json, 'stepUpAuthenticationRule') ? undefined : json['stepUpAuthenticationRule'],
+    stepUpAuthentication: !exists(json, 'stepUpAuthentication')
+      ? undefined
+      : PatchStepUpAuthenticationFromJSON(json['stepUpAuthentication']),
+    adaptiveAuthenticationRule: !exists(json, 'adaptiveAuthenticationRule') ? undefined : json['adaptiveAuthenticationRule'],
+    rememberDevice: !exists(json, 'rememberDevice') ? undefined : PatchRememberDeviceSettingsFromJSON(json['rememberDevice']),
+    enrollment: !exists(json, 'enrollment') ? undefined : PatchEnrollmentSettingsFromJSON(json['enrollment']),
+    enroll: !exists(json, 'enroll') ? undefined : PatchEnrollSettingsFromJSON(json['enroll']),
+    challenge: !exists(json, 'challenge') ? undefined : PatchChallengeSettingsFromJSON(json['challenge']),
   };
 }
 
-export function PatchMFASettingsToJSON(json: any): PatchMFASettings {
-  return PatchMFASettingsToJSONTyped(json, false);
-}
-
-export function PatchMFASettingsToJSONTyped(value?: PatchMFASettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchMFASettingsToJSON(value?: PatchMFASettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    loginRule: value['loginRule'],
-    factor: PatchFactorSettingsToJSON(value['factor']),
-    stepUpAuthenticationRule: value['stepUpAuthenticationRule'],
-    stepUpAuthentication: PatchStepUpAuthenticationToJSON(value['stepUpAuthentication']),
-    adaptiveAuthenticationRule: value['adaptiveAuthenticationRule'],
-    rememberDevice: PatchRememberDeviceSettingsToJSON(value['rememberDevice']),
-    enrollment: PatchEnrollmentSettingsToJSON(value['enrollment']),
-    enroll: PatchEnrollSettingsToJSON(value['enroll']),
-    challenge: PatchChallengeSettingsToJSON(value['challenge']),
+    loginRule: value.loginRule,
+    factor: PatchFactorSettingsToJSON(value.factor),
+    stepUpAuthenticationRule: value.stepUpAuthenticationRule,
+    stepUpAuthentication: PatchStepUpAuthenticationToJSON(value.stepUpAuthentication),
+    adaptiveAuthenticationRule: value.adaptiveAuthenticationRule,
+    rememberDevice: PatchRememberDeviceSettingsToJSON(value.rememberDevice),
+    enrollment: PatchEnrollmentSettingsToJSON(value.enrollment),
+    enroll: PatchEnrollSettingsToJSON(value.enroll),
+    challenge: PatchChallengeSettingsToJSON(value.challenge),
   };
 }

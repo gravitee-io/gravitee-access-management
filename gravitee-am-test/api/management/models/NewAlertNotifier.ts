@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,44 +58,33 @@ export interface NewAlertNotifier {
   configuration: string;
 }
 
-/**
- * Check if a given object implements the NewAlertNotifier interface.
- */
-export function instanceOfNewAlertNotifier(value: object): value is NewAlertNotifier {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
-  return true;
-}
-
 export function NewAlertNotifierFromJSON(json: any): NewAlertNotifier {
   return NewAlertNotifierFromJSONTyped(json, false);
 }
 
 export function NewAlertNotifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewAlertNotifier {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     type: json['type'],
-    name: json['name'] == null ? undefined : json['name'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
     configuration: json['configuration'],
   };
 }
 
-export function NewAlertNotifierToJSON(json: any): NewAlertNotifier {
-  return NewAlertNotifierToJSONTyped(json, false);
-}
-
-export function NewAlertNotifierToJSONTyped(value?: NewAlertNotifier | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewAlertNotifierToJSON(value?: NewAlertNotifier | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    type: value['type'],
-    name: value['name'],
-    enabled: value['enabled'],
-    configuration: value['configuration'],
+    type: value.type,
+    name: value.name,
+    enabled: value.enabled,
+    configuration: value.configuration,
   };
 }

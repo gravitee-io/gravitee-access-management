@@ -512,7 +512,7 @@ export class ExtensionGrantApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(ExtensionGrantFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ExtensionGrantFromJSON));
   }
 
   /**

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,38 +46,29 @@ export interface SecretExpirationSettings {
   expiryTimeSeconds?: number;
 }
 
-/**
- * Check if a given object implements the SecretExpirationSettings interface.
- */
-export function instanceOfSecretExpirationSettings(value: object): value is SecretExpirationSettings {
-  return true;
-}
-
 export function SecretExpirationSettingsFromJSON(json: any): SecretExpirationSettings {
   return SecretExpirationSettingsFromJSONTyped(json, false);
 }
 
 export function SecretExpirationSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): SecretExpirationSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    expiryTimeSeconds: json['expiryTimeSeconds'] == null ? undefined : json['expiryTimeSeconds'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    expiryTimeSeconds: !exists(json, 'expiryTimeSeconds') ? undefined : json['expiryTimeSeconds'],
   };
 }
 
-export function SecretExpirationSettingsToJSON(json: any): SecretExpirationSettings {
-  return SecretExpirationSettingsToJSONTyped(json, false);
-}
-
-export function SecretExpirationSettingsToJSONTyped(value?: SecretExpirationSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function SecretExpirationSettingsToJSON(value?: SecretExpirationSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    expiryTimeSeconds: value['expiryTimeSeconds'],
+    enabled: value.enabled,
+    expiryTimeSeconds: value.expiryTimeSeconds,
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,48 +58,33 @@ export interface NewAuthenticationDeviceNotifier {
   configuration: string;
 }
 
-/**
- * Check if a given object implements the NewAuthenticationDeviceNotifier interface.
- */
-export function instanceOfNewAuthenticationDeviceNotifier(value: object): value is NewAuthenticationDeviceNotifier {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
-  return true;
-}
-
 export function NewAuthenticationDeviceNotifierFromJSON(json: any): NewAuthenticationDeviceNotifier {
   return NewAuthenticationDeviceNotifierFromJSONTyped(json, false);
 }
 
 export function NewAuthenticationDeviceNotifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewAuthenticationDeviceNotifier {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
+    id: !exists(json, 'id') ? undefined : json['id'],
     type: json['type'],
     name: json['name'],
     configuration: json['configuration'],
   };
 }
 
-export function NewAuthenticationDeviceNotifierToJSON(json: any): NewAuthenticationDeviceNotifier {
-  return NewAuthenticationDeviceNotifierToJSONTyped(json, false);
-}
-
-export function NewAuthenticationDeviceNotifierToJSONTyped(
-  value?: NewAuthenticationDeviceNotifier | null,
-  ignoreDiscriminator: boolean = false,
-): any {
-  if (value == null) {
-    return value;
+export function NewAuthenticationDeviceNotifierToJSON(value?: NewAuthenticationDeviceNotifier | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    type: value['type'],
-    name: value['name'],
-    configuration: value['configuration'],
+    id: value.id,
+    type: value.type,
+    name: value.name,
+    configuration: value.configuration,
   };
 }

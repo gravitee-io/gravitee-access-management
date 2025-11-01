@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -82,50 +82,41 @@ export interface NewTheme {
   css?: string;
 }
 
-/**
- * Check if a given object implements the NewTheme interface.
- */
-export function instanceOfNewTheme(value: object): value is NewTheme {
-  return true;
-}
-
 export function NewThemeFromJSON(json: any): NewTheme {
   return NewThemeFromJSONTyped(json, false);
 }
 
 export function NewThemeFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewTheme {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    logoUrl: json['logoUrl'] == null ? undefined : json['logoUrl'],
-    logoWidth: json['logoWidth'] == null ? undefined : json['logoWidth'],
-    faviconUrl: json['faviconUrl'] == null ? undefined : json['faviconUrl'],
-    primaryButtonColorHex: json['primaryButtonColorHex'] == null ? undefined : json['primaryButtonColorHex'],
-    secondaryButtonColorHex: json['secondaryButtonColorHex'] == null ? undefined : json['secondaryButtonColorHex'],
-    primaryTextColorHex: json['primaryTextColorHex'] == null ? undefined : json['primaryTextColorHex'],
-    secondaryTextColorHex: json['secondaryTextColorHex'] == null ? undefined : json['secondaryTextColorHex'],
-    css: json['css'] == null ? undefined : json['css'],
+    logoUrl: !exists(json, 'logoUrl') ? undefined : json['logoUrl'],
+    logoWidth: !exists(json, 'logoWidth') ? undefined : json['logoWidth'],
+    faviconUrl: !exists(json, 'faviconUrl') ? undefined : json['faviconUrl'],
+    primaryButtonColorHex: !exists(json, 'primaryButtonColorHex') ? undefined : json['primaryButtonColorHex'],
+    secondaryButtonColorHex: !exists(json, 'secondaryButtonColorHex') ? undefined : json['secondaryButtonColorHex'],
+    primaryTextColorHex: !exists(json, 'primaryTextColorHex') ? undefined : json['primaryTextColorHex'],
+    secondaryTextColorHex: !exists(json, 'secondaryTextColorHex') ? undefined : json['secondaryTextColorHex'],
+    css: !exists(json, 'css') ? undefined : json['css'],
   };
 }
 
-export function NewThemeToJSON(json: any): NewTheme {
-  return NewThemeToJSONTyped(json, false);
-}
-
-export function NewThemeToJSONTyped(value?: NewTheme | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewThemeToJSON(value?: NewTheme | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    logoUrl: value['logoUrl'],
-    logoWidth: value['logoWidth'],
-    faviconUrl: value['faviconUrl'],
-    primaryButtonColorHex: value['primaryButtonColorHex'],
-    secondaryButtonColorHex: value['secondaryButtonColorHex'],
-    primaryTextColorHex: value['primaryTextColorHex'],
-    secondaryTextColorHex: value['secondaryTextColorHex'],
-    css: value['css'],
+    logoUrl: value.logoUrl,
+    logoWidth: value.logoWidth,
+    faviconUrl: value.faviconUrl,
+    primaryButtonColorHex: value.primaryButtonColorHex,
+    secondaryButtonColorHex: value.secondaryButtonColorHex,
+    primaryTextColorHex: value.primaryTextColorHex,
+    secondaryTextColorHex: value.secondaryTextColorHex,
+    css: value.css,
   };
 }

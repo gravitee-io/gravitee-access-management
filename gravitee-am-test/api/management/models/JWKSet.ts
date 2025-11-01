@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { JWK } from './JWK';
-import { JWKFromJSON, JWKFromJSONTyped, JWKToJSON, JWKToJSONTyped } from './JWK';
+import { exists, mapValues } from '../runtime';
+import { JWK, JWKFromJSON, JWKFromJSONTyped, JWKToJSON } from './JWK';
 
 /**
  *
@@ -43,36 +42,27 @@ export interface JWKSet {
   keys?: Array<JWK>;
 }
 
-/**
- * Check if a given object implements the JWKSet interface.
- */
-export function instanceOfJWKSet(value: object): value is JWKSet {
-  return true;
-}
-
 export function JWKSetFromJSON(json: any): JWKSet {
   return JWKSetFromJSONTyped(json, false);
 }
 
 export function JWKSetFromJSONTyped(json: any, ignoreDiscriminator: boolean): JWKSet {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    keys: json['keys'] == null ? undefined : (json['keys'] as Array<any>).map(JWKFromJSON),
+    keys: !exists(json, 'keys') ? undefined : (json['keys'] as Array<any>).map(JWKFromJSON),
   };
 }
 
-export function JWKSetToJSON(json: any): JWKSet {
-  return JWKSetToJSONTyped(json, false);
-}
-
-export function JWKSetToJSONTyped(value?: JWKSet | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function JWKSetToJSON(value?: JWKSet | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    keys: value['keys'] == null ? undefined : (value['keys'] as Array<any>).map(JWKToJSON),
+    keys: value.keys === undefined ? undefined : (value.keys as Array<any>).map(JWKToJSON),
   };
 }

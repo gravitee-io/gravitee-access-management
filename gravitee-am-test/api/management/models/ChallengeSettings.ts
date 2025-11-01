@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -62,40 +62,31 @@ export const ChallengeSettingsTypeEnum = {
 } as const;
 export type ChallengeSettingsTypeEnum = typeof ChallengeSettingsTypeEnum[keyof typeof ChallengeSettingsTypeEnum];
 
-/**
- * Check if a given object implements the ChallengeSettings interface.
- */
-export function instanceOfChallengeSettings(value: object): value is ChallengeSettings {
-  return true;
-}
-
 export function ChallengeSettingsFromJSON(json: any): ChallengeSettings {
   return ChallengeSettingsFromJSONTyped(json, false);
 }
 
 export function ChallengeSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ChallengeSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    active: json['active'] == null ? undefined : json['active'],
-    challengeRule: json['challengeRule'] == null ? undefined : json['challengeRule'],
-    type: json['type'] == null ? undefined : json['type'],
+    active: !exists(json, 'active') ? undefined : json['active'],
+    challengeRule: !exists(json, 'challengeRule') ? undefined : json['challengeRule'],
+    type: !exists(json, 'type') ? undefined : json['type'],
   };
 }
 
-export function ChallengeSettingsToJSON(json: any): ChallengeSettings {
-  return ChallengeSettingsToJSONTyped(json, false);
-}
-
-export function ChallengeSettingsToJSONTyped(value?: ChallengeSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ChallengeSettingsToJSON(value?: ChallengeSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    active: value['active'],
-    challengeRule: value['challengeRule'],
-    type: value['type'],
+    active: value.active,
+    challengeRule: value.challengeRule,
+    type: value.type,
   };
 }

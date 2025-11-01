@@ -813,7 +813,7 @@ export class GroupApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(RoleFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleFromJSON));
   }
 
   /**
@@ -1085,7 +1085,7 @@ export class GroupApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(GroupFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(GroupFromJSON));
   }
 
   /**

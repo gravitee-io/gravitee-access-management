@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,46 +70,37 @@ export interface Tag {
   updatedAt?: Date;
 }
 
-/**
- * Check if a given object implements the Tag interface.
- */
-export function instanceOfTag(value: object): value is Tag {
-  return true;
-}
-
 export function TagFromJSON(json: any): Tag {
   return TagFromJSONTyped(json, false);
 }
 
 export function TagFromJSONTyped(json: any, ignoreDiscriminator: boolean): Tag {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    organizationId: json['organizationId'] == null ? undefined : json['organizationId'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    description: !exists(json, 'description') ? undefined : json['description'],
+    organizationId: !exists(json, 'organizationId') ? undefined : json['organizationId'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function TagToJSON(json: any): Tag {
-  return TagToJSONTyped(json, false);
-}
-
-export function TagToJSONTyped(value?: Tag | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function TagToJSON(value?: Tag | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    name: value['name'],
-    description: value['description'],
-    organizationId: value['organizationId'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    id: value.id,
+    name: value.name,
+    description: value.description,
+    organizationId: value.organizationId,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };
 }

@@ -57,7 +57,7 @@ export interface CreateRoleRequest {
   newRole: NewRole;
 }
 
-export interface Delete13Request {
+export interface Delete14Request {
   organizationId: string;
   role: string;
 }
@@ -254,19 +254,19 @@ export class RoleApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
    * Delete a plaform role
    */
-  async delete13Raw(
-    requestParameters: Delete13Request,
+  async delete14Raw(
+    requestParameters: Delete14Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete13.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete14.',
       );
     }
 
     if (requestParameters.role === null || requestParameters.role === undefined) {
-      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling delete13.');
+      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling delete14.');
     }
 
     const queryParameters: any = {};
@@ -300,8 +300,8 @@ export class RoleApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
    * Delete a plaform role
    */
-  async delete13(requestParameters: Delete13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete13Raw(requestParameters, initOverrides);
+  async delete14(requestParameters: Delete14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete14Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -619,7 +619,7 @@ export class RoleApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(RoleEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(RoleEntityFromJSON));
   }
 
   /**

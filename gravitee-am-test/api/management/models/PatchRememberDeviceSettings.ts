@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,45 +58,33 @@ export interface PatchRememberDeviceSettings {
   deviceIdentifierId?: string;
 }
 
-/**
- * Check if a given object implements the PatchRememberDeviceSettings interface.
- */
-export function instanceOfPatchRememberDeviceSettings(value: object): value is PatchRememberDeviceSettings {
-  return true;
-}
-
 export function PatchRememberDeviceSettingsFromJSON(json: any): PatchRememberDeviceSettings {
   return PatchRememberDeviceSettingsFromJSONTyped(json, false);
 }
 
 export function PatchRememberDeviceSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchRememberDeviceSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    active: json['active'] == null ? undefined : json['active'],
-    skipRememberDevice: json['skipRememberDevice'] == null ? undefined : json['skipRememberDevice'],
-    expirationTimeSeconds: json['expirationTimeSeconds'] == null ? undefined : json['expirationTimeSeconds'],
-    deviceIdentifierId: json['deviceIdentifierId'] == null ? undefined : json['deviceIdentifierId'],
+    active: !exists(json, 'active') ? undefined : json['active'],
+    skipRememberDevice: !exists(json, 'skipRememberDevice') ? undefined : json['skipRememberDevice'],
+    expirationTimeSeconds: !exists(json, 'expirationTimeSeconds') ? undefined : json['expirationTimeSeconds'],
+    deviceIdentifierId: !exists(json, 'deviceIdentifierId') ? undefined : json['deviceIdentifierId'],
   };
 }
 
-export function PatchRememberDeviceSettingsToJSON(json: any): PatchRememberDeviceSettings {
-  return PatchRememberDeviceSettingsToJSONTyped(json, false);
-}
-
-export function PatchRememberDeviceSettingsToJSONTyped(
-  value?: PatchRememberDeviceSettings | null,
-  ignoreDiscriminator: boolean = false,
-): any {
-  if (value == null) {
-    return value;
+export function PatchRememberDeviceSettingsToJSON(value?: PatchRememberDeviceSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    active: value['active'],
-    skipRememberDevice: value['skipRememberDevice'],
-    expirationTimeSeconds: value['expirationTimeSeconds'],
-    deviceIdentifierId: value['deviceIdentifierId'],
+    active: value.active,
+    skipRememberDevice: value.skipRememberDevice,
+    expirationTimeSeconds: value.expirationTimeSeconds,
+    deviceIdentifierId: value.deviceIdentifierId,
   };
 }

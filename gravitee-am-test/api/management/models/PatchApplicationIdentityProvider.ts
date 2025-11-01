@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,43 +52,31 @@ export interface PatchApplicationIdentityProvider {
   priority?: number;
 }
 
-/**
- * Check if a given object implements the PatchApplicationIdentityProvider interface.
- */
-export function instanceOfPatchApplicationIdentityProvider(value: object): value is PatchApplicationIdentityProvider {
-  return true;
-}
-
 export function PatchApplicationIdentityProviderFromJSON(json: any): PatchApplicationIdentityProvider {
   return PatchApplicationIdentityProviderFromJSONTyped(json, false);
 }
 
 export function PatchApplicationIdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchApplicationIdentityProvider {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    identity: json['identity'] == null ? undefined : json['identity'],
-    selectionRule: json['selectionRule'] == null ? undefined : json['selectionRule'],
-    priority: json['priority'] == null ? undefined : json['priority'],
+    identity: !exists(json, 'identity') ? undefined : json['identity'],
+    selectionRule: !exists(json, 'selectionRule') ? undefined : json['selectionRule'],
+    priority: !exists(json, 'priority') ? undefined : json['priority'],
   };
 }
 
-export function PatchApplicationIdentityProviderToJSON(json: any): PatchApplicationIdentityProvider {
-  return PatchApplicationIdentityProviderToJSONTyped(json, false);
-}
-
-export function PatchApplicationIdentityProviderToJSONTyped(
-  value?: PatchApplicationIdentityProvider | null,
-  ignoreDiscriminator: boolean = false,
-): any {
-  if (value == null) {
-    return value;
+export function PatchApplicationIdentityProviderToJSON(value?: PatchApplicationIdentityProvider | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    identity: value['identity'],
-    selectionRule: value['selectionRule'],
-    priority: value['priority'],
+    identity: value.identity,
+    selectionRule: value.selectionRule,
+    priority: value.priority,
   };
 }

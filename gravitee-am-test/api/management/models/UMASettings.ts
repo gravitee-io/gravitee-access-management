@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,36 +40,27 @@ export interface UMASettings {
   enabled?: boolean;
 }
 
-/**
- * Check if a given object implements the UMASettings interface.
- */
-export function instanceOfUMASettings(value: object): value is UMASettings {
-  return true;
-}
-
 export function UMASettingsFromJSON(json: any): UMASettings {
   return UMASettingsFromJSONTyped(json, false);
 }
 
 export function UMASettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): UMASettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
   };
 }
 
-export function UMASettingsToJSON(json: any): UMASettings {
-  return UMASettingsToJSONTyped(json, false);
-}
-
-export function UMASettingsToJSONTyped(value?: UMASettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UMASettingsToJSON(value?: UMASettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
+    enabled: value.enabled,
   };
 }

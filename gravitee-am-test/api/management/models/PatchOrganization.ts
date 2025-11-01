@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,36 +40,27 @@ export interface PatchOrganization {
   identities?: Array<string>;
 }
 
-/**
- * Check if a given object implements the PatchOrganization interface.
- */
-export function instanceOfPatchOrganization(value: object): value is PatchOrganization {
-  return true;
-}
-
 export function PatchOrganizationFromJSON(json: any): PatchOrganization {
   return PatchOrganizationFromJSONTyped(json, false);
 }
 
 export function PatchOrganizationFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchOrganization {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    identities: json['identities'] == null ? undefined : json['identities'],
+    identities: !exists(json, 'identities') ? undefined : json['identities'],
   };
 }
 
-export function PatchOrganizationToJSON(json: any): PatchOrganization {
-  return PatchOrganizationToJSONTyped(json, false);
-}
-
-export function PatchOrganizationToJSONTyped(value?: PatchOrganization | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchOrganizationToJSON(value?: PatchOrganization | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    identities: value['identities'],
+    identities: value.identities,
   };
 }

@@ -504,7 +504,7 @@ export class AuthenticationDeviceNotifierApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AuthenticationDeviceNotifierFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuthenticationDeviceNotifierFromJSON));
   }
 
   /**

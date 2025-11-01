@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,27 +64,16 @@ export interface NewFactor {
   configuration: string;
 }
 
-/**
- * Check if a given object implements the NewFactor interface.
- */
-export function instanceOfNewFactor(value: object): value is NewFactor {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('factorType' in value) || value['factorType'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
-  return true;
-}
-
 export function NewFactorFromJSON(json: any): NewFactor {
   return NewFactorFromJSONTyped(json, false);
 }
 
 export function NewFactorFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewFactor {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
+    id: !exists(json, 'id') ? undefined : json['id'],
     type: json['type'],
     factorType: json['factorType'],
     name: json['name'],
@@ -92,20 +81,18 @@ export function NewFactorFromJSONTyped(json: any, ignoreDiscriminator: boolean):
   };
 }
 
-export function NewFactorToJSON(json: any): NewFactor {
-  return NewFactorToJSONTyped(json, false);
-}
-
-export function NewFactorToJSONTyped(value?: NewFactor | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewFactorToJSON(value?: NewFactor | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    type: value['type'],
-    factorType: value['factorType'],
-    name: value['name'],
-    configuration: value['configuration'],
+    id: value.id,
+    type: value.type,
+    factorType: value.factorType,
+    name: value.name,
+    configuration: value.configuration,
   };
 }

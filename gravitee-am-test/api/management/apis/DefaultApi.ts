@@ -377,7 +377,7 @@ export class DefaultApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(EnvironmentFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(EnvironmentFromJSON));
   }
 
   /**

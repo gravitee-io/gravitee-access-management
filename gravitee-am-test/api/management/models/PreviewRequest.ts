@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { Theme } from './Theme';
-import { ThemeFromJSON, ThemeFromJSONTyped, ThemeToJSON, ThemeToJSONTyped } from './Theme';
+import { exists, mapValues } from '../runtime';
+import { Theme, ThemeFromJSON, ThemeFromJSONTyped, ThemeToJSON } from './Theme';
 
 /**
  *
@@ -70,44 +69,33 @@ export const PreviewRequestTypeEnum = {
 } as const;
 export type PreviewRequestTypeEnum = typeof PreviewRequestTypeEnum[keyof typeof PreviewRequestTypeEnum];
 
-/**
- * Check if a given object implements the PreviewRequest interface.
- */
-export function instanceOfPreviewRequest(value: object): value is PreviewRequest {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('template' in value) || value['template'] === undefined) return false;
-  return true;
-}
-
 export function PreviewRequestFromJSON(json: any): PreviewRequest {
   return PreviewRequestFromJSONTyped(json, false);
 }
 
 export function PreviewRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): PreviewRequest {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    content: json['content'] == null ? undefined : json['content'],
-    theme: json['theme'] == null ? undefined : ThemeFromJSON(json['theme']),
+    content: !exists(json, 'content') ? undefined : json['content'],
+    theme: !exists(json, 'theme') ? undefined : ThemeFromJSON(json['theme']),
     type: json['type'],
     template: json['template'],
   };
 }
 
-export function PreviewRequestToJSON(json: any): PreviewRequest {
-  return PreviewRequestToJSONTyped(json, false);
-}
-
-export function PreviewRequestToJSONTyped(value?: PreviewRequest | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PreviewRequestToJSON(value?: PreviewRequest | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    content: value['content'],
-    theme: ThemeToJSON(value['theme']),
-    type: value['type'],
-    template: value['template'],
+    content: value.content,
+    theme: ThemeToJSON(value.theme),
+    type: value.type,
+    template: value.template,
   };
 }

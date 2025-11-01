@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,38 +58,29 @@ export const ReferenceTypeEnum = {
 } as const;
 export type ReferenceTypeEnum = typeof ReferenceTypeEnum[keyof typeof ReferenceTypeEnum];
 
-/**
- * Check if a given object implements the Reference interface.
- */
-export function instanceOfReference(value: object): value is Reference {
-  return true;
-}
-
 export function ReferenceFromJSON(json: any): Reference {
   return ReferenceFromJSONTyped(json, false);
 }
 
 export function ReferenceFromJSONTyped(json: any, ignoreDiscriminator: boolean): Reference {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    type: json['type'] == null ? undefined : json['type'],
-    id: json['id'] == null ? undefined : json['id'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+    id: !exists(json, 'id') ? undefined : json['id'],
   };
 }
 
-export function ReferenceToJSON(json: any): Reference {
-  return ReferenceToJSONTyped(json, false);
-}
-
-export function ReferenceToJSONTyped(value?: Reference | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ReferenceToJSON(value?: Reference | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    type: value['type'],
-    id: value['id'],
+    type: value.type,
+    id: value.id,
   };
 }

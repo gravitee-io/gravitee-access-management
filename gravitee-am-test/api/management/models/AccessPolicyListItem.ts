@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,44 +64,35 @@ export interface AccessPolicyListItem {
   updatedAt?: Date;
 }
 
-/**
- * Check if a given object implements the AccessPolicyListItem interface.
- */
-export function instanceOfAccessPolicyListItem(value: object): value is AccessPolicyListItem {
-  return true;
-}
-
 export function AccessPolicyListItemFromJSON(json: any): AccessPolicyListItem {
   return AccessPolicyListItemFromJSONTyped(json, false);
 }
 
 export function AccessPolicyListItemFromJSONTyped(json: any, ignoreDiscriminator: boolean): AccessPolicyListItem {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    description: !exists(json, 'description') ? undefined : json['description'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function AccessPolicyListItemToJSON(json: any): AccessPolicyListItem {
-  return AccessPolicyListItemToJSONTyped(json, false);
-}
-
-export function AccessPolicyListItemToJSONTyped(value?: AccessPolicyListItem | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function AccessPolicyListItemToJSON(value?: AccessPolicyListItem | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    name: value['name'],
-    description: value['description'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    id: value.id,
+    name: value.name,
+    description: value.description,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };
 }

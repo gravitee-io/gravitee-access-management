@@ -25,13 +25,12 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { ResetPasswordSettings } from './ResetPasswordSettings';
+import { exists, mapValues } from '../runtime';
 import {
+  ResetPasswordSettings,
   ResetPasswordSettingsFromJSON,
   ResetPasswordSettingsFromJSONTyped,
   ResetPasswordSettingsToJSON,
-  ResetPasswordSettingsToJSONTyped,
 } from './ResetPasswordSettings';
 
 /**
@@ -54,13 +53,6 @@ export interface SelfServiceAccountManagementSettings {
   resetPassword?: ResetPasswordSettings;
 }
 
-/**
- * Check if a given object implements the SelfServiceAccountManagementSettings interface.
- */
-export function instanceOfSelfServiceAccountManagementSettings(value: object): value is SelfServiceAccountManagementSettings {
-  return true;
-}
-
 export function SelfServiceAccountManagementSettingsFromJSON(json: any): SelfServiceAccountManagementSettings {
   return SelfServiceAccountManagementSettingsFromJSONTyped(json, false);
 }
@@ -69,29 +61,24 @@ export function SelfServiceAccountManagementSettingsFromJSONTyped(
   json: any,
   ignoreDiscriminator: boolean,
 ): SelfServiceAccountManagementSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    resetPassword: json['resetPassword'] == null ? undefined : ResetPasswordSettingsFromJSON(json['resetPassword']),
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    resetPassword: !exists(json, 'resetPassword') ? undefined : ResetPasswordSettingsFromJSON(json['resetPassword']),
   };
 }
 
-export function SelfServiceAccountManagementSettingsToJSON(json: any): SelfServiceAccountManagementSettings {
-  return SelfServiceAccountManagementSettingsToJSONTyped(json, false);
-}
-
-export function SelfServiceAccountManagementSettingsToJSONTyped(
-  value?: SelfServiceAccountManagementSettings | null,
-  ignoreDiscriminator: boolean = false,
-): any {
-  if (value == null) {
-    return value;
+export function SelfServiceAccountManagementSettingsToJSON(value?: SelfServiceAccountManagementSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    resetPassword: ResetPasswordSettingsToJSON(value['resetPassword']),
+    enabled: value.enabled,
+    resetPassword: ResetPasswordSettingsToJSON(value.resetPassword),
   };
 }

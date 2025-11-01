@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,41 +46,29 @@ export interface StepUpAuthenticationSettings {
   stepUpAuthenticationRule?: string;
 }
 
-/**
- * Check if a given object implements the StepUpAuthenticationSettings interface.
- */
-export function instanceOfStepUpAuthenticationSettings(value: object): value is StepUpAuthenticationSettings {
-  return true;
-}
-
 export function StepUpAuthenticationSettingsFromJSON(json: any): StepUpAuthenticationSettings {
   return StepUpAuthenticationSettingsFromJSONTyped(json, false);
 }
 
 export function StepUpAuthenticationSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): StepUpAuthenticationSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    active: json['active'] == null ? undefined : json['active'],
-    stepUpAuthenticationRule: json['stepUpAuthenticationRule'] == null ? undefined : json['stepUpAuthenticationRule'],
+    active: !exists(json, 'active') ? undefined : json['active'],
+    stepUpAuthenticationRule: !exists(json, 'stepUpAuthenticationRule') ? undefined : json['stepUpAuthenticationRule'],
   };
 }
 
-export function StepUpAuthenticationSettingsToJSON(json: any): StepUpAuthenticationSettings {
-  return StepUpAuthenticationSettingsToJSONTyped(json, false);
-}
-
-export function StepUpAuthenticationSettingsToJSONTyped(
-  value?: StepUpAuthenticationSettings | null,
-  ignoreDiscriminator: boolean = false,
-): any {
-  if (value == null) {
-    return value;
+export function StepUpAuthenticationSettingsToJSON(value?: StepUpAuthenticationSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    active: value['active'],
-    stepUpAuthenticationRule: value['stepUpAuthenticationRule'],
+    active: value.active,
+    stepUpAuthenticationRule: value.stepUpAuthenticationRule,
   };
 }

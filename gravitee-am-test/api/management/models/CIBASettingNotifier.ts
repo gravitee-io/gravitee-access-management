@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,36 +40,27 @@ export interface CIBASettingNotifier {
   id?: string;
 }
 
-/**
- * Check if a given object implements the CIBASettingNotifier interface.
- */
-export function instanceOfCIBASettingNotifier(value: object): value is CIBASettingNotifier {
-  return true;
-}
-
 export function CIBASettingNotifierFromJSON(json: any): CIBASettingNotifier {
   return CIBASettingNotifierFromJSONTyped(json, false);
 }
 
 export function CIBASettingNotifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): CIBASettingNotifier {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
+    id: !exists(json, 'id') ? undefined : json['id'],
   };
 }
 
-export function CIBASettingNotifierToJSON(json: any): CIBASettingNotifier {
-  return CIBASettingNotifierToJSONTyped(json, false);
-}
-
-export function CIBASettingNotifierToJSONTyped(value?: CIBASettingNotifier | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function CIBASettingNotifierToJSON(value?: CIBASettingNotifier | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
+    id: value.id,
   };
 }

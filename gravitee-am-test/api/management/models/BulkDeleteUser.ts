@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -62,42 +62,31 @@ export const BulkDeleteUserActionEnum = {
 } as const;
 export type BulkDeleteUserActionEnum = typeof BulkDeleteUserActionEnum[keyof typeof BulkDeleteUserActionEnum];
 
-/**
- * Check if a given object implements the BulkDeleteUser interface.
- */
-export function instanceOfBulkDeleteUser(value: object): value is BulkDeleteUser {
-  if (!('action' in value) || value['action'] === undefined) return false;
-  if (!('items' in value) || value['items'] === undefined) return false;
-  return true;
-}
-
 export function BulkDeleteUserFromJSON(json: any): BulkDeleteUser {
   return BulkDeleteUserFromJSONTyped(json, false);
 }
 
 export function BulkDeleteUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): BulkDeleteUser {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     action: json['action'],
-    failOnErrors: json['failOnErrors'] == null ? undefined : json['failOnErrors'],
+    failOnErrors: !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
     items: json['items'],
   };
 }
 
-export function BulkDeleteUserToJSON(json: any): BulkDeleteUser {
-  return BulkDeleteUserToJSONTyped(json, false);
-}
-
-export function BulkDeleteUserToJSONTyped(value?: BulkDeleteUser | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function BulkDeleteUserToJSON(value?: BulkDeleteUser | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    action: value['action'],
-    failOnErrors: value['failOnErrors'],
-    items: value['items'],
+    action: value.action,
+    failOnErrors: value.failOnErrors,
+    items: value.items,
   };
 }

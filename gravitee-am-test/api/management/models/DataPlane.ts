@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,36 +40,27 @@ export interface DataPlane {
   delegate?: any;
 }
 
-/**
- * Check if a given object implements the DataPlane interface.
- */
-export function instanceOfDataPlane(value: object): value is DataPlane {
-  return true;
-}
-
 export function DataPlaneFromJSON(json: any): DataPlane {
   return DataPlaneFromJSONTyped(json, false);
 }
 
 export function DataPlaneFromJSONTyped(json: any, ignoreDiscriminator: boolean): DataPlane {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    delegate: json['delegate'] == null ? undefined : json['delegate'],
+    delegate: !exists(json, 'delegate') ? undefined : json['delegate'],
   };
 }
 
-export function DataPlaneToJSON(json: any): DataPlane {
-  return DataPlaneToJSONTyped(json, false);
-}
-
-export function DataPlaneToJSONTyped(value?: DataPlane | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function DataPlaneToJSON(value?: DataPlane | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    delegate: value['delegate'],
+    delegate: value.delegate,
   };
 }

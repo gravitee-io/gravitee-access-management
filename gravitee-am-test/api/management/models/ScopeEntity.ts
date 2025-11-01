@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -58,42 +58,33 @@ export interface ScopeEntity {
   description?: string;
 }
 
-/**
- * Check if a given object implements the ScopeEntity interface.
- */
-export function instanceOfScopeEntity(value: object): value is ScopeEntity {
-  return true;
-}
-
 export function ScopeEntityFromJSON(json: any): ScopeEntity {
   return ScopeEntityFromJSONTyped(json, false);
 }
 
 export function ScopeEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): ScopeEntity {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    key: json['key'] == null ? undefined : json['key'],
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
+    id: !exists(json, 'id') ? undefined : json['id'],
+    key: !exists(json, 'key') ? undefined : json['key'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    description: !exists(json, 'description') ? undefined : json['description'],
   };
 }
 
-export function ScopeEntityToJSON(json: any): ScopeEntity {
-  return ScopeEntityToJSONTyped(json, false);
-}
-
-export function ScopeEntityToJSONTyped(value?: ScopeEntity | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ScopeEntityToJSON(value?: ScopeEntity | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    key: value['key'],
-    name: value['name'],
-    description: value['description'],
+    id: value.id,
+    key: value.key,
+    name: value.name,
+    description: value.description,
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -100,52 +100,43 @@ export const GroupReferenceTypeEnum = {
 } as const;
 export type GroupReferenceTypeEnum = typeof GroupReferenceTypeEnum[keyof typeof GroupReferenceTypeEnum];
 
-/**
- * Check if a given object implements the Group interface.
- */
-export function instanceOfGroup(value: object): value is Group {
-  return true;
-}
-
 export function GroupFromJSON(json: any): Group {
   return GroupFromJSONTyped(json, false);
 }
 
 export function GroupFromJSONTyped(json: any, ignoreDiscriminator: boolean): Group {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    members: json['members'] == null ? undefined : json['members'],
-    roles: json['roles'] == null ? undefined : json['roles'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
+    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    description: !exists(json, 'description') ? undefined : json['description'],
+    members: !exists(json, 'members') ? undefined : json['members'],
+    roles: !exists(json, 'roles') ? undefined : json['roles'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function GroupToJSON(json: any): Group {
-  return GroupToJSONTyped(json, false);
-}
-
-export function GroupToJSONTyped(value?: Group | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function GroupToJSON(value?: Group | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    name: value['name'],
-    description: value['description'],
-    members: value['members'],
-    roles: value['roles'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    id: value.id,
+    referenceType: value.referenceType,
+    referenceId: value.referenceId,
+    name: value.name,
+    description: value.description,
+    members: value.members,
+    roles: value.roles,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };
 }

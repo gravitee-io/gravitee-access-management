@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { Reference } from './Reference';
-import { ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON, ReferenceToJSONTyped } from './Reference';
+import { exists, mapValues } from '../runtime';
+import { Reference, ReferenceFromJSON, ReferenceFromJSONTyped, ReferenceToJSON } from './Reference';
 
 /**
  *
@@ -103,52 +102,43 @@ export const I18nDictionaryReferenceTypeEnum = {
 } as const;
 export type I18nDictionaryReferenceTypeEnum = typeof I18nDictionaryReferenceTypeEnum[keyof typeof I18nDictionaryReferenceTypeEnum];
 
-/**
- * Check if a given object implements the I18nDictionary interface.
- */
-export function instanceOfI18nDictionary(value: object): value is I18nDictionary {
-  return true;
-}
-
 export function I18nDictionaryFromJSON(json: any): I18nDictionary {
   return I18nDictionaryFromJSONTyped(json, false);
 }
 
 export function I18nDictionaryFromJSONTyped(json: any, ignoreDiscriminator: boolean): I18nDictionary {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    name: json['name'] == null ? undefined : json['name'],
-    locale: json['locale'] == null ? undefined : json['locale'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
-    entries: json['entries'] == null ? undefined : json['entries'],
-    reference: json['reference'] == null ? undefined : ReferenceFromJSON(json['reference']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
+    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    locale: !exists(json, 'locale') ? undefined : json['locale'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
+    entries: !exists(json, 'entries') ? undefined : json['entries'],
+    reference: !exists(json, 'reference') ? undefined : ReferenceFromJSON(json['reference']),
   };
 }
 
-export function I18nDictionaryToJSON(json: any): I18nDictionary {
-  return I18nDictionaryToJSONTyped(json, false);
-}
-
-export function I18nDictionaryToJSONTyped(value?: I18nDictionary | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function I18nDictionaryToJSON(value?: I18nDictionary | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    referenceId: value['referenceId'],
-    referenceType: value['referenceType'],
-    name: value['name'],
-    locale: value['locale'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
-    entries: value['entries'],
-    reference: ReferenceToJSON(value['reference']),
+    id: value.id,
+    referenceId: value.referenceId,
+    referenceType: value.referenceType,
+    name: value.name,
+    locale: value.locale,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
+    entries: value.entries,
+    reference: ReferenceToJSON(value.reference),
   };
 }

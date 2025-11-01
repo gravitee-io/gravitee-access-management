@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -82,53 +82,41 @@ export interface UpdateIdentityProvider {
   passwordPolicy?: string;
 }
 
-/**
- * Check if a given object implements the UpdateIdentityProvider interface.
- */
-export function instanceOfUpdateIdentityProvider(value: object): value is UpdateIdentityProvider {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
-  return true;
-}
-
 export function UpdateIdentityProviderFromJSON(json: any): UpdateIdentityProvider {
   return UpdateIdentityProviderFromJSONTyped(json, false);
 }
 
 export function UpdateIdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateIdentityProvider {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     name: json['name'],
     type: json['type'],
     configuration: json['configuration'],
-    mappers: json['mappers'] == null ? undefined : json['mappers'],
-    roleMapper: json['roleMapper'] == null ? undefined : json['roleMapper'],
-    groupMapper: json['groupMapper'] == null ? undefined : json['groupMapper'],
-    domainWhitelist: json['domainWhitelist'] == null ? undefined : json['domainWhitelist'],
-    passwordPolicy: json['passwordPolicy'] == null ? undefined : json['passwordPolicy'],
+    mappers: !exists(json, 'mappers') ? undefined : json['mappers'],
+    roleMapper: !exists(json, 'roleMapper') ? undefined : json['roleMapper'],
+    groupMapper: !exists(json, 'groupMapper') ? undefined : json['groupMapper'],
+    domainWhitelist: !exists(json, 'domainWhitelist') ? undefined : json['domainWhitelist'],
+    passwordPolicy: !exists(json, 'passwordPolicy') ? undefined : json['passwordPolicy'],
   };
 }
 
-export function UpdateIdentityProviderToJSON(json: any): UpdateIdentityProvider {
-  return UpdateIdentityProviderToJSONTyped(json, false);
-}
-
-export function UpdateIdentityProviderToJSONTyped(value?: UpdateIdentityProvider | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UpdateIdentityProviderToJSON(value?: UpdateIdentityProvider | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
-    type: value['type'],
-    configuration: value['configuration'],
-    mappers: value['mappers'],
-    roleMapper: value['roleMapper'],
-    groupMapper: value['groupMapper'],
-    domainWhitelist: value['domainWhitelist'],
-    passwordPolicy: value['passwordPolicy'],
+    name: value.name,
+    type: value.type,
+    configuration: value.configuration,
+    mappers: value.mappers,
+    roleMapper: value.roleMapper,
+    groupMapper: value.groupMapper,
+    domainWhitelist: value.domainWhitelist,
+    passwordPolicy: value.passwordPolicy,
   };
 }

@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { Role } from './Role';
-import { RoleFromJSON, RoleFromJSONTyped, RoleToJSON, RoleToJSONTyped } from './Role';
+import { exists, mapValues } from '../runtime';
+import { Role, RoleFromJSON, RoleFromJSONTyped, RoleToJSON } from './Role';
 
 /**
  *
@@ -55,40 +54,31 @@ export interface RolePage {
   totalCount?: number;
 }
 
-/**
- * Check if a given object implements the RolePage interface.
- */
-export function instanceOfRolePage(value: object): value is RolePage {
-  return true;
-}
-
 export function RolePageFromJSON(json: any): RolePage {
   return RolePageFromJSONTyped(json, false);
 }
 
 export function RolePageFromJSONTyped(json: any, ignoreDiscriminator: boolean): RolePage {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(RoleFromJSON),
-    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
-    totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
+    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(RoleFromJSON),
+    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
+    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
   };
 }
 
-export function RolePageToJSON(json: any): RolePage {
-  return RolePageToJSONTyped(json, false);
-}
-
-export function RolePageToJSONTyped(value?: RolePage | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function RolePageToJSON(value?: RolePage | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(RoleToJSON),
-    currentPage: value['currentPage'],
-    totalCount: value['totalCount'],
+    data: value.data === undefined ? undefined : (value.data as Array<any>).map(RoleToJSON),
+    currentPage: value.currentPage,
+    totalCount: value.totalCount,
   };
 }

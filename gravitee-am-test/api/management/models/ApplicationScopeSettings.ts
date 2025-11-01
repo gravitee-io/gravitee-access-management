@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,40 +52,31 @@ export interface ApplicationScopeSettings {
   scopeApproval?: number;
 }
 
-/**
- * Check if a given object implements the ApplicationScopeSettings interface.
- */
-export function instanceOfApplicationScopeSettings(value: object): value is ApplicationScopeSettings {
-  return true;
-}
-
 export function ApplicationScopeSettingsFromJSON(json: any): ApplicationScopeSettings {
   return ApplicationScopeSettingsFromJSONTyped(json, false);
 }
 
 export function ApplicationScopeSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationScopeSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    scope: json['scope'] == null ? undefined : json['scope'],
-    defaultScope: json['defaultScope'] == null ? undefined : json['defaultScope'],
-    scopeApproval: json['scopeApproval'] == null ? undefined : json['scopeApproval'],
+    scope: !exists(json, 'scope') ? undefined : json['scope'],
+    defaultScope: !exists(json, 'defaultScope') ? undefined : json['defaultScope'],
+    scopeApproval: !exists(json, 'scopeApproval') ? undefined : json['scopeApproval'],
   };
 }
 
-export function ApplicationScopeSettingsToJSON(json: any): ApplicationScopeSettings {
-  return ApplicationScopeSettingsToJSONTyped(json, false);
-}
-
-export function ApplicationScopeSettingsToJSONTyped(value?: ApplicationScopeSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ApplicationScopeSettingsToJSON(value?: ApplicationScopeSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    scope: value['scope'],
-    defaultScope: value['defaultScope'],
-    scopeApproval: value['scopeApproval'],
+    scope: value.scope,
+    defaultScope: value.defaultScope,
+    scopeApproval: value.scopeApproval,
   };
 }

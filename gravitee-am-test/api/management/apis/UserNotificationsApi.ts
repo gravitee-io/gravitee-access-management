@@ -65,7 +65,7 @@ export class UserNotificationsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(UserNotificationContentFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(UserNotificationContentFromJSON));
   }
 
   /**

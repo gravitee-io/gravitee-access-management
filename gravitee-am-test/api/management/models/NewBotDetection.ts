@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,27 +64,16 @@ export interface NewBotDetection {
   configuration: string;
 }
 
-/**
- * Check if a given object implements the NewBotDetection interface.
- */
-export function instanceOfNewBotDetection(value: object): value is NewBotDetection {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('detectionType' in value) || value['detectionType'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
-  return true;
-}
-
 export function NewBotDetectionFromJSON(json: any): NewBotDetection {
   return NewBotDetectionFromJSONTyped(json, false);
 }
 
 export function NewBotDetectionFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewBotDetection {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
+    id: !exists(json, 'id') ? undefined : json['id'],
     type: json['type'],
     detectionType: json['detectionType'],
     name: json['name'],
@@ -92,20 +81,18 @@ export function NewBotDetectionFromJSONTyped(json: any, ignoreDiscriminator: boo
   };
 }
 
-export function NewBotDetectionToJSON(json: any): NewBotDetection {
-  return NewBotDetectionToJSONTyped(json, false);
-}
-
-export function NewBotDetectionToJSONTyped(value?: NewBotDetection | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewBotDetectionToJSON(value?: NewBotDetection | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    type: value['type'],
-    detectionType: value['detectionType'],
-    name: value['name'],
-    configuration: value['configuration'],
+    id: value.id,
+    type: value.type,
+    detectionType: value.detectionType,
+    name: value.name,
+    configuration: value.configuration,
   };
 }

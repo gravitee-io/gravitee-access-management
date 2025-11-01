@@ -260,7 +260,7 @@ export class AuditApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
   }
 
   /**
@@ -351,7 +351,7 @@ export class AuditApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AuditFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AuditFromJSON));
   }
 
   /**

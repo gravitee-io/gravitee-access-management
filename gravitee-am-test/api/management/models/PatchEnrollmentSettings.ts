@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,38 +46,29 @@ export interface PatchEnrollmentSettings {
   skipTimeSeconds?: number;
 }
 
-/**
- * Check if a given object implements the PatchEnrollmentSettings interface.
- */
-export function instanceOfPatchEnrollmentSettings(value: object): value is PatchEnrollmentSettings {
-  return true;
-}
-
 export function PatchEnrollmentSettingsFromJSON(json: any): PatchEnrollmentSettings {
   return PatchEnrollmentSettingsFromJSONTyped(json, false);
 }
 
 export function PatchEnrollmentSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchEnrollmentSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    forceEnrollment: json['forceEnrollment'] == null ? undefined : json['forceEnrollment'],
-    skipTimeSeconds: json['skipTimeSeconds'] == null ? undefined : json['skipTimeSeconds'],
+    forceEnrollment: !exists(json, 'forceEnrollment') ? undefined : json['forceEnrollment'],
+    skipTimeSeconds: !exists(json, 'skipTimeSeconds') ? undefined : json['skipTimeSeconds'],
   };
 }
 
-export function PatchEnrollmentSettingsToJSON(json: any): PatchEnrollmentSettings {
-  return PatchEnrollmentSettingsToJSONTyped(json, false);
-}
-
-export function PatchEnrollmentSettingsToJSONTyped(value?: PatchEnrollmentSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchEnrollmentSettingsToJSON(value?: PatchEnrollmentSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    forceEnrollment: value['forceEnrollment'],
-    skipTimeSeconds: value['skipTimeSeconds'],
+    forceEnrollment: value.forceEnrollment,
+    skipTimeSeconds: value.skipTimeSeconds,
   };
 }

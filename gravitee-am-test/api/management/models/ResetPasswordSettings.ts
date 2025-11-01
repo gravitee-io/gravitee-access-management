@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,38 +46,29 @@ export interface ResetPasswordSettings {
   tokenAge?: number;
 }
 
-/**
- * Check if a given object implements the ResetPasswordSettings interface.
- */
-export function instanceOfResetPasswordSettings(value: object): value is ResetPasswordSettings {
-  return true;
-}
-
 export function ResetPasswordSettingsFromJSON(json: any): ResetPasswordSettings {
   return ResetPasswordSettingsFromJSONTyped(json, false);
 }
 
 export function ResetPasswordSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ResetPasswordSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    oldPasswordRequired: json['oldPasswordRequired'] == null ? undefined : json['oldPasswordRequired'],
-    tokenAge: json['tokenAge'] == null ? undefined : json['tokenAge'],
+    oldPasswordRequired: !exists(json, 'oldPasswordRequired') ? undefined : json['oldPasswordRequired'],
+    tokenAge: !exists(json, 'tokenAge') ? undefined : json['tokenAge'],
   };
 }
 
-export function ResetPasswordSettingsToJSON(json: any): ResetPasswordSettings {
-  return ResetPasswordSettingsToJSONTyped(json, false);
-}
-
-export function ResetPasswordSettingsToJSONTyped(value?: ResetPasswordSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ResetPasswordSettingsToJSON(value?: ResetPasswordSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    oldPasswordRequired: value['oldPasswordRequired'],
-    tokenAge: value['tokenAge'],
+    oldPasswordRequired: value.oldPasswordRequired,
+    tokenAge: value.tokenAge,
   };
 }

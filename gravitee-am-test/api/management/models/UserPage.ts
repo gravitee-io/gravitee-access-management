@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { User } from './User';
-import { UserFromJSON, UserFromJSONTyped, UserToJSON, UserToJSONTyped } from './User';
+import { exists, mapValues } from '../runtime';
+import { User, UserFromJSON, UserFromJSONTyped, UserToJSON } from './User';
 
 /**
  *
@@ -55,40 +54,31 @@ export interface UserPage {
   totalCount?: number;
 }
 
-/**
- * Check if a given object implements the UserPage interface.
- */
-export function instanceOfUserPage(value: object): value is UserPage {
-  return true;
-}
-
 export function UserPageFromJSON(json: any): UserPage {
   return UserPageFromJSONTyped(json, false);
 }
 
 export function UserPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserPage {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(UserFromJSON),
-    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
-    totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
+    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(UserFromJSON),
+    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
+    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
   };
 }
 
-export function UserPageToJSON(json: any): UserPage {
-  return UserPageToJSONTyped(json, false);
-}
-
-export function UserPageToJSONTyped(value?: UserPage | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UserPageToJSON(value?: UserPage | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(UserToJSON),
-    currentPage: value['currentPage'],
-    totalCount: value['totalCount'],
+    data: value.data === undefined ? undefined : (value.data as Array<any>).map(UserToJSON),
+    currentPage: value.currentPage,
+    totalCount: value.totalCount,
   };
 }

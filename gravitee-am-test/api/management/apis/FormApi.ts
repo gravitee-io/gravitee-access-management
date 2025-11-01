@@ -65,7 +65,7 @@ export interface Create8Request {
   newForm: NewForm;
 }
 
-export interface Delete11Request {
+export interface Delete12Request {
   organizationId: string;
   form: string;
 }
@@ -356,19 +356,19 @@ export class FormApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization
    * Delete a form
    */
-  async delete11Raw(
-    requestParameters: Delete11Request,
+  async delete12Raw(
+    requestParameters: Delete12Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete11.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling delete12.',
       );
     }
 
     if (requestParameters.form === null || requestParameters.form === undefined) {
-      throw new runtime.RequiredError('form', 'Required parameter requestParameters.form was null or undefined when calling delete11.');
+      throw new runtime.RequiredError('form', 'Required parameter requestParameters.form was null or undefined when calling delete12.');
     }
 
     const queryParameters: any = {};
@@ -402,8 +402,8 @@ export class FormApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_FORM[DELETE] permission on the specified organization
    * Delete a form
    */
-  async delete11(requestParameters: Delete11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete11Raw(requestParameters, initOverrides);
+  async delete12(requestParameters: Delete12Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.delete12Raw(requestParameters, initOverrides);
   }
 
   /**

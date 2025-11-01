@@ -25,13 +25,12 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { NewOrganizationUser } from './NewOrganizationUser';
+import { exists, mapValues } from '../runtime';
 import {
+  NewOrganizationUser,
   NewOrganizationUserFromJSON,
   NewOrganizationUserFromJSONTyped,
   NewOrganizationUserToJSON,
-  NewOrganizationUserToJSONTyped,
 } from './NewOrganizationUser';
 
 /**
@@ -71,45 +70,31 @@ export const BulkCreateOrganizationUserActionEnum = {
 export type BulkCreateOrganizationUserActionEnum =
   typeof BulkCreateOrganizationUserActionEnum[keyof typeof BulkCreateOrganizationUserActionEnum];
 
-/**
- * Check if a given object implements the BulkCreateOrganizationUser interface.
- */
-export function instanceOfBulkCreateOrganizationUser(value: object): value is BulkCreateOrganizationUser {
-  if (!('action' in value) || value['action'] === undefined) return false;
-  if (!('items' in value) || value['items'] === undefined) return false;
-  return true;
-}
-
 export function BulkCreateOrganizationUserFromJSON(json: any): BulkCreateOrganizationUser {
   return BulkCreateOrganizationUserFromJSONTyped(json, false);
 }
 
 export function BulkCreateOrganizationUserFromJSONTyped(json: any, ignoreDiscriminator: boolean): BulkCreateOrganizationUser {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     action: json['action'],
-    failOnErrors: json['failOnErrors'] == null ? undefined : json['failOnErrors'],
+    failOnErrors: !exists(json, 'failOnErrors') ? undefined : json['failOnErrors'],
     items: (json['items'] as Array<any>).map(NewOrganizationUserFromJSON),
   };
 }
 
-export function BulkCreateOrganizationUserToJSON(json: any): BulkCreateOrganizationUser {
-  return BulkCreateOrganizationUserToJSONTyped(json, false);
-}
-
-export function BulkCreateOrganizationUserToJSONTyped(
-  value?: BulkCreateOrganizationUser | null,
-  ignoreDiscriminator: boolean = false,
-): any {
-  if (value == null) {
-    return value;
+export function BulkCreateOrganizationUserToJSON(value?: BulkCreateOrganizationUser | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    action: value['action'],
-    failOnErrors: value['failOnErrors'],
-    items: (value['items'] as Array<any>).map(NewOrganizationUserToJSON),
+    action: value.action,
+    failOnErrors: value.failOnErrors,
+    items: (value.items as Array<any>).map(NewOrganizationUserToJSON),
   };
 }

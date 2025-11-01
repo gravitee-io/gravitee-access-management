@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,40 +52,31 @@ export interface ApplicationEntity {
   name?: string;
 }
 
-/**
- * Check if a given object implements the ApplicationEntity interface.
- */
-export function instanceOfApplicationEntity(value: object): value is ApplicationEntity {
-  return true;
-}
-
 export function ApplicationEntityFromJSON(json: any): ApplicationEntity {
   return ApplicationEntityFromJSONTyped(json, false);
 }
 
 export function ApplicationEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationEntity {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    clientId: json['clientId'] == null ? undefined : json['clientId'],
-    name: json['name'] == null ? undefined : json['name'],
+    id: !exists(json, 'id') ? undefined : json['id'],
+    clientId: !exists(json, 'clientId') ? undefined : json['clientId'],
+    name: !exists(json, 'name') ? undefined : json['name'],
   };
 }
 
-export function ApplicationEntityToJSON(json: any): ApplicationEntity {
-  return ApplicationEntityToJSONTyped(json, false);
-}
-
-export function ApplicationEntityToJSONTyped(value?: ApplicationEntity | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ApplicationEntityToJSON(value?: ApplicationEntity | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    clientId: value['clientId'],
-    name: value['name'],
+    id: value.id,
+    clientId: value.clientId,
+    name: value.name,
   };
 }

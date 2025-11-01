@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,36 +40,27 @@ export interface Certificate {
   value?: string;
 }
 
-/**
- * Check if a given object implements the Certificate interface.
- */
-export function instanceOfCertificate(value: object): value is Certificate {
-  return true;
-}
-
 export function CertificateFromJSON(json: any): Certificate {
   return CertificateFromJSONTyped(json, false);
 }
 
 export function CertificateFromJSONTyped(json: any, ignoreDiscriminator: boolean): Certificate {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    value: json['value'] == null ? undefined : json['value'],
+    value: !exists(json, 'value') ? undefined : json['value'],
   };
 }
 
-export function CertificateToJSON(json: any): Certificate {
-  return CertificateToJSONTyped(json, false);
-}
-
-export function CertificateToJSONTyped(value?: Certificate | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function CertificateToJSON(value?: Certificate | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    value: value['value'],
+    value: value.value,
   };
 }

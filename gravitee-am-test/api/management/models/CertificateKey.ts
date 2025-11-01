@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,40 +52,31 @@ export interface CertificateKey {
   metadata?: { [key: string]: any };
 }
 
-/**
- * Check if a given object implements the CertificateKey interface.
- */
-export function instanceOfCertificateKey(value: object): value is CertificateKey {
-  return true;
-}
-
 export function CertificateKeyFromJSON(json: any): CertificateKey {
   return CertificateKeyFromJSONTyped(json, false);
 }
 
 export function CertificateKeyFromJSONTyped(json: any, ignoreDiscriminator: boolean): CertificateKey {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    fmt: json['fmt'] == null ? undefined : json['fmt'],
-    payload: json['payload'] == null ? undefined : json['payload'],
-    metadata: json['metadata'] == null ? undefined : json['metadata'],
+    fmt: !exists(json, 'fmt') ? undefined : json['fmt'],
+    payload: !exists(json, 'payload') ? undefined : json['payload'],
+    metadata: !exists(json, 'metadata') ? undefined : json['metadata'],
   };
 }
 
-export function CertificateKeyToJSON(json: any): CertificateKey {
-  return CertificateKeyToJSONTyped(json, false);
-}
-
-export function CertificateKeyToJSONTyped(value?: CertificateKey | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function CertificateKeyToJSON(value?: CertificateKey | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    fmt: value['fmt'],
-    payload: value['payload'],
-    metadata: value['metadata'],
+    fmt: value.fmt,
+    payload: value.payload,
+    metadata: value.metadata,
   };
 }

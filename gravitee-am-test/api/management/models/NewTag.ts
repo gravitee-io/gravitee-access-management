@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,39 +46,29 @@ export interface NewTag {
   description?: string;
 }
 
-/**
- * Check if a given object implements the NewTag interface.
- */
-export function instanceOfNewTag(value: object): value is NewTag {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  return true;
-}
-
 export function NewTagFromJSON(json: any): NewTag {
   return NewTagFromJSONTyped(json, false);
 }
 
 export function NewTagFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewTag {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
     name: json['name'],
-    description: json['description'] == null ? undefined : json['description'],
+    description: !exists(json, 'description') ? undefined : json['description'],
   };
 }
 
-export function NewTagToJSON(json: any): NewTag {
-  return NewTagToJSONTyped(json, false);
-}
-
-export function NewTagToJSONTyped(value?: NewTag | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewTagToJSON(value?: NewTag | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
-    description: value['description'],
+    name: value.name,
+    description: value.description,
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,38 +46,29 @@ export interface SecurityProfileSettings {
   enableFapiBrazil?: boolean;
 }
 
-/**
- * Check if a given object implements the SecurityProfileSettings interface.
- */
-export function instanceOfSecurityProfileSettings(value: object): value is SecurityProfileSettings {
-  return true;
-}
-
 export function SecurityProfileSettingsFromJSON(json: any): SecurityProfileSettings {
   return SecurityProfileSettingsFromJSONTyped(json, false);
 }
 
 export function SecurityProfileSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): SecurityProfileSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enablePlainFapi: json['enablePlainFapi'] == null ? undefined : json['enablePlainFapi'],
-    enableFapiBrazil: json['enableFapiBrazil'] == null ? undefined : json['enableFapiBrazil'],
+    enablePlainFapi: !exists(json, 'enablePlainFapi') ? undefined : json['enablePlainFapi'],
+    enableFapiBrazil: !exists(json, 'enableFapiBrazil') ? undefined : json['enableFapiBrazil'],
   };
 }
 
-export function SecurityProfileSettingsToJSON(json: any): SecurityProfileSettings {
-  return SecurityProfileSettingsToJSONTyped(json, false);
-}
-
-export function SecurityProfileSettingsToJSONTyped(value?: SecurityProfileSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function SecurityProfileSettingsToJSON(value?: SecurityProfileSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enablePlainFapi: value['enablePlainFapi'],
-    enableFapiBrazil: value['enableFapiBrazil'],
+    enablePlainFapi: value.enablePlainFapi,
+    enableFapiBrazil: value.enableFapiBrazil,
   };
 }

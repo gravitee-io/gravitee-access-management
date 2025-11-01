@@ -93,14 +93,6 @@ export interface Get36Request {
   role: string;
 }
 
-export interface GetAuthorizationEnginePluginRequest {
-  authorizationEngine: string;
-}
-
-export interface GetAuthorizationEnginePluginSchemaRequest {
-  authorizationEngine: string;
-}
-
 export interface GetDocumentationRequest {
   policy: string;
 }
@@ -168,10 +160,6 @@ export interface List31Request {
 }
 
 export interface List33Request {
-  expand?: Array<string>;
-}
-
-export interface ListAuthorizationEnginePluginsRequest {
   expand?: Array<string>;
 }
 
@@ -880,114 +868,6 @@ export class PlatformApi extends runtime.BaseAPI {
   async getAlertServiceStatus(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<AlertServiceStatusEntity> {
     const response = await this.getAlertServiceStatusRaw(initOverrides);
     return await response.value();
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an authorization engine plugin
-   */
-  async getAuthorizationEnginePluginRaw(
-    requestParameters: GetAuthorizationEnginePluginRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.authorizationEngine === null || requestParameters.authorizationEngine === undefined) {
-      throw new runtime.RequiredError(
-        'authorizationEngine',
-        'Required parameter requestParameters.authorizationEngine was null or undefined when calling getAuthorizationEnginePlugin.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/authorization-engines/{authorizationEngine}`.replace(
-          `{${'authorizationEngine'}}`,
-          encodeURIComponent(String(requestParameters.authorizationEngine)),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an authorization engine plugin
-   */
-  async getAuthorizationEnginePlugin(
-    requestParameters: GetAuthorizationEnginePluginRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<void> {
-    await this.getAuthorizationEnginePluginRaw(requestParameters, initOverrides);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an authorization engine plugin\'s schema
-   */
-  async getAuthorizationEnginePluginSchemaRaw(
-    requestParameters: GetAuthorizationEnginePluginSchemaRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.authorizationEngine === null || requestParameters.authorizationEngine === undefined) {
-      throw new runtime.RequiredError(
-        'authorizationEngine',
-        'Required parameter requestParameters.authorizationEngine was null or undefined when calling getAuthorizationEnginePluginSchema.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/authorization-engines/{authorizationEngine}/schema`.replace(
-          `{${'authorizationEngine'}}`,
-          encodeURIComponent(String(requestParameters.authorizationEngine)),
-        ),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get an authorization engine plugin\'s schema
-   */
-  async getAuthorizationEnginePluginSchema(
-    requestParameters: GetAuthorizationEnginePluginSchemaRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<void> {
-    await this.getAuthorizationEnginePluginSchemaRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -1988,7 +1868,7 @@ export class PlatformApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(NotifierPluginFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(NotifierPluginFromJSON));
   }
 
   /**
@@ -2205,53 +2085,5 @@ export class PlatformApi extends runtime.BaseAPI {
    */
   async list35(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.list35Raw(initOverrides);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List authorization engine plugins
-   */
-  async listAuthorizationEnginePluginsRaw(
-    requestParameters: ListAuthorizationEnginePluginsRequest,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    const queryParameters: any = {};
-
-    if (requestParameters.expand) {
-      queryParameters['expand'] = requestParameters.expand;
-    }
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/authorization-engines`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List authorization engine plugins
-   */
-  async listAuthorizationEnginePlugins(
-    requestParameters: ListAuthorizationEnginePluginsRequest = {},
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<void> {
-    await this.listAuthorizationEnginePluginsRaw(requestParameters, initOverrides);
   }
 }

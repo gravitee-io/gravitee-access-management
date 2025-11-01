@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -82,50 +82,41 @@ export interface Address {
   primary?: boolean;
 }
 
-/**
- * Check if a given object implements the Address interface.
- */
-export function instanceOfAddress(value: object): value is Address {
-  return true;
-}
-
 export function AddressFromJSON(json: any): Address {
   return AddressFromJSONTyped(json, false);
 }
 
 export function AddressFromJSONTyped(json: any, ignoreDiscriminator: boolean): Address {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    type: json['type'] == null ? undefined : json['type'],
-    formatted: json['formatted'] == null ? undefined : json['formatted'],
-    streetAddress: json['streetAddress'] == null ? undefined : json['streetAddress'],
-    locality: json['locality'] == null ? undefined : json['locality'],
-    region: json['region'] == null ? undefined : json['region'],
-    postalCode: json['postalCode'] == null ? undefined : json['postalCode'],
-    country: json['country'] == null ? undefined : json['country'],
-    primary: json['primary'] == null ? undefined : json['primary'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+    formatted: !exists(json, 'formatted') ? undefined : json['formatted'],
+    streetAddress: !exists(json, 'streetAddress') ? undefined : json['streetAddress'],
+    locality: !exists(json, 'locality') ? undefined : json['locality'],
+    region: !exists(json, 'region') ? undefined : json['region'],
+    postalCode: !exists(json, 'postalCode') ? undefined : json['postalCode'],
+    country: !exists(json, 'country') ? undefined : json['country'],
+    primary: !exists(json, 'primary') ? undefined : json['primary'],
   };
 }
 
-export function AddressToJSON(json: any): Address {
-  return AddressToJSONTyped(json, false);
-}
-
-export function AddressToJSONTyped(value?: Address | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function AddressToJSON(value?: Address | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    type: value['type'],
-    formatted: value['formatted'],
-    streetAddress: value['streetAddress'],
-    locality: value['locality'],
-    region: value['region'],
-    postalCode: value['postalCode'],
-    country: value['country'],
-    primary: value['primary'],
+    type: value.type,
+    formatted: value.formatted,
+    streetAddress: value.streetAddress,
+    locality: value.locality,
+    region: value.region,
+    postalCode: value.postalCode,
+    country: value.country,
+    primary: value.primary,
   };
 }

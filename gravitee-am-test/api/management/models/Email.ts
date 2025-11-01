@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -130,62 +130,53 @@ export const EmailReferenceTypeEnum = {
 } as const;
 export type EmailReferenceTypeEnum = typeof EmailReferenceTypeEnum[keyof typeof EmailReferenceTypeEnum];
 
-/**
- * Check if a given object implements the Email interface.
- */
-export function instanceOfEmail(value: object): value is Email {
-  return true;
-}
-
 export function EmailFromJSON(json: any): Email {
   return EmailFromJSONTyped(json, false);
 }
 
 export function EmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): Email {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
-    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
-    client: json['client'] == null ? undefined : json['client'],
-    template: json['template'] == null ? undefined : json['template'],
-    defaultTemplate: json['defaultTemplate'] == null ? undefined : json['defaultTemplate'],
-    from: json['from'] == null ? undefined : json['from'],
-    fromName: json['fromName'] == null ? undefined : json['fromName'],
-    subject: json['subject'] == null ? undefined : json['subject'],
-    content: json['content'] == null ? undefined : json['content'],
-    expiresAfter: json['expiresAfter'] == null ? undefined : json['expiresAfter'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
+    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
+    client: !exists(json, 'client') ? undefined : json['client'],
+    template: !exists(json, 'template') ? undefined : json['template'],
+    defaultTemplate: !exists(json, 'defaultTemplate') ? undefined : json['defaultTemplate'],
+    from: !exists(json, 'from') ? undefined : json['from'],
+    fromName: !exists(json, 'fromName') ? undefined : json['fromName'],
+    subject: !exists(json, 'subject') ? undefined : json['subject'],
+    content: !exists(json, 'content') ? undefined : json['content'],
+    expiresAfter: !exists(json, 'expiresAfter') ? undefined : json['expiresAfter'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function EmailToJSON(json: any): Email {
-  return EmailToJSONTyped(json, false);
-}
-
-export function EmailToJSONTyped(value?: Email | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function EmailToJSON(value?: Email | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    enabled: value['enabled'],
-    referenceType: value['referenceType'],
-    referenceId: value['referenceId'],
-    client: value['client'],
-    template: value['template'],
-    defaultTemplate: value['defaultTemplate'],
-    from: value['from'],
-    fromName: value['fromName'],
-    subject: value['subject'],
-    content: value['content'],
-    expiresAfter: value['expiresAfter'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    id: value.id,
+    enabled: value.enabled,
+    referenceType: value.referenceType,
+    referenceId: value.referenceId,
+    client: value.client,
+    template: value.template,
+    defaultTemplate: value.defaultTemplate,
+    from: value.from,
+    fromName: value.fromName,
+    subject: value.subject,
+    content: value.content,
+    expiresAfter: value.expiresAfter,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };
 }

@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { FormField } from './FormField';
-import { FormFieldFromJSON, FormFieldFromJSONTyped, FormFieldToJSON, FormFieldToJSONTyped } from './FormField';
+import { exists, mapValues } from '../runtime';
+import { FormField, FormFieldFromJSON, FormFieldFromJSONTyped, FormFieldToJSON } from './FormField';
 
 /**
  *
@@ -199,100 +198,96 @@ export interface AccountSettings {
   sendVerifyRegistrationAccountEmail?: boolean;
 }
 
-/**
- * Check if a given object implements the AccountSettings interface.
- */
-export function instanceOfAccountSettings(value: object): value is AccountSettings {
-  return true;
-}
-
 export function AccountSettingsFromJSON(json: any): AccountSettings {
   return AccountSettingsFromJSONTyped(json, false);
 }
 
 export function AccountSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): AccountSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    inherited: json['inherited'] == null ? undefined : json['inherited'],
-    loginAttemptsDetectionEnabled: json['loginAttemptsDetectionEnabled'] == null ? undefined : json['loginAttemptsDetectionEnabled'],
-    maxLoginAttempts: json['maxLoginAttempts'] == null ? undefined : json['maxLoginAttempts'],
-    loginAttemptsResetTime: json['loginAttemptsResetTime'] == null ? undefined : json['loginAttemptsResetTime'],
-    accountBlockedDuration: json['accountBlockedDuration'] == null ? undefined : json['accountBlockedDuration'],
-    sendRecoverAccountEmail: json['sendRecoverAccountEmail'] == null ? undefined : json['sendRecoverAccountEmail'],
-    completeRegistrationWhenResetPassword:
-      json['completeRegistrationWhenResetPassword'] == null ? undefined : json['completeRegistrationWhenResetPassword'],
-    autoLoginAfterRegistration: json['autoLoginAfterRegistration'] == null ? undefined : json['autoLoginAfterRegistration'],
-    redirectUriAfterRegistration: json['redirectUriAfterRegistration'] == null ? undefined : json['redirectUriAfterRegistration'],
-    dynamicUserRegistration: json['dynamicUserRegistration'] == null ? undefined : json['dynamicUserRegistration'],
-    defaultIdentityProviderForRegistration:
-      json['defaultIdentityProviderForRegistration'] == null ? undefined : json['defaultIdentityProviderForRegistration'],
-    autoLoginAfterResetPassword: json['autoLoginAfterResetPassword'] == null ? undefined : json['autoLoginAfterResetPassword'],
-    redirectUriAfterResetPassword: json['redirectUriAfterResetPassword'] == null ? undefined : json['redirectUriAfterResetPassword'],
-    deletePasswordlessDevicesAfterResetPassword:
-      json['deletePasswordlessDevicesAfterResetPassword'] == null ? undefined : json['deletePasswordlessDevicesAfterResetPassword'],
-    useBotDetection: json['useBotDetection'] == null ? undefined : json['useBotDetection'],
-    botDetectionPlugin: json['botDetectionPlugin'] == null ? undefined : json['botDetectionPlugin'],
-    rememberMe: json['rememberMe'] == null ? undefined : json['rememberMe'],
-    rememberMeDuration: json['rememberMeDuration'] == null ? undefined : json['rememberMeDuration'],
-    resetPasswordCustomForm: json['resetPasswordCustomForm'] == null ? undefined : json['resetPasswordCustomForm'],
-    resetPasswordCustomFormFields:
-      json['resetPasswordCustomFormFields'] == null
-        ? undefined
-        : (json['resetPasswordCustomFormFields'] as Array<any>).map(FormFieldFromJSON),
-    resetPasswordConfirmIdentity: json['resetPasswordConfirmIdentity'] == null ? undefined : json['resetPasswordConfirmIdentity'],
-    resetPasswordInvalidateTokens: json['resetPasswordInvalidateTokens'] == null ? undefined : json['resetPasswordInvalidateTokens'],
-    mfaChallengeAttemptsDetectionEnabled:
-      json['mfaChallengeAttemptsDetectionEnabled'] == null ? undefined : json['mfaChallengeAttemptsDetectionEnabled'],
-    mfaChallengeMaxAttempts: json['mfaChallengeMaxAttempts'] == null ? undefined : json['mfaChallengeMaxAttempts'],
-    mfaChallengeAttemptsResetTime: json['mfaChallengeAttemptsResetTime'] == null ? undefined : json['mfaChallengeAttemptsResetTime'],
-    mfaChallengeSendVerifyAlertEmail:
-      json['mfaChallengeSendVerifyAlertEmail'] == null ? undefined : json['mfaChallengeSendVerifyAlertEmail'],
-    sendVerifyRegistrationAccountEmail:
-      json['sendVerifyRegistrationAccountEmail'] == null ? undefined : json['sendVerifyRegistrationAccountEmail'],
+    inherited: !exists(json, 'inherited') ? undefined : json['inherited'],
+    loginAttemptsDetectionEnabled: !exists(json, 'loginAttemptsDetectionEnabled') ? undefined : json['loginAttemptsDetectionEnabled'],
+    maxLoginAttempts: !exists(json, 'maxLoginAttempts') ? undefined : json['maxLoginAttempts'],
+    loginAttemptsResetTime: !exists(json, 'loginAttemptsResetTime') ? undefined : json['loginAttemptsResetTime'],
+    accountBlockedDuration: !exists(json, 'accountBlockedDuration') ? undefined : json['accountBlockedDuration'],
+    sendRecoverAccountEmail: !exists(json, 'sendRecoverAccountEmail') ? undefined : json['sendRecoverAccountEmail'],
+    completeRegistrationWhenResetPassword: !exists(json, 'completeRegistrationWhenResetPassword')
+      ? undefined
+      : json['completeRegistrationWhenResetPassword'],
+    autoLoginAfterRegistration: !exists(json, 'autoLoginAfterRegistration') ? undefined : json['autoLoginAfterRegistration'],
+    redirectUriAfterRegistration: !exists(json, 'redirectUriAfterRegistration') ? undefined : json['redirectUriAfterRegistration'],
+    dynamicUserRegistration: !exists(json, 'dynamicUserRegistration') ? undefined : json['dynamicUserRegistration'],
+    defaultIdentityProviderForRegistration: !exists(json, 'defaultIdentityProviderForRegistration')
+      ? undefined
+      : json['defaultIdentityProviderForRegistration'],
+    autoLoginAfterResetPassword: !exists(json, 'autoLoginAfterResetPassword') ? undefined : json['autoLoginAfterResetPassword'],
+    redirectUriAfterResetPassword: !exists(json, 'redirectUriAfterResetPassword') ? undefined : json['redirectUriAfterResetPassword'],
+    deletePasswordlessDevicesAfterResetPassword: !exists(json, 'deletePasswordlessDevicesAfterResetPassword')
+      ? undefined
+      : json['deletePasswordlessDevicesAfterResetPassword'],
+    useBotDetection: !exists(json, 'useBotDetection') ? undefined : json['useBotDetection'],
+    botDetectionPlugin: !exists(json, 'botDetectionPlugin') ? undefined : json['botDetectionPlugin'],
+    rememberMe: !exists(json, 'rememberMe') ? undefined : json['rememberMe'],
+    rememberMeDuration: !exists(json, 'rememberMeDuration') ? undefined : json['rememberMeDuration'],
+    resetPasswordCustomForm: !exists(json, 'resetPasswordCustomForm') ? undefined : json['resetPasswordCustomForm'],
+    resetPasswordCustomFormFields: !exists(json, 'resetPasswordCustomFormFields')
+      ? undefined
+      : (json['resetPasswordCustomFormFields'] as Array<any>).map(FormFieldFromJSON),
+    resetPasswordConfirmIdentity: !exists(json, 'resetPasswordConfirmIdentity') ? undefined : json['resetPasswordConfirmIdentity'],
+    resetPasswordInvalidateTokens: !exists(json, 'resetPasswordInvalidateTokens') ? undefined : json['resetPasswordInvalidateTokens'],
+    mfaChallengeAttemptsDetectionEnabled: !exists(json, 'mfaChallengeAttemptsDetectionEnabled')
+      ? undefined
+      : json['mfaChallengeAttemptsDetectionEnabled'],
+    mfaChallengeMaxAttempts: !exists(json, 'mfaChallengeMaxAttempts') ? undefined : json['mfaChallengeMaxAttempts'],
+    mfaChallengeAttemptsResetTime: !exists(json, 'mfaChallengeAttemptsResetTime') ? undefined : json['mfaChallengeAttemptsResetTime'],
+    mfaChallengeSendVerifyAlertEmail: !exists(json, 'mfaChallengeSendVerifyAlertEmail')
+      ? undefined
+      : json['mfaChallengeSendVerifyAlertEmail'],
+    sendVerifyRegistrationAccountEmail: !exists(json, 'sendVerifyRegistrationAccountEmail')
+      ? undefined
+      : json['sendVerifyRegistrationAccountEmail'],
   };
 }
 
-export function AccountSettingsToJSON(json: any): AccountSettings {
-  return AccountSettingsToJSONTyped(json, false);
-}
-
-export function AccountSettingsToJSONTyped(value?: AccountSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function AccountSettingsToJSON(value?: AccountSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    inherited: value['inherited'],
-    loginAttemptsDetectionEnabled: value['loginAttemptsDetectionEnabled'],
-    maxLoginAttempts: value['maxLoginAttempts'],
-    loginAttemptsResetTime: value['loginAttemptsResetTime'],
-    accountBlockedDuration: value['accountBlockedDuration'],
-    sendRecoverAccountEmail: value['sendRecoverAccountEmail'],
-    completeRegistrationWhenResetPassword: value['completeRegistrationWhenResetPassword'],
-    autoLoginAfterRegistration: value['autoLoginAfterRegistration'],
-    redirectUriAfterRegistration: value['redirectUriAfterRegistration'],
-    dynamicUserRegistration: value['dynamicUserRegistration'],
-    defaultIdentityProviderForRegistration: value['defaultIdentityProviderForRegistration'],
-    autoLoginAfterResetPassword: value['autoLoginAfterResetPassword'],
-    redirectUriAfterResetPassword: value['redirectUriAfterResetPassword'],
-    deletePasswordlessDevicesAfterResetPassword: value['deletePasswordlessDevicesAfterResetPassword'],
-    useBotDetection: value['useBotDetection'],
-    botDetectionPlugin: value['botDetectionPlugin'],
-    rememberMe: value['rememberMe'],
-    rememberMeDuration: value['rememberMeDuration'],
-    resetPasswordCustomForm: value['resetPasswordCustomForm'],
+    inherited: value.inherited,
+    loginAttemptsDetectionEnabled: value.loginAttemptsDetectionEnabled,
+    maxLoginAttempts: value.maxLoginAttempts,
+    loginAttemptsResetTime: value.loginAttemptsResetTime,
+    accountBlockedDuration: value.accountBlockedDuration,
+    sendRecoverAccountEmail: value.sendRecoverAccountEmail,
+    completeRegistrationWhenResetPassword: value.completeRegistrationWhenResetPassword,
+    autoLoginAfterRegistration: value.autoLoginAfterRegistration,
+    redirectUriAfterRegistration: value.redirectUriAfterRegistration,
+    dynamicUserRegistration: value.dynamicUserRegistration,
+    defaultIdentityProviderForRegistration: value.defaultIdentityProviderForRegistration,
+    autoLoginAfterResetPassword: value.autoLoginAfterResetPassword,
+    redirectUriAfterResetPassword: value.redirectUriAfterResetPassword,
+    deletePasswordlessDevicesAfterResetPassword: value.deletePasswordlessDevicesAfterResetPassword,
+    useBotDetection: value.useBotDetection,
+    botDetectionPlugin: value.botDetectionPlugin,
+    rememberMe: value.rememberMe,
+    rememberMeDuration: value.rememberMeDuration,
+    resetPasswordCustomForm: value.resetPasswordCustomForm,
     resetPasswordCustomFormFields:
-      value['resetPasswordCustomFormFields'] == null
+      value.resetPasswordCustomFormFields === undefined
         ? undefined
-        : (value['resetPasswordCustomFormFields'] as Array<any>).map(FormFieldToJSON),
-    resetPasswordConfirmIdentity: value['resetPasswordConfirmIdentity'],
-    resetPasswordInvalidateTokens: value['resetPasswordInvalidateTokens'],
-    mfaChallengeAttemptsDetectionEnabled: value['mfaChallengeAttemptsDetectionEnabled'],
-    mfaChallengeMaxAttempts: value['mfaChallengeMaxAttempts'],
-    mfaChallengeAttemptsResetTime: value['mfaChallengeAttemptsResetTime'],
-    mfaChallengeSendVerifyAlertEmail: value['mfaChallengeSendVerifyAlertEmail'],
-    sendVerifyRegistrationAccountEmail: value['sendVerifyRegistrationAccountEmail'],
+        : (value.resetPasswordCustomFormFields as Array<any>).map(FormFieldToJSON),
+    resetPasswordConfirmIdentity: value.resetPasswordConfirmIdentity,
+    resetPasswordInvalidateTokens: value.resetPasswordInvalidateTokens,
+    mfaChallengeAttemptsDetectionEnabled: value.mfaChallengeAttemptsDetectionEnabled,
+    mfaChallengeMaxAttempts: value.mfaChallengeMaxAttempts,
+    mfaChallengeAttemptsResetTime: value.mfaChallengeAttemptsResetTime,
+    mfaChallengeSendVerifyAlertEmail: value.mfaChallengeSendVerifyAlertEmail,
+    sendVerifyRegistrationAccountEmail: value.sendVerifyRegistrationAccountEmail,
   };
 }

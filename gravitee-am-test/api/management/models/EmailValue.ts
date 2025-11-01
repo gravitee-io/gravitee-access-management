@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,20 +40,12 @@ export interface EmailValue {
   email: string;
 }
 
-/**
- * Check if a given object implements the EmailValue interface.
- */
-export function instanceOfEmailValue(value: object): value is EmailValue {
-  if (!('email' in value) || value['email'] === undefined) return false;
-  return true;
-}
-
 export function EmailValueFromJSON(json: any): EmailValue {
   return EmailValueFromJSONTyped(json, false);
 }
 
 export function EmailValueFromJSONTyped(json: any, ignoreDiscriminator: boolean): EmailValue {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
@@ -61,16 +53,14 @@ export function EmailValueFromJSONTyped(json: any, ignoreDiscriminator: boolean)
   };
 }
 
-export function EmailValueToJSON(json: any): EmailValue {
-  return EmailValueToJSONTyped(json, false);
-}
-
-export function EmailValueToJSONTyped(value?: EmailValue | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function EmailValueToJSON(value?: EmailValue | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    email: value['email'],
+    email: value.email,
   };
 }

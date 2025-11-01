@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -62,40 +62,31 @@ export const PatchChallengeSettingsTypeEnum = {
 } as const;
 export type PatchChallengeSettingsTypeEnum = typeof PatchChallengeSettingsTypeEnum[keyof typeof PatchChallengeSettingsTypeEnum];
 
-/**
- * Check if a given object implements the PatchChallengeSettings interface.
- */
-export function instanceOfPatchChallengeSettings(value: object): value is PatchChallengeSettings {
-  return true;
-}
-
 export function PatchChallengeSettingsFromJSON(json: any): PatchChallengeSettings {
   return PatchChallengeSettingsFromJSONTyped(json, false);
 }
 
 export function PatchChallengeSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchChallengeSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    active: json['active'] == null ? undefined : json['active'],
-    challengeRule: json['challengeRule'] == null ? undefined : json['challengeRule'],
-    type: json['type'] == null ? undefined : json['type'],
+    active: !exists(json, 'active') ? undefined : json['active'],
+    challengeRule: !exists(json, 'challengeRule') ? undefined : json['challengeRule'],
+    type: !exists(json, 'type') ? undefined : json['type'],
   };
 }
 
-export function PatchChallengeSettingsToJSON(json: any): PatchChallengeSettings {
-  return PatchChallengeSettingsToJSONTyped(json, false);
-}
-
-export function PatchChallengeSettingsToJSONTyped(value?: PatchChallengeSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchChallengeSettingsToJSON(value?: PatchChallengeSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    active: value['active'],
-    challengeRule: value['challengeRule'],
-    type: value['type'],
+    active: value.active,
+    challengeRule: value.challengeRule,
+    type: value.type,
   };
 }

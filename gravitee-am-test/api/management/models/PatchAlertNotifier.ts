@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,40 +52,31 @@ export interface PatchAlertNotifier {
   configuration?: string;
 }
 
-/**
- * Check if a given object implements the PatchAlertNotifier interface.
- */
-export function instanceOfPatchAlertNotifier(value: object): value is PatchAlertNotifier {
-  return true;
-}
-
 export function PatchAlertNotifierFromJSON(json: any): PatchAlertNotifier {
   return PatchAlertNotifierFromJSONTyped(json, false);
 }
 
 export function PatchAlertNotifierFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchAlertNotifier {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    name: json['name'] == null ? undefined : json['name'],
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    configuration: json['configuration'] == null ? undefined : json['configuration'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    configuration: !exists(json, 'configuration') ? undefined : json['configuration'],
   };
 }
 
-export function PatchAlertNotifierToJSON(json: any): PatchAlertNotifier {
-  return PatchAlertNotifierToJSONTyped(json, false);
-}
-
-export function PatchAlertNotifierToJSONTyped(value?: PatchAlertNotifier | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchAlertNotifierToJSON(value?: PatchAlertNotifier | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
-    enabled: value['enabled'],
-    configuration: value['configuration'],
+    name: value.name,
+    enabled: value.enabled,
+    configuration: value.configuration,
   };
 }

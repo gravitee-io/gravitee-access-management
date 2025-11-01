@@ -838,7 +838,7 @@ export class ApplicationApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(FlowEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
   }
 
   /**
@@ -1860,7 +1860,7 @@ export class ApplicationApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(ClientSecretFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ClientSecretFromJSON));
   }
 
   /**
@@ -1942,7 +1942,7 @@ export class ApplicationApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AccessPolicyListItemFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AccessPolicyListItemFromJSON));
   }
 
   /**
@@ -2098,7 +2098,7 @@ export class ApplicationApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(FlowEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(FlowEntityFromJSON));
   }
 
   /**

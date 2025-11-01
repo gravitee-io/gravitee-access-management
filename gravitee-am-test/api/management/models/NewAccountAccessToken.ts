@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,20 +40,12 @@ export interface NewAccountAccessToken {
   name: string;
 }
 
-/**
- * Check if a given object implements the NewAccountAccessToken interface.
- */
-export function instanceOfNewAccountAccessToken(value: object): value is NewAccountAccessToken {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  return true;
-}
-
 export function NewAccountAccessTokenFromJSON(json: any): NewAccountAccessToken {
   return NewAccountAccessTokenFromJSONTyped(json, false);
 }
 
 export function NewAccountAccessTokenFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewAccountAccessToken {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
@@ -61,16 +53,14 @@ export function NewAccountAccessTokenFromJSONTyped(json: any, ignoreDiscriminato
   };
 }
 
-export function NewAccountAccessTokenToJSON(json: any): NewAccountAccessToken {
-  return NewAccountAccessTokenToJSONTyped(json, false);
-}
-
-export function NewAccountAccessTokenToJSONTyped(value?: NewAccountAccessToken | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewAccountAccessTokenToJSON(value?: NewAccountAccessToken | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
+    name: value.name,
   };
 }

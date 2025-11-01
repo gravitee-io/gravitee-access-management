@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { Scope } from './Scope';
-import { ScopeFromJSON, ScopeFromJSONTyped, ScopeToJSON, ScopeToJSONTyped } from './Scope';
+import { exists, mapValues } from '../runtime';
+import { Scope, ScopeFromJSON, ScopeFromJSONTyped, ScopeToJSON } from './Scope';
 
 /**
  *
@@ -55,40 +54,31 @@ export interface ScopePage {
   totalCount?: number;
 }
 
-/**
- * Check if a given object implements the ScopePage interface.
- */
-export function instanceOfScopePage(value: object): value is ScopePage {
-  return true;
-}
-
 export function ScopePageFromJSON(json: any): ScopePage {
   return ScopePageFromJSONTyped(json, false);
 }
 
 export function ScopePageFromJSONTyped(json: any, ignoreDiscriminator: boolean): ScopePage {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(ScopeFromJSON),
-    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
-    totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
+    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(ScopeFromJSON),
+    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
+    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
   };
 }
 
-export function ScopePageToJSON(json: any): ScopePage {
-  return ScopePageToJSONTyped(json, false);
-}
-
-export function ScopePageToJSONTyped(value?: ScopePage | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ScopePageToJSON(value?: ScopePage | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(ScopeToJSON),
-    currentPage: value['currentPage'],
-    totalCount: value['totalCount'],
+    data: value.data === undefined ? undefined : (value.data as Array<any>).map(ScopeToJSON),
+    currentPage: value.currentPage,
+    totalCount: value.totalCount,
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -40,20 +40,12 @@ export interface UsernameEntity {
   username: string;
 }
 
-/**
- * Check if a given object implements the UsernameEntity interface.
- */
-export function instanceOfUsernameEntity(value: object): value is UsernameEntity {
-  if (!('username' in value) || value['username'] === undefined) return false;
-  return true;
-}
-
 export function UsernameEntityFromJSON(json: any): UsernameEntity {
   return UsernameEntityFromJSONTyped(json, false);
 }
 
 export function UsernameEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): UsernameEntity {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
@@ -61,16 +53,14 @@ export function UsernameEntityFromJSONTyped(json: any, ignoreDiscriminator: bool
   };
 }
 
-export function UsernameEntityToJSON(json: any): UsernameEntity {
-  return UsernameEntityToJSONTyped(json, false);
-}
-
-export function UsernameEntityToJSONTyped(value?: UsernameEntity | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UsernameEntityToJSON(value?: UsernameEntity | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    username: value['username'],
+    username: value.username,
   };
 }

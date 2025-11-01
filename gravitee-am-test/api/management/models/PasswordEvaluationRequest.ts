@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,38 +46,29 @@ export interface PasswordEvaluationRequest {
   userId?: string;
 }
 
-/**
- * Check if a given object implements the PasswordEvaluationRequest interface.
- */
-export function instanceOfPasswordEvaluationRequest(value: object): value is PasswordEvaluationRequest {
-  return true;
-}
-
 export function PasswordEvaluationRequestFromJSON(json: any): PasswordEvaluationRequest {
   return PasswordEvaluationRequestFromJSONTyped(json, false);
 }
 
 export function PasswordEvaluationRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): PasswordEvaluationRequest {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    password: json['password'] == null ? undefined : json['password'],
-    userId: json['userId'] == null ? undefined : json['userId'],
+    password: !exists(json, 'password') ? undefined : json['password'],
+    userId: !exists(json, 'userId') ? undefined : json['userId'],
   };
 }
 
-export function PasswordEvaluationRequestToJSON(json: any): PasswordEvaluationRequest {
-  return PasswordEvaluationRequestToJSONTyped(json, false);
-}
-
-export function PasswordEvaluationRequestToJSONTyped(value?: PasswordEvaluationRequest | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PasswordEvaluationRequestToJSON(value?: PasswordEvaluationRequest | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    password: value['password'],
-    userId: value['userId'],
+    password: value.password,
+    userId: value.userId,
   };
 }

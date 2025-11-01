@@ -380,7 +380,7 @@ export class AlertsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AlertTriggerFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
   }
 
   /**
@@ -453,7 +453,7 @@ export class AlertsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AlertTriggerFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
   }
 
   /**
@@ -519,7 +519,7 @@ export class AlertsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(AlertNotifierFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertNotifierFromJSON));
   }
 
   /**

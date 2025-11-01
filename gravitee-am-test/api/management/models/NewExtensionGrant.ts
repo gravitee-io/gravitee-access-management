@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -76,23 +76,12 @@ export interface NewExtensionGrant {
   userExists?: boolean;
 }
 
-/**
- * Check if a given object implements the NewExtensionGrant interface.
- */
-export function instanceOfNewExtensionGrant(value: object): value is NewExtensionGrant {
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
-  if (!('grantType' in value) || value['grantType'] === undefined) return false;
-  return true;
-}
-
 export function NewExtensionGrantFromJSON(json: any): NewExtensionGrant {
   return NewExtensionGrantFromJSONTyped(json, false);
 }
 
 export function NewExtensionGrantFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewExtensionGrant {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
@@ -100,28 +89,26 @@ export function NewExtensionGrantFromJSONTyped(json: any, ignoreDiscriminator: b
     name: json['name'],
     configuration: json['configuration'],
     grantType: json['grantType'],
-    identityProvider: json['identityProvider'] == null ? undefined : json['identityProvider'],
-    createUser: json['createUser'] == null ? undefined : json['createUser'],
-    userExists: json['userExists'] == null ? undefined : json['userExists'],
+    identityProvider: !exists(json, 'identityProvider') ? undefined : json['identityProvider'],
+    createUser: !exists(json, 'createUser') ? undefined : json['createUser'],
+    userExists: !exists(json, 'userExists') ? undefined : json['userExists'],
   };
 }
 
-export function NewExtensionGrantToJSON(json: any): NewExtensionGrant {
-  return NewExtensionGrantToJSONTyped(json, false);
-}
-
-export function NewExtensionGrantToJSONTyped(value?: NewExtensionGrant | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function NewExtensionGrantToJSON(value?: NewExtensionGrant | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    type: value['type'],
-    name: value['name'],
-    configuration: value['configuration'],
-    grantType: value['grantType'],
-    identityProvider: value['identityProvider'],
-    createUser: value['createUser'],
-    userExists: value['userExists'],
+    type: value.type,
+    name: value.name,
+    configuration: value.configuration,
+    grantType: value.grantType,
+    identityProvider: value.identityProvider,
+    createUser: value.createUser,
+    userExists: value.userExists,
   };
 }

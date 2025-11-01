@@ -25,62 +25,42 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { AccountSettings } from './AccountSettings';
+import { exists, mapValues } from '../runtime';
+import { AccountSettings, AccountSettingsFromJSON, AccountSettingsFromJSONTyped, AccountSettingsToJSON } from './AccountSettings';
 import {
-  AccountSettingsFromJSON,
-  AccountSettingsFromJSONTyped,
-  AccountSettingsToJSON,
-  AccountSettingsToJSONTyped,
-} from './AccountSettings';
-import type { ApplicationOAuthSettings } from './ApplicationOAuthSettings';
-import {
-  ApplicationOAuthSettingsFromJSON,
-  ApplicationOAuthSettingsFromJSONTyped,
-  ApplicationOAuthSettingsToJSON,
-  ApplicationOAuthSettingsToJSONTyped,
-} from './ApplicationOAuthSettings';
-import type { ApplicationAdvancedSettings } from './ApplicationAdvancedSettings';
-import {
+  ApplicationAdvancedSettings,
   ApplicationAdvancedSettingsFromJSON,
   ApplicationAdvancedSettingsFromJSONTyped,
   ApplicationAdvancedSettingsToJSON,
-  ApplicationAdvancedSettingsToJSONTyped,
 } from './ApplicationAdvancedSettings';
-import type { ApplicationSAMLSettings } from './ApplicationSAMLSettings';
 import {
+  ApplicationOAuthSettings,
+  ApplicationOAuthSettingsFromJSON,
+  ApplicationOAuthSettingsFromJSONTyped,
+  ApplicationOAuthSettingsToJSON,
+} from './ApplicationOAuthSettings';
+import {
+  ApplicationSAMLSettings,
   ApplicationSAMLSettingsFromJSON,
   ApplicationSAMLSettingsFromJSONTyped,
   ApplicationSAMLSettingsToJSON,
-  ApplicationSAMLSettingsToJSONTyped,
 } from './ApplicationSAMLSettings';
-import type { CookieSettings } from './CookieSettings';
-import { CookieSettingsFromJSON, CookieSettingsFromJSONTyped, CookieSettingsToJSON, CookieSettingsToJSONTyped } from './CookieSettings';
-import type { RiskAssessmentSettings } from './RiskAssessmentSettings';
+import { CookieSettings, CookieSettingsFromJSON, CookieSettingsFromJSONTyped, CookieSettingsToJSON } from './CookieSettings';
+import { LoginSettings, LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON } from './LoginSettings';
+import { MFASettings, MFASettingsFromJSON, MFASettingsFromJSONTyped, MFASettingsToJSON } from './MFASettings';
+import { PasswordSettings, PasswordSettingsFromJSON, PasswordSettingsFromJSONTyped, PasswordSettingsToJSON } from './PasswordSettings';
 import {
+  RiskAssessmentSettings,
   RiskAssessmentSettingsFromJSON,
   RiskAssessmentSettingsFromJSONTyped,
   RiskAssessmentSettingsToJSON,
-  RiskAssessmentSettingsToJSONTyped,
 } from './RiskAssessmentSettings';
-import type { MFASettings } from './MFASettings';
-import { MFASettingsFromJSON, MFASettingsFromJSONTyped, MFASettingsToJSON, MFASettingsToJSONTyped } from './MFASettings';
-import type { LoginSettings } from './LoginSettings';
-import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
-import type { SecretExpirationSettings } from './SecretExpirationSettings';
 import {
+  SecretExpirationSettings,
   SecretExpirationSettingsFromJSON,
   SecretExpirationSettingsFromJSONTyped,
   SecretExpirationSettingsToJSON,
-  SecretExpirationSettingsToJSONTyped,
 } from './SecretExpirationSettings';
-import type { PasswordSettings } from './PasswordSettings';
-import {
-  PasswordSettingsFromJSON,
-  PasswordSettingsFromJSONTyped,
-  PasswordSettingsToJSON,
-  PasswordSettingsToJSONTyped,
-} from './PasswordSettings';
 
 /**
  *
@@ -150,55 +130,47 @@ export interface ApplicationSettings {
   secretExpirationSettings?: SecretExpirationSettings;
 }
 
-/**
- * Check if a given object implements the ApplicationSettings interface.
- */
-export function instanceOfApplicationSettings(value: object): value is ApplicationSettings {
-  return true;
-}
-
 export function ApplicationSettingsFromJSON(json: any): ApplicationSettings {
   return ApplicationSettingsFromJSONTyped(json, false);
 }
 
 export function ApplicationSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    oauth: json['oauth'] == null ? undefined : ApplicationOAuthSettingsFromJSON(json['oauth']),
-    saml: json['saml'] == null ? undefined : ApplicationSAMLSettingsFromJSON(json['saml']),
-    account: json['account'] == null ? undefined : AccountSettingsFromJSON(json['account']),
-    login: json['login'] == null ? undefined : LoginSettingsFromJSON(json['login']),
-    advanced: json['advanced'] == null ? undefined : ApplicationAdvancedSettingsFromJSON(json['advanced']),
-    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
-    mfa: json['mfa'] == null ? undefined : MFASettingsFromJSON(json['mfa']),
-    cookieSettings: json['cookieSettings'] == null ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
-    riskAssessment: json['riskAssessment'] == null ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
-    secretExpirationSettings:
-      json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
+    oauth: !exists(json, 'oauth') ? undefined : ApplicationOAuthSettingsFromJSON(json['oauth']),
+    saml: !exists(json, 'saml') ? undefined : ApplicationSAMLSettingsFromJSON(json['saml']),
+    account: !exists(json, 'account') ? undefined : AccountSettingsFromJSON(json['account']),
+    login: !exists(json, 'login') ? undefined : LoginSettingsFromJSON(json['login']),
+    advanced: !exists(json, 'advanced') ? undefined : ApplicationAdvancedSettingsFromJSON(json['advanced']),
+    passwordSettings: !exists(json, 'passwordSettings') ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
+    mfa: !exists(json, 'mfa') ? undefined : MFASettingsFromJSON(json['mfa']),
+    cookieSettings: !exists(json, 'cookieSettings') ? undefined : CookieSettingsFromJSON(json['cookieSettings']),
+    riskAssessment: !exists(json, 'riskAssessment') ? undefined : RiskAssessmentSettingsFromJSON(json['riskAssessment']),
+    secretExpirationSettings: !exists(json, 'secretExpirationSettings')
+      ? undefined
+      : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
   };
 }
 
-export function ApplicationSettingsToJSON(json: any): ApplicationSettings {
-  return ApplicationSettingsToJSONTyped(json, false);
-}
-
-export function ApplicationSettingsToJSONTyped(value?: ApplicationSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ApplicationSettingsToJSON(value?: ApplicationSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    oauth: ApplicationOAuthSettingsToJSON(value['oauth']),
-    saml: ApplicationSAMLSettingsToJSON(value['saml']),
-    account: AccountSettingsToJSON(value['account']),
-    login: LoginSettingsToJSON(value['login']),
-    advanced: ApplicationAdvancedSettingsToJSON(value['advanced']),
-    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
-    mfa: MFASettingsToJSON(value['mfa']),
-    cookieSettings: CookieSettingsToJSON(value['cookieSettings']),
-    riskAssessment: RiskAssessmentSettingsToJSON(value['riskAssessment']),
-    secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
+    oauth: ApplicationOAuthSettingsToJSON(value.oauth),
+    saml: ApplicationSAMLSettingsToJSON(value.saml),
+    account: AccountSettingsToJSON(value.account),
+    login: LoginSettingsToJSON(value.login),
+    advanced: ApplicationAdvancedSettingsToJSON(value.advanced),
+    passwordSettings: PasswordSettingsToJSON(value.passwordSettings),
+    mfa: MFASettingsToJSON(value.mfa),
+    cookieSettings: CookieSettingsToJSON(value.cookieSettings),
+    riskAssessment: RiskAssessmentSettingsToJSON(value.riskAssessment),
+    secretExpirationSettings: SecretExpirationSettingsToJSON(value.secretExpirationSettings),
   };
 }

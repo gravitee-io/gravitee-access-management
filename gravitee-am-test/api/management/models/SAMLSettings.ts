@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,40 +52,31 @@ export interface SAMLSettings {
   certificate?: string;
 }
 
-/**
- * Check if a given object implements the SAMLSettings interface.
- */
-export function instanceOfSAMLSettings(value: object): value is SAMLSettings {
-  return true;
-}
-
 export function SAMLSettingsFromJSON(json: any): SAMLSettings {
   return SAMLSettingsFromJSONTyped(json, false);
 }
 
 export function SAMLSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): SAMLSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    entityId: json['entityId'] == null ? undefined : json['entityId'],
-    certificate: json['certificate'] == null ? undefined : json['certificate'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    entityId: !exists(json, 'entityId') ? undefined : json['entityId'],
+    certificate: !exists(json, 'certificate') ? undefined : json['certificate'],
   };
 }
 
-export function SAMLSettingsToJSON(json: any): SAMLSettings {
-  return SAMLSettingsToJSONTyped(json, false);
-}
-
-export function SAMLSettingsToJSONTyped(value?: SAMLSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function SAMLSettingsToJSON(value?: SAMLSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    entityId: value['entityId'],
-    certificate: value['certificate'],
+    enabled: value.enabled,
+    entityId: value.entityId,
+    certificate: value.certificate,
   };
 }

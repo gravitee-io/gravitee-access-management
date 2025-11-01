@@ -25,13 +25,12 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { AssessmentSettings } from './AssessmentSettings';
+import { exists, mapValues } from '../runtime';
 import {
+  AssessmentSettings,
   AssessmentSettingsFromJSON,
   AssessmentSettingsFromJSONTyped,
   AssessmentSettingsToJSON,
-  AssessmentSettingsToJSONTyped,
 } from './AssessmentSettings';
 
 /**
@@ -66,42 +65,35 @@ export interface RiskAssessmentSettings {
   geoVelocityAssessment?: AssessmentSettings;
 }
 
-/**
- * Check if a given object implements the RiskAssessmentSettings interface.
- */
-export function instanceOfRiskAssessmentSettings(value: object): value is RiskAssessmentSettings {
-  return true;
-}
-
 export function RiskAssessmentSettingsFromJSON(json: any): RiskAssessmentSettings {
   return RiskAssessmentSettingsFromJSONTyped(json, false);
 }
 
 export function RiskAssessmentSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): RiskAssessmentSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    deviceAssessment: json['deviceAssessment'] == null ? undefined : AssessmentSettingsFromJSON(json['deviceAssessment']),
-    ipReputationAssessment: json['ipReputationAssessment'] == null ? undefined : AssessmentSettingsFromJSON(json['ipReputationAssessment']),
-    geoVelocityAssessment: json['geoVelocityAssessment'] == null ? undefined : AssessmentSettingsFromJSON(json['geoVelocityAssessment']),
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    deviceAssessment: !exists(json, 'deviceAssessment') ? undefined : AssessmentSettingsFromJSON(json['deviceAssessment']),
+    ipReputationAssessment: !exists(json, 'ipReputationAssessment')
+      ? undefined
+      : AssessmentSettingsFromJSON(json['ipReputationAssessment']),
+    geoVelocityAssessment: !exists(json, 'geoVelocityAssessment') ? undefined : AssessmentSettingsFromJSON(json['geoVelocityAssessment']),
   };
 }
 
-export function RiskAssessmentSettingsToJSON(json: any): RiskAssessmentSettings {
-  return RiskAssessmentSettingsToJSONTyped(json, false);
-}
-
-export function RiskAssessmentSettingsToJSONTyped(value?: RiskAssessmentSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function RiskAssessmentSettingsToJSON(value?: RiskAssessmentSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    deviceAssessment: AssessmentSettingsToJSON(value['deviceAssessment']),
-    ipReputationAssessment: AssessmentSettingsToJSON(value['ipReputationAssessment']),
-    geoVelocityAssessment: AssessmentSettingsToJSON(value['geoVelocityAssessment']),
+    enabled: value.enabled,
+    deviceAssessment: AssessmentSettingsToJSON(value.deviceAssessment),
+    ipReputationAssessment: AssessmentSettingsToJSON(value.ipReputationAssessment),
+    geoVelocityAssessment: AssessmentSettingsToJSON(value.geoVelocityAssessment),
   };
 }

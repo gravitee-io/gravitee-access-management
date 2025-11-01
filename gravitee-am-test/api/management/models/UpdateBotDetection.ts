@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,22 +52,12 @@ export interface UpdateBotDetection {
   configuration: string;
 }
 
-/**
- * Check if a given object implements the UpdateBotDetection interface.
- */
-export function instanceOfUpdateBotDetection(value: object): value is UpdateBotDetection {
-  if (!('name' in value) || value['name'] === undefined) return false;
-  if (!('type' in value) || value['type'] === undefined) return false;
-  if (!('configuration' in value) || value['configuration'] === undefined) return false;
-  return true;
-}
-
 export function UpdateBotDetectionFromJSON(json: any): UpdateBotDetection {
   return UpdateBotDetectionFromJSONTyped(json, false);
 }
 
 export function UpdateBotDetectionFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateBotDetection {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
@@ -77,18 +67,16 @@ export function UpdateBotDetectionFromJSONTyped(json: any, ignoreDiscriminator: 
   };
 }
 
-export function UpdateBotDetectionToJSON(json: any): UpdateBotDetection {
-  return UpdateBotDetectionToJSONTyped(json, false);
-}
-
-export function UpdateBotDetectionToJSONTyped(value?: UpdateBotDetection | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UpdateBotDetectionToJSON(value?: UpdateBotDetection | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
-    type: value['type'],
-    configuration: value['configuration'],
+    name: value.name,
+    type: value.type,
+    configuration: value.configuration,
   };
 }

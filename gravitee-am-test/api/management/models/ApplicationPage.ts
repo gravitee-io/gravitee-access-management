@@ -25,14 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { FilteredApplication } from './FilteredApplication';
-import {
-  FilteredApplicationFromJSON,
-  FilteredApplicationFromJSONTyped,
-  FilteredApplicationToJSON,
-  FilteredApplicationToJSONTyped,
-} from './FilteredApplication';
+import { exists, mapValues } from '../runtime';
+import { Application, ApplicationFromJSON, ApplicationFromJSONTyped, ApplicationToJSON } from './Application';
 
 /**
  *
@@ -42,10 +36,10 @@ import {
 export interface ApplicationPage {
   /**
    *
-   * @type {Array<FilteredApplication>}
+   * @type {Array<Application>}
    * @memberof ApplicationPage
    */
-  data?: Array<FilteredApplication>;
+  data?: Array<Application>;
   /**
    *
    * @type {number}
@@ -60,40 +54,31 @@ export interface ApplicationPage {
   totalCount?: number;
 }
 
-/**
- * Check if a given object implements the ApplicationPage interface.
- */
-export function instanceOfApplicationPage(value: object): value is ApplicationPage {
-  return true;
-}
-
 export function ApplicationPageFromJSON(json: any): ApplicationPage {
   return ApplicationPageFromJSONTyped(json, false);
 }
 
 export function ApplicationPageFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationPage {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    data: json['data'] == null ? undefined : (json['data'] as Array<any>).map(FilteredApplicationFromJSON),
-    currentPage: json['currentPage'] == null ? undefined : json['currentPage'],
-    totalCount: json['totalCount'] == null ? undefined : json['totalCount'],
+    data: !exists(json, 'data') ? undefined : (json['data'] as Array<any>).map(ApplicationFromJSON),
+    currentPage: !exists(json, 'currentPage') ? undefined : json['currentPage'],
+    totalCount: !exists(json, 'totalCount') ? undefined : json['totalCount'],
   };
 }
 
-export function ApplicationPageToJSON(json: any): ApplicationPage {
-  return ApplicationPageToJSONTyped(json, false);
-}
-
-export function ApplicationPageToJSONTyped(value?: ApplicationPage | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ApplicationPageToJSON(value?: ApplicationPage | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    data: value['data'] == null ? undefined : (value['data'] as Array<any>).map(FilteredApplicationToJSON),
-    currentPage: value['currentPage'],
-    totalCount: value['totalCount'],
+    data: value.data === undefined ? undefined : (value.data as Array<any>).map(ApplicationToJSON),
+    currentPage: value.currentPage,
+    totalCount: value.totalCount,
   };
 }

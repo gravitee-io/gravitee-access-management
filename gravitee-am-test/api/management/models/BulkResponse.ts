@@ -25,13 +25,12 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { BulkOperationResultObject } from './BulkOperationResultObject';
+import { exists, mapValues } from '../runtime';
 import {
+  BulkOperationResultObject,
   BulkOperationResultObjectFromJSON,
   BulkOperationResultObjectFromJSONTyped,
   BulkOperationResultObjectToJSON,
-  BulkOperationResultObjectToJSONTyped,
 } from './BulkOperationResultObject';
 
 /**
@@ -54,38 +53,29 @@ export interface BulkResponse {
   allSuccessful?: boolean;
 }
 
-/**
- * Check if a given object implements the BulkResponse interface.
- */
-export function instanceOfBulkResponse(value: object): value is BulkResponse {
-  return true;
-}
-
 export function BulkResponseFromJSON(json: any): BulkResponse {
   return BulkResponseFromJSONTyped(json, false);
 }
 
 export function BulkResponseFromJSONTyped(json: any, ignoreDiscriminator: boolean): BulkResponse {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    results: json['results'] == null ? undefined : (json['results'] as Array<any>).map(BulkOperationResultObjectFromJSON),
-    allSuccessful: json['allSuccessful'] == null ? undefined : json['allSuccessful'],
+    results: !exists(json, 'results') ? undefined : (json['results'] as Array<any>).map(BulkOperationResultObjectFromJSON),
+    allSuccessful: !exists(json, 'allSuccessful') ? undefined : json['allSuccessful'],
   };
 }
 
-export function BulkResponseToJSON(json: any): BulkResponse {
-  return BulkResponseToJSONTyped(json, false);
-}
-
-export function BulkResponseToJSONTyped(value?: BulkResponse | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function BulkResponseToJSON(value?: BulkResponse | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    results: value['results'] == null ? undefined : (value['results'] as Array<any>).map(BulkOperationResultObjectToJSON),
-    allSuccessful: value['allSuccessful'],
+    results: value.results === undefined ? undefined : (value.results as Array<any>).map(BulkOperationResultObjectToJSON),
+    allSuccessful: value.allSuccessful,
   };
 }

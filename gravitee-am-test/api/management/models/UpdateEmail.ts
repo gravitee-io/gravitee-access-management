@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,50 +70,37 @@ export interface UpdateEmail {
   expiresAfter: number;
 }
 
-/**
- * Check if a given object implements the UpdateEmail interface.
- */
-export function instanceOfUpdateEmail(value: object): value is UpdateEmail {
-  if (!('from' in value) || value['from'] === undefined) return false;
-  if (!('subject' in value) || value['subject'] === undefined) return false;
-  if (!('content' in value) || value['content'] === undefined) return false;
-  if (!('expiresAfter' in value) || value['expiresAfter'] === undefined) return false;
-  return true;
-}
-
 export function UpdateEmailFromJSON(json: any): UpdateEmail {
   return UpdateEmailFromJSONTyped(json, false);
 }
 
 export function UpdateEmailFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateEmail {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
     from: json['from'],
-    fromName: json['fromName'] == null ? undefined : json['fromName'],
+    fromName: !exists(json, 'fromName') ? undefined : json['fromName'],
     subject: json['subject'],
     content: json['content'],
     expiresAfter: json['expiresAfter'],
   };
 }
 
-export function UpdateEmailToJSON(json: any): UpdateEmail {
-  return UpdateEmailToJSONTyped(json, false);
-}
-
-export function UpdateEmailToJSONTyped(value?: UpdateEmail | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function UpdateEmailToJSON(value?: UpdateEmail | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    from: value['from'],
-    fromName: value['fromName'],
-    subject: value['subject'],
-    content: value['content'],
-    expiresAfter: value['expiresAfter'],
+    enabled: value.enabled,
+    from: value.from,
+    fromName: value.fromName,
+    subject: value.subject,
+    content: value.content,
+    expiresAfter: value.expiresAfter,
   };
 }

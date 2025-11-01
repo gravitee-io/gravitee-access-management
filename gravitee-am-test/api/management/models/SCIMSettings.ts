@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,40 +52,31 @@ export interface SCIMSettings {
   idpSelectionRule?: string;
 }
 
-/**
- * Check if a given object implements the SCIMSettings interface.
- */
-export function instanceOfSCIMSettings(value: object): value is SCIMSettings {
-  return true;
-}
-
 export function SCIMSettingsFromJSON(json: any): SCIMSettings {
   return SCIMSettingsFromJSONTyped(json, false);
 }
 
 export function SCIMSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): SCIMSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    idpSelectionEnabled: json['idpSelectionEnabled'] == null ? undefined : json['idpSelectionEnabled'],
-    idpSelectionRule: json['idpSelectionRule'] == null ? undefined : json['idpSelectionRule'],
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    idpSelectionEnabled: !exists(json, 'idpSelectionEnabled') ? undefined : json['idpSelectionEnabled'],
+    idpSelectionRule: !exists(json, 'idpSelectionRule') ? undefined : json['idpSelectionRule'],
   };
 }
 
-export function SCIMSettingsToJSON(json: any): SCIMSettings {
-  return SCIMSettingsToJSONTyped(json, false);
-}
-
-export function SCIMSettingsToJSONTyped(value?: SCIMSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function SCIMSettingsToJSON(value?: SCIMSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    enabled: value['enabled'],
-    idpSelectionEnabled: value['idpSelectionEnabled'],
-    idpSelectionRule: value['idpSelectionRule'],
+    enabled: value.enabled,
+    idpSelectionEnabled: value.idpSelectionEnabled,
+    idpSelectionRule: value.idpSelectionRule,
   };
 }

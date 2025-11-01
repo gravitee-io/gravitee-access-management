@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,38 +46,29 @@ export interface ApplicationSecretSettings {
   algorithm?: string;
 }
 
-/**
- * Check if a given object implements the ApplicationSecretSettings interface.
- */
-export function instanceOfApplicationSecretSettings(value: object): value is ApplicationSecretSettings {
-  return true;
-}
-
 export function ApplicationSecretSettingsFromJSON(json: any): ApplicationSecretSettings {
   return ApplicationSecretSettingsFromJSONTyped(json, false);
 }
 
 export function ApplicationSecretSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationSecretSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    algorithm: json['algorithm'] == null ? undefined : json['algorithm'],
+    id: !exists(json, 'id') ? undefined : json['id'],
+    algorithm: !exists(json, 'algorithm') ? undefined : json['algorithm'],
   };
 }
 
-export function ApplicationSecretSettingsToJSON(json: any): ApplicationSecretSettings {
-  return ApplicationSecretSettingsToJSONTyped(json, false);
-}
-
-export function ApplicationSecretSettingsToJSONTyped(value?: ApplicationSecretSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ApplicationSecretSettingsToJSON(value?: ApplicationSecretSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    algorithm: value['algorithm'],
+    id: value.id,
+    algorithm: value.algorithm,
   };
 }

@@ -25,22 +25,19 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { CIBASettings } from './CIBASettings';
-import { CIBASettingsFromJSON, CIBASettingsFromJSONTyped, CIBASettingsToJSON, CIBASettingsToJSONTyped } from './CIBASettings';
-import type { ClientRegistrationSettings } from './ClientRegistrationSettings';
+import { exists, mapValues } from '../runtime';
+import { CIBASettings, CIBASettingsFromJSON, CIBASettingsFromJSONTyped, CIBASettingsToJSON } from './CIBASettings';
 import {
+  ClientRegistrationSettings,
   ClientRegistrationSettingsFromJSON,
   ClientRegistrationSettingsFromJSONTyped,
   ClientRegistrationSettingsToJSON,
-  ClientRegistrationSettingsToJSONTyped,
 } from './ClientRegistrationSettings';
-import type { SecurityProfileSettings } from './SecurityProfileSettings';
 import {
+  SecurityProfileSettings,
   SecurityProfileSettingsFromJSON,
   SecurityProfileSettingsFromJSONTyped,
   SecurityProfileSettingsToJSON,
-  SecurityProfileSettingsToJSONTyped,
 } from './SecurityProfileSettings';
 
 /**
@@ -87,48 +84,41 @@ export interface OIDCSettings {
   cibaSettings?: CIBASettings;
 }
 
-/**
- * Check if a given object implements the OIDCSettings interface.
- */
-export function instanceOfOIDCSettings(value: object): value is OIDCSettings {
-  return true;
-}
-
 export function OIDCSettingsFromJSON(json: any): OIDCSettings {
   return OIDCSettingsFromJSONTyped(json, false);
 }
 
 export function OIDCSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): OIDCSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    clientRegistrationSettings:
-      json['clientRegistrationSettings'] == null ? undefined : ClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
-    securityProfileSettings:
-      json['securityProfileSettings'] == null ? undefined : SecurityProfileSettingsFromJSON(json['securityProfileSettings']),
-    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
-    postLogoutRedirectUris: json['postLogoutRedirectUris'] == null ? undefined : json['postLogoutRedirectUris'],
-    requestUris: json['requestUris'] == null ? undefined : json['requestUris'],
-    cibaSettings: json['cibaSettings'] == null ? undefined : CIBASettingsFromJSON(json['cibaSettings']),
+    clientRegistrationSettings: !exists(json, 'clientRegistrationSettings')
+      ? undefined
+      : ClientRegistrationSettingsFromJSON(json['clientRegistrationSettings']),
+    securityProfileSettings: !exists(json, 'securityProfileSettings')
+      ? undefined
+      : SecurityProfileSettingsFromJSON(json['securityProfileSettings']),
+    redirectUriStrictMatching: !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
+    postLogoutRedirectUris: !exists(json, 'postLogoutRedirectUris') ? undefined : json['postLogoutRedirectUris'],
+    requestUris: !exists(json, 'requestUris') ? undefined : json['requestUris'],
+    cibaSettings: !exists(json, 'cibaSettings') ? undefined : CIBASettingsFromJSON(json['cibaSettings']),
   };
 }
 
-export function OIDCSettingsToJSON(json: any): OIDCSettings {
-  return OIDCSettingsToJSONTyped(json, false);
-}
-
-export function OIDCSettingsToJSONTyped(value?: OIDCSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function OIDCSettingsToJSON(value?: OIDCSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    clientRegistrationSettings: ClientRegistrationSettingsToJSON(value['clientRegistrationSettings']),
-    securityProfileSettings: SecurityProfileSettingsToJSON(value['securityProfileSettings']),
-    redirectUriStrictMatching: value['redirectUriStrictMatching'],
-    postLogoutRedirectUris: value['postLogoutRedirectUris'],
-    requestUris: value['requestUris'],
-    cibaSettings: CIBASettingsToJSON(value['cibaSettings']),
+    clientRegistrationSettings: ClientRegistrationSettingsToJSON(value.clientRegistrationSettings),
+    securityProfileSettings: SecurityProfileSettingsToJSON(value.securityProfileSettings),
+    redirectUriStrictMatching: value.redirectUriStrictMatching,
+    postLogoutRedirectUris: value.postLogoutRedirectUris,
+    requestUris: value.requestUris,
+    cibaSettings: CIBASettingsToJSON(value.cibaSettings),
   };
 }

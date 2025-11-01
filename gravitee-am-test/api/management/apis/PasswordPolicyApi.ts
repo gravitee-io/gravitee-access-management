@@ -525,7 +525,7 @@ export class PasswordPolicyApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => Array.from(jsonValue).map(PasswordPolicyEntityFromJSON));
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(PasswordPolicyEntityFromJSON));
   }
 
   /**

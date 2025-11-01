@@ -1,4 +1,3 @@
-.openapi-generator-ignore
 apis/AlertsApi.ts
 apis/ApplicationApi.ts
 apis/AuditApi.ts
@@ -193,7 +192,6 @@ models/PatchSecurityProfileSettings.ts
 models/PatchStepUpAuthentication.ts
 models/PreviewRequest.ts
 models/PreviewResponse.ts
-models/ProtectedResource.ts
 models/ProtectedResourceFeature.ts
 models/ProtectedResourcePage.ts
 models/ProtectedResourcePrimaryData.ts
@@ -241,10 +239,7 @@ models/UpdateForm.ts
 models/UpdateGroup.ts
 models/UpdateI18nDictionary.ts
 models/UpdateIdentityProvider.ts
-models/UpdateMcpTool.ts
 models/UpdatePasswordPolicy.ts
-models/UpdateProtectedResource.ts
-models/UpdateProtectedResourceFeature.ts
 models/UpdateReporter.ts
 models/UpdateRole.ts
 models/UpdateScope.ts

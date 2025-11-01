@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -76,48 +76,39 @@ export interface ApplicationSAMLSettings {
   responseBinding?: string;
 }
 
-/**
- * Check if a given object implements the ApplicationSAMLSettings interface.
- */
-export function instanceOfApplicationSAMLSettings(value: object): value is ApplicationSAMLSettings {
-  return true;
-}
-
 export function ApplicationSAMLSettingsFromJSON(json: any): ApplicationSAMLSettings {
   return ApplicationSAMLSettingsFromJSONTyped(json, false);
 }
 
 export function ApplicationSAMLSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationSAMLSettings {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    entityId: json['entityId'] == null ? undefined : json['entityId'],
-    attributeConsumeServiceUrl: json['attributeConsumeServiceUrl'] == null ? undefined : json['attributeConsumeServiceUrl'],
-    singleLogoutServiceUrl: json['singleLogoutServiceUrl'] == null ? undefined : json['singleLogoutServiceUrl'],
-    certificate: json['certificate'] == null ? undefined : json['certificate'],
-    wantResponseSigned: json['wantResponseSigned'] == null ? undefined : json['wantResponseSigned'],
-    wantAssertionsSigned: json['wantAssertionsSigned'] == null ? undefined : json['wantAssertionsSigned'],
-    responseBinding: json['responseBinding'] == null ? undefined : json['responseBinding'],
+    entityId: !exists(json, 'entityId') ? undefined : json['entityId'],
+    attributeConsumeServiceUrl: !exists(json, 'attributeConsumeServiceUrl') ? undefined : json['attributeConsumeServiceUrl'],
+    singleLogoutServiceUrl: !exists(json, 'singleLogoutServiceUrl') ? undefined : json['singleLogoutServiceUrl'],
+    certificate: !exists(json, 'certificate') ? undefined : json['certificate'],
+    wantResponseSigned: !exists(json, 'wantResponseSigned') ? undefined : json['wantResponseSigned'],
+    wantAssertionsSigned: !exists(json, 'wantAssertionsSigned') ? undefined : json['wantAssertionsSigned'],
+    responseBinding: !exists(json, 'responseBinding') ? undefined : json['responseBinding'],
   };
 }
 
-export function ApplicationSAMLSettingsToJSON(json: any): ApplicationSAMLSettings {
-  return ApplicationSAMLSettingsToJSONTyped(json, false);
-}
-
-export function ApplicationSAMLSettingsToJSONTyped(value?: ApplicationSAMLSettings | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function ApplicationSAMLSettingsToJSON(value?: ApplicationSAMLSettings | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    entityId: value['entityId'],
-    attributeConsumeServiceUrl: value['attributeConsumeServiceUrl'],
-    singleLogoutServiceUrl: value['singleLogoutServiceUrl'],
-    certificate: value['certificate'],
-    wantResponseSigned: value['wantResponseSigned'],
-    wantAssertionsSigned: value['wantAssertionsSigned'],
-    responseBinding: value['responseBinding'],
+    entityId: value.entityId,
+    attributeConsumeServiceUrl: value.attributeConsumeServiceUrl,
+    singleLogoutServiceUrl: value.singleLogoutServiceUrl,
+    certificate: value.certificate,
+    wantResponseSigned: value.wantResponseSigned,
+    wantAssertionsSigned: value.wantAssertionsSigned,
+    responseBinding: value.responseBinding,
   };
 }

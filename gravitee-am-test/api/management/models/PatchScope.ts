@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { exists, mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,46 +70,37 @@ export interface PatchScope {
   parameterized?: boolean;
 }
 
-/**
- * Check if a given object implements the PatchScope interface.
- */
-export function instanceOfPatchScope(value: object): value is PatchScope {
-  return true;
-}
-
 export function PatchScopeFromJSON(json: any): PatchScope {
   return PatchScopeFromJSONTyped(json, false);
 }
 
 export function PatchScopeFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchScope {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    name: json['name'] == null ? undefined : json['name'],
-    description: json['description'] == null ? undefined : json['description'],
-    iconUri: json['iconUri'] == null ? undefined : json['iconUri'],
-    expiresIn: json['expiresIn'] == null ? undefined : json['expiresIn'],
-    discovery: json['discovery'] == null ? undefined : json['discovery'],
-    parameterized: json['parameterized'] == null ? undefined : json['parameterized'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    description: !exists(json, 'description') ? undefined : json['description'],
+    iconUri: !exists(json, 'iconUri') ? undefined : json['iconUri'],
+    expiresIn: !exists(json, 'expiresIn') ? undefined : json['expiresIn'],
+    discovery: !exists(json, 'discovery') ? undefined : json['discovery'],
+    parameterized: !exists(json, 'parameterized') ? undefined : json['parameterized'],
   };
 }
 
-export function PatchScopeToJSON(json: any): PatchScope {
-  return PatchScopeToJSONTyped(json, false);
-}
-
-export function PatchScopeToJSONTyped(value?: PatchScope | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function PatchScopeToJSON(value?: PatchScope | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    name: value['name'],
-    description: value['description'],
-    iconUri: value['iconUri'],
-    expiresIn: value['expiresIn'],
-    discovery: value['discovery'],
-    parameterized: value['parameterized'],
+    name: value.name,
+    description: value.description,
+    iconUri: value.iconUri,
+    expiresIn: value.expiresIn,
+    discovery: value.discovery,
+    parameterized: value.parameterized,
   };
 }

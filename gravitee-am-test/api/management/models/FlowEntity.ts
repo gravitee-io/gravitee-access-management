@@ -25,9 +25,8 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
-import type { Step } from './Step';
-import { StepFromJSON, StepFromJSONTyped, StepToJSON, StepToJSONTyped } from './Step';
+import { exists, mapValues } from '../runtime';
+import { Step, StepFromJSON, StepFromJSONTyped, StepToJSON } from './Step';
 
 /**
  *
@@ -111,59 +110,50 @@ export const FlowEntityTypeEnum = {
   RegistrationConfirmation: 'REGISTRATION_CONFIRMATION',
   Token: 'TOKEN',
   WebauthnRegister: 'WEBAUTHN_REGISTER',
+  MfaEnroll: 'MFA_ENROLLMENT',
   MfaChallenge: 'MFA_CHALLENGE',
-  MfaEnrollment: 'MFA_ENROLLMENT',
 } as const;
 export type FlowEntityTypeEnum = typeof FlowEntityTypeEnum[keyof typeof FlowEntityTypeEnum];
-
-/**
- * Check if a given object implements the FlowEntity interface.
- */
-export function instanceOfFlowEntity(value: object): value is FlowEntity {
-  return true;
-}
 
 export function FlowEntityFromJSON(json: any): FlowEntity {
   return FlowEntityFromJSONTyped(json, false);
 }
 
 export function FlowEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean): FlowEntity {
-  if (json == null) {
+  if (json === undefined || json === null) {
     return json;
   }
   return {
-    id: json['id'] == null ? undefined : json['id'],
-    name: json['name'] == null ? undefined : json['name'],
-    pre: json['pre'] == null ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
-    post: json['post'] == null ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
-    enabled: json['enabled'] == null ? undefined : json['enabled'],
-    type: json['type'] == null ? undefined : json['type'],
-    condition: json['condition'] == null ? undefined : json['condition'],
-    icon: json['icon'] == null ? undefined : json['icon'],
-    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
-    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    id: !exists(json, 'id') ? undefined : json['id'],
+    name: !exists(json, 'name') ? undefined : json['name'],
+    pre: !exists(json, 'pre') ? undefined : (json['pre'] as Array<any>).map(StepFromJSON),
+    post: !exists(json, 'post') ? undefined : (json['post'] as Array<any>).map(StepFromJSON),
+    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
+    type: !exists(json, 'type') ? undefined : json['type'],
+    condition: !exists(json, 'condition') ? undefined : json['condition'],
+    icon: !exists(json, 'icon') ? undefined : json['icon'],
+    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
+    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
   };
 }
 
-export function FlowEntityToJSON(json: any): FlowEntity {
-  return FlowEntityToJSONTyped(json, false);
-}
-
-export function FlowEntityToJSONTyped(value?: FlowEntity | null, ignoreDiscriminator: boolean = false): any {
-  if (value == null) {
-    return value;
+export function FlowEntityToJSON(value?: FlowEntity | null): any {
+  if (value === undefined) {
+    return undefined;
   }
-
+  if (value === null) {
+    return null;
+  }
   return {
-    id: value['id'],
-    name: value['name'],
-    pre: value['pre'] == null ? undefined : (value['pre'] as Array<any>).map(StepToJSON),
-    post: value['post'] == null ? undefined : (value['post'] as Array<any>).map(StepToJSON),
-    enabled: value['enabled'],
-    type: value['type'],
-    condition: value['condition'],
-    icon: value['icon'],
-    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    id: value.id,
+    name: value.name,
+    pre: value.pre === undefined ? undefined : (value.pre as Array<any>).map(StepToJSON),
+    post: value.post === undefined ? undefined : (value.post as Array<any>).map(StepToJSON),
+    enabled: value.enabled,
+    type: value.type,
+    condition: value.condition,
+    icon: value.icon,
+    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
+    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
   };
 }

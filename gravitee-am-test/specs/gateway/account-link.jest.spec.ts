@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {
   createDomain,
@@ -35,7 +34,6 @@ import { performGet } from '@gateway-commands/oauth-oidc-commands';
 import { delay } from '@utils-commands/misc';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
 
-global.fetch = fetch;
 jest.setTimeout(200000);
 
 let accessToken: string;
