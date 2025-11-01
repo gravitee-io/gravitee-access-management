@@ -20,47 +20,16 @@
   <h1>New MCP server</h1>
   <div class="gv-page-content" fxLayout="row">
     <form fxLayout="column">
-      <div class="gv-form-section">
-        <div class="gv-form-section-title">
-          <h5>MCP Server Settings</h5>
-          <mat-divider></mat-divider>
-        </div>
-        <div>
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Domain</mat-label>
-            <input matInput type="text" placeholder="Domain" name="domain" [value]="domain.name" disabled />
-            <mat-hint>MCP server's security domain.</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Name</mat-label>
-            <input matInput type="text" placeholder="Enter the MCP server's name" name="name" [(ngModel)]="newMcpServer.name" required />
-            <mat-hint>The MCP server's name</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>MCP Resource Identifier</mat-label>
-            <input
-              matInput
-              type="text"
-              placeholder="MCP Resource Identifier (e.g. https://banking.example.com)"
-              name="name"
-              [(ngModel)]="newMcpServer.resourceIdentifier"
-              required
-            />
-            <mat-hint>The canonical resource identifier of your MCP Server</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline" floatLabel="always">
-            <mat-label>Description</mat-label>
-            <textarea
-              matInput
-              type="text"
-              placeholder="Enter the MCP server description"
-              name="description"
-              [(ngModel)]="newMcpServer.description"
-            ></textarea>
-            <mat-hint>The MCP server's description</mat-hint>
-          </mat-form-field>
-        </div>
-      </div>
+      <app-mcp-server-settings
+        #settingsComponent
+        [domain]="domain"
+        [name]="newMcpServer.name"
+        [resourceIdentifier]="newMcpServer.resourceIdentifier"
+        [description]="newMcpServer.description"
+        [readonly]="false"
+        [domainId]="domain.id"
+        (onSettingsChange)="onSettingsChange($event)"
+      ></app-mcp-server-settings>
       <div class="gv-form-section">
         <div class="gv-form-section-title">
           <div class="tools-theme-container">
@@ -100,7 +69,7 @@
           </mat-form-field>
         </div>
       </div>
-      <button mat-raised-button class="create-button" color="primary" (click)="registerMcpServer()" [disabled]="!formValid()">
+      <button mat-raised-button class="create-button" color="primary" (click)="registerMcpServer()" [disabled]="!formValid() || !settingsComponent?.isFormValid()">
         Create
       </button>
     </form>

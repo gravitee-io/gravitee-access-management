@@ -59,6 +59,12 @@ export class DomainNewMcpServerComponent implements OnInit {
     this.scopes = this.route.snapshot.data['scopes'];
   }
 
+  onSettingsChange(settings: { name: string; resourceIdentifier: string; description: string }): void {
+    this.newMcpServer.name = settings.name;
+    this.newMcpServer.resourceIdentifier = settings.resourceIdentifier;
+    this.newMcpServer.description = settings.description;
+  }
+
   registerMcpServer(): void {
     this.service
       .create(this.domain.id, this.newMcpServer)

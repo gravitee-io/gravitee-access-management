@@ -46,6 +46,10 @@ export class ProtectedResourceService {
     return this.http.put<ProtectedResource>(this.baseURL + `${domainId}/protected-resources/${resourceId}`, protectedResource);
   }
 
+  patch(domainId: string, resourceId: string, patchProtectedResource: PatchProtectedResourceRequest): Observable<ProtectedResource> {
+    return this.http.patch<ProtectedResource>(this.baseURL + `${domainId}/protected-resources/${resourceId}`, patchProtectedResource);
+  }
+
   findById(domainId: string, id: string, type: ProtectedResourceType): Observable<ProtectedResource> {
     return this.http.get<ProtectedResource>(this.baseURL + `${domainId}/protected-resources/${id}?type=${type}`);
   }
@@ -107,4 +111,11 @@ export interface UpdateProtectedResourceRequest {
   resourceIdentifiers: string[];
   description?: string;
   features: ProtectedResourceFeature[];
+}
+
+export interface PatchProtectedResourceRequest {
+  name?: string;
+  description?: string;
+  resourceIdentifiers?: string[];
+  features?: ProtectedResourceFeature[];
 }
