@@ -34,6 +34,7 @@ import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.*;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
@@ -344,12 +345,21 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         }
 
         // Validate scopes exist in domain
+        // Note: scopeService.validateScope() returns Single.error(InvalidClientMetadataException) when invalid
+        // We need to catch it and convert to InvalidProtectedResourceException for consistency
         return scopeService.validateScope(domainId, allScopes)
                 .flatMapCompletable(valid -> {
                     if (!valid) {
                         return Completable.error(new InvalidProtectedResourceException("One or more scopes are not valid"));
                     }
                     return Completable.complete();
+                })
+                .onErrorResumeNext(ex -> {
+                    // Convert InvalidClientMetadataException from scope validation to InvalidProtectedResourceException
+                    if (ex instanceof InvalidClientMetadataException) {
+                        return Completable.error(new InvalidProtectedResourceException(ex.getMessage()));
+                    }
+                    return Completable.error(ex);
                 });
     }
 

@@ -34,6 +34,7 @@ import io.gravitee.am.model.McpTool;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.ClientAlreadyExistsException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
@@ -653,6 +654,98 @@ public class ProtectedResourceServiceImplTest {
         service.patch(domain, "resource-id", patchRequest, user)
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
+
+        // Verify validation was called but no update occurred
+        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
+        Mockito.verify(scopeService, Mockito.times(1)).validateScope(any(), any());
+        Mockito.verify(repository, Mockito.never()).update(any());
+        Mockito.verify(auditService, Mockito.never()).report(any());
+        Mockito.verify(eventService, Mockito.never()).create(any(), any());
+    }
+
+    @Test
+    public void shouldConvertInvalidClientMetadataExceptionToInvalidProtectedResourceExceptionOnPatch() {
+        // This test verifies that when scopeService.validateScope() throws InvalidClientMetadataException,
+        // it gets converted to InvalidProtectedResourceException (which returns 400 instead of potentially 500)
+        ProtectedResource existingResource = new ProtectedResource();
+        existingResource.setId("resource-id");
+        existingResource.setDomainId("domainId");
+        existingResource.setResourceIdentifiers(List.of("https://example.com"));
+        existingResource.setFeatures(new ArrayList<>());
+
+        UpdateMcpTool tool = new UpdateMcpTool();
+        tool.setKey("tool1");
+        tool.setDescription("Tool 1");
+        tool.setScopes(List.of("invalid_scope"));
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setName(Optional.of("Name"));
+        patchRequest.setResourceIdentifiers(Optional.of(List.of("https://example.com")));
+        patchRequest.setFeatures(Optional.of(List.of(tool)));
+
+        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        // Mock validateScope to throw InvalidClientMetadataException (actual behavior in production)
+        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(
+                Single.error(new InvalidClientMetadataException("scope invalid_scope is not valid.")));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        service.patch(domain, "resource-id", patchRequest, user)
+                .test()
+                .assertError(throwable -> {
+                    // Verify it was converted to InvalidProtectedResourceException
+                    return throwable instanceof InvalidProtectedResourceException &&
+                           throwable.getMessage().equals("scope invalid_scope is not valid.");
+                });
+
+        // Verify validation was called but no update occurred
+        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
+        Mockito.verify(scopeService, Mockito.times(1)).validateScope(any(), any());
+        Mockito.verify(repository, Mockito.never()).update(any());
+        Mockito.verify(auditService, Mockito.never()).report(any());
+        Mockito.verify(eventService, Mockito.never()).create(any(), any());
+    }
+
+    @Test
+    public void shouldConvertInvalidClientMetadataExceptionToInvalidProtectedResourceExceptionOnUpdate() {
+        // This test verifies that when scopeService.validateScope() throws InvalidClientMetadataException,
+        // it gets converted to InvalidProtectedResourceException (which returns 400 instead of potentially 500)
+        ProtectedResource existingResource = new ProtectedResource();
+        existingResource.setId("resource-id");
+        existingResource.setDomainId("domainId");
+        existingResource.setResourceIdentifiers(List.of("https://example.com"));
+        existingResource.setFeatures(new ArrayList<>());
+
+        UpdateMcpTool tool = new UpdateMcpTool();
+        tool.setKey("tool1");
+        tool.setDescription("Tool 1");
+        tool.setScopes(List.of("invalid_scope"));
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("Name");
+        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
+        updateRequest.setFeatures(List.of(tool));
+
+        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        // Mock validateScope to throw InvalidClientMetadataException (actual behavior in production)
+        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(
+                Single.error(new InvalidClientMetadataException("scope invalid_scope is not valid.")));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        service.update(domain, "resource-id", updateRequest, user)
+                .test()
+                .assertError(throwable -> {
+                    // Verify it was converted to InvalidProtectedResourceException
+                    return throwable instanceof InvalidProtectedResourceException &&
+                           throwable.getMessage().equals("scope invalid_scope is not valid.");
+                });
 
         // Verify validation was called but no update occurred
         Mockito.verify(repository, Mockito.times(1)).findById("resource-id");

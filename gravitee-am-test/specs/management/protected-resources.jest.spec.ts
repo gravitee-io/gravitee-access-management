@@ -1160,7 +1160,8 @@ describe('When patching protected resource', () => {
 
         await patchProtectedResource(domain.id, accessToken, created.id, patchRequest)
             .catch(err => {
-                // Permission check might happen before existence check
+                // TODO: Document expected behavior - Cross-domain access should return 403 (Forbidden) or 404 (Not Found)
+                // Permission check happens before existence check, so 403 is returned when permission fails
                 const status = (err as any).response?.status || (err as any).status;
                 expect([403, 404]).toContain(status);
             });
@@ -1347,10 +1348,8 @@ describe('When patching protected resource', () => {
 
         await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
             .catch(err => {
-                // TODO: Fix exception handling bug - Invalid scope should always return 400 (Bad Request)
-                // Currently sometimes returns 500 due to InvalidClientMetadataException propagation issue
-                // Expected behavior: InvalidClientMetadataException should map to 400, not 500
-                expect([400, 500]).toContain(err.response.status);
+                // Invalid scope should return 400 (Bad Request) - InvalidProtectedResourceException
+                expect(err.response.status).toEqual(400);
             });
     });
 
