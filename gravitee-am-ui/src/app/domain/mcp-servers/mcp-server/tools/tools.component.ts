@@ -46,6 +46,9 @@ interface ProtectedResourceFeatureWithScopes extends ProtectedResourceFeature {
 
 /**
  * Type for feature update request with all required fields.
+ * Note: We use ProtectedResourceFeatureType here instead of NewMcpToolTypeEnum
+ * because this is the frontend service layer type. NewMcpToolTypeEnum is the
+ * auto-generated API model type. Both resolve to 'MCP_TOOL' for tool features.
  */
 interface FeatureUpdateData {
   key: string;
@@ -108,7 +111,11 @@ export class DomainMcpServerToolsComponent implements OnInit {
   handleAdd(): void {
     this.newToolDialogFactory.openDialog({ scopes: this.domainScopes }, (result) => {
       if (!result.cancel) {
-        this.addTool(result);
+        this.addTool({
+          name: result.name,
+          description: result.description,
+          scopes: result.scopes,
+        });
       }
     });
   }
@@ -138,7 +145,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
       });
   }
 
-  private addTool(newTool: { name?: string; description?: string; scopes?: string[] }): void {
+  private addTool(newTool: { name: string; description?: string; scopes?: string[] }): void {
     // Trim the tool name and description
     const trimmedName = newTool.name?.trim();
     const trimmedDescription = newTool.description?.trim();
@@ -151,14 +158,8 @@ export class DomainMcpServerToolsComponent implements OnInit {
 
     // Add the new tool to the features list
     const updatedFeatures: FeatureUpdateData[] = [
-      ...this.protectedResource.features.map(
-        (f): FeatureUpdateData => ({
-          key: f.key,
-          description: f.description || '',
-          type: 'MCP_TOOL' as ProtectedResourceFeatureType,
-          scopes: (f as ProtectedResourceFeatureWithScopes).scopes,
-        }),
-      ),
+      // Cast existing features instead of recreating them
+      ...(this.protectedResource.features as ProtectedResourceFeatureWithScopes[]),
       {
         key: trimmedName,
         description: trimmedDescription || '',
@@ -196,22 +197,17 @@ export class DomainMcpServerToolsComponent implements OnInit {
   }
 
   private deleteTool(toolKey: string): void {
-    // Remove the tool from the features list
-    const updatedFeatures = this.protectedResource.features.filter((feature) => feature.key !== toolKey);
+    // Remove the tool from the features list and cast to the expected type
+    const updatedFeatures = this.protectedResource.features.filter(
+      (feature) => feature.key !== toolKey,
+    ) as ProtectedResourceFeatureWithScopes[];
 
-    // Map features to the update request format
+    // Create the update request
     const updateRequest: UpdateProtectedResourceRequest = {
       name: this.protectedResource.name,
       resourceIdentifiers: this.protectedResource.resourceIdentifiers,
       description: this.protectedResource.description,
-      features: updatedFeatures.map(
-        (f): FeatureUpdateData => ({
-          key: f.key,
-          description: f.description || '',
-          type: 'MCP_TOOL' as ProtectedResourceFeatureType,
-          scopes: (f as ProtectedResourceFeatureWithScopes).scopes,
-        }),
-      ),
+      features: updatedFeatures,
     };
 
     this.protectedResourceService
@@ -243,6 +239,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
     // Update the tool in the features list
     const updatedFeatures: FeatureUpdateData[] = this.protectedResource.features.map((feature): FeatureUpdateData => {
       if (feature.key === originalKey) {
+        // Return new object for the updated feature
         return {
           key: trimmedKey,
           description: trimmedDescription || '',
@@ -250,12 +247,8 @@ export class DomainMcpServerToolsComponent implements OnInit {
           scopes: updatedTool.scopes,
         };
       }
-      return {
-        key: feature.key,
-        description: feature.description || '',
-        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
-        scopes: (feature as ProtectedResourceFeatureWithScopes).scopes,
-      };
+      // For unchanged features, cast and return the existing object (no need to recreate)
+      return feature as ProtectedResourceFeatureWithScopes;
     });
 
     const updateRequest: UpdateProtectedResourceRequest = {

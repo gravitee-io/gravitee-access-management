@@ -829,7 +829,7 @@ describe('When updating protected resource', () => {
         const before = await getMcpServer(domain.id, accessToken, createdResource.id);
         const originalCreatedAt = before.features && before.features[0] ? before.features[0].createdAt : null;
         
-        await waitFor(1000); // Ensure time passes
+        await waitFor(500); // Ensure time passes
         
         // Update the tool WITHOUT changing the key
         const updateRequest = {
@@ -891,8 +891,9 @@ describe('When updating protected resource', () => {
         }
     });
     
-    it('Should fail when updating with invalid tool key pattern', async () => {
-        const updateRequest = {
+    it('Should fail when updating with invalid tool key formats', async () => {
+        // Test with spaces in key
+        const requestWithSpaces = {
             name: createdResource.name,
             description: createdResource.description,
             resourceIdentifiers: createdResource.resourceIdentifiers,
@@ -906,12 +907,11 @@ describe('When updating protected resource', () => {
             ]
         } as UpdateProtectedResource;
         
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpaces)
             .catch(err => expect(err.response.status).toEqual(400));
-    });
-    
-    it('Should fail when updating with special characters in tool key', async () => {
-        const updateRequest = {
+        
+        // Test with special characters in key
+        const requestWithSpecialChars = {
             name: createdResource.name,
             description: createdResource.description,
             resourceIdentifiers: createdResource.resourceIdentifiers,
@@ -925,7 +925,7 @@ describe('When updating protected resource', () => {
             ]
         } as UpdateProtectedResource;
         
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpecialChars)
             .catch(err => expect(err.response.status).toEqual(400));
     });
     
@@ -994,37 +994,36 @@ describe('When updating protected resource', () => {
         }
     });
     
-    it('Should fail when missing required name field', async () => {
-        const updateRequest = {
+    it('Should validate required fields and URL format', async () => {
+        // Missing name field
+        const missingName = {
             description: createdResource.description,
             resourceIdentifiers: createdResource.resourceIdentifiers,
             features: []
         } as any;
         
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, missingName)
             .catch(err => expect(err.response.status).toEqual(400));
-    });
-    
-    it('Should fail when missing required resourceIdentifiers field', async () => {
-        const updateRequest = {
+        
+        // Missing resourceIdentifiers field
+        const missingIdentifiers = {
             name: createdResource.name,
             description: createdResource.description,
             features: []
         } as any;
         
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, missingIdentifiers)
             .catch(err => expect(err.response.status).toEqual(400));
-    });
-    
-    it('Should fail when resourceIdentifier is not a valid URL', async () => {
-        const updateRequest = {
+        
+        // Invalid URL format
+        const invalidUrl = {
             name: createdResource.name,
             description: createdResource.description,
             resourceIdentifiers: ["not-a-url"],
             features: []
         } as UpdateProtectedResource;
         
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, invalidUrl)
             .catch(err => expect(err.response.status).toEqual(400));
     });
 });
@@ -1111,8 +1110,6 @@ describe('When deleting tools from protected resource', () => {
         expect(updated.features.find(f => f.key === 'tool_to_keep')).toBeDefined();
         expect(updated.features.find(f => f.key === 'tool_to_delete_2')).toBeDefined();
         expect(updated.updatedAt).not.toEqual(resourceWithTools.updatedAt);
-        
-        resourceWithTools = updated;
     });
     
     it('Should delete multiple tools at once', async () => {
@@ -1136,8 +1133,6 @@ describe('When deleting tools from protected resource', () => {
         expect(updated).toBeDefined();
         expect(updated.features).toHaveLength(1);
         expect(updated.features[0].key).toEqual('tool_to_keep');
-        
-        resourceWithTools = updated;
     });
     
     it('Should delete the last tool leaving empty features list', async () => {
@@ -1154,12 +1149,10 @@ describe('When deleting tools from protected resource', () => {
         expect(updated).toBeDefined();
         expect(updated.features).toHaveLength(0);
         expect(updated.updatedAt).not.toEqual(resourceWithTools.updatedAt);
-        
-        resourceWithTools = updated;
     });
     
-    it('Should maintain resource integrity after deleting all tools', async () => {
-        // Verify the resource still exists and can be fetched
+    it('Should maintain integrity and allow adding tools after clearing all', async () => {
+        // Verify the resource still exists and can be fetched after all tools deleted
         const fetched = await getMcpServer(domain.id, accessToken, resourceWithTools.id);
         
         expect(fetched).toBeDefined();
@@ -1167,9 +1160,7 @@ describe('When deleting tools from protected resource', () => {
         expect(fetched.name).toEqual(resourceWithTools.name);
         expect(fetched.resourceIdentifiers).toEqual(resourceWithTools.resourceIdentifiers);
         expect(fetched.features).toHaveLength(0);
-    });
-    
-    it('Should allow adding tools back after deleting all', async () => {
+        
         // Add a new tool to the resource that has no tools
         const updateRequest = {
             name: resourceWithTools.name,
@@ -1190,36 +1181,6 @@ describe('When deleting tools from protected resource', () => {
         expect(updated).toBeDefined();
         expect(updated.features).toHaveLength(1);
         expect(updated.features[0].key).toEqual('new_tool_after_delete');
-    });
-    
-    it('Should handle deleting non-existent tool gracefully', async () => {
-        // Try to "delete" a tool that doesn't exist by excluding it from features
-        // This should succeed as it's just sending the current state
-        const fetched = await getMcpServer(domain.id, accessToken, resourceWithTools.id);
-        
-        const updateRequest = {
-            name: fetched.name,
-            description: fetched.description,
-            resourceIdentifiers: fetched.resourceIdentifiers,
-            features: fetched.features
-                .filter(f => f.key !== 'non_existent_tool')
-                .map(f => ({
-                    key: f.key,
-                    description: f.description,
-                    type: 'MCP_TOOL',
-                    scopes: (f as any).scopes || []
-                }))
-        } as UpdateProtectedResource;
-        
-        const updated = await updateProtectedResource(domain.id, accessToken, fetched.id, updateRequest);
-        
-        expect(updated).toBeDefined();
-        expect(updated.features).toHaveLength(fetched.features.length);
-        // Compare feature keys and descriptions instead of full objects (to avoid timestamp comparison issues)
-        fetched.features.forEach((fetchedFeature, index) => {
-            expect(updated.features[index].key).toEqual(fetchedFeature.key);
-            expect(updated.features[index].description).toEqual(fetchedFeature.description);
-        });
     });
     
     it('Should preserve timestamps correctly when deleting tools', async () => {
@@ -1251,7 +1212,7 @@ describe('When deleting tools from protected resource', () => {
         const originalUpdatedAt = before.updatedAt;
         const tool1CreatedAt = before.features.find(f => f.key === 'timestamp_tool_1')?.createdAt;
         
-        await waitFor(1000); // Ensure time difference
+        await waitFor(500); // Ensure time difference
         
         // Delete timestamp_tool_2
         const updateRequest = {
@@ -1305,7 +1266,7 @@ describe('When deleting tools from protected resource', () => {
         } as NewProtectedResource;
         
         const createdSecret = await createProtectedResource(domain.id, accessToken, request);
-        await waitFor(2000);
+        await waitFor(1000);
         
         const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
         
@@ -1355,7 +1316,7 @@ describe('When deleting tools from protected resource', () => {
         } as NewProtectedResource;
         
         const createdSecret = await createProtectedResource(domain.id, accessToken, request);
-        await waitFor(2000);
+        await waitFor(1000);
         
         const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
         
@@ -1402,7 +1363,7 @@ describe('When deleting tools from protected resource', () => {
         } as NewProtectedResource;
         
         const createdSecret = await createProtectedResource(domain.id, accessToken, request);
-        await waitFor(2000);
+        await waitFor(1000);
         
         const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
         

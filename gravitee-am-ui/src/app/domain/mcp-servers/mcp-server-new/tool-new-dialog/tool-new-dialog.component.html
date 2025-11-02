@@ -18,7 +18,7 @@
 <div class="new-tool-container">
   <h3>{{ isEditMode ? 'Edit Tool' : 'Add New Tool' }}</h3>
   <span>{{ isEditMode ? 'Update the tool details and associated scopes.' : 'Configure the tool details and associated scopes.' }}</span>
-  <form fxLayout="column">
+  <form fxLayout="column" (keydown.enter)="$event.preventDefault(); isFormValid() && accept()">
     <mat-form-field appearance="outline" floatLabel="always">
       <mat-label>Tool Name</mat-label>
       <input matInput type="text" placeholder="Tool Name" name="toolName" [formControl]="toolNameCtrl" required />

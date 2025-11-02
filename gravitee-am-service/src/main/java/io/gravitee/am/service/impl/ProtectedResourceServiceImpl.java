@@ -48,6 +48,7 @@ import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,8 +120,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         var rawSecret = hasLength(newProtectedResource.getClientSecret()) ? newProtectedResource.getClientSecret() : SecureRandomString.generate();
 
         toCreate.setId(RandomString.generate());
-        toCreate.setName(newProtectedResource.getName() != null ? newProtectedResource.getName().trim() : null);
-        toCreate.setDescription(newProtectedResource.getDescription() != null ? newProtectedResource.getDescription().trim() : null);
+        toCreate.setName(StringUtils.trimToNull(newProtectedResource.getName()));
+        toCreate.setDescription(StringUtils.trimToNull(newProtectedResource.getDescription()));
         toCreate.setResourceIdentifiers(newProtectedResource.getResourceIdentifiers().stream().map(String::trim).map(String::toLowerCase).toList());
         toCreate.setClientId(hasLength(newProtectedResource.getClientId()) ? newProtectedResource.getClientId() : SecureRandomString.generate());
 
