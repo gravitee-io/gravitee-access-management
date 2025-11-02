@@ -58,12 +58,6 @@ export interface PatchClientRegistrationSettings {
   defaultScopes?: Array<string>;
   /**
    *
-   * @type {boolean}
-   * @memberof PatchClientRegistrationSettings
-   */
-  isAllowedScopesEnabled?: boolean;
-  /**
-   *
    * @type {Array<string>}
    * @memberof PatchClientRegistrationSettings
    */
@@ -74,6 +68,12 @@ export interface PatchClientRegistrationSettings {
    * @memberof PatchClientRegistrationSettings
    */
   allowRedirectUriParamsExpressionLanguage?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  openDynamicClientRegistrationEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -91,7 +91,25 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  openDynamicClientRegistrationEnabled?: boolean;
+  isDynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  isOpenDynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  isAllowedScopesEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof PatchClientRegistrationSettings
+   */
+  isClientTemplateEnabled?: boolean;
 }
 
 /**
@@ -114,15 +132,20 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
     allowHttpSchemeRedirectUri: json['allowHttpSchemeRedirectUri'] == null ? undefined : json['allowHttpSchemeRedirectUri'],
     allowWildCardRedirectUri: json['allowWildCardRedirectUri'] == null ? undefined : json['allowWildCardRedirectUri'],
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
-    isAllowedScopesEnabled: json['isAllowedScopesEnabled'] == null ? undefined : json['isAllowedScopesEnabled'],
     allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
     allowRedirectUriParamsExpressionLanguage:
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
+    openDynamicClientRegistrationEnabled:
+      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
     clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
-    openDynamicClientRegistrationEnabled:
-      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
+    isDynamicClientRegistrationEnabled:
+      json['isDynamicClientRegistrationEnabled'] == null ? undefined : json['isDynamicClientRegistrationEnabled'],
+    isOpenDynamicClientRegistrationEnabled:
+      json['isOpenDynamicClientRegistrationEnabled'] == null ? undefined : json['isOpenDynamicClientRegistrationEnabled'],
+    isAllowedScopesEnabled: json['isAllowedScopesEnabled'] == null ? undefined : json['isAllowedScopesEnabled'],
+    isClientTemplateEnabled: json['isClientTemplateEnabled'] == null ? undefined : json['isClientTemplateEnabled'],
   };
 }
 
@@ -143,11 +166,14 @@ export function PatchClientRegistrationSettingsToJSONTyped(
     allowHttpSchemeRedirectUri: value['allowHttpSchemeRedirectUri'],
     allowWildCardRedirectUri: value['allowWildCardRedirectUri'],
     defaultScopes: value['defaultScopes'],
-    isAllowedScopesEnabled: value['isAllowedScopesEnabled'],
     allowedScopes: value['allowedScopes'],
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
+    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
     clientTemplateEnabled: value['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
-    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
+    isDynamicClientRegistrationEnabled: value['isDynamicClientRegistrationEnabled'],
+    isOpenDynamicClientRegistrationEnabled: value['isOpenDynamicClientRegistrationEnabled'],
+    isAllowedScopesEnabled: value['isAllowedScopesEnabled'],
+    isClientTemplateEnabled: value['isClientTemplateEnabled'],
   };
 }
