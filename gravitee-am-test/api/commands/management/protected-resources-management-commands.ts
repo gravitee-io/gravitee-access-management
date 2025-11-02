@@ -15,14 +15,18 @@
  */
 
 import { getProtectedResourcesApi } from './service/utils';
-import { NewProtectedResource } from "@management-models/NewProtectedResource";
-import { UpdateProtectedResource } from "@management-models/UpdateProtectedResource";
-import {ProtectedResourcePrimaryData, ProtectedResourceSecret} from "@management-models/index";
-import {ProtectedResourcePage} from "@management-models/ProtectedResourcePage";
-import {PatchProtectedResource} from "@management-apis/ProtectedResourceApi";
+import { NewProtectedResource } from '@management-models/NewProtectedResource';
+import { UpdateProtectedResource } from '@management-models/UpdateProtectedResource';
+import { ProtectedResourcePrimaryData, ProtectedResourceSecret } from '@management-models/index';
+import { ProtectedResourcePage } from '@management-models/ProtectedResourcePage';
+import { PatchProtectedResource } from '@management-models/PatchProtectedResource';
 import { retryUntil } from '@utils-commands/retry';
 
-export const createProtectedResource = (domainId: string, accessToken: string, body: NewProtectedResource) : Promise<ProtectedResourceSecret> =>
+export const createProtectedResource = (
+  domainId: string,
+  accessToken: string,
+  body: NewProtectedResource,
+): Promise<ProtectedResourceSecret> =>
   getProtectedResourcesApi(accessToken).createProtectedResource({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -30,7 +34,12 @@ export const createProtectedResource = (domainId: string, accessToken: string, b
     newProtectedResource: body,
   });
 
-export const updateProtectedResource = (domainId: string, accessToken: string, resourceId: string, body: UpdateProtectedResource) : Promise<ProtectedResourcePrimaryData> =>
+export const updateProtectedResource = (
+  domainId: string,
+  accessToken: string,
+  resourceId: string,
+  body: UpdateProtectedResource,
+): Promise<ProtectedResourcePrimaryData> =>
   getProtectedResourcesApi(accessToken).updateProtectedResource({
     organizationId: process.env.AM_DEF_ORG_ID,
     environmentId: process.env.AM_DEF_ENV_ID,
@@ -43,7 +52,7 @@ export const patchProtectedResource = (
   domainId: string,
   accessToken: string,
   resourceId: string,
-  body: PatchProtectedResource
+  body: PatchProtectedResource,
 ): Promise<ProtectedResourcePrimaryData> =>
   getProtectedResourcesApi(accessToken).patchProtectedResource({
     organizationId: process.env.AM_DEF_ORG_ID,
@@ -53,7 +62,7 @@ export const patchProtectedResource = (
     patchProtectedResource: body,
   });
 
-export const getMcpServers = (domainId: string, accessToken: string, size = 10, page = 0, sort?: string) : Promise<ProtectedResourcePage> =>
+export const getMcpServers = (domainId: string, accessToken: string, size = 10, page = 0, sort?: string): Promise<ProtectedResourcePage> =>
   getProtectedResourcesApi(accessToken).listProtectedResources({
     organizationId: 'DEFAULT',
     environmentId: 'DEFAULT',
@@ -61,16 +70,16 @@ export const getMcpServers = (domainId: string, accessToken: string, size = 10, 
     size: size,
     page: page,
     type: 'MCP_SERVER',
-    sort: sort
+    sort: sort,
   });
 
-export const getMcpServer = (domainId: string, accessToken: string, id: string) : Promise<ProtectedResourcePrimaryData> =>
+export const getMcpServer = (domainId: string, accessToken: string, id: string): Promise<ProtectedResourcePrimaryData> =>
   getProtectedResourcesApi(accessToken).findProtectedResource({
-      organizationId: 'DEFAULT',
-      environmentId: 'DEFAULT',
-      domain: domainId,
-      protectedResource: id,
-      type: 'MCP_SERVER',
+    organizationId: 'DEFAULT',
+    environmentId: 'DEFAULT',
+    domain: domainId,
+    protectedResource: id,
+    type: 'MCP_SERVER',
   });
 
 export const deleteProtectedResource = (domainId: string, accessToken: string, id: string, type: string): Promise<void> =>
@@ -94,7 +103,7 @@ export const waitForProtectedResourceInList = async (
   domainId: string,
   accessToken: string,
   resourceId: string,
-  timeoutMillis: number = 10000
+  timeoutMillis: number = 10000,
 ): Promise<void> => {
   const start = Date.now();
   await retryUntil(
@@ -105,7 +114,7 @@ export const waitForProtectedResourceInList = async (
       intervalMillis: 250,
       onDone: () => console.log(`protected resource "${resourceId}" found in list after ${(Date.now() - start) / 1000}s`),
       onRetry: () => console.debug(`protected resource "${resourceId}" not found in list yet`),
-    }
+    },
   );
 };
 
@@ -121,7 +130,7 @@ export const waitForProtectedResourceRemovedFromList = async (
   domainId: string,
   accessToken: string,
   resourceId: string,
-  timeoutMillis: number = 10000
+  timeoutMillis: number = 10000,
 ): Promise<void> => {
   const start = Date.now();
   await retryUntil(
@@ -132,11 +141,6 @@ export const waitForProtectedResourceRemovedFromList = async (
       intervalMillis: 250,
       onDone: () => console.log(`protected resource "${resourceId}" removed from list after ${(Date.now() - start) / 1000}s`),
       onRetry: () => console.debug(`protected resource "${resourceId}" still in list`),
-    }
+    },
   );
 };
-
-
-
-
-

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { mapValues } from '../runtime';
+import { type McpToolFeature, McpToolFeatureFromJSONTyped, McpToolFeatureToJSON, McpToolFeatureToJSONTyped } from './McpToolFeature';
 /**
  * 
  * @export
@@ -37,7 +37,7 @@ export interface ProtectedResourceFeature {
      * @type {string}
      * @memberof ProtectedResourceFeature
      */
-    key?: string;
+    key: string;
     /**
      * 
      * @type {string}
@@ -49,14 +49,19 @@ export interface ProtectedResourceFeature {
      * @type {string}
      * @memberof ProtectedResourceFeature
      */
-    type?: ProtectedResourceFeatureTypeEnum;
+    type: ProtectedResourceFeatureTypeEnum;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ProtectedResourceFeature
      */
-    createdAt?: Date;
-    updatedAt?: Date;
+    createdAt?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ProtectedResourceFeature
+     */
+    updatedAt?: number;
 }
 
 
@@ -73,6 +78,8 @@ export type ProtectedResourceFeatureTypeEnum = typeof ProtectedResourceFeatureTy
  * Check if a given object implements the ProtectedResourceFeature interface.
  */
 export function instanceOfProtectedResourceFeature(value: object): value is ProtectedResourceFeature {
+    if (!('key' in value) || value['key'] === undefined) return false;
+    if (!('type' in value) || value['type'] === undefined) return false;
     return true;
 }
 
@@ -84,13 +91,19 @@ export function ProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscrimin
     if (json == null) {
         return json;
     }
+    if (!ignoreDiscriminator) {
+        if (json['type'] === 'MCP_TOOL' || json['type'] === 'mcp_tool') {
+            return McpToolFeatureFromJSONTyped(json, ignoreDiscriminator);
+        }
+
+    }
     return {
         
-        'key': json['key'] == null ? undefined : json['key'],
+        'key': json['key'],
         'description': json['description'] == null ? undefined : json['description'],
-        'type': json['type'] == null ? undefined : json['type'],
-        'createdAt': json['createdAt'] == null ? undefined : (new Date(json['createdAt'])),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'type': json['type'],
+        'createdAt': json['createdAt'] == null ? undefined : json['createdAt'],
+        'updatedAt': json['updatedAt'] == null ? undefined : json['updatedAt'],
     };
 }
 
@@ -103,12 +116,21 @@ export function ProtectedResourceFeatureToJSONTyped(value?: ProtectedResourceFea
         return value;
     }
 
+    if (!ignoreDiscriminator) {
+        switch (value['type']) {
+            case 'MCP_TOOL':
+                return McpToolFeatureToJSONTyped(value as McpToolFeature, ignoreDiscriminator);
+            default:
+                return value;
+        }
+    }
+
     return {
         
         'key': value['key'],
         'description': value['description'],
         'type': value['type'],
-        'createdAt': value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
-        'updatedAt': value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+        'createdAt': value['createdAt'],
+        'updatedAt': value['updatedAt'],
     };
 }

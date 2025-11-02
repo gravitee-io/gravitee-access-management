@@ -51,15 +51,24 @@ export interface NewProtectedResourceFeature {
      * @type {string}
      * @memberof NewProtectedResourceFeature
      */
-    type: string;
+    type?: NewProtectedResourceFeatureTypeEnum;
 }
+
+
+/**
+ * @export
+ */
+export const NewProtectedResourceFeatureTypeEnum = {
+    McpTool: 'MCP_TOOL'
+} as const;
+export type NewProtectedResourceFeatureTypeEnum = typeof NewProtectedResourceFeatureTypeEnum[keyof typeof NewProtectedResourceFeatureTypeEnum];
+
 
 /**
  * Check if a given object implements the NewProtectedResourceFeature interface.
  */
 export function instanceOfNewProtectedResourceFeature(value: object): value is NewProtectedResourceFeature {
     if (!('key' in value) || value['key'] === undefined) return false;
-    if (!('type' in value) || value['type'] === undefined) return false;
     return true;
 }
 
@@ -72,15 +81,16 @@ export function NewProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscri
         return json;
     }
     if (!ignoreDiscriminator) {
-        if (json['type'] === 'NewMcpTool') {
+        if (json['type'] === 'MCP_TOOL') {
             return NewMcpToolFromJSONTyped(json, ignoreDiscriminator);
         }
+
     }
     return {
         
         'key': json['key'],
         'description': json['description'] == null ? undefined : json['description'],
-        'type': json['type'],
+        'type': json['type'] == null ? undefined : json['type'],
     };
 }
 
@@ -95,7 +105,7 @@ export function NewProtectedResourceFeatureToJSONTyped(value?: NewProtectedResou
 
     if (!ignoreDiscriminator) {
         switch (value['type']) {
-            case 'NewMcpTool':
+            case 'MCP_TOOL':
                 return NewMcpToolToJSONTyped(value as NewMcpTool, ignoreDiscriminator);
             default:
                 return value;

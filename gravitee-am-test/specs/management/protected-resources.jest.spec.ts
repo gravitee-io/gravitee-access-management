@@ -21,6 +21,9 @@ import {Domain} from "@management-models/Domain";
 import {NewProtectedResource} from "@management-models/NewProtectedResource";
 import {UpdateProtectedResource} from "@management-models/UpdateProtectedResource";
 import {UpdateMcpTool} from "@management-models/UpdateMcpTool";
+import {NewMcpTool} from "@management-models/NewMcpTool";
+import {McpToolFeature} from "@management-models/McpToolFeature";
+import {ProtectedResourceFeature} from "@management-models/ProtectedResourceFeature";
 
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
 import { deleteDomain, setupDomainForTest, waitFor } from '@management-commands/domain-management-commands';
@@ -42,6 +45,10 @@ import { retryUntil } from '@utils-commands/retry';
 
 function generateValidProtectedResourceName(): string {
     return `test-${faker.datatype.number({min: 1000, max: 9999})}-${faker.helpers.slugify(faker.commerce.productName()).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+}
+
+function isMcpToolFeature(feature: ProtectedResourceFeature): feature is McpToolFeature {
+    return feature.type === 'MCP_TOOL' || feature.type === 'mcp_tool';
 }
 
 globalThis.fetch = fetch;
@@ -337,10 +344,10 @@ describe('When creating protected resource', () => {
             features: [
                 {
                     key: 'key',
-                    type: 'ABC'
+                    type: 'ABC' // Invalid feature type - intentionally testing validation
                 }
             ]
-        } as NewProtectedResource;
+        } as unknown as NewProtectedResource; // Type assertion needed to bypass TypeScript's enum validation for testing invalid data
 
         await createProtectedResource(domain.id, accessToken, request)
             .catch(err => expect(err.response.status).toEqual(400))
@@ -458,7 +465,7 @@ describe('When admin created bunch of Protected Resources', () => {
             } as NewProtectedResource;
             await createProtectedResource(domainTestSearch.id, accessToken, request);
         }
-    })
+    });
 
     it('Protected Resource page must not contain secret', async () => {
         const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0);
@@ -527,18 +534,16 @@ describe('When admin created bunch of Protected Resources', () => {
 
 describe('When updating protected resource', () => {
     let createdResource;
-    let testScope1;
-    let testScope2;
 
     beforeAll(async () => {
         // Create test scopes for validation
-        testScope1 = await createScope(domain.id, accessToken, {
+        await createScope(domain.id, accessToken, {
             key: 'test_scope_1',
             name: 'Test Scope 1',
             description: 'Test scope for protected resource updates'
         });
 
-        testScope2 = await createScope(domain.id, accessToken, {
+        await createScope(domain.id, accessToken, {
             key: 'test_scope_2',
             name: 'Test Scope 2',
             description: 'Another test scope'
@@ -553,10 +558,10 @@ describe('When updating protected resource', () => {
             features: [
                 {
                     key: 'original_tool',
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: 'Original tool description',
                     scopes: ['test_scope_1']
-                }
+                } as NewMcpTool
             ]
         } as NewProtectedResource;
 
@@ -582,7 +587,7 @@ describe('When updating protected resource', () => {
                 key: f.key,
                 description: f.description,
                 type: 'MCP_TOOL',
-                scopes: (f as any).scopes || []
+                scopes: isMcpToolFeature(f) ? f.scopes || [] : []
             }))
         } as UpdateProtectedResource;
 
@@ -640,12 +645,12 @@ describe('When updating protected resource', () => {
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
 
         expect(updated).toBeDefined();
-        const scopes = updated.features[0]['scopes'];
-        if (scopes) {
-            expect(scopes).toHaveLength(2);
-            expect(scopes).toContain('test_scope_1');
-            expect(scopes).toContain('test_scope_2');
-        }
+        expect(updated.features[0]).toBeDefined();
+        const firstFeature = updated.features[0] as McpToolFeature;
+        expect(firstFeature.type).toMatch(/^mcp_tool$/i);
+        expect(firstFeature.scopes).toHaveLength(2);
+        expect(firstFeature.scopes).toContain('test_scope_1');
+        expect(firstFeature.scopes).toContain('test_scope_2');
 
         createdResource = updated;
     });
@@ -715,7 +720,7 @@ describe('When updating protected resource', () => {
                 key: f.key,
                 description: f.description,
                 type: 'MCP_TOOL',
-                scopes: (f as any).scopes || []
+                scopes: isMcpToolFeature(f) ? f.scopes || [] : []
             }))
         } as UpdateProtectedResource;
 
@@ -791,7 +796,7 @@ describe('When updating protected resource', () => {
                 key: f.key,
                 description: f.description,
                 type: 'MCP_TOOL',
-                scopes: (f as any).scopes || []
+                scopes: isMcpToolFeature(f) ? f.scopes || [] : []
             }))
         } as UpdateProtectedResource;
 
@@ -808,7 +813,7 @@ describe('When updating protected resource', () => {
                 key: f.key,
                 description: f.description,
                 type: 'MCP_TOOL',
-                scopes: (f as any).scopes || []
+                scopes: isMcpToolFeature(f) ? f.scopes || [] : []
             }))
         } as UpdateProtectedResource;
 
@@ -821,7 +826,7 @@ describe('When updating protected resource', () => {
     it('Should preserve createdAt when updating existing tool (same key)', async () => {
         // Get the current tool's createdAt (key is 'updated_tool_name' from previous test)
         const before = await getMcpServer(domain.id, accessToken, createdResource.id);
-        const originalCreatedAt = before.features && before.features[0] ? before.features[0].createdAt : null;
+        const originalCreatedAt = before.features?.[0]?.createdAt ?? null;
 
         await waitFor(1000); // Ensure time passes
 
@@ -879,11 +884,8 @@ describe('When updating protected resource', () => {
         const newTool = updated.features.find(f => f.key === 'brand_new_tool');
         expect(newTool).toBeDefined();
         expect(newTool.createdAt).toBeDefined();
-        // TODO: Verify if updatedAt should always be present in the API response model
-        // If it should always be present, remove this conditional and assert it directly
-        if (newTool.updatedAt !== undefined) {
-            expect(newTool.updatedAt).toBeDefined();
-        }
+        // updatedAt should always be present for features (same as createdAt)
+        expect(newTool.updatedAt).toBeDefined();
     });
 
     it('Should fail when updating with invalid tool key pattern', async () => {
@@ -943,11 +945,10 @@ describe('When updating protected resource', () => {
 
         expect(updated).toBeDefined();
         expect(updated.features[0].key).toEqual('tool_no_scopes');
-        // TODO: Verify expected behavior for empty scopes - should they be undefined or empty array?
-        // Currently accepting both cases. If empty array is expected, assert scopes.length === 0
-        // If undefined is expected for empty scopes, assert scopes === undefined
-        const scopes = updated.features[0]['scopes'];
-        expect(scopes === undefined || scopes.length === 0).toBeTruthy();
+        expect(updated.features[0].type).toMatch(/^mcp_tool$/i);
+        const firstFeature = updated.features[0] as McpToolFeature;
+        expect(Array.isArray(firstFeature.scopes)).toBeTruthy();
+        expect(firstFeature.scopes?.length).toEqual(0);
     });
 
     it('Should update resource with multiple tools', async () => {
@@ -985,10 +986,11 @@ describe('When updating protected resource', () => {
         expect(updated.features[0].key).toEqual('tool_1');
         expect(updated.features[1].key).toEqual('tool_2');
         expect(updated.features[2].key).toEqual('tool_3');
-        const tool3Scopes = updated.features[2]['scopes'];
-        if (tool3Scopes) {
-            expect(tool3Scopes).toHaveLength(2);
-        }
+        const tool3Feature = updated.features[2] as McpToolFeature;
+        expect(tool3Feature.type).toMatch(/^mcp_tool$/i);
+        expect(tool3Feature.scopes).toHaveLength(2);
+        expect(tool3Feature.scopes).toContain('test_scope_1');
+        expect(tool3Feature.scopes).toContain('test_scope_2');
     });
 
     it('Should fail when missing required name field', async () => {
@@ -1028,18 +1030,16 @@ describe('When updating protected resource', () => {
 
 describe('When patching protected resource', () => {
     let createdResource;
-    let testScope1;
-    let testScope2;
 
     beforeAll(async () => {
         // Create test scopes for validation
-        testScope1 = await createScope(domain.id, accessToken, {
+        await createScope(domain.id, accessToken, {
             key: 'patch_scope_1',
             name: 'Patch Test Scope 1',
             description: 'Test scope for protected resource patches'
         });
 
-        testScope2 = await createScope(domain.id, accessToken, {
+        await createScope(domain.id, accessToken, {
             key: 'patch_scope_2',
             name: 'Patch Test Scope 2',
             description: 'Another test scope for patches'
@@ -1054,10 +1054,10 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'original_tool',
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: 'Original tool description',
                     scopes: ['patch_scope_1']
-                }
+                } as NewMcpTool
             ]
         } as NewProtectedResource;
 
@@ -1160,16 +1160,15 @@ describe('When patching protected resource', () => {
 
         await patchProtectedResource(domain.id, accessToken, created.id, patchRequest)
             .catch(err => {
-                // TODO: Document expected behavior - Cross-domain access should return 403 (Forbidden) or 404 (Not Found)
+                // Cross-domain access returns 403 (Forbidden) or 404 (Not Found)
                 // Permission check happens before existence check, so 403 is returned when permission fails
-                const status = (err as any).response?.status || (err as any).status;
-                expect([403, 404]).toContain(status);
+                expect([403, 404]).toContain(err.response.status);
             });
     });
 
     it('Should patch features only (update existing tool)', async () => {
         // Store original createdAt for comparison
-        const originalTool = createdResource.features?.find((f: any) => f.key === 'original_tool');
+        const originalTool = createdResource.features?.find(f => f.key === 'original_tool');
         const originalCreatedAt = originalTool?.createdAt;
         expect(originalCreatedAt).toBeDefined();
 
@@ -1177,10 +1176,10 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'original_tool',
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: 'Updated tool description',
                     scopes: ['patch_scope_1', 'patch_scope_2']
-                }
+                } as UpdateMcpTool
             ]
         };
 
@@ -1190,16 +1189,12 @@ describe('When patching protected resource', () => {
         expect(patched.features).toBeDefined();
         expect(patched.features).toHaveLength(1);
 
-        const updatedTool = patched.features[0];
+        const updatedTool = patched.features[0] as McpToolFeature;
         expect(updatedTool.key).toEqual('original_tool');
         expect(updatedTool.description).toEqual('Updated tool description');
-        // TODO: Verify if scopes should always be present in McpTool features
-        // Currently using (as any) because TypeScript model doesn't include scopes in ProtectedResourceFeature base type
-        // If scopes should always be present for MCP_TOOL type, update TypeScript model and remove conditional
-        const scopes = (updatedTool as any).scopes;
-        if (scopes !== undefined) {
-            expect(scopes).toEqual(['patch_scope_1', 'patch_scope_2']);
-        }
+        expect(updatedTool.type).toMatch(/^mcp_tool$/i);
+        expect(Array.isArray(updatedTool.scopes)).toBeTruthy();
+        expect(updatedTool.scopes).toEqual(['patch_scope_1', 'patch_scope_2']);
         expect(updatedTool.createdAt).toEqual(originalCreatedAt); // Preserved
         expect(updatedTool.updatedAt).toBeDefined();
         expect(updatedTool.updatedAt).not.toEqual(originalTool?.updatedAt || originalCreatedAt);
@@ -1208,7 +1203,7 @@ describe('When patching protected resource', () => {
     });
 
     it('Should patch features (add new tool)', async () => {
-        const existingTool = createdResource.features?.find((f: any) => f.key === 'original_tool');
+        const existingTool = createdResource.features?.find(f => f.key === 'original_tool');
         const existingToolCreatedAt = existingTool?.createdAt;
         expect(existingToolCreatedAt).toBeDefined();
         expect(existingTool).toBeDefined();
@@ -1217,16 +1212,16 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'original_tool',
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: existingTool.description || 'Updated tool description',
                     scopes: existingTool.scopes || ['patch_scope_1', 'patch_scope_2']
-                },
+                } as UpdateMcpTool,
                 {
                     key: 'new_tool',
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: 'New tool description',
                     scopes: ['patch_scope_2']
-                }
+                } as UpdateMcpTool
             ]
         };
 
@@ -1236,8 +1231,8 @@ describe('When patching protected resource', () => {
         expect(patched.features).toBeDefined();
         expect(patched.features).toHaveLength(2);
 
-        const originalToolAfter = patched.features.find((f: any) => f.key === 'original_tool');
-        const newTool = patched.features.find((f: any) => f.key === 'new_tool');
+        const originalToolAfter = patched.features.find(f => f.key === 'original_tool');
+        const newTool = patched.features.find(f => f.key === 'new_tool');
 
         expect(originalToolAfter).toBeDefined();
         expect(originalToolAfter?.createdAt).toEqual(existingToolCreatedAt); // Preserved
@@ -1245,13 +1240,10 @@ describe('When patching protected resource', () => {
         expect(newTool).toBeDefined();
         expect(newTool?.key).toEqual('new_tool');
         expect(newTool?.description).toEqual('New tool description');
-        // TODO: Verify if scopes should always be present in McpTool features
-        // Currently using (as any) because TypeScript model doesn't include scopes in ProtectedResourceFeature base type
-        // If scopes should always be present for MCP_TOOL type, update TypeScript model and remove conditional
-        const newToolScopes = (newTool as any).scopes;
-        if (newToolScopes !== undefined) {
-            expect(newToolScopes).toEqual(['patch_scope_2']);
-        }
+        expect(newTool?.type).toMatch(/^mcp_tool$/i);
+        const newToolFeature = newTool as McpToolFeature;
+        expect(Array.isArray(newToolFeature.scopes)).toBeTruthy();
+        expect(newToolFeature.scopes).toEqual(['patch_scope_2']);
         expect(newTool?.createdAt).toBeDefined();
         // New tool's createdAt should be recent (within last few seconds)
         const now = Date.now();
@@ -1267,11 +1259,11 @@ describe('When patching protected resource', () => {
             // Add a second tool if we don't have multiple tools
             const patchRequest = {
                 features: [
-                    ...(createdResource.features || []).map((f: any) => ({
+                    ...(createdResource.features || []).map(f => ({
                         key: f.key,
                         type: 'MCP_TOOL',
                         description: f.description || '',
-                        scopes: f.scopes || []
+                        scopes: isMcpToolFeature(f) ? f.scopes || [] : []
                     })),
                     {
                         key: 'new_tool',
@@ -1286,17 +1278,17 @@ describe('When patching protected resource', () => {
         // Verify we have multiple tools
         expect(createdResource.features?.length).toBeGreaterThan(1);
 
-        const toolToKeep = createdResource.features?.find((f: any) => f.key === 'new_tool');
+        const toolToKeep = createdResource.features?.find(f => f.key === 'new_tool');
         expect(toolToKeep).toBeDefined();
 
         const patchRequest = {
             features: [
                 {
                     key: 'new_tool',
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: toolToKeep?.description || 'New tool description',
                     scopes: toolToKeep?.scopes || ['patch_scope_2']
-                }
+                } as UpdateMcpTool
             ]
         };
 
@@ -1308,7 +1300,7 @@ describe('When patching protected resource', () => {
         expect(patched.features[0].key).toEqual('new_tool');
 
         // Verify original_tool is removed
-        const originalTool = patched.features.find((f: any) => f.key === 'original_tool');
+        const originalTool = patched.features.find(f => f.key === 'original_tool');
         expect(originalTool).toBeUndefined();
 
         createdResource = patched;
@@ -1319,14 +1311,14 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'tool1',
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: 'First tool'
-                },
+                } as UpdateMcpTool,
                 {
                     key: 'tool1', // Duplicate key
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: 'Second tool with same key'
-                }
+                } as UpdateMcpTool
             ]
         };
 
@@ -1339,10 +1331,10 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'tool_with_invalid_scope',
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: 'Tool with invalid scope',
                     scopes: ['invalid_scope_that_does_not_exist']
-                }
+                } as UpdateMcpTool
             ]
         };
 
@@ -1358,9 +1350,9 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'invalid key with spaces', // Invalid: contains spaces
-                    type: 'MCP_TOOL',
+                    type: 'MCP_TOOL' as const,
                     description: 'Tool with invalid key'
-                }
+                } as UpdateMcpTool
             ]
         };
 
@@ -1386,7 +1378,7 @@ describe('When deleting protected resource', () => {
         // Verify it no longer appears in list (poll until removed)
         await waitForProtectedResourceRemovedFromList(domain.id, accessToken, created.id);
         const page = await getMcpServers(domain.id, accessToken, 100, 0);
-        const exists = page.data.some((r: any) => r.id === created.id);
+        const exists = page.data.some(r => r.id === created.id);
         expect(exists).toBeFalsy();
     });
 
@@ -1404,10 +1396,9 @@ describe('When deleting protected resource', () => {
         // Try to delete from the wrong domain (no wait needed for management API operations)
         await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER')
             .catch(err => {
-                // TODO: Document expected behavior - Cross-domain access should return 403 (Forbidden) or 404 (Not Found)
+                // Cross-domain access returns 403 (Forbidden) or 404 (Not Found)
                 // Permission check happens before existence check, so 403 is returned when permission fails
-                const status = (err as any).response?.status || (err as any).status;
-                expect([403, 404]).toContain(status);
+                expect([403, 404]).toContain(err.response.status);
             });
     });
 
@@ -1441,12 +1432,12 @@ describe('When deleting protected resource', () => {
         // Verify resource is removed from list (poll until removed)
         await waitForProtectedResourceRemovedFromList(domain.id, accessToken, created.id);
         const page = await getMcpServers(domain.id, accessToken, 100, 0);
-        const exists = page.data.some((r: any) => r.id === created.id);
+        const exists = page.data.some(r => r.id === created.id);
         expect(exists).toBeFalsy();
 
         // Verify we cannot get it by ID (resource is completely deleted)
         await getMcpServer(domain.id, accessToken, created.id)
-            .catch(err => expect((err as any).response?.status || (err as any).status).toBe(404));
+            .catch(err => expect(err.response.status).toBe(404));
     });
 
     it('Should delete protected resources when domain is deleted', async () => {
@@ -1475,7 +1466,7 @@ describe('When deleting protected resource', () => {
         let page = await getMcpServers(testDomain.domain.id, accessToken, 100, 0);
         expect(page.data.length).toBeGreaterThanOrEqual(3);
         for (const resource of resources) {
-            expect(page.data.some((r: any) => r.id === resource.id)).toBeTruthy();
+            expect(page.data.some(r => r.id === resource.id)).toBeTruthy();
         }
 
         // Delete the domain (should cascade delete protected resources)
@@ -1485,8 +1476,7 @@ describe('When deleting protected resource', () => {
         // Since the domain is deleted, checkDomainExists will throw DomainNotFoundException (404)
         await getMcpServers(testDomain.domain.id, accessToken, 100, 0)
             .catch(err => {
-                const status = (err as any).response?.status || (err as any).status;
-                expect(status).toBe(404);
+                expect(err.response.status).toBe(404);
             });
     });
 

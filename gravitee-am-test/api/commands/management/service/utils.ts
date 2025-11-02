@@ -33,7 +33,7 @@ import { DeviceIdentifiersApi } from '@management-apis/DeviceIdentifiersApi';
 import { PasswordPolicyApi } from '@management-apis/PasswordPolicyApi';
 import { ExtensionGrantApi } from '@management-apis/ExtensionGrantApi';
 import { BotDetectionApi } from '@management-apis/BotDetectionApi';
-import {ProtectedResourceApi} from "@management-apis/ProtectedResourceApi";
+import { ProtectedResourceApi } from '@management-apis/ProtectedResourceApi';
 
 function createAccessTokenConfig(accessToken) {
   return new Configuration({ ...managementConf, accessToken: accessToken });

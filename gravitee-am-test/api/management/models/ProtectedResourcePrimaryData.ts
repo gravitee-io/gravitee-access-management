@@ -84,10 +84,10 @@ export interface ProtectedResourcePrimaryData {
     features?: Array<ProtectedResourceFeature>;
     /**
      * 
-     * @type {Date}
+     * @type {number}
      * @memberof ProtectedResourcePrimaryData
      */
-    updatedAt?: Date;
+    updatedAt?: number;
 }
 
 
@@ -124,7 +124,7 @@ export function ProtectedResourcePrimaryDataFromJSONTyped(json: any, ignoreDiscr
         'type': json['type'] == null ? undefined : json['type'],
         'resourceIdentifiers': json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
         'features': json['features'] == null ? undefined : ((json['features'] as Array<any>).map(ProtectedResourceFeatureFromJSON)),
-        'updatedAt': json['updatedAt'] == null ? undefined : (new Date(json['updatedAt'])),
+        'updatedAt': json['updatedAt'] == null ? undefined : json['updatedAt'],
     };
 }
 
@@ -146,6 +146,6 @@ export function ProtectedResourcePrimaryDataToJSONTyped(value?: ProtectedResourc
         'type': value['type'],
         'resourceIdentifiers': value['resourceIdentifiers'],
         'features': value['features'] == null ? undefined : ((value['features'] as Array<any>).map(ProtectedResourceFeatureToJSON)),
-        'updatedAt': value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+        'updatedAt': value['updatedAt'],
     };
 }

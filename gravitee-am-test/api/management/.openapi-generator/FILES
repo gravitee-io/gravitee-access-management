@@ -121,6 +121,7 @@ models/JWK.ts
 models/JWKSet.ts
 models/LoginSettings.ts
 models/MFASettings.ts
+models/McpToolFeature.ts
 models/Membership.ts
 models/MembershipListItem.ts
 models/ModifiedCertificateEntity.ts
@@ -185,6 +186,7 @@ models/PatchMFASettings.ts
 models/PatchOIDCSettings.ts
 models/PatchOrganization.ts
 models/PatchPasswordSettings.ts
+models/PatchProtectedResource.ts
 models/PatchRememberDeviceSettings.ts
 models/PatchSAMLSettings.ts
 models/PatchScope.ts
@@ -239,7 +241,10 @@ models/UpdateForm.ts
 models/UpdateGroup.ts
 models/UpdateI18nDictionary.ts
 models/UpdateIdentityProvider.ts
+models/UpdateMcpTool.ts
 models/UpdatePasswordPolicy.ts
+models/UpdateProtectedResource.ts
+models/UpdateProtectedResourceFeature.ts
 models/UpdateReporter.ts
 models/UpdateRole.ts
 models/UpdateScope.ts

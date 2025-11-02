@@ -26,24 +26,24 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
-import type { NewProtectedResourceFeature } from './NewProtectedResourceFeature';
+import type { ProtectedResourceFeature } from './ProtectedResourceFeature';
 import {
-    NewProtectedResourceFeatureFromJSON,
-    NewProtectedResourceFeatureFromJSONTyped,
-    NewProtectedResourceFeatureToJSON,
-    NewProtectedResourceFeatureToJSONTyped,
-} from './NewProtectedResourceFeature';
+    ProtectedResourceFeatureFromJSON,
+    ProtectedResourceFeatureFromJSONTyped,
+    ProtectedResourceFeatureToJSON,
+    ProtectedResourceFeatureToJSONTyped,
+} from './ProtectedResourceFeature';
 
 /**
  * 
  * @export
- * @interface NewMcpTool
+ * @interface McpToolFeature
  */
-export interface NewMcpTool extends NewProtectedResourceFeature {
+export interface McpToolFeature extends ProtectedResourceFeature {
     /**
      * 
      * @type {Array<string>}
-     * @memberof NewMcpTool
+     * @memberof McpToolFeature
      */
     scopes?: Array<string>;
 }
@@ -51,37 +51,37 @@ export interface NewMcpTool extends NewProtectedResourceFeature {
 
 
 /**
- * Check if a given object implements the NewMcpTool interface.
+ * Check if a given object implements the McpToolFeature interface.
  */
-export function instanceOfNewMcpTool(value: object): value is NewMcpTool {
+export function instanceOfMcpToolFeature(value: object): value is McpToolFeature {
     return true;
 }
 
-export function NewMcpToolFromJSON(json: any): NewMcpTool {
-    return NewMcpToolFromJSONTyped(json, false);
+export function McpToolFeatureFromJSON(json: any): McpToolFeature {
+    return McpToolFeatureFromJSONTyped(json, false);
 }
 
-export function NewMcpToolFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewMcpTool {
+export function McpToolFeatureFromJSONTyped(json: any, ignoreDiscriminator: boolean): McpToolFeature {
     if (json == null) {
         return json;
     }
     if (!ignoreDiscriminator) {
-        if (json['type'] === 'MCP_TOOL') {
-            return NewMcpToolFromJSONTyped(json, true);
+        if (json['type'] === 'MCP_TOOL' || json['type'] === 'mcp_tool') {
+            return McpToolFeatureFromJSONTyped(json, true);
         }
 
     }
     return {
-        ...NewProtectedResourceFeatureFromJSONTyped(json, true),
+        ...ProtectedResourceFeatureFromJSONTyped(json, true),
         'scopes': json['scopes'] == null ? undefined : json['scopes'],
     };
 }
 
-export function NewMcpToolToJSON(json: any): NewMcpTool {
-    return NewMcpToolToJSONTyped(json, false);
+export function McpToolFeatureToJSON(json: any): McpToolFeature {
+    return McpToolFeatureToJSONTyped(json, false);
 }
 
-export function NewMcpToolToJSONTyped(value?: NewMcpTool | null, ignoreDiscriminator: boolean = false): any {
+export function McpToolFeatureToJSONTyped(value?: McpToolFeature | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
@@ -94,7 +94,7 @@ export function NewMcpToolToJSONTyped(value?: NewMcpTool | null, ignoreDiscrimin
     }
 
     return {
-        ...NewProtectedResourceFeatureToJSONTyped(value, true),
+        ...ProtectedResourceFeatureToJSONTyped(value, true),
         'scopes': value['scopes'],
     };
 }

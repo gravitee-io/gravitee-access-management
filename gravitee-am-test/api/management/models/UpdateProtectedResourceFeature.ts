@@ -26,14 +26,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
-import type { UpdateMcpTool } from './UpdateMcpTool';
-import {
-    UpdateMcpToolFromJSON,
-    UpdateMcpToolFromJSONTyped,
-    UpdateMcpToolToJSON,
-    UpdateMcpToolToJSONTyped,
-} from './UpdateMcpTool';
 
+import { type UpdateMcpTool, UpdateMcpToolFromJSONTyped, UpdateMcpToolToJSON, UpdateMcpToolToJSONTyped } from './UpdateMcpTool';
 /**
  * 
  * @export
@@ -86,6 +80,12 @@ export function UpdateProtectedResourceFeatureFromJSONTyped(json: any, ignoreDis
     if (json == null) {
         return json;
     }
+    if (!ignoreDiscriminator) {
+        if (json['type'] === 'MCP_TOOL') {
+            return UpdateMcpToolFromJSONTyped(json, ignoreDiscriminator);
+        }
+
+    }
     return {
         
         'key': json['key'],
@@ -103,6 +103,15 @@ export function UpdateProtectedResourceFeatureToJSONTyped(value?: UpdateProtecte
         return value;
     }
 
+    if (!ignoreDiscriminator) {
+        switch (value['type']) {
+            case 'MCP_TOOL':
+                return UpdateMcpToolToJSONTyped(value as UpdateMcpTool, ignoreDiscriminator);
+            default:
+                return value;
+        }
+    }
+
     return {
         
         'key': value['key'],
@@ -110,4 +119,3 @@ export function UpdateProtectedResourceFeatureToJSONTyped(value?: UpdateProtecte
         'type': value['type'],
     };
 }
-

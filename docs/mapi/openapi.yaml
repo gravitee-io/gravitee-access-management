@@ -6196,47 +6196,6 @@ paths:
       responses:
         "200":
           description: Result of evaluating the password against the policy
-  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources:
-    post:
-      tags:
-      - protected-resource
-      - domain
-      summary: Create a Protected Resource definition
-      description: "User must have PROTECTED_RESOURCE[CREATE] permission on the specified\
-        \ domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment\
-        \ or PROTECTED_RESOURCE[CREATE] permission on the specified organization"
-      operationId: createProtectedResource
-      parameters:
-      - name: organizationId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: environmentId
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: domain
-        in: path
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NewProtectedResource"
-        required: true
-      responses:
-        "201":
-          description: Protected Resource successfully created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProtectedResourceSecret"
-        "500":
-          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}:
     delete:
       tags:
@@ -6279,6 +6238,258 @@ paths:
           description: Protected Resource not found
         "403":
           description: Forbidden
+        "500":
+          description: Internal server error
+    get:
+      tags:
+      - protected-resource
+      - domain
+      summary: Get a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[READ] permission on the specified\
+        \ resource or PROTECTED_RESOURCE[READ] permission on the specified domain\
+        \ or PROTECTED_RESOURCE[READ] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[READ] permission on the specified organization."
+      operationId: findProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [MCP_SERVER]
+      responses:
+        "200":
+          description: Protected Resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        "404":
+          description: Protected Resource not found
+        "500":
+          description: Internal server error
+    patch:
+      tags:
+      - protected-resource
+      - domain
+      summary: Patch a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified\
+        \ resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain\
+        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified organization."
+      operationId: patchProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchProtectedResource"
+        required: true
+      responses:
+        "200":
+          description: Protected Resource successfully patched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        "400":
+          description: Bad request
+        "404":
+          description: Protected Resource not found
+        "500":
+          description: Internal server error
+    put:
+      tags:
+      - protected-resource
+      - domain
+      summary: Update a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified\
+        \ resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain\
+        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified organization."
+      operationId: updateProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProtectedResource"
+        required: true
+      responses:
+        "200":
+          description: Protected Resource successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        "400":
+          description: Bad request
+        "404":
+          description: Protected Resource not found
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources:
+    get:
+      tags:
+      - protected-resource
+      - domain
+      summary: List registered protected resources for a security domain
+      description: "User must have the PROTECTED_RESOURCE[LIST] permission on the specified\
+        \ domain, environment or organization AND either PROTECTED_RESOURCE[READ]\
+        \ permission on each domain's protected resource or PROTECTED_RESOURCE[READ]\
+        \ permission on the specified domain or PROTECTED_RESOURCE[READ] permission\
+        \ on the specified environment or PROTECTED_RESOURCE[READ] permission on\
+        \ the specified organization. Each returned protected resource is filtered\
+        \ and contains only basic information such as id, name, description and isEnabled."
+      operationId: listProtectedResources
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [MCP_SERVER]
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        schema:
+          maximum: 1000
+          minimum: 1
+          type: integer
+          format: int32
+          default: 50
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: updatedAt.desc
+      responses:
+        "200":
+          description: List registered protected resources for a security domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourcePage"
+        "500":
+          description: Internal server error
+    post:
+      tags:
+      - protected-resource
+      - domain
+      summary: Create a Protected Resource definition
+      description: "User must have PROTECTED_RESOURCE[CREATE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[CREATE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[CREATE] permission on the specified organization"
+      operationId: createProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewProtectedResource"
+        required: true
+      responses:
+        "201":
+          description: Protected Resource successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourceSecret"
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters:
@@ -13540,6 +13751,7 @@ components:
       properties:
         name:
           minLength: 1
+          pattern: ^[a-zA-Z0-9_-]+$
           type: string
         description:
           type: string
@@ -13547,6 +13759,7 @@ components:
           minItems: 1
           type: array
           items:
+            format: uri
             minLength: 1
             type: string
         clientId:
@@ -13557,6 +13770,10 @@ components:
           minLength: 1
           pattern: ^MCP_SERVER$
           type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewProtectedResourceFeature"
     NewReporter:
       required:
       - configuration
@@ -14862,6 +15079,170 @@ components:
           type: string
         clientSecret:
           type: string
+    ProtectedResourcePrimaryData:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [MCP_SERVER]
+        resourceIdentifiers:
+          type: array
+          items:
+            type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectedResourceFeature"
+        updatedAt:
+          type: integer
+          format: int64
+    ProtectedResourcePage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        currentPage:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
+    ProtectedResourceFeature:
+      type: object
+      required:
+      - key
+      - type
+      discriminator:
+        propertyName: type
+        mapping:
+          MCP_TOOL: "#/components/schemas/McpToolFeature"
+      properties:
+        key:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [MCP_TOOL]
+        createdAt:
+          type: integer
+          format: int64
+        updatedAt:
+          type: integer
+          format: int64
+    McpToolFeature:
+      allOf:
+      - $ref: "#/components/schemas/ProtectedResourceFeature"
+      - type: object
+        properties:
+          scopes:
+            type: array
+            items:
+              type: string
+    PatchProtectedResource:
+      type: object
+      properties:
+        name:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        description:
+          type: string
+        resourceIdentifiers:
+          minItems: 1
+          type: array
+          items:
+            format: uri
+            minLength: 1
+            type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+    UpdateProtectedResource:
+      required:
+      - name
+      - resourceIdentifiers
+      type: object
+      properties:
+        name:
+          minLength: 1
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        description:
+          type: string
+        resourceIdentifiers:
+          minItems: 1
+          type: array
+          items:
+            format: uri
+            minLength: 1
+            type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+    UpdateProtectedResourceFeature:
+      type: object
+      required:
+      - key
+      discriminator:
+        propertyName: type
+        mapping:
+          MCP_TOOL: "#/components/schemas/UpdateMcpTool"
+      properties:
+        key:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [MCP_TOOL]
+    UpdateMcpTool:
+      allOf:
+      - $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+      - type: object
+        properties:
+          scopes:
+            type: array
+            items:
+              type: string
+    NewProtectedResourceFeature:
+      type: object
+      required:
+      - key
+      discriminator:
+        propertyName: type
+        mapping:
+          MCP_TOOL: "#/components/schemas/NewMcpTool"
+      properties:
+        key:
+          pattern: ^[a-zA-Z0-9_-]+$
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [MCP_TOOL]
+    NewMcpTool:
+      allOf:
+      - $ref: "#/components/schemas/NewProtectedResourceFeature"
+      - type: object
+        properties:
+          scopes:
+            type: array
+            items:
+              type: string
     Reference:
       type: object
       properties:

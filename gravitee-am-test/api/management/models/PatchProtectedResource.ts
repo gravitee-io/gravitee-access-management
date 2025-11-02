@@ -37,66 +37,64 @@ import {
 /**
  * 
  * @export
- * @interface UpdateProtectedResource
+ * @interface PatchProtectedResource
  */
-export interface UpdateProtectedResource {
+export interface PatchProtectedResource {
     /**
      * 
      * @type {string}
-     * @memberof UpdateProtectedResource
+     * @memberof PatchProtectedResource
      */
-    name: string;
+    name?: string;
     /**
      * 
      * @type {string}
-     * @memberof UpdateProtectedResource
+     * @memberof PatchProtectedResource
      */
     description?: string;
     /**
      * 
      * @type {Array<string>}
-     * @memberof UpdateProtectedResource
+     * @memberof PatchProtectedResource
      */
-    resourceIdentifiers: Array<string>;
+    resourceIdentifiers?: Array<string>;
     /**
      * 
      * @type {Array<UpdateProtectedResourceFeature>}
-     * @memberof UpdateProtectedResource
+     * @memberof PatchProtectedResource
      */
     features?: Array<UpdateProtectedResourceFeature>;
 }
 
 /**
- * Check if a given object implements the UpdateProtectedResource interface.
+ * Check if a given object implements the PatchProtectedResource interface.
  */
-export function instanceOfUpdateProtectedResource(value: object): value is UpdateProtectedResource {
-    if (!('name' in value) || value['name'] === undefined) return false;
-    if (!('resourceIdentifiers' in value) || value['resourceIdentifiers'] === undefined) return false;
+export function instanceOfPatchProtectedResource(value: object): value is PatchProtectedResource {
     return true;
 }
 
-export function UpdateProtectedResourceFromJSON(json: any): UpdateProtectedResource {
-    return UpdateProtectedResourceFromJSONTyped(json, false);
+export function PatchProtectedResourceFromJSON(json: any): PatchProtectedResource {
+    return PatchProtectedResourceFromJSONTyped(json, false);
 }
 
-export function UpdateProtectedResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateProtectedResource {
+export function PatchProtectedResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchProtectedResource {
     if (json == null) {
         return json;
     }
     return {
         
-        'name': json['name'],
+        'name': json['name'] == null ? undefined : json['name'],
         'description': json['description'] == null ? undefined : json['description'],
-        'resourceIdentifiers': json['resourceIdentifiers'],
+        'resourceIdentifiers': json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
         'features': json['features'] == null ? undefined : ((json['features'] as Array<any>).map(UpdateProtectedResourceFeatureFromJSON)),
     };
 }
 
-export function UpdateProtectedResourceToJSON(json: any): UpdateProtectedResource {
-    return UpdateProtectedResourceToJSONTyped(json, false);
+export function PatchProtectedResourceToJSON(json: any): PatchProtectedResource {
+    return PatchProtectedResourceToJSONTyped(json, false);
 }
 
-export function UpdateProtectedResourceToJSONTyped(value?: UpdateProtectedResource | null, ignoreDiscriminator: boolean = false): any {
+export function PatchProtectedResourceToJSONTyped(value?: PatchProtectedResource | null, ignoreDiscriminator: boolean = false): any {
     if (value == null) {
         return value;
     }
