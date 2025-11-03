@@ -90,7 +90,8 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
 
     @Override
     public Completable delete(String s) {
-        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, s)));
+        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, s)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
