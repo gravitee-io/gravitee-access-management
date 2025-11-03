@@ -48,7 +48,7 @@ echo "[INFO] OpenAPI Generator Version:"
 npx @openapitools/openapi-generator-cli version
 
 echo "[INFO] OpenAPI Generator Setting Version:"
-npx @openapitools/openapi-generator-cli version-manager set 6.0.0
+npx @openapitools/openapi-generator-cli version-manager set 7.16.0
 
 echo "[INFO] output path will be: $SDK_OUTPUT_PATH"
 
