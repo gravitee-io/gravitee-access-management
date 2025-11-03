@@ -41,6 +41,7 @@ import io.gravitee.am.model.I18nDictionary;
 import io.gravitee.am.model.IdentityProvider;
 import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.Reference;
+import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Reporter;
 import io.gravitee.am.model.Role;
@@ -82,6 +83,7 @@ import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.ReporterService;
+import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ServiceResourceService;
@@ -326,6 +328,9 @@ public class DomainServiceTest {
 
     @Mock
     private ServiceResourceService serviceResourceService;
+
+    @Mock
+    private ProtectedResourceService protectedResourceService;
 
 
     @Test
@@ -1006,6 +1011,11 @@ public class DomainServiceTest {
 
     @Test
     public void shouldDelete() {
+        // protected resources
+        ProtectedResource protectedResource = new ProtectedResource();
+        protectedResource.setId("pr-1");
+        when(protectedResourceService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.just(protectedResource));
+        when(protectedResourceService.delete(any(Domain.class), eq("pr-1"), isNull(), any())).thenReturn(complete());
         Application mockApp1 = new Application();
         mockApp1.setId("client-1");
 
@@ -1123,6 +1133,7 @@ public class DomainServiceTest {
 
     @Test
     public void shouldDeleteWithoutRelatedData() {
+        when(protectedResourceService.findByDomain(DOMAIN_ID)).thenReturn(Flowable.empty());
         when(dataPlaneRegistry.getUserRepository(any())).thenReturn(userRepository);
         when(domainRepository.findById(DOMAIN_ID)).thenReturn(Maybe.just(domain));
         when(domainRepository.delete(DOMAIN_ID)).thenReturn(complete());
