@@ -425,13 +425,13 @@ export interface UserEntity {
    * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
-  lastIdentityInformation?: { [key: string]: any };
+  identitiesAsMap?: { [key: string]: any };
   /**
    *
-   * @type {{ [key: string]: any; }}
+   * @type {UserId}
    * @memberof UserEntity
    */
-  identitiesAsMap?: { [key: string]: any };
+  fullId?: UserId;
   /**
    *
    * @type {string}
@@ -476,10 +476,10 @@ export interface UserEntity {
   disabled?: boolean;
   /**
    *
-   * @type {UserId}
+   * @type {{ [key: string]: any; }}
    * @memberof UserEntity
    */
-  fullId?: UserId;
+  lastIdentityInformation?: { [key: string]: any };
 }
 
 /**
@@ -571,8 +571,8 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     address: json['address'] == null ? undefined : json['address'],
     locale: json['locale'] == null ? undefined : json['locale'],
     zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
-    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
     identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     middleName: json['middleName'] == null ? undefined : json['middleName'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
@@ -580,7 +580,7 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
+    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
   };
 }
 
@@ -657,8 +657,8 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     address: value['address'],
     locale: value['locale'],
     zoneInfo: value['zoneInfo'],
-    lastIdentityInformation: value['lastIdentityInformation'],
     identitiesAsMap: value['identitiesAsMap'],
+    fullId: UserIdToJSON(value['fullId']),
     middleName: value['middleName'],
     inactive: value['inactive'],
     profile: value['profile'],
@@ -666,6 +666,6 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     birthdate: value['birthdate'],
     phoneNumber: value['phoneNumber'],
     disabled: value['disabled'],
-    fullId: UserIdToJSON(value['fullId']),
+    lastIdentityInformation: value['lastIdentityInformation'],
   };
 }

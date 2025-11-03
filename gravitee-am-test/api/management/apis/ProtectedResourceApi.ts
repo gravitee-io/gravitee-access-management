@@ -55,6 +55,14 @@ export interface CreateProtectedResourceRequest {
   newProtectedResource: NewProtectedResource;
 }
 
+export interface DeleteProtectedResourceRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+  type?: string;
+}
+
 export interface FindProtectedResourceRequest {
   organizationId: string;
   environmentId: string;
@@ -73,20 +81,6 @@ export interface ListProtectedResourcesRequest {
   sort?: string;
 }
 
-<<<<<<< HEAD
-=======
-export interface DeleteProtectedResourceRequest {
-    organizationId: string;
-    environmentId: string;
-    domain: string;
-    protectedResource: string;
-    type?: string;
-}
-
-/**
- * 
- */
->>>>>>> origin/master
 export interface UpdateProtectedResourceRequest {
   organizationId: string;
   environmentId: string;
@@ -179,6 +173,86 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
+   * Delete a Protected Resource
+   */
+  async deleteProtectedResourceRaw(
+    requestParameters: DeleteProtectedResourceRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteProtectedResource.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteProtectedResource.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteProtectedResource.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling deleteProtectedResource.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    if (requestParameters.type !== undefined) {
+      queryParameters['type'] = requestParameters.type;
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
+   * Delete a Protected Resource
+   */
+  async deleteProtectedResource(
+    requestParameters: DeleteProtectedResourceRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteProtectedResourceRaw(requestParameters, initOverrides);
+  }
+
+  /**
    * User must have the PROTECTED_RESOURCE[READ] permission on the specified resource or PROTECTED_RESOURCE[READ] permission on the specified domain or PROTECTED_RESOURCE[READ] permission on the specified environment or PROTECTED_RESOURCE[READ] permission on the specified organization.
    * Get a Protected Resource
    */
@@ -214,7 +288,6 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
       );
     }
 
-<<<<<<< HEAD
     const queryParameters: any = {};
 
     if (requestParameters.type !== undefined) {
@@ -431,61 +504,4 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
     const response = await this.updateProtectedResourceRaw(requestParameters, initOverrides);
     return await response.value();
   }
-=======
-    /**
-     * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
-     * Delete a Protected Resource
-     */
-    async deleteProtectedResourceRaw(requestParameters: DeleteProtectedResourceRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-        if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-            throw new runtime.RequiredError('organizationId','Required parameter requestParameters.organizationId was null or undefined when calling deleteProtectedResource.');
-        }
-
-        if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-            throw new runtime.RequiredError('environmentId','Required parameter requestParameters.environmentId was null or undefined when calling deleteProtectedResource.');
-        }
-
-        if (requestParameters.domain === null || requestParameters.domain === undefined) {
-            throw new runtime.RequiredError('domain','Required parameter requestParameters.domain was null or undefined when calling deleteProtectedResource.');
-        }
-
-        if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
-            throw new runtime.RequiredError('protectedResource','Required parameter requestParameters.protectedResource was null or undefined when calling deleteProtectedResource.');
-        }
-
-        const queryParameters: any = {};
-
-        if (requestParameters.type !== undefined) {
-            queryParameters['type'] = requestParameters.type;
-        }
-
-        const headerParameters: runtime.HTTPHeaders = {};
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("gravitee-auth", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
-        const response = await this.request({
-            path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}`.replace(`{${"organizationId"}}`, encodeURIComponent(String(requestParameters.organizationId))).replace(`{${"environmentId"}}`, encodeURIComponent(String(requestParameters.environmentId))).replace(`{${"domain"}}`, encodeURIComponent(String(requestParameters.domain))).replace(`{${"protected-resource"}}`, encodeURIComponent(String(requestParameters.protectedResource))),
-            method: 'DELETE',
-            headers: headerParameters,
-            query: queryParameters,
-        }, initOverrides);
-
-        return new runtime.VoidApiResponse(response);
-    }
-
-    /**
-     * User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization.
-     * Delete a Protected Resource
-     */
-    async deleteProtectedResource(requestParameters: DeleteProtectedResourceRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-        await this.deleteProtectedResourceRaw(requestParameters, initOverrides);
-    }
-
->>>>>>> origin/master
 }
