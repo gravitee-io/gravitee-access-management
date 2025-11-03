@@ -549,8 +549,7 @@ describe('When updating protected resource', () => {
                 {
                     key: 'original_tool',
                     type: 'MCP_TOOL',
-                    description: 'Original tool description',
-                    scopes: ['test_scope_1']
+                    description: 'Original tool description'
                 }
             ]
         } as NewProtectedResource;

@@ -59,7 +59,7 @@ beforeAll(async () => {
         ],
       },
     },
-    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
+    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
   });
 
   const domainStarted = await startDomain(createdDomain.id, accessToken);

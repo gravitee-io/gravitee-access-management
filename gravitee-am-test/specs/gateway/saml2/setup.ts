@@ -212,7 +212,6 @@ async function createProviderApp(domain: Domain, clientDomain: Domain, accessTok
 
     // Call the common function with the specific settings
     return createTestApp(appName, domain, accessToken, 'web', {
-        clientId: clientId, // Pass the specific client ID here
         settings: providerSettings,
         identityProviders: new Set([{identity: idpId, priority: -1}]),
     });
