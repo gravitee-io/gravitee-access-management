@@ -17,11 +17,13 @@ package io.gravitee.am.gateway.handler.oauth2.service.granter.refresh;
 
 import io.gravitee.am.common.exception.oauth2.InvalidRequestException;
 import io.gravitee.am.common.jwt.JWT;
+import io.gravitee.am.common.jwt.OrigResourcesUtils;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.gateway.handler.common.auth.user.UserAuthenticationManager;
 import io.gravitee.am.gateway.handler.common.policy.RulesEngine;
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidGrantException;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.AbstractTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -50,6 +52,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class RefreshTokenGranter extends AbstractTokenGranter {
 
     private UserAuthenticationManager userAuthenticationManager;
+    private ResourceConsistencyValidationService resourceConsistencyValidationService;
 
     public RefreshTokenGranter() {
         super(GrantType.REFRESH_TOKEN);
@@ -58,12 +61,14 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
     public RefreshTokenGranter(TokenRequestResolver tokenRequestResolver,
                                TokenService tokenService,
                                UserAuthenticationManager userAuthenticationManager,
+                               ResourceConsistencyValidationService resourceConsistencyValidationService,
                                RulesEngine rulesEngine) {
         this();
         setTokenRequestResolver(tokenRequestResolver);
         setTokenService(tokenService);
         setRulesEngine(rulesEngine);
         this.userAuthenticationManager = userAuthenticationManager;
+        this.resourceConsistencyValidationService = resourceConsistencyValidationService;
     }
 
     @Override
@@ -76,7 +81,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
 
         return super.parseRequest(tokenRequest, client)
                 .flatMap(tokenRequest1 -> getTokenService().refresh(refreshToken, tokenRequest, client)
-                        .map(refreshToken1 -> {
+                        .flatMap(refreshToken1 -> {
                             // set resource owner
                             if (refreshToken1.getSubject() != null) {
                                 tokenRequest1.setSubject(refreshToken1.getSubject());
@@ -85,7 +90,7 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
                             // The requested scope MUST NOT include any scope
                             // not originally granted by the resource owner, and if omitted is
                             // treated as equal to the scope originally granted by the resource owner.
-                            final Set<String> originalScopes = (refreshToken1.getScope() != null ? new HashSet(Arrays.asList(refreshToken1.getScope().split("\\s+"))) : null);
+                            final Set<String> originalScopes = (refreshToken1.getScope() != null ? new HashSet<>(Arrays.asList(refreshToken1.getScope().split("\\s+"))) : null);
                             final Set<String> requestedScopes = tokenRequest1.getScopes();
                             if (requestedScopes == null || requestedScopes.isEmpty()) {
                                 tokenRequest1.setScopes(originalScopes);
@@ -98,7 +103,15 @@ public class RefreshTokenGranter extends AbstractTokenGranter {
                             }
                             // set decoded refresh token to the current request
                             tokenRequest1.setRefreshToken(refreshToken1.getAdditionalInformation());
-                            return tokenRequest1;
+                            
+                            Set<String> originalResources = OrigResourcesUtils.extractOrigResources(refreshToken1.getAdditionalInformation());
+                            
+                            // Resolve and validate final resources according to RFC 8707
+                            return Single.fromCallable(() -> {
+                                        Set<String> finalResources = resourceConsistencyValidationService.resolveFinalResources(tokenRequest1, originalResources);
+                                        tokenRequest1.setResources(finalResources);
+                                        return tokenRequest1;
+                                    });
                         }));
     }
 

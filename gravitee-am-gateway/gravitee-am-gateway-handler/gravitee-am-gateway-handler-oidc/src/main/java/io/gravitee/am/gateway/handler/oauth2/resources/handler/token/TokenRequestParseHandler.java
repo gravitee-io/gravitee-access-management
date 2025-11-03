@@ -52,7 +52,7 @@ public class TokenRequestParseHandler implements Handler<RoutingContext> {
         Set<String> requestParametersNames = requestParameters.names();
         requestParametersNames.forEach(requestParameterName -> {
             List<String> requestParameterValue = requestParameters.getAll(requestParameterName);
-            if (requestParameterValue.size() > 1) {
+            if (requestParameterValue.size() > 1 && !requestParameterName.equals(Parameters.RESOURCE)) {
                 throw new InvalidRequestException("Parameter [" + requestParameterName + "] is included more than once");
             }
         });

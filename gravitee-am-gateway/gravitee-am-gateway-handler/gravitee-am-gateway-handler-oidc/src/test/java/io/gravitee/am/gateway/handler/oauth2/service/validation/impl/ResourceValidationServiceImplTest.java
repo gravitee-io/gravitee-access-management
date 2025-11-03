@@ -1,0 +1,123 @@
+/**
+ * Copyright (C) 2015 The Gravitee team (http://gravitee.io)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *         http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.gravitee.am.gateway.handler.oauth2.service.validation.impl;
+
+import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResourceManager;
+import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
+import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
+import io.gravitee.am.model.ProtectedResource;
+import io.reactivex.rxjava3.observers.TestObserver;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
+public class ResourceValidationServiceImplTest {
+
+    @Mock
+    private ProtectedResourceManager protectedResourceManager;
+
+    private ResourceValidationServiceImpl service;
+
+    @Before
+    public void init() {
+        service = new ResourceValidationServiceImpl(protectedResourceManager);
+    }
+
+    @Test
+    public void shouldRejectUnknownResource_withInvalidTarget() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Set.of("https://api.example.com/unknown"));
+
+        when(protectedResourceManager.entities()).thenReturn(Collections.emptyList());
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertError(t -> t instanceof InvalidResourceException &&
+                ((InvalidResourceException) t).getOAuth2ErrorCode().equals("invalid_target"));
+    }
+
+    @Test
+    public void shouldAcceptKnownResource() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Set.of("https://api.example.com/photos"));
+
+        ProtectedResource known = new ProtectedResource();
+        known.setId("res-1");
+        known.setResourceIdentifiers(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
+
+        when(protectedResourceManager.entities()).thenReturn(List.of(known));
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldRejectWhenSomeResourcesUnknown() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Set.of("https://api.example.com/photos", "https://api.example.com/unknown"));
+
+        ProtectedResource known = new ProtectedResource();
+        known.setId("res-1");
+        known.setResourceIdentifiers(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
+
+        when(protectedResourceManager.entities()).thenReturn(List.of(known));
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertError(t -> t instanceof InvalidResourceException &&
+                ((InvalidResourceException) t).getOAuth2ErrorCode().equals("invalid_target"));
+    }
+
+    @Test
+    public void shouldPassWhenAllRequestedAreKnown() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Set.of("https://api.example.com/photos", "https://api.example.com/albums"));
+
+        ProtectedResource known = new ProtectedResource();
+        known.setId("res-1");
+        known.setResourceIdentifiers(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
+
+        when(protectedResourceManager.entities()).thenReturn(List.of(known));
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+
+    @Test
+    public void shouldPassWhenNoProtectedResourcesAndNoRequestedResources() {
+        AuthorizationRequest request = new AuthorizationRequest();
+        request.setResources(Collections.emptySet());
+
+        TestObserver<Void> observer = service.validate(request).test();
+        observer.awaitDone(1, TimeUnit.SECONDS);
+        observer.assertComplete();
+        observer.assertNoErrors();
+    }
+}
+
+

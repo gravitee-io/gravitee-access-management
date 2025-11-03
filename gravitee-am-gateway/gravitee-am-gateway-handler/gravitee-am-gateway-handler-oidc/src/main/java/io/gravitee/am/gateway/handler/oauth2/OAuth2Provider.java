@@ -59,6 +59,9 @@ import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.con
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.authorization.consent.UserConsentProcessHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.risk.RiskAssessmentHandler;
 import io.gravitee.am.gateway.handler.oauth2.resources.handler.token.TokenRequestParseHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.AuthorizationRequestResourceValidationHandler;
+import io.gravitee.am.gateway.handler.oauth2.resources.handler.validation.TokenRequestResourceValidationHandler;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.assertion.ClientAssertionService;
 import io.gravitee.am.gateway.handler.oauth2.service.consent.UserConsentService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.TokenGranter;
@@ -116,6 +119,9 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
     @Autowired
     private ProtectedResourceSyncService protectedResourceSyncService;
+
+    @Autowired
+    private ResourceValidationService resourceValidationService;
 
     @Autowired
     private ClientAssertionService clientAssertionService;
@@ -289,6 +295,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(new RiskAssessmentHandler(deviceService, userActivityService, vertx.eventBus(), objectMapper, domain))
                 .handler(authenticationFlowHandler.create())
                 .handler(new AuthorizationRequestResolveHandler(domain, scopeManager, protectedResourceManager, executionContextFactory))
+                .handler(new AuthorizationRequestResourceValidationHandler(resourceValidationService))
                 .handler(new AuthorizationRequestEndUserConsentHandler(userConsentService))
                 .handler(new AuthorizationRequestMFAPromptHandler())
                 .handler(new AuthorizationEndpoint(flow, thymeleafTemplateEngine, parService))
@@ -330,6 +337,7 @@ public class OAuth2Provider extends AbstractProtocolProvider {
                 .handler(corsHandler)
                 .handler(new TokenRequestParseHandler())
                 .handler(clientAuthHandler)
+                .handler(new TokenRequestResourceValidationHandler(resourceValidationService))
                 .handler(new TokenEndpoint(tokenGranter));
 
         // Introspection endpoint

@@ -30,6 +30,7 @@ import io.gravitee.am.gateway.handler.oauth2.service.granter.ciba.CibaTokenGrant
 import io.gravitee.am.gateway.handler.oauth2.service.granter.client.ClientCredentialsTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.code.AuthorizationCodeTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.password.ResourceOwnerPasswordCredentialsTokenGranter;
+import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceConsistencyValidationService;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.refresh.RefreshTokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.granter.uma.UMATokenGranter;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
@@ -112,6 +113,9 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
     @Autowired
     private SubjectManager subjectManager;
 
+    @Autowired
+    private ResourceConsistencyValidationService resourceConsistencyValidationService;
+
     @Override
     public Single<Token> grant(TokenRequest tokenRequest, Client client) {
         return findGranter(tokenRequest, client)
@@ -155,8 +159,8 @@ public class CompositeTokenGranter implements TokenGranter, InitializingBean {
         this.tokenRequestResolver.setManagers(this.scopeManager, this.protectedResourceManager);
         addTokenGranter(GrantType.CLIENT_CREDENTIALS, new ClientCredentialsTokenGranter(tokenRequestResolver, tokenService, rulesEngine));
         addTokenGranter(GrantType.PASSWORD, new ResourceOwnerPasswordCredentialsTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, rulesEngine));
-        addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, environment, rulesEngine));
-        addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, rulesEngine));
+        addTokenGranter(GrantType.AUTHORIZATION_CODE, new AuthorizationCodeTokenGranter(tokenRequestResolver, tokenService, authorizationCodeService, userAuthenticationManager, authenticationFlowContextService, resourceConsistencyValidationService, environment, rulesEngine));
+        addTokenGranter(GrantType.REFRESH_TOKEN, new RefreshTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, resourceConsistencyValidationService, rulesEngine));
         addTokenGranter(GrantType.UMA, new UMATokenGranter(tokenService, userAuthenticationManager, permissionTicketService, resourceService, jwtService, domain, executionContextFactory, rulesEngine, subjectManager));
         addTokenGranter(GrantType.CIBA_GRANT_TYPE, new CibaTokenGranter(tokenRequestResolver, tokenService, userAuthenticationManager, authenticationRequestService, domain, rulesEngine));
     }

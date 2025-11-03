@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.request;
 
+import java.util.List;
+
 import io.gravitee.am.common.oauth2.Parameters;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.gateway.handler.common.vertx.core.http.VertxHttpHeaders;
@@ -76,6 +78,9 @@ public final class TokenRequestFactory {
         String scope = request.params().get(Parameters.SCOPE);
         tokenRequest.setScopes(scope != null && !scope.isEmpty() ? new HashSet<>(Arrays.asList(scope.split("\\s+"))) : null);
         tokenRequest.setAdditionalParameters(extractAdditionalParameters(request));
+
+        // set RFC 8707 resource indicators
+        tokenRequest.setResources(ResourceParameterUtils.parseResourceParameters(request));
 
         return tokenRequest;
     }

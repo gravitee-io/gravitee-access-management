@@ -32,7 +32,7 @@ public class Page<T> {
     }
 
     public Page(Collection<T> data, int currentPage, long totalCount) {
-        this.data = List.copyOf(data);
+        this.data = data != null ? List.copyOf(data) : List.of();
         this.currentPage = currentPage;
         this.totalCount = totalCount;
     }
