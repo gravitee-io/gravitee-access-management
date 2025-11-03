@@ -20,6 +20,7 @@ import io.gravitee.am.common.event.Type;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Membership;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.application.ApplicationSecretSettings;
 import io.gravitee.am.model.application.ClientSecret;
@@ -31,18 +32,20 @@ import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.model.McpTool;
 import io.gravitee.am.model.ProtectedResource;
-import io.gravitee.am.model.ProtectedResourceFeature;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.exception.ClientAlreadyExistsException;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
+import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewProtectedResource;
 import io.gravitee.am.service.model.UpdateMcpTool;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.am.service.spring.application.ApplicationSecretConfig;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.subscribers.TestSubscriber;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -353,5 +356,122 @@ public class ProtectedResourceServiceImplTest {
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
 
         Mockito.verify(repository, Mockito.never()).update(any());
+    }
+
+    @Test
+    public void shouldDeleteProtectedResource() {
+        // existing resource
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("res-1");
+        resource.setDomainId("domainId");
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        Mockito.when(repository.findById("res-1")).thenReturn(Maybe.just(resource));
+        Mockito.when(repository.delete("res-1")).thenReturn(Completable.complete());
+        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        Mockito.when(membershipService.findByReference(eq("res-1"), eq(ReferenceType.APPLICATION)))
+                .thenReturn(Flowable.empty());
+
+        service.delete(domain, "res-1", null, user)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        Mockito.verify(repository, Mockito.times(1)).delete("res-1");
+        Mockito.verify(eventService, Mockito.times(1)).create(any(), eq(domain));
+        Mockito.verify(auditService, Mockito.times(1)).report(any());
+    }
+
+    @Test
+    public void shouldDeleteProtectedResource_cleansMemberships() {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId("res-2");
+        resource.setDomainId("domainId");
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        Mockito.when(repository.findById("res-2")).thenReturn(Maybe.just(resource));
+        Mockito.when(repository.delete("res-2")).thenReturn(Completable.complete());
+        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        Mockito.when(membershipService.findByReference(eq("res-2"), eq(ReferenceType.APPLICATION)))
+                .thenReturn(Flowable.just(new Membership()));
+        Mockito.when(membershipService.delete(any())).thenReturn(Completable.complete());
+
+        service.delete(domain, "res-2", null, user)
+                .test()
+                .assertComplete()
+                .assertNoErrors();
+
+        Mockito.verify(membershipService, Mockito.atLeastOnce()).delete(any());
+    }
+
+    @Test
+    public void shouldNotDeleteProtectedResourceWhenNotFound() {
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        Mockito.when(repository.findById("missing")).thenReturn(Maybe.empty());
+
+        service.delete(domain, "missing", null, user)
+                .test()
+                .assertError(throwable -> throwable instanceof ProtectedResourceNotFoundException);
+
+        Mockito.verify(repository, Mockito.never()).delete(any());
+    }
+
+    @Test
+    public void shouldFindByDomain() {
+        // given
+        String domainId = "domain-id";
+        ProtectedResource resource1 = new ProtectedResource();
+        resource1.setId("res-1");
+        resource1.setDomainId(domainId);
+        resource1.setName("Resource 1");
+
+        ProtectedResource resource2 = new ProtectedResource();
+        resource2.setId("res-2");
+        resource2.setDomainId(domainId);
+        resource2.setName("Resource 2");
+
+        Mockito.when(repository.findByDomain(domainId))
+                .thenReturn(Flowable.just(resource1, resource2));
+
+        // when
+        TestSubscriber<ProtectedResource> observer = service.findByDomain(domainId).test();
+
+        // then
+        observer.assertComplete();
+        observer.assertValueCount(2);
+        observer.assertValueAt(0, resource -> resource.getId().equals("res-1") && resource.getDomainId().equals(domainId));
+        observer.assertValueAt(1, resource -> resource.getId().equals("res-2") && resource.getDomainId().equals(domainId));
+        Mockito.verify(repository, Mockito.times(1)).findByDomain(domainId);
+    }
+
+    @Test
+    public void shouldHandleErrorOnFindByDomain() {
+        // given
+        String domainId = "domain-id";
+        RuntimeException repositoryError = new RuntimeException("Database error");
+
+        Mockito.when(repository.findByDomain(domainId))
+                .thenReturn(Flowable.error(repositoryError));
+
+        // when
+        TestSubscriber<ProtectedResource> observer = service.findByDomain(domainId).test();
+
+        // then
+        observer.assertError(TechnicalManagementException.class);
+        observer.assertError(throwable -> 
+            throwable.getMessage().contains("An error occurs while trying to find protected resources by domain " + domainId));
+        Mockito.verify(repository, Mockito.times(1)).findByDomain(domainId);
     }
 }

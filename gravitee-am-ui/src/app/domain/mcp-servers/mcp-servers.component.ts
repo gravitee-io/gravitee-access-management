@@ -16,8 +16,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SortType } from '@swimlane/ngx-datatable';
+import { filter, switchMap, tap } from 'rxjs/operators';
 
 import { Page, Sort } from '../../services/api.model';
+import { DialogService } from '../../services/dialog.service';
+import { SnackbarService } from '../../services/snackbar.service';
 
 import { McpServer, McpServersService } from './mcp-servers.service';
 
@@ -35,8 +38,10 @@ export class DomainMcpServersComponent implements OnInit {
   sort: Sort = { dir: 'desc', prop: 'updatedAt' };
 
   constructor(
-    private route: ActivatedRoute,
-    private service: McpServersService,
+    private readonly route: ActivatedRoute,
+    private readonly service: McpServersService,
+    private readonly dialogService: DialogService,
+    private readonly snackbarService: SnackbarService,
   ) {
     this.currentPage = 0;
     this.page = {
@@ -63,6 +68,21 @@ export class DomainMcpServersComponent implements OnInit {
   applySort(e: any) {
     this.sort = e.sorts[0];
     this.fetchData();
+  }
+
+  delete(id: string, event: Event): void {
+    event.preventDefault();
+    this.dialogService
+      .confirm('Delete MCP Server', 'Are you sure you want to delete this MCP server?')
+      .pipe(
+        filter((res) => res),
+        switchMap(() => this.service.delete(this.domainId, id)),
+        tap(() => {
+          this.snackbarService.open('MCP Server deleted');
+          this.fetchData();
+        }),
+      )
+      .subscribe();
   }
 
   get isEmpty(): boolean {

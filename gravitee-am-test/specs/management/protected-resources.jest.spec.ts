@@ -34,7 +34,7 @@ import { createScope } from '@management-commands/scope-management-commands';
 import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { testCryptData } from '../gateway/ext-grant-jwt-bearer.jest.spec';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
-import { found } from '@jridgewell/trace-mapping/src/binary-search';
+import { retryUntil } from '@utils-commands/retry';
 
 global.fetch = fetch;
 jest.setTimeout(200000);

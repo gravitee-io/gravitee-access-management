@@ -6297,6 +6297,7 @@ paths:
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}:
+<<<<<<< HEAD
     get:
       tags:
       - protected-resource
@@ -6307,6 +6308,15 @@ paths:
         \ domain or PROTECTED_RESOURCE[READ] permission on the specified environment\
         \ or PROTECTED_RESOURCE[READ] permission on the specified organization. "
       operationId: findProtectedResource
+=======
+    delete:
+      tags:
+      - protected-resource
+      - domain
+      summary: Delete a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization."
+      operationId: deleteProtectedResource
+>>>>>>> origin/master
       parameters:
       - name: organizationId
         in: path
@@ -6330,6 +6340,7 @@ paths:
           type: string
       - name: type
         in: query
+<<<<<<< HEAD
         schema:
           type: string
       responses:
@@ -6385,6 +6396,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProtectedResource"
+=======
+        required: true
+        schema:
+          type: string
+          enum: [MCP_SERVER]
+      responses:
+        "204":
+          description: Protected Resource successfully deleted
+        "404":
+          description: Protected Resource not found
+        "403":
+          description: Forbidden
+>>>>>>> origin/master
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters:
