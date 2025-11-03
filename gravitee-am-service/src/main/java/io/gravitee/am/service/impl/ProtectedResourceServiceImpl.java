@@ -196,8 +196,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
                     // Build the updated resource
                     ProtectedResource toUpdate = new ProtectedResource(oldProtectedResource);
-                    toUpdate.setName(updateProtectedResource.getName() != null ? updateProtectedResource.getName().trim() : null);
-                    toUpdate.setDescription(updateProtectedResource.getDescription() != null ? updateProtectedResource.getDescription().trim() : null);
+                    toUpdate.setName(StringUtils.trimToNull(updateProtectedResource.getName()));
+                    toUpdate.setDescription(StringUtils.trimToNull(updateProtectedResource.getDescription()));
                     toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers().stream()
                             .map(String::trim)
                             .map(String::toLowerCase)
