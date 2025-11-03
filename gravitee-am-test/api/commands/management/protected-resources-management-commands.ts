@@ -15,18 +15,11 @@
  */
 
 import { getProtectedResourcesApi } from './service/utils';
-<<<<<<< HEAD
 import { NewProtectedResource } from '@management-models/NewProtectedResource';
 import { UpdateProtectedResource } from '@management-models/UpdateProtectedResource';
 import { ProtectedResourcePrimaryData, ProtectedResourceSecret } from '@management-models/index';
 import { ProtectedResourcePage } from '@management-models/ProtectedResourcePage';
-=======
-import { NewProtectedResource } from "@management-models/NewProtectedResource";
-import { UpdateProtectedResource } from "@management-models/UpdateProtectedResource";
-import {ProtectedResourcePrimaryData, ProtectedResourceSecret} from "@management-models/index";
-import {ProtectedResourcePage} from "@management-models/ProtectedResourcePage";
 import { retryUntil } from '@utils-commands/retry';
->>>>>>> origin/master
 
 export const createProtectedResource = (
   domainId: string,
@@ -73,8 +66,6 @@ export const getMcpServer = (domainId: string, accessToken: string, id: string):
     protectedResource: id,
     type: 'MCP_SERVER',
   });
-<<<<<<< HEAD
-=======
 
 export const deleteProtectedResource = (domainId: string, accessToken: string, id: string, type: string): Promise<void> =>
   getProtectedResourcesApi(accessToken).deleteProtectedResource({
@@ -139,8 +130,3 @@ export const waitForProtectedResourceRemovedFromList = async (
   );
 };
 
-
-
-
-
->>>>>>> origin/master

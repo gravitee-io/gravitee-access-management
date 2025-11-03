@@ -231,8 +231,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to update protected resource %s", id), ex));
+                    return Single.error(ex);
                 });
     }
 

@@ -31,10 +31,8 @@ import { NewProtectedResource } from '@management-models/NewProtectedResource';
 import { UpdateProtectedResource } from '@management-models/UpdateProtectedResource';
 import { UpdateMcpTool } from '@management-models/UpdateMcpTool';
 import { createScope } from '@management-commands/scope-management-commands';
-import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
-import { testCryptData } from '../gateway/ext-grant-jwt-bearer.jest.spec';
+import {  performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
-import { retryUntil } from '@utils-commands/retry';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
