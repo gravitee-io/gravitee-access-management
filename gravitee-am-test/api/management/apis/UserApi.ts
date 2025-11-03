@@ -2118,7 +2118,7 @@ export class UserApi extends runtime.BaseAPI {
    * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
    * Get a user enrolled factors
    */
-  async list14(
+  async getUsersEnrolledFactors(
     requestParameters: List14Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<EnrolledFactorEntity>> {

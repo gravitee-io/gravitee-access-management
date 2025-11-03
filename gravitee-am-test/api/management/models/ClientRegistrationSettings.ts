@@ -117,11 +117,11 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
     allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
-    openDynamicClientRegistrationEnabled:
+    isOpenDynamicClientRegistrationEnabled:
       json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
     clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     allowedScopesEnabled: json['allowedScopesEnabled'] == null ? undefined : json['allowedScopesEnabled'],
-    dynamicClientRegistrationEnabled:
+    isDynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
   };
 }
@@ -134,7 +134,7 @@ export function ClientRegistrationSettingsToJSONTyped(
   value?: ClientRegistrationSettings | null,
   ignoreDiscriminator: boolean = false,
 ): any {
-  if (value == null) {
+  if (value == null) {1
     return value;
   }
 
@@ -145,9 +145,9 @@ export function ClientRegistrationSettingsToJSONTyped(
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: value['defaultScopes'],
     allowedScopes: value['allowedScopes'],
-    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
+    isOpenDynamicClientRegistrationEnabled: value['isOpenDynamicClientRegistrationEnabled'],
     clientTemplateEnabled: value['clientTemplateEnabled'],
     allowedScopesEnabled: value['allowedScopesEnabled'],
-    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
+    isDynamicClientRegistrationEnabled: value['isDynamicClientRegistrationEnabled'],
   };
 }
