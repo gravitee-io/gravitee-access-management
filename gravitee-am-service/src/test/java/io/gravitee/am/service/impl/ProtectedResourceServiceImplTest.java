@@ -874,4 +874,131 @@ public class ProtectedResourceServiceImplTest {
         Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiers(Mockito.anyString(), Mockito.anyList());
         Mockito.verify(repository, Mockito.never()).update(Mockito.any());
     }
+
+    @Test
+    public void shouldNotPatchProtectedResourceWhenResourceIdentifiersIsNull() {
+        // Test null-safety: patching with Optional.empty() resourceIdentifiers should fail
+        // SetterUtils.safeSet sets field to null when Optional.empty() is provided
+        ProtectedResource existingResource = new ProtectedResource();
+        existingResource.setId("resource-id");
+        existingResource.setDomainId("domainId");
+        existingResource.setResourceIdentifiers(List.of("https://example.com"));
+        existingResource.setFeatures(new ArrayList<>());
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setResourceIdentifiers(Optional.empty()); // This will set resourceIdentifiers to null after patching
+
+        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        // Create a patch that results in null resourceIdentifiers
+        // When Optional.empty() is used, SetterUtils.safeSet sets the field to null
+        service.patch(domain, "resource-id", patchRequest, user)
+                .test()
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
+                        throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
+
+        // Verify validation failed before any update
+        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
+        Mockito.verify(repository, Mockito.never()).update(any());
+        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotPatchProtectedResourceWhenResourceIdentifiersIsEmpty() {
+        // Test validation: patching with empty resourceIdentifiers list should fail
+        ProtectedResource existingResource = new ProtectedResource();
+        existingResource.setId("resource-id");
+        existingResource.setDomainId("domainId");
+        existingResource.setResourceIdentifiers(List.of("https://example.com"));
+        existingResource.setFeatures(new ArrayList<>());
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setResourceIdentifiers(Optional.of(new ArrayList<>())); // Empty list
+
+        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        service.patch(domain, "resource-id", patchRequest, user)
+                .test()
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
+                        throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
+
+        // Verify validation failed before any update
+        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
+        Mockito.verify(repository, Mockito.never()).update(any());
+        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateProtectedResourceWhenResourceIdentifiersIsNull() {
+        // Test null-safety: updating with null resourceIdentifiers should fail
+        ProtectedResource existingResource = new ProtectedResource();
+        existingResource.setId("resource-id");
+        existingResource.setDomainId("domainId");
+        existingResource.setResourceIdentifiers(List.of("https://example.com"));
+        existingResource.setFeatures(new ArrayList<>());
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("New Name");
+        updateRequest.setResourceIdentifiers(null); // Null list
+        updateRequest.setFeatures(new ArrayList<>());
+
+        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        service.update(domain, "resource-id", updateRequest, user)
+                .test()
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
+                        throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
+
+        // Verify validation failed before any update
+        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
+        Mockito.verify(repository, Mockito.never()).update(any());
+        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateProtectedResourceWhenResourceIdentifiersIsEmpty() {
+        // Test validation: updating with empty resourceIdentifiers list should fail
+        ProtectedResource existingResource = new ProtectedResource();
+        existingResource.setId("resource-id");
+        existingResource.setDomainId("domainId");
+        existingResource.setResourceIdentifiers(List.of("https://example.com"));
+        existingResource.setFeatures(new ArrayList<>());
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("New Name");
+        updateRequest.setResourceIdentifiers(new ArrayList<>()); // Empty list
+        updateRequest.setFeatures(new ArrayList<>());
+
+        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        service.update(domain, "resource-id", updateRequest, user)
+                .test()
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
+                        throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
+
+        // Verify validation failed before any update
+        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
+        Mockito.verify(repository, Mockito.never()).update(any());
+        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+    }
 }

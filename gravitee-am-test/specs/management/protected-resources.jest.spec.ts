@@ -61,10 +61,10 @@ let openIdConfiguration: any;
 
 beforeAll(async () => {
     accessToken = await requestAdminAccessToken();
-    const domainResult = await setupDomainForTest(uniqueName('domain-protected-resources'), { accessToken, waitForStart:true });
+    const domainResult = await setupDomainForTest(uniqueName('domain-protected-resources', true), { accessToken, waitForStart:true });
     domain = domainResult.domain;
     openIdConfiguration = domainResult.oidcConfig;
-    domainTestSearch = await setupDomainForTest(uniqueName('domain-protected-resources-search'), { accessToken, waitForStart:true}).then((it) => it.domain);
+    domainTestSearch = await setupDomainForTest(uniqueName('domain-protected-resources-search', true), { accessToken, waitForStart:true}).then((it) => it.domain);
 });
 
 afterAll(async () => {
@@ -790,8 +790,12 @@ describe('When updating protected resource', () => {
             features: []
         } as UpdateProtectedResource;
 
+        // Note: API checks permissions BEFORE checking if resource exists (security by design)
+        // If user lacks permission: 403 (Forbidden) - permission check fails first
+        // If user has permission but resource doesn't exist: 404 (Not Found) - would be returned after permission check passes
+        // In this test, we expect 403 because permission check happens before existence check
         await updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest)
-            .catch(err => expect(err.response.status).toEqual(403)); // 403 because permission check happens before existence check
+            .catch(err => expect(err.response.status).toEqual(403));
     });
 
     it('Should fail when updating with duplicate resource identifier', async () => {
@@ -1175,10 +1179,13 @@ describe('When patching protected resource', () => {
             name: "Test"
         };
 
+        // Note: API checks permissions BEFORE checking if resource belongs to domain (security by design)
+        // Expected behavior:
+        // - If user lacks permission on the resource/domain: 403 (Forbidden) - permission check fails first
+        // - If user has permission but resource belongs to another domain: 404 (Not Found) - returned after permission check passes
+        // We accept both status codes because the actual response depends on the test user's permission setup
         await patchProtectedResource(domain.id, accessToken, created.id, patchRequest)
             .catch(err => {
-                // Cross-domain access returns 403 (Forbidden) or 404 (Not Found)
-                // Permission check happens before existence check, so 403 is returned when permission fails
                 expect([403, 404]).toContain(err.response.status);
             });
     });
@@ -1410,11 +1417,13 @@ describe('When deleting protected resource', () => {
         const created = await createProtectedResource(domainTestSearch.id, accessToken, request);
         expect(created).toBeDefined();
 
-        // Try to delete from the wrong domain (no wait needed for management API operations)
+        // Note: API checks permissions BEFORE checking if resource belongs to domain (security by design)
+        // Expected behavior:
+        // - If user lacks permission on the resource/domain: 403 (Forbidden) - permission check fails first
+        // - If user has permission but resource belongs to another domain: 404 (Not Found) - returned after permission check passes
+        // We accept both status codes because the actual response depends on the test user's permission setup
         await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER')
             .catch(err => {
-                // Cross-domain access returns 403 (Forbidden) or 404 (Not Found)
-                // Permission check happens before existence check, so 403 is returned when permission fails
                 expect([403, 404]).toContain(err.response.status);
             });
     });

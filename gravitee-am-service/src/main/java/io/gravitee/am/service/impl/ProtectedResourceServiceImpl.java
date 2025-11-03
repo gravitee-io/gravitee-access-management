@@ -197,6 +197,11 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         return Single.error(new ProtectedResourceNotFoundException(id));
                     }
 
+                    // Validate input before building resource (defensive check - @NotEmpty should catch this at API layer)
+                    if (updateProtectedResource.getResourceIdentifiers() == null || updateProtectedResource.getResourceIdentifiers().isEmpty()) {
+                        return Single.error(new InvalidProtectedResourceException("Field [resourceIdentifiers] must not be empty"));
+                    }
+
                     // Build the updated resource
                     ProtectedResource toUpdate = new ProtectedResource(oldProtectedResource);
                     toUpdate.setName(updateProtectedResource.getName());
@@ -313,16 +318,19 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     private Completable validateResourceIdentifiersUniqueness(String domainId, String resourceId, 
                                                                List<String> oldIdentifiers, 
                                                                List<String> newIdentifiers) {
+        // A protected resource must have at least one identifier (enforced on create/update)
+        if (newIdentifiers == null || newIdentifiers.isEmpty()) {
+            return Completable.error(new InvalidProtectedResourceException("Field [resourceIdentifiers] must not be empty"));
+        }
+        
         // Check if identifiers changed (order-insensitive comparison)
         if (new HashSet<>(oldIdentifiers).equals(new HashSet<>(newIdentifiers))) {
             return Completable.complete();
         }
+        
         // Check all new identifiers for uniqueness against other resources (excluding current resource)
         // This ensures we catch cases where an identifier that was previously owned by this resource
         // has been taken by another resource in the meantime
-        if (newIdentifiers.isEmpty()) {
-            return Completable.complete();
-        }
         return repository.existsByResourceIdentifiersExcludingId(domainId, newIdentifiers, resourceId)
                 .flatMapCompletable(exists -> {
                     if(exists) {

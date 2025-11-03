@@ -101,7 +101,7 @@ async function setupTestEnvironment() {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const domain = await createDomain(accessToken, uniqueName(PROTECTED_RESOURCES_TEST.DOMAIN_NAME_PREFIX), PROTECTED_RESOURCES_TEST.DOMAIN_DESCRIPTION);
+  const domain = await createDomain(accessToken, uniqueName(PROTECTED_RESOURCES_TEST.DOMAIN_NAME_PREFIX, true), PROTECTED_RESOURCES_TEST.DOMAIN_DESCRIPTION);
   expect(domain).toBeDefined();
   expect(domain.id).toBeDefined();
 
@@ -192,9 +192,9 @@ async function createTestUser(domain: Domain, application: Application, defaultI
 
 async function createTestProtectedResources(domain: Domain, accessToken: string) {
   const resources = [
-    { name: 'Photos API', resourceIdentifiers: ['https://api.example.com/photos'], description: 'Photos API resource for testing', type: 'MCP_SERVER' },
-    { name: 'Albums API', resourceIdentifiers: ['https://api.example.com/albums'], description: 'Albums API resource for testing', type: 'MCP_SERVER' },
-    { name: 'Meta API', resourceIdentifiers: ['https://api.example.com/meta?foo=bar#frag'], description: 'Meta API with query/fragment', type: 'MCP_SERVER' },
+    { name: 'Photos_API', resourceIdentifiers: ['https://api.example.com/photos'], description: 'Photos API resource for testing', type: 'MCP_SERVER' },
+    { name: 'Albums_API', resourceIdentifiers: ['https://api.example.com/albums'], description: 'Albums API resource for testing', type: 'MCP_SERVER' },
+    { name: 'Meta_API', resourceIdentifiers: ['https://api.example.com/meta?foo=bar#frag'], description: 'Meta API with query/fragment', type: 'MCP_SERVER' },
   ];
   const protectedResources = [] as any[];
   for (const resource of resources) {
@@ -206,16 +206,23 @@ async function createTestProtectedResources(domain: Domain, accessToken: string)
 }
 
 export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourcesFixture> => {
-  const { domain, defaultIdp, accessToken } = await setupTestEnvironment();
-  const application = await createTestApplication(domain, defaultIdp, accessToken, PROTECTED_RESOURCES_TEST.REDIRECT_URI);
-  const serviceApplication = await createServiceApplication(domain, accessToken);
-  const user = await createTestUser(domain, application, defaultIdp, accessToken);
-  const protectedResources = await createTestProtectedResources(domain, accessToken);
-  const domainReady = await waitForDomainStart(domain);
-  const readyDomain = domainReady.domain;
-  const openIdConfiguration = domainReady.oidcConfig;
-  expect(openIdConfiguration).toBeDefined();
-  await waitForDomainSync();
+  let domain: Domain | null = null;
+  let accessToken: string | null = null;
+  try {
+    const envResult = await setupTestEnvironment();
+    domain = envResult.domain;
+    accessToken = envResult.accessToken;
+    const { defaultIdp } = envResult;
+    
+    const application = await createTestApplication(domain, defaultIdp, accessToken, PROTECTED_RESOURCES_TEST.REDIRECT_URI);
+    const serviceApplication = await createServiceApplication(domain, accessToken);
+    const user = await createTestUser(domain, application, defaultIdp, accessToken);
+    const protectedResources = await createTestProtectedResources(domain, accessToken);
+    const domainReady = await waitForDomainStart(domain);
+    const readyDomain = domainReady.domain;
+    const openIdConfiguration = domainReady.oidcConfig;
+    expect(openIdConfiguration).toBeDefined();
+    await waitForDomainSync();
 
   const completeAuthorizationFlowWithResources = async (resources: string[]): Promise<string> => {
     const clientId = application.settings.oauth.clientId;
@@ -254,26 +261,37 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     });
   };
 
-  const cleanup = async () => {
-    if (readyDomain && accessToken) {
-      await deleteDomain(readyDomain.id, accessToken);
-    }
-  };
+    const cleanup = async () => {
+      if (readyDomain && accessToken) {
+        await deleteDomain(readyDomain.id, accessToken);
+      }
+    };
 
-  return {
-    domain: readyDomain,
-    application,
-    serviceApplication,
-    user,
-    defaultIdp,
-    openIdConfiguration,
-    accessToken,
-    redirectUri: PROTECTED_RESOURCES_TEST.REDIRECT_URI,
-    protectedResources,
-    cleanup,
-    completeAuthorizationFlow: completeAuthorizationFlowWithResources,
-    exchangeAuthCodeForToken: exchangeCodeForTokenWithResources,
-    exchangeAuthCodeForTokenWithoutResources: exchangeCodeForTokenWithoutResources,
-    exchangeRefreshToken: exchangeRefreshForTokenWithResources,
-  };
+    return {
+      domain: readyDomain,
+      application,
+      serviceApplication,
+      user,
+      defaultIdp,
+      openIdConfiguration,
+      accessToken,
+      redirectUri: PROTECTED_RESOURCES_TEST.REDIRECT_URI,
+      protectedResources,
+      cleanup,
+      completeAuthorizationFlow: completeAuthorizationFlowWithResources,
+      exchangeAuthCodeForToken: exchangeCodeForTokenWithResources,
+      exchangeAuthCodeForTokenWithoutResources: exchangeCodeForTokenWithoutResources,
+      exchangeRefreshToken: exchangeRefreshForTokenWithResources,
+    };
+  } catch (error) {
+    // Cleanup domain if setup fails partway through
+    if (domain && accessToken) {
+      try {
+        await deleteDomain(domain.id, accessToken);
+      } catch (cleanupError) {
+        console.error('Failed to cleanup domain after setup failure:', cleanupError);
+      }
+    }
+    throw error;
+  }
 };
