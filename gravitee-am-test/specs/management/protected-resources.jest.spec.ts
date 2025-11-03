@@ -93,6 +93,16 @@ describe('When creating protected resource', () => {
                     type: 'MCP_TOOL',
                     description: 'Description 2'
                 }]
+                {
+                    key: 'get_weather',
+                    type: 'MCP_TOOL',
+                    description: 'Description'
+                },
+                {
+                    key: 'get_something',
+                    type: 'MCP_TOOL',
+                    description: 'Description 2'
+                }]
         } as NewProtectedResource;
 
         const createdResource = await createProtectedResource(domain.id, accessToken, request);
@@ -186,6 +196,7 @@ describe('When creating protected resource', () => {
 
         await createProtectedResource(domain.id, accessToken, request)
             .catch(err => expect(err.response.status).toEqual(400))
+            .catch(err => expect(err.response.status).toEqual(400))
     });
 
     it('Protected Resource must not be created with wrong type', async () => {
@@ -197,6 +208,7 @@ describe('When creating protected resource', () => {
 
         await createProtectedResource(domain.id, accessToken, request)
             .catch(err => expect(err.response.status).toEqual(400))
+            .catch(err => expect(err.response.status).toEqual(400))
     });
 
     it('Protected Resource must not be created with wrong resource identifier', async () => {
@@ -207,6 +219,7 @@ describe('When creating protected resource', () => {
         } as NewProtectedResource;
 
         await createProtectedResource(domain.id, accessToken, request)
+            .catch(err => expect(err.response.status).toEqual(400))
             .catch(err => expect(err.response.status).toEqual(400))
     });
 
@@ -221,6 +234,7 @@ describe('When creating protected resource', () => {
         expect(first.id).toBeDefined();
 
         await createProtectedResource(domain.id, accessToken, request)
+            .catch(err => expect(err.response.status).toEqual(400))
             .catch(err => expect(err.response.status).toEqual(400))
     });
     it('Protected Resource resource identifier http(s)://localhost is correct', async () => {
@@ -251,6 +265,7 @@ describe('When creating protected resource', () => {
         } as NewProtectedResource;
 
         createProtectedResource(domain.id, accessToken, badRequest)
+            .catch(err => expect(err.response.status).toEqual(400))
             .catch(err => expect(err.response.status).toEqual(400))
 
         const correctRequest = {
@@ -298,9 +313,40 @@ describe('When creating protected resource', () => {
             }),
         );
         expect(application).toBeDefined();
+        // Create an application which we can use to get a token from
+        const application = await createApplication(domain.id, accessToken, {
+            name: uniqueName('intro-app'),
+            type: 'SERVICE',
+            clientId: 'app',
+            clientSecret: 'app',
+        }).then((app) =>
+            updateApplication(
+                domain.id,
+                accessToken,
+                {
+                    settings: {
+                        oauth: {
+                            grantTypes: ['client_credentials'],
+                        },
+                    },
+                },
+                app.id,
+            ).then((updatedApp) => {
+                updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+                updatedApp.settings.oauth.clientId = app.settings.oauth.clientId;
+                return updatedApp;
+            }),
+        );
+        expect(application).toBeDefined();
 
         await waitFor(5000);
+        await waitFor(5000);
 
+        // First request to get a token
+        const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+        }).expect(200);
         // First request to get a token
         const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
             'Content-type': 'application/x-www-form-urlencoded',
@@ -309,7 +355,14 @@ describe('When creating protected resource', () => {
 
         const responseJwt = response.body.access_token;
         expect(responseJwt).toBeDefined();
+        const responseJwt = response.body.access_token;
+        expect(responseJwt).toBeDefined();
 
+        // Next request to introspect to token using the Application credentials
+        await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+        }).expect(200);
         // Next request to introspect to token using the Application credentials
         await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
             'Content-type': 'application/x-www-form-urlencoded',
@@ -325,10 +378,19 @@ describe('When creating protected resource', () => {
 
         const createdResource = await createProtectedResource(domain.id, accessToken, request);
         expect(createdResource).toBeDefined();
+        const createdResource = await createProtectedResource(domain.id, accessToken, request);
+        expect(createdResource).toBeDefined();
 
         // Wait for the resource to be synced
         await waitFor(5000);
+        // Wait for the resource to be synced
+        await waitFor(5000);
 
+        // Make the request to introspect the token using the Protected Resource credentials
+        await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + getBase64BasicAuth(createdResource.clientId, createdResource.clientSecret),
+        }).expect(200);
         // Make the request to introspect the token using the Protected Resource credentials
         await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
             'Content-type': 'application/x-www-form-urlencoded',
@@ -351,6 +413,7 @@ describe('When creating protected resource', () => {
 
         await createProtectedResource(domain.id, accessToken, request)
             .catch(err => expect(err.response.status).toEqual(400))
+            .catch(err => expect(err.response.status).toEqual(400))
     });
 
     it('Protected Resource must not be created when feature type is missing', async () => {
@@ -366,6 +429,7 @@ describe('When creating protected resource', () => {
         } as NewProtectedResource;
 
         await createProtectedResource(domain.id, accessToken, request)
+            .catch(err => expect(err.response.status).toEqual(400))
             .catch(err => expect(err.response.status).toEqual(400))
     });
 
@@ -388,6 +452,7 @@ describe('When creating protected resource', () => {
 
         await createProtectedResource(domain.id, accessToken, request)
             .catch(err => expect(err.response.status).toEqual(400))
+            .catch(err => expect(err.response.status).toEqual(400))
     });
 
     it('Protected Resource must not be created when key is missing', async () => {
@@ -407,6 +472,7 @@ describe('When creating protected resource', () => {
         } as NewProtectedResource;
 
         await createProtectedResource(domain.id, accessToken, request)
+            .catch(err => expect(err.response.status).toEqual(400))
             .catch(err => expect(err.response.status).toEqual(400))
     });
 
@@ -428,6 +494,7 @@ describe('When creating protected resource', () => {
 
         await createProtectedResource(domain.id, accessToken, request)
             .catch(err => expect(err.response.status).toEqual(400))
+            .catch(err => expect(err.response.status).toEqual(400))
 
         const request2 = {
             name: generateValidProtectedResourceName(),
@@ -445,6 +512,7 @@ describe('When creating protected resource', () => {
         } as NewProtectedResource;
 
         await createProtectedResource(domain.id, accessToken, request2)
+            .catch(err => expect(err.response.status).toEqual(400))
             .catch(err => expect(err.response.status).toEqual(400))
     });
 });
@@ -549,6 +617,7 @@ describe('When updating protected resource', () => {
             description: 'Another test scope'
         });
 
+
         // Create a protected resource to update
         const request = {
             name: generateValidProtectedResourceName(),
@@ -565,18 +634,22 @@ describe('When updating protected resource', () => {
             ]
         } as NewProtectedResource;
 
+
         const createdSecret = await createProtectedResource(domain.id, accessToken, request);
         expect(createdSecret).toBeDefined();
         expect(createdSecret.id).toBeDefined();
 
+
         // Wait for resource to be fully synced
         await waitFor(2000);
+
 
         // Fetch the full resource details
         createdResource = await getMcpServer(domain.id, accessToken, createdSecret.id);
         expect(createdResource).toBeDefined();
         expect(createdResource.resourceIdentifiers).toBeDefined();
     });
+
 
     it('Should update protected resource name and description', async () => {
         const updateRequest = {
@@ -601,6 +674,7 @@ describe('When updating protected resource', () => {
 
         createdResource = updated;
     });
+
 
     it('Should update tool name and description', async () => {
         const updateRequest = {
@@ -775,6 +849,17 @@ describe('When updating protected resource', () => {
 
         await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
             .catch(err => expect(err.response.status).toEqual(400));
+    });
+
+    it('Should fail when updating non-existent resource', async () => {
+        const updateRequest = {
+            name: "Test",
+            resourceIdentifiers: ["https://test.com"],
+            features: []
+        } as UpdateProtectedResource;
+
+        await updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest)
+            .catch(err => expect(err.response.status).toEqual(403)); // 403 because permission check happens before existence check
     });
 
     it('Should fail when updating with duplicate resource identifier', async () => {
