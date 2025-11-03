@@ -147,7 +147,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
 
   private addTool(newTool: { name: string; description?: string; scopes?: string[] }): void {
     // Trim the tool name and description
-    const trimmedName = newTool.name?.trim();
+    const trimmedName = newTool.name.trim();
     const trimmedDescription = newTool.description?.trim();
 
     // Check if tool with same name already exists
@@ -158,12 +158,17 @@ export class DomainMcpServerToolsComponent implements OnInit {
 
     // Add the new tool to the features list
     const updatedFeatures: FeatureUpdateData[] = [
-      // Cast existing features instead of recreating them
-      ...(this.protectedResource.features as ProtectedResourceFeatureWithScopes[]),
+      // Map existing features to ensure type is set correctly
+      ...(this.protectedResource.features as ProtectedResourceFeatureWithScopes[]).map((f) => ({
+        key: f.key,
+        description: f.description,
+        type: ProtectedResourceFeatureType.MCP_TOOL,
+        scopes: f.scopes,
+      })),
       {
         key: trimmedName,
         description: trimmedDescription || '',
-        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
+        type: ProtectedResourceFeatureType.MCP_TOOL,
         scopes: newTool.scopes,
       },
     ];
@@ -197,10 +202,15 @@ export class DomainMcpServerToolsComponent implements OnInit {
   }
 
   private deleteTool(toolKey: string): void {
-    // Remove the tool from the features list and cast to the expected type
-    const updatedFeatures = this.protectedResource.features.filter(
-      (feature) => feature.key !== toolKey,
-    ) as ProtectedResourceFeatureWithScopes[];
+    // Remove the tool from the features list and map to ensure type is set correctly
+    const updatedFeatures: FeatureUpdateData[] = (
+      this.protectedResource.features.filter((feature) => feature.key !== toolKey) as ProtectedResourceFeatureWithScopes[]
+    ).map((f) => ({
+      key: f.key,
+      description: f.description,
+      type: ProtectedResourceFeatureType.MCP_TOOL,
+      scopes: f.scopes,
+    }));
 
     // Create the update request
     const updateRequest: UpdateProtectedResourceRequest = {
@@ -238,17 +248,23 @@ export class DomainMcpServerToolsComponent implements OnInit {
 
     // Update the tool in the features list
     const updatedFeatures: FeatureUpdateData[] = this.protectedResource.features.map((feature): FeatureUpdateData => {
+      const featureWithScopes = feature as ProtectedResourceFeatureWithScopes;
       if (feature.key === originalKey) {
         // Return new object for the updated feature
         return {
           key: trimmedKey,
           description: trimmedDescription || '',
-          type: 'MCP_TOOL' as ProtectedResourceFeatureType,
+          type: ProtectedResourceFeatureType.MCP_TOOL,
           scopes: updatedTool.scopes,
         };
       }
-      // For unchanged features, cast and return the existing object (no need to recreate)
-      return feature as ProtectedResourceFeatureWithScopes;
+      // Map existing features to ensure type is set correctly
+      return {
+        key: featureWithScopes.key,
+        description: featureWithScopes.description,
+        type: ProtectedResourceFeatureType.MCP_TOOL,
+        scopes: featureWithScopes.scopes,
+      };
     });
 
     const updateRequest: UpdateProtectedResourceRequest = {
