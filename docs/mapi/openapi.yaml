@@ -2029,7 +2029,7 @@ paths:
         \ or APPLICATION[READ] permission on the specified domain or APPLICATION[READ]\
         \ permission on the specified environment or APPLICATION[READ] permission\
         \ on the specified organization"
-      operationId: getPermissions
+      operationId: getApplicationMemberPermissions
       parameters:
       - name: organizationId
         in: path
@@ -4781,7 +4781,7 @@ paths:
         \ domain or DOMAIN_GROUP[LIST] permission on the specified environment or\
         \ DOMAIN_GROUP[LIST] permission on the specified organization. Each returned\
         \ group is filtered and contains only basic information such as id and name."
-      operationId: listGroups
+      operationId: listDomainGroups
       parameters:
       - name: organizationId
         in: path
@@ -5837,7 +5837,7 @@ paths:
       description: "User must have DOMAIN[READ] permission on the specified domain\
         \ or DOMAIN[READ] permission on the specified environment or DOMAIN[READ]\
         \ permission on the specified organization"
-      operationId: getPermissions_1
+      operationId: getDomainMemberPermissions
       parameters:
       - name: organizationId
         in: path
@@ -5871,7 +5871,7 @@ paths:
       description: "User must have the DOMAIN_MEMBER[DELETE] permission on the specified\
         \ domain or DOMAIN_MEMBER[DELETE] permission on the specified environment\
         \ or DOMAIN_MEMBER[DELETE] permission on the specified organization"
-      operationId: removeMember
+      operationId: removeDomainMember
       parameters:
       - name: organizationId
         in: path
@@ -6297,7 +6297,6 @@ paths:
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}:
-<<<<<<< HEAD
     get:
       tags:
       - protected-resource
@@ -6308,15 +6307,6 @@ paths:
         \ domain or PROTECTED_RESOURCE[READ] permission on the specified environment\
         \ or PROTECTED_RESOURCE[READ] permission on the specified organization. "
       operationId: findProtectedResource
-=======
-    delete:
-      tags:
-      - protected-resource
-      - domain
-      summary: Delete a Protected Resource
-      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization."
-      operationId: deleteProtectedResource
->>>>>>> origin/master
       parameters:
       - name: organizationId
         in: path
@@ -6340,7 +6330,6 @@ paths:
           type: string
       - name: type
         in: query
-<<<<<<< HEAD
         schema:
           type: string
       responses:
@@ -6396,11 +6385,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProtectedResource"
-=======
+        "500":
+          description: Internal server error
+    delete:
+      tags:
+      - protected-resource
+      - domain
+      summary: Delete a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[DELETE] permission on the specified organization. "
+      operationId: deleteProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
         required: true
         schema:
           type: string
-          enum: [MCP_SERVER]
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: string
       responses:
         "204":
           description: Protected Resource successfully deleted
@@ -6408,7 +6429,6 @@ paths:
           description: Protected Resource not found
         "403":
           description: Forbidden
->>>>>>> origin/master
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/reporters:
@@ -8803,7 +8823,7 @@ paths:
       summary: List environment member's permissions
       description: "User must have ENVIRONMENT[READ] permission on the specified environment\
         \ or ENVIRONMENT[READ] permission on the specified organization"
-      operationId: getPermissions_2
+      operationId: getMemberPermissions
       parameters:
       - name: organizationId
         in: path
@@ -8959,7 +8979,7 @@ paths:
       description: "User must have the ORGANIZATION[LIST] permission on the specified\
         \ organization. Each returned group is filtered and contains only basic information\
         \ such as id and name."
-      operationId: listGroups_1
+      operationId: listGroups
       parameters:
       - name: organizationId
         in: path
@@ -8995,7 +9015,7 @@ paths:
       summary: Create a platform group
       description: "User must have the ORGANIZATION_GROUP[CREATE] permission on the\
         \ specified organization"
-      operationId: createGroup_1
+      operationId: createPlatformGroup
       parameters:
       - name: organizationId
         in: path
@@ -9388,7 +9408,7 @@ paths:
       summary: Remove a membership of the organization
       description: "User must have ORGANIZATION_MEMBER[DELETE] permission on the specified\
         \ organization"
-      operationId: removeMember_1
+      operationId: removeOrganizationMember
       parameters:
       - name: organizationId
         in: path
@@ -12180,13 +12200,13 @@ components:
           type: array
           items:
             type: string
+        allowedScopesEnabled:
+          type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
         clientTemplateEnabled:
-          type: boolean
-        allowedScopesEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -12408,17 +12428,17 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
-        redirectUriExpressionLanguageEnabled:
-          type: boolean
-        redirectUriStrictMatching:
-          type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
+          type: boolean
+        redirectUriStrictMatching:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
@@ -14539,9 +14559,6 @@ components:
           type: array
           items:
             type: string
-        isAllowedScopesEnabled:
-          type: boolean
-          writeOnly: true
         allowedScopes:
           type: array
           items:
@@ -14557,6 +14574,14 @@ components:
         openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
+        isDynamicClientRegistrationEnabled:
+          type: boolean
+        isOpenDynamicClientRegistrationEnabled:
+          type: boolean
+        isAllowedScopesEnabled:
+          type: boolean
+        isClientTemplateEnabled:
+          type: boolean
     PatchDomain:
       type: object
       properties:
@@ -16352,10 +16377,12 @@ components:
           type: string
         zoneInfo:
           type: string
-        lastIdentityInformation:
+        identitiesAsMap:
           type: object
           additionalProperties:
             type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
         inactive:
@@ -16370,9 +16397,7 @@ components:
           type: string
         disabled:
           type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        identitiesAsMap:
+        lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
@@ -16551,10 +16576,12 @@ components:
           type: string
         zoneInfo:
           type: string
-        lastIdentityInformation:
+        identitiesAsMap:
           type: object
           additionalProperties:
             type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
         inactive:
@@ -16569,9 +16596,7 @@ components:
           type: string
         disabled:
           type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        identitiesAsMap:
+        lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
