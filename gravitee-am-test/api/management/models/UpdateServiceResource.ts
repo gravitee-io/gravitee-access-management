@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,12 +52,22 @@ export interface UpdateServiceResource {
   configuration: string;
 }
 
+/**
+ * Check if a given object implements the UpdateServiceResource interface.
+ */
+export function instanceOfUpdateServiceResource(value: object): value is UpdateServiceResource {
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function UpdateServiceResourceFromJSON(json: any): UpdateServiceResource {
   return UpdateServiceResourceFromJSONTyped(json, false);
 }
 
 export function UpdateServiceResourceFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateServiceResource {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
@@ -67,16 +77,18 @@ export function UpdateServiceResourceFromJSONTyped(json: any, ignoreDiscriminato
   };
 }
 
-export function UpdateServiceResourceToJSON(value?: UpdateServiceResource | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateServiceResourceToJSON(json: any): UpdateServiceResource {
+  return UpdateServiceResourceToJSONTyped(json, false);
+}
+
+export function UpdateServiceResourceToJSONTyped(value?: UpdateServiceResource | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    name: value.name,
-    type: value.type,
-    configuration: value.configuration,
+    name: value['name'],
+    type: value['type'],
+    configuration: value['configuration'],
   };
 }

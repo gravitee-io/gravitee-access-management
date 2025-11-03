@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -63,31 +63,40 @@ export const EnrolledFactorChannelTypeEnum = {
 } as const;
 export type EnrolledFactorChannelTypeEnum = typeof EnrolledFactorChannelTypeEnum[keyof typeof EnrolledFactorChannelTypeEnum];
 
+/**
+ * Check if a given object implements the EnrolledFactorChannel interface.
+ */
+export function instanceOfEnrolledFactorChannel(value: object): value is EnrolledFactorChannel {
+  return true;
+}
+
 export function EnrolledFactorChannelFromJSON(json: any): EnrolledFactorChannel {
   return EnrolledFactorChannelFromJSONTyped(json, false);
 }
 
 export function EnrolledFactorChannelFromJSONTyped(json: any, ignoreDiscriminator: boolean): EnrolledFactorChannel {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    type: !exists(json, 'type') ? undefined : json['type'],
-    target: !exists(json, 'target') ? undefined : json['target'],
-    additionalData: !exists(json, 'additionalData') ? undefined : json['additionalData'],
+    type: json['type'] == null ? undefined : json['type'],
+    target: json['target'] == null ? undefined : json['target'],
+    additionalData: json['additionalData'] == null ? undefined : json['additionalData'],
   };
 }
 
-export function EnrolledFactorChannelToJSON(value?: EnrolledFactorChannel | null): any {
-  if (value === undefined) {
-    return undefined;
+export function EnrolledFactorChannelToJSON(json: any): EnrolledFactorChannel {
+  return EnrolledFactorChannelToJSONTyped(json, false);
+}
+
+export function EnrolledFactorChannelToJSONTyped(value?: EnrolledFactorChannel | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    type: value.type,
-    target: value.target,
-    additionalData: value.additionalData,
+    type: value['type'],
+    target: value['target'],
+    additionalData: value['additionalData'],
   };
 }

@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,40 @@ export interface Attribute {
   primary?: boolean;
 }
 
+/**
+ * Check if a given object implements the Attribute interface.
+ */
+export function instanceOfAttribute(value: object): value is Attribute {
+  return true;
+}
+
 export function AttributeFromJSON(json: any): Attribute {
   return AttributeFromJSONTyped(json, false);
 }
 
 export function AttributeFromJSONTyped(json: any, ignoreDiscriminator: boolean): Attribute {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    value: !exists(json, 'value') ? undefined : json['value'],
-    type: !exists(json, 'type') ? undefined : json['type'],
-    primary: !exists(json, 'primary') ? undefined : json['primary'],
+    value: json['value'] == null ? undefined : json['value'],
+    type: json['type'] == null ? undefined : json['type'],
+    primary: json['primary'] == null ? undefined : json['primary'],
   };
 }
 
-export function AttributeToJSON(value?: Attribute | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AttributeToJSON(json: any): Attribute {
+  return AttributeToJSONTyped(json, false);
+}
+
+export function AttributeToJSONTyped(value?: Attribute | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    value: value.value,
-    type: value.type,
-    primary: value.primary,
+    value: value['value'],
+    type: value['type'],
+    primary: value['primary'],
   };
 }

@@ -25,29 +25,56 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { AccountSettings, AccountSettingsFromJSON, AccountSettingsFromJSONTyped, AccountSettingsToJSON } from './AccountSettings';
-import { CorsSettings, CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON } from './CorsSettings';
-import { LoginSettings, LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON } from './LoginSettings';
-import { OIDCSettings, OIDCSettingsFromJSON, OIDCSettingsFromJSONTyped, OIDCSettingsToJSON } from './OIDCSettings';
-import { PasswordSettings, PasswordSettingsFromJSON, PasswordSettingsFromJSONTyped, PasswordSettingsToJSON } from './PasswordSettings';
-import { SAMLSettings, SAMLSettingsFromJSON, SAMLSettingsFromJSONTyped, SAMLSettingsToJSON } from './SAMLSettings';
-import { SCIMSettings, SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON } from './SCIMSettings';
+import { mapValues } from '../runtime';
+import type { AccountSettings } from './AccountSettings';
 import {
-  SecretExpirationSettings,
-  SecretExpirationSettingsFromJSON,
-  SecretExpirationSettingsFromJSONTyped,
-  SecretExpirationSettingsToJSON,
-} from './SecretExpirationSettings';
+  AccountSettingsFromJSON,
+  AccountSettingsFromJSONTyped,
+  AccountSettingsToJSON,
+  AccountSettingsToJSONTyped,
+} from './AccountSettings';
+import type { SCIMSettings } from './SCIMSettings';
+import { SCIMSettingsFromJSON, SCIMSettingsFromJSONTyped, SCIMSettingsToJSON, SCIMSettingsToJSONTyped } from './SCIMSettings';
+import type { SelfServiceAccountManagementSettings } from './SelfServiceAccountManagementSettings';
 import {
-  SelfServiceAccountManagementSettings,
   SelfServiceAccountManagementSettingsFromJSON,
   SelfServiceAccountManagementSettingsFromJSONTyped,
   SelfServiceAccountManagementSettingsToJSON,
+  SelfServiceAccountManagementSettingsToJSONTyped,
 } from './SelfServiceAccountManagementSettings';
-import { UMASettings, UMASettingsFromJSON, UMASettingsFromJSONTyped, UMASettingsToJSON } from './UMASettings';
-import { VirtualHost, VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON } from './VirtualHost';
-import { WebAuthnSettings, WebAuthnSettingsFromJSON, WebAuthnSettingsFromJSONTyped, WebAuthnSettingsToJSON } from './WebAuthnSettings';
+import type { CorsSettings } from './CorsSettings';
+import { CorsSettingsFromJSON, CorsSettingsFromJSONTyped, CorsSettingsToJSON, CorsSettingsToJSONTyped } from './CorsSettings';
+import type { LoginSettings } from './LoginSettings';
+import { LoginSettingsFromJSON, LoginSettingsFromJSONTyped, LoginSettingsToJSON, LoginSettingsToJSONTyped } from './LoginSettings';
+import type { SecretExpirationSettings } from './SecretExpirationSettings';
+import {
+  SecretExpirationSettingsFromJSON,
+  SecretExpirationSettingsFromJSONTyped,
+  SecretExpirationSettingsToJSON,
+  SecretExpirationSettingsToJSONTyped,
+} from './SecretExpirationSettings';
+import type { VirtualHost } from './VirtualHost';
+import { VirtualHostFromJSON, VirtualHostFromJSONTyped, VirtualHostToJSON, VirtualHostToJSONTyped } from './VirtualHost';
+import type { OIDCSettings } from './OIDCSettings';
+import { OIDCSettingsFromJSON, OIDCSettingsFromJSONTyped, OIDCSettingsToJSON, OIDCSettingsToJSONTyped } from './OIDCSettings';
+import type { PasswordSettings } from './PasswordSettings';
+import {
+  PasswordSettingsFromJSON,
+  PasswordSettingsFromJSONTyped,
+  PasswordSettingsToJSON,
+  PasswordSettingsToJSONTyped,
+} from './PasswordSettings';
+import type { WebAuthnSettings } from './WebAuthnSettings';
+import {
+  WebAuthnSettingsFromJSON,
+  WebAuthnSettingsFromJSONTyped,
+  WebAuthnSettingsToJSON,
+  WebAuthnSettingsToJSONTyped,
+} from './WebAuthnSettings';
+import type { SAMLSettings } from './SAMLSettings';
+import { SAMLSettingsFromJSON, SAMLSettingsFromJSONTyped, SAMLSettingsToJSON, SAMLSettingsToJSONTyped } from './SAMLSettings';
+import type { UMASettings } from './UMASettings';
+import { UMASettingsFromJSON, UMASettingsFromJSONTyped, UMASettingsToJSON, UMASettingsToJSONTyped } from './UMASettings';
 
 /**
  *
@@ -234,13 +261,13 @@ export interface Domain {
    * @type {boolean}
    * @memberof Domain
    */
-  dynamicClientRegistrationTemplateEnabled?: boolean;
+  redirectUriUnsecuredHttpSchemeAllowed?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof Domain
    */
-  redirectUriUnsecuredHttpSchemeAllowed?: boolean;
+  dynamicClientRegistrationTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -271,6 +298,12 @@ export interface Domain {
    * @memberof Domain
    */
   openDynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriExpressionLanguageEnabled?: boolean;
 }
 
 /**
@@ -294,109 +327,117 @@ export const DomainReferenceTypeEnum = {
 } as const;
 export type DomainReferenceTypeEnum = typeof DomainReferenceTypeEnum[keyof typeof DomainReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the Domain interface.
+ */
+export function instanceOfDomain(value: object): value is Domain {
+  return true;
+}
+
 export function DomainFromJSON(json: any): Domain {
   return DomainFromJSONTyped(json, false);
 }
 
 export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Domain {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    hrid: !exists(json, 'hrid') ? undefined : json['hrid'],
-    name: !exists(json, 'name') ? undefined : json['name'],
-    version: !exists(json, 'version') ? undefined : json['version'],
-    description: !exists(json, 'description') ? undefined : json['description'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    alertEnabled: !exists(json, 'alertEnabled') ? undefined : json['alertEnabled'],
-    path: !exists(json, 'path') ? undefined : json['path'],
-    identities: !exists(json, 'identities') ? undefined : json['identities'],
-    master: !exists(json, 'master') ? undefined : json['master'],
-    vhostMode: !exists(json, 'vhostMode') ? undefined : json['vhostMode'],
-    vhosts: !exists(json, 'vhosts') ? undefined : (json['vhosts'] as Array<any>).map(VirtualHostFromJSON),
-    tags: !exists(json, 'tags') ? undefined : json['tags'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
-    oidc: !exists(json, 'oidc') ? undefined : OIDCSettingsFromJSON(json['oidc']),
-    uma: !exists(json, 'uma') ? undefined : UMASettingsFromJSON(json['uma']),
-    loginSettings: !exists(json, 'loginSettings') ? undefined : LoginSettingsFromJSON(json['loginSettings']),
-    webAuthnSettings: !exists(json, 'webAuthnSettings') ? undefined : WebAuthnSettingsFromJSON(json['webAuthnSettings']),
-    scim: !exists(json, 'scim') ? undefined : SCIMSettingsFromJSON(json['scim']),
-    accountSettings: !exists(json, 'accountSettings') ? undefined : AccountSettingsFromJSON(json['accountSettings']),
-    passwordSettings: !exists(json, 'passwordSettings') ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
-    selfServiceAccountManagementSettings: !exists(json, 'selfServiceAccountManagementSettings')
-      ? undefined
-      : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
-    saml: !exists(json, 'saml') ? undefined : SAMLSettingsFromJSON(json['saml']),
-    corsSettings: !exists(json, 'corsSettings') ? undefined : CorsSettingsFromJSON(json['corsSettings']),
-    dataPlaneId: !exists(json, 'dataPlaneId') ? undefined : json['dataPlaneId'],
-    secretExpirationSettings: !exists(json, 'secretExpirationSettings')
-      ? undefined
-      : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
-    dynamicClientRegistrationTemplateEnabled: !exists(json, 'dynamicClientRegistrationTemplateEnabled')
-      ? undefined
-      : json['dynamicClientRegistrationTemplateEnabled'],
-    redirectUriUnsecuredHttpSchemeAllowed: !exists(json, 'redirectUriUnsecuredHttpSchemeAllowed')
-      ? undefined
-      : json['redirectUriUnsecuredHttpSchemeAllowed'],
-    redirectUriLocalhostAllowed: !exists(json, 'redirectUriLocalhostAllowed') ? undefined : json['redirectUriLocalhostAllowed'],
-    redirectUriWildcardAllowed: !exists(json, 'redirectUriWildcardAllowed') ? undefined : json['redirectUriWildcardAllowed'],
-    redirectUriStrictMatching: !exists(json, 'redirectUriStrictMatching') ? undefined : json['redirectUriStrictMatching'],
-    dynamicClientRegistrationEnabled: !exists(json, 'dynamicClientRegistrationEnabled')
-      ? undefined
-      : json['dynamicClientRegistrationEnabled'],
-    openDynamicClientRegistrationEnabled: !exists(json, 'openDynamicClientRegistrationEnabled')
-      ? undefined
-      : json['openDynamicClientRegistrationEnabled'],
+    id: json['id'] == null ? undefined : json['id'],
+    hrid: json['hrid'] == null ? undefined : json['hrid'],
+    name: json['name'] == null ? undefined : json['name'],
+    version: json['version'] == null ? undefined : json['version'],
+    description: json['description'] == null ? undefined : json['description'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    alertEnabled: json['alertEnabled'] == null ? undefined : json['alertEnabled'],
+    path: json['path'] == null ? undefined : json['path'],
+    identities: json['identities'] == null ? undefined : new Set(json['identities']),
+    master: json['master'] == null ? undefined : json['master'],
+    vhostMode: json['vhostMode'] == null ? undefined : json['vhostMode'],
+    vhosts: json['vhosts'] == null ? undefined : (json['vhosts'] as Array<any>).map(VirtualHostFromJSON),
+    tags: json['tags'] == null ? undefined : new Set(json['tags']),
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    oidc: json['oidc'] == null ? undefined : OIDCSettingsFromJSON(json['oidc']),
+    uma: json['uma'] == null ? undefined : UMASettingsFromJSON(json['uma']),
+    loginSettings: json['loginSettings'] == null ? undefined : LoginSettingsFromJSON(json['loginSettings']),
+    webAuthnSettings: json['webAuthnSettings'] == null ? undefined : WebAuthnSettingsFromJSON(json['webAuthnSettings']),
+    scim: json['scim'] == null ? undefined : SCIMSettingsFromJSON(json['scim']),
+    accountSettings: json['accountSettings'] == null ? undefined : AccountSettingsFromJSON(json['accountSettings']),
+    passwordSettings: json['passwordSettings'] == null ? undefined : PasswordSettingsFromJSON(json['passwordSettings']),
+    selfServiceAccountManagementSettings:
+      json['selfServiceAccountManagementSettings'] == null
+        ? undefined
+        : SelfServiceAccountManagementSettingsFromJSON(json['selfServiceAccountManagementSettings']),
+    saml: json['saml'] == null ? undefined : SAMLSettingsFromJSON(json['saml']),
+    corsSettings: json['corsSettings'] == null ? undefined : CorsSettingsFromJSON(json['corsSettings']),
+    dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
+    secretExpirationSettings:
+      json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
+    redirectUriUnsecuredHttpSchemeAllowed:
+      json['redirectUriUnsecuredHttpSchemeAllowed'] == null ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
+    dynamicClientRegistrationTemplateEnabled:
+      json['dynamicClientRegistrationTemplateEnabled'] == null ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
+    redirectUriLocalhostAllowed: json['redirectUriLocalhostAllowed'] == null ? undefined : json['redirectUriLocalhostAllowed'],
+    redirectUriWildcardAllowed: json['redirectUriWildcardAllowed'] == null ? undefined : json['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
+    dynamicClientRegistrationEnabled:
+      json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled:
+      json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
+    redirectUriExpressionLanguageEnabled:
+      json['redirectUriExpressionLanguageEnabled'] == null ? undefined : json['redirectUriExpressionLanguageEnabled'],
   };
 }
 
-export function DomainToJSON(value?: Domain | null): any {
-  if (value === undefined) {
-    return undefined;
+export function DomainToJSON(json: any): Domain {
+  return DomainToJSONTyped(json, false);
+}
+
+export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    hrid: value.hrid,
-    name: value.name,
-    version: value.version,
-    description: value.description,
-    referenceType: value.referenceType,
-    referenceId: value.referenceId,
-    enabled: value.enabled,
-    alertEnabled: value.alertEnabled,
-    path: value.path,
-    identities: value.identities,
-    master: value.master,
-    vhostMode: value.vhostMode,
-    vhosts: value.vhosts === undefined ? undefined : (value.vhosts as Array<any>).map(VirtualHostToJSON),
-    tags: value.tags,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
-    oidc: OIDCSettingsToJSON(value.oidc),
-    uma: UMASettingsToJSON(value.uma),
-    loginSettings: LoginSettingsToJSON(value.loginSettings),
-    webAuthnSettings: WebAuthnSettingsToJSON(value.webAuthnSettings),
-    scim: SCIMSettingsToJSON(value.scim),
-    accountSettings: AccountSettingsToJSON(value.accountSettings),
-    passwordSettings: PasswordSettingsToJSON(value.passwordSettings),
-    selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value.selfServiceAccountManagementSettings),
-    saml: SAMLSettingsToJSON(value.saml),
-    corsSettings: CorsSettingsToJSON(value.corsSettings),
-    dataPlaneId: value.dataPlaneId,
-    secretExpirationSettings: SecretExpirationSettingsToJSON(value.secretExpirationSettings),
-    dynamicClientRegistrationTemplateEnabled: value.dynamicClientRegistrationTemplateEnabled,
-    redirectUriUnsecuredHttpSchemeAllowed: value.redirectUriUnsecuredHttpSchemeAllowed,
-    redirectUriLocalhostAllowed: value.redirectUriLocalhostAllowed,
-    redirectUriWildcardAllowed: value.redirectUriWildcardAllowed,
-    redirectUriStrictMatching: value.redirectUriStrictMatching,
-    dynamicClientRegistrationEnabled: value.dynamicClientRegistrationEnabled,
-    openDynamicClientRegistrationEnabled: value.openDynamicClientRegistrationEnabled,
+    id: value['id'],
+    hrid: value['hrid'],
+    name: value['name'],
+    version: value['version'],
+    description: value['description'],
+    referenceType: value['referenceType'],
+    referenceId: value['referenceId'],
+    enabled: value['enabled'],
+    alertEnabled: value['alertEnabled'],
+    path: value['path'],
+    identities: value['identities'] == null ? undefined : Array.from(value['identities'] as Set<any>),
+    master: value['master'],
+    vhostMode: value['vhostMode'],
+    vhosts: value['vhosts'] == null ? undefined : (value['vhosts'] as Array<any>).map(VirtualHostToJSON),
+    tags: value['tags'] == null ? undefined : Array.from(value['tags'] as Set<any>),
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    oidc: OIDCSettingsToJSON(value['oidc']),
+    uma: UMASettingsToJSON(value['uma']),
+    loginSettings: LoginSettingsToJSON(value['loginSettings']),
+    webAuthnSettings: WebAuthnSettingsToJSON(value['webAuthnSettings']),
+    scim: SCIMSettingsToJSON(value['scim']),
+    accountSettings: AccountSettingsToJSON(value['accountSettings']),
+    passwordSettings: PasswordSettingsToJSON(value['passwordSettings']),
+    selfServiceAccountManagementSettings: SelfServiceAccountManagementSettingsToJSON(value['selfServiceAccountManagementSettings']),
+    saml: SAMLSettingsToJSON(value['saml']),
+    corsSettings: CorsSettingsToJSON(value['corsSettings']),
+    dataPlaneId: value['dataPlaneId'],
+    secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
+    redirectUriUnsecuredHttpSchemeAllowed: value['redirectUriUnsecuredHttpSchemeAllowed'],
+    dynamicClientRegistrationTemplateEnabled: value['dynamicClientRegistrationTemplateEnabled'],
+    redirectUriLocalhostAllowed: value['redirectUriLocalhostAllowed'],
+    redirectUriWildcardAllowed: value['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: value['redirectUriStrictMatching'],
+    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
+    openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
+    redirectUriExpressionLanguageEnabled: value['redirectUriExpressionLanguageEnabled'],
   };
 }
