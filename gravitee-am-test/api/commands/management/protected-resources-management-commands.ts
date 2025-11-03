@@ -92,33 +92,6 @@ export const deleteProtectedResource = (domainId: string, accessToken: string, i
   });
 
 /**
- * Polls until a protected resource appears in the list (useful for waiting for gateway sync)
- * @param domainId Domain ID
- * @param accessToken Access token
- * @param resourceId Resource ID to find
- * @param timeoutMillis Maximum time to wait in milliseconds
- * @returns Promise that resolves when resource is found or rejects on timeout
- */
-export const waitForProtectedResourceInList = async (
-  domainId: string,
-  accessToken: string,
-  resourceId: string,
-  timeoutMillis: number = 10000,
-): Promise<void> => {
-  const start = Date.now();
-  await retryUntil(
-    () => getMcpServers(domainId, accessToken, 100, 0),
-    (page) => page.data.some((r: any) => r.id === resourceId),
-    {
-      timeoutMillis,
-      intervalMillis: 250,
-      onDone: () => console.log(`protected resource "${resourceId}" found in list after ${(Date.now() - start) / 1000}s`),
-      onRetry: () => console.debug(`protected resource "${resourceId}" not found in list yet`),
-    },
-  );
-};
-
-/**
  * Polls until a protected resource is removed from the list
  * @param domainId Domain ID
  * @param accessToken Access token
