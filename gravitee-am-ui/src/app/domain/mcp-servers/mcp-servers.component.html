@@ -62,6 +62,18 @@
           {{ row.updatedAt | humanDate }}
         </ng-template>
       </ngx-datatable-column>
+      <ngx-datatable-column name="" [flexGrow]="1">
+        <ng-template let-row="row" ngx-datatable-cell-template>
+          <div fxLayout="row" class="gv-table-cell-actions">
+            <a mat-button [routerLink]="[row.id]" *hasPermission="['protected_resource_read']">
+              <mat-icon>settings</mat-icon>
+            </a>
+            <button *hasPermission="['protected_resource_delete']" mat-button (click)="delete(row.id, $event)">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </ng-template>
+      </ngx-datatable-column>
     </ngx-datatable>
   </div>
 

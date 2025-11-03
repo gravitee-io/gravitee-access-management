@@ -69,6 +69,7 @@ import io.gravitee.am.service.FormService;
 import io.gravitee.am.service.IdentityProviderService;
 import io.gravitee.am.service.MembershipService;
 import io.gravitee.am.service.PasswordPolicyService;
+import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.ReporterService;
 import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
@@ -251,6 +252,9 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private DefaultIdentityProviderService defaultIdentityProviderService;
+
+    @Autowired
+    private ProtectedResourceService protectedResourceService;
 
     @With(AccessLevel.PACKAGE) // to make test setup less painful
     @Value("${domains.reporters.default.enabled:true}")
@@ -647,6 +651,9 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(serviceResourceService.deleteByDomain(domainId))
                             .andThen(deviceIdentifierService.deleteByDomain(domainId))
+                            .andThen(protectedResourceService.findByDomain(domainId)
+                                    .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))
+                            )
                             .andThen(domainRepository.delete(domainId))
                             .andThen(Completable.fromSingle(eventService.create(new Event(Type.DOMAIN, new Payload(domainId, DOMAIN, domainId, Action.DELETE), domain.getDataPlaneId(), domain.getReferenceId()), domain)))
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(DomainAuditBuilder.class)
