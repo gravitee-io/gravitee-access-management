@@ -69,7 +69,13 @@
           </mat-form-field>
         </div>
       </div>
-      <button mat-raised-button class="create-button" color="primary" (click)="registerMcpServer()" [disabled]="!formValid() || !settingsComponent?.isFormValid()">
+      <button
+        mat-raised-button
+        class="create-button"
+        color="primary"
+        (click)="registerMcpServer()"
+        [disabled]="!formValid() || !settingsComponent?.isFormValid()"
+      >
         Create
       </button>
     </form>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs/operators';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
@@ -23,7 +23,7 @@ import { McpServersService } from '../../../../mcp-servers/mcp-servers.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { AuthService } from '../../../../../services/auth.service';
 import { DomainStoreService } from '../../../../../stores/domain.store';
-import { ProtectedResource } from '../../../../../services/protected-resource.service';
+import { ProtectedResource, PatchProtectedResourceRequest } from '../../../../../services/protected-resource.service';
 
 @Component({
   selector: 'app-domain-mcp-server-general',
@@ -31,7 +31,7 @@ import { ProtectedResource } from '../../../../../services/protected-resource.se
   styleUrls: ['./general.component.scss'],
   standalone: false,
 })
-export class DomainMcpServerGeneralComponent implements OnInit, OnDestroy {
+export class DomainMcpServerGeneralComponent implements OnInit {
   @ViewChild('settingsComponent', { static: false }) settingsComponent: any;
 
   domainId: string;
@@ -73,10 +73,6 @@ export class DomainMcpServerGeneralComponent implements OnInit, OnDestroy {
     this.checkFormChanges();
   }
 
-  ngOnDestroy() {
-    // Cleanup if needed
-  }
-
   onSettingsChange(settings: { name: string; resourceIdentifier: string; description: string }): void {
     this.protectedResource.name = settings.name;
     this.protectedResource.description = settings.description;
@@ -85,14 +81,29 @@ export class DomainMcpServerGeneralComponent implements OnInit, OnDestroy {
   }
 
   update() {
-    const patchData: any = {
-      name: this.protectedResource.name,
-      description: this.protectedResource.description,
-      resourceIdentifiers: [this.resourceUri?.trim()?.toLowerCase() || ''],
-    };
+    const patchData: PatchProtectedResourceRequest = {};
 
-    this.mcpServersService.patch(this.domainId, this.protectedResource.id, patchData).subscribe(
-      () => {
+    const currentName = (this.protectedResource.name || '').trim();
+    if (currentName !== (this.initialValues.name || '').trim()) {
+      patchData.name = this.protectedResource.name;
+    }
+
+    const currentDescription = (this.protectedResource.description || '').trim();
+    if (currentDescription !== (this.initialValues.description || '').trim()) {
+      patchData.description = this.protectedResource.description;
+    }
+
+    const currentResourceUri = (this.resourceUri || '').trim().toLowerCase();
+    if (currentResourceUri !== (this.initialValues.resourceUri || '').trim().toLowerCase()) {
+      patchData.resourceIdentifiers = [currentResourceUri];
+    }
+
+    if (Object.keys(patchData).length === 0) {
+      return; // Should not happen if save button is disabled correctly
+    }
+
+    this.mcpServersService.patch(this.domainId, this.protectedResource.id, patchData).subscribe({
+      next: () => {
         // Update initial values after successful save
         this.initialValues = {
           name: this.protectedResource.name || '',
@@ -103,29 +114,40 @@ export class DomainMcpServerGeneralComponent implements OnInit, OnDestroy {
         this.snackbarService.open('MCP Server updated');
         this.router.navigate(['.'], { relativeTo: this.route, queryParams: { reload: true } });
       },
-      (error) => {
-        if (error.error?.message) {
-          this.snackbarService.open(error.error.message);
+      error: (error: unknown) => {
+        const httpError = error as { error?: { message?: string } };
+        if (httpError?.error?.message) {
+          this.snackbarService.open(httpError.error.message);
         } else {
           this.snackbarService.open('Failed to update MCP Server');
         }
       },
-    );
+    });
   }
 
   delete(event) {
     event.preventDefault();
     this.dialogService
-      .confirm('Delete MCP Authorization Server', 'Are you sure you want to delete this MCP Authorization Server?')
+      .confirm('Delete MCP Server', 'Are you sure you want to delete this MCP server?')
       .pipe(
         filter((res) => res),
         switchMap(() => this.mcpServersService.delete(this.domainId, this.protectedResource.id)),
         tap(() => {
-          this.snackbarService.open('MCP Authorization Server deleted');
+          this.snackbarService.open('MCP Server deleted');
           this.router.navigate(['/environments', this.domain.referenceId, 'domains', this.domain.id, 'mcp-servers']);
         }),
       )
-      .subscribe();
+      .subscribe({
+        next: () => {},
+        error: (error: unknown) => {
+          const httpError = error as { error?: { message?: string } };
+          if (httpError?.error?.message) {
+            this.snackbarService.open(httpError.error.message);
+          } else {
+            this.snackbarService.open('Failed to delete MCP Server');
+          }
+        },
+      });
   }
 
   valueCopied(message: string) {
@@ -146,9 +168,7 @@ export class DomainMcpServerGeneralComponent implements OnInit, OnDestroy {
     const initialResourceUri = (this.initialValues.resourceUri || '').trim().toLowerCase();
 
     this.formChanged =
-      currentName !== initialName ||
-      currentDescription !== initialDescription ||
-      currentResourceUri !== initialResourceUri;
+      currentName !== initialName || currentDescription !== initialDescription || currentResourceUri !== initialResourceUri;
   }
 
   hasFormChanges(): boolean {

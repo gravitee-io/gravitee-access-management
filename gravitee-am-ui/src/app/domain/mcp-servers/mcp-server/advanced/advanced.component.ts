@@ -54,4 +54,3 @@ export class DomainMcpServerAdvancedComponent implements OnDestroy {
     return this.authService.hasPermissions(permissions);
   }
 }
-

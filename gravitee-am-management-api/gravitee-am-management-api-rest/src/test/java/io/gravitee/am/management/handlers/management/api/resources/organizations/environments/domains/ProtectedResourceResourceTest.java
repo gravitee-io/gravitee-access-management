@@ -214,9 +214,9 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 .path("resource-id"), patchRequest);
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
-        ProtectedResource result = readEntity(response, ProtectedResource.class);
-        assertEquals("resource-id", result.getId());
-        assertEquals("NewName", result.getName());
+        ProtectedResourcePrimaryData result = readEntity(response, ProtectedResourcePrimaryData.class);
+        assertEquals("resource-id", result.id());
+        assertEquals("NewName", result.name());
     }
 
     @Test

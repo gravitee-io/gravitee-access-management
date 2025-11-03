@@ -50,7 +50,7 @@ export class McpServerSettingsComponent implements OnInit, OnChanges, OnDestroy 
   ngOnInit(): void {
     // Store initial name for comparison in edit mode
     this.initialName = this.name || '';
-    
+
     // Set up duplicate name checking
     this.nameCheckSubject
       .pipe(
@@ -97,7 +97,7 @@ export class McpServerSettingsComponent implements OnInit, OnChanges, OnDestroy 
         }),
       )
       .subscribe();
-    
+
     // Check for duplicates on initial load if name is already set
     if (this.name && this.domainId && !this.existingResourceId) {
       // In create mode, check immediately if name is already set
@@ -167,4 +167,3 @@ export class McpServerSettingsComponent implements OnInit, OnChanges, OnDestroy 
     }
   }
 }
-
