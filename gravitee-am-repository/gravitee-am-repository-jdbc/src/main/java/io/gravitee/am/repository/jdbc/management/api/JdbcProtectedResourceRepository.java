@@ -305,6 +305,15 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .any(Boolean::booleanValue);
     }
 
+    @Override
+    public Single<Boolean> existsByResourceIdentifiersExcludingId(String domainId, List<String> resourceIdentifiers, String excludeId) {
+        List<Single<Boolean>> checks = resourceIdentifiers.stream()
+                .map(uri -> spring.existsByDomainIdAndResourceIdentifiersContainsIgnoreCaseAndIdNot(domainId, uri, excludeId))
+                .toList();
+        return Single.concat(checks)
+                .any(Boolean::booleanValue);
+    }
+
 
     private Single<ProtectedResource> complete(ProtectedResource entity) {
         return Single.just(entity)

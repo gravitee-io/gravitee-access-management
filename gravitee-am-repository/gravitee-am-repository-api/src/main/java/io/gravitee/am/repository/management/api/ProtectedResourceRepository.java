@@ -40,4 +40,15 @@ public interface ProtectedResourceRepository extends CrudRepository<ProtectedRes
     Single<Page<ProtectedResourcePrimaryData>> findByDomainAndTypeAndIds(String domain, Type type, List<String> ids, PageSortRequest pageSortRequest);
 
     Single<Boolean> existsByResourceIdentifiers(String domainId, List<String> resourceIdentifiers);
+
+    /**
+     * Checks if any resource (excluding the one with excludeId) has any of the given resource identifiers.
+     * Used during updates to validate uniqueness while excluding the current resource.
+     *
+     * @param domainId the domain to search in
+     * @param resourceIdentifiers the identifiers to check for
+     * @param excludeId the resource ID to exclude from the check
+     * @return true if another resource (not the excluded one) has any of these identifiers
+     */
+    Single<Boolean> existsByResourceIdentifiersExcludingId(String domainId, List<String> resourceIdentifiers, String excludeId);
 }

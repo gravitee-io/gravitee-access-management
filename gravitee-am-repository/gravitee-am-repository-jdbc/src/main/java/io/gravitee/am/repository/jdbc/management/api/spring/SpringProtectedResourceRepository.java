@@ -15,7 +15,6 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
-import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResource.Type;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
 import io.reactivex.rxjava3.core.Single;
@@ -32,4 +31,6 @@ public interface SpringProtectedResourceRepository extends RxJava3CrudRepository
     Single<Long> countByDomainIdAndTypeAndIdIn(String domainId, Type type, Collection<String> ids);
 
     Single<Boolean> existsByDomainIdAndResourceIdentifiersContainsIgnoreCase(String domainId, String resourceIdentifier);
+
+    Single<Boolean> existsByDomainIdAndResourceIdentifiersContainsIgnoreCaseAndIdNot(String domainId, String resourceIdentifier, String excludeId);
 }

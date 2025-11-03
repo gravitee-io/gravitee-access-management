@@ -6234,10 +6234,10 @@ paths:
       responses:
         "204":
           description: Protected Resource successfully deleted
-        "404":
-          description: Protected Resource not found
         "403":
           description: Forbidden
+        "404":
+          description: Protected Resource not found
         "500":
           description: Internal server error
     get:
@@ -6284,6 +6284,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        "403":
+          description: Forbidden
         "404":
           description: Protected Resource not found
         "500":
@@ -6334,6 +6336,8 @@ paths:
                 $ref: "#/components/schemas/ProtectedResourcePrimaryData"
         "400":
           description: Bad request
+        "403":
+          description: Forbidden
         "404":
           description: Protected Resource not found
         "500":
@@ -6384,6 +6388,8 @@ paths:
                 $ref: "#/components/schemas/ProtectedResourcePrimaryData"
         "400":
           description: Bad request
+        "403":
+          description: Forbidden
         "404":
           description: Protected Resource not found
         "500":

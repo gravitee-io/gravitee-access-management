@@ -136,6 +136,18 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
                 .map(count -> count > 0);
     }
 
+    @Override
+    public Single<Boolean> existsByResourceIdentifiersExcludingId(String domainId, List<String> resourceIdentifiers, String excludeId) {
+        if(resourceIdentifiers.isEmpty()){
+            return Single.just(false);
+        }
+        return Single.fromPublisher(collection.countDocuments(and(
+                eq(DOMAIN_ID_FIELD, domainId),
+                in(RESOURCE_IDENTIFIERS_FIELD, resourceIdentifiers),
+                ne(FIELD_ID, excludeId))))
+                .map(count -> count > 0);
+    }
+
     private Single<Page<ProtectedResourcePrimaryData>> queryProtectedResource(Bson query, PageSortRequest pageSortRequest) {
         Single<Long> countOperation = Observable.fromPublisher(collection
                         .countDocuments(query, countOptions()))

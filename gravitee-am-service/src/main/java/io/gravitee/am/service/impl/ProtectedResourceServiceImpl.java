@@ -60,6 +60,8 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.ProtectedResource.Type.valueOf;
 import static org.springframework.util.StringUtils.hasLength;
@@ -206,14 +208,13 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     toUpdate.setUpdatedAt(new Date());
 
                     // Map features
+
+                    Map<String, Date> oldFeatureCreationDates = oldProtectedResource.getFeatures().stream()
+                            .collect(Collectors.toMap(ProtectedResourceFeature::getKey, ProtectedResourceFeature::getCreatedAt));
                     toUpdate.setFeatures(updateProtectedResource.getFeatures().stream().map(f -> {
                         ProtectedResourceFeature feature = f.asFeature();
                         // Keep original createdAt if feature key matches, otherwise set new date
-                        Date createdAt = oldProtectedResource.getFeatures().stream()
-                                .filter(old -> old.getKey().equals(feature.getKey()))
-                                .findFirst()
-                                .map(ProtectedResourceFeature::getCreatedAt)
-                                .orElse(toUpdate.getUpdatedAt());
+                        Date createdAt = oldFeatureCreationDates.getOrDefault(feature.getKey(), toUpdate.getUpdatedAt());
                         feature.setCreatedAt(createdAt);
                         feature.setUpdatedAt(toUpdate.getUpdatedAt());
                         return switch (f) {
@@ -266,13 +267,11 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
                     // Handle features with createdAt preservation if features were updated
                     if (toPatch.getFeatures() != null && oldProtectedResource.getFeatures() != null) {
+                        Map<String, Date> oldFeatureCreationDates = oldProtectedResource.getFeatures().stream()
+                                .collect(Collectors.toMap(ProtectedResourceFeature::getKey, ProtectedResourceFeature::getCreatedAt));
                         toPatch.setFeatures(toPatch.getFeatures().stream().map(feature -> {
                             // Keep original createdAt if feature key matches, otherwise set new date
-                            Date createdAt = oldProtectedResource.getFeatures().stream()
-                                    .filter(old -> old.getKey().equals(feature.getKey()))
-                                    .findFirst()
-                                    .map(ProtectedResourceFeature::getCreatedAt)
-                                    .orElse(toPatch.getUpdatedAt());
+                            Date createdAt = oldFeatureCreationDates.getOrDefault(feature.getKey(), toPatch.getUpdatedAt());
                             feature.setCreatedAt(createdAt);
                             feature.setUpdatedAt(toPatch.getUpdatedAt());
                             return feature;
@@ -318,14 +317,20 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         if (new HashSet<>(oldIdentifiers).equals(new HashSet<>(newIdentifiers))) {
             return Completable.complete();
         }
-        // Only check new identifiers that weren't in the old list
-        List<String> identifiersToCheck = newIdentifiers.stream()
-                .filter(identifier -> !oldIdentifiers.contains(identifier))
-                .toList();
-        if (identifiersToCheck.isEmpty()) {
+        // Check all new identifiers for uniqueness against other resources (excluding current resource)
+        // This ensures we catch cases where an identifier that was previously owned by this resource
+        // has been taken by another resource in the meantime
+        if (newIdentifiers.isEmpty()) {
             return Completable.complete();
         }
-        return checkResourceIdentifierUniqueness(domainId, identifiersToCheck);
+        return repository.existsByResourceIdentifiersExcludingId(domainId, newIdentifiers, resourceId)
+                .flatMapCompletable(exists -> {
+                    if(exists) {
+                        return Completable.error(new InvalidProtectedResourceException("Resource identifier already exists"));
+                    } else {
+                        return Completable.complete();
+                    }
+                });
     }
 
     private Completable validateFeatureScopes(String domainId, ProtectedResource resource) {

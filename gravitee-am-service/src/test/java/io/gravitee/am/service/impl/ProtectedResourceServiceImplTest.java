@@ -216,8 +216,8 @@ public class ProtectedResourceServiceImplTest {
 
         // Mock dependencies
         Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        Mockito.when(repository.existsByResourceIdentifiers(eq("domainId"), any())).thenReturn(Single.just(false));
-        Mockito.when(scopeService.validateScope(eq("domainId"), any())).thenReturn(Single.just(true));
+        Mockito.when(repository.existsByResourceIdentifiersExcludingId(Mockito.eq("domainId"), Mockito.anyList(), Mockito.eq("resource-id"))).thenReturn(Single.just(false));
+        Mockito.when(scopeService.validateScope(Mockito.eq("domainId"), Mockito.anyList())).thenReturn(Single.just(true));
         Mockito.when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
@@ -794,5 +794,84 @@ public class ProtectedResourceServiceImplTest {
         Mockito.verify(repository, Mockito.times(1)).update(any());
         Mockito.verify(auditService, Mockito.times(1)).report(any());
         Mockito.verify(eventService, Mockito.times(1)).create(any(), any());
+    }
+
+    @Test
+    public void shouldNotUpdateProtectedResourceWhenIdentifierTakenByAnotherResource() {
+        // Test the race condition fix: when a resource identifier that was previously owned
+        // by this resource has been taken by another resource in the meantime
+        ProtectedResource existingResource = new ProtectedResource();
+        existingResource.setId("resource-id");
+        existingResource.setDomainId("domainId");
+        existingResource.setResourceIdentifiers(List.of("https://example.com", "https://example2.com"));
+        existingResource.setFeatures(new ArrayList<>());
+
+        // Update request that keeps "https://example.com" (which was in old list)
+        // but this identifier has been taken by another resource in the meantime
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("New Name");
+        updateRequest.setResourceIdentifiers(List.of("https://example.com", "https://example3.com"));
+        updateRequest.setFeatures(new ArrayList<>());
+
+        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        // The identifier "https://example.com" exists in another resource (not this one)
+        Mockito.when(repository.existsByResourceIdentifiersExcludingId(Mockito.eq("domainId"), Mockito.anyList(), Mockito.eq("resource-id")))
+                .thenReturn(Single.just(true));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        service.update(domain, "resource-id", updateRequest, user)
+                .test()
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
+                        throwable.getMessage().equals("Resource identifier already exists"));
+
+        // Verify the new method was called (not the old one)
+        Mockito.verify(repository, Mockito.times(1)).existsByResourceIdentifiersExcludingId(
+                Mockito.eq("domainId"),
+                Mockito.argThat(identifiers -> identifiers.contains("https://example.com") && identifiers.contains("https://example3.com")),
+                Mockito.eq("resource-id"));
+        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiers(Mockito.anyString(), Mockito.anyList());
+        Mockito.verify(repository, Mockito.never()).update(Mockito.any());
+    }
+
+    @Test
+    public void shouldNotPatchProtectedResourceWhenIdentifierTakenByAnotherResource() {
+        // Test the race condition fix for patch operation
+        ProtectedResource existingResource = new ProtectedResource();
+        existingResource.setId("resource-id");
+        existingResource.setDomainId("domainId");
+        existingResource.setResourceIdentifiers(List.of("https://example.com", "https://example2.com"));
+        existingResource.setFeatures(new ArrayList<>());
+
+        // Patch request that keeps "https://example.com" (which was in old list)
+        // but this identifier has been taken by another resource in the meantime
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setResourceIdentifiers(Optional.of(List.of("https://example.com", "https://example3.com")));
+
+        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        // The identifier "https://example.com" exists in another resource (not this one)
+        Mockito.when(repository.existsByResourceIdentifiersExcludingId(Mockito.eq("domainId"), Mockito.anyList(), Mockito.eq("resource-id")))
+                .thenReturn(Single.just(true));
+
+        Domain domain = new Domain();
+        domain.setId("domainId");
+
+        User user = new DefaultUser();
+
+        service.patch(domain, "resource-id", patchRequest, user)
+                .test()
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
+                        throwable.getMessage().equals("Resource identifier already exists"));
+
+        // Verify the new method was called (not the old one)
+        Mockito.verify(repository, Mockito.times(1)).existsByResourceIdentifiersExcludingId(
+                Mockito.eq("domainId"),
+                Mockito.argThat(identifiers -> identifiers.contains("https://example.com") && identifiers.contains("https://example3.com")),
+                Mockito.eq("resource-id"));
+        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiers(Mockito.anyString(), Mockito.anyList());
+        Mockito.verify(repository, Mockito.never()).update(Mockito.any());
     }
 }
