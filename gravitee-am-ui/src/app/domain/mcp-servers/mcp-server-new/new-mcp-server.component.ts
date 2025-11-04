@@ -24,7 +24,7 @@ import {
   CopyClientSecretCopyDialogData,
 } from '../../applications/application/advanced/secrets-certificates/copy-client-secret/copy-client-secret.component';
 import { SnackbarService } from '../../../services/snackbar.service';
-import { McpServersService, NewMcpServer } from '../mcp-servers.service';
+import { McpServersService, NewMcpServer, McpServerTool } from '../mcp-servers.service';
 
 import { DomainNewMcpServerToolDialogFactory } from './tool-new-dialog/tool-new-dialog.component';
 
@@ -115,7 +115,7 @@ export class DomainNewMcpServerComponent implements OnInit {
     });
   }
 
-  editTool(tool: any): void {
+  editTool(tool: McpServerTool): void {
     this.newToolDialogFactory.openDialog(
       {
         scopes: this.scopes,
@@ -128,14 +128,15 @@ export class DomainNewMcpServerComponent implements OnInit {
             this.snackbarService.open(`Tool with name ${data.name} already exists`);
           } else {
             // Update the tool in the array
-            this.newMcpServer.tools = this.newMcpServer.tools.map((t) =>
-              t.key === tool.key
-                ? {
-                    key: data.name,
-                    scopes: data.scopes,
-                    description: data.description,
-                  }
-                : t,
+            this.newMcpServer.tools = this.newMcpServer.tools.map(
+              (t): McpServerTool =>
+                t.key === tool.key
+                  ? {
+                      key: data.name,
+                      scopes: data.scopes,
+                      description: data.description,
+                    }
+                  : t,
             );
           }
         }

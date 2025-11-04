@@ -15,7 +15,7 @@
  */
 import { Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { UntypedFormControl } from '@angular/forms';
+import { UntypedFormControl, FormControl, Validators } from '@angular/forms';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 
 interface EditTool {
@@ -42,8 +42,11 @@ export class DomainMcpServerToolEditDialogComponent {
   @ViewChild('scopeInput', { static: true }) scopeInput: ElementRef<HTMLInputElement>;
   matChipInputSeparatorKeyCodes = [ENTER, COMMA];
   tool: EditTool;
+  originalTool: EditTool;
   filteredScopes: any[];
   scopeCtrl = new UntypedFormControl();
+  toolNameCtrl: FormControl<string>;
+  toolDescriptionCtrl: FormControl<string>;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: EditToolDialogData,
@@ -56,6 +59,27 @@ export class DomainMcpServerToolEditDialogComponent {
       scopes: [...(data.tool.scopes || [])],
     };
 
+    // Store the original tool for comparison
+    this.originalTool = {
+      key: data.tool.key,
+      description: data.tool.description,
+      scopes: [...(data.tool.scopes || [])],
+    };
+
+    // Initialize form controls with validation
+    this.toolNameCtrl = new FormControl(data.tool.key, [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)]);
+
+    this.toolDescriptionCtrl = new FormControl(data.tool.description || '');
+
+    // Sync form controls with tool object
+    this.toolNameCtrl.valueChanges.subscribe((value) => {
+      this.tool.key = value || '';
+    });
+
+    this.toolDescriptionCtrl.valueChanges.subscribe((value) => {
+      this.tool.description = value || '';
+    });
+
     this.scopeCtrl.valueChanges.subscribe((searchTerm: string) => {
       if (typeof searchTerm === 'string') {
         this.filteredScopes = data.scopes.filter((scope) => {
@@ -67,7 +91,52 @@ export class DomainMcpServerToolEditDialogComponent {
   }
 
   accept(): void {
-    this.dialogRef.close(this.tool);
+    // Validate form before accepting
+    if (this.toolNameCtrl.invalid) {
+      this.toolNameCtrl.markAsTouched();
+      return;
+    }
+
+    // Check if anything has changed
+    if (this.hasChanges()) {
+      this.dialogRef.close(this.tool);
+    } else {
+      // No changes, close without returning data
+      this.dialogRef.close();
+    }
+  }
+
+  isFormValid(): boolean {
+    return this.toolNameCtrl.valid;
+  }
+
+  private hasChanges(): boolean {
+    // Trim values for comparison
+    const currentKey = this.tool.key?.trim() || '';
+    const originalKey = this.originalTool.key?.trim() || '';
+    const currentDescription = this.tool.description?.trim() || '';
+    const originalDescription = this.originalTool.description?.trim() || '';
+
+    // Check if key or description changed
+    if (currentKey !== originalKey || currentDescription !== originalDescription) {
+      return true;
+    }
+
+    // Check if scopes changed
+    const currentScopes = [...(this.tool.scopes || [])].sort();
+    const originalScopes = [...(this.originalTool.scopes || [])].sort();
+
+    if (currentScopes.length !== originalScopes.length) {
+      return true;
+    }
+
+    for (let i = 0; i < currentScopes.length; i++) {
+      if (currentScopes[i] !== originalScopes[i]) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   close(): void {

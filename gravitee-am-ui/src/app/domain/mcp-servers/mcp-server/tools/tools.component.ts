@@ -17,7 +17,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
-import { catchError } from 'rxjs/operators';
+import { catchError, filter } from 'rxjs/operators';
 import { of } from 'rxjs';
 
 import {
@@ -31,6 +31,8 @@ import { McpTool } from '../../../components/mcp-tools-table/mcp-tools-table.com
 import { ScopeService } from '../../../../services/scope.service';
 import { SnackbarService } from '../../../../services/snackbar.service';
 import { AuthService } from '../../../../services/auth.service';
+import { DialogService } from '../../../../services/dialog.service';
+import { DomainNewMcpServerToolDialogFactory } from '../../mcp-server-new/tool-new-dialog/tool-new-dialog.component';
 
 import { DomainMcpServerToolEditDialogComponent } from './tool-edit-dialog/tool-edit-dialog.component';
 
@@ -39,6 +41,19 @@ import { DomainMcpServerToolEditDialogComponent } from './tool-edit-dialog/tool-
  * The API returns features with scopes for MCP tools, but the base type doesn't include it.
  */
 interface ProtectedResourceFeatureWithScopes extends ProtectedResourceFeature {
+  scopes?: string[];
+}
+
+/**
+ * Type for feature update request with all required fields.
+ * Note: We use ProtectedResourceFeatureType here instead of NewMcpToolTypeEnum
+ * because this is the frontend service layer type. NewMcpToolTypeEnum is the
+ * auto-generated API model type. Both resolve to 'MCP_TOOL' for tool features.
+ */
+interface FeatureUpdateData {
+  key: string;
+  description: string;
+  type: ProtectedResourceFeatureType;
   scopes?: string[];
 }
 
@@ -63,6 +78,8 @@ export class DomainMcpServerToolsComponent implements OnInit {
     private snackbarService: SnackbarService,
     private authService: AuthService,
     private dialog: MatDialog,
+    private dialogService: DialogService,
+    private newToolDialogFactory: DomainNewMcpServerToolDialogFactory,
   ) {}
 
   ngOnInit(): void {
@@ -91,6 +108,18 @@ export class DomainMcpServerToolsComponent implements OnInit {
     });
   }
 
+  handleAdd(): void {
+    this.newToolDialogFactory.openDialog({ scopes: this.domainScopes }, (result) => {
+      if (!result.cancel) {
+        this.addTool({
+          name: result.name,
+          description: result.description,
+          scopes: result.scopes,
+        });
+      }
+    });
+  }
+
   handleEdit(tool: McpTool): void {
     const dialogRef = this.dialog.open(DomainMcpServerToolEditDialogComponent, {
       width: '540px',
@@ -107,22 +136,134 @@ export class DomainMcpServerToolsComponent implements OnInit {
     });
   }
 
+  handleDelete(tool: McpTool): void {
+    this.dialogService
+      .confirm('Delete Tool', `Are you sure you want to delete the tool "${tool.key}"?`)
+      .pipe(filter((confirmed) => confirmed))
+      .subscribe(() => {
+        this.deleteTool(tool.key);
+      });
+  }
+
+  private addTool(newTool: { name: string; description?: string; scopes?: string[] }): void {
+    // Trim the tool name and description
+    const trimmedName = newTool.name.trim();
+    const trimmedDescription = newTool.description?.trim();
+
+    // Check if tool with same name already exists
+    if (this.protectedResource.features.some((f) => f.key === trimmedName)) {
+      this.snackbarService.open(`Tool with name "${trimmedName}" already exists`);
+      return;
+    }
+
+    // Add the new tool to the features list
+    const updatedFeatures: FeatureUpdateData[] = [
+      // Map existing features to ensure type is set correctly
+      ...(this.protectedResource.features as ProtectedResourceFeatureWithScopes[]).map((f) => ({
+        key: f.key,
+        description: f.description,
+        type: ProtectedResourceFeatureType.MCP_TOOL,
+        scopes: f.scopes,
+      })),
+      {
+        key: trimmedName,
+        description: trimmedDescription || '',
+        type: ProtectedResourceFeatureType.MCP_TOOL,
+        scopes: newTool.scopes,
+      },
+    ];
+
+    const updateRequest: UpdateProtectedResourceRequest = {
+      name: this.protectedResource.name,
+      resourceIdentifiers: this.protectedResource.resourceIdentifiers,
+      description: this.protectedResource.description,
+      features: updatedFeatures,
+    };
+
+    this.protectedResourceService
+      .update(this.domainId, this.protectedResource.id, updateRequest)
+      .pipe(
+        catchError((err: unknown) => {
+          this.snackbarService.open(
+            'Failed to add tool: ' + ((err as HttpErrorResponse).error?.message || (err as HttpErrorResponse).message),
+          );
+          return of(null);
+        }),
+      )
+      .subscribe((updated) => {
+        if (updated) {
+          this.snackbarService.open(`Tool "${newTool.name}" added successfully`);
+          this.protectedResource = updated;
+          this.features = this.mapFeaturesToTools(updated.features ?? []);
+          // Update the route snapshot data so other tabs see the updated data
+          this.route.snapshot.data['mcpServer'] = updated;
+        }
+      });
+  }
+
+  private deleteTool(toolKey: string): void {
+    // Remove the tool from the features list and map to ensure type is set correctly
+    const updatedFeatures: FeatureUpdateData[] = (
+      this.protectedResource.features.filter((feature) => feature.key !== toolKey) as ProtectedResourceFeatureWithScopes[]
+    ).map((f) => ({
+      key: f.key,
+      description: f.description,
+      type: ProtectedResourceFeatureType.MCP_TOOL,
+      scopes: f.scopes,
+    }));
+
+    // Create the update request
+    const updateRequest: UpdateProtectedResourceRequest = {
+      name: this.protectedResource.name,
+      resourceIdentifiers: this.protectedResource.resourceIdentifiers,
+      description: this.protectedResource.description,
+      features: updatedFeatures,
+    };
+
+    this.protectedResourceService
+      .update(this.domainId, this.protectedResource.id, updateRequest)
+      .pipe(
+        catchError((err: unknown) => {
+          this.snackbarService.open(
+            'Failed to delete tool: ' + ((err as HttpErrorResponse).error?.message || (err as HttpErrorResponse).message),
+          );
+          return of(null);
+        }),
+      )
+      .subscribe((updated) => {
+        if (updated) {
+          this.snackbarService.open(`Tool "${toolKey}" deleted successfully`);
+          this.protectedResource = updated;
+          this.features = this.mapFeaturesToTools(updated.features ?? []);
+          // Update the route snapshot data so other tabs see the updated data
+          this.route.snapshot.data['mcpServer'] = updated;
+        }
+      });
+  }
+
   private updateTool(originalKey: string, updatedTool: { key: string; description?: string; scopes?: string[] }): void {
+    // Trim the tool key and description
+    const trimmedKey = updatedTool.key?.trim();
+    const trimmedDescription = updatedTool.description?.trim();
+
     // Update the tool in the features list
-    const updatedFeatures = this.protectedResource.features.map((feature) => {
+    const updatedFeatures: FeatureUpdateData[] = this.protectedResource.features.map((feature): FeatureUpdateData => {
+      const featureWithScopes = feature as ProtectedResourceFeatureWithScopes;
       if (feature.key === originalKey) {
+        // Return new object for the updated feature
         return {
-          key: updatedTool.key,
-          description: updatedTool.description,
-          type: 'MCP_TOOL' as ProtectedResourceFeatureType,
+          key: trimmedKey,
+          description: trimmedDescription || '',
+          type: ProtectedResourceFeatureType.MCP_TOOL,
           scopes: updatedTool.scopes,
         };
       }
+      // Map existing features to ensure type is set correctly
       return {
-        key: feature.key,
-        description: feature.description,
-        type: 'MCP_TOOL' as ProtectedResourceFeatureType,
-        scopes: (feature as any).scopes,
+        key: featureWithScopes.key,
+        description: featureWithScopes.description,
+        type: ProtectedResourceFeatureType.MCP_TOOL,
+        scopes: featureWithScopes.scopes,
       };
     });
 
