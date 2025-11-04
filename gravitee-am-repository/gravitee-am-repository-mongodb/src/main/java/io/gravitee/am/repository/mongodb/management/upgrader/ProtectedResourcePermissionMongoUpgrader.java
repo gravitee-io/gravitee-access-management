@@ -15,19 +15,19 @@
  */
 package io.gravitee.am.repository.mongodb.management.upgrader;
 
+import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
 import io.gravitee.node.api.upgrader.Upgrader;
-import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Completable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Filters.in;
 
@@ -42,9 +42,9 @@ public class ProtectedResourcePermissionMongoUpgrader implements Upgrader {
     public boolean upgrade() {
         var rolesCollection = mongo.getCollection("roles", RoleMongo.class);
         var filter = and(in("name", "ORGANIZATION_OWNER"), exists("permissionAcls.PROTECTED_RESOURCE", false));
-        var update = com.mongodb.client.model.Updates.set("permissionAcls." + Permission.PROTECTED_RESOURCE.name(), Acl.all());
+        var update = Updates.set("permissionAcls." + Permission.PROTECTED_RESOURCE.name(), Acl.all());
 
-        return io.reactivex.rxjava3.core.Completable.fromPublisher(rolesCollection.updateMany(filter, update))
+        return Completable.fromPublisher(rolesCollection.updateMany(filter, update))
                 .toSingleDefault(true)
                 .onErrorReturn(ex -> {
                     log.error("Error adding PROTECTED_RESOURCE permission on ORGANIZATION_OWNER", ex);
