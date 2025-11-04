@@ -41,14 +41,11 @@ public class ProtectedResourcePermissionMongoUpgrader implements Upgrader {
     @Override
     public boolean upgrade() {
         var rolesCollection = mongo.getCollection("roles", RoleMongo.class);
-        return Flowable.fromPublisher(rolesCollection.find(and(in("name", "ORGANIZATION_OWNER"), exists("permissionAcls.PROTECTED_RESOURCE", false))))
-                .flatMap(role -> {
-                    role.getPermissionAcls().putIfAbsent(Permission.PROTECTED_RESOURCE.name(), Acl.all());
-                    return rolesCollection.replaceOne(eq("_id", role.getId()), role);
-                })
-                .map(r -> r.getModifiedCount() > 0)
-                .switchIfEmpty(Flowable.just(true))
-                .reduce(Boolean.TRUE, (acc, opResult) -> acc && opResult)
+        var filter = and(in("name", "ORGANIZATION_OWNER"), exists("permissionAcls.PROTECTED_RESOURCE", false));
+        var update = com.mongodb.client.model.Updates.set("permissionAcls." + Permission.PROTECTED_RESOURCE.name(), Acl.all());
+
+        return io.reactivex.rxjava3.core.Completable.fromPublisher(rolesCollection.updateMany(filter, update))
+                .toSingleDefault(true)
                 .onErrorReturn(ex -> {
                     log.error("Error adding PROTECTED_RESOURCE permission on ORGANIZATION_OWNER", ex);
                     return false;
