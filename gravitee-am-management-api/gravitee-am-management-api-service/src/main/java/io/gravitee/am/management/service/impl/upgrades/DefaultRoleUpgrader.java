@@ -37,7 +37,7 @@ public class DefaultRoleUpgrader implements Upgrader {
     private final RoleService roleService;
 
     // bump every time system roles are modified
-    private static final String VERSION ="3";
+    private static final String VERSION ="4";
 
     @Override
     public boolean upgrade() {

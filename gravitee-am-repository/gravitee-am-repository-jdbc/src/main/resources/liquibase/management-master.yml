@@ -193,3 +193,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_10_0/4.10.0-protected-resources-features-table.yml
   - include:
       - file: liquibase/changelogs/v4_10_0/4.10.0-add-updated-at-to-protected-resource-features.yml
+  - include:
+      - file: liquibase/changelogs/v4_10_0/4.10.0-protected-resource-permissions.yml
