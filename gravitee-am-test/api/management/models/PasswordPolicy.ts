@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -160,65 +160,73 @@ export const PasswordPolicyReferenceTypeEnum = {
 } as const;
 export type PasswordPolicyReferenceTypeEnum = typeof PasswordPolicyReferenceTypeEnum[keyof typeof PasswordPolicyReferenceTypeEnum];
 
+/**
+ * Check if a given object implements the PasswordPolicy interface.
+ */
+export function instanceOfPasswordPolicy(value: object): value is PasswordPolicy {
+  return true;
+}
+
 export function PasswordPolicyFromJSON(json: any): PasswordPolicy {
   return PasswordPolicyFromJSONTyped(json, false);
 }
 
 export function PasswordPolicyFromJSONTyped(json: any, ignoreDiscriminator: boolean): PasswordPolicy {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    referenceId: !exists(json, 'referenceId') ? undefined : json['referenceId'],
-    referenceType: !exists(json, 'referenceType') ? undefined : json['referenceType'],
-    createdAt: !exists(json, 'createdAt') ? undefined : new Date(json['createdAt']),
-    updatedAt: !exists(json, 'updatedAt') ? undefined : new Date(json['updatedAt']),
-    name: !exists(json, 'name') ? undefined : json['name'],
-    minLength: !exists(json, 'minLength') ? undefined : json['minLength'],
-    maxLength: !exists(json, 'maxLength') ? undefined : json['maxLength'],
-    includeNumbers: !exists(json, 'includeNumbers') ? undefined : json['includeNumbers'],
-    includeSpecialCharacters: !exists(json, 'includeSpecialCharacters') ? undefined : json['includeSpecialCharacters'],
-    lettersInMixedCase: !exists(json, 'lettersInMixedCase') ? undefined : json['lettersInMixedCase'],
-    maxConsecutiveLetters: !exists(json, 'maxConsecutiveLetters') ? undefined : json['maxConsecutiveLetters'],
-    excludePasswordsInDictionary: !exists(json, 'excludePasswordsInDictionary') ? undefined : json['excludePasswordsInDictionary'],
-    excludeUserProfileInfoInPassword: !exists(json, 'excludeUserProfileInfoInPassword')
-      ? undefined
-      : json['excludeUserProfileInfoInPassword'],
-    expiryDuration: !exists(json, 'expiryDuration') ? undefined : json['expiryDuration'],
-    passwordHistoryEnabled: !exists(json, 'passwordHistoryEnabled') ? undefined : json['passwordHistoryEnabled'],
-    oldPasswords: !exists(json, 'oldPasswords') ? undefined : json['oldPasswords'],
-    regex: !exists(json, 'regex') ? undefined : json['regex'],
-    defaultPolicy: !exists(json, 'defaultPolicy') ? undefined : json['defaultPolicy'],
+    id: json['id'] == null ? undefined : json['id'],
+    referenceId: json['referenceId'] == null ? undefined : json['referenceId'],
+    referenceType: json['referenceType'] == null ? undefined : json['referenceType'],
+    createdAt: json['createdAt'] == null ? undefined : new Date(json['createdAt']),
+    updatedAt: json['updatedAt'] == null ? undefined : new Date(json['updatedAt']),
+    name: json['name'] == null ? undefined : json['name'],
+    minLength: json['minLength'] == null ? undefined : json['minLength'],
+    maxLength: json['maxLength'] == null ? undefined : json['maxLength'],
+    includeNumbers: json['includeNumbers'] == null ? undefined : json['includeNumbers'],
+    includeSpecialCharacters: json['includeSpecialCharacters'] == null ? undefined : json['includeSpecialCharacters'],
+    lettersInMixedCase: json['lettersInMixedCase'] == null ? undefined : json['lettersInMixedCase'],
+    maxConsecutiveLetters: json['maxConsecutiveLetters'] == null ? undefined : json['maxConsecutiveLetters'],
+    excludePasswordsInDictionary: json['excludePasswordsInDictionary'] == null ? undefined : json['excludePasswordsInDictionary'],
+    excludeUserProfileInfoInPassword:
+      json['excludeUserProfileInfoInPassword'] == null ? undefined : json['excludeUserProfileInfoInPassword'],
+    expiryDuration: json['expiryDuration'] == null ? undefined : json['expiryDuration'],
+    passwordHistoryEnabled: json['passwordHistoryEnabled'] == null ? undefined : json['passwordHistoryEnabled'],
+    oldPasswords: json['oldPasswords'] == null ? undefined : json['oldPasswords'],
+    regex: json['regex'] == null ? undefined : json['regex'],
+    defaultPolicy: json['defaultPolicy'] == null ? undefined : json['defaultPolicy'],
   };
 }
 
-export function PasswordPolicyToJSON(value?: PasswordPolicy | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PasswordPolicyToJSON(json: any): PasswordPolicy {
+  return PasswordPolicyToJSONTyped(json, false);
+}
+
+export function PasswordPolicyToJSONTyped(value?: PasswordPolicy | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    referenceId: value.referenceId,
-    referenceType: value.referenceType,
-    createdAt: value.createdAt === undefined ? undefined : value.createdAt.toISOString(),
-    updatedAt: value.updatedAt === undefined ? undefined : value.updatedAt.toISOString(),
-    name: value.name,
-    minLength: value.minLength,
-    maxLength: value.maxLength,
-    includeNumbers: value.includeNumbers,
-    includeSpecialCharacters: value.includeSpecialCharacters,
-    lettersInMixedCase: value.lettersInMixedCase,
-    maxConsecutiveLetters: value.maxConsecutiveLetters,
-    excludePasswordsInDictionary: value.excludePasswordsInDictionary,
-    excludeUserProfileInfoInPassword: value.excludeUserProfileInfoInPassword,
-    expiryDuration: value.expiryDuration,
-    passwordHistoryEnabled: value.passwordHistoryEnabled,
-    oldPasswords: value.oldPasswords,
-    regex: value.regex,
-    defaultPolicy: value.defaultPolicy,
+    id: value['id'],
+    referenceId: value['referenceId'],
+    referenceType: value['referenceType'],
+    createdAt: value['createdAt'] == null ? value['createdAt'] : value['createdAt'].toISOString(),
+    updatedAt: value['updatedAt'] == null ? value['updatedAt'] : value['updatedAt'].toISOString(),
+    name: value['name'],
+    minLength: value['minLength'],
+    maxLength: value['maxLength'],
+    includeNumbers: value['includeNumbers'],
+    includeSpecialCharacters: value['includeSpecialCharacters'],
+    lettersInMixedCase: value['lettersInMixedCase'],
+    maxConsecutiveLetters: value['maxConsecutiveLetters'],
+    excludePasswordsInDictionary: value['excludePasswordsInDictionary'],
+    excludeUserProfileInfoInPassword: value['excludeUserProfileInfoInPassword'],
+    expiryDuration: value['expiryDuration'],
+    passwordHistoryEnabled: value['passwordHistoryEnabled'],
+    oldPasswords: value['oldPasswords'],
+    regex: value['regex'],
+    defaultPolicy: value['defaultPolicy'],
   };
 }

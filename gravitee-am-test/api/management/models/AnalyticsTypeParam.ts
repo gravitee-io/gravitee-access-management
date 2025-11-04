@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -56,29 +56,38 @@ export const AnalyticsTypeParamValueEnum = {
 } as const;
 export type AnalyticsTypeParamValueEnum = typeof AnalyticsTypeParamValueEnum[keyof typeof AnalyticsTypeParamValueEnum];
 
+/**
+ * Check if a given object implements the AnalyticsTypeParam interface.
+ */
+export function instanceOfAnalyticsTypeParam(value: object): value is AnalyticsTypeParam {
+  return true;
+}
+
 export function AnalyticsTypeParamFromJSON(json: any): AnalyticsTypeParam {
   return AnalyticsTypeParamFromJSONTyped(json, false);
 }
 
 export function AnalyticsTypeParamFromJSONTyped(json: any, ignoreDiscriminator: boolean): AnalyticsTypeParam {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    value: !exists(json, 'value') ? undefined : json['value'],
-    originalParam: !exists(json, 'originalParam') ? undefined : json['originalParam'],
+    value: json['value'] == null ? undefined : json['value'],
+    originalParam: json['originalParam'] == null ? undefined : json['originalParam'],
   };
 }
 
-export function AnalyticsTypeParamToJSON(value?: AnalyticsTypeParam | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AnalyticsTypeParamToJSON(json: any): AnalyticsTypeParam {
+  return AnalyticsTypeParamToJSONTyped(json, false);
+}
+
+export function AnalyticsTypeParamToJSONTyped(value?: AnalyticsTypeParam | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    value: value.value,
-    originalParam: value.originalParam,
+    value: value['value'],
+    originalParam: value['originalParam'],
   };
 }

@@ -52,7 +52,9 @@ public class UserRoleResource extends AbstractResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Revoke role to a user",
+    @Operation(
+            operationId = "revokeUserRole",
+            summary = "Revoke role to a user",
             description = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")

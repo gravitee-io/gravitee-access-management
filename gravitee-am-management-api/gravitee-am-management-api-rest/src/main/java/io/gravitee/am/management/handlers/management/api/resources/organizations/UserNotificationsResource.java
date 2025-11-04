@@ -63,7 +63,9 @@ public class UserNotificationsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List notifications received by the current user")
+    @Operation(
+            operationId = "listNotifications",
+            summary = "List notifications received by the current user")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Current user notifications successfully fetched",
                     content = @Content(mediaType =  "application/json",
@@ -98,7 +100,9 @@ public class UserNotificationsResource extends AbstractResource {
 
     @POST
     @Path("/{notificationId}/acknowledge")
-    @Operation(summary = "Mark User notification as read")
+    @Operation(
+            operationId = "markNotificationAsRead",
+            summary = "Mark User notification as read")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "User notification has been marked as read"),
             @ApiResponse(responseCode = "500", description = "Internal server error")})

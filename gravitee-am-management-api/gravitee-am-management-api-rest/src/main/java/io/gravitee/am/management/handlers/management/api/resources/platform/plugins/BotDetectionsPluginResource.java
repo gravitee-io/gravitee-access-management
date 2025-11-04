@@ -48,7 +48,9 @@ public class BotDetectionsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List bot detection plugins",
+    @Operation(
+            operationId = "listBotDetectionsPlugins",
+            summary = "List bot detection plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
 

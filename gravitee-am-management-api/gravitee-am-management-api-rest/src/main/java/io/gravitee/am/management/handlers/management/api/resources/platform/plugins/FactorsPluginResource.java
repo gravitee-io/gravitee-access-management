@@ -48,7 +48,9 @@ public class FactorsPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List factor plugins",
+    @Operation(
+            operationId = "listFactorPlugins",
+            summary = "List factor plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@Suspended final AsyncResponse response) {
 

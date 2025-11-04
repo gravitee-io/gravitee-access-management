@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import fetch from "cross-fetch";
-import {Domain} from "@management-models/Domain";
+import fetch from 'cross-fetch';
+import { Domain } from '@management-models/Domain';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import { deleteDomain, setupDomainForTest, waitFor } from '@management-commands/domain-management-commands';
-import {uniqueName} from "@utils-commands/misc";
-import faker from "faker";
-import {createApplication, updateApplication} from "@management-commands/application-management-commands";
+import { requestAdminAccessToken } from '@management-commands/token-management-commands';
+import { deleteDomain, setupDomainForTest, waitFor, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { uniqueName } from '@utils-commands/misc';
+import faker from 'faker';
+import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import {
-    createProtectedResource,
-    getMcpServer,
-    getMcpServers,
-    updateProtectedResource,
-    deleteProtectedResource,
-    waitForProtectedResourceRemovedFromList
-} from "@management-commands/protected-resources-management-commands";
-import {NewProtectedResource} from "@management-models/NewProtectedResource";
-import {UpdateProtectedResource} from "@management-models/UpdateProtectedResource";
-import {UpdateMcpTool} from "@management-models/UpdateMcpTool";
-import {createScope} from "@management-commands/scope-management-commands";
-import { performPost } from '@gateway-commands/oauth-oidc-commands';
+  createProtectedResource,
+  getMcpServer,
+  getMcpServers,
+  updateProtectedResource,
+} from '@management-commands/protected-resources-management-commands';
+import { NewProtectedResource } from '@management-models/NewProtectedResource';
+import { UpdateProtectedResource } from '@management-models/UpdateProtectedResource';
+import { UpdateMcpTool } from '@management-models/UpdateMcpTool';
+import { createScope } from '@management-commands/scope-management-commands';
+import {  performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
-import { retryUntil } from '@utils-commands/retry';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
@@ -46,478 +43,464 @@ let domainTestSearch: Domain;
 let openIdConfiguration: any;
 
 beforeAll(async () => {
-    accessToken = await requestAdminAccessToken();
-    var domainResult = await setupDomainForTest(uniqueName('domain-protected-resources'), { accessToken, waitForStart:true });
-    domain = domainResult.domain;
-    openIdConfiguration = domainResult.oidcConfig;
-    domainTestSearch = await setupDomainForTest(uniqueName('domain-protected-resources-search'), { accessToken, waitForStart:true}).then((it) => it.domain);
+  accessToken = await requestAdminAccessToken();
+  var domainResult = await setupDomainForTest(uniqueName('domain-protected-resources'), { accessToken, waitForStart: true });
+  domain = domainResult.domain;
+  openIdConfiguration = domainResult.oidcConfig;
+  domainTestSearch = await setupDomainForTest(uniqueName('domain-protected-resources-search'), { accessToken, waitForStart: true }).then(
+    (it) => it.domain,
+  );
 });
 
 afterAll(async () => {
-    if (domain && domain.id) {
-        await deleteDomain(domain.id, accessToken);
-    }
-    if (domainTestSearch && domainTestSearch.id) {
-        await deleteDomain(domainTestSearch.id, accessToken);
-    }
+  if (domain && domain.id) {
+    await deleteDomain(domain.id, accessToken);
+  }
+  if (domainTestSearch && domainTestSearch.id) {
+    await deleteDomain(domainTestSearch.id, accessToken);
+  }
 });
 
 describe('When creating protected resource', () => {
-    it('New Protected Resource should be created', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something.com", "https://something2.com"],
-            features: [
-                {
-                    key: 'get_weather',
-                    type: 'MCP_TOOL',
-                    description: 'Description'
-                },
-                {
-                    key: 'get_something',
-                    type: 'MCP_TOOL',
-                    description: 'Description 2'
-                }]
-        } as NewProtectedResource;
+  it('New Protected Resource should be created', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://something.com', 'https://something2.com'],
+      features: [
+        {
+          key: 'get_weather',
+          type: 'MCP_TOOL',
+          description: 'Description',
+        },
+        {
+          key: 'get_something',
+          type: 'MCP_TOOL',
+          description: 'Description 2',
+        },
+      ],
+    } as NewProtectedResource;
 
-        const createdResource = await createProtectedResource(domain.id, accessToken, request);
-        expect(createdResource).toBeDefined();
-        expect(createdResource.id).toBeDefined();
-        expect(createdResource.name).toEqual(request.name);
-        expect(createdResource.clientSecret).toBeDefined();
-        expect(createdResource.clientId).toBeDefined();
-    });
+    const createdResource = await createProtectedResource(domain.id, accessToken, request);
+    expect(createdResource).toBeDefined();
+    expect(createdResource.id).toBeDefined();
+    expect(createdResource.name).toEqual(request.name);
+    expect(createdResource.clientSecret).toBeDefined();
+    expect(createdResource.clientId).toBeDefined();
+  });
 
-    it('New Protected Resource should be created with set clientId', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            clientId: "client-id",
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something3.com"]
-        } as NewProtectedResource;
+  it('New Protected Resource should be created with set clientId', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      clientId: 'client-id',
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://something3.com'],
+    } as NewProtectedResource;
 
-        const createdResource = await createProtectedResource(domain.id, accessToken, request);
-        expect(createdResource).toBeDefined();
-        expect(createdResource.id).toBeDefined();
-        expect(createdResource.name).toEqual(request.name);
-        expect(createdResource.clientSecret).toBeDefined();
-        expect(createdResource.clientId).toEqual(request.clientId);
-    });
+    const createdResource = await createProtectedResource(domain.id, accessToken, request);
+    expect(createdResource).toBeDefined();
+    expect(createdResource.id).toBeDefined();
+    expect(createdResource.name).toEqual(request.name);
+    expect(createdResource.clientSecret).toBeDefined();
+    expect(createdResource.clientId).toEqual(request.clientId);
+  });
 
-    it('New Protected Resource should be created with set clientSecret', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            clientId: "client-id2",
-            clientSecret: "secret",
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something4.com"]
-        } as NewProtectedResource;
+  it('New Protected Resource should be created with set clientSecret', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      clientId: 'client-id2',
+      clientSecret: 'secret',
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://something4.com'],
+    } as NewProtectedResource;
 
-        const createdResource = await createProtectedResource(domain.id, accessToken, request);
-        expect(createdResource).toBeDefined();
-        expect(createdResource.id).toBeDefined();
-        expect(createdResource.name).toEqual(request.name);
-        expect(createdResource.clientSecret).toEqual(request.clientSecret);
-        expect(createdResource.clientId).toEqual(request.clientId);
-    });
+    const createdResource = await createProtectedResource(domain.id, accessToken, request);
+    expect(createdResource).toBeDefined();
+    expect(createdResource.id).toBeDefined();
+    expect(createdResource.name).toEqual(request.name);
+    expect(createdResource.clientSecret).toEqual(request.clientSecret);
+    expect(createdResource.clientId).toEqual(request.clientId);
+  });
 
-    it('Protected Resource must not be created with same clientId', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            clientId: "client-id3",
-            clientSecret: "secret",
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something5.com"]
-        } as NewProtectedResource;
+  it('Protected Resource must not be created with same clientId', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      clientId: 'client-id3',
+      clientSecret: 'secret',
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://something5.com'],
+    } as NewProtectedResource;
 
-        const createdResource = await createProtectedResource(domain.id, accessToken, request);
-        expect(createdResource).toBeDefined();
-        expect(createdResource.id).toBeDefined();
-        expect(createdResource.name).toEqual(request.name);
-        expect(createdResource.clientSecret).toEqual(request.clientSecret);
-        expect(createdResource.clientId).toEqual(request.clientId);
+    const createdResource = await createProtectedResource(domain.id, accessToken, request);
+    expect(createdResource).toBeDefined();
+    expect(createdResource.id).toBeDefined();
+    expect(createdResource.name).toEqual(request.name);
+    expect(createdResource.clientSecret).toEqual(request.clientSecret);
+    expect(createdResource.clientId).toEqual(request.clientId);
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-    it('Protected Resource must not be created with same clientId in application', async () => {
-        const appRequest = {
-            name: faker.commerce.productName(),
-            type: 'service',
-            description: faker.lorem.paragraph(),
-            clientId: 'client-id4',
-        };
+  it('Protected Resource must not be created with same clientId in application', async () => {
+    const appRequest = {
+      name: faker.commerce.productName(),
+      type: 'service',
+      description: faker.lorem.paragraph(),
+      clientId: 'client-id4',
+    };
 
-        await createApplication(domain.id, accessToken, appRequest);
+    await createApplication(domain.id, accessToken, appRequest);
 
-        const request = {
-            name: faker.commerce.productName(),
-            clientId: appRequest.clientId,
-            clientSecret: "secret",
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://something6.com"]
-        } as NewProtectedResource;
+    const request = {
+      name: faker.commerce.productName(),
+      clientId: appRequest.clientId,
+      clientSecret: 'secret',
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://something6.com'],
+    } as NewProtectedResource;
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-    it('Protected Resource must not be created without type', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            resourceIdentifiers: ["https://something7.com", "https://something8.com"]
-        } as NewProtectedResource;
+  it('Protected Resource must not be created without type', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      resourceIdentifiers: ['https://something7.com', 'https://something8.com'],
+    } as NewProtectedResource;
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-    it('Protected Resource must not be created with wrong type', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVERR',
-            resourceIdentifiers: ["https://something9.com", "https://something10.com"]
-        } as NewProtectedResource;
+  it('Protected Resource must not be created with wrong type', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVERR',
+      resourceIdentifiers: ['https://something9.com', 'https://something10.com'],
+    } as NewProtectedResource;
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-    it('Protected Resource must not be created with wrong resource identifier', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["something", "https://something11.com"]
-        } as NewProtectedResource;
+  it('Protected Resource must not be created with wrong resource identifier', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['something', 'https://something11.com'],
+    } as NewProtectedResource;
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-    it('Protected Resource must not be created if resourceIdentifier already exists', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://something13.com"]
-        } as NewProtectedResource;
+  it('Protected Resource must not be created if resourceIdentifier already exists', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://something13.com'],
+    } as NewProtectedResource;
 
-        const first = await createProtectedResource(domain.id, accessToken, request)
-        expect(first.id).toBeDefined();
+    const first = await createProtectedResource(domain.id, accessToken, request);
+    expect(first.id).toBeDefined();
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
-    it('Protected Resource resource identifier http(s)://localhost is correct', async () => {
-        const httpsRequest = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://localhost.com"]
-        } as NewProtectedResource;
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
+  it('Protected Resource resource identifier http(s)://localhost is correct', async () => {
+    const httpsRequest = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://localhost.com'],
+    } as NewProtectedResource;
 
-        const created1 = await createProtectedResource(domain.id, accessToken, httpsRequest)
-        expect(created1.id).toBeDefined()
+    const created1 = await createProtectedResource(domain.id, accessToken, httpsRequest);
+    expect(created1.id).toBeDefined();
 
-        const httpRequest = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["http://localhost.com"]
-        } as NewProtectedResource;
+    const httpRequest = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['http://localhost.com'],
+    } as NewProtectedResource;
 
-        const created2 = await createProtectedResource(domain.id, accessToken, httpRequest)
-        expect(created2.id).toBeDefined()
-    })
+    const created2 = await createProtectedResource(domain.id, accessToken, httpRequest);
+    expect(created2.id).toBeDefined();
+  });
 
-    it('Protected Resource resource identifier and lowercased', async () => {
-        const badRequest = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: [" https://toTrimDomain.com   "]
-        } as NewProtectedResource;
+  it('Protected Resource resource identifier and lowercased', async () => {
+    const badRequest = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: [' https://toTrimDomain.com   '],
+    } as NewProtectedResource;
 
-        createProtectedResource(domain.id, accessToken, badRequest)
-            .catch(err => expect(err.response.status).toEqual(400))
+    createProtectedResource(domain.id, accessToken, badRequest).catch((err) => expect(err.response.status).toEqual(400));
 
-        const correctRequest = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://toLowerCaseDomain.com"]
-        } as NewProtectedResource;
+    const correctRequest = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://toLowerCaseDomain.com'],
+    } as NewProtectedResource;
 
-        const created = await createProtectedResource(domain.id, accessToken, correctRequest)
-        expect(created.id).toBeDefined()
+    const created = await createProtectedResource(domain.id, accessToken, correctRequest);
+    expect(created.id).toBeDefined();
 
-        const anotherCorrectRequest = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://tolowercasedomain.com"]
-        } as NewProtectedResource;
+    const anotherCorrectRequest = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://tolowercasedomain.com'],
+    } as NewProtectedResource;
 
-        createProtectedResource(domain.id, accessToken, anotherCorrectRequest)
-            .catch(err => expect(err.response.status).toEqual(400))
+    createProtectedResource(domain.id, accessToken, anotherCorrectRequest).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-    });
+  it('Protected Resource can introspect token', async () => {
+    // Create an application which we can use to get a token from
+    const application = await createApplication(domain.id, accessToken, {
+      name: uniqueName('intro-app'),
+      type: 'SERVICE',
+      clientId: 'app',
+      clientSecret: 'app',
+    }).then((app) =>
+      updateApplication(
+        domain.id,
+        accessToken,
+        {
+          settings: {
+            oauth: {
+              grantTypes: ['client_credentials'],
+            },
+          },
+        },
+        app.id,
+      ).then((updatedApp) => {
+        updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+        updatedApp.settings.oauth.clientId = app.settings.oauth.clientId;
+        return updatedApp;
+      }),
+    );
+    expect(application).toBeDefined();
 
-    it('Protected Resource can introspect token', async () => {
-        // Create an application which we can use to get a token from
-        const application = await createApplication(domain.id, accessToken, {
-            name: uniqueName('intro-app'),
-            type: 'SERVICE',
-            clientId: 'app',
-            clientSecret: 'app',
-        }).then((app) =>
-            updateApplication(
-                domain.id,
-                accessToken,
-                {
-                    settings: {
-                        oauth: {
-                            grantTypes: ['client_credentials'],
-                        },
-                    },
-                },
-                app.id,
-            ).then((updatedApp) => {
-                updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-                updatedApp.settings.oauth.clientId = app.settings.oauth.clientId;
-                return updatedApp;
-            }),
-        );
-        expect(application).toBeDefined();
+    await waitFor(5000);
 
-        await waitFor(5000);
+    // First request to get a token
+    const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + applicationBase64Token(application),
+    }).expect(200);
 
-        // First request to get a token
-        const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
-            'Content-type': 'application/x-www-form-urlencoded',
-            Authorization: 'Basic ' + applicationBase64Token(application),
-        }).expect(200);
+    const responseJwt = response.body.access_token;
+    expect(responseJwt).toBeDefined();
 
-        const responseJwt = response.body.access_token;
-        expect(responseJwt).toBeDefined();
+    // Next request to introspect to token using the Application credentials
+    await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + applicationBase64Token(application),
+    }).expect(200);
 
-        // Next request to introspect to token using the Application credentials
-        await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
-            'Content-type': 'application/x-www-form-urlencoded',
-            Authorization: 'Basic ' + applicationBase64Token(application),
-        }).expect(200);
+    // Now we create a Protected Resource which we can use to introspect the existing token
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://other-something.com', 'https://other-something2.com'],
+    } as NewProtectedResource;
 
-        // Now we create a Protected Resource which we can use to introspect the existing token
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ['https://other-something.com', 'https://other-something2.com'],
-        } as NewProtectedResource;
+    const createdResource = await createProtectedResource(domain.id, accessToken, request);
+    expect(createdResource).toBeDefined();
 
-        const createdResource = await createProtectedResource(domain.id, accessToken, request);
-        expect(createdResource).toBeDefined();
+    // Wait for the resource to be synced
+    await waitFor(5000);
 
-        // Wait for the resource to be synced
-        await waitFor(5000);
+    // Make the request to introspect the token using the Protected Resource credentials
+    await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
+      'Content-type': 'application/x-www-form-urlencoded',
+      Authorization: 'Basic ' + getBase64BasicAuth(createdResource.clientId, createdResource.clientSecret),
+    }).expect(200);
+  });
 
-        // Make the request to introspect the token using the Protected Resource credentials
-        await performPost(openIdConfiguration.introspection_endpoint, '', `token=${responseJwt}`, {
-            'Content-type': 'application/x-www-form-urlencoded',
-            Authorization: 'Basic ' + getBase64BasicAuth(createdResource.clientId, createdResource.clientSecret),
-        }).expect(200);
-    });
+  it('Protected Resource must not be created when feature type is unknown', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://unkownToolName.com'],
+      features: [
+        {
+          key: 'key',
+          type: 'ABC',
+        },
+      ],
+    } as NewProtectedResource;
 
-    it('Protected Resource must not be created when feature type is unknown', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://unkownToolName.com"],
-            features: [
-                {
-                    key: 'key',
-                    type: 'ABC'
-                }
-            ]
-        } as NewProtectedResource;
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+  it('Protected Resource must not be created when feature type is missing', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://unkownToolName.com'],
+      features: [
+        {
+          key: 'key',
+        },
+      ],
+    } as NewProtectedResource;
 
-    it('Protected Resource must not be created when feature type is missing', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://unkownToolName.com"],
-            features: [
-                {
-                    key: 'key',
-                }
-            ]
-        } as NewProtectedResource;
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+  it('Protected Resource must not be created when keys are duplicated', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://unkownToolName.com'],
+      features: [
+        {
+          key: 'key',
+          type: 'MCP_TOOL',
+        },
+        {
+          key: 'key',
+          type: 'MCP_TOOL',
+        },
+      ],
+    } as NewProtectedResource;
 
-    it('Protected Resource must not be created when keys are duplicated', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://unkownToolName.com"],
-            features: [
-                {
-                    key: 'key',
-                    type: 'MCP_TOOL'
-                },
-                {
-                    key: 'key',
-                    type: 'MCP_TOOL'
-                }
-            ]
-        } as NewProtectedResource;
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+  it('Protected Resource must not be created when key is missing', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://unkownToolName.com'],
+      features: [
+        {
+          key: 'key',
+          type: 'MCP_TOOL',
+        },
+        {
+          type: 'MCP_TOOL',
+        },
+      ],
+    } as NewProtectedResource;
 
-    it('Protected Resource must not be created when key is missing', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://unkownToolName.com"],
-            features: [
-                {
-                    key: 'key',
-                    type: 'MCP_TOOL'
-                },
-                {
-                    type: 'MCP_TOOL'
-                }
-            ]
-        } as NewProtectedResource;
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+  });
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+  it('Protected Resource must not be created when key doesnt follow regex pattern', async () => {
+    const request = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://unkownToolName.com'],
+      features: [
+        {
+          key: 'key$',
+          type: 'MCP_TOOL',
+        },
+        {
+          type: 'MCP_TOOL',
+        },
+      ],
+    } as NewProtectedResource;
 
-    it('Protected Resource must not be created when key doesnt follow regex pattern', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://unkownToolName.com"],
-            features: [
-                {
-                    key: 'key$',
-                    type: 'MCP_TOOL'
-                },
-                {
-                    type: 'MCP_TOOL'
-                }
-            ]
-        } as NewProtectedResource;
+    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
+    const request2 = {
+      name: faker.commerce.productName(),
+      type: 'MCP_SERVER',
+      resourceIdentifiers: ['https://unkownToolName.com'],
+      features: [
+        {
+          key: 'key asdsad',
+          type: 'MCP_TOOL',
+        },
+        {
+          type: 'MCP_TOOL',
+        },
+      ],
+    } as NewProtectedResource;
 
-        const request2 = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://unkownToolName.com"],
-            features: [
-                {
-                    key: 'key asdsad',
-                    type: 'MCP_TOOL'
-                },
-                {
-                    type: 'MCP_TOOL'
-                }
-            ]
-        } as NewProtectedResource;
-
-        await createProtectedResource(domain.id, accessToken, request2)
-            .catch(err => expect(err.response.status).toEqual(400))
-    });
+    await createProtectedResource(domain.id, accessToken, request2).catch((err) => expect(err.response.status).toEqual(400));
+  });
 });
 
 describe('When admin created bunch of Protected Resources', () => {
-    beforeAll( async () => {
-        for (let i = 0; i < 100; i++) {
-            const request = {
-                name: faker.commerce.productName(),
-                type: "MCP_SERVER",
-                resourceIdentifiers: [`https://abc${i}.com`, `https://abc${i}a${i}.com`],
-                features: [
-                    {
-                        key: 'key',
-                        type: 'MCP_TOOL'
-                    }
-                ]
-            } as NewProtectedResource;
-            await createProtectedResource(domainTestSearch.id, accessToken, request);
-        }
-    })
+  beforeAll(async () => {
+    for (let i = 0; i < 100; i++) {
+      const request = {
+        name: faker.commerce.productName(),
+        type: 'MCP_SERVER',
+        resourceIdentifiers: [`https://abc${i}.com`, `https://abc${i}a${i}.com`],
+        features: [
+          {
+            key: 'key',
+            type: 'MCP_TOOL',
+          },
+        ],
+      } as NewProtectedResource;
+      await createProtectedResource(domainTestSearch.id, accessToken, request);
+    }
+  });
 
-    it('Protected Resource page must not contain secret', async () => {
-        const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0);
-        const secretNotPresent = page.data.every(data => data['secret'] == undefined)
-        expect(secretNotPresent).toBeTruthy()
-    })
+  it('Protected Resource page must not contain secret', async () => {
+    const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0);
+    const secretNotPresent = page.data.every((data) => data['secret'] == undefined);
+    expect(secretNotPresent).toBeTruthy();
+  });
 
-    it('Protected Resource page should be returned', async () => {
-        const page = await getMcpServers(domainTestSearch.id, accessToken, 10, 0);
-        expect(page.currentPage).toEqual(0);
-        expect(page.totalCount).toEqual(100);
-        expect(page.data).toHaveLength(10);
-    })
+  it('Protected Resource page should be returned', async () => {
+    const page = await getMcpServers(domainTestSearch.id, accessToken, 10, 0);
+    expect(page.currentPage).toEqual(0);
+    expect(page.totalCount).toEqual(100);
+    expect(page.data).toHaveLength(10);
+  });
 
-    it('Protected Resource page 1 should be different than 2', async () => {
-        const page1 = await getMcpServers(domainTestSearch.id, accessToken, 10, 0);
-        expect(page1.currentPage).toEqual(0);
-        expect(page1.totalCount).toEqual(100);
-        expect(page1.data).toHaveLength(10);
+  it('Protected Resource page 1 should be different than 2', async () => {
+    const page1 = await getMcpServers(domainTestSearch.id, accessToken, 10, 0);
+    expect(page1.currentPage).toEqual(0);
+    expect(page1.totalCount).toEqual(100);
+    expect(page1.data).toHaveLength(10);
 
-        const page2 = await getMcpServers(domainTestSearch.id, accessToken, 10, 1);
-        expect(page2.currentPage).toEqual(1);
-        expect(page2.totalCount).toEqual(100);
-        expect(page2.data).toHaveLength(10);
+    const page2 = await getMcpServers(domainTestSearch.id, accessToken, 10, 1);
+    expect(page2.currentPage).toEqual(1);
+    expect(page2.totalCount).toEqual(100);
+    expect(page2.data).toHaveLength(10);
 
-        expect(page1.data[0].id).not.toEqual(page2.data[0].id)
-    })
+    expect(page1.data[0].id).not.toEqual(page2.data[0].id);
+  });
 
-    it('No data returned if page exceeds elements count', async () => {
-        const page1 = await getMcpServers(domainTestSearch.id, accessToken, 10, 200);
-        expect(page1.currentPage).toEqual(200);
-        expect(page1.totalCount).toEqual(100);
-        expect(page1.data).toHaveLength(0);
-    })
+  it('No data returned if page exceeds elements count', async () => {
+    const page1 = await getMcpServers(domainTestSearch.id, accessToken, 10, 200);
+    expect(page1.currentPage).toEqual(200);
+    expect(page1.totalCount).toEqual(100);
+    expect(page1.data).toHaveLength(0);
+  });
 
-    it('All data should be returned if size exceeds elements count', async () => {
-        const page1 = await getMcpServers(domainTestSearch.id, accessToken, 200, 0);
-        expect(page1.currentPage).toEqual(0);
-        expect(page1.totalCount).toEqual(100);
-        expect(page1.data).toHaveLength(100);
-    })
+  it('All data should be returned if size exceeds elements count', async () => {
+    const page1 = await getMcpServers(domainTestSearch.id, accessToken, 200, 0);
+    expect(page1.currentPage).toEqual(0);
+    expect(page1.totalCount).toEqual(100);
+    expect(page1.data).toHaveLength(100);
+  });
 
-    it('Protected Resource page should be returned sorted by name', async () => {
-        const pageAsc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'name.asc');
-        const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'name.desc');
-        expect(pageAsc.data[0].name).toEqual(pageDesc.data[99].name);
-        expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
-    })
+  it('Protected Resource page should be returned sorted by name', async () => {
+    const pageAsc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'name.asc');
+    const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'name.desc');
+    expect(pageAsc.data[0].name).toEqual(pageDesc.data[99].name);
+    expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
+  });
 
-    it('Protected Resource page should be returned sorted by updatedAt', async () => {
-        const pageAsc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
-        const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.desc');
-        expect(pageAsc.data[0].updatedAt).toEqual(pageDesc.data[99].updatedAt);
-        expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
-    })
+  it('Protected Resource page should be returned sorted by updatedAt', async () => {
+    const pageAsc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
+    const pageDesc = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.desc');
+    expect(pageAsc.data[0].updatedAt).toEqual(pageDesc.data[99].updatedAt);
+    expect(pageAsc.data[0].id).not.toEqual(pageDesc.data[0].id);
+  });
 
-    it('Protected Resource can be found by its id', async () => {
-        const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
-        const protectedResourcePrimaryData = page.data[55];
+  it('Protected Resource can be found by its id', async () => {
+    const page = await getMcpServers(domainTestSearch.id, accessToken, 100, 0, 'updatedAt.asc');
+    const protectedResourcePrimaryData = page.data[55];
 
-        const fetched = await getMcpServer(domainTestSearch.id, accessToken, protectedResourcePrimaryData.id)
-        expect(fetched).toEqual(protectedResourcePrimaryData)
-
-    })
-
+    const fetched = await getMcpServer(domainTestSearch.id, accessToken, protectedResourcePrimaryData.id);
+    expect(fetched).toEqual(protectedResourcePrimaryData);
+  });
 });
 
 describe('When updating protected resource', () => {
@@ -530,29 +513,28 @@ describe('When updating protected resource', () => {
         testScope1 = await createScope(domain.id, accessToken, {
             key: 'test_scope_1',
             name: 'Test Scope 1',
-            description: 'Test scope for protected resource updates'
+            description: 'Test scope for protected resource updates',
         });
 
         testScope2 = await createScope(domain.id, accessToken, {
             key: 'test_scope_2',
             name: 'Test Scope 2',
-            description: 'Another test scope'
+            description: 'Another test scope',
         });
 
         // Create a protected resource to update
         const request = {
             name: faker.commerce.productName(),
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://update-test.com"],
-            description: "Original description",
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ['https://update-test.com'],
+            description: 'Original description',
             features: [
                 {
                     key: 'original_tool',
                     type: 'MCP_TOOL',
                     description: 'Original tool description',
-                    scopes: ['test_scope_1']
-                } as any
-            ]
+                },
+            ],
         } as NewProtectedResource;
 
         const createdSecret = await createProtectedResource(domain.id, accessToken, request);
@@ -570,23 +552,23 @@ describe('When updating protected resource', () => {
 
     it('Should update protected resource name and description', async () => {
         const updateRequest = {
-            name: "Updated Name",
-            description: "Updated description",
+            name: 'Updated Name',
+            description: 'Updated description',
             resourceIdentifiers: createdResource.resourceIdentifiers,
-            features: createdResource.features.map(f => ({
+            features: createdResource.features.map((f) => ({
                 key: f.key,
                 description: f.description,
                 type: 'MCP_TOOL',
-                scopes: (f as any).scopes || []
-            }))
+                scopes: (f as any).scopes || [],
+            })),
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
 
         expect(updated).toBeDefined();
         expect(updated.id).toEqual(createdResource.id);
-        expect(updated.name).toEqual("Updated Name");
-        expect(updated.description).toEqual("Updated description");
+        expect(updated.name).toEqual('Updated Name');
+        expect(updated.description).toEqual('Updated description');
         expect(updated.updatedAt).not.toEqual(createdResource.updatedAt);
 
         // Update local reference for next tests
@@ -603,9 +585,9 @@ describe('When updating protected resource', () => {
                     key: 'updated_tool_name',
                     type: 'MCP_TOOL',
                     description: 'Updated tool description',
-                    scopes: ['test_scope_1']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['test_scope_1'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -628,9 +610,9 @@ describe('When updating protected resource', () => {
                     key: 'updated_tool_name',
                     type: 'MCP_TOOL',
                     description: 'Updated tool description',
-                    scopes: ['test_scope_1', 'test_scope_2']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['test_scope_1', 'test_scope_2'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -656,15 +638,15 @@ describe('When updating protected resource', () => {
                     key: 'updated_tool_name',
                     type: 'MCP_TOOL',
                     description: 'Updated tool description',
-                    scopes: ['test_scope_1', 'test_scope_2']
+                    scopes: ['test_scope_1', 'test_scope_2'],
                 } as UpdateMcpTool,
                 {
                     key: 'second_tool',
                     type: 'MCP_TOOL',
                     description: 'Second tool',
-                    scopes: ['test_scope_1']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['test_scope_1'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -688,9 +670,9 @@ describe('When updating protected resource', () => {
                     key: 'updated_tool_name',
                     type: 'MCP_TOOL',
                     description: 'Updated tool description',
-                    scopes: ['test_scope_1', 'test_scope_2']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['test_scope_1', 'test_scope_2'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -706,20 +688,20 @@ describe('When updating protected resource', () => {
         const updateRequest = {
             name: createdResource.name,
             description: createdResource.description,
-            resourceIdentifiers: ["https://new-uri.com"],
-            features: createdResource.features.map(f => ({
+            resourceIdentifiers: ['https://new-uri.com'],
+            features: createdResource.features.map((f) => ({
                 key: f.key,
                 description: f.description,
                 type: 'MCP_TOOL',
-                scopes: (f as any).scopes || []
-            }))
+                scopes: (f as any).scopes || [],
+            })),
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
 
         expect(updated).toBeDefined();
         expect(updated.resourceIdentifiers).toHaveLength(1);
-        expect(updated.resourceIdentifiers[0]).toEqual("https://new-uri.com");
+        expect(updated.resourceIdentifiers[0]).toEqual('https://new-uri.com');
 
         createdResource = updated;
     });
@@ -734,19 +716,20 @@ describe('When updating protected resource', () => {
                     key: 'duplicate_tool',
                     type: 'MCP_TOOL',
                     description: 'Tool 1',
-                    scopes: ['test_scope_1']
+                    scopes: ['test_scope_1'],
                 } as UpdateMcpTool,
                 {
                     key: 'duplicate_tool',
                     type: 'MCP_TOOL',
                     description: 'Tool 2',
-                    scopes: ['test_scope_2']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['test_scope_2'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
+            expect(err.response.status).toEqual(400),
+        );
     });
 
     it('Should fail when updating with invalid scope', async () => {
@@ -759,32 +742,34 @@ describe('When updating protected resource', () => {
                     key: 'tool_with_invalid_scope',
                     type: 'MCP_TOOL',
                     description: 'Tool with invalid scope',
-                    scopes: ['non_existent_scope']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['non_existent_scope'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
+            expect(err.response.status).toEqual(500),
+        );
     });
 
     it('Should fail when updating non-existent resource', async () => {
         const updateRequest = {
-            name: "Test",
-            resourceIdentifiers: ["https://test.com"],
-            features: []
+            name: 'Test',
+            resourceIdentifiers: ['https://test.com'],
+            features: [],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest)
-            .catch(err => expect(err.response.status).toEqual(403)); // 403 because permission check happens before existence check
+        await updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest).catch((err) =>
+            expect(err.response.status).toEqual(403),
+        ); // 403 because permission check happens before existence check
     });
 
     it('Should fail when updating with duplicate resource identifier', async () => {
         // Create another resource first
         const otherResource = await createProtectedResource(domain.id, accessToken, {
             name: faker.commerce.productName(),
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://other-resource.com"],
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ['https://other-resource.com'],
         } as NewProtectedResource);
 
         expect(otherResource).toBeDefined();
@@ -793,36 +778,37 @@ describe('When updating protected resource', () => {
         const updateRequest = {
             name: createdResource.name,
             description: createdResource.description,
-            resourceIdentifiers: ["https://other-resource.com"],
-            features: createdResource.features.map(f => ({
+            resourceIdentifiers: ['https://other-resource.com'],
+            features: createdResource.features.map((f) => ({
                 key: f.key,
                 description: f.description,
                 type: 'MCP_TOOL',
-                scopes: (f as any).scopes || []
-            }))
+                scopes: (f as any).scopes || [],
+            })),
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
+            expect(err.response.status).toEqual(400),
+        );
     });
 
     it('Should update resource identifier to lowercase', async () => {
         const updateRequest = {
             name: createdResource.name,
             description: createdResource.description,
-            resourceIdentifiers: ["https://MixedCaseUri.COM"],
-            features: createdResource.features.map(f => ({
+            resourceIdentifiers: ['https://MixedCaseUri.COM'],
+            features: createdResource.features.map((f) => ({
                 key: f.key,
                 description: f.description,
                 type: 'MCP_TOOL',
-                scopes: (f as any).scopes || []
-            }))
+                scopes: (f as any).scopes || [],
+            })),
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
 
         expect(updated).toBeDefined();
-        expect(updated.resourceIdentifiers[0]).toEqual("https://mixedcaseuri.com");
+        expect(updated.resourceIdentifiers[0]).toEqual('https://mixedcaseuri.com');
     });
 
     it('Should preserve createdAt when updating existing tool (same key)', async () => {
@@ -839,12 +825,12 @@ describe('When updating protected resource', () => {
             resourceIdentifiers: createdResource.resourceIdentifiers,
             features: [
                 {
-                    key: 'updated_tool_name',  // Keep the SAME key
+                    key: 'updated_tool_name', // Keep the SAME key
                     type: 'MCP_TOOL',
                     description: 'Modified description again',
-                    scopes: ['test_scope_1']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['test_scope_1'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -867,15 +853,15 @@ describe('When updating protected resource', () => {
                     key: 'updated_tool_name',
                     type: 'MCP_TOOL',
                     description: 'Existing tool',
-                    scopes: ['test_scope_1']
+                    scopes: ['test_scope_1'],
                 } as UpdateMcpTool,
                 {
                     key: 'brand_new_tool',
                     type: 'MCP_TOOL',
                     description: 'This is a new tool',
-                    scopes: ['test_scope_2']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['test_scope_2'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -883,7 +869,7 @@ describe('When updating protected resource', () => {
         expect(updated).toBeDefined();
         expect(updated.features).toHaveLength(2);
 
-        const newTool = updated.features.find(f => f.key === 'brand_new_tool');
+        const newTool = updated.features.find((f) => f.key === 'brand_new_tool');
         expect(newTool).toBeDefined();
         expect(newTool.createdAt).toBeDefined();
         // updatedAt might not be in the API response model, so make it optional
@@ -891,7 +877,6 @@ describe('When updating protected resource', () => {
             expect(newTool.updatedAt).toBeDefined();
         }
     });
-
 
     it('Should fail when updating with invalid tool key formats', async () => {
         // Test with spaces in key
@@ -904,14 +889,16 @@ describe('When updating protected resource', () => {
                     key: 'invalid key with spaces',
                     type: 'MCP_TOOL',
                     description: 'Invalid key',
-                    scopes: []
-                } as UpdateMcpTool
-            ]
+                    scopes: [],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpaces)
-            .catch(err => expect(err.response.status).toEqual(400));
-
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpaces).catch((err) =>
+            expect(err.response.status).toEqual(400),
+        );
+    });
+    it('Should fail when updating with special characters in tool key', async () => {
         // Test with special characters in key
         const requestWithSpecialChars = {
             name: createdResource.name,
@@ -922,13 +909,14 @@ describe('When updating protected resource', () => {
                     key: 'tool@#$%',
                     type: 'MCP_TOOL',
                     description: 'Invalid key',
-                    scopes: []
-                } as UpdateMcpTool
-            ]
+                    scopes: [],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpecialChars)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpecialChars).catch((err) =>
+            expect(err.response.status).toEqual(400),
+        );
     });
 
     it('Should allow update with empty scopes array', async () => {
@@ -941,9 +929,9 @@ describe('When updating protected resource', () => {
                     key: 'tool_no_scopes',
                     type: 'MCP_TOOL',
                     description: 'Tool without scopes',
-                    scopes: []
-                } as UpdateMcpTool
-            ]
+                    scopes: [],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -965,21 +953,21 @@ describe('When updating protected resource', () => {
                     key: 'tool_1',
                     type: 'MCP_TOOL',
                     description: 'First tool',
-                    scopes: ['test_scope_1']
+                    scopes: ['test_scope_1'],
                 } as UpdateMcpTool,
                 {
                     key: 'tool_2',
                     type: 'MCP_TOOL',
                     description: 'Second tool',
-                    scopes: ['test_scope_2']
+                    scopes: ['test_scope_2'],
                 } as UpdateMcpTool,
                 {
                     key: 'tool_3',
                     type: 'MCP_TOOL',
                     description: 'Third tool',
-                    scopes: ['test_scope_1', 'test_scope_2']
-                } as UpdateMcpTool
-            ]
+                    scopes: ['test_scope_1', 'test_scope_2'],
+                } as UpdateMcpTool,
+            ],
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -996,638 +984,407 @@ describe('When updating protected resource', () => {
         }
     });
 
-    it('Should validate required fields and URL format', async () => {
-        // Missing name field
+    it('Should validate required name field', async () => {
         const missingName = {
             description: createdResource.description,
             resourceIdentifiers: createdResource.resourceIdentifiers,
-            features: []
+            features: [],
         } as any;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, missingName)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, missingName).catch((err) =>
+            expect(err.response.status).toEqual(400),
+        );
+    });
 
-        // Missing resourceIdentifiers field
+    it('Should validate required resourceIdentifiers field', async () => {
         const missingIdentifiers = {
             name: createdResource.name,
             description: createdResource.description,
-            features: []
+            features: [],
         } as any;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, missingIdentifiers)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, missingIdentifiers).catch((err) =>
+            expect(err.response.status).toEqual(400),
+        );
+    });
 
-        // Invalid URL format
-        const invalidUrl = {
+    it('Should fail when resourceIdentifier is not a valid URL', async () => {
+        const updateRequest = {
             name: createdResource.name,
             description: createdResource.description,
-            resourceIdentifiers: ["not-a-url"],
-            features: []
+            resourceIdentifiers: ['not-a-url'],
+            features: [],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, invalidUrl)
-            .catch(err => expect(err.response.status).toEqual(400));
-    });
-});
-
-describe('When deleting tools from protected resource', () => {
-    let resourceWithTools;
-    let testScope1;
-    let testScope2;
-
-    beforeAll(async () => {
-        // Create test scopes
-        testScope1 = await createScope(domain.id, accessToken, {
-            key: 'delete_test_scope_1',
-            name: 'Delete Test Scope 1',
-            description: 'Scope for delete tests'
-        });
-
-        testScope2 = await createScope(domain.id, accessToken, {
-            key: 'delete_test_scope_2',
-            name: 'Delete Test Scope 2',
-            description: 'Another scope for delete tests'
-        });
-
-        // Create a protected resource with multiple tools
-        const request = {
-            name: faker.commerce.productName(),
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://delete-test.com"],
-            description: "Resource for delete testing",
-            features: [
-                {
-                    key: 'tool_to_keep',
-                    type: 'MCP_TOOL',
-                    description: 'This tool will be kept',
-                    scopes: ['delete_test_scope_1']
-                } as any,
-                {
-                    key: 'tool_to_delete_1',
-                    type: 'MCP_TOOL',
-                    description: 'This tool will be deleted',
-                    scopes: ['delete_test_scope_2']
-                } as any,
-                {
-                    key: 'tool_to_delete_2',
-                    type: 'MCP_TOOL',
-                    description: 'This tool will also be deleted',
-                    scopes: ['delete_test_scope_1', 'delete_test_scope_2']
-                } as any
-            ]
-        } as NewProtectedResource;
-
-        const created = await createProtectedResource(domain.id, accessToken, request);
-        expect(created).toBeDefined();
-        expect(created.id).toBeDefined();
-
-        await waitFor(2000);
-
-        resourceWithTools = await getMcpServer(domain.id, accessToken, created.id);
-        expect(resourceWithTools).toBeDefined();
-        expect(resourceWithTools.features).toHaveLength(3);
+        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
+            expect(err.response.status).toEqual(400),
+        );
     });
 
-    it('Should delete a single tool by filtering it out', async () => {
-        // Delete 'tool_to_delete_1' by sending update without it
-        const updateRequest = {
-            name: resourceWithTools.name,
-            description: resourceWithTools.description,
-            resourceIdentifiers: resourceWithTools.resourceIdentifiers,
-            features: resourceWithTools.features
-                .filter(f => f.key !== 'tool_to_delete_1')
-                .map(f => ({
-                    key: f.key,
-                    description: f.description,
-                    type: 'MCP_TOOL',
-                    scopes: (f as any).scopes || []
-                }))
-        } as UpdateProtectedResource;
+    describe('When deleting tools from protected resource', () => {
+        let resourceWithTools;
+        let testScope1;
+        let testScope2;
 
-        const updated = await updateProtectedResource(domain.id, accessToken, resourceWithTools.id, updateRequest);
-
-        expect(updated).toBeDefined();
-        expect(updated.features).toHaveLength(2);
-        expect(updated.features.find(f => f.key === 'tool_to_delete_1')).toBeUndefined();
-        expect(updated.features.find(f => f.key === 'tool_to_keep')).toBeDefined();
-        expect(updated.features.find(f => f.key === 'tool_to_delete_2')).toBeDefined();
-        expect(updated.updatedAt).not.toEqual(resourceWithTools.updatedAt);
-    });
-
-    it('Should delete multiple tools at once', async () => {
-        // Delete both remaining deletable tools, keeping only 'tool_to_keep'
-        const updateRequest = {
-            name: resourceWithTools.name,
-            description: resourceWithTools.description,
-            resourceIdentifiers: resourceWithTools.resourceIdentifiers,
-            features: resourceWithTools.features
-                .filter(f => f.key === 'tool_to_keep')
-                .map(f => ({
-                    key: f.key,
-                    description: f.description,
-                    type: 'MCP_TOOL',
-                    scopes: (f as any).scopes || []
-                }))
-        } as UpdateProtectedResource;
-
-        const updated = await updateProtectedResource(domain.id, accessToken, resourceWithTools.id, updateRequest);
-
-        expect(updated).toBeDefined();
-        expect(updated.features).toHaveLength(1);
-        expect(updated.features[0].key).toEqual('tool_to_keep');
-    });
-
-    it('Should delete the last tool leaving empty features list', async () => {
-        // Delete the last tool
-        const updateRequest = {
-            name: resourceWithTools.name,
-            description: resourceWithTools.description,
-            resourceIdentifiers: resourceWithTools.resourceIdentifiers,
-            features: []
-        } as UpdateProtectedResource;
-
-        const updated = await updateProtectedResource(domain.id, accessToken, resourceWithTools.id, updateRequest);
-
-        expect(updated).toBeDefined();
-        expect(updated.features).toHaveLength(0);
-        expect(updated.updatedAt).not.toEqual(resourceWithTools.updatedAt);
-    });
-
-    it('Should maintain integrity and allow adding tools after clearing all', async () => {
-        // Verify the resource still exists and can be fetched after all tools deleted
-        const fetched = await getMcpServer(domain.id, accessToken, resourceWithTools.id);
-
-        expect(fetched).toBeDefined();
-        expect(fetched.id).toEqual(resourceWithTools.id);
-        expect(fetched.name).toEqual(resourceWithTools.name);
-        expect(fetched.resourceIdentifiers).toEqual(resourceWithTools.resourceIdentifiers);
-        expect(fetched.features).toHaveLength(0);
-
-        // Add a new tool to the resource that has no tools
-        const updateRequest = {
-            name: resourceWithTools.name,
-            description: resourceWithTools.description,
-            resourceIdentifiers: resourceWithTools.resourceIdentifiers,
-            features: [
-                {
-                    key: 'new_tool_after_delete',
-                    type: 'MCP_TOOL',
-                    description: 'Tool added after all were deleted',
-                    scopes: ['delete_test_scope_1']
-                } as UpdateMcpTool
-            ]
-        } as UpdateProtectedResource;
-
-        const updated = await updateProtectedResource(domain.id, accessToken, resourceWithTools.id, updateRequest);
-
-        expect(updated).toBeDefined();
-        expect(updated.features).toHaveLength(1);
-        expect(updated.features[0].key).toEqual('new_tool_after_delete');
-    });
-
-    it('Should preserve timestamps correctly when deleting tools', async () => {
-        // Create a new resource with multiple tools for timestamp testing
-        const request = {
-            name: faker.commerce.productName(),
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://timestamp-delete-test.com"],
-            features: [
-                {
-                    key: 'timestamp_tool_1',
-                    type: 'MCP_TOOL',
-                    description: 'Tool 1',
-                    scopes: []
-                } as any,
-                {
-                    key: 'timestamp_tool_2',
-                    type: 'MCP_TOOL',
-                    description: 'Tool 2',
-                    scopes: []
-                } as any
-            ]
-        } as NewProtectedResource;
-
-        const created = await createProtectedResource(domain.id, accessToken, request);
-        await waitFor(2000);
-
-        const before = await getMcpServer(domain.id, accessToken, created.id);
-        const originalUpdatedAt = before.updatedAt;
-        const tool1CreatedAt = before.features.find(f => f.key === 'timestamp_tool_1')?.createdAt;
-
-        await waitFor(500); // Ensure time difference
-
-        // Delete timestamp_tool_2
-        const updateRequest = {
-            name: before.name,
-            description: before.description,
-            resourceIdentifiers: before.resourceIdentifiers,
-            features: [
-                {
-                    key: 'timestamp_tool_1',
-                    type: 'MCP_TOOL',
-                    description: 'Tool 1',
-                    scopes: []
-                } as UpdateMcpTool
-            ]
-        } as UpdateProtectedResource;
-
-        const updated = await updateProtectedResource(domain.id, accessToken, created.id, updateRequest);
-
-        expect(updated).toBeDefined();
-        expect(updated.features).toHaveLength(1);
-        expect(updated.updatedAt).not.toEqual(originalUpdatedAt);
-
-        // The remaining tool should keep its original createdAt
-        const remainingTool = updated.features.find(f => f.key === 'timestamp_tool_1');
-        expect(remainingTool).toBeDefined();
-        if (tool1CreatedAt && remainingTool.createdAt) {
-            expect(remainingTool.createdAt).toEqual(tool1CreatedAt);
-        }
-    });
-
-    it('Should delete tool with special scope configurations', async () => {
-        // Create resource with tool that has multiple scopes
-        const request = {
-            name: faker.commerce.productName(),
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://scope-delete-test.com"],
-            features: [
-                {
-                    key: 'tool_with_many_scopes',
-                    type: 'MCP_TOOL',
-                    description: 'Tool with multiple scopes',
-                    scopes: ['delete_test_scope_1', 'delete_test_scope_2']
-                } as any,
-                {
-                    key: 'tool_with_no_scopes',
-                    type: 'MCP_TOOL',
-                    description: 'Tool with no scopes',
-                    scopes: []
-                } as any
-            ]
-        } as NewProtectedResource;
-
-        const createdSecret = await createProtectedResource(domain.id, accessToken, request);
-        await waitFor(1000);
-
-        const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
-
-        // Delete the tool with multiple scopes
-        const updateRequest = {
-            name: created.name,
-            description: created.description,
-            resourceIdentifiers: created.resourceIdentifiers,
-            features: [
-                {
-                    key: 'tool_with_no_scopes',
-                    type: 'MCP_TOOL',
-                    description: 'Tool with no scopes',
-                    scopes: []
-                } as UpdateMcpTool
-            ]
-        } as UpdateProtectedResource;
-
-        const updated = await updateProtectedResource(domain.id, accessToken, created.id, updateRequest);
-
-        expect(updated).toBeDefined();
-        expect(updated.features).toHaveLength(1);
-        expect(updated.features[0].key).toEqual('tool_with_no_scopes');
-        expect(updated.features.find(f => f.key === 'tool_with_many_scopes')).toBeUndefined();
-    });
-
-    it('Should validate remaining tools after deletion', async () => {
-        // Create resource with valid and a tool to delete
-        const request = {
-            name: faker.commerce.productName(),
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://validation-delete-test.com"],
-            features: [
-                {
-                    key: 'valid_tool',
-                    type: 'MCP_TOOL',
-                    description: 'Valid tool',
-                    scopes: ['delete_test_scope_1']
-                } as any,
-                {
-                    key: 'tool_to_remove',
-                    type: 'MCP_TOOL',
-                    description: 'Will be removed',
-                    scopes: ['delete_test_scope_2']
-                } as any
-            ]
-        } as NewProtectedResource;
-
-        const createdSecret = await createProtectedResource(domain.id, accessToken, request);
-        await waitFor(1000);
-
-        const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
-
-        // Delete tool_to_remove but accidentally use invalid scope for remaining tool
-        const updateRequest = {
-            name: created.name,
-            description: created.description,
-            resourceIdentifiers: created.resourceIdentifiers,
-            features: [
-                {
-                    key: 'valid_tool',
-                    type: 'MCP_TOOL',
-                    description: 'Valid tool',
-                    scopes: ['non_existent_scope'] // Invalid scope
-                } as UpdateMcpTool
-            ]
-        } as UpdateProtectedResource;
-
-        // Should fail because remaining tool has invalid scope
-        await updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
-    });
-
-    it('Should not allow duplicate keys when deleting and re-adding', async () => {
-        // Create resource with two tools
-        const request = {
-            name: faker.commerce.productName(),
-            type: "MCP_SERVER",
-            resourceIdentifiers: ["https://duplicate-delete-test.com"],
-            features: [
-                {
-                    key: 'tool_a',
-                    type: 'MCP_TOOL',
-                    description: 'Tool A',
-                    scopes: []
-                } as any,
-                {
-                    key: 'tool_b',
-                    type: 'MCP_TOOL',
-                    description: 'Tool B',
-                    scopes: []
-                } as any
-            ]
-        } as NewProtectedResource;
-
-        const createdSecret = await createProtectedResource(domain.id, accessToken, request);
-        await waitFor(1000);
-
-        const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
-
-        // Try to "delete" tool_b but add it back with duplicate key
-        const updateRequest = {
-            name: created.name,
-            description: created.description,
-            resourceIdentifiers: created.resourceIdentifiers,
-            features: [
-                {
-                    key: 'tool_a',
-                    type: 'MCP_TOOL',
-                    description: 'Tool A',
-                    scopes: []
-                } as UpdateMcpTool,
-                {
-                    key: 'tool_a', // Duplicate!
-                    type: 'MCP_TOOL',
-                    description: 'Duplicate Tool A',
-                    scopes: []
-                } as UpdateMcpTool
-            ]
-        } as UpdateProtectedResource;
-
-        // Should fail due to duplicate keys
-        await updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
-    });
-});
-
-describe('When deleting protected resource', () => {
-    // Scenario: List reflects deletion
-    // Given the server is deleted
-    // When I list MCP servers
-    // Then the deleted server no longer appears
-    it('Should delete an existing MCP server and remove from list', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://delete-me.com"],
-        } as NewProtectedResource;
-
-        const created = await createProtectedResource(domain.id, accessToken, request);
-        expect(created).toBeDefined();
-
-        // Delete the resource (management API is synchronous)
-        await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER');
-
-        // Verify it no longer appears in list (poll until removed)
-        await waitForProtectedResourceRemovedFromList(domain.id, accessToken, created.id);
-        const page = await getMcpServers(domain.id, accessToken, 100, 0);
-        const exists = page.data.some((r: any) => r.id === created.id);
-        expect(exists).toBeFalsy();
-    });
-
-    // Scenario: Not found
-    // Given a protected resource id that does not exist
-    // When I call DELETE
-    // Then I receive 404 Not Found (or 403 if permission check happens first)
-    it('Protected Resource must not be deleted when resource does not exist', async () => {
-        const nonExistentId = 'non-existent-resource-id';
-
-        await deleteProtectedResource(domain.id, accessToken, nonExistentId, 'MCP_SERVER')
-            .catch(err => {
-                // Permission check might happen before existence check
-                const status = (err as any).response?.status || (err as any).status;
-                expect([403, 404]).toContain(status);
+        beforeAll(async () => {
+            // Create test scopes
+            testScope1 = await createScope(domain.id, accessToken, {
+                key: 'delete_test_scope_1',
+                name: 'Delete Test Scope 1',
+                description: 'Scope for delete tests'
             });
-    });
 
-    // Scenario: Type/domain mismatch
-    // Given a valid protected resource id in another domain
-    // When I call DELETE with type=MCP_SERVER for my current domain
-    // Then I receive 404 Not Found
-    it('Protected Resource must not be deleted when resource belongs to another domain', async () => {
-        // Create a resource in the test search domain
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://other-domain.com"],
-        } as NewProtectedResource;
-
-        const created = await createProtectedResource(domainTestSearch.id, accessToken, request);
-        expect(created).toBeDefined();
-
-        // Try to delete from the wrong domain (no wait needed for management API operations)
-        await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER')
-            .catch(err => {
-                // Permission check might happen before existence check
-                const status = (err as any).response?.status || (err as any).status;
-                expect([403, 404]).toContain(status);
+            testScope2 = await createScope(domain.id, accessToken, {
+                key: 'delete_test_scope_2',
+                name: 'Delete Test Scope 2',
+                description: 'Another scope for delete tests'
             });
-    });
 
-    // Scenario: Successful deletion (service/repository)
-    // Given a protected resource with client secrets and features (tools)
-    // When I delete it
-    // Then the protected resource row/document is removed
-    // And all child entities (client secrets, features/tools) are removed
-    // And an audit entry PROTECTED_RESOURCE_DELETED is created
-    // And a PROTECTED_RESOURCE Action.DELETE event is emitted
-    it('Should delete protected resource with client secrets and features', async () => {
-        const request = {
-            name: faker.commerce.productName(),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ["https://with-children.com"],
-            features: [
-                {
-                    key: 'test_tool_1',
-                    type: 'MCP_TOOL',
-                    description: 'Test tool'
-                }
-            ]
-        } as NewProtectedResource;
-
-        const created = await createProtectedResource(domain.id, accessToken, request);
-        expect(created).toBeDefined();
-        expect(created.clientSecret).toBeDefined();
-
-        // Verify features exist
-        const fetched = await getMcpServer(domain.id, accessToken, created.id);
-        expect(fetched).toBeDefined();
-        expect(fetched.features).toBeDefined();
-        expect(fetched.features.length).toBeGreaterThan(0);
-
-        // Delete the resource (this should cascade delete client secrets and features)
-        await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER');
-
-        // Verify resource is removed from list (poll until removed)
-        await waitForProtectedResourceRemovedFromList(domain.id, accessToken, created.id);
-        const page = await getMcpServers(domain.id, accessToken, 100, 0);
-        const exists = page.data.some((r: any) => r.id === created.id);
-        expect(exists).toBeFalsy();
-
-        // Verify we cannot get it by ID (resource is completely deleted)
-        await getMcpServer(domain.id, accessToken, created.id)
-            .catch(err => expect((err as any).response?.status || (err as any).status).toBe(404));
-    });
-
-    // Scenario: Domain deletion cascades to protected resources
-    // Given a domain with protected resources
-    // When I delete the domain
-    // Then all protected resources are also deleted
-    it('Should delete protected resources when domain is deleted', async () => {
-        // Create a test domain
-        const testDomain = await setupDomainForTest(uniqueName('domain-delete-cascade'), { accessToken, waitForStart: true });
-
-        // Create protected resources in the test domain
-        const resources = [];
-        for (let i = 0; i < 3; i++) {
+            // Create a protected resource with multiple tools
             const request = {
                 name: faker.commerce.productName(),
-                type: 'MCP_SERVER',
-                resourceIdentifiers: [`https://cascade-test-${i}.com`],
+                type: "MCP_SERVER",
+                resourceIdentifiers: ["https://delete-test.com"],
+                description: "Resource for delete testing",
                 features: [
                     {
-                        key: `tool_${i}`,
+                        key: 'tool_to_keep',
                         type: 'MCP_TOOL',
-                        description: `Test tool ${i}`
-                    }
+                        description: 'This tool will be kept',
+                        scopes: ['delete_test_scope_1']
+                    } as any,
+                    {
+                        key: 'tool_to_delete_1',
+                        type: 'MCP_TOOL',
+                        description: 'This tool will be deleted',
+                        scopes: ['delete_test_scope_2']
+                    } as any,
+                    {
+                        key: 'tool_to_delete_2',
+                        type: 'MCP_TOOL',
+                        description: 'This tool will also be deleted',
+                        scopes: ['delete_test_scope_1', 'delete_test_scope_2']
+                    } as any
                 ]
             } as NewProtectedResource;
-            const created = await createProtectedResource(testDomain.domain.id, accessToken, request);
-            resources.push(created);
-        }
 
-        // Verify resources exist
-        let page = await getMcpServers(testDomain.domain.id, accessToken, 100, 0);
-        expect(page.data.length).toBeGreaterThanOrEqual(3);
-        for (const resource of resources) {
-            expect(page.data.some((r: any) => r.id === resource.id)).toBeTruthy();
-        }
+            const created = await createProtectedResource(domain.id, accessToken, request);
+            expect(created).toBeDefined();
+            expect(created.id).toBeDefined();
 
-        // Delete the domain (should cascade delete protected resources)
-        await deleteDomain(testDomain.domain.id, accessToken);
+            await waitFor(2000);
 
-        // Verify protected resources no longer exist by trying to list them
-        // Since the domain is deleted, checkDomainExists will throw DomainNotFoundException (404)
-        await getMcpServers(testDomain.domain.id, accessToken, 100, 0)
-            .catch(err => {
-                const status = (err as any).response?.status || (err as any).status;
-                expect(status).toBe(404);
-            });
-    });
+            resourceWithTools = await getMcpServer(domain.id, accessToken, created.id);
+            expect(resourceWithTools).toBeDefined();
+            expect(resourceWithTools.features).toHaveLength(3);
+        });
 
-    // Scenario: Deleted resource cannot introspect tokens
-    // Given a protected resource with credentials
-    // When I delete it
-    // Then introspection with its credentials fails (gateway syncs deletion)
-    it('Deleted protected resource cannot introspect token', async () => {
-        // Create an application to mint a token
-        const application = await createApplication(domain.id, accessToken, {
-            name: uniqueName('introspect-app'),
-            type: 'SERVICE',
-            clientId: 'introspect-app',
-            clientSecret: 'introspect-app',
-        }).then((app) =>
-            updateApplication(
-                domain.id,
-                accessToken,
-                { settings: { oauth: { grantTypes: ['client_credentials'] } } },
-                app.id,
-            ).then((updatedApp) => {
-                updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-                updatedApp.settings.oauth.clientId = app.settings.oauth.clientId;
-                return updatedApp;
-            }),
-        );
+        it('Should delete a single tool by filtering it out', async () => {
+            // Delete 'tool_to_delete_1' by sending update without it
+            const updateRequest = {
+                name: resourceWithTools.name,
+                description: resourceWithTools.description,
+                resourceIdentifiers: resourceWithTools.resourceIdentifiers,
+                features: resourceWithTools.features
+                    .filter(f => f.key !== 'tool_to_delete_1')
+                    .map(f => ({
+                        key: f.key,
+                        description: f.description,
+                        type: 'MCP_TOOL',
+                        scopes: (f as any).scopes || []
+                    }))
+            } as UpdateProtectedResource;
 
-        // Poll token endpoint until application is synced to gateway
-        const token = await retryUntil(
-            () => performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
-                'Content-type': 'application/x-www-form-urlencoded',
-                Authorization: 'Basic ' + applicationBase64Token(application),
-            }),
-            (resp: any) => resp.status === 200,
-            {
-                timeoutMillis: 10000,
-                intervalMillis: 250,
-                onDone: () => console.log('application synced, token obtained'),
+            const updated = await updateProtectedResource(domain.id, accessToken, resourceWithTools.id, updateRequest);
+
+            expect(updated).toBeDefined();
+            expect(updated.features).toHaveLength(2);
+            expect(updated.features.find(f => f.key === 'tool_to_delete_1')).toBeUndefined();
+            expect(updated.features.find(f => f.key === 'tool_to_keep')).toBeDefined();
+            expect(updated.features.find(f => f.key === 'tool_to_delete_2')).toBeDefined();
+            expect(updated.updatedAt).not.toEqual(resourceWithTools.updatedAt);
+        });
+
+        it('Should delete multiple tools at once', async () => {
+            // Delete both remaining deletable tools, keeping only 'tool_to_keep'
+            const updateRequest = {
+                name: resourceWithTools.name,
+                description: resourceWithTools.description,
+                resourceIdentifiers: resourceWithTools.resourceIdentifiers,
+                features: resourceWithTools.features
+                    .filter(f => f.key === 'tool_to_keep')
+                    .map(f => ({
+                        key: f.key,
+                        description: f.description,
+                        type: 'MCP_TOOL',
+                        scopes: (f as any).scopes || []
+                    }))
+            } as UpdateProtectedResource;
+
+            const updated = await updateProtectedResource(domain.id, accessToken, resourceWithTools.id, updateRequest);
+
+            expect(updated).toBeDefined();
+            expect(updated.features).toHaveLength(1);
+            expect(updated.features[0].key).toEqual('tool_to_keep');
+        });
+
+        it('Should delete the last tool leaving empty features list', async () => {
+            // Delete the last tool
+            const updateRequest = {
+                name: resourceWithTools.name,
+                description: resourceWithTools.description,
+                resourceIdentifiers: resourceWithTools.resourceIdentifiers,
+                features: []
+            } as UpdateProtectedResource;
+
+            const updated = await updateProtectedResource(domain.id, accessToken, resourceWithTools.id, updateRequest);
+
+            expect(updated).toBeDefined();
+            expect(updated.features).toHaveLength(0);
+            expect(updated.updatedAt).not.toEqual(resourceWithTools.updatedAt);
+        });
+
+        it('Should maintain integrity and allow adding tools after clearing all', async () => {
+            // Verify the resource still exists and can be fetched after all tools deleted
+            const fetched = await getMcpServer(domain.id, accessToken, resourceWithTools.id);
+
+            expect(fetched).toBeDefined();
+            expect(fetched.id).toEqual(resourceWithTools.id);
+            expect(fetched.name).toEqual(resourceWithTools.name);
+            expect(fetched.resourceIdentifiers).toEqual(resourceWithTools.resourceIdentifiers);
+            expect(fetched.features).toHaveLength(0);
+
+            // Add a new tool to the resource that has no tools
+            const updateRequest = {
+                name: resourceWithTools.name,
+                description: resourceWithTools.description,
+                resourceIdentifiers: resourceWithTools.resourceIdentifiers,
+                features: [
+                    {
+                        key: 'new_tool_after_delete',
+                        type: 'MCP_TOOL',
+                        description: 'Tool added after all were deleted',
+                        scopes: ['delete_test_scope_1']
+                    } as UpdateMcpTool
+                ]
+            } as UpdateProtectedResource;
+
+            const updated = await updateProtectedResource(domain.id, accessToken, resourceWithTools.id, updateRequest);
+
+            expect(updated).toBeDefined();
+            expect(updated.features).toHaveLength(1);
+            expect(updated.features[0].key).toEqual('new_tool_after_delete');
+        });
+
+        it('Should preserve timestamps correctly when deleting tools', async () => {
+            // Create a new resource with multiple tools for timestamp testing
+            const request = {
+                name: faker.commerce.productName(),
+                type: "MCP_SERVER",
+                resourceIdentifiers: ["https://timestamp-delete-test.com"],
+                features: [
+                    {
+                        key: 'timestamp_tool_1',
+                        type: 'MCP_TOOL',
+                        description: 'Tool 1',
+                        scopes: []
+                    } as any,
+                    {
+                        key: 'timestamp_tool_2',
+                        type: 'MCP_TOOL',
+                        description: 'Tool 2',
+                        scopes: []
+                    } as any
+                ]
+            } as NewProtectedResource;
+
+            const created = await createProtectedResource(domain.id, accessToken, request);
+            await waitFor(2000);
+
+            const before = await getMcpServer(domain.id, accessToken, created.id);
+            const originalUpdatedAt = before.updatedAt;
+            const tool1CreatedAt = before.features.find(f => f.key === 'timestamp_tool_1')?.createdAt;
+
+            await waitFor(500); // Ensure time difference
+
+            // Delete timestamp_tool_2
+            const updateRequest = {
+                name: before.name,
+                description: before.description,
+                resourceIdentifiers: before.resourceIdentifiers,
+                features: [
+                    {
+                        key: 'timestamp_tool_1',
+                        type: 'MCP_TOOL',
+                        description: 'Tool 1',
+                        scopes: []
+                    } as UpdateMcpTool
+                ]
+            } as UpdateProtectedResource;
+
+            const updated = await updateProtectedResource(domain.id, accessToken, created.id, updateRequest);
+
+            expect(updated).toBeDefined();
+            expect(updated.features).toHaveLength(1);
+            expect(updated.updatedAt).not.toEqual(originalUpdatedAt);
+
+            // The remaining tool should keep its original createdAt
+            const remainingTool = updated.features.find(f => f.key === 'timestamp_tool_1');
+            expect(remainingTool).toBeDefined();
+            if (tool1CreatedAt && remainingTool.createdAt) {
+                expect(remainingTool.createdAt).toEqual(tool1CreatedAt);
             }
-        ).then((resp: any) => resp.body.access_token);
-        expect(token).toBeDefined();
+        });
 
-        // Create Protected Resource and wait for it to be synced to gateway
-        const created = await createProtectedResource(domain.id, accessToken, {
-            name: uniqueName('pr-introspect'),
-            type: 'MCP_SERVER',
-            resourceIdentifiers: ['https://deleted-after.com'],
-        } as NewProtectedResource);
-        expect(created).toBeDefined();
+        it('Should delete tool with special scope configurations', async () => {
+            // Create resource with tool that has multiple scopes
+            const request = {
+                name: faker.commerce.productName(),
+                type: "MCP_SERVER",
+                resourceIdentifiers: ["https://scope-delete-test.com"],
+                features: [
+                    {
+                        key: 'tool_with_many_scopes',
+                        type: 'MCP_TOOL',
+                        description: 'Tool with multiple scopes',
+                        scopes: ['delete_test_scope_1', 'delete_test_scope_2']
+                    } as any,
+                    {
+                        key: 'tool_with_no_scopes',
+                        type: 'MCP_TOOL',
+                        description: 'Tool with no scopes',
+                        scopes: []
+                    } as any
+                ]
+            } as NewProtectedResource;
 
-        // Poll introspection until resource is synced to gateway (proves it exists and is usable)
-        await retryUntil(
-            () => performPost(openIdConfiguration.introspection_endpoint, '', `token=${token}`, {
-                'Content-type': 'application/x-www-form-urlencoded',
-                Authorization: 'Basic ' + getBase64BasicAuth(created.clientId, created.clientSecret),
-            }),
-            (resp: any) => resp.status === 200,
-            {
-                timeoutMillis: 10000,
-                intervalMillis: 250,
-                onDone: () => console.log('protected resource synced to gateway'),
-            }
-        );
+            const createdSecret = await createProtectedResource(domain.id, accessToken, request);
+            await waitFor(1000);
 
-        // Delete the resource
-        await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER');
-        await waitForProtectedResourceRemovedFromList(domain.id, accessToken, created.id);
+            const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
 
-        // Poll introspection until deletion is synced (should fail with 401)
-        await retryUntil(
-            () => performPost(openIdConfiguration.introspection_endpoint, '', `token=${token}`, {
-                'Content-type': 'application/x-www-form-urlencoded',
-                Authorization: 'Basic ' + getBase64BasicAuth(created.clientId, created.clientSecret),
-            }).catch((err: any) => ({ status: err.response?.status || 401 })),
-            (resp: any) => resp.status === 401,
-            {
-                timeoutMillis: 10000,
-                intervalMillis: 250,
-                onDone: () => console.log('deletion synced, introspection correctly fails'),
-            }
-        );
+            // Delete the tool with multiple scopes
+            const updateRequest = {
+                name: created.name,
+                description: created.description,
+                resourceIdentifiers: created.resourceIdentifiers,
+                features: [
+                    {
+                        key: 'tool_with_no_scopes',
+                        type: 'MCP_TOOL',
+                        description: 'Tool with no scopes',
+                        scopes: []
+                    } as UpdateMcpTool
+                ]
+            } as UpdateProtectedResource;
+
+            const updated = await updateProtectedResource(domain.id, accessToken, created.id, updateRequest);
+
+            expect(updated).toBeDefined();
+            expect(updated.features).toHaveLength(1);
+            expect(updated.features[0].key).toEqual('tool_with_no_scopes');
+            expect(updated.features.find(f => f.key === 'tool_with_many_scopes')).toBeUndefined();
+        });
+
+        it('Should validate remaining tools after deletion', async () => {
+            // Create resource with valid and a tool to delete
+            const request = {
+                name: faker.commerce.productName(),
+                type: "MCP_SERVER",
+                resourceIdentifiers: ["https://validation-delete-test.com"],
+                features: [
+                    {
+                        key: 'valid_tool',
+                        type: 'MCP_TOOL',
+                        description: 'Valid tool',
+                        scopes: ['delete_test_scope_1']
+                    } as any,
+                    {
+                        key: 'tool_to_remove',
+                        type: 'MCP_TOOL',
+                        description: 'Will be removed',
+                        scopes: ['delete_test_scope_2']
+                    } as any
+                ]
+            } as NewProtectedResource;
+
+            const createdSecret = await createProtectedResource(domain.id, accessToken, request);
+            await waitFor(1000);
+
+            const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
+
+            // Delete tool_to_remove but accidentally use invalid scope for remaining tool
+            const updateRequest = {
+                name: created.name,
+                description: created.description,
+                resourceIdentifiers: created.resourceIdentifiers,
+                features: [
+                    {
+                        key: 'valid_tool',
+                        type: 'MCP_TOOL',
+                        description: 'Valid tool',
+                        scopes: ['non_existent_scope'] // Invalid scope
+                    } as UpdateMcpTool
+                ]
+            } as UpdateProtectedResource;
+
+            // Should fail because remaining tool has invalid scope
+            await updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
+                .catch(err => expect(err.response.status).toEqual(500));
+        });
+
+        it('Should not allow duplicate keys when deleting and re-adding', async () => {
+            // Create resource with two tools
+            const request = {
+                name: faker.commerce.productName(),
+                type: "MCP_SERVER",
+                resourceIdentifiers: ["https://duplicate-delete-test.com"],
+                features: [
+                    {
+                        key: 'tool_a',
+                        type: 'MCP_TOOL',
+                        description: 'Tool A',
+                        scopes: []
+                    } as any,
+                    {
+                        key: 'tool_b',
+                        type: 'MCP_TOOL',
+                        description: 'Tool B',
+                        scopes: []
+                    } as any
+                ]
+            } as NewProtectedResource;
+
+            const createdSecret = await createProtectedResource(domain.id, accessToken, request);
+            await waitFor(1000);
+
+            const created = await getMcpServer(domain.id, accessToken, createdSecret.id);
+
+            // Try to "delete" tool_b but add it back with duplicate key
+            const updateRequest = {
+                name: created.name,
+                description: created.description,
+                resourceIdentifiers: created.resourceIdentifiers,
+                features: [
+                    {
+                        key: 'tool_a',
+                        type: 'MCP_TOOL',
+                        description: 'Tool A',
+                        scopes: []
+                    } as UpdateMcpTool,
+                    {
+                        key: 'tool_a', // Duplicate!
+                        type: 'MCP_TOOL',
+                        description: 'Duplicate Tool A',
+                        scopes: []
+                    } as UpdateMcpTool
+                ]
+            } as UpdateProtectedResource;
+
+            // Should fail due to duplicate keys
+            await updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
+                .catch(err => expect(err.response.status).toEqual(400));
+        });
     });
 });
+

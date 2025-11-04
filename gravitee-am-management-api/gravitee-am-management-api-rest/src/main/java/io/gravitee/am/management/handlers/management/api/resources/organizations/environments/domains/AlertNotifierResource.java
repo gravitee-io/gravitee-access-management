@@ -57,6 +57,7 @@ public class AlertNotifierResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "getAlertNotifier",
             summary = "Get an alert notifier",
             description = "Get an alert notifier by its id. " +
                     "User must have DOMAIN_ALERT_NOTIFIER[LIST] permission on the specified domain, environment or organization.")
@@ -81,6 +82,7 @@ public class AlertNotifierResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "patchAlertNotifier",
             summary = "Update an alert notifier",
             description = "Update an alert notifier" +
                     "User must have DOMAIN_ALERT_NOTIFIER[UPDATE] permission on the specified domain, environment or organization.")
@@ -107,6 +109,7 @@ public class AlertNotifierResource extends AbstractResource {
     @DELETE
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "deleteAlertNotifier",
             summary = "Delete an alert notifier",
             description = "Delete an alert notifier by its id. " +
                     "User must have DOMAIN_ALERT_NOTIFIER[DELETE] permission on the specified domain, environment or organization.")

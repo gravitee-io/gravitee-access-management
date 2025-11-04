@@ -39,7 +39,7 @@ import {
   UpdateReporterToJSON,
 } from '../models';
 
-export interface Create7Request {
+export interface CreateDomainReporterRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -51,7 +51,7 @@ export interface CreateOrgReporterRequest {
   newReporter?: NewReporter;
 }
 
-export interface Delete7Request {
+export interface DeleteDomainReporterRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -63,14 +63,10 @@ export interface DeleteOrgReporterRequest {
   reporterId: string;
 }
 
-export interface Get13Request {
+export interface GetDomainReporterRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
-  reporter: string;
-}
-
-export interface Get33Request {
   reporter: string;
 }
 
@@ -83,18 +79,22 @@ export interface GetOrgReportersRequest {
   organizationId: string;
 }
 
-export interface GetSchema8Request {
+export interface GetReporterRequest {
   reporter: string;
 }
 
-export interface List9Request {
+export interface GetReporterSchemaRequest {
+  reporter: string;
+}
+
+export interface ListDomainReportersRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
   userProvider?: boolean;
 }
 
-export interface Update6Request {
+export interface UpdateDomainReporterRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -116,26 +116,29 @@ export class ReporterApi extends runtime.BaseAPI {
    * User must have the DOMAIN_REPORTER[CREATE] permission on the specified domain or DOMAIN_REPORTER[CREATE] permission on the specified environment or DOMAIN_REPORTER[CREATE] permission on the specified organization.
    * Create a reporter for a security domain
    */
-  async create7Raw(
-    requestParameters: Create7Request,
+  async createDomainReporterRaw(
+    requestParameters: CreateDomainReporterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Reporter>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create7.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createDomainReporter.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling create7.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling createDomainReporter.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling create7.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling createDomainReporter.',
+      );
     }
 
     const queryParameters: any = {};
@@ -173,8 +176,11 @@ export class ReporterApi extends runtime.BaseAPI {
    * User must have the DOMAIN_REPORTER[CREATE] permission on the specified domain or DOMAIN_REPORTER[CREATE] permission on the specified environment or DOMAIN_REPORTER[CREATE] permission on the specified organization.
    * Create a reporter for a security domain
    */
-  async create7(requestParameters: Create7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Reporter> {
-    const response = await this.create7Raw(requestParameters, initOverrides);
+  async createDomainReporter(
+    requestParameters: CreateDomainReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Reporter> {
+    const response = await this.createDomainReporterRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -240,32 +246,35 @@ export class ReporterApi extends runtime.BaseAPI {
    * User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain or DOMAIN_REPORTER[DELETE] permission on the specified environment or DOMAIN_REPORTER[DELETE] permission on the specified organization
    * Delete a reporter
    */
-  async delete7Raw(
-    requestParameters: Delete7Request,
+  async deleteDomainReporterRaw(
+    requestParameters: DeleteDomainReporterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete7.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteDomainReporter.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling delete7.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling deleteDomainReporter.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling delete7.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling deleteDomainReporter.',
+      );
     }
 
     if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
       throw new runtime.RequiredError(
         'reporter',
-        'Required parameter requestParameters.reporter was null or undefined when calling delete7.',
+        'Required parameter requestParameters.reporter was null or undefined when calling deleteDomainReporter.',
       );
     }
 
@@ -302,8 +311,11 @@ export class ReporterApi extends runtime.BaseAPI {
    * User must have the DOMAIN_REPORTER[DELETE] permission on the specified domain or DOMAIN_REPORTER[DELETE] permission on the specified environment or DOMAIN_REPORTER[DELETE] permission on the specified organization
    * Delete a reporter
    */
-  async delete7(requestParameters: Delete7Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete7Raw(requestParameters, initOverrides);
+  async deleteDomainReporter(
+    requestParameters: DeleteDomainReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.deleteDomainReporterRaw(requestParameters, initOverrides);
   }
 
   /**
@@ -370,32 +382,35 @@ export class ReporterApi extends runtime.BaseAPI {
    * User must have the DOMAIN_REPORTER[READ] permission on the specified domain or DOMAIN_REPORTER[READ] permission on the specified environment or DOMAIN_REPORTER[READ] permission on the specified organization
    * Get a reporter
    */
-  async get13Raw(
-    requestParameters: Get13Request,
+  async getDomainReporterRaw(
+    requestParameters: GetDomainReporterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Reporter>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling get13.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getDomainReporter.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling get13.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getDomainReporter.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling get13.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getDomainReporter.',
+      );
     }
 
     if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
       throw new runtime.RequiredError(
         'reporter',
-        'Required parameter requestParameters.reporter was null or undefined when calling get13.',
+        'Required parameter requestParameters.reporter was null or undefined when calling getDomainReporter.',
       );
     }
 
@@ -432,57 +447,12 @@ export class ReporterApi extends runtime.BaseAPI {
    * User must have the DOMAIN_REPORTER[READ] permission on the specified domain or DOMAIN_REPORTER[READ] permission on the specified environment or DOMAIN_REPORTER[READ] permission on the specified organization
    * Get a reporter
    */
-  async get13(requestParameters: Get13Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Reporter> {
-    const response = await this.get13Raw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a reporter plugin
-   */
-  async get33Raw(
-    requestParameters: Get33Request,
+  async getDomainReporter(
+    requestParameters: GetDomainReporterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
-      throw new runtime.RequiredError(
-        'reporter',
-        'Required parameter requestParameters.reporter was null or undefined when calling get33.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/reporters/{reporter}`.replace(`{${'reporter'}}`, encodeURIComponent(String(requestParameters.reporter))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a reporter plugin
-   */
-  async get33(requestParameters: Get33Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get33Raw(requestParameters, initOverrides);
+  ): Promise<Reporter> {
+    const response = await this.getDomainReporterRaw(requestParameters, initOverrides);
+    return await response.value();
   }
 
   /**
@@ -602,16 +572,64 @@ export class ReporterApi extends runtime.BaseAPI {
   }
 
   /**
-   * Get a reporter plugin\'s schema
+   * There is no particular permission needed. User must be authenticated.
+   * Get a reporter plugin
    */
-  async getSchema8Raw(
-    requestParameters: GetSchema8Request,
+  async getReporterRaw(
+    requestParameters: GetReporterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
       throw new runtime.RequiredError(
         'reporter',
-        'Required parameter requestParameters.reporter was null or undefined when calling getSchema8.',
+        'Required parameter requestParameters.reporter was null or undefined when calling getReporter.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/reporters/{reporter}`.replace(`{${'reporter'}}`, encodeURIComponent(String(requestParameters.reporter))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get a reporter plugin
+   */
+  async getReporter(requestParameters: GetReporterRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.getReporterRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Get a reporter plugin\'s schema
+   */
+  async getReporterSchemaRaw(
+    requestParameters: GetReporterSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
+      throw new runtime.RequiredError(
+        'reporter',
+        'Required parameter requestParameters.reporter was null or undefined when calling getReporterSchema.',
       );
     }
 
@@ -646,72 +664,40 @@ export class ReporterApi extends runtime.BaseAPI {
   /**
    * Get a reporter plugin\'s schema
    */
-  async getSchema8(requestParameters: GetSchema8Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema8Raw(requestParameters, initOverrides);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List reporter plugins
-   */
-  async list32Raw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/reporters`,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * List reporter plugins
-   */
-  async list32(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list32Raw(initOverrides);
+  async getReporterSchema(
+    requestParameters: GetReporterSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getReporterSchemaRaw(requestParameters, initOverrides);
   }
 
   /**
    * User must have the DOMAIN_REPORTER[LIST] permission on the specified domain or DOMAIN_REPORTER[LIST] permission on the specified environment or DOMAIN_REPORTER[LIST] permission on the specified organization. Except if user has DOMAIN_REPORTER[READ] permission on the domain, environment or organization, each returned reporter is filtered and contains only basic information such as id and name and type.
    * List registered reporters for a security domain
    */
-  async list9Raw(
-    requestParameters: List9Request,
+  async listDomainReportersRaw(
+    requestParameters: ListDomainReportersRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Array<Reporter>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling list9.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listDomainReporters.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling list9.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listDomainReporters.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling list9.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listDomainReporters.',
+      );
     }
 
     const queryParameters: any = {};
@@ -750,48 +736,92 @@ export class ReporterApi extends runtime.BaseAPI {
    * User must have the DOMAIN_REPORTER[LIST] permission on the specified domain or DOMAIN_REPORTER[LIST] permission on the specified environment or DOMAIN_REPORTER[LIST] permission on the specified organization. Except if user has DOMAIN_REPORTER[READ] permission on the domain, environment or organization, each returned reporter is filtered and contains only basic information such as id and name and type.
    * List registered reporters for a security domain
    */
-  async list9(requestParameters: List9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<Reporter>> {
-    const response = await this.list9Raw(requestParameters, initOverrides);
+  async listDomainReporters(
+    requestParameters: ListDomainReportersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<Reporter>> {
+    const response = await this.listDomainReportersRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List reporter plugins
+   */
+  async listReporterPluginsRaw(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<runtime.ApiResponse<void>> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/reporters`,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * List reporter plugins
+   */
+  async listReporterPlugins(initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.listReporterPluginsRaw(initOverrides);
   }
 
   /**
    * User must have the DOMAIN_REPORTER[UPDATE] permission on the specified domain or DOMAIN_REPORTER[UPDATE] permission on the specified environment or DOMAIN_REPORTER[UPDATE] permission on the specified organization
    * Update a reporter
    */
-  async update6Raw(
-    requestParameters: Update6Request,
+  async updateDomainReporterRaw(
+    requestParameters: UpdateDomainReporterRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Reporter>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling update6.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateDomainReporter.',
       );
     }
 
     if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
       throw new runtime.RequiredError(
         'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling update6.',
+        'Required parameter requestParameters.environmentId was null or undefined when calling updateDomainReporter.',
       );
     }
 
     if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling update6.');
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling updateDomainReporter.',
+      );
     }
 
     if (requestParameters.reporter === null || requestParameters.reporter === undefined) {
       throw new runtime.RequiredError(
         'reporter',
-        'Required parameter requestParameters.reporter was null or undefined when calling update6.',
+        'Required parameter requestParameters.reporter was null or undefined when calling updateDomainReporter.',
       );
     }
 
     if (requestParameters.updateReporter === null || requestParameters.updateReporter === undefined) {
       throw new runtime.RequiredError(
         'updateReporter',
-        'Required parameter requestParameters.updateReporter was null or undefined when calling update6.',
+        'Required parameter requestParameters.updateReporter was null or undefined when calling updateDomainReporter.',
       );
     }
 
@@ -831,8 +861,11 @@ export class ReporterApi extends runtime.BaseAPI {
    * User must have the DOMAIN_REPORTER[UPDATE] permission on the specified domain or DOMAIN_REPORTER[UPDATE] permission on the specified environment or DOMAIN_REPORTER[UPDATE] permission on the specified organization
    * Update a reporter
    */
-  async update6(requestParameters: Update6Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Reporter> {
-    const response = await this.update6Raw(requestParameters, initOverrides);
+  async updateDomainReporter(
+    requestParameters: UpdateDomainReporterRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Reporter> {
+    const response = await this.updateDomainReporterRaw(requestParameters, initOverrides);
     return await response.value();
   }
 

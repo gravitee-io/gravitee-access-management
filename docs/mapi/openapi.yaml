@@ -17,7 +17,7 @@
 openapi: 3.0.1
 info:
   title: Gravitee.io - Access Management API
-  version: 4.10.0-SNAPSHOT
+  version: 4.10.0-alpha.3-SNAPSHOT
 servers:
 - url: /management
 security:
@@ -102,7 +102,7 @@ paths:
         \ specified organization. Except if user has ORGANIZATION_AUDIT[READ] permission\
         \ on the organization, each returned audit is filtered and contains only basic\
         \ information such as id, date, event, actor, target and status."
-      operationId: list
+      operationId: listOrganizationAudits
       parameters:
       - name: organizationId
         in: path
@@ -161,7 +161,7 @@ paths:
       summary: Get an audit log
       description: "User must have the ORGANIZATION_AUDIT[READ] permission on the\
         \ specified organization"
-      operationId: get_1
+      operationId: getOrganizationAudit
       parameters:
       - name: organizationId
         in: path
@@ -190,7 +190,7 @@ paths:
       description: "User must have the ORGANIZATION[LIST] permission on the specified\
         \ organization. Each returned entrypoint is filtered and contains only basic\
         \ information such as id and name."
-      operationId: list_1
+      operationId: listEntrypoints
       parameters:
       - name: organizationId
         in: path
@@ -214,7 +214,7 @@ paths:
       summary: Create a entrypoint
       description: "User must have the ORGANIZATION_ENTRYPOINT[CREATE] permission\
         \ on the specified organization"
-      operationId: create
+      operationId: createEntrypoint
       parameters:
       - name: organizationId
         in: path
@@ -239,7 +239,7 @@ paths:
       summary: Get a sharding entrypoint
       description: "User must have the ORGANIZATION_ENTRYPOINT[READ] permission on\
         \ the specified organization"
-      operationId: get_2
+      operationId: getEntrypoint
       parameters:
       - name: organizationId
         in: path
@@ -266,7 +266,7 @@ paths:
       summary: Update the sharding entrypoint
       description: "User must have the ORGANIZATION_ENTRYPOINT[UPDATE] permission\
         \ on the specified organization"
-      operationId: update
+      operationId: updateEntrypoint
       parameters:
       - name: organizationId
         in: path
@@ -299,7 +299,7 @@ paths:
       summary: Delete the sharding entrypoint
       description: "User must have the ORGANIZATION_ENTRYPOINT[DELETE] permission\
         \ on the specified organization"
-      operationId: delete
+      operationId: deleteEntrypoint
       parameters:
       - name: organizationId
         in: path
@@ -324,7 +324,7 @@ paths:
         \ or ENVIRONMENT[READ] permission on the specified organization.Each returned\
         \ environment is filtered and contains only basic information such as id and\
         \ name."
-      operationId: list_17
+      operationId: listEnvironments
       parameters:
       - name: organizationId
         in: path
@@ -859,11 +859,11 @@ paths:
       tags:
       - alerts
       - domain
-      summary: List alert alert triggers
+      summary: List alert triggers
       description: "List all the alert triggers of the domain accessible to the current\
         \ user. User must have DOMAIN_ALERT[LIST] permission on the specified domain,\
         \ environment or organization."
-      operationId: list_2
+      operationId: listAlertTriggers
       parameters:
       - name: organizationId
         in: path
@@ -899,7 +899,7 @@ paths:
       description: "Update multiple alert triggers in the same timeUser must have\
         \ DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or\
         \ organization."
-      operationId: list_3
+      operationId: updateAlertTriggers
       parameters:
       - name: organizationId
         in: path
@@ -943,7 +943,7 @@ paths:
       description: "User must have DOMAIN_ANALYTICS[READ] permission on the specified\
         \ domain or DOMAIN_ANALYTICS[READ] permission on the specified environment\
         \ or DOMAIN_ANALYTICS[READ] permission on the specified organization"
-      operationId: get_3
+      operationId: findDomainAnalytics
       parameters:
       - name: organizationId
         in: path
@@ -1274,7 +1274,7 @@ paths:
         \ application or APPLICATION_ANALYTICS[READ] permission on the specified domain\
         \ or APPLICATION_ANALYTICS[READ] permission on the specified environment or\
         \ APPLICATION_ANALYTICS[READ] permission on the specified organization"
-      operationId: get_4
+      operationId: getApplicationAnalytics
       parameters:
       - name: organizationId
         in: path
@@ -1347,7 +1347,7 @@ paths:
         \ on the specified domain or APPLICATION_EMAIL_TEMPLATE[READ] permission on\
         \ the specified environment or APPLICATION_EMAIL_TEMPLATE[READ] permission\
         \ on the specified organization"
-      operationId: get_5
+      operationId: findApplicationEmail
       parameters:
       - name: organizationId
         in: path
@@ -1412,7 +1412,7 @@ paths:
         \ on the specified domain or APPLICATION_EMAIL_TEMPLATE[CREATE] permission\
         \ on the specified environment or APPLICATION_EMAIL_TEMPLATE[CREATE] permission\
         \ on the specified organization"
-      operationId: create_2
+      operationId: createApplicationEmail
       parameters:
       - name: organizationId
         in: path
@@ -1457,7 +1457,7 @@ paths:
         \ on the specified domain or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission\
         \ on the specified environment or APPLICATION_EMAIL_TEMPLATE[UPDATE] permission\
         \ on the specified organization"
-      operationId: update_1
+      operationId: updateApplicationEmail
       parameters:
       - name: organizationId
         in: path
@@ -1510,7 +1510,7 @@ paths:
         \ on the specified domain or APPLICATION_EMAIL_TEMPLATE[DELETE] permission\
         \ on the specified environment or APPLICATION_EMAIL_TEMPLATE[DELETE] permission\
         \ on the specified organization"
-      operationId: delete_2
+      operationId: deleteApplicationEmail
       parameters:
       - name: organizationId
         in: path
@@ -1742,7 +1742,7 @@ paths:
         \ application or APPLICATION_FORM[READ] permission on the specified domain\
         \ or APPLICATION_FORM[READ] permission on the specified environment or APPLICATION_FORM[READ]\
         \ permission on the specified organization"
-      operationId: get_6
+      operationId: findApplicationForm
       parameters:
       - name: organizationId
         in: path
@@ -1806,7 +1806,7 @@ paths:
         \ application or APPLICATION_FORM[CREATE] permission on the specified domain\
         \ or APPLICATION_FORM[CREATE] permission on the specified environment or APPLICATION_FORM[CREATE]\
         \ permission on the specified organization"
-      operationId: create_3
+      operationId: createApplicationForm
       parameters:
       - name: organizationId
         in: path
@@ -1850,7 +1850,7 @@ paths:
         \ application or APPLICATION_FORM[UPDATE] permission on the specified domain\
         \ or APPLICATION_FORM[UPDATE] permission on the specified environment or APPLICATION_FORM[UPDATE]\
         \ permission on the specified organization"
-      operationId: update_2
+      operationId: updateApplicationForm
       parameters:
       - name: organizationId
         in: path
@@ -1902,7 +1902,7 @@ paths:
         \ application or APPLICATION_FORM[DELETE] permission on the specified domain\
         \ or APPLICATION_FORM[DELETE] permission on the specified environment or APPLICATION_FORM[DELETE]\
         \ permission on the specified organization"
-      operationId: delete_3
+      operationId: deleteApplicationForm
       parameters:
       - name: organizationId
         in: path
@@ -2029,7 +2029,7 @@ paths:
         \ or APPLICATION[READ] permission on the specified domain or APPLICATION[READ]\
         \ permission on the specified environment or APPLICATION[READ] permission\
         \ on the specified organization"
-      operationId: permissions
+      operationId: getApplicationMemberPermissions
       parameters:
       - name: organizationId
         in: path
@@ -2070,7 +2070,7 @@ paths:
         \ application or APPLICATION_MEMBER[DELETE] permission on the specified domain\
         \ or APPLICATION_MEMBER[DELETE] permission on the specified environment or\
         \ APPLICATION_MEMBER[DELETE] permission on the specified organization"
-      operationId: removeMember
+      operationId: removeApplicationMember
       parameters:
       - name: organizationId
         in: path
@@ -2112,7 +2112,7 @@ paths:
         \ application or APPLICATION_RESOURCE[LIST] permission on the specified domain\
         \ or APPLICATION_RESOURCE[LIST] permission on the specified environment or\
         \ APPLICATION_RESOURCE[LIST] permission on the specified organization"
-      operationId: list_5
+      operationId: listApplicationResources
       parameters:
       - name: organizationId
         in: path
@@ -2165,7 +2165,7 @@ paths:
         \ application or APPLICATION_RESOURCE[READ] permission on the specified domain\
         \ or APPLICATION_RESOURCE[READ] permission on the specified environment or\
         \ APPLICATION_RESOURCE[READ] permission on the specified organization"
-      operationId: get_7
+      operationId: getApplicationResource
       parameters:
       - name: organizationId
         in: path
@@ -2211,7 +2211,7 @@ paths:
         \ application or APPLICATION_RESOURCE[READ] permission on the specified domain\
         \ or APPLICATION_RESOURCE[READ] permission on the specified environment or\
         \ APPLICATION_RESOURCE[READ] permission on the specified organization"
-      operationId: list_4
+      operationId: listApplicationPolicies
       parameters:
       - name: organizationId
         in: path
@@ -2259,7 +2259,7 @@ paths:
         \ application or APPLICATION_RESOURCE[READ] permission on the specified domain\
         \ or APPLICATION_RESOURCE[READ] permission on the specified environment or\
         \ APPLICATION_RESOURCE[READ] permission on the specified organization"
-      operationId: get_8
+      operationId: getApplicationResourcePolicy
       parameters:
       - name: organizationId
         in: path
@@ -2310,7 +2310,7 @@ paths:
         \ application or APPLICATION_OPENID[LIST] permission on the specified domain\
         \ or APPLICATION_OPENID[LIST] permission on the specified environment or APPLICATION_OPENID[LIST]\
         \ permission on the specified organization"
-      operationId: getSecrets
+      operationId: listSecrets
       parameters:
       - name: organizationId
         in: path
@@ -2352,7 +2352,7 @@ paths:
         \ application or APPLICATION_OPENID[CREATE] permission on the specified domain\
         \ or APPLICATION_OPENID[CREATE] permission on the specified environment or\
         \ APPLICATION_OPENID[CREATE] permission on the specified organization"
-      operationId: create_1
+      operationId: createSecret
       parameters:
       - name: organizationId
         in: path
@@ -2399,7 +2399,7 @@ paths:
         \ application or APPLICATION_OPENID[DELETE] permission on the specified domain\
         \ or APPLICATION_OPENID[DELETE] permission on the specified environment or\
         \ APPLICATION_OPENID[DELETE] permission on the specified organization"
-      operationId: delete_1
+      operationId: deleteClientSecret
       parameters:
       - name: organizationId
         in: path
@@ -2535,7 +2535,7 @@ paths:
         \ permission on the domain, environment or organization, each returned audit\
         \ is filtered and contains only basic information such as id, date, event,\
         \ actor, target and status."
-      operationId: list_6
+      operationId: listDomainAudits
       parameters:
       - name: organizationId
         in: path
@@ -2606,7 +2606,7 @@ paths:
       description: "User must have the DOMAIN_AUDIT[READ] permission on the specified\
         \ domain or DOMAIN_AUDIT[READ] permission on the specified environment or\
         \ DOMAIN_AUDIT[READ] permission on the specified organization"
-      operationId: get_9
+      operationId: getDomainAudit
       parameters:
       - name: organizationId
         in: path
@@ -2648,7 +2648,7 @@ paths:
         \ the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission\
         \ on the specified organization Each returned Authentication Device Notifier\
         \ is filtered and contains only basic information such as id, name."
-      operationId: list_7
+      operationId: listAuthenticationDeviceNotifiers
       parameters:
       - name: organizationId
         in: path
@@ -2686,7 +2686,7 @@ paths:
         \ on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission\
         \ on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission\
         \ on the specified organization"
-      operationId: create_4
+      operationId: createAuthenticationDeviceNotifier
       parameters:
       - name: organizationId
         in: path
@@ -2724,7 +2724,7 @@ paths:
         \ on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission on\
         \ the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[READ] permission\
         \ on the specified organization"
-      operationId: get_10
+      operationId: getAuthenticationDeviceNotifier
       parameters:
       - name: organizationId
         in: path
@@ -2764,7 +2764,7 @@ paths:
         \ on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission\
         \ on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[UPDATE] permission\
         \ on the specified organization"
-      operationId: update_3
+      operationId: updateAuthenticationDeviceNotifier
       parameters:
       - name: organizationId
         in: path
@@ -2810,7 +2810,7 @@ paths:
         \ on the specified domain or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission\
         \ on the specified environment or DOMAIN_AUTHDEVICE_NOTIFIER[DELETE] permission\
         \ on the specified organization"
-      operationId: delete_4
+      operationId: deleteAuthenticationDeviceNotifier
       parameters:
       - name: organizationId
         in: path
@@ -3775,7 +3775,7 @@ paths:
       description: "User must have the DOMAIN_EMAIL_TEMPLATE[READ] permission on the\
         \ specified domain or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified\
         \ environment or DOMAIN_EMAIL_TEMPLATE[READ] permission on the specified organization"
-      operationId: get_11
+      operationId: findEmail
       parameters:
       - name: organizationId
         in: path
@@ -3833,7 +3833,7 @@ paths:
         \ the specified domain or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the\
         \ specified environment or DOMAIN_EMAIL_TEMPLATE[CREATE] permission on the\
         \ specified organization"
-      operationId: create_5
+      operationId: createEmail
       parameters:
       - name: organizationId
         in: path
@@ -3871,7 +3871,7 @@ paths:
         \ the specified domain or DOMAIN_EMAIL_TEMPLATE[UPDATE] permission on the\
         \ specified environment or DOMAIN_EMAIL_TEMPLATE[UPDATE] permission on the\
         \ specified organization"
-      operationId: update_4
+      operationId: updateDomainEmail
       parameters:
       - name: organizationId
         in: path
@@ -3917,7 +3917,7 @@ paths:
         \ the specified domain or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the\
         \ specified environment or DOMAIN_EMAIL_TEMPLATE[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_5
+      operationId: deleteDomainEmail
       parameters:
       - name: organizationId
         in: path
@@ -4563,7 +4563,7 @@ paths:
       description: "User must have the DOMAIN_FORM[READ] permission on the specified\
         \ domain or DOMAIN_FORM[READ] permission on the specified environment or DOMAIN_FORM[READ]\
         \ permission on the specified organization"
-      operationId: get_12
+      operationId: findForm
       parameters:
       - name: organizationId
         in: path
@@ -4620,7 +4620,7 @@ paths:
       description: "User must have the DOMAIN_FORM[CREATE] permission on the specified\
         \ domain or DOMAIN_FORM[CREATE] permission on the specified environment or\
         \ DOMAIN_FORM[CREATE] permission on the specified organization"
-      operationId: create_6
+      operationId: createForm
       parameters:
       - name: organizationId
         in: path
@@ -4699,7 +4699,7 @@ paths:
       description: "User must have the DOMAIN_FORM[UPDATE] permission on the specified\
         \ domain or DOMAIN_FORM[UPDATE] permission on the specified environment or\
         \ DOMAIN_FORM[UPDATE] permission on the specified organization"
-      operationId: update_5
+      operationId: updateDomainForm
       parameters:
       - name: organizationId
         in: path
@@ -4744,7 +4744,7 @@ paths:
       description: "User must have the DOMAIN_FORM[DELETE] permission on the specified\
         \ domain or DOMAIN_FORM[DELETE] permission on the specified environment or\
         \ DOMAIN_FORM[DELETE] permission on the specified organization"
-      operationId: delete_6
+      operationId: deleteDomainForm
       parameters:
       - name: organizationId
         in: path
@@ -4781,7 +4781,7 @@ paths:
         \ domain or DOMAIN_GROUP[LIST] permission on the specified environment or\
         \ DOMAIN_GROUP[LIST] permission on the specified organization. Each returned\
         \ group is filtered and contains only basic information such as id and name."
-      operationId: listGroups
+      operationId: listDomainGroups
       parameters:
       - name: organizationId
         in: path
@@ -5766,7 +5766,7 @@ paths:
       description: "User must have the DOMAIN_MEMBER[LIST] permission on the specified\
         \ domain or DOMAIN_MEMBER[LIST] permission on the specified environment or\
         \ DOMAIN_MEMBER[LIST] permission on the specified organization"
-      operationId: list_8
+      operationId: listMembers
       parameters:
       - name: organizationId
         in: path
@@ -5837,7 +5837,7 @@ paths:
       description: "User must have DOMAIN[READ] permission on the specified domain\
         \ or DOMAIN[READ] permission on the specified environment or DOMAIN[READ]\
         \ permission on the specified organization"
-      operationId: permissions_1
+      operationId: getDomainMemberPermissions
       parameters:
       - name: organizationId
         in: path
@@ -5871,7 +5871,7 @@ paths:
       description: "User must have the DOMAIN_MEMBER[DELETE] permission on the specified\
         \ domain or DOMAIN_MEMBER[DELETE] permission on the specified environment\
         \ or DOMAIN_MEMBER[DELETE] permission on the specified organization"
-      operationId: removeMember_1
+      operationId: removeDomainMember
       parameters:
       - name: organizationId
         in: path
@@ -6197,6 +6197,65 @@ paths:
         "200":
           description: Result of evaluating the password against the policy
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources:
+    get:
+      tags:
+      - protected-resource
+      - domain
+      summary: List registered protected resources for a security domain
+      description: "User must have the PROTECTED_RESOURCE[LIST] permission on the\
+        \ specified domain, environment or organization AND either PROTECTED_RESOURCE[READ]\
+        \ permission on each domain's protected resource or PROTECTED_RESOURCE[READ]\
+        \ permission on the specified domain or PROTECTED_RESOURCE[READ] permission\
+        \ on the specified environment or PROTECTED_RESOURCE[READ] permission on the\
+        \ specified organization. Each returned protected resource is filtered and\
+        \ contains only basic information such as id, name, description and isEnabled."
+      operationId: listProtectedResources
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: string
+      - name: page
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 0
+      - name: size
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 50
+      - name: sort
+        in: query
+        schema:
+          type: string
+          default: updatedAt.desc
+      responses:
+        "200":
+          description: List registered protected resources for a security domain
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourcePage"
+        "500":
+          description: Internal server error
     post:
       tags:
       - protected-resource
@@ -6238,12 +6297,105 @@ paths:
         "500":
           description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}:
+    get:
+      tags:
+      - protected-resource
+      - domain
+      summary: Get a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[READ] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[READ] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[READ] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[READ] permission on the specified organization. "
+      operationId: findProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: type
+        in: query
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Protected Resource
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        "500":
+          description: Internal server error
+    put:
+      tags:
+      - protected-resource
+      - domain
+      summary: Update a Protected Resource
+      description: "User must have the PROTECTED_RESOURCE[UPDATE] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[UPDATE] permission on the specified organization. "
+      operationId: updateProtectedResource
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: protected-resource
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProtectedResource"
+        required: true
+      responses:
+        "200":
+          description: Protected Resource successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProtectedResource"
+        "500":
+          description: Internal server error
     delete:
       tags:
       - protected-resource
       - domain
       summary: Delete a Protected Resource
-      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment or PROTECTED_RESOURCE[DELETE] permission on the specified organization."
+      description: "User must have the PROTECTED_RESOURCE[DELETE] permission on the\
+        \ specified resource or PROTECTED_RESOURCE[DELETE] permission on the specified\
+        \ domain or PROTECTED_RESOURCE[DELETE] permission on the specified environment\
+        \ or PROTECTED_RESOURCE[DELETE] permission on the specified organization. "
       operationId: deleteProtectedResource
       parameters:
       - name: organizationId
@@ -6268,10 +6420,8 @@ paths:
           type: string
       - name: type
         in: query
-        required: true
         schema:
           type: string
-          enum: [MCP_SERVER]
       responses:
         "204":
           description: Protected Resource successfully deleted
@@ -6293,7 +6443,7 @@ paths:
         \ if user has DOMAIN_REPORTER[READ] permission on the domain, environment\
         \ or organization, each returned reporter is filtered and contains only basic\
         \ information such as id and name and type."
-      operationId: list_9
+      operationId: listDomainReporters
       parameters:
       - name: organizationId
         in: path
@@ -6333,7 +6483,7 @@ paths:
       description: "User must have the DOMAIN_REPORTER[CREATE] permission on the specified\
         \ domain or DOMAIN_REPORTER[CREATE] permission on the specified environment\
         \ or DOMAIN_REPORTER[CREATE] permission on the specified organization."
-      operationId: create_7
+      operationId: createDomainReporter
       parameters:
       - name: organizationId
         in: path
@@ -6373,7 +6523,7 @@ paths:
       description: "User must have the DOMAIN_REPORTER[READ] permission on the specified\
         \ domain or DOMAIN_REPORTER[READ] permission on the specified environment\
         \ or DOMAIN_REPORTER[READ] permission on the specified organization"
-      operationId: get_13
+      operationId: getDomainReporter
       parameters:
       - name: organizationId
         in: path
@@ -6412,7 +6562,7 @@ paths:
       description: "User must have the DOMAIN_REPORTER[UPDATE] permission on the specified\
         \ domain or DOMAIN_REPORTER[UPDATE] permission on the specified environment\
         \ or DOMAIN_REPORTER[UPDATE] permission on the specified organization"
-      operationId: update_6
+      operationId: updateDomainReporter
       parameters:
       - name: organizationId
         in: path
@@ -6457,7 +6607,7 @@ paths:
       description: "User must have the DOMAIN_REPORTER[DELETE] permission on the specified\
         \ domain or DOMAIN_REPORTER[DELETE] permission on the specified environment\
         \ or DOMAIN_REPORTER[DELETE] permission on the specified organization"
-      operationId: delete_7
+      operationId: deleteDomainReporter
       parameters:
       - name: organizationId
         in: path
@@ -7635,7 +7785,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: list_10
+      operationId: listUserAuditLogs
       parameters:
       - name: organizationId
         in: path
@@ -7707,7 +7857,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: get_14
+      operationId: getUserAuditLog
       parameters:
       - name: organizationId
         in: path
@@ -7752,7 +7902,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: list_11
+      operationId: listUserConsents
       parameters:
       - name: organizationId
         in: path
@@ -7795,7 +7945,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_8
+      operationId: revokeUserConsents
       parameters:
       - name: organizationId
         in: path
@@ -7835,7 +7985,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: get_15
+      operationId: getUserConsent
       parameters:
       - name: organizationId
         in: path
@@ -7879,7 +8029,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: revoke
+      operationId: revokeUserConsent
       parameters:
       - name: organizationId
         in: path
@@ -7920,7 +8070,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: list_12
+      operationId: listUserCredentials
       parameters:
       - name: organizationId
         in: path
@@ -7960,7 +8110,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: get_16
+      operationId: getUserCredential
       parameters:
       - name: organizationId
         in: path
@@ -8004,7 +8154,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: revoke_1
+      operationId: revokeUserCredential
       parameters:
       - name: organizationId
         in: path
@@ -8046,7 +8196,7 @@ paths:
       description: "User must have the DOMAIN_USER_DEVICES[LIST] permission on the\
         \ specified domain or DOMAIN_USER_DEVICES[LIST] permission on the specified\
         \ environment or DOMAIN_USER_DEVICES[LIST] permission on the specified organization. "
-      operationId: list_13
+      operationId: listUserDevices
       parameters:
       - name: organizationId
         in: path
@@ -8089,7 +8239,7 @@ paths:
       description: "User must have the DOMAIN_USER_DEVICE[DELETE] permission on the\
         \ specified domain or DOMAIN_USER_DEVICE[DELETE] permission on the specified\
         \ environment or DOMAIN_USER_DEVICE[DELETE] permission on the specified organization"
-      operationId: delete_9
+      operationId: deleteUserDevice
       parameters:
       - name: organizationId
         in: path
@@ -8130,7 +8280,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: list_14
+      operationId: listUserEnrolledFactors
       parameters:
       - name: organizationId
         in: path
@@ -8213,7 +8363,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: list_15
+      operationId: listUserIdentities
       parameters:
       - name: organizationId
         in: path
@@ -8255,7 +8405,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: delete_10
+      operationId: unlinkUserIdentity
       parameters:
       - name: organizationId
         in: path
@@ -8374,7 +8524,7 @@ paths:
       description: "User must have the DOMAIN_USER[READ] permission on the specified\
         \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
         \ permission on the specified organization"
-      operationId: list_16
+      operationId: listUserRoles
       parameters:
       - name: organizationId
         in: path
@@ -8420,7 +8570,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: assign
+      operationId: assignRolesToUser
       parameters:
       - name: organizationId
         in: path
@@ -8468,7 +8618,7 @@ paths:
       description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
         \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
         \ DOMAIN_USER[UPDATE] permission on the specified organization"
-      operationId: revoke_2
+      operationId: revokeUserRole
       parameters:
       - name: organizationId
         in: path
@@ -8673,7 +8823,7 @@ paths:
       summary: List environment member's permissions
       description: "User must have ENVIRONMENT[READ] permission on the specified environment\
         \ or ENVIRONMENT[READ] permission on the specified organization"
-      operationId: permissions_2
+      operationId: getMemberPermissions
       parameters:
       - name: organizationId
         in: path
@@ -8701,7 +8851,7 @@ paths:
       summary: Find an organization form template
       description: "User must have the ORGANIZATION_FORM[READ] permission on the specified\
         \ organization"
-      operationId: get_17
+      operationId: findOrganizationFormTemplate
       parameters:
       - name: organizationId
         in: path
@@ -8746,7 +8896,7 @@ paths:
       summary: Create a form
       description: "User must have the ORGANIZATION_FORM[CREATE] permission on the\
         \ specified organization"
-      operationId: create_8
+      operationId: createOrganizationForm
       parameters:
       - name: organizationId
         in: path
@@ -8771,7 +8921,7 @@ paths:
       summary: Update a form
       description: "User must have the ORGANIZATION_FORM[UPDATE] permission on the\
         \ specified organization"
-      operationId: update_7
+      operationId: updateForm
       parameters:
       - name: organizationId
         in: path
@@ -8804,7 +8954,7 @@ paths:
       summary: Delete a form
       description: "User must have the ORGANIZATION_FORM[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_11
+      operationId: deleteForm
       parameters:
       - name: organizationId
         in: path
@@ -8829,7 +8979,7 @@ paths:
       description: "User must have the ORGANIZATION[LIST] permission on the specified\
         \ organization. Each returned group is filtered and contains only basic information\
         \ such as id and name."
-      operationId: list_19
+      operationId: listGroups
       parameters:
       - name: organizationId
         in: path
@@ -8865,7 +9015,7 @@ paths:
       summary: Create a platform group
       description: "User must have the ORGANIZATION_GROUP[CREATE] permission on the\
         \ specified organization"
-      operationId: create_9
+      operationId: createPlatformGroup
       parameters:
       - name: organizationId
         in: path
@@ -8974,7 +9124,7 @@ paths:
       summary: List group members
       description: "User must have the ORGANIZATION_GROUP[READ] permission on the\
         \ specified organization"
-      operationId: list_18
+      operationId: listGroupMembers
       parameters:
       - name: organizationId
         in: path
@@ -9014,7 +9164,7 @@ paths:
       summary: Add a group member
       description: "User must have the ORGANIZATION_GROUP[UPDATE] permission on the\
         \ specified organization"
-      operationId: addMember
+      operationId: addGroupMember_1
       parameters:
       - name: organizationId
         in: path
@@ -9044,7 +9194,7 @@ paths:
       summary: Remove a group member
       description: "User must have the ORGANIZATION_GROUP[UPDATE] permission on the\
         \ specified organization"
-      operationId: removeMember_2
+      operationId: removeGroupMember_1
       parameters:
       - name: organizationId
         in: path
@@ -9076,7 +9226,7 @@ paths:
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission\
         \ on the specified organization. Each returned identity provider is filtered\
         \ and contains only basic information such as id, name, type and isExternal."
-      operationId: list_20
+      operationId: listIdentityProviders_1
       parameters:
       - name: organizationId
         in: path
@@ -9104,7 +9254,7 @@ paths:
       summary: Create an identity provider for the organization
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission\
         \ on the specified organization"
-      operationId: create_10
+      operationId: createIdentityProvider_1
       parameters:
       - name: organizationId
         in: path
@@ -9129,7 +9279,7 @@ paths:
       summary: Get an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[READ] permission\
         \ on the specified organization"
-      operationId: get_18
+      operationId: getIdentityProvider
       parameters:
       - name: organizationId
         in: path
@@ -9156,7 +9306,7 @@ paths:
       summary: Update an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[UPDATE] permission\
         \ on the specified organization"
-      operationId: update_8
+      operationId: updateIdentityProvider_1
       parameters:
       - name: organizationId
         in: path
@@ -9189,7 +9339,7 @@ paths:
       summary: Delete an identity provider
       description: "User must have the ORGANIZATION_IDENTITY_PROVIDER[DELETE] permission\
         \ on the specified organization"
-      operationId: delete_12
+      operationId: deleteIdentityProvider_1
       parameters:
       - name: organizationId
         in: path
@@ -9213,7 +9363,7 @@ paths:
       summary: List members for an organization
       description: "User must have ORGANIZATION_MEMBER[LIST] permission on the specified\
         \ organization"
-      operationId: getMembers_1
+      operationId: listOrganizationMembers
       parameters:
       - name: organizationId
         in: path
@@ -9233,7 +9383,7 @@ paths:
       summary: Add or update an organization member
       description: "User must have ORGANIZATION_MEMBER[READ] permission on the specified\
         \ organization"
-      operationId: addOrUpdateMember_2
+      operationId: addOrUpdateOrganizationMember
       parameters:
       - name: organizationId
         in: path
@@ -9258,7 +9408,7 @@ paths:
       summary: Remove a membership of the organization
       description: "User must have ORGANIZATION_MEMBER[DELETE] permission on the specified\
         \ organization"
-      operationId: removeMember_3
+      operationId: removeOrganizationMember
       parameters:
       - name: organizationId
         in: path
@@ -9423,7 +9573,7 @@ paths:
       description: "User must have the ORGANIZATION_ROLE[LIST] permission on the specified\
         \ organization. Each returned role is filtered and contains only basic information\
         \ such as id, name, isSystem and assignableType."
-      operationId: list_21
+      operationId: listRoles
       parameters:
       - name: organizationId
         in: path
@@ -9457,7 +9607,7 @@ paths:
       summary: Create a role for the organization
       description: "User must have the ORGANIZATION_ROLE[CREATE] permission on the\
         \ specified organization"
-      operationId: create_11
+      operationId: createRole_1
       parameters:
       - name: organizationId
         in: path
@@ -9482,7 +9632,7 @@ paths:
       summary: Get a platform role
       description: "User must have the ORGANIZATION_ROLE[READ] permission on the specified\
         \ organization"
-      operationId: get_19
+      operationId: getRole
       parameters:
       - name: organizationId
         in: path
@@ -9509,7 +9659,7 @@ paths:
       summary: Update a platform role
       description: "User must have the ORGANIZATION_ROLE[UPDATE] permission on the\
         \ specified organization"
-      operationId: update_9
+      operationId: updateRole_1
       parameters:
       - name: organizationId
         in: path
@@ -9542,7 +9692,7 @@ paths:
       summary: Delete a plaform role
       description: "User must have the ORGANIZATION_ROLE[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_13
+      operationId: deleteRole_1
       parameters:
       - name: organizationId
         in: path
@@ -9566,7 +9716,7 @@ paths:
       summary: Get organization main settings
       description: "User must have the ORGANIZATION_SETTINGS[READ] permission on the\
         \ specified organization"
-      operationId: get_20
+      operationId: getOrganizationSettings
       parameters:
       - name: organizationId
         in: path
@@ -9586,7 +9736,7 @@ paths:
       summary: Update platform main settings
       description: "User must have the ORGANIZATION_SETTINGS[UPDATE] permission on\
         \ the specified organization"
-      operationId: patch
+      operationId: patchOrganizationSettings
       parameters:
       - name: organizationId
         in: path
@@ -9616,7 +9766,7 @@ paths:
       description: "User must have the ORGANIZATION[LIST] permission on the specified\
         \ organization. Each returned tag is filtered and contains only basic information\
         \ such as id and name."
-      operationId: list_22
+      operationId: listShardingTags
       parameters:
       - name: organizationId
         in: path
@@ -9640,7 +9790,7 @@ paths:
       summary: Create a sharding tags
       description: "User must have the ORGANIZATION_TAG[CREATE] permission on the\
         \ specified organization"
-      operationId: create_12
+      operationId: createShardingTag
       parameters:
       - name: organizationId
         in: path
@@ -9665,7 +9815,7 @@ paths:
       summary: Get a sharding tag
       description: "User must have the ORGANIZATION_TAG[READ] permission on the specified\
         \ organization"
-      operationId: get_21
+      operationId: getTag
       parameters:
       - name: organizationId
         in: path
@@ -9692,7 +9842,7 @@ paths:
       summary: Update the sharding tag
       description: "User must have the ORGANIZATION_TAG[UPDATE] permission on the\
         \ specified organization"
-      operationId: update_10
+      operationId: updateTag
       parameters:
       - name: organizationId
         in: path
@@ -9725,7 +9875,7 @@ paths:
       summary: Delete the sharding tag
       description: "User must have the ORGANIZATION_TAG[DELETE] permission on the\
         \ specified organization"
-      operationId: delete_14
+      operationId: deleteTag
       parameters:
       - name: organizationId
         in: path
@@ -9861,7 +10011,7 @@ paths:
       summary: Get a user
       description: "User must have the ORGANIZATION_USER[READ] permission on the specified\
         \ organization"
-      operationId: get_22
+      operationId: getOrganizationUser
       parameters:
       - name: organizationId
         in: path
@@ -10009,7 +10159,7 @@ paths:
       summary: Get tokens of a user
       description: "User must have the ORGANIZATION_USER[READ] permission on the specified\
         \ organization"
-      operationId: getUserActiveTokens
+      operationId: getOrganizationUserTokens
       parameters:
       - name: organizationId
         in: path
@@ -10129,7 +10279,7 @@ paths:
       - platform
       summary: List audit event types
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_35
+      operationId: listAuditEventTypes
       responses:
         default:
           description: default response
@@ -10157,7 +10307,7 @@ paths:
       - platform
       summary: Get the Policy Studio flow schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_23
+      operationId: getPolicyStudioFlowSchema
       responses:
         default:
           description: default response
@@ -10191,7 +10341,7 @@ paths:
       - platform
       summary: Get installation information
       description: "User must have the INSTALLATION[READ] permission on the platform"
-      operationId: get_23
+      operationId: getInstallation
       responses:
         "200":
           description: Installation successfully fetched
@@ -10212,7 +10362,7 @@ paths:
       tags:
       - platform
       summary: Get current node License
-      operationId: get_24
+      operationId: getLicense
       responses:
         default:
           description: default response
@@ -10226,7 +10376,7 @@ paths:
       - platform
       summary: List authentication device notifier plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_24
+      operationId: listAuthenticationDeviceNotifierPlugins
       parameters:
       - name: expand
         in: query
@@ -10247,7 +10397,7 @@ paths:
       - platform
       summary: Get a Authentication Device Notifier plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_25
+      operationId: getAuthenticationDeviceNotifierPlugin
       parameters:
       - name: authDeviceNotifierId
         in: path
@@ -10267,7 +10417,7 @@ paths:
       - platform
       summary: Get an Authentication Device Notifier plugin's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema
+      operationId: getAuthenticationDeviceNotifierPluginSchema
       parameters:
       - name: authDeviceNotifierId
         in: path
@@ -10348,7 +10498,7 @@ paths:
       - platform
       summary: List bot detection plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_25
+      operationId: listBotDetectionsPlugins
       responses:
         default:
           description: default response
@@ -10362,7 +10512,7 @@ paths:
       - platform
       summary: Get a Bot Detection plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_26
+      operationId: getBotDetectionPlugin
       parameters:
       - name: botDetection
         in: path
@@ -10382,7 +10532,7 @@ paths:
       - platform
       summary: Get a Bot Detection plugin's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema_1
+      operationId: getBotDetectionPluginSchema
       parameters:
       - name: botDetection
         in: path
@@ -10402,7 +10552,7 @@ paths:
       - platform
       summary: List certificate plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_26
+      operationId: listCertificatesPlugins
       responses:
         default:
           description: default response
@@ -10416,7 +10566,7 @@ paths:
       - platform
       summary: Get an certificate plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_27
+      operationId: getCertificatePlugin
       parameters:
       - name: certificate
         in: path
@@ -10436,7 +10586,7 @@ paths:
       - platform
       summary: Get an certificate's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema_2
+      operationId: getCertificatePluginSchema
       parameters:
       - name: certificate
         in: path
@@ -10456,7 +10606,7 @@ paths:
       - platform
       summary: List device identifier plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_27
+      operationId: listDeviceIdentifierPlugins
       responses:
         default:
           description: default response
@@ -10470,7 +10620,7 @@ paths:
       - platform
       summary: Get a device identifier plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_28
+      operationId: getDeviceIdentifierPlugin
       parameters:
       - name: deviceIdentifier
         in: path
@@ -10490,7 +10640,7 @@ paths:
       - platform
       summary: Get a device identifier plugin's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema_3
+      operationId: getDeviceIdentifierPluginSchema
       parameters:
       - name: deviceIdentifier
         in: path
@@ -10510,7 +10660,7 @@ paths:
       - platform
       summary: List extension grant plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_34
+      operationId: listExtensionGrants_1
       responses:
         default:
           description: default response
@@ -10524,7 +10674,7 @@ paths:
       - platform
       summary: Get an extension grant plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_35
+      operationId: getExtensionGrant_1
       parameters:
       - name: extensionGrant
         in: path
@@ -10544,7 +10694,7 @@ paths:
       - platform
       summary: Get an extension grant plugin's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema_10
+      operationId: getExtensionGrantSchema
       parameters:
       - name: extensionGrant
         in: path
@@ -10564,7 +10714,7 @@ paths:
       - platform
       summary: List factor plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_28
+      operationId: listFactorPlugins
       responses:
         default:
           description: default response
@@ -10578,7 +10728,7 @@ paths:
       - platform
       summary: Get a factor plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_29
+      operationId: getFactorPlugin
       parameters:
       - name: factor
         in: path
@@ -10598,7 +10748,7 @@ paths:
       - platform
       summary: Get a factor plugin's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema_4
+      operationId: getFactorPluginSchema
       parameters:
       - name: factor
         in: path
@@ -10618,7 +10768,7 @@ paths:
       - platform
       summary: List identity provider plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_29
+      operationId: listIdentityProviders_2
       parameters:
       - name: external
         in: query
@@ -10647,7 +10797,7 @@ paths:
       - platform
       summary: Get an identity provider
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_30
+      operationId: getIdentityProviderPlugin
       parameters:
       - name: identity
         in: path
@@ -10667,7 +10817,7 @@ paths:
       - platform
       summary: Get an identity provider plugin's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema_5
+      operationId: getIdentityProviderPluginSchema
       parameters:
       - name: identity
         in: path
@@ -10687,7 +10837,7 @@ paths:
       - platform
       summary: List all available notifier plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_30
+      operationId: listNotifiers
       parameters:
       - name: expand
         in: query
@@ -10714,7 +10864,7 @@ paths:
       - platform
       summary: Get a notifier
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_31
+      operationId: getNotifier
       parameters:
       - name: notifierId
         in: path
@@ -10744,7 +10894,7 @@ paths:
       - platform
       summary: Get a notifier plugin's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema_6
+      operationId: getNotifierSchema
       parameters:
       - name: notifierId
         in: path
@@ -10774,7 +10924,7 @@ paths:
       - platform
       summary: List policy plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_31
+      operationId: listPolicies
       parameters:
       - name: expand
         in: query
@@ -10795,7 +10945,7 @@ paths:
       - platform
       summary: Get a policy plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_32
+      operationId: getPolicy
       parameters:
       - name: policy
         in: path
@@ -10814,7 +10964,7 @@ paths:
       - Policy
       - platform
       summary: Get a policy plugin's documentation
-      operationId: getDocumentation
+      operationId: getPolicyDocumentation
       parameters:
       - name: policy
         in: path
@@ -10833,7 +10983,7 @@ paths:
       - Policy
       - platform
       summary: Get a policy plugin's schema
-      operationId: getSchema_7
+      operationId: getPolicySchema
       parameters:
       - name: policy
         in: path
@@ -10853,7 +11003,7 @@ paths:
       - platform
       summary: List reporter plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_32
+      operationId: listReporterPlugins
       responses:
         default:
           description: default response
@@ -10867,7 +11017,7 @@ paths:
       - platform
       summary: Get a reporter plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_33
+      operationId: getReporter
       parameters:
       - name: reporter
         in: path
@@ -10886,7 +11036,7 @@ paths:
       - Reporter
       - platform
       summary: Get a reporter plugin's schema
-      operationId: getSchema_8
+      operationId: getReporterSchema
       parameters:
       - name: reporter
         in: path
@@ -10906,7 +11056,7 @@ paths:
       - platform
       summary: List resource plugins
       description: There is no particular permission needed. User must be authenticated.
-      operationId: list_33
+      operationId: listResourcePlugins
       parameters:
       - name: expand
         in: query
@@ -10927,7 +11077,7 @@ paths:
       - platform
       summary: Get a resource plugin
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_34
+      operationId: getResource_1
       parameters:
       - name: resource
         in: path
@@ -10947,7 +11097,7 @@ paths:
       - platform
       summary: Get a resource plugin's schema
       description: There is no particular permission needed. User must be authenticated.
-      operationId: getSchema_9
+      operationId: getResourceSchema
       parameters:
       - name: resource
         in: path
@@ -10965,7 +11115,7 @@ paths:
       - platform
       summary: Get a system role
       description: There is no particular permission needed. User must be authenticated.
-      operationId: get_36
+      operationId: getSystemRole
       parameters:
       - name: role
         in: path
@@ -10986,7 +11136,7 @@ paths:
       tags:
       - user
       summary: Get the current user
-      operationId: get
+      operationId: getCurrentUser
       responses:
         "200":
           description: Current user successfully fetched
@@ -11064,7 +11214,7 @@ paths:
       - user notifications
       - user
       summary: Mark User notification as read
-      operationId: markAsRead
+      operationId: markNotificationAsRead
       parameters:
       - name: notificationId
         in: path
@@ -12050,13 +12200,13 @@ components:
           type: array
           items:
             type: string
+        allowedScopesEnabled:
+          type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
         clientTemplateEnabled:
-          type: boolean
-        allowedScopesEnabled:
           type: boolean
     ClientSecret:
       type: object
@@ -12278,21 +12428,21 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
+        redirectUriExpressionLanguageEnabled:
+          type: boolean
+        dynamicClientRegistrationEnabled:
+          type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
-        redirectUriExpressionLanguageEnabled:
+        redirectUriStrictMatching:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
-        openDynamicClientRegistrationEnabled:
-          type: boolean
         dynamicClientRegistrationTemplateEnabled:
-          type: boolean
-        dynamicClientRegistrationEnabled:
-          type: boolean
-        redirectUriStrictMatching:
           type: boolean
     DomainPage:
       type: object
@@ -13415,6 +13565,23 @@ components:
             type: string
         external:
           type: boolean
+    NewMcpTool:
+      required:
+      - key
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/NewProtectedResourceFeature"
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - MCP_TOOL
+          scopes:
+            type: array
+            items:
+              minLength: 1
+              type: string
     NewMembership:
       required:
       - memberId
@@ -13557,6 +13724,26 @@ components:
           minLength: 1
           pattern: ^MCP_SERVER$
           type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/NewProtectedResourceFeature"
+    NewProtectedResourceFeature:
+      required:
+      - key
+      - type
+      type: object
+      properties:
+        key:
+          minLength: 1
+          pattern: "^[a-zA-Z0-9_-]+$"
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+      discriminator:
+        propertyName: type
     NewReporter:
       required:
       - configuration
@@ -14372,9 +14559,6 @@ components:
           type: array
           items:
             type: string
-        isAllowedScopesEnabled:
-          type: boolean
-          writeOnly: true
         allowedScopes:
           type: array
           items:
@@ -14384,12 +14568,20 @@ components:
         dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
-        openDynamicClientRegistrationEnabled:
-          type: boolean
-          writeOnly: true
         clientTemplateEnabled:
           type: boolean
           writeOnly: true
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+          writeOnly: true
+        isDynamicClientRegistrationEnabled:
+          type: boolean
+        isOpenDynamicClientRegistrationEnabled:
+          type: boolean
+        isAllowedScopesEnabled:
+          type: boolean
+        isClientTemplateEnabled:
+          type: boolean
     PatchDomain:
       type: object
       properties:
@@ -14851,6 +15043,101 @@ components:
           - FORM
         template:
           type: string
+    ProtectedResource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        clientId:
+          type: string
+        domainId:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - MCP_SERVER
+        resourceIdentifiers:
+          type: array
+          items:
+            type: string
+        clientSecrets:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClientSecret"
+        secretSettings:
+          type: array
+          items:
+            $ref: "#/components/schemas/ApplicationSecretSettings"
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectedResourceFeature"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProtectedResourceFeature:
+      type: object
+      properties:
+        key:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - MCP_TOOL
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ProtectedResourcePage:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectedResourcePrimaryData"
+        currentPage:
+          type: integer
+          format: int32
+        totalCount:
+          type: integer
+          format: int64
+    ProtectedResourcePrimaryData:
+      type: object
+      properties:
+        id:
+          type: string
+        clientId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum:
+          - MCP_SERVER
+        resourceIdentifiers:
+          type: array
+          items:
+            type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProtectedResourceFeature"
+        updatedAt:
+          type: string
+          format: date-time
     ProtectedResourceSecret:
       type: object
       properties:
@@ -15645,6 +15932,23 @@ components:
             type: string
         passwordPolicy:
           type: string
+    UpdateMcpTool:
+      required:
+      - key
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+      - type: object
+        properties:
+          type:
+            type: string
+            enum:
+            - MCP_TOOL
+          scopes:
+            type: array
+            items:
+              minLength: 1
+              type: string
     UpdatePasswordPolicy:
       required:
       - name
@@ -15684,6 +15988,43 @@ components:
           format: int32
         defaultPolicy:
           type: boolean
+    UpdateProtectedResource:
+      required:
+      - name
+      - resourceIdentifiers
+      type: object
+      properties:
+        name:
+          minLength: 1
+          type: string
+        description:
+          type: string
+        resourceIdentifiers:
+          minItems: 1
+          type: array
+          items:
+            minLength: 1
+            type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpdateProtectedResourceFeature"
+    UpdateProtectedResourceFeature:
+      required:
+      - key
+      - type
+      type: object
+      properties:
+        key:
+          minLength: 1
+          pattern: "^[a-zA-Z0-9_-]+$"
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+      discriminator:
+        propertyName: type
     UpdateReporter:
       required:
       - configuration
@@ -16032,20 +16373,18 @@ components:
           type: object
           additionalProperties:
             type: object
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        disabled:
-          type: boolean
-        middleName:
+        locale:
+          type: string
+        zoneInfo:
           type: string
         identitiesAsMap:
           type: object
           additionalProperties:
             type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        middleName:
+          type: string
         inactive:
           type: boolean
         profile:
@@ -16054,12 +16393,14 @@ components:
           type: string
         birthdate:
           type: string
-        zoneInfo:
-          type: string
         phoneNumber:
           type: string
-        locale:
-          type: string
+        disabled:
+          type: boolean
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserEntity:
       type: object
       properties:
@@ -16231,20 +16572,18 @@ components:
           type: object
           additionalProperties:
             type: object
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        disabled:
-          type: boolean
-        middleName:
+        locale:
+          type: string
+        zoneInfo:
           type: string
         identitiesAsMap:
           type: object
           additionalProperties:
             type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
+        middleName:
+          type: string
         inactive:
           type: boolean
         profile:
@@ -16253,12 +16592,14 @@ components:
           type: string
         birthdate:
           type: string
-        zoneInfo:
-          type: string
         phoneNumber:
           type: string
-        locale:
-          type: string
+        disabled:
+          type: boolean
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserId:
       type: object
       properties:

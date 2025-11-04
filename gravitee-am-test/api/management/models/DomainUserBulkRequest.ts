@@ -25,9 +25,12 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { BulkCreateUser, BulkCreateUserFromJSON, BulkCreateUserFromJSONTyped, BulkCreateUserToJSON } from './BulkCreateUser';
-import { BulkDeleteUser, BulkDeleteUserFromJSON, BulkDeleteUserFromJSONTyped, BulkDeleteUserToJSON } from './BulkDeleteUser';
-import { BulkUpdateUser, BulkUpdateUserFromJSON, BulkUpdateUserFromJSONTyped, BulkUpdateUserToJSON } from './BulkUpdateUser';
+import type { BulkCreateUser } from './BulkCreateUser';
+import { instanceOfBulkCreateUser, BulkCreateUserFromJSON, BulkCreateUserFromJSONTyped, BulkCreateUserToJSON } from './BulkCreateUser';
+import type { BulkDeleteUser } from './BulkDeleteUser';
+import { instanceOfBulkDeleteUser, BulkDeleteUserFromJSON, BulkDeleteUserFromJSONTyped, BulkDeleteUserToJSON } from './BulkDeleteUser';
+import type { BulkUpdateUser } from './BulkUpdateUser';
+import { instanceOfBulkUpdateUser, BulkUpdateUserFromJSON, BulkUpdateUserFromJSONTyped, BulkUpdateUserToJSON } from './BulkUpdateUser';
 
 /**
  * @type DomainUserBulkRequest
@@ -35,9 +38,6 @@ import { BulkUpdateUser, BulkUpdateUserFromJSON, BulkUpdateUserFromJSONTyped, Bu
  * @export
  */
 export type DomainUserBulkRequest =
-  | ({ action: 'BulkCreateUser' } & BulkCreateUser)
-  | ({ action: 'BulkDeleteUser' } & BulkDeleteUser)
-  | ({ action: 'BulkUpdateUser' } & BulkUpdateUser)
   | ({ action: 'CREATE' } & BulkCreateUser)
   | ({ action: 'DELETE' } & BulkDeleteUser)
   | ({ action: 'UPDATE' } & BulkUpdateUser);
@@ -47,48 +47,37 @@ export function DomainUserBulkRequestFromJSON(json: any): DomainUserBulkRequest 
 }
 
 export function DomainUserBulkRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean): DomainUserBulkRequest {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   switch (json['action']) {
-    case 'BulkCreateUser':
-      return { ...BulkCreateUserFromJSONTyped(json, true), action: 'BulkCreateUser' };
-    case 'BulkDeleteUser':
-      return { ...BulkDeleteUserFromJSONTyped(json, true), action: 'BulkDeleteUser' };
-    case 'BulkUpdateUser':
-      return { ...BulkUpdateUserFromJSONTyped(json, true), action: 'BulkUpdateUser' };
     case 'CREATE':
-      return { ...BulkCreateUserFromJSONTyped(json, true), action: 'CREATE' };
+      return Object.assign({}, BulkCreateUserFromJSONTyped(json, true), { action: 'CREATE' } as const);
     case 'DELETE':
-      return { ...BulkDeleteUserFromJSONTyped(json, true), action: 'DELETE' };
+      return Object.assign({}, BulkDeleteUserFromJSONTyped(json, true), { action: 'DELETE' } as const);
     case 'UPDATE':
-      return { ...BulkUpdateUserFromJSONTyped(json, true), action: 'UPDATE' };
+      return Object.assign({}, BulkUpdateUserFromJSONTyped(json, true), { action: 'UPDATE' } as const);
     default:
-      throw new Error(`No variant of DomainUserBulkRequest exists with 'action=${json['action']}'`);
+      return json;
   }
 }
 
-export function DomainUserBulkRequestToJSON(value?: DomainUserBulkRequest | null): any {
-  if (value === undefined) {
-    return undefined;
-  }
-  if (value === null) {
-    return null;
+export function DomainUserBulkRequestToJSON(json: any): any {
+  return DomainUserBulkRequestToJSONTyped(json, false);
+}
+
+export function DomainUserBulkRequestToJSONTyped(value?: DomainUserBulkRequest | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
   switch (value['action']) {
-    case 'BulkCreateUser':
-      return BulkCreateUserToJSON(value);
-    case 'BulkDeleteUser':
-      return BulkDeleteUserToJSON(value);
-    case 'BulkUpdateUser':
-      return BulkUpdateUserToJSON(value);
     case 'CREATE':
-      return BulkCreateUserToJSON(value);
+      return Object.assign({}, BulkCreateUserToJSON(value), { action: 'CREATE' } as const);
     case 'DELETE':
-      return BulkDeleteUserToJSON(value);
+      return Object.assign({}, BulkDeleteUserToJSON(value), { action: 'DELETE' } as const);
     case 'UPDATE':
-      return BulkUpdateUserToJSON(value);
+      return Object.assign({}, BulkUpdateUserToJSON(value), { action: 'UPDATE' } as const);
     default:
-      throw new Error(`No variant of DomainUserBulkRequest exists with 'action=${value['action']}'`);
+      return value;
   }
 }

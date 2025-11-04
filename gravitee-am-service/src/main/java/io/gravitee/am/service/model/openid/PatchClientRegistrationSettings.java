@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service.model.openid;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.gravitee.am.model.oidc.ClientRegistrationSettings;
 import io.gravitee.am.service.utils.SetterUtils;
 import lombok.NoArgsConstructor;
@@ -47,11 +48,13 @@ public class PatchClientRegistrationSettings {
     /**
      * Domain Dynamic Client Registration enabled
      */
+    @JsonProperty("isDynamicClientRegistrationEnabled")
     private Optional<Boolean> isDynamicClientRegistrationEnabled;
 
     /**
      * Domain open Dynamic Client Registration enabled
      */
+    @JsonProperty("isOpenDynamicClientRegistrationEnabled")
     private Optional<Boolean> isOpenDynamicClientRegistrationEnabled;
 
     /**
@@ -62,6 +65,7 @@ public class PatchClientRegistrationSettings {
     /**
      * Filter scopes on Client Registration through an allowed list of scopes enabled.
      */
+    @JsonProperty("isAllowedScopesEnabled")
     private Optional<Boolean> isAllowedScopesEnabled;
 
     /**
@@ -72,6 +76,7 @@ public class PatchClientRegistrationSettings {
     /**
      * Enable client to be used as template for dynamic client registration
      */
+    @JsonProperty("isClientTemplateEnabled")
     private Optional<Boolean> isClientTemplateEnabled;
 
     private Optional<Boolean> allowRedirectUriParamsExpressionLanguage;

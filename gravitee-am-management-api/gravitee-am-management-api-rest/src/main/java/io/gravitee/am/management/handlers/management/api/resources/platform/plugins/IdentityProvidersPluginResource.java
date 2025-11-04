@@ -53,7 +53,9 @@ public class IdentityProvidersPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List identity provider plugins",
+    @Operation(
+            operationId = "listIdentityProviders",
+            summary = "List identity provider plugins",
             description = "There is no particular permission needed. User must be authenticated.")
     public void list(@QueryParam("external") Boolean external,
                      @QueryParam("organization") Boolean organization,

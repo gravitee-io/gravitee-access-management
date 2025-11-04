@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,29 +46,41 @@ export interface ApplicationAdvancedSettings {
   flowsInherited?: boolean;
 }
 
+/**
+ * Check if a given object implements the ApplicationAdvancedSettings interface.
+ */
+export function instanceOfApplicationAdvancedSettings(value: object): value is ApplicationAdvancedSettings {
+  return true;
+}
+
 export function ApplicationAdvancedSettingsFromJSON(json: any): ApplicationAdvancedSettings {
   return ApplicationAdvancedSettingsFromJSONTyped(json, false);
 }
 
 export function ApplicationAdvancedSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): ApplicationAdvancedSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    skipConsent: !exists(json, 'skipConsent') ? undefined : json['skipConsent'],
-    flowsInherited: !exists(json, 'flowsInherited') ? undefined : json['flowsInherited'],
+    skipConsent: json['skipConsent'] == null ? undefined : json['skipConsent'],
+    flowsInherited: json['flowsInherited'] == null ? undefined : json['flowsInherited'],
   };
 }
 
-export function ApplicationAdvancedSettingsToJSON(value?: ApplicationAdvancedSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ApplicationAdvancedSettingsToJSON(json: any): ApplicationAdvancedSettings {
+  return ApplicationAdvancedSettingsToJSONTyped(json, false);
+}
+
+export function ApplicationAdvancedSettingsToJSONTyped(
+  value?: ApplicationAdvancedSettings | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    skipConsent: value.skipConsent,
-    flowsInherited: value.flowsInherited,
+    skipConsent: value['skipConsent'],
+    flowsInherited: value['flowsInherited'],
   };
 }

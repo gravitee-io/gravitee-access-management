@@ -66,20 +66,13 @@ export interface GetAlertNotifierRequest {
   notifierId: string;
 }
 
-export interface List2Request {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-}
-
-export interface List3Request {
-  organizationId: string;
-  environmentId: string;
-  domain: string;
-  patchAlertTrigger: Array<PatchAlertTrigger>;
-}
-
 export interface ListAlertNotifiersRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+}
+
+export interface ListAlertTriggersRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
@@ -91,6 +84,13 @@ export interface PatchAlertNotifierRequest {
   domain: string;
   notifierId: string;
   patchAlertNotifier: PatchAlertNotifier;
+}
+
+export interface UpdateAlertTriggersRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  patchAlertTrigger: Array<PatchAlertTrigger>;
 }
 
 /**
@@ -330,142 +330,6 @@ export class AlertsApi extends runtime.BaseAPI {
   }
 
   /**
-   * List all the alert triggers of the domain accessible to the current user. User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.
-   * List alert alert triggers
-   */
-  async list2Raw(
-    requestParameters: List2Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<AlertTrigger>>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling list2.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling list2.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling list2.');
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/alerts/triggers`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
-  }
-
-  /**
-   * List all the alert triggers of the domain accessible to the current user. User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.
-   * List alert alert triggers
-   */
-  async list2(requestParameters: List2Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AlertTrigger>> {
-    const response = await this.list2Raw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * Update multiple alert triggers in the same timeUser must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.
-   * Update multiple alert triggers
-   */
-  async list3Raw(
-    requestParameters: List3Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<Array<AlertTrigger>>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling list3.',
-      );
-    }
-
-    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
-      throw new runtime.RequiredError(
-        'environmentId',
-        'Required parameter requestParameters.environmentId was null or undefined when calling list3.',
-      );
-    }
-
-    if (requestParameters.domain === null || requestParameters.domain === undefined) {
-      throw new runtime.RequiredError('domain', 'Required parameter requestParameters.domain was null or undefined when calling list3.');
-    }
-
-    if (requestParameters.patchAlertTrigger === null || requestParameters.patchAlertTrigger === undefined) {
-      throw new runtime.RequiredError(
-        'patchAlertTrigger',
-        'Required parameter requestParameters.patchAlertTrigger was null or undefined when calling list3.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/alerts/triggers`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
-          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
-        method: 'PATCH',
-        headers: headerParameters,
-        query: queryParameters,
-        body: requestParameters.patchAlertTrigger.map(PatchAlertTriggerToJSON),
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
-  }
-
-  /**
-   * Update multiple alert triggers in the same timeUser must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.
-   * Update multiple alert triggers
-   */
-  async list3(requestParameters: List3Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<AlertTrigger>> {
-    const response = await this.list3Raw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
    * List all the alert notifiers of the domain. User must have DOMAIN_ALERT_NOTIFIER[LIST] permission on the specified domain, environment or organization.
    * List alert notifiers
    */
@@ -531,6 +395,75 @@ export class AlertsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<Array<AlertNotifier>> {
     const response = await this.listAlertNotifiersRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * List all the alert triggers of the domain accessible to the current user. User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.
+   * List alert triggers
+   */
+  async listAlertTriggersRaw(
+    requestParameters: ListAlertTriggersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<AlertTrigger>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listAlertTriggers.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listAlertTriggers.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listAlertTriggers.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/alerts/triggers`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
+  }
+
+  /**
+   * List all the alert triggers of the domain accessible to the current user. User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.
+   * List alert triggers
+   */
+  async listAlertTriggers(
+    requestParameters: ListAlertTriggersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<AlertTrigger>> {
+    const response = await this.listAlertTriggersRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -618,6 +551,85 @@ export class AlertsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<AlertNotifier> {
     const response = await this.patchAlertNotifierRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Update multiple alert triggers in the same timeUser must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.
+   * Update multiple alert triggers
+   */
+  async updateAlertTriggersRaw(
+    requestParameters: UpdateAlertTriggersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<AlertTrigger>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateAlertTriggers.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling updateAlertTriggers.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling updateAlertTriggers.',
+      );
+    }
+
+    if (requestParameters.patchAlertTrigger === null || requestParameters.patchAlertTrigger === undefined) {
+      throw new runtime.RequiredError(
+        'patchAlertTrigger',
+        'Required parameter requestParameters.patchAlertTrigger was null or undefined when calling updateAlertTriggers.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/alerts/triggers`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain))),
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters.patchAlertTrigger.map(PatchAlertTriggerToJSON),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(AlertTriggerFromJSON));
+  }
+
+  /**
+   * Update multiple alert triggers in the same timeUser must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.
+   * Update multiple alert triggers
+   */
+  async updateAlertTriggers(
+    requestParameters: UpdateAlertTriggersRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<AlertTrigger>> {
+    const response = await this.updateAlertTriggersRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }

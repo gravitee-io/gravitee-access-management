@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -70,37 +70,49 @@ export interface NewIdentityProvider {
   external?: boolean;
 }
 
+/**
+ * Check if a given object implements the NewIdentityProvider interface.
+ */
+export function instanceOfNewIdentityProvider(value: object): value is NewIdentityProvider {
+  if (!('type' in value) || value['type'] === undefined) return false;
+  if (!('name' in value) || value['name'] === undefined) return false;
+  if (!('configuration' in value) || value['configuration'] === undefined) return false;
+  return true;
+}
+
 export function NewIdentityProviderFromJSON(json: any): NewIdentityProvider {
   return NewIdentityProviderFromJSONTyped(json, false);
 }
 
 export function NewIdentityProviderFromJSONTyped(json: any, ignoreDiscriminator: boolean): NewIdentityProvider {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
+    id: json['id'] == null ? undefined : json['id'],
     type: json['type'],
     name: json['name'],
     configuration: json['configuration'],
-    domainWhitelist: !exists(json, 'domainWhitelist') ? undefined : json['domainWhitelist'],
-    external: !exists(json, 'external') ? undefined : json['external'],
+    domainWhitelist: json['domainWhitelist'] == null ? undefined : json['domainWhitelist'],
+    external: json['external'] == null ? undefined : json['external'],
   };
 }
 
-export function NewIdentityProviderToJSON(value?: NewIdentityProvider | null): any {
-  if (value === undefined) {
-    return undefined;
+export function NewIdentityProviderToJSON(json: any): NewIdentityProvider {
+  return NewIdentityProviderToJSONTyped(json, false);
+}
+
+export function NewIdentityProviderToJSONTyped(value?: NewIdentityProvider | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    type: value.type,
-    name: value.name,
-    configuration: value.configuration,
-    domainWhitelist: value.domainWhitelist,
-    external: value.external,
+    id: value['id'],
+    type: value['type'],
+    name: value['name'],
+    configuration: value['configuration'],
+    domainWhitelist: value['domainWhitelist'],
+    external: value['external'],
   };
 }

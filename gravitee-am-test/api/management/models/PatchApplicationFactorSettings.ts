@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,29 +46,41 @@ export interface PatchApplicationFactorSettings {
   selectionRule?: string;
 }
 
+/**
+ * Check if a given object implements the PatchApplicationFactorSettings interface.
+ */
+export function instanceOfPatchApplicationFactorSettings(value: object): value is PatchApplicationFactorSettings {
+  return true;
+}
+
 export function PatchApplicationFactorSettingsFromJSON(json: any): PatchApplicationFactorSettings {
   return PatchApplicationFactorSettingsFromJSONTyped(json, false);
 }
 
 export function PatchApplicationFactorSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): PatchApplicationFactorSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    id: !exists(json, 'id') ? undefined : json['id'],
-    selectionRule: !exists(json, 'selectionRule') ? undefined : json['selectionRule'],
+    id: json['id'] == null ? undefined : json['id'],
+    selectionRule: json['selectionRule'] == null ? undefined : json['selectionRule'],
   };
 }
 
-export function PatchApplicationFactorSettingsToJSON(value?: PatchApplicationFactorSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function PatchApplicationFactorSettingsToJSON(json: any): PatchApplicationFactorSettings {
+  return PatchApplicationFactorSettingsToJSONTyped(json, false);
+}
+
+export function PatchApplicationFactorSettingsToJSONTyped(
+  value?: PatchApplicationFactorSettings | null,
+  ignoreDiscriminator: boolean = false,
+): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    id: value.id,
-    selectionRule: value.selectionRule,
+    id: value['id'],
+    selectionRule: value['selectionRule'],
   };
 }
