@@ -114,10 +114,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     @Override
     public Completable delete(Domain domain, String id, ProtectedResource.Type expectedType, User principal) {
         LOGGER.debug("Delete protected resource {} with domain/type validation", id);
-        return repository.findById(id)
+        return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .flatMapCompletable(resource -> {
-                    if (!resource.getDomainId().equals(domain.getId()) || (expectedType != null && resource.getType() != expectedType)) {
+                    if (expectedType != null && resource.getType() != expectedType) {
                         return Completable.error(new ProtectedResourceNotFoundException(id));
                     }
                     Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.DELETE));
@@ -189,15 +189,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     public Single<ProtectedResourcePrimaryData> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal) {
         LOGGER.debug("Update ProtectedResource {} for domain {}", id, domain.getId());
 
-        return repository.findById(id)
+        return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMap(oldProtectedResource -> {
-                    // Verify resource belongs to the domain
-                    if (!oldProtectedResource.getDomainId().equals(domain.getId())) {
-                        return Single.error(new ProtectedResourceNotFoundException(id));
-                    }
-
                     // Validate input before building resource (defensive check - @NotEmpty should catch this at API layer)
                     if (updateProtectedResource.getResourceIdentifiers() == null || updateProtectedResource.getResourceIdentifiers().isEmpty()) {
                         return Single.error(new InvalidProtectedResourceException("Field [resourceIdentifiers] must not be empty"));
@@ -250,15 +245,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     public Single<ProtectedResourcePrimaryData> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal) {
         LOGGER.debug("Patch ProtectedResource {} for domain {}", id, domain.getId());
 
-        return repository.findById(id)
+        return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMap(oldProtectedResource -> {
-                    // Verify resource belongs to the domain
-                    if (!oldProtectedResource.getDomainId().equals(domain.getId())) {
-                        return Single.error(new ProtectedResourceNotFoundException(id));
-                    }
-
                     // Apply patch
                     ProtectedResource toPatch = patchProtectedResource.patch(oldProtectedResource);
                     toPatch.setUpdatedAt(new Date());

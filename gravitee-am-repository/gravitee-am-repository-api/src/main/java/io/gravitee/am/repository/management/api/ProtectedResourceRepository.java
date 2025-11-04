@@ -31,6 +31,8 @@ public interface ProtectedResourceRepository extends CrudRepository<ProtectedRes
 
     Maybe<ProtectedResource> findByDomainAndClient(String domainId, String clientId);
 
+    Maybe<ProtectedResource> findByDomainAndId(String domainId, String id);
+
     Flowable<ProtectedResource> findAll();
 
     Flowable<ProtectedResource> findByDomain(String domain);

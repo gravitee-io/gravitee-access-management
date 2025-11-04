@@ -102,6 +102,14 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
                 .observeOn(Schedulers.computation());
     }
 
+    @Override
+    public Maybe<ProtectedResource> findByDomainAndId(String domainId, String id) {
+        return Observable.fromPublisher(collection.find(and(eq(DOMAIN_ID_FIELD, domainId), eq(FIELD_ID, id))).first())
+                .firstElement()
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
 
     @Override
     public Flowable<ProtectedResource> findAll() {

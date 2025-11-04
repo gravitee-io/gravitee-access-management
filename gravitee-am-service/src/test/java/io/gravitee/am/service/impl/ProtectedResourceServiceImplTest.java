@@ -228,7 +228,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setDescription("New Description");
         updateRequest.setFeatures(List.of(createUpdateMcpTool("tool1", "Updated Tool 1", List.of("scope1", "scope2"))));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(repository.existsByResourceIdentifiersExcludingId(eq(DOMAIN_ID), any(), eq(RESOURCE_ID)))
                 .thenReturn(Single.just(false));
         when(scopeService.validateScope(eq(DOMAIN_ID), any())).thenReturn(Single.just(true));
@@ -258,25 +258,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
         updateRequest.setFeatures(new ArrayList<>());
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.empty());
-
-        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
-                .test()
-                .assertError(ProtectedResourceNotFoundException.class::isInstance);
-
-        verify(repository, never()).update(any());
-    }
-
-    @Test
-    public void shouldNotUpdateProtectedResourceWhenDomainMismatch() {
-        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, "differentDomainId");
-
-        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
-        updateRequest.setName("New Name");
-        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
-        updateRequest.setFeatures(new ArrayList<>());
-
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
 
         service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
@@ -297,7 +279,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
         updateRequest.setFeatures(List.of(tool1, tool2));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
         service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
@@ -316,7 +298,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
         updateRequest.setFeatures(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("invalid_scope"))));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(false));
 
         service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
@@ -332,7 +314,7 @@ public class ProtectedResourceServiceImplTest {
     public void shouldDeleteProtectedResource() {
         ProtectedResource resource = createProtectedResource("res-1", DOMAIN_ID);
 
-        when(repository.findById("res-1")).thenReturn(Maybe.just(resource));
+        when(repository.findByDomainAndId(DOMAIN_ID, "res-1")).thenReturn(Maybe.just(resource));
         when(repository.delete("res-1")).thenReturn(Completable.complete());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(membershipService.findByReference(eq("res-1"), eq(ReferenceType.APPLICATION)))
@@ -353,7 +335,7 @@ public class ProtectedResourceServiceImplTest {
     public void shouldDeleteProtectedResource_cleansMemberships() {
         ProtectedResource resource = createProtectedResource("res-2", DOMAIN_ID);
 
-        when(repository.findById("res-2")).thenReturn(Maybe.just(resource));
+        when(repository.findByDomainAndId(DOMAIN_ID, "res-2")).thenReturn(Maybe.just(resource));
         when(repository.delete("res-2")).thenReturn(Completable.complete());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
         when(membershipService.findByReference(eq("res-2"), eq(ReferenceType.APPLICATION)))
@@ -370,7 +352,7 @@ public class ProtectedResourceServiceImplTest {
 
     @Test
     public void shouldNotDeleteProtectedResourceWhenNotFound() {
-        when(repository.findById("missing")).thenReturn(Maybe.empty());
+        when(repository.findByDomainAndId(DOMAIN_ID, "missing")).thenReturn(Maybe.empty());
 
         service.delete(createDomain(), "missing", null, createUser())
                 .test()
@@ -429,7 +411,7 @@ public class ProtectedResourceServiceImplTest {
         patchRequest.setName(Optional.of("New Name"));
         patchRequest.setDescription(Optional.of("New Description"));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(eq(DOMAIN_ID), any())).thenReturn(Single.just(true));
         when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
@@ -442,7 +424,7 @@ public class ProtectedResourceServiceImplTest {
                         v.description().equals("New Description") &&
                         v.resourceIdentifiers().contains("https://old.example.com"));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(scopeService, times(1)).validateScope(eq(DOMAIN_ID), any());
         verify(repository, times(1)).update(any());
         verify(auditService, times(1)).report(any());
@@ -458,32 +440,13 @@ public class ProtectedResourceServiceImplTest {
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("New Name"));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.empty());
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.empty());
 
         service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertError(ProtectedResourceNotFoundException.class::isInstance);
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
-        verify(repository, never()).update(any());
-        verify(auditService, never()).report(any());
-        verify(eventService, never()).create(any(), any());
-    }
-
-    @Test
-    public void shouldNotPatchProtectedResourceWhenDomainMismatch() {
-        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, "differentDomainId");
-
-        PatchProtectedResource patchRequest = new PatchProtectedResource();
-        patchRequest.setName(Optional.of("New Name"));
-
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
-
-        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
-                .test()
-                .assertError(ProtectedResourceNotFoundException.class::isInstance);
-
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
         verify(eventService, never()).create(any(), any());
@@ -501,14 +464,14 @@ public class ProtectedResourceServiceImplTest {
         patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI)));
         patchRequest.setFeatures(Optional.of(List.of(tool1, tool2)));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
         service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertError(InvalidProtectedResourceException.class::isInstance);
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
         verify(eventService, never()).create(any(), any());
@@ -523,14 +486,14 @@ public class ProtectedResourceServiceImplTest {
         patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI)));
         patchRequest.setFeatures(Optional.of(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("invalid_scope")))));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.just(false));
 
         service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertError(InvalidProtectedResourceException.class::isInstance);
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(scopeService, times(1)).validateScope(any(), any());
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
@@ -546,7 +509,7 @@ public class ProtectedResourceServiceImplTest {
         patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI)));
         patchRequest.setFeatures(Optional.of(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("invalid_scope")))));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(any(), any())).thenReturn(
                 Single.error(new InvalidClientMetadataException("scope invalid_scope is not valid.")));
 
@@ -555,7 +518,7 @@ public class ProtectedResourceServiceImplTest {
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("scope invalid_scope is not valid."));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(scopeService, times(1)).validateScope(any(), any());
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
@@ -571,7 +534,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
         updateRequest.setFeatures(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("invalid_scope"))));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(any(), any())).thenReturn(
                 Single.error(new InvalidClientMetadataException("scope invalid_scope is not valid.")));
 
@@ -580,7 +543,7 @@ public class ProtectedResourceServiceImplTest {
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("scope invalid_scope is not valid."));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(scopeService, times(1)).validateScope(any(), any());
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
@@ -599,7 +562,7 @@ public class ProtectedResourceServiceImplTest {
         io.gravitee.am.common.exception.oauth2.InvalidRequestException oauthException =
                 new io.gravitee.am.common.exception.oauth2.InvalidRequestException("Invalid OAuth2 request");
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.error(oauthException));
 
         service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
@@ -608,7 +571,7 @@ public class ProtectedResourceServiceImplTest {
                         !(throwable instanceof TechnicalManagementException) &&
                         throwable.getMessage().equals("Invalid OAuth2 request"));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(scopeService, times(1)).validateScope(any(), any());
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
@@ -627,7 +590,7 @@ public class ProtectedResourceServiceImplTest {
         io.gravitee.am.common.exception.oauth2.InvalidRequestException oauthException =
                 new io.gravitee.am.common.exception.oauth2.InvalidRequestException("Invalid OAuth2 request");
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(scopeService.validateScope(any(), any())).thenReturn(Single.error(oauthException));
 
         service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
@@ -636,7 +599,7 @@ public class ProtectedResourceServiceImplTest {
                         !(throwable instanceof TechnicalManagementException) &&
                         throwable.getMessage().equals("Invalid OAuth2 request"));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(scopeService, times(1)).validateScope(any(), any());
         verify(repository, never()).update(any());
         verify(auditService, never()).report(any());
@@ -653,7 +616,7 @@ public class ProtectedResourceServiceImplTest {
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("New Name"));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
@@ -663,7 +626,7 @@ public class ProtectedResourceServiceImplTest {
                 .assertValue(v -> v.name().equals("New Name") &&
                         v.description().equals("Old Description"));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, times(1)).update(any());
         verify(auditService, times(1)).report(any());
         verify(eventService, times(1)).create(any(), any());
@@ -679,7 +642,7 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI, "https://example3.com"));
         updateRequest.setFeatures(new ArrayList<>());
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(repository.existsByResourceIdentifiersExcludingId(eq(DOMAIN_ID), any(), eq(RESOURCE_ID)))
                 .thenReturn(Single.just(true));
 
@@ -704,7 +667,7 @@ public class ProtectedResourceServiceImplTest {
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI, "https://example3.com")));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
         when(repository.existsByResourceIdentifiersExcludingId(eq(DOMAIN_ID), any(), eq(RESOURCE_ID)))
                 .thenReturn(Single.just(true));
 
@@ -728,14 +691,14 @@ public class ProtectedResourceServiceImplTest {
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setResourceIdentifiers(Optional.empty());
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
         service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, never()).update(any());
         verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
     }
@@ -747,14 +710,14 @@ public class ProtectedResourceServiceImplTest {
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setResourceIdentifiers(Optional.of(new ArrayList<>()));
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
         service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, never()).update(any());
         verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
     }
@@ -768,14 +731,14 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setResourceIdentifiers(null);
         updateRequest.setFeatures(new ArrayList<>());
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
         service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, never()).update(any());
         verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
     }
@@ -789,14 +752,14 @@ public class ProtectedResourceServiceImplTest {
         updateRequest.setResourceIdentifiers(new ArrayList<>());
         updateRequest.setFeatures(new ArrayList<>());
 
-        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.findByDomainAndId(DOMAIN_ID, RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
         service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
 
-        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).findByDomainAndId(DOMAIN_ID, RESOURCE_ID);
         verify(repository, never()).update(any());
         verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
     }

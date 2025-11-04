@@ -159,6 +159,39 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByDomainAndId() {
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(clientSecret, secretSettings, List.of());
+        resource.setDomainId("DomainTestFindByDomainAndId");
+        ProtectedResource created = repository.create(resource).blockingGet();
+
+        TestObserver<ProtectedResource> testObserver = repository.findByDomainAndId("DomainTestFindByDomainAndId", created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(r -> r.getId().equals(created.getId()));
+        testObserver.assertValue(r -> r.getDomainId().equals("DomainTestFindByDomainAndId"));
+    }
+
+    @Test
+    public void testFindByDomainAndId_whenDomainMismatch() {
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(clientSecret, secretSettings, List.of());
+        resource.setDomainId("domain-1");
+        ProtectedResource created = repository.create(resource).blockingGet();
+
+        TestObserver<ProtectedResource> testObserver = repository.findByDomainAndId("domain-2", created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues(); // Should return empty Maybe
+    }
+
+    @Test
     public void testCreateWithMultipleSecrets() {
         // Create resource with 3 client secrets
         ClientSecret clientSecret1 = generateClientSecret();

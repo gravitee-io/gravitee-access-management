@@ -17,6 +17,7 @@ package io.gravitee.am.repository.jdbc.management.api.spring;
 
 import io.gravitee.am.model.ProtectedResource.Type;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -25,6 +26,8 @@ import java.util.Collection;
 
 @Repository
 public interface SpringProtectedResourceRepository extends RxJava3CrudRepository<JdbcProtectedResource, String> {
+
+    Maybe<JdbcProtectedResource> findByDomainIdAndId(String domainId, String id);
 
     Single<Long> countByDomainIdAndType(String domainId, Type type);
 
