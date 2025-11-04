@@ -16,7 +16,13 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
+import {
+  createDomain,
+  deleteDomain,
+  startDomain,
+  waitForDomainStart,
+  waitForDomainSync,
+} from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -63,21 +69,15 @@ export const PROTECTED_RESOURCES_TEST = {
   REDIRECT_URI: 'https://example.com/callback',
 } as const;
 
-
 // Helper functions for authorization flow
-export function buildAuthorizationUrlWithResources(
-  endpoint: string, 
-  clientId: string, 
-  redirectUri: string, 
-  resources: string[]
-): string {
+export function buildAuthorizationUrlWithResources(endpoint: string, clientId: string, redirectUri: string, resources: string[]): string {
   const params = new URLSearchParams({
     response_type: 'code',
     client_id: clientId,
     redirect_uri: redirectUri,
     state: PROTECTED_RESOURCES_TEST.STATE,
   });
-  resources.forEach(resource => params.append('resource', resource));
+  resources.forEach((resource) => params.append('resource', resource));
   return `${endpoint}?${params.toString()}`;
 }
 
@@ -101,7 +101,11 @@ async function setupTestEnvironment() {
   const accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const domain = await createDomain(accessToken, uniqueName(PROTECTED_RESOURCES_TEST.DOMAIN_NAME_PREFIX, true), PROTECTED_RESOURCES_TEST.DOMAIN_DESCRIPTION);
+  const domain = await createDomain(
+    accessToken,
+    uniqueName(PROTECTED_RESOURCES_TEST.DOMAIN_NAME_PREFIX, true),
+    PROTECTED_RESOURCES_TEST.DOMAIN_DESCRIPTION,
+  );
   expect(domain).toBeDefined();
   expect(domain.id).toBeDefined();
 
@@ -158,15 +162,12 @@ async function createServiceApplication(domain: Domain, accessToken: string) {
     type: 'SERVICE',
     clientId: `${PROTECTED_RESOURCES_TEST.CLIENT_ID}-service`,
   }).then((app) =>
-    updateApplication(
-      domain.id,
-      accessToken,
-      { settings: { oauth: { grantTypes: ['client_credentials'] } } },
-      app.id,
-    ).then((updatedApp) => {
-      updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-      return updatedApp;
-    }),
+    updateApplication(domain.id, accessToken, { settings: { oauth: { grantTypes: ['client_credentials'] } } }, app.id).then(
+      (updatedApp) => {
+        updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
+        return updatedApp;
+      },
+    ),
   );
 
   expect(application).toBeDefined();
@@ -192,9 +193,24 @@ async function createTestUser(domain: Domain, application: Application, defaultI
 
 async function createTestProtectedResources(domain: Domain, accessToken: string) {
   const resources = [
-    { name: 'Photos_API', resourceIdentifiers: ['https://api.example.com/photos'], description: 'Photos API resource for testing', type: 'MCP_SERVER' },
-    { name: 'Albums_API', resourceIdentifiers: ['https://api.example.com/albums'], description: 'Albums API resource for testing', type: 'MCP_SERVER' },
-    { name: 'Meta_API', resourceIdentifiers: ['https://api.example.com/meta?foo=bar#frag'], description: 'Meta API with query/fragment', type: 'MCP_SERVER' },
+    {
+      name: 'Photos API',
+      resourceIdentifiers: ['https://api.example.com/photos'],
+      description: 'Photos API resource for testing',
+      type: 'MCP_SERVER',
+    },
+    {
+      name: 'Albums API',
+      resourceIdentifiers: ['https://api.example.com/albums'],
+      description: 'Albums API resource for testing',
+      type: 'MCP_SERVER',
+    },
+    {
+      name: 'Meta API',
+      resourceIdentifiers: ['https://api.example.com/meta?foo=bar#frag'],
+      description: 'Meta API with query/fragment',
+      type: 'MCP_SERVER',
+    },
   ];
   const protectedResources = [] as any[];
   for (const resource of resources) {
@@ -234,7 +250,9 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     );
     const authResponse = await performGet(authUrl).expect(302);
     const loginResponse = await login(authResponse, user.username, clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD, false, false);
-    const authorizeResponse = await performGet(loginResponse.headers['location'], '', { Cookie: loginResponse.headers['set-cookie'] }).expect(302);
+    const authorizeResponse = await performGet(loginResponse.headers['location'], '', {
+      Cookie: loginResponse.headers['set-cookie'],
+    }).expect(302);
     const redirectUrl = authorizeResponse.headers['location'];
     expect(redirectUrl).toContain(PROTECTED_RESOURCES_TEST.REDIRECT_URI);
     expect(redirectUrl).toContain('code=');
@@ -242,7 +260,11 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
   };
 
   const exchangeCodeForTokenWithResources = (authCode: string, resources?: string[]) => {
-    const tokenParams = new URLSearchParams({ grant_type: 'authorization_code', code: authCode, redirect_uri: PROTECTED_RESOURCES_TEST.REDIRECT_URI });
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      code: authCode,
+      redirect_uri: PROTECTED_RESOURCES_TEST.REDIRECT_URI,
+    });
     if (resources && resources.length > 0) resources.forEach((r) => tokenParams.append('resource', r));
     return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
       'Content-Type': 'application/x-www-form-urlencoded',

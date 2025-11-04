@@ -62,7 +62,9 @@ public class RoleResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a platform role",
+    @Operation(
+            operationId = "getRole",
+            summary = "Get a platform role",
             description = "User must have the ORGANIZATION_ROLE[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Role successfully fetched",
@@ -83,7 +85,9 @@ public class RoleResource extends AbstractResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Update a platform role",
+    @Operation(
+            operationId = "updateRole",
+            summary = "Update a platform role",
             description = "User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Role successfully updated",
@@ -104,7 +108,9 @@ public class RoleResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Delete a plaform role",
+    @Operation(
+            operationId = "deleteRole",
+            summary = "Delete a plaform role",
             description = "User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Role successfully deleted"),

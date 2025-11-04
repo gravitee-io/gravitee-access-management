@@ -17,7 +17,12 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
-import { ProtectedResourcesFixture, setupProtectedResourcesFixture, buildAuthorizationUrlWithResources, PROTECTED_RESOURCES_TEST } from './fixtures/protected-resources-fixture';
+import {
+  ProtectedResourcesFixture,
+  setupProtectedResourcesFixture,
+  buildAuthorizationUrlWithResources,
+  PROTECTED_RESOURCES_TEST,
+} from './fixtures/protected-resources-fixture';
 import { expectResourceValidationErrorAfterLogin } from './fixtures/test-utils';
 
 // RFC 8707 Authorization Endpoint: resource indicators handling and error redirects
@@ -36,14 +41,13 @@ afterAll(async () => {
 });
 
 describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
-
   it('should accept valid resource and redirect to login', async () => {
     const validResource = 'https://api.example.com/photos';
     const url = buildAuthorizationUrlWithResources(
       fixture.openIdConfiguration.authorization_endpoint,
       fixture.application.settings.oauth.clientId,
       fixture.redirectUri,
-      [validResource]
+      [validResource],
     );
     const response = await performGet(url).expect(302);
 
@@ -59,13 +63,12 @@ describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
     expect(location).toContain('/login');
   });
 
-
   it('should accept multiple valid resources and redirect to login', async () => {
     const url = buildAuthorizationUrlWithResources(
       fixture.openIdConfiguration.authorization_endpoint,
       fixture.application.settings.oauth.clientId,
       fixture.redirectUri,
-      ['https://api.example.com/photos', 'https://api.example.com/albums']
+      ['https://api.example.com/photos', 'https://api.example.com/albums'],
     );
     const response = await performGet(url).expect(302);
 
@@ -81,10 +84,11 @@ describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
     expect(location).toContain('/login');
   });
 
-
   it('should work without resource parameter (backward compatibility)', async () => {
     const response = await performGet(
-      `${fixture.openIdConfiguration.authorization_endpoint}?response_type=code&client_id=${fixture.application.settings.oauth.clientId}&redirect_uri=${encodeURIComponent(fixture.redirectUri)}`
+      `${fixture.openIdConfiguration.authorization_endpoint}?response_type=code&client_id=${
+        fixture.application.settings.oauth.clientId
+      }&redirect_uri=${encodeURIComponent(fixture.redirectUri)}`,
     ).expect(302);
 
     // Should redirect to login page (backward compatibility)
@@ -105,10 +109,15 @@ describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
       fixture.openIdConfiguration.authorization_endpoint,
       fixture.application.settings.oauth.clientId,
       fixture.redirectUri,
-      [invalidResource]
+      [invalidResource],
     );
     const first = await performGet(url).expect(302);
-    await expectResourceValidationErrorAfterLogin(first, fixture.user.username, fixture.application.settings.oauth.clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD);
+    await expectResourceValidationErrorAfterLogin(
+      first,
+      fixture.user.username,
+      fixture.application.settings.oauth.clientId,
+      PROTECTED_RESOURCES_TEST.USER_PASSWORD,
+    );
   });
 
   it('should reject malformed resource after login with error redirect', async () => {
@@ -117,10 +126,15 @@ describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
       fixture.openIdConfiguration.authorization_endpoint,
       fixture.application.settings.oauth.clientId,
       fixture.redirectUri,
-      [malformedResource]
+      [malformedResource],
     );
     const first = await performGet(url).expect(302);
-    await expectResourceValidationErrorAfterLogin(first, fixture.user.username, fixture.application.settings.oauth.clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD);
+    await expectResourceValidationErrorAfterLogin(
+      first,
+      fixture.user.username,
+      fixture.application.settings.oauth.clientId,
+      PROTECTED_RESOURCES_TEST.USER_PASSWORD,
+    );
   });
 
   it('should reject mixed valid/invalid resources after login with error redirect', async () => {
@@ -128,16 +142,28 @@ describe('Authorization Endpoint - Resource Indicators (RFC 8707)', () => {
       fixture.openIdConfiguration.authorization_endpoint,
       fixture.application.settings.oauth.clientId,
       fixture.redirectUri,
-      ['https://api.example.com/photos', 'https://unknown-api.com/invalid']
+      ['https://api.example.com/photos', 'https://unknown-api.com/invalid'],
     );
     const first = await performGet(url).expect(302);
-    await expectResourceValidationErrorAfterLogin(first, fixture.user.username, fixture.application.settings.oauth.clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD);
+    await expectResourceValidationErrorAfterLogin(
+      first,
+      fixture.user.username,
+      fixture.application.settings.oauth.clientId,
+      PROTECTED_RESOURCES_TEST.USER_PASSWORD,
+    );
   });
 
   it('should reject empty resource after login with error redirect', async () => {
     const firstResponse = await performGet(
-      `${fixture.openIdConfiguration.authorization_endpoint}?response_type=code&client_id=${fixture.application.settings.oauth.clientId}&redirect_uri=${encodeURIComponent(fixture.redirectUri)}&resource=`
+      `${fixture.openIdConfiguration.authorization_endpoint}?response_type=code&client_id=${
+        fixture.application.settings.oauth.clientId
+      }&redirect_uri=${encodeURIComponent(fixture.redirectUri)}&resource=`,
     ).expect(302);
-    await expectResourceValidationErrorAfterLogin(firstResponse, fixture.user.username, fixture.application.settings.oauth.clientId, PROTECTED_RESOURCES_TEST.USER_PASSWORD);
+    await expectResourceValidationErrorAfterLogin(
+      firstResponse,
+      fixture.user.username,
+      fixture.application.settings.oauth.clientId,
+      PROTECTED_RESOURCES_TEST.USER_PASSWORD,
+    );
   });
 });

@@ -48,7 +48,9 @@ public class BotDetectionPluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a Bot Detection plugin",
+    @Operation(
+            operationId = "getBotDetectionPlugin",
+            summary = "Get a Bot Detection plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(@PathParam("botDetection") String botDetectionId,
                     @Suspended final AsyncResponse response) {
@@ -62,7 +64,9 @@ public class BotDetectionPluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a Bot Detection plugin's schema",
+    @Operation(
+            operationId = "getBotDetectionPluginSchema",
+            summary = "Get a Bot Detection plugin's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("botDetection") String botDetection,
                           @Suspended final AsyncResponse response) {

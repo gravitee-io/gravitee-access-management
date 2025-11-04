@@ -53,7 +53,9 @@ public class UserCredentialResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a user credential",
+    @Operation(
+            operationId = "getUserCredential",
+            summary = "Get a user credential",
             description = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
                     "or DOMAIN_USER[READ] permission on the specified environment " +
                     "or DOMAIN_USER[READ] permission on the specified organization")
@@ -79,7 +81,9 @@ public class UserCredentialResource extends AbstractResource {
     }
 
     @DELETE
-    @Operation(summary = "Revoke a user credential",
+    @Operation(
+            operationId = "revokeUserCredential",
+            summary = "Revoke a user credential",
             description = "User must have the DOMAIN_USER[UPDATE] permission on the specified domain " +
                     "or DOMAIN_USER[UPDATE] permission on the specified environment " +
                     "or DOMAIN_USER[UPDATE] permission on the specified organization")

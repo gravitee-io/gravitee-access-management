@@ -44,7 +44,9 @@ public class AuditResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get an audit log",
+    @Operation(
+            operationId = "getDomainAudit",
+            summary = "Get an audit log",
             description = "User must have the DOMAIN_AUDIT[READ] permission on the specified domain " +
                     "or DOMAIN_AUDIT[READ] permission on the specified environment " +
                     "or DOMAIN_AUDIT[READ] permission on the specified organization")

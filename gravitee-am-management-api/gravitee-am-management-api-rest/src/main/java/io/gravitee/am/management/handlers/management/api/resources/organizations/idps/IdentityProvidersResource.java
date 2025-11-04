@@ -71,7 +71,9 @@ public class IdentityProvidersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List registered identity providers of the organization",
+    @Operation(
+            operationId = "listIdentityProviders",
+            summary = "List registered identity providers of the organization",
             description = "User must have the ORGANIZATION_IDENTITY_PROVIDER[LIST] permission on the specified organization. " +
                     "Each returned identity provider is filtered and contains only basic information such as id, name, type and isExternal.")
     @ApiResponses({
@@ -105,7 +107,9 @@ public class IdentityProvidersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create an identity provider for the organization",
+    @Operation(
+            operationId = "createIdentityProvider",
+            summary = "Create an identity provider for the organization",
             description = "User must have the ORGANIZATION_IDENTITY_PROVIDER[CREATE] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Identity provider successfully created"),

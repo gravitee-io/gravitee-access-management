@@ -56,7 +56,9 @@ public class UserCredentialsResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a user credentials",
+    @Operation(
+            operationId = "listUserCredentials",
+            summary = "Get a user credentials",
             description = "User must have the DOMAIN_USER[READ] permission on the specified domain " +
                     "or DOMAIN_USER[READ] permission on the specified environment " +
                     "or DOMAIN_USER[READ] permission on the specified organization")

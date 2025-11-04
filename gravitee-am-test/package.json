@@ -8,6 +8,7 @@
     "test": "jest --runInBand --no-cache --config=api/config/dev.config.js",
     "ci": "jest --runInBand --no-cache --config=api/config/ci.config.js",
     "ui-test": "cypress open",
+    "typecheck": "tsc --noEmit",
     "lint": "npm run prettier && npm run lint:license",
     "lint:fix": "npm run prettier:fix && npm run lint:license:fix && tsc --noEmit",
     "lint:license": "license-check-and-add check -f license-check-config.json",

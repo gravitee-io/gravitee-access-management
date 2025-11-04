@@ -77,7 +77,7 @@ async function initDomain(resetPasswordOnExpiration: boolean) {
         scopeSettings: [],
       },
     },
-    identityProviders: [{ identity: defaultIdp.id, priority: 0 }],
+    identityProviders: new Set([{ identity: defaultIdp.id, priority: 0 }]),
   });
 
   await createPasswordPolicy(createdDomain.id, accessToken, {

@@ -25,8 +25,9 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
-import { ResourceEntity, ResourceEntityFromJSON, ResourceEntityFromJSONTyped, ResourceEntityToJSON } from './ResourceEntity';
+import { mapValues } from '../runtime';
+import type { ResourceEntity } from './ResourceEntity';
+import { ResourceEntityFromJSON, ResourceEntityFromJSONTyped, ResourceEntityToJSON, ResourceEntityToJSONTyped } from './ResourceEntity';
 
 /**
  *
@@ -48,29 +49,38 @@ export interface ResourceListItem {
   metadata?: { [key: string]: { [key: string]: any } };
 }
 
+/**
+ * Check if a given object implements the ResourceListItem interface.
+ */
+export function instanceOfResourceListItem(value: object): value is ResourceListItem {
+  return true;
+}
+
 export function ResourceListItemFromJSON(json: any): ResourceListItem {
   return ResourceListItemFromJSONTyped(json, false);
 }
 
 export function ResourceListItemFromJSONTyped(json: any, ignoreDiscriminator: boolean): ResourceListItem {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    resources: !exists(json, 'resources') ? undefined : (json['resources'] as Array<any>).map(ResourceEntityFromJSON),
-    metadata: !exists(json, 'metadata') ? undefined : json['metadata'],
+    resources: json['resources'] == null ? undefined : (json['resources'] as Array<any>).map(ResourceEntityFromJSON),
+    metadata: json['metadata'] == null ? undefined : json['metadata'],
   };
 }
 
-export function ResourceListItemToJSON(value?: ResourceListItem | null): any {
-  if (value === undefined) {
-    return undefined;
+export function ResourceListItemToJSON(json: any): ResourceListItem {
+  return ResourceListItemToJSONTyped(json, false);
+}
+
+export function ResourceListItemToJSONTyped(value?: ResourceListItem | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    resources: value.resources === undefined ? undefined : (value.resources as Array<any>).map(ResourceEntityToJSON),
-    metadata: value.metadata,
+    resources: value['resources'] == null ? undefined : (value['resources'] as Array<any>).map(ResourceEntityToJSON),
+    metadata: value['metadata'],
   };
 }

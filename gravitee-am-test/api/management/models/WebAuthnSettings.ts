@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -132,49 +132,57 @@ export const WebAuthnSettingsAttestationConveyancePreferenceEnum = {
 export type WebAuthnSettingsAttestationConveyancePreferenceEnum =
   typeof WebAuthnSettingsAttestationConveyancePreferenceEnum[keyof typeof WebAuthnSettingsAttestationConveyancePreferenceEnum];
 
+/**
+ * Check if a given object implements the WebAuthnSettings interface.
+ */
+export function instanceOfWebAuthnSettings(value: object): value is WebAuthnSettings {
+  return true;
+}
+
 export function WebAuthnSettingsFromJSON(json: any): WebAuthnSettings {
   return WebAuthnSettingsFromJSONTyped(json, false);
 }
 
 export function WebAuthnSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): WebAuthnSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    origin: !exists(json, 'origin') ? undefined : json['origin'],
-    relyingPartyId: !exists(json, 'relyingPartyId') ? undefined : json['relyingPartyId'],
-    relyingPartyName: !exists(json, 'relyingPartyName') ? undefined : json['relyingPartyName'],
-    requireResidentKey: !exists(json, 'requireResidentKey') ? undefined : json['requireResidentKey'],
-    userVerification: !exists(json, 'userVerification') ? undefined : json['userVerification'],
-    authenticatorAttachment: !exists(json, 'authenticatorAttachment') ? undefined : json['authenticatorAttachment'],
-    attestationConveyancePreference: !exists(json, 'attestationConveyancePreference') ? undefined : json['attestationConveyancePreference'],
-    forceRegistration: !exists(json, 'forceRegistration') ? undefined : json['forceRegistration'],
-    certificates: !exists(json, 'certificates') ? undefined : json['certificates'],
-    enforceAuthenticatorIntegrity: !exists(json, 'enforceAuthenticatorIntegrity') ? undefined : json['enforceAuthenticatorIntegrity'],
-    enforceAuthenticatorIntegrityMaxAge: !exists(json, 'enforceAuthenticatorIntegrityMaxAge')
-      ? undefined
-      : json['enforceAuthenticatorIntegrityMaxAge'],
+    origin: json['origin'] == null ? undefined : json['origin'],
+    relyingPartyId: json['relyingPartyId'] == null ? undefined : json['relyingPartyId'],
+    relyingPartyName: json['relyingPartyName'] == null ? undefined : json['relyingPartyName'],
+    requireResidentKey: json['requireResidentKey'] == null ? undefined : json['requireResidentKey'],
+    userVerification: json['userVerification'] == null ? undefined : json['userVerification'],
+    authenticatorAttachment: json['authenticatorAttachment'] == null ? undefined : json['authenticatorAttachment'],
+    attestationConveyancePreference: json['attestationConveyancePreference'] == null ? undefined : json['attestationConveyancePreference'],
+    forceRegistration: json['forceRegistration'] == null ? undefined : json['forceRegistration'],
+    certificates: json['certificates'] == null ? undefined : json['certificates'],
+    enforceAuthenticatorIntegrity: json['enforceAuthenticatorIntegrity'] == null ? undefined : json['enforceAuthenticatorIntegrity'],
+    enforceAuthenticatorIntegrityMaxAge:
+      json['enforceAuthenticatorIntegrityMaxAge'] == null ? undefined : json['enforceAuthenticatorIntegrityMaxAge'],
   };
 }
 
-export function WebAuthnSettingsToJSON(value?: WebAuthnSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function WebAuthnSettingsToJSON(json: any): WebAuthnSettings {
+  return WebAuthnSettingsToJSONTyped(json, false);
+}
+
+export function WebAuthnSettingsToJSONTyped(value?: WebAuthnSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    origin: value.origin,
-    relyingPartyId: value.relyingPartyId,
-    relyingPartyName: value.relyingPartyName,
-    requireResidentKey: value.requireResidentKey,
-    userVerification: value.userVerification,
-    authenticatorAttachment: value.authenticatorAttachment,
-    attestationConveyancePreference: value.attestationConveyancePreference,
-    forceRegistration: value.forceRegistration,
-    certificates: value.certificates,
-    enforceAuthenticatorIntegrity: value.enforceAuthenticatorIntegrity,
-    enforceAuthenticatorIntegrityMaxAge: value.enforceAuthenticatorIntegrityMaxAge,
+    origin: value['origin'],
+    relyingPartyId: value['relyingPartyId'],
+    relyingPartyName: value['relyingPartyName'],
+    requireResidentKey: value['requireResidentKey'],
+    userVerification: value['userVerification'],
+    authenticatorAttachment: value['authenticatorAttachment'],
+    attestationConveyancePreference: value['attestationConveyancePreference'],
+    forceRegistration: value['forceRegistration'],
+    certificates: value['certificates'],
+    enforceAuthenticatorIntegrity: value['enforceAuthenticatorIntegrity'],
+    enforceAuthenticatorIntegrityMaxAge: value['enforceAuthenticatorIntegrityMaxAge'],
   };
 }

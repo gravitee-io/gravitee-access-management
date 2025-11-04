@@ -69,7 +69,9 @@ public class AuthenticationDeviceNotifiersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List registered Authentication Device Notifiers for a security domain",
+    @Operation(
+            operationId = "listAuthenticationDeviceNotifiers",
+            summary = "List registered Authentication Device Notifiers for a security domain",
             description = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified domain " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified environment " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[LIST] permission on the specified organization " +
@@ -95,7 +97,9 @@ public class AuthenticationDeviceNotifiersResource extends AbstractResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Create an Authentication Device Notifier",
+    @Operation(
+            operationId = "createAuthenticationDeviceNotifier",
+            summary = "Create an Authentication Device Notifier",
             description = "User must have the DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified domain " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified environment " +
                     "or DOMAIN_AUTHDEVICE_NOTIFIER[CREATE] permission on the specified organization")

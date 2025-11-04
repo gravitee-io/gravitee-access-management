@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -64,35 +64,44 @@ export interface UserIdentity {
   linkedAt?: Date;
 }
 
+/**
+ * Check if a given object implements the UserIdentity interface.
+ */
+export function instanceOfUserIdentity(value: object): value is UserIdentity {
+  return true;
+}
+
 export function UserIdentityFromJSON(json: any): UserIdentity {
   return UserIdentityFromJSONTyped(json, false);
 }
 
 export function UserIdentityFromJSONTyped(json: any, ignoreDiscriminator: boolean): UserIdentity {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    userId: !exists(json, 'userId') ? undefined : json['userId'],
-    username: !exists(json, 'username') ? undefined : json['username'],
-    providerId: !exists(json, 'providerId') ? undefined : json['providerId'],
-    additionalInformation: !exists(json, 'additionalInformation') ? undefined : json['additionalInformation'],
-    linkedAt: !exists(json, 'linkedAt') ? undefined : new Date(json['linkedAt']),
+    userId: json['userId'] == null ? undefined : json['userId'],
+    username: json['username'] == null ? undefined : json['username'],
+    providerId: json['providerId'] == null ? undefined : json['providerId'],
+    additionalInformation: json['additionalInformation'] == null ? undefined : json['additionalInformation'],
+    linkedAt: json['linkedAt'] == null ? undefined : new Date(json['linkedAt']),
   };
 }
 
-export function UserIdentityToJSON(value?: UserIdentity | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UserIdentityToJSON(json: any): UserIdentity {
+  return UserIdentityToJSONTyped(json, false);
+}
+
+export function UserIdentityToJSONTyped(value?: UserIdentity | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    userId: value.userId,
-    username: value.username,
-    providerId: value.providerId,
-    additionalInformation: value.additionalInformation,
-    linkedAt: value.linkedAt === undefined ? undefined : value.linkedAt.toISOString(),
+    userId: value['userId'],
+    username: value['username'],
+    providerId: value['providerId'],
+    additionalInformation: value['additionalInformation'],
+    linkedAt: value['linkedAt'] == null ? value['linkedAt'] : value['linkedAt'].toISOString(),
   };
 }

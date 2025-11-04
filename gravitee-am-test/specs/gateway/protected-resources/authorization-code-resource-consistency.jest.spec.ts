@@ -66,7 +66,7 @@ describe('Authorization Code Flow - Resource Parameter Consistency (RFC 8707)', 
     const refreshTokenDecoded = decodeJwt(tokenResponse.body.refresh_token);
     expect(refreshTokenDecoded.orig_resources).toBeDefined();
     expect(Array.isArray(refreshTokenDecoded.orig_resources)).toBe(true);
-    authResources.forEach(resource => {
+    authResources.forEach((resource) => {
       expect(refreshTokenDecoded.orig_resources).toContain(resource);
     });
   });
@@ -94,7 +94,7 @@ describe('Authorization Code Flow - Resource Parameter Consistency (RFC 8707)', 
     const refreshTokenDecoded = decodeJwt(tokenResponse.body.refresh_token);
     expect(refreshTokenDecoded.orig_resources).toBeDefined();
     expect(Array.isArray(refreshTokenDecoded.orig_resources)).toBe(true);
-    authResources.forEach(resource => {
+    authResources.forEach((resource) => {
       expect(refreshTokenDecoded.orig_resources).toContain(resource);
     });
   });
@@ -112,7 +112,6 @@ describe('Authorization Code Flow - Resource Parameter Consistency (RFC 8707)', 
     // ensure only one entry
     expect(audArray.filter((v) => v === 'https://api.example.com/photos').length).toBe(1);
   });
-
 
   it('should reject resources not in original authorization', async () => {
     // Step 1: Authorization request with limited resources
@@ -147,7 +146,7 @@ describe('Authorization Code Flow - Resource Parameter Consistency (RFC 8707)', 
     const refreshTokenDecoded = decodeJwt(tokenResponse.body.refresh_token);
     expect(refreshTokenDecoded.orig_resources).toBeDefined();
     expect(Array.isArray(refreshTokenDecoded.orig_resources)).toBe(true);
-    authResources.forEach(resource => {
+    authResources.forEach((resource) => {
       expect(refreshTokenDecoded.orig_resources).toContain(resource);
     });
   });

@@ -54,12 +54,12 @@ export async function expectResourceValidationErrorAfterLogin(
   password: string,
 ): Promise<string> {
   const loginResponse = await login(firstResponse, username, clientId, password, false, false);
-  const authorizeResponse = await performGet(loginResponse.headers.location, '', { Cookie: loginResponse.headers['set-cookie'] }).expect(302);
+  const authorizeResponse = await performGet(loginResponse.headers.location, '', { Cookie: loginResponse.headers['set-cookie'] }).expect(
+    302,
+  );
   const location = authorizeResponse.headers.location as string;
   expect(location).toContain('error=invalid_target');
   expect(location).toContain('error_description');
   expect(location).toContain('not+recognized');
   return location;
 }
-
-

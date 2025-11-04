@@ -60,7 +60,9 @@ public class EnvironmentsResource extends AbstractResource {
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List all the environments",
+    @Operation(
+            operationId = "listEnvironments",
+            summary = "List all the environments",
             description = "User must have the ENVIRONMENT[LIST] permission on the specified organization " +
                     "AND either ENVIRONMENT[READ] permission on each environment " +
                     "or ENVIRONMENT[READ] permission on the specified organization." +

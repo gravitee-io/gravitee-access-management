@@ -67,7 +67,9 @@ public class NewsletterResource extends AbstractResource {
 
     @POST
     @Path("/_subscribe")
-    @Operation(summary = "Subscribe to the newsletter the authenticated user")
+    @Operation(
+            operationId = "subscribeNewsletter",
+            summary = "Subscribe to the newsletter the authenticated user")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Updated user",
                     content = @Content(mediaType = "application/json",
@@ -98,7 +100,9 @@ public class NewsletterResource extends AbstractResource {
 
     @GET
     @Path("/taglines")
-    @Operation(summary = "Get taglines to display in the newsletter")
+    @Operation(
+            operationId = "getTaglines",
+            summary = "Get taglines to display in the newsletter")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Retrieved taglines",
                     content = @Content(mediaType = "application/json",

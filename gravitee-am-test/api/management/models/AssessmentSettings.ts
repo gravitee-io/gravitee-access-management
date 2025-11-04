@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -46,29 +46,38 @@ export interface AssessmentSettings {
   thresholds?: { [key: string]: number };
 }
 
+/**
+ * Check if a given object implements the AssessmentSettings interface.
+ */
+export function instanceOfAssessmentSettings(value: object): value is AssessmentSettings {
+  return true;
+}
+
 export function AssessmentSettingsFromJSON(json: any): AssessmentSettings {
   return AssessmentSettingsFromJSONTyped(json, false);
 }
 
 export function AssessmentSettingsFromJSONTyped(json: any, ignoreDiscriminator: boolean): AssessmentSettings {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    thresholds: !exists(json, 'thresholds') ? undefined : json['thresholds'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    thresholds: json['thresholds'] == null ? undefined : json['thresholds'],
   };
 }
 
-export function AssessmentSettingsToJSON(value?: AssessmentSettings | null): any {
-  if (value === undefined) {
-    return undefined;
+export function AssessmentSettingsToJSON(json: any): AssessmentSettings {
+  return AssessmentSettingsToJSONTyped(json, false);
+}
+
+export function AssessmentSettingsToJSONTyped(value?: AssessmentSettings | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    enabled: value.enabled,
-    thresholds: value.thresholds,
+    enabled: value['enabled'],
+    thresholds: value['thresholds'],
   };
 }

@@ -61,7 +61,8 @@ public class AlertTriggersResource extends AbstractResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
-            summary = "List alert alert triggers",
+            operationId = "listAlertTriggers",
+            summary = "List alert triggers",
             description = "List all the alert triggers of the domain accessible to the current user. " +
                     "User must have DOMAIN_ALERT[LIST] permission on the specified domain, environment or organization.")
     @ApiResponses({
@@ -86,6 +87,7 @@ public class AlertTriggersResource extends AbstractResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(
+            operationId = "updateAlertTriggers",
             summary = "Update multiple alert triggers",
             description = "Update multiple alert triggers in the same time" +
                     "User must have DOMAIN_ALERT[UPDATE] permission on the specified domain, environment or organization.")

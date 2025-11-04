@@ -48,7 +48,9 @@ public class ResourcePluginResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a resource plugin",
+    @Operation(
+            operationId = "getResource",
+            summary = "Get a resource plugin",
             description = "There is no particular permission needed. User must be authenticated.")
     public void get(@PathParam("resource") String resourceId,
                     @Suspended final AsyncResponse response) {
@@ -62,7 +64,9 @@ public class ResourcePluginResource {
     @GET
     @Path("schema")
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "Get a resource plugin's schema",
+    @Operation(
+            operationId = "getResourceSchema",
+            summary = "Get a resource plugin's schema",
             description = "There is no particular permission needed. User must be authenticated.")
     public void getSchema(@PathParam("resource") String resourceId,
                           @Suspended final AsyncResponse response) {

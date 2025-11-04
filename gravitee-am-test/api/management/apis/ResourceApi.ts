@@ -53,10 +53,6 @@ export interface DeleteResourceRequest {
   resource: string;
 }
 
-export interface Get34Request {
-  resource: string;
-}
-
 export interface GetResourceRequest {
   organizationId: string;
   environmentId: string;
@@ -64,11 +60,15 @@ export interface GetResourceRequest {
   resource: string;
 }
 
-export interface GetSchema9Request {
+export interface GetResource1Request {
   resource: string;
 }
 
-export interface List33Request {
+export interface GetResourceSchemaRequest {
+  resource: string;
+}
+
+export interface ListResourcePluginsRequest {
   expand?: Array<string>;
 }
 
@@ -243,54 +243,6 @@ export class ResourceApi extends runtime.BaseAPI {
   }
 
   /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a resource plugin
-   */
-  async get34Raw(
-    requestParameters: Get34Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.resource === null || requestParameters.resource === undefined) {
-      throw new runtime.RequiredError(
-        'resource',
-        'Required parameter requestParameters.resource was null or undefined when calling get34.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/platform/plugins/resources/{resource}`.replace(`{${'resource'}}`, encodeURIComponent(String(requestParameters.resource))),
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * There is no particular permission needed. User must be authenticated.
-   * Get a resource plugin
-   */
-  async get34(requestParameters: Get34Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.get34Raw(requestParameters, initOverrides);
-  }
-
-  /**
    * User must have the DOMAIN_RESOURCE[READ] permission on the specified domain or DOMAIN_RESOURCE[READ] permission on the specified environment or DOMAIN_RESOURCE[READ] permission on the specified organization
    * Get a resource
    */
@@ -369,16 +321,64 @@ export class ResourceApi extends runtime.BaseAPI {
 
   /**
    * There is no particular permission needed. User must be authenticated.
-   * Get a resource plugin\'s schema
+   * Get a resource plugin
    */
-  async getSchema9Raw(
-    requestParameters: GetSchema9Request,
+  async getResource1Raw(
+    requestParameters: GetResource1Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.resource === null || requestParameters.resource === undefined) {
       throw new runtime.RequiredError(
         'resource',
-        'Required parameter requestParameters.resource was null or undefined when calling getSchema9.',
+        'Required parameter requestParameters.resource was null or undefined when calling getResource1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/platform/plugins/resources/{resource}`.replace(`{${'resource'}}`, encodeURIComponent(String(requestParameters.resource))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get a resource plugin
+   */
+  async getResource1(requestParameters: GetResource1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.getResource1Raw(requestParameters, initOverrides);
+  }
+
+  /**
+   * There is no particular permission needed. User must be authenticated.
+   * Get a resource plugin\'s schema
+   */
+  async getResourceSchemaRaw(
+    requestParameters: GetResourceSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.resource === null || requestParameters.resource === undefined) {
+      throw new runtime.RequiredError(
+        'resource',
+        'Required parameter requestParameters.resource was null or undefined when calling getResourceSchema.',
       );
     }
 
@@ -414,16 +414,19 @@ export class ResourceApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * Get a resource plugin\'s schema
    */
-  async getSchema9(requestParameters: GetSchema9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.getSchema9Raw(requestParameters, initOverrides);
+  async getResourceSchema(
+    requestParameters: GetResourceSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.getResourceSchemaRaw(requestParameters, initOverrides);
   }
 
   /**
    * There is no particular permission needed. User must be authenticated.
    * List resource plugins
    */
-  async list33Raw(
-    requestParameters: List33Request,
+  async listResourcePluginsRaw(
+    requestParameters: ListResourcePluginsRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     const queryParameters: any = {};
@@ -459,8 +462,11 @@ export class ResourceApi extends runtime.BaseAPI {
    * There is no particular permission needed. User must be authenticated.
    * List resource plugins
    */
-  async list33(requestParameters: List33Request = {}, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.list33Raw(requestParameters, initOverrides);
+  async listResourcePlugins(
+    requestParameters: ListResourcePluginsRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.listResourcePluginsRaw(requestParameters, initOverrides);
   }
 
   /**

@@ -65,7 +65,9 @@ public class GroupMembersResource extends AbstractResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Operation(summary = "List group members",
+    @Operation(
+            operationId = "listGroupMembers",
+            summary = "List group members",
             description = "User must have the ORGANIZATION_GROUP[READ] permission on the specified organization")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Group members successfully fetched",

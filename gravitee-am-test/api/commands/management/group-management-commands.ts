@@ -39,9 +39,9 @@ export const getGroupPage = (domainId, accessToken, page: number = null, size: n
     domain: domainId,
   };
   if (page !== null && size != null) {
-    return getGroupApi(accessToken).listGroups({ ...params, page: page, size: size });
+    return getGroupApi(accessToken).listDomainGroups({ ...params, page: page, size: size });
   }
-  return getGroupApi(accessToken).listGroups(params);
+  return getGroupApi(accessToken).listDomainGroups(params);
 };
 
 export const getAllGroups = (domainId, accessToken) => getGroupPage(domainId, accessToken);

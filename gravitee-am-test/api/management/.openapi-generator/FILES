@@ -194,6 +194,7 @@ models/PatchSecurityProfileSettings.ts
 models/PatchStepUpAuthentication.ts
 models/PreviewRequest.ts
 models/PreviewResponse.ts
+models/ProtectedResource.ts
 models/ProtectedResourceFeature.ts
 models/ProtectedResourcePage.ts
 models/ProtectedResourcePrimaryData.ts

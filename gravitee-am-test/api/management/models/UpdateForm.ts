@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { exists, mapValues } from '../runtime';
+import { mapValues } from '../runtime';
 /**
  *
  * @export
@@ -52,31 +52,40 @@ export interface UpdateForm {
   assets?: string;
 }
 
+/**
+ * Check if a given object implements the UpdateForm interface.
+ */
+export function instanceOfUpdateForm(value: object): value is UpdateForm {
+  return true;
+}
+
 export function UpdateFormFromJSON(json: any): UpdateForm {
   return UpdateFormFromJSONTyped(json, false);
 }
 
 export function UpdateFormFromJSONTyped(json: any, ignoreDiscriminator: boolean): UpdateForm {
-  if (json === undefined || json === null) {
+  if (json == null) {
     return json;
   }
   return {
-    enabled: !exists(json, 'enabled') ? undefined : json['enabled'],
-    content: !exists(json, 'content') ? undefined : json['content'],
-    assets: !exists(json, 'assets') ? undefined : json['assets'],
+    enabled: json['enabled'] == null ? undefined : json['enabled'],
+    content: json['content'] == null ? undefined : json['content'],
+    assets: json['assets'] == null ? undefined : json['assets'],
   };
 }
 
-export function UpdateFormToJSON(value?: UpdateForm | null): any {
-  if (value === undefined) {
-    return undefined;
+export function UpdateFormToJSON(json: any): UpdateForm {
+  return UpdateFormToJSONTyped(json, false);
+}
+
+export function UpdateFormToJSONTyped(value?: UpdateForm | null, ignoreDiscriminator: boolean = false): any {
+  if (value == null) {
+    return value;
   }
-  if (value === null) {
-    return null;
-  }
+
   return {
-    enabled: value.enabled,
-    content: value.content,
-    assets: value.assets,
+    enabled: value['enabled'],
+    content: value['content'],
+    assets: value['assets'],
   };
 }

@@ -45,11 +45,6 @@ import {
   UpdateRoleToJSON,
 } from '../models';
 
-export interface Create11Request {
-  organizationId: string;
-  newRole: NewRole;
-}
-
 export interface CreateRoleRequest {
   organizationId: string;
   environmentId: string;
@@ -57,15 +52,20 @@ export interface CreateRoleRequest {
   newRole: NewRole;
 }
 
-export interface Delete14Request {
+export interface CreateRole1Request {
   organizationId: string;
-  role: string;
+  newRole: NewRole;
 }
 
 export interface DeleteRoleRequest {
   organizationId: string;
   environmentId: string;
   domain: string;
+  role: string;
+}
+
+export interface DeleteRole1Request {
+  organizationId: string;
   role: string;
 }
 
@@ -85,20 +85,14 @@ export interface FindRolesRequest {
   q?: string;
 }
 
-export interface Get19Request {
+export interface GetRoleRequest {
   organizationId: string;
   role: string;
 }
 
-export interface List21Request {
+export interface ListRolesRequest {
   organizationId: string;
-  type?: List21TypeEnum;
-}
-
-export interface Update9Request {
-  organizationId: string;
-  role: string;
-  updateRole: UpdateRole;
+  type?: ListRolesTypeEnum;
 }
 
 export interface UpdateRoleRequest {
@@ -109,71 +103,16 @@ export interface UpdateRoleRequest {
   updateRole: UpdateRole;
 }
 
+export interface UpdateRole1Request {
+  organizationId: string;
+  role: string;
+  updateRole: UpdateRole;
+}
+
 /**
  *
  */
 export class RoleApi extends runtime.BaseAPI {
-  /**
-   * User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization
-   * Create a role for the organization
-   */
-  async create11Raw(
-    requestParameters: Create11Request,
-    initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling create11.',
-      );
-    }
-
-    if (requestParameters.newRole === null || requestParameters.newRole === undefined) {
-      throw new runtime.RequiredError(
-        'newRole',
-        'Required parameter requestParameters.newRole was null or undefined when calling create11.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/roles`.replace(
-          `{${'organizationId'}}`,
-          encodeURIComponent(String(requestParameters.organizationId)),
-        ),
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: NewRoleToJSON(requestParameters.newRole),
-      },
-      initOverrides,
-    );
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   * User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization
-   * Create a role for the organization
-   */
-  async create11(requestParameters: Create11Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.create11Raw(requestParameters, initOverrides);
-  }
-
   /**
    * User must have the DOMAIN_ROLE[CREATE] permission on the specified domain or DOMAIN_ROLE[CREATE] permission on the specified environment or DOMAIN_ROLE[CREATE] permission on the specified organization
    * Create a role
@@ -251,27 +190,32 @@ export class RoleApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
-   * Delete a plaform role
+   * User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization
+   * Create a role for the organization
    */
-  async delete14Raw(
-    requestParameters: Delete14Request,
+  async createRole1Raw(
+    requestParameters: CreateRole1Request,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<void>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling delete14.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling createRole1.',
       );
     }
 
-    if (requestParameters.role === null || requestParameters.role === undefined) {
-      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling delete14.');
+    if (requestParameters.newRole === null || requestParameters.newRole === undefined) {
+      throw new runtime.RequiredError(
+        'newRole',
+        'Required parameter requestParameters.newRole was null or undefined when calling createRole1.',
+      );
     }
 
     const queryParameters: any = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
 
     if (this.configuration && this.configuration.accessToken) {
       const token = this.configuration.accessToken;
@@ -283,12 +227,14 @@ export class RoleApi extends runtime.BaseAPI {
     }
     const response = await this.request(
       {
-        path: `/organizations/{organizationId}/roles/{role}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'role'}}`, encodeURIComponent(String(requestParameters.role))),
-        method: 'DELETE',
+        path: `/organizations/{organizationId}/roles`.replace(
+          `{${'organizationId'}}`,
+          encodeURIComponent(String(requestParameters.organizationId)),
+        ),
+        method: 'POST',
         headers: headerParameters,
         query: queryParameters,
+        body: NewRoleToJSON(requestParameters.newRole),
       },
       initOverrides,
     );
@@ -297,11 +243,11 @@ export class RoleApi extends runtime.BaseAPI {
   }
 
   /**
-   * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
-   * Delete a plaform role
+   * User must have the ORGANIZATION_ROLE[CREATE] permission on the specified organization
+   * Create a role for the organization
    */
-  async delete14(requestParameters: Delete14Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
-    await this.delete14Raw(requestParameters, initOverrides);
+  async createRole1(requestParameters: CreateRole1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.createRole1Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -372,6 +318,60 @@ export class RoleApi extends runtime.BaseAPI {
    */
   async deleteRole(requestParameters: DeleteRoleRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
     await this.deleteRoleRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
+   * Delete a plaform role
+   */
+  async deleteRole1Raw(
+    requestParameters: DeleteRole1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling deleteRole1.',
+      );
+    }
+
+    if (requestParameters.role === null || requestParameters.role === undefined) {
+      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling deleteRole1.');
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/roles/{role}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'role'}}`, encodeURIComponent(String(requestParameters.role))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[DELETE] permission on the specified organization
+   * Delete a plaform role
+   */
+  async deleteRole1(requestParameters: DeleteRole1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<void> {
+    await this.deleteRole1Raw(requestParameters, initOverrides);
   }
 
   /**
@@ -524,19 +524,19 @@ export class RoleApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ROLE[READ] permission on the specified organization
    * Get a platform role
    */
-  async get19Raw(
-    requestParameters: Get19Request,
+  async getRoleRaw(
+    requestParameters: GetRoleRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<RoleEntity>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling get19.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getRole.',
       );
     }
 
     if (requestParameters.role === null || requestParameters.role === undefined) {
-      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling get19.');
+      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling getRole.');
     }
 
     const queryParameters: any = {};
@@ -570,8 +570,8 @@ export class RoleApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ROLE[READ] permission on the specified organization
    * Get a platform role
    */
-  async get19(requestParameters: Get19Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
-    const response = await this.get19Raw(requestParameters, initOverrides);
+  async getRole(requestParameters: GetRoleRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
+    const response = await this.getRoleRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -579,14 +579,14 @@ export class RoleApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.
    * List registered roles of the organization
    */
-  async list21Raw(
-    requestParameters: List21Request,
+  async listRolesRaw(
+    requestParameters: ListRolesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
   ): Promise<runtime.ApiResponse<Array<RoleEntity>>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling list21.',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listRoles.',
       );
     }
 
@@ -626,73 +626,11 @@ export class RoleApi extends runtime.BaseAPI {
    * User must have the ORGANIZATION_ROLE[LIST] permission on the specified organization. Each returned role is filtered and contains only basic information such as id, name, isSystem and assignableType.
    * List registered roles of the organization
    */
-  async list21(requestParameters: List21Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Array<RoleEntity>> {
-    const response = await this.list21Raw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization
-   * Update a platform role
-   */
-  async update9Raw(
-    requestParameters: Update9Request,
+  async listRoles(
+    requestParameters: ListRolesRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<RoleEntity>> {
-    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
-      throw new runtime.RequiredError(
-        'organizationId',
-        'Required parameter requestParameters.organizationId was null or undefined when calling update9.',
-      );
-    }
-
-    if (requestParameters.role === null || requestParameters.role === undefined) {
-      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling update9.');
-    }
-
-    if (requestParameters.updateRole === null || requestParameters.updateRole === undefined) {
-      throw new runtime.RequiredError(
-        'updateRole',
-        'Required parameter requestParameters.updateRole was null or undefined when calling update9.',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    if (this.configuration && this.configuration.accessToken) {
-      const token = this.configuration.accessToken;
-      const tokenString = await token('gravitee-auth', []);
-
-      if (tokenString) {
-        headerParameters['Authorization'] = `Bearer ${tokenString}`;
-      }
-    }
-    const response = await this.request(
-      {
-        path: `/organizations/{organizationId}/roles/{role}`
-          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
-          .replace(`{${'role'}}`, encodeURIComponent(String(requestParameters.role))),
-        method: 'PUT',
-        headers: headerParameters,
-        query: queryParameters,
-        body: UpdateRoleToJSON(requestParameters.updateRole),
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => RoleEntityFromJSON(jsonValue));
-  }
-
-  /**
-   * User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization
-   * Update a platform role
-   */
-  async update9(requestParameters: Update9Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
-    const response = await this.update9Raw(requestParameters, initOverrides);
+  ): Promise<Array<RoleEntity>> {
+    const response = await this.listRolesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
@@ -776,16 +714,81 @@ export class RoleApi extends runtime.BaseAPI {
     const response = await this.updateRoleRaw(requestParameters, initOverrides);
     return await response.value();
   }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization
+   * Update a platform role
+   */
+  async updateRole1Raw(
+    requestParameters: UpdateRole1Request,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<RoleEntity>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling updateRole1.',
+      );
+    }
+
+    if (requestParameters.role === null || requestParameters.role === undefined) {
+      throw new runtime.RequiredError('role', 'Required parameter requestParameters.role was null or undefined when calling updateRole1.');
+    }
+
+    if (requestParameters.updateRole === null || requestParameters.updateRole === undefined) {
+      throw new runtime.RequiredError(
+        'updateRole',
+        'Required parameter requestParameters.updateRole was null or undefined when calling updateRole1.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/roles/{role}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'role'}}`, encodeURIComponent(String(requestParameters.role))),
+        method: 'PUT',
+        headers: headerParameters,
+        query: queryParameters,
+        body: UpdateRoleToJSON(requestParameters.updateRole),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => RoleEntityFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the ORGANIZATION_ROLE[UPDATE] permission on the specified organization
+   * Update a platform role
+   */
+  async updateRole1(requestParameters: UpdateRole1Request, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<RoleEntity> {
+    const response = await this.updateRole1Raw(requestParameters, initOverrides);
+    return await response.value();
+  }
 }
 
 /**
  * @export
  */
-export const List21TypeEnum = {
+export const ListRolesTypeEnum = {
   Platform: 'PLATFORM',
   Domain: 'DOMAIN',
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
 } as const;
-export type List21TypeEnum = typeof List21TypeEnum[keyof typeof List21TypeEnum];
+export type ListRolesTypeEnum = typeof ListRolesTypeEnum[keyof typeof ListRolesTypeEnum];
