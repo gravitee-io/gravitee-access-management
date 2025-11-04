@@ -49,6 +49,7 @@ import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -147,8 +148,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         var rawSecret = hasLength(newProtectedResource.getClientSecret()) ? newProtectedResource.getClientSecret() : SecureRandomString.generate();
 
         toCreate.setId(RandomString.generate());
-        toCreate.setName(newProtectedResource.getName());
-        toCreate.setDescription(newProtectedResource.getDescription());
+        toCreate.setName(StringUtils.trimToNull(newProtectedResource.getName()));
+        toCreate.setDescription(StringUtils.trimToNull(newProtectedResource.getDescription()));
         toCreate.setResourceIdentifiers(newProtectedResource.getResourceIdentifiers().stream().map(String::trim).map(String::toLowerCase).toList());
         toCreate.setClientId(hasLength(newProtectedResource.getClientId()) ? newProtectedResource.getClientId() : SecureRandomString.generate());
 
@@ -195,8 +196,8 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
 
                     // Build the updated resource
                     ProtectedResource toUpdate = new ProtectedResource(oldProtectedResource);
-                    toUpdate.setName(updateProtectedResource.getName());
-                    toUpdate.setDescription(updateProtectedResource.getDescription());
+                    toUpdate.setName(StringUtils.trimToNull(updateProtectedResource.getName()));
+                    toUpdate.setDescription(StringUtils.trimToNull(updateProtectedResource.getDescription()));
                     toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers().stream()
                             .map(String::trim)
                             .map(String::toLowerCase)
