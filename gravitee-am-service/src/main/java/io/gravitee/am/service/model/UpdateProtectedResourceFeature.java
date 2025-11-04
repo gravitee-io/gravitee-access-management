@@ -22,6 +22,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -43,11 +44,9 @@ public class UpdateProtectedResourceFeature {
 
     public ProtectedResourceFeature asFeature(){
         ProtectedResourceFeature feature = new ProtectedResourceFeature();
-        feature.setKey(getKey());
-        feature.setDescription(getDescription());
+        feature.setKey(StringUtils.trimToNull(getKey()));
+        feature.setDescription(StringUtils.trimToNull(getDescription()));
         return feature;
     }
-
-
 }
 

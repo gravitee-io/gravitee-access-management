@@ -15,7 +15,7 @@
  */
 import { Component, ElementRef, Inject, Injectable, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { UntypedFormControl } from '@angular/forms';
+import { UntypedFormControl, FormControl, Validators } from '@angular/forms';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 
 interface NewTool {
@@ -57,6 +57,8 @@ export class DomainNewMcpServerToolDialogComponent {
   };
   filteredScopes: any[];
   scopeCtrl = new UntypedFormControl();
+  toolNameCtrl: FormControl<string>;
+  toolDescriptionCtrl: FormControl<string>;
   isEditMode: boolean;
 
   constructor(
@@ -73,6 +75,20 @@ export class DomainNewMcpServerToolDialogComponent {
       };
     }
 
+    // Initialize form controls with validation
+    this.toolNameCtrl = new FormControl(this.newTool.name || '', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_-]+$/)]);
+
+    this.toolDescriptionCtrl = new FormControl(this.newTool.description || '');
+
+    // Sync form controls with tool object
+    this.toolNameCtrl.valueChanges.subscribe((value) => {
+      this.newTool.name = value || '';
+    });
+
+    this.toolDescriptionCtrl.valueChanges.subscribe((value) => {
+      this.newTool.description = value || '';
+    });
+
     this.scopeCtrl.valueChanges.subscribe((searchTerm: string) => {
       if (typeof searchTerm === 'string') {
         this.filteredScopes = data.scopes.filter((scope) => {
@@ -84,7 +100,17 @@ export class DomainNewMcpServerToolDialogComponent {
   }
 
   accept(): void {
+    // Validate form before accepting
+    if (this.toolNameCtrl.invalid) {
+      this.toolNameCtrl.markAsTouched();
+      return;
+    }
+
     this.dialogRef.close(this.newTool);
+  }
+
+  isFormValid(): boolean {
+    return this.toolNameCtrl.valid;
   }
 
   close(): void {
