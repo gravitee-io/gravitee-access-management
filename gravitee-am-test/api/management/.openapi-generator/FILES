@@ -1,3 +1,4 @@
+.openapi-generator-ignore
 apis/AlertsApi.ts
 apis/ApplicationApi.ts
 apis/AuditApi.ts
@@ -121,7 +122,6 @@ models/JWK.ts
 models/JWKSet.ts
 models/LoginSettings.ts
 models/MFASettings.ts
-models/McpToolFeature.ts
 models/Membership.ts
 models/MembershipListItem.ts
 models/ModifiedCertificateEntity.ts
@@ -194,7 +194,6 @@ models/PatchSecurityProfileSettings.ts
 models/PatchStepUpAuthentication.ts
 models/PreviewRequest.ts
 models/PreviewResponse.ts
-models/ProtectedResource.ts
 models/ProtectedResourceFeature.ts
 models/ProtectedResourcePage.ts
 models/ProtectedResourcePrimaryData.ts

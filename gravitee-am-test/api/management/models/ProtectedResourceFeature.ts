@@ -25,7 +25,7 @@
 
 /* tslint:disable */
 /* eslint-disable */
-import { type McpToolFeature, McpToolFeatureFromJSONTyped, McpToolFeatureToJSON, McpToolFeatureToJSONTyped } from './McpToolFeature';
+import { mapValues } from '../runtime';
 /**
  *
  * @export

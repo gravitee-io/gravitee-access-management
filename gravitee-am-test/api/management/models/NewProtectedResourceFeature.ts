@@ -54,16 +54,6 @@ export interface NewProtectedResourceFeature {
   type: string;
 }
 
-
-/**
- * @export
- */
-export const NewProtectedResourceFeatureTypeEnum = {
-    McpTool: 'MCP_TOOL'
-} as const;
-export type NewProtectedResourceFeatureTypeEnum = typeof NewProtectedResourceFeatureTypeEnum[keyof typeof NewProtectedResourceFeatureTypeEnum];
-
-
 /**
  * Check if a given object implements the NewProtectedResourceFeature interface.
  */
