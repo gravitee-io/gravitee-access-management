@@ -22,8 +22,9 @@ import {NewProtectedResource} from "@management-models/NewProtectedResource";
 import {UpdateProtectedResource} from "@management-models/UpdateProtectedResource";
 import {UpdateMcpTool} from "@management-models/UpdateMcpTool";
 import {NewMcpTool} from "@management-models/NewMcpTool";
-import {McpToolFeature} from "@management-models/McpToolFeature";
+import {UpdateProtectedResourceFeature} from "@management-models/UpdateProtectedResourceFeature";
 import {ProtectedResourceFeature} from "@management-models/ProtectedResourceFeature";
+import {McpTool} from "@management-models/McpTool";
 
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
 import { deleteDomain, setupDomainForTest, waitFor } from '@management-commands/domain-management-commands';
@@ -47,8 +48,63 @@ function generateValidProtectedResourceName(): string {
     return `test-${faker.datatype.number({min: 1000, max: 9999})}-${faker.commerce.productName()}`;
 }
 
-function isMcpToolFeature(feature: ProtectedResourceFeature): feature is McpToolFeature {
+function isMcpToolFeature(feature: ProtectedResourceFeature): feature is McpTool {
     return feature.type === 'MCP_TOOL' || feature.type === 'mcp_tool';
+}
+
+// Constants
+const RESOURCE_SYNC_WAIT_MS = 2000;
+
+// Helper function for error handling
+async function expectErrorStatus(promise: Promise<any>, expectedStatus: number): Promise<void> {
+    await promise.catch((err) => {
+        // Use toEqual for consistent comparison (works for both toEqual and toBe cases)
+        expect(err.response.status).toEqual(expectedStatus);
+    });
+}
+
+// Helper function to create and sync a protected resource
+async function createAndSyncProtectedResource(
+    domainId: string,
+    accessToken: string,
+    request: NewProtectedResource
+): Promise<any> {
+    const created = await createProtectedResource(domainId, accessToken, request);
+    expect(created).toBeDefined();
+    expect(created.id).toBeDefined();
+    await waitFor(RESOURCE_SYNC_WAIT_MS);
+    const createdResource = await getMcpServer(domainId, accessToken, created.id);
+    expect(createdResource).toBeDefined();
+    return createdResource;
+}
+
+// Helper function to create test scopes
+async function createTestScopes(
+    domainId: string,
+    accessToken: string,
+    prefix: string
+): Promise<{ scope1: any; scope2: any }> {
+    const scope1 = await createScope(domainId, accessToken, {
+        key: `${prefix}_scope_1`,
+        name: `${prefix.charAt(0).toUpperCase() + prefix.slice(1)} Test Scope 1`,
+        description: `Test scope for ${prefix}`,
+    });
+    const scope2 = await createScope(domainId, accessToken, {
+        key: `${prefix}_scope_2`,
+        name: `${prefix.charAt(0).toUpperCase() + prefix.slice(1)} Test Scope 2`,
+        description: `Another test scope for ${prefix}`,
+    });
+    return { scope1, scope2 };
+}
+
+// Helper function to map features for update
+function mapFeaturesForUpdate(features: ProtectedResourceFeature[]): UpdateMcpTool[] {
+    return features.map((f) => ({
+        key: f.key,
+        description: f.description,
+        type: 'MCP_TOOL',
+        scopes: isMcpToolFeature(f) ? f.scopes || [] : [],
+    } as UpdateMcpTool));
 }
 
 globalThis.fetch = fetch;
@@ -95,13 +151,61 @@ describe('When creating protected resource', () => {
                 }]
         } as NewProtectedResource;
 
-    const createdResource = await createProtectedResource(domain.id, accessToken, request);
-    expect(createdResource).toBeDefined();
-    expect(createdResource.id).toBeDefined();
-    expect(createdResource.name).toEqual(request.name);
-    expect(createdResource.clientSecret).toBeDefined();
-    expect(createdResource.clientId).toBeDefined();
-  });
+        const createdResource = await createProtectedResource(domain.id, accessToken, request);
+        expect(createdResource).toBeDefined();
+        expect(createdResource.id).toBeDefined();
+        expect(createdResource.name).toEqual(request.name);
+        expect(createdResource.clientSecret).toBeDefined();
+        expect(createdResource.clientSecret.length).toBeGreaterThan(0);
+        expect(createdResource.clientId).toBeDefined();
+        expect(createdResource.clientId.length).toBeGreaterThan(0);
+    });
+
+    it('New Protected Resource should be created with scopes', async () => {
+        // Create test scopes first
+        await createScope(domain.id, accessToken, {
+            key: 'create_test_scope_1',
+            name: 'Create Test Scope 1',
+            description: 'Test scope for protected resource creation',
+        });
+        await createScope(domain.id, accessToken, {
+            key: 'create_test_scope_2',
+            name: 'Create Test Scope 2',
+            description: 'Another test scope for creation',
+        });
+
+        const request = {
+            name: `Test MCP Server with Scopes ${faker.datatype.number({min: 1000, max: 9999})}`,
+            type: "MCP_SERVER",
+            resourceIdentifiers: ["https://create-scopes-test.com"],
+            features: [
+                {
+                    key: 'tool_with_scopes',
+                    type: 'MCP_TOOL' as const,
+                    description: 'Tool with scopes',
+                    scopes: ['create_test_scope_1', 'create_test_scope_2']
+                } as NewMcpTool
+            ]
+        } as NewProtectedResource;
+
+        const createdSecret = await createProtectedResource(domain.id, accessToken, request);
+        expect(createdSecret).toBeDefined();
+        expect(createdSecret.id).toBeDefined();
+
+        // Wait for resource to be fully synced
+        await waitFor(RESOURCE_SYNC_WAIT_MS);
+
+        // Fetch the full resource details to verify scopes are present
+        const fetchedResource = await getMcpServer(domain.id, accessToken, createdSecret.id);
+        expect(fetchedResource).toBeDefined();
+        expect(fetchedResource.features).toHaveLength(1);
+        
+        const firstFeature = fetchedResource.features[0] as McpTool;
+        expect(firstFeature.type).toMatch(/^mcp_tool$/i);
+        expect(firstFeature.scopes).toHaveLength(2);
+        expect(firstFeature.scopes).toContain('create_test_scope_1');
+        expect(firstFeature.scopes).toContain('create_test_scope_2');
+    });
 
     it('New Protected Resource should be created with set clientId', async () => {
         const request = {
@@ -116,6 +220,7 @@ describe('When creating protected resource', () => {
     expect(createdResource.id).toBeDefined();
     expect(createdResource.name).toEqual(request.name);
     expect(createdResource.clientSecret).toBeDefined();
+    expect(createdResource.clientSecret.length).toBeGreaterThan(0);
     expect(createdResource.clientId).toEqual(request.clientId);
   });
 
@@ -133,7 +238,9 @@ describe('When creating protected resource', () => {
     expect(createdResource.id).toBeDefined();
     expect(createdResource.name).toEqual(request.name);
     expect(createdResource.clientSecret).toEqual(request.clientSecret);
+    expect(createdResource.clientSecret.length).toBeGreaterThan(0);
     expect(createdResource.clientId).toEqual(request.clientId);
+    expect(createdResource.clientId.length).toBeGreaterThan(0);
   });
 
     it('Protected Resource must not be created with same clientId', async () => {
@@ -150,9 +257,11 @@ describe('When creating protected resource', () => {
     expect(createdResource.id).toBeDefined();
     expect(createdResource.name).toEqual(request.name);
     expect(createdResource.clientSecret).toEqual(request.clientSecret);
+    expect(createdResource.clientSecret.length).toBeGreaterThan(0);
     expect(createdResource.clientId).toEqual(request.clientId);
+    expect(createdResource.clientId.length).toBeGreaterThan(0);
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created with same clientId in application', async () => {
@@ -173,7 +282,7 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://something6.com"]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created without type', async () => {
@@ -182,7 +291,7 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://something7.com", "https://something8.com"]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created with wrong type', async () => {
@@ -192,7 +301,7 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://something9.com", "https://something10.com"]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created with wrong resource identifier', async () => {
@@ -202,7 +311,7 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["something", "https://something11.com"]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created if resourceIdentifier already exists', async () => {
@@ -215,8 +324,7 @@ describe('When creating protected resource', () => {
     const first = await createProtectedResource(domain.id, accessToken, request);
     expect(first.id).toBeDefined();
 
-        await createProtectedResource(domain.id, accessToken, request)
-            .catch(err => expect(err.response.status).toEqual(400))
+        await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400)
     });
     it('Protected Resource resource identifier http(s)://localhost is correct', async () => {
         const httpsRequest = {
@@ -245,7 +353,7 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: [" https://toTrimDomain.com   "]
         } as NewProtectedResource;
 
-    createProtectedResource(domain.id, accessToken, badRequest).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, badRequest), 400);
 
         const correctRequest = {
             name: generateValidProtectedResourceName(),
@@ -262,8 +370,7 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://tolowercasedomain.com"]
         } as NewProtectedResource;
 
-        createProtectedResource(domain.id, accessToken, anotherCorrectRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await expectErrorStatus(createProtectedResource(domain.id, accessToken, anotherCorrectRequest), 400);
     });
 
   it('Protected Resource can introspect token', async () => {
@@ -343,7 +450,7 @@ describe('When creating protected resource', () => {
             ]
         } as unknown as NewProtectedResource; // Type assertion needed to bypass TypeScript's enum validation for testing invalid data
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created when feature type is missing', async () => {
@@ -358,7 +465,7 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created when keys are duplicated', async () => {
@@ -378,7 +485,7 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created when key is missing', async () => {
@@ -397,7 +504,7 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
     it('Protected Resource must not be created when key doesnt follow regex pattern', async () => {
@@ -416,7 +523,7 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
 
         const request2 = {
             name: generateValidProtectedResourceName(),
@@ -433,7 +540,7 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await createProtectedResource(domain.id, accessToken, request2).catch((err) => expect(err.response.status).toEqual(400));
+    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request2), 400);
   });
 });
 
@@ -525,17 +632,7 @@ describe('When updating protected resource', () => {
 
     beforeAll(async () => {
         // Create test scopes for validation
-        await createScope(domain.id, accessToken, {
-            key: 'test_scope_1',
-            name: 'Test Scope 1',
-            description: 'Test scope for protected resource updates',
-        });
-
-        await createScope(domain.id, accessToken, {
-            key: 'test_scope_2',
-            name: 'Test Scope 2',
-            description: 'Another test scope',
-        });
+        await createTestScopes(domain.id, accessToken, 'test');
 
 
         // Create a protected resource to update
@@ -555,18 +652,7 @@ describe('When updating protected resource', () => {
         } as NewProtectedResource;
 
 
-        const createdSecret = await createProtectedResource(domain.id, accessToken, request);
-        expect(createdSecret).toBeDefined();
-        expect(createdSecret.id).toBeDefined();
-
-
-        // Wait for resource to be fully synced
-        await waitFor(2000);
-
-
-        // Fetch the full resource details
-        createdResource = await getMcpServer(domain.id, accessToken, createdSecret.id);
-        expect(createdResource).toBeDefined();
+        createdResource = await createAndSyncProtectedResource(domain.id, accessToken, request);
         expect(createdResource.resourceIdentifiers).toBeDefined();
     });
 
@@ -576,12 +662,7 @@ describe('When updating protected resource', () => {
             name: "Updated Protected Resource Name",
             description: "Updated description",
             resourceIdentifiers: createdResource.resourceIdentifiers,
-            features: createdResource.features.map((f) => ({
-                key: f.key,
-                description: f.description,
-                type: 'MCP_TOOL',
-                scopes: isMcpToolFeature(f) ? f.scopes || [] : []
-            }))
+            features: mapFeaturesForUpdate(createdResource.features)
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -639,8 +720,8 @@ describe('When updating protected resource', () => {
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
 
         expect(updated).toBeDefined();
-        expect(updated.features[0]).toBeDefined();
-        const firstFeature = updated.features[0] as McpToolFeature;
+        expect(updated.features).toHaveLength(1);
+        const firstFeature = updated.features[0] as McpTool;
         expect(firstFeature.type).toMatch(/^mcp_tool$/i);
         expect(firstFeature.scopes).toHaveLength(2);
         expect(firstFeature.scopes).toContain('test_scope_1');
@@ -710,12 +791,7 @@ describe('When updating protected resource', () => {
             name: createdResource.name,
             description: createdResource.description,
             resourceIdentifiers: ['https://new-uri.com'],
-            features: createdResource.features.map((f) => ({
-                key: f.key,
-                description: f.description,
-                type: 'MCP_TOOL',
-                scopes: isMcpToolFeature(f) ? f.scopes || [] : []
-            }))
+            features: mapFeaturesForUpdate(createdResource.features)
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -748,8 +824,9 @@ describe('When updating protected resource', () => {
             ],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
-            expect(err.response.status).toEqual(400),
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest),
+            400,
         );
     });
 
@@ -768,8 +845,11 @@ describe('When updating protected resource', () => {
             ],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
-            expect(err.response.status).toEqual(500),
+        // Invalid scope should return 400 (Bad Request) - InvalidProtectedResourceException
+        // This is correct behavior after OAuth2Exception fix
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest),
+            400,
         );
     });
 
@@ -784,8 +864,10 @@ describe('When updating protected resource', () => {
         // If user lacks permission: 403 (Forbidden) - permission check fails first
         // If user has permission but resource doesn't exist: 404 (Not Found) - would be returned after permission check passes
         // In this test, we expect 403 because permission check happens before existence check
-        await updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest)
-            .catch(err => expect(err.response.status).toEqual(403));
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest),
+            403,
+        );
     });
 
     it('Should fail when updating with duplicate resource identifier', async () => {
@@ -803,16 +885,12 @@ describe('When updating protected resource', () => {
             name: createdResource.name,
             description: createdResource.description,
             resourceIdentifiers: ['https://other-resource.com'],
-            features: createdResource.features.map((f) => ({
-                key: f.key,
-                description: f.description,
-                type: 'MCP_TOOL',
-                scopes: isMcpToolFeature(f) ? f.scopes || [] : []
-            }))
+            features: mapFeaturesForUpdate(createdResource.features)
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
-            expect(err.response.status).toEqual(400),
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest),
+            400,
         );
     });
 
@@ -821,12 +899,7 @@ describe('When updating protected resource', () => {
             name: createdResource.name,
             description: createdResource.description,
             resourceIdentifiers: ['https://MixedCaseUri.COM'],
-            features: createdResource.features.map((f) => ({
-                key: f.key,
-                description: f.description,
-                type: 'MCP_TOOL',
-                scopes: isMcpToolFeature(f) ? f.scopes || [] : []
-            }))
+            features: mapFeaturesForUpdate(createdResource.features)
         } as UpdateProtectedResource;
 
         const updated = await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest);
@@ -838,7 +911,8 @@ describe('When updating protected resource', () => {
     it('Should preserve createdAt when updating existing tool (same key)', async () => {
         // Get the current tool's createdAt (key is 'updated_tool_name' from previous test)
         const before = await getMcpServer(domain.id, accessToken, createdResource.id);
-        const originalCreatedAt = before.features?.[0]?.createdAt ?? null;
+        const originalCreatedAt = before.features?.[0]?.createdAt;
+        expect(originalCreatedAt).toBeDefined();
 
         await waitFor(1000); // Ensure time passes
 
@@ -861,9 +935,8 @@ describe('When updating protected resource', () => {
 
         expect(updated).toBeDefined();
         expect(updated.features[0].createdAt).toBeDefined();
-        if (originalCreatedAt) {
-            expect(updated.features[0].createdAt).toEqual(originalCreatedAt);
-        }
+        // Compare timestamps since createdAt is a Date object - should be preserved when key matches
+        expect(updated.features[0].createdAt?.getTime()).toEqual(originalCreatedAt?.getTime());
         expect(updated.features[0].updatedAt).toBeDefined();
     });
 
@@ -916,8 +989,9 @@ describe('When updating protected resource', () => {
             ],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpaces).catch((err) =>
-            expect(err.response.status).toEqual(400),
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpaces),
+            400,
         );
     });
     it('Should fail when updating with special characters in tool key', async () => {
@@ -936,8 +1010,9 @@ describe('When updating protected resource', () => {
             ],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpecialChars).catch((err) =>
-            expect(err.response.status).toEqual(400),
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpecialChars),
+            400,
         );
     });
 
@@ -961,9 +1036,8 @@ describe('When updating protected resource', () => {
         expect(updated).toBeDefined();
         expect(updated.features[0].key).toEqual('tool_no_scopes');
         expect(updated.features[0].type).toMatch(/^mcp_tool$/i);
-        const firstFeature = updated.features[0] as McpToolFeature;
-        expect(Array.isArray(firstFeature.scopes)).toBeTruthy();
-        expect(firstFeature.scopes?.length).toEqual(0);
+        const firstFeature = updated.features[0] as McpTool;
+        expect(firstFeature.scopes).toHaveLength(0);
     });
 
     it('Should update resource with multiple tools', async () => {
@@ -1001,7 +1075,7 @@ describe('When updating protected resource', () => {
         expect(updated.features[0].key).toEqual('tool_1');
         expect(updated.features[1].key).toEqual('tool_2');
         expect(updated.features[2].key).toEqual('tool_3');
-        const tool3Feature = updated.features[2] as McpToolFeature;
+        const tool3Feature = updated.features[2] as McpTool;
         expect(tool3Feature.type).toMatch(/^mcp_tool$/i);
         expect(tool3Feature.scopes).toHaveLength(2);
         expect(tool3Feature.scopes).toContain('test_scope_1');
@@ -1015,8 +1089,9 @@ describe('When updating protected resource', () => {
             features: [],
         } as any;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, missingName).catch((err) =>
-            expect(err.response.status).toEqual(400),
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, missingName),
+            400,
         );
     });
 
@@ -1027,8 +1102,9 @@ describe('When updating protected resource', () => {
             features: [],
         } as any;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, missingIdentifiers).catch((err) =>
-            expect(err.response.status).toEqual(400),
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, missingIdentifiers),
+            400,
         );
     });
 
@@ -1040,8 +1116,9 @@ describe('When updating protected resource', () => {
             features: [],
         } as UpdateProtectedResource;
 
-        await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
-            expect(err.response.status).toEqual(400),
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest),
+            400,
         );
     });
 
@@ -1052,17 +1129,9 @@ describe('When updating protected resource', () => {
 
         beforeAll(async () => {
             // Create test scopes
-            testScope1 = await createScope(domain.id, accessToken, {
-                key: 'delete_test_scope_1',
-                name: 'Delete Test Scope 1',
-                description: 'Scope for delete tests'
-            });
-
-            testScope2 = await createScope(domain.id, accessToken, {
-                key: 'delete_test_scope_2',
-                name: 'Delete Test Scope 2',
-                description: 'Another scope for delete tests'
-            });
+            const { scope1, scope2 } = await createTestScopes(domain.id, accessToken, 'delete_test');
+            testScope1 = scope1;
+            testScope2 = scope2;
 
             // Create a protected resource with multiple tools
             const request = {
@@ -1092,14 +1161,7 @@ describe('When updating protected resource', () => {
                 ]
             } as NewProtectedResource;
 
-            const created = await createProtectedResource(domain.id, accessToken, request);
-            expect(created).toBeDefined();
-            expect(created.id).toBeDefined();
-
-            await waitFor(2000);
-
-            resourceWithTools = await getMcpServer(domain.id, accessToken, created.id);
-            expect(resourceWithTools).toBeDefined();
+            resourceWithTools = await createAndSyncProtectedResource(domain.id, accessToken, request);
             expect(resourceWithTools.features).toHaveLength(3);
         });
 
@@ -1124,8 +1186,8 @@ describe('When updating protected resource', () => {
             expect(updated).toBeDefined();
             expect(updated.features).toHaveLength(2);
             expect(updated.features.find(f => f.key === 'tool_to_delete_1')).toBeUndefined();
-            expect(updated.features.find(f => f.key === 'tool_to_keep')).toBeDefined();
-            expect(updated.features.find(f => f.key === 'tool_to_delete_2')).toBeDefined();
+            expect(updated.features.some(f => f.key === 'tool_to_keep')).toBeTruthy();
+            expect(updated.features.some(f => f.key === 'tool_to_delete_2')).toBeTruthy();
             expect(updated.updatedAt).not.toEqual(resourceWithTools.updatedAt);
         });
 
@@ -1222,12 +1284,10 @@ describe('When updating protected resource', () => {
                 ]
             } as NewProtectedResource;
 
-            const created = await createProtectedResource(domain.id, accessToken, request);
-            await waitFor(2000);
-
-            const before = await getMcpServer(domain.id, accessToken, created.id);
+            const before = await createAndSyncProtectedResource(domain.id, accessToken, request);
             const originalUpdatedAt = before.updatedAt;
             const tool1CreatedAt = before.features.find(f => f.key === 'timestamp_tool_1')?.createdAt;
+            expect(tool1CreatedAt).toBeDefined();
 
             await waitFor(500); // Ensure time difference
 
@@ -1246,7 +1306,7 @@ describe('When updating protected resource', () => {
                 ]
             } as UpdateProtectedResource;
 
-            const updated = await updateProtectedResource(domain.id, accessToken, created.id, updateRequest);
+            const updated = await updateProtectedResource(domain.id, accessToken, before.id, updateRequest);
 
             expect(updated).toBeDefined();
             expect(updated.features).toHaveLength(1);
@@ -1255,9 +1315,9 @@ describe('When updating protected resource', () => {
             // The remaining tool should keep its original createdAt
             const remainingTool = updated.features.find(f => f.key === 'timestamp_tool_1');
             expect(remainingTool).toBeDefined();
-            if (tool1CreatedAt && remainingTool.createdAt) {
-                expect(remainingTool.createdAt).toEqual(tool1CreatedAt);
-            }
+            expect(remainingTool.createdAt).toBeDefined();
+            // Compare timestamps since createdAt is a Date object - should be preserved when key matches
+            expect(remainingTool.createdAt?.getTime()).toEqual(tool1CreatedAt?.getTime());
         });
 
         it('Should delete tool with special scope configurations', async () => {
@@ -1353,8 +1413,12 @@ describe('When updating protected resource', () => {
             } as UpdateProtectedResource;
 
             // Should fail because remaining tool has invalid scope
-            await updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
-                .catch(err => expect(err.response.status).toEqual(500));
+            // Invalid scope should return 400 (Bad Request) - InvalidProtectedResourceException
+            // This is correct behavior after OAuth2Exception fix
+            await expectErrorStatus(
+                updateProtectedResource(domain.id, accessToken, created.id, updateRequest),
+                400,
+            );
         });
 
         it('Should not allow duplicate keys when deleting and re-adding', async () => {
@@ -1406,8 +1470,11 @@ describe('When updating protected resource', () => {
             } as UpdateProtectedResource;
 
         // Should fail due to duplicate keys
-        await updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await expectErrorStatus(
+            updateProtectedResource(domain.id, accessToken, created.id, updateRequest),
+            400,
+        );
+    });
     });
 });
 
@@ -1416,17 +1483,7 @@ describe('When patching protected resource', () => {
 
     beforeAll(async () => {
         // Create test scopes for validation
-        await createScope(domain.id, accessToken, {
-            key: 'patch_scope_1',
-            name: 'Patch Test Scope 1',
-            description: 'Test scope for protected resource patches'
-        });
-
-        await createScope(domain.id, accessToken, {
-            key: 'patch_scope_2',
-            name: 'Patch Test Scope 2',
-            description: 'Another test scope for patches'
-        });
+        await createTestScopes(domain.id, accessToken, 'patch');
 
         // Create a protected resource to patch
         const request = {
@@ -1444,16 +1501,7 @@ describe('When patching protected resource', () => {
             ]
         } as NewProtectedResource;
 
-        const createdSecret = await createProtectedResource(domain.id, accessToken, request);
-        expect(createdSecret).toBeDefined();
-        expect(createdSecret.id).toBeDefined();
-
-        // Wait for resource to be fully synced
-        await waitFor(2000);
-
-        // Fetch the full resource details
-        createdResource = await getMcpServer(domain.id, accessToken, createdSecret.id);
-        expect(createdResource).toBeDefined();
+        createdResource = await createAndSyncProtectedResource(domain.id, accessToken, request);
         expect(createdResource.resourceIdentifiers).toBeDefined();
     });
 
@@ -1493,8 +1541,10 @@ describe('When patching protected resource', () => {
     it('Should fail when patching with empty request body', async () => {
         const patchRequest = {};
 
-        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await expectErrorStatus(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
+            400,
+        );
     });
 
     it('Should fail when resource identifier is not a valid URL', async () => {
@@ -1502,8 +1552,10 @@ describe('When patching protected resource', () => {
             resourceIdentifiers: ["not-a-valid-url"]
         };
 
-        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await expectErrorStatus(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
+            400,
+        );
     });
 
     it('Should fail when patching with duplicate resource identifier', async () => {
@@ -1521,8 +1573,10 @@ describe('When patching protected resource', () => {
             resourceIdentifiers: ["https://duplicate-test.com"]
         };
 
-        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await expectErrorStatus(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
+            400,
+        );
     });
 
     it('Should fail when patching resource from another domain', async () => {
@@ -1555,35 +1609,37 @@ describe('When patching protected resource', () => {
     it('Should patch features only (update existing tool)', async () => {
         // Store original createdAt for comparison
         const originalTool = createdResource.features?.find(f => f.key === 'original_tool');
+        expect(originalTool).toBeDefined();
         const originalCreatedAt = originalTool?.createdAt;
         expect(originalCreatedAt).toBeDefined();
+        expect(originalTool?.updatedAt).toBeDefined();
 
         const patchRequest = {
             features: [
                 {
                     key: 'original_tool',
-                    type: 'MCP_TOOL' as const,
+                    type: 'MCP_TOOL',
                     description: 'Updated tool description',
                     scopes: ['patch_scope_1', 'patch_scope_2']
-                } as UpdateMcpTool
+                } as UpdateProtectedResourceFeature & { scopes?: string[] }
             ]
         };
 
         const patched = await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest);
 
         expect(patched).toBeDefined();
-        expect(patched.features).toBeDefined();
         expect(patched.features).toHaveLength(1);
 
-        const updatedTool = patched.features[0] as McpToolFeature;
+        const updatedTool = patched.features[0] as McpTool;
         expect(updatedTool.key).toEqual('original_tool');
         expect(updatedTool.description).toEqual('Updated tool description');
         expect(updatedTool.type).toMatch(/^mcp_tool$/i);
-        expect(Array.isArray(updatedTool.scopes)).toBeTruthy();
         expect(updatedTool.scopes).toEqual(['patch_scope_1', 'patch_scope_2']);
-        expect(updatedTool.createdAt).toEqual(originalCreatedAt); // Preserved
+        // Compare timestamps since createdAt is a Date object - should be preserved when key matches
+        expect(updatedTool.createdAt?.getTime()).toEqual(originalCreatedAt?.getTime()); // Preserved
         expect(updatedTool.updatedAt).toBeDefined();
-        expect(updatedTool.updatedAt).not.toEqual(originalTool?.updatedAt || originalCreatedAt);
+        // updatedAt should change when tool is modified
+        expect(updatedTool.updatedAt?.getTime()).not.toEqual(originalTool.updatedAt?.getTime());
 
         createdResource = patched;
     });
@@ -1598,42 +1654,43 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'original_tool',
-                    type: 'MCP_TOOL' as const,
+                    type: 'MCP_TOOL',
                     description: existingTool.description || 'Updated tool description',
                     scopes: existingTool.scopes || ['patch_scope_1', 'patch_scope_2']
-                } as UpdateMcpTool,
+                } as UpdateProtectedResourceFeature & { scopes?: string[] },
                 {
                     key: 'new_tool',
-                    type: 'MCP_TOOL' as const,
+                    type: 'MCP_TOOL',
                     description: 'New tool description',
                     scopes: ['patch_scope_2']
-                } as UpdateMcpTool
+                } as UpdateProtectedResourceFeature & { scopes?: string[] }
             ]
         };
 
         const patched = await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest);
 
         expect(patched).toBeDefined();
-        expect(patched.features).toBeDefined();
         expect(patched.features).toHaveLength(2);
 
         const originalToolAfter = patched.features.find(f => f.key === 'original_tool');
         const newTool = patched.features.find(f => f.key === 'new_tool');
 
         expect(originalToolAfter).toBeDefined();
-        expect(originalToolAfter?.createdAt).toEqual(existingToolCreatedAt); // Preserved
+        // Compare timestamps since createdAt is a Date object - should be preserved when key matches
+        expect(originalToolAfter?.createdAt?.getTime()).toEqual(existingToolCreatedAt?.getTime()); // Preserved
 
         expect(newTool).toBeDefined();
         expect(newTool?.key).toEqual('new_tool');
         expect(newTool?.description).toEqual('New tool description');
         expect(newTool?.type).toMatch(/^mcp_tool$/i);
-        const newToolFeature = newTool as McpToolFeature;
+        const newToolFeature = newTool as McpTool;
         expect(Array.isArray(newToolFeature.scopes)).toBeTruthy();
         expect(newToolFeature.scopes).toEqual(['patch_scope_2']);
         expect(newTool?.createdAt).toBeDefined();
         // New tool's createdAt should be recent (within last few seconds)
+        // createdAt is a Date object, get timestamp using getTime()
         const now = Date.now();
-        const newToolCreatedAt = new Date(newTool?.createdAt || 0).getTime();
+        const newToolCreatedAt = newTool?.createdAt instanceof Date ? newTool.createdAt.getTime() : new Date(newTool?.createdAt || 0).getTime();
         expect(now - newToolCreatedAt).toBeLessThan(5000); // Within 5 seconds
 
         createdResource = patched;
@@ -1671,17 +1728,16 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'new_tool',
-                    type: 'MCP_TOOL' as const,
+                    type: 'MCP_TOOL',
                     description: toolToKeep?.description || 'New tool description',
                     scopes: toolToKeep?.scopes || ['patch_scope_2']
-                } as UpdateMcpTool
+                } as UpdateProtectedResourceFeature & { scopes?: string[] }
             ]
         };
 
         const patched = await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest);
 
         expect(patched).toBeDefined();
-        expect(patched.features).toBeDefined();
         expect(patched.features).toHaveLength(1);
         expect(patched.features[0].key).toEqual('new_tool');
 
@@ -1697,19 +1753,21 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'tool1',
-                    type: 'MCP_TOOL' as const,
+                    type: 'MCP_TOOL',
                     description: 'First tool'
-                } as UpdateMcpTool,
+                } as UpdateProtectedResourceFeature,
                 {
                     key: 'tool1', // Duplicate key
-                    type: 'MCP_TOOL' as const,
+                    type: 'MCP_TOOL',
                     description: 'Second tool with same key'
-                } as UpdateMcpTool
+                } as UpdateProtectedResourceFeature
             ]
         };
 
-        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
-            .catch(err => expect(err.response.status).toEqual(400));
+        await expectErrorStatus(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
+            400,
+        );
     });
 
     it('Should fail when patching with invalid scope in feature', async () => {
@@ -1717,18 +1775,18 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'tool_with_invalid_scope',
-                    type: 'MCP_TOOL' as const,
+                    type: 'MCP_TOOL',
                     description: 'Tool with invalid scope',
                     scopes: ['invalid_scope_that_does_not_exist']
-                } as UpdateMcpTool
+                } as UpdateProtectedResourceFeature & { scopes?: string[] }
             ]
         };
 
-        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
-            .catch(err => {
-                // Invalid scope should return 400 (Bad Request) - InvalidProtectedResourceException
-                expect(err.response.status).toEqual(400);
-            });
+        // Invalid scope should return 400 (Bad Request) - InvalidProtectedResourceException
+        await expectErrorStatus(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
+            400,
+        );
     });
 
     it('Should fail when patching with invalid feature key pattern', async () => {
@@ -1736,14 +1794,16 @@ describe('When patching protected resource', () => {
             features: [
                 {
                     key: 'invalid key with spaces', // Invalid: contains spaces
-                    type: 'MCP_TOOL' as const,
+                    type: 'MCP_TOOL',
                     description: 'Tool with invalid key'
-                } as UpdateMcpTool
+                } as UpdateProtectedResourceFeature
             ]
         };
 
-        await patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
-        .catch(err => expect(err.response.status).toEqual(400));
+        await expectErrorStatus(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
+            400,
+        );
     });
 });
 
@@ -1811,7 +1871,6 @@ describe('When deleting protected resource', () => {
         // Verify features exist
         const fetched = await getMcpServer(domain.id, accessToken, created.id);
         expect(fetched).toBeDefined();
-        expect(fetched.features).toBeDefined();
         expect(fetched.features.length).toBeGreaterThan(0);
 
         // Delete the resource (this should cascade delete client secrets and features)
@@ -1824,8 +1883,7 @@ describe('When deleting protected resource', () => {
         expect(exists).toBeFalsy();
 
         // Verify we cannot get it by ID (resource is completely deleted)
-        await getMcpServer(domain.id, accessToken, created.id)
-            .catch(err => expect(err.response.status).toBe(404));
+        await expectErrorStatus(getMcpServer(domain.id, accessToken, created.id), 404);
     });
 
     it('Should delete protected resources when domain is deleted', async () => {
@@ -1862,10 +1920,7 @@ describe('When deleting protected resource', () => {
 
         // Verify protected resources no longer exist by trying to list them
         // Since the domain is deleted, checkDomainExists will throw DomainNotFoundException (404)
-        await getMcpServers(testDomain.domain.id, accessToken, 100, 0)
-            .catch(err => {
-                expect(err.response.status).toBe(404);
-            });
+        await expectErrorStatus(getMcpServers(testDomain.domain.id, accessToken, 100, 0), 404);
     });
 
     it('Deleted protected resource cannot introspect token', async () => {

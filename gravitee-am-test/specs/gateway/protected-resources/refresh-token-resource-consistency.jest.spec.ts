@@ -17,6 +17,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, jest, it } from '@jest/globals';
 import { decodeJwt } from '@utils-commands/jwt';
+import { validateAudienceClaim } from './fixtures/test-utils';
 import { ProtectedResourcesFixture, setupProtectedResourcesFixture } from './fixtures/protected-resources-fixture';
 
 globalThis.fetch = fetch;
@@ -44,9 +45,9 @@ describe('Refresh Token Flow - Resource Parameter Consistency (RFC 8707)', () =>
     const refreshResp = await fixture.exchangeRefreshToken(initialToken.body.refresh_token, subset).expect(200);
 
     // Access token aud should be subset
+    validateAudienceClaim(refreshResp.body.access_token, subset);
     const at = decodeJwt(refreshResp.body.access_token);
     const atAud: string[] = Array.isArray(at.aud) ? at.aud : [at.aud];
-    subset.forEach((r) => expect(atAud).toContain(r));
     expect(atAud).not.toContain('https://api.example.com/albums');
 
     // Refresh token orig_resources should remain original authorization resources
@@ -82,9 +83,7 @@ describe('Refresh Token Flow - Resource Parameter Consistency (RFC 8707)', () =>
     const initialToken = await fixture.exchangeAuthCodeForTokenWithoutResources(code).expect(200);
 
     const resp = await fixture.exchangeRefreshToken(initialToken.body.refresh_token).expect(200);
-    const at = decodeJwt(resp.body.access_token);
-    const atAud2: string[] = Array.isArray(at.aud) ? at.aud : [at.aud];
-    expect(atAud2.sort()).toEqual(authResources.sort());
+    validateAudienceClaim(resp.body.access_token, authResources);
 
     const rt = decodeJwt(resp.body.refresh_token);
     expect(Array.isArray(rt.orig_resources)).toBe(true);

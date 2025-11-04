@@ -12246,11 +12246,11 @@ components:
           type: array
           items:
             type: string
-        allowedScopesEnabled:
-          type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
+          type: boolean
+        allowedScopesEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
@@ -12480,11 +12480,11 @@ components:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
-        redirectUriStrictMatching:
-          type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
+          type: boolean
+        redirectUriStrictMatching:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
@@ -13192,6 +13192,16 @@ components:
           $ref: "#/components/schemas/ChallengeSettings"
         enroll:
           $ref: "#/components/schemas/EnrollSettings"
+    McpTool:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ProtectedResourceFeature"
+      - type: object
+        properties:
+          scopes:
+            type: array
+            items:
+              type: string
     Membership:
       type: object
       properties:
@@ -15191,6 +15201,10 @@ components:
         updatedAt:
           type: string
           format: date-time
+      discriminator:
+        propertyName: type
+        mapping:
+          MCP_TOOL: "#/components/schemas/McpTool"
     ProtectedResourcePage:
       type: object
       properties:
@@ -16469,7 +16483,7 @@ components:
           type: string
         zoneInfo:
           type: string
-        identitiesAsMap:
+        lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
@@ -16489,7 +16503,7 @@ components:
           type: string
         disabled:
           type: boolean
-        lastIdentityInformation:
+        identitiesAsMap:
           type: object
           additionalProperties:
             type: object
@@ -16668,7 +16682,7 @@ components:
           type: string
         zoneInfo:
           type: string
-        identitiesAsMap:
+        lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
@@ -16688,7 +16702,7 @@ components:
           type: string
         disabled:
           type: boolean
-        lastIdentityInformation:
+        identitiesAsMap:
           type: object
           additionalProperties:
             type: object

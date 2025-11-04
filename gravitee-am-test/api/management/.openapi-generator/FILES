@@ -122,6 +122,7 @@ models/JWK.ts
 models/JWKSet.ts
 models/LoginSettings.ts
 models/MFASettings.ts
+models/McpTool.ts
 models/Membership.ts
 models/MembershipListItem.ts
 models/ModifiedCertificateEntity.ts

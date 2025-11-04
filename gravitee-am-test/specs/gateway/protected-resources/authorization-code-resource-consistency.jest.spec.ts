@@ -84,10 +84,10 @@ describe('Authorization Code Flow - Resource Parameter Consistency (RFC 8707)', 
     expect(tokenResponse.body.refresh_token).toBeDefined();
 
     // Verify access token aud claim contains subset resources from token request
+    validateAudienceClaim(tokenResponse.body.access_token, tokenResources);
+    // Should NOT contain resources not in token request
     const accessTokenDecoded = decodeJwt(tokenResponse.body.access_token);
     const audArray: string[] = Array.isArray(accessTokenDecoded.aud) ? accessTokenDecoded.aud : [accessTokenDecoded.aud];
-    tokenResources.forEach((r) => expect(audArray).toContain(r));
-    // Should NOT contain resources not in token request
     expect(audArray).not.toContain('https://api.example.com/albums');
 
     // Verify refresh token orig_resources claim contains original authorization resources

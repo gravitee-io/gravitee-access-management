@@ -65,8 +65,23 @@ npx @openapitools/openapi-generator-cli generate \
   --skip-validate-spec
 
 find "$SDK_OUTPUT_PATH" -name "*.ts" -exec sed -i.bak "/* The version of the OpenAPI document/d" {} \;
+
+# Fix discriminator mapping issue in ProtectedResourceFeature
+# The backend serializes enum values as lowercase (e.g., 'mcp_tool'), but the discriminator mapping uses uppercase ('MCP_TOOL')
+# This ensures the discriminator check handles both cases
+if [ -f "$SDK_OUTPUT_PATH/models/ProtectedResourceFeature.ts" ]; then
+  # Check if discriminator already handles both cases
+  if ! grep -q "json\['type'\] === 'MCP_TOOL' || json\['type'\] === 'mcp_tool'" "$SDK_OUTPUT_PATH/models/ProtectedResourceFeature.ts"; then
+    sed -i.bak2 \
+      -e "s/json\['type'\] === 'MCP_TOOL'/json['type'] === 'MCP_TOOL' || json['type'] === 'mcp_tool'/g" \
+      -e "s/case 'MCP_TOOL':/case 'MCP_TOOL':\\n      case 'mcp_tool':/g" \
+      "$SDK_OUTPUT_PATH/models/ProtectedResourceFeature.ts"
+    echo "[INFO] Fixed discriminator mapping to handle both uppercase and lowercase type values in ProtectedResourceFeature.ts"
+  fi
+fi
+
 # must delete .bak files
-find "$SDK_OUTPUT_PATH" -name "*.ts.bak" -exec rm -f {} \;
+find "$SDK_OUTPUT_PATH" -name "*.ts.bak*" -exec rm -f {} \;
 rm -f "$SDK_OUTPUT_PATH/index.ts"
 rm -f "$SDK_OUTPUT_PATH/apis/index.ts"
 

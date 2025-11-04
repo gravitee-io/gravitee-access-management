@@ -26,6 +26,8 @@
 /* tslint:disable */
 /* eslint-disable */
 import { mapValues } from '../runtime';
+
+import { type McpTool, McpToolFromJSONTyped, McpToolToJSON, McpToolToJSONTyped } from './McpTool';
 /**
  *
  * @export
@@ -87,6 +89,11 @@ export function ProtectedResourceFeatureFromJSONTyped(json: any, ignoreDiscrimin
   if (json == null) {
     return json;
   }
+  if (!ignoreDiscriminator) {
+    if (json['type'] === 'MCP_TOOL' || json['type'] === 'mcp_tool') {
+      return McpToolFromJSONTyped(json, ignoreDiscriminator);
+    }
+  }
   return {
     key: json['key'] == null ? undefined : json['key'],
     description: json['description'] == null ? undefined : json['description'],
@@ -103,6 +110,16 @@ export function ProtectedResourceFeatureToJSON(json: any): ProtectedResourceFeat
 export function ProtectedResourceFeatureToJSONTyped(value?: ProtectedResourceFeature | null, ignoreDiscriminator: boolean = false): any {
   if (value == null) {
     return value;
+  }
+
+  if (!ignoreDiscriminator) {
+    switch (value['type']) {
+      case 'MCP_TOOL':
+      case 'mcp_tool':
+        return McpToolToJSONTyped(value as McpTool, ignoreDiscriminator);
+      default:
+        return value;
+    }
   }
 
   return {

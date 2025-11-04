@@ -73,12 +73,6 @@ export interface ClientRegistrationSettings {
    * @type {boolean}
    * @memberof ClientRegistrationSettings
    */
-  allowedScopesEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof ClientRegistrationSettings
-   */
   dynamicClientRegistrationEnabled?: boolean;
   /**
    *
@@ -86,6 +80,12 @@ export interface ClientRegistrationSettings {
    * @memberof ClientRegistrationSettings
    */
   openDynamicClientRegistrationEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof ClientRegistrationSettings
+   */
+  allowedScopesEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -117,11 +117,11 @@ export function ClientRegistrationSettingsFromJSONTyped(json: any, ignoreDiscrim
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: json['defaultScopes'] == null ? undefined : json['defaultScopes'],
     allowedScopes: json['allowedScopes'] == null ? undefined : json['allowedScopes'],
-    allowedScopesEnabled: json['allowedScopesEnabled'] == null ? undefined : json['allowedScopesEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled:
       json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
+    allowedScopesEnabled: json['allowedScopesEnabled'] == null ? undefined : json['allowedScopesEnabled'],
     clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
   };
 }
@@ -145,9 +145,9 @@ export function ClientRegistrationSettingsToJSONTyped(
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
     defaultScopes: value['defaultScopes'],
     allowedScopes: value['allowedScopes'],
-    allowedScopesEnabled: value['allowedScopesEnabled'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
+    allowedScopesEnabled: value['allowedScopesEnabled'],
     clientTemplateEnabled: value['clientTemplateEnabled'],
   };
 }

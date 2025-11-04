@@ -88,14 +88,6 @@ export function extractAuthorizationCode(redirectUrl: string): string {
   return match[1];
 }
 
-export function validateTokenResponse(tokenResult: any): void {
-  expect(tokenResult.body.access_token).toBeDefined();
-  expect(tokenResult.body.token_type).toBeDefined();
-  expect(tokenResult.body.token_type.toLowerCase()).toBe('bearer');
-  expect(tokenResult.body.expires_in).toBeDefined();
-  expect(tokenResult.body.scope).toBeDefined();
-}
-
 // Helper functions for test setup
 async function setupTestEnvironment() {
   const accessToken = await requestAdminAccessToken();

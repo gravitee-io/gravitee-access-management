@@ -107,6 +107,7 @@ export * from './JWK';
 export * from './JWKSet';
 export * from './LoginSettings';
 export * from './MFASettings';
+export * from './McpTool';
 export * from './Membership';
 export * from './MembershipListItem';
 export * from './ModifiedCertificateEntity';
