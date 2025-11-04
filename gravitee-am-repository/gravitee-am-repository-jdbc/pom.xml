@@ -34,7 +34,7 @@
         <r2dbc-releasetrain.version>Arabba-SR13</r2dbc-releasetrain.version>
 
         <jdbc-postgresql.version>42.2.25</jdbc-postgresql.version>
-        <jdbc-mssql.version>7.4.1.jre8</jdbc-mssql.version>
+        <jdbc-mssql.version>10.2.4.jre8</jdbc-mssql.version>
         <jdbc-mysql.version>8.0.29</jdbc-mysql.version>
         <jdbc-mariadb.version>2.4.0</jdbc-mariadb.version>
 
