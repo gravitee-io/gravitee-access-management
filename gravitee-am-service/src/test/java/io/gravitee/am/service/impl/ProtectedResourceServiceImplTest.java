@@ -52,7 +52,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
@@ -63,9 +62,20 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class ProtectedResourceServiceImplTest {
+
+    // Test constants
+    private static final String DOMAIN_ID = "domainId";
+    private static final String RESOURCE_ID = "resource-id";
+    private static final String CLIENT_ID = "clientId";
+    private static final String RESOURCE_URI = "https://example.com";
 
     @Mock
     private ProtectedResourceRepository repository;
@@ -97,85 +107,102 @@ public class ProtectedResourceServiceImplTest {
     @InjectMocks
     private ProtectedResourceServiceImpl service;
 
+    // Helper methods
+    private Domain createDomain() {
+        Domain domain = new Domain();
+        domain.setId(DOMAIN_ID);
+        return domain;
+    }
+
+    private User createUser() {
+        return new DefaultUser();
+    }
+
+    private ProtectedResource createProtectedResource(String id, String domainId) {
+        ProtectedResource resource = new ProtectedResource();
+        resource.setId(id);
+        resource.setDomainId(domainId);
+        resource.setResourceIdentifiers(List.of(RESOURCE_URI));
+        resource.setFeatures(new ArrayList<>());
+        return resource;
+    }
+
+    private NewProtectedResource createNewProtectedResource() {
+        NewProtectedResource resource = new NewProtectedResource();
+        resource.setClientId(CLIENT_ID);
+        resource.setType("MCP_SERVER");
+        resource.setResourceIdentifiers(List.of("https://onet.pl"));
+        return resource;
+    }
+
+    private UpdateMcpTool createUpdateMcpTool(String key, String description, List<String> scopes) {
+        UpdateMcpTool tool = new UpdateMcpTool();
+        tool.setKey(key);
+        tool.setDescription(description);
+        tool.setScopes(scopes);
+        return tool;
+    }
+
+    private McpTool createMcpTool(String key, String description, List<String> scopes) {
+        McpTool tool = new McpTool();
+        tool.setKey(key);
+        tool.setDescription(description);
+        tool.setScopes(scopes);
+        tool.setCreatedAt(new Date());
+        return tool;
+    }
+
+    // ========== CREATE Tests ==========
 
     @Test
     public void shouldNotCreateProtectedResourceWhenClientIdAlreadyExists() {
-        Mockito.when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
-        Mockito.when(repository.create(any())).thenReturn(Single.never());
-        Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
-                .thenReturn(Completable.error(new ClientAlreadyExistsException("","")));
-        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
-        Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        when(repository.create(any())).thenReturn(Single.never());
+        when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
+                .thenReturn(Completable.error(new ClientAlreadyExistsException("", "")));
+        when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        NewProtectedResource newProtectedResource = new NewProtectedResource();
-        newProtectedResource.setClientId("clientId");
-        newProtectedResource.setType("MCP_SERVER");
-        newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
-        service.create(domain, user, newProtectedResource)
+        service.create(createDomain(), createUser(), createNewProtectedResource())
                 .test()
-                .assertError(throwable -> throwable instanceof ClientAlreadyExistsException);
-
+                .assertError(ClientAlreadyExistsException.class::isInstance);
     }
 
     @Test
     public void shouldNotCreateProtectedResourceWhenResourceIdAlreadyExists() {
-        Mockito.when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
-        Mockito.when(repository.create(any())).thenReturn(Single.never());
-        Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
+        when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        when(repository.create(any())).thenReturn(Single.never());
+        when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
                 .thenReturn(Completable.complete());
-        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(true));
-        Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(true));
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        NewProtectedResource newProtectedResource = new NewProtectedResource();
-        newProtectedResource.setClientId("clientId");
-        newProtectedResource.setType("MCP_SERVER");
-        newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
-        service.create(domain, user, newProtectedResource)
+        service.create(createDomain(), createUser(), createNewProtectedResource())
                 .test()
-                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
+                .assertError(InvalidProtectedResourceException.class::isInstance);
 
-        Mockito.verify(auditService, Mockito.times(0)).report(any());
-
+        verify(auditService, never()).report(any());
     }
 
     @Test
     public void shouldCreateProtectedResourceWhenClientIdDoesntExist() {
-        Mockito.when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
-        Mockito.when(repository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
-        Mockito.when(oAuthClientUniquenessValidator.checkClientIdUniqueness("domainId", "clientId"))
+        when(applicationSecretConfig.toSecretSettings()).thenReturn(new ApplicationSecretSettings());
+        when(repository.create(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(oAuthClientUniquenessValidator.checkClientIdUniqueness(DOMAIN_ID, CLIENT_ID))
                 .thenReturn(Completable.complete());
-        Mockito.when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
-        Mockito.when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
-        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(repository.existsByResourceIdentifiers(any(), any())).thenReturn(Single.just(false));
+        when(secretService.generateClientSecret(any(), any(), any(), any(), any())).thenReturn(new ClientSecret());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        NewProtectedResource newProtectedResource = new NewProtectedResource();
-        newProtectedResource.setClientId("clientId");
-        newProtectedResource.setType("MCP_SERVER");
-        newProtectedResource.setResourceIdentifiers(List.of("https://onet.pl"));
-        var result = service.create(domain, user, newProtectedResource)
+        Domain domain = createDomain();
+        var result = service.create(domain, createUser(), createNewProtectedResource())
                 .test()
                 .assertComplete()
-                .assertValue(v -> v.getClientId().equals("clientId"));
-        Mockito.verify(auditService, Mockito.times(1)).report(any());
+                .assertValue(v -> v.getClientId().equals(CLIENT_ID));
 
-        // Verify eventService.create() was called with correct arguments using argThat
+        verify(auditService, times(1)).report(any());
         String resourceId = result.values().getFirst().getId();
-        Mockito.verify(eventService, Mockito.times(1)).create(
+        verify(eventService, times(1)).create(
                 argThat(event -> event.getType() == Type.PROTECTED_RESOURCE &&
                         event.getPayload().getId().equals(resourceId) &&
                         event.getPayload().getReferenceType() == ReferenceType.DOMAIN &&
@@ -185,58 +212,39 @@ public class ProtectedResourceServiceImplTest {
         );
     }
 
+    // ========== UPDATE Tests ==========
+
     @Test
     public void shouldUpdateProtectedResource() {
-        // Setup existing resource
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
         existingResource.setName("Old Name");
         existingResource.setResourceIdentifiers(List.of("https://old.example.com"));
         existingResource.setDescription("Old Description");
-        
-        McpTool existingTool = new McpTool();
-        existingTool.setKey("tool1");
-        existingTool.setDescription("Tool 1");
-        existingTool.setScopes(List.of("scope1"));
-        existingTool.setCreatedAt(new Date());
-        existingResource.setFeatures(List.of(existingTool));
+        existingResource.setFeatures(List.of(createMcpTool("tool1", "Tool 1", List.of("scope1"))));
 
-        // Setup update request
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("New Name");
         updateRequest.setResourceIdentifiers(List.of("https://new.example.com"));
         updateRequest.setDescription("New Description");
-        
-        UpdateMcpTool updatedTool = new UpdateMcpTool();
-        updatedTool.setKey("tool1");
-        updatedTool.setDescription("Updated Tool 1");
-        updatedTool.setScopes(List.of("scope1", "scope2"));
-        updateRequest.setFeatures(List.of(updatedTool));
+        updateRequest.setFeatures(List.of(createUpdateMcpTool("tool1", "Updated Tool 1", List.of("scope1", "scope2"))));
 
-        // Mock dependencies
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        Mockito.when(repository.existsByResourceIdentifiersExcludingId(Mockito.eq("domainId"), Mockito.anyList(), Mockito.eq("resource-id"))).thenReturn(Single.just(false));
-        Mockito.when(scopeService.validateScope(Mockito.eq("domainId"), Mockito.anyList())).thenReturn(Single.just(true));
-        Mockito.when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
-        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.existsByResourceIdentifiersExcludingId(eq(DOMAIN_ID), any(), eq(RESOURCE_ID)))
+                .thenReturn(Single.just(false));
+        when(scopeService.validateScope(eq(DOMAIN_ID), any())).thenReturn(Single.just(true));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        // Execute update
-        service.update(domain, "resource-id", updateRequest, user)
+        Domain domain = createDomain();
+        service.update(domain, RESOURCE_ID, updateRequest, createUser())
                 .test()
                 .assertComplete()
-                .assertValue(v -> v.name().equals("New Name") && 
-                             v.description().equals("New Description") &&
-                             v.resourceIdentifiers().contains("https://new.example.com"));
+                .assertValue(v -> v.name().equals("New Name") &&
+                        v.description().equals("New Description") &&
+                        v.resourceIdentifiers().contains("https://new.example.com"));
 
-        // Verify audit and event were called
-        Mockito.verify(auditService, Mockito.times(1)).report(any());
-        Mockito.verify(eventService, Mockito.times(1)).create(
+        verify(auditService, times(1)).report(any());
+        verify(eventService, times(1)).create(
                 argThat(event -> event.getType() == Type.PROTECTED_RESOURCE &&
                         event.getPayload().getAction() == Action.UPDATE),
                 argThat(d -> d.equals(domain))
@@ -247,285 +255,198 @@ public class ProtectedResourceServiceImplTest {
     public void shouldNotUpdateProtectedResourceWhenNotFound() {
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("New Name");
-        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
         updateRequest.setFeatures(new ArrayList<>());
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.empty());
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.empty());
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.update(domain, "resource-id", updateRequest, user)
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof ProtectedResourceNotFoundException);
+                .assertError(ProtectedResourceNotFoundException.class::isInstance);
 
-        Mockito.verify(repository, Mockito.never()).update(any());
+        verify(repository, never()).update(any());
     }
 
     @Test
     public void shouldNotUpdateProtectedResourceWhenDomainMismatch() {
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("differentDomainId");
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, "differentDomainId");
 
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("New Name");
-        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
         updateRequest.setFeatures(new ArrayList<>());
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.update(domain, "resource-id", updateRequest, user)
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof ProtectedResourceNotFoundException);
+                .assertError(ProtectedResourceNotFoundException.class::isInstance);
 
-        Mockito.verify(repository, Mockito.never()).update(any());
+        verify(repository, never()).update(any());
     }
 
     @Test
     public void shouldNotUpdateProtectedResourceWhenDuplicateFeatureKeys() {
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
-        UpdateMcpTool tool1 = new UpdateMcpTool();
-        tool1.setKey("tool1");
-        tool1.setDescription("Tool 1");
-        tool1.setScopes(List.of("scope1"));
-
-        UpdateMcpTool tool2 = new UpdateMcpTool();
-        tool2.setKey("tool1");  // Duplicate key
-        tool2.setDescription("Tool 2");
-        tool2.setScopes(List.of("scope2"));
+        UpdateMcpTool tool1 = createUpdateMcpTool("tool1", "Tool 1", List.of("scope1"));
+        UpdateMcpTool tool2 = createUpdateMcpTool("tool1", "Tool 2", List.of("scope2")); // Duplicate key
 
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("Name");
-        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
         updateRequest.setFeatures(List.of(tool1, tool2));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.update(domain, "resource-id", updateRequest, user)
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
+                .assertError(InvalidProtectedResourceException.class::isInstance);
 
-        Mockito.verify(repository, Mockito.never()).update(any());
+        verify(repository, never()).update(any());
     }
 
     @Test
     public void shouldNotUpdateProtectedResourceWhenInvalidScopes() {
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
-
-        UpdateMcpTool tool = new UpdateMcpTool();
-        tool.setKey("tool1");
-        tool.setDescription("Tool 1");
-        tool.setScopes(List.of("invalid_scope"));
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("Name");
-        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
-        updateRequest.setFeatures(List.of(tool));
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
+        updateRequest.setFeatures(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("invalid_scope"))));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(Single.just(false));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(false));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.update(domain, "resource-id", updateRequest, user)
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
+                .assertError(InvalidProtectedResourceException.class::isInstance);
 
-        Mockito.verify(repository, Mockito.never()).update(any());
+        verify(repository, never()).update(any());
     }
+
+    // ========== DELETE Tests ==========
 
     @Test
     public void shouldDeleteProtectedResource() {
-        // existing resource
-        ProtectedResource resource = new ProtectedResource();
-        resource.setId("res-1");
-        resource.setDomainId("domainId");
+        ProtectedResource resource = createProtectedResource("res-1", DOMAIN_ID);
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        Mockito.when(repository.findById("res-1")).thenReturn(Maybe.just(resource));
-        Mockito.when(repository.delete("res-1")).thenReturn(Completable.complete());
-        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
-        Mockito.when(membershipService.findByReference(eq("res-1"), eq(ReferenceType.APPLICATION)))
+        when(repository.findById("res-1")).thenReturn(Maybe.just(resource));
+        when(repository.delete("res-1")).thenReturn(Completable.complete());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(membershipService.findByReference(eq("res-1"), eq(ReferenceType.APPLICATION)))
                 .thenReturn(Flowable.empty());
 
-        service.delete(domain, "res-1", null, user)
+        Domain domain = createDomain();
+        service.delete(domain, "res-1", null, createUser())
                 .test()
                 .assertComplete()
                 .assertNoErrors();
 
-        Mockito.verify(repository, Mockito.times(1)).delete("res-1");
-        Mockito.verify(eventService, Mockito.times(1)).create(any(), eq(domain));
-        Mockito.verify(auditService, Mockito.times(1)).report(any());
+        verify(repository, times(1)).delete("res-1");
+        verify(eventService, times(1)).create(any(), eq(domain));
+        verify(auditService, times(1)).report(any());
     }
 
     @Test
     public void shouldDeleteProtectedResource_cleansMemberships() {
-        ProtectedResource resource = new ProtectedResource();
-        resource.setId("res-2");
-        resource.setDomainId("domainId");
+        ProtectedResource resource = createProtectedResource("res-2", DOMAIN_ID);
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        Mockito.when(repository.findById("res-2")).thenReturn(Maybe.just(resource));
-        Mockito.when(repository.delete("res-2")).thenReturn(Completable.complete());
-        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
-        Mockito.when(membershipService.findByReference(eq("res-2"), eq(ReferenceType.APPLICATION)))
+        when(repository.findById("res-2")).thenReturn(Maybe.just(resource));
+        when(repository.delete("res-2")).thenReturn(Completable.complete());
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(membershipService.findByReference(eq("res-2"), eq(ReferenceType.APPLICATION)))
                 .thenReturn(Flowable.just(new Membership()));
-        Mockito.when(membershipService.delete(any())).thenReturn(Completable.complete());
+        when(membershipService.delete(any())).thenReturn(Completable.complete());
 
-        service.delete(domain, "res-2", null, user)
+        service.delete(createDomain(), "res-2", null, createUser())
                 .test()
                 .assertComplete()
                 .assertNoErrors();
 
-        Mockito.verify(membershipService, Mockito.atLeastOnce()).delete(any());
+        verify(membershipService, atLeastOnce()).delete(any());
     }
 
     @Test
     public void shouldNotDeleteProtectedResourceWhenNotFound() {
-        Domain domain = new Domain();
-        domain.setId("domainId");
+        when(repository.findById("missing")).thenReturn(Maybe.empty());
 
-        User user = new DefaultUser();
-
-        Mockito.when(repository.findById("missing")).thenReturn(Maybe.empty());
-
-        service.delete(domain, "missing", null, user)
+        service.delete(createDomain(), "missing", null, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof ProtectedResourceNotFoundException);
+                .assertError(ProtectedResourceNotFoundException.class::isInstance);
 
-        Mockito.verify(repository, Mockito.never()).delete(any());
+        verify(repository, never()).delete(any());
     }
+
+    // ========== FIND Tests ==========
 
     @Test
     public void shouldFindByDomain() {
-        // given
         String domainId = "domain-id";
-        ProtectedResource resource1 = new ProtectedResource();
-        resource1.setId("res-1");
-        resource1.setDomainId(domainId);
+        ProtectedResource resource1 = createProtectedResource("res-1", domainId);
         resource1.setName("Resource 1");
-
-        ProtectedResource resource2 = new ProtectedResource();
-        resource2.setId("res-2");
-        resource2.setDomainId(domainId);
+        ProtectedResource resource2 = createProtectedResource("res-2", domainId);
         resource2.setName("Resource 2");
 
-        Mockito.when(repository.findByDomain(domainId))
-                .thenReturn(Flowable.just(resource1, resource2));
+        when(repository.findByDomain(domainId)).thenReturn(Flowable.just(resource1, resource2));
 
-        // when
         TestSubscriber<ProtectedResource> observer = service.findByDomain(domainId).test();
 
-        // then
         observer.assertComplete();
         observer.assertValueCount(2);
         observer.assertValueAt(0, resource -> resource.getId().equals("res-1") && resource.getDomainId().equals(domainId));
         observer.assertValueAt(1, resource -> resource.getId().equals("res-2") && resource.getDomainId().equals(domainId));
-        Mockito.verify(repository, Mockito.times(1)).findByDomain(domainId);
+        verify(repository, times(1)).findByDomain(domainId);
     }
 
     @Test
     public void shouldHandleErrorOnFindByDomain() {
-        // given
         String domainId = "domain-id";
         RuntimeException repositoryError = new RuntimeException("Database error");
 
-        Mockito.when(repository.findByDomain(domainId))
-                .thenReturn(Flowable.error(repositoryError));
+        when(repository.findByDomain(domainId)).thenReturn(Flowable.error(repositoryError));
 
-        // when
         TestSubscriber<ProtectedResource> observer = service.findByDomain(domainId).test();
 
-        // then
         observer.assertError(TechnicalManagementException.class);
-        observer.assertError(throwable -> 
-            throwable.getMessage().contains("An error occurs while trying to find protected resources by domain " + domainId));
-        Mockito.verify(repository, Mockito.times(1)).findByDomain(domainId);
+        observer.assertError(throwable ->
+                throwable.getMessage().contains("An error occurs while trying to find protected resources by domain " + domainId));
+        verify(repository, times(1)).findByDomain(domainId);
     }
+
+    // ========== PATCH Tests ==========
 
     @Test
     public void shouldPatchProtectedResource() {
-        // Setup existing resource
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
         existingResource.setName("Old Name");
         existingResource.setResourceIdentifiers(List.of("https://old.example.com"));
         existingResource.setDescription("Old Description");
-        
-        McpTool existingTool = new McpTool();
-        existingTool.setKey("tool1");
-        existingTool.setDescription("Tool 1");
-        existingTool.setScopes(List.of("scope1"));
-        existingTool.setCreatedAt(new Date());
-        existingResource.setFeatures(List.of(existingTool));
+        existingResource.setFeatures(List.of(createMcpTool("tool1", "Tool 1", List.of("scope1"))));
 
-        // Setup patch request - only update name and description
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("New Name"));
         patchRequest.setDescription(Optional.of("New Description"));
 
-        // Mock dependencies
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        // scopeService.validateScope is called because existing resource has features with scopes
-        Mockito.when(scopeService.validateScope(eq("domainId"), any())).thenReturn(Single.just(true));
-        Mockito.when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
-        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(eq(DOMAIN_ID), any())).thenReturn(Single.just(true));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        // Execute patch
-        service.patch(domain, "resource-id", patchRequest, user)
+        Domain domain = createDomain();
+        service.patch(domain, RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertComplete()
-                .assertValue(v -> v.name().equals("New Name") && 
-                             v.description().equals("New Description") &&
-                             v.resourceIdentifiers().contains("https://old.example.com")); // Resource identifiers not updated
+                .assertValue(v -> v.name().equals("New Name") &&
+                        v.description().equals("New Description") &&
+                        v.resourceIdentifiers().contains("https://old.example.com"));
 
-        // Verify interactions
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(scopeService, Mockito.times(1)).validateScope(eq("domainId"), any());
-        Mockito.verify(repository, Mockito.times(1)).update(any());
-        Mockito.verify(auditService, Mockito.times(1)).report(any());
-        Mockito.verify(eventService, Mockito.times(1)).create(
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(scopeService, times(1)).validateScope(eq(DOMAIN_ID), any());
+        verify(repository, times(1)).update(any());
+        verify(auditService, times(1)).report(any());
+        verify(eventService, times(1)).create(
                 argThat(event -> event.getType() == Type.PROTECTED_RESOURCE &&
                         event.getPayload().getAction() == Action.UPDATE),
                 argThat(d -> d.equals(domain))
@@ -537,468 +458,346 @@ public class ProtectedResourceServiceImplTest {
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("New Name"));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.empty());
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.empty());
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof ProtectedResourceNotFoundException);
+                .assertError(ProtectedResourceNotFoundException.class::isInstance);
 
-        // Verify no side effects occurred
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(auditService, Mockito.never()).report(any());
-        Mockito.verify(eventService, Mockito.never()).create(any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
     }
 
     @Test
     public void shouldNotPatchProtectedResourceWhenDomainMismatch() {
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("differentDomainId");
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, "differentDomainId");
 
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("New Name"));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof ProtectedResourceNotFoundException);
+                .assertError(ProtectedResourceNotFoundException.class::isInstance);
 
-        // Verify no side effects occurred
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(auditService, Mockito.never()).report(any());
-        Mockito.verify(eventService, Mockito.never()).create(any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
     }
 
     @Test
     public void shouldNotPatchProtectedResourceWhenDuplicateFeatureKeys() {
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
-        UpdateMcpTool tool1 = new UpdateMcpTool();
-        tool1.setKey("tool1");
-        tool1.setDescription("Tool 1");
-        tool1.setScopes(List.of("scope1"));
-
-        UpdateMcpTool tool2 = new UpdateMcpTool();
-        tool2.setKey("tool1");  // Duplicate key
-        tool2.setDescription("Tool 2");
-        tool2.setScopes(List.of("scope2"));
+        UpdateMcpTool tool1 = createUpdateMcpTool("tool1", "Tool 1", List.of("scope1"));
+        UpdateMcpTool tool2 = createUpdateMcpTool("tool1", "Tool 2", List.of("scope2")); // Duplicate key
 
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("Name"));
-        patchRequest.setResourceIdentifiers(Optional.of(List.of("https://example.com")));
+        patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI)));
         patchRequest.setFeatures(Optional.of(List.of(tool1, tool2)));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(true));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
+                .assertError(InvalidProtectedResourceException.class::isInstance);
 
-        // Verify validation was called but no update occurred
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(auditService, Mockito.never()).report(any());
-        Mockito.verify(eventService, Mockito.never()).create(any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
     }
 
     @Test
     public void shouldNotPatchProtectedResourceWhenInvalidScopes() {
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
-
-        UpdateMcpTool tool = new UpdateMcpTool();
-        tool.setKey("tool1");
-        tool.setDescription("Tool 1");
-        tool.setScopes(List.of("invalid_scope"));
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("Name"));
-        patchRequest.setResourceIdentifiers(Optional.of(List.of("https://example.com")));
-        patchRequest.setFeatures(Optional.of(List.of(tool)));
+        patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI)));
+        patchRequest.setFeatures(Optional.of(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("invalid_scope")))));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(Single.just(false));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.just(false));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
-                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException);
+                .assertError(InvalidProtectedResourceException.class::isInstance);
 
-        // Verify validation was called but no update occurred
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(scopeService, Mockito.times(1)).validateScope(any(), any());
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(auditService, Mockito.never()).report(any());
-        Mockito.verify(eventService, Mockito.never()).create(any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(scopeService, times(1)).validateScope(any(), any());
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
     }
 
     @Test
     public void shouldConvertInvalidClientMetadataExceptionToInvalidProtectedResourceExceptionOnPatch() {
-        // This test verifies that when scopeService.validateScope() throws InvalidClientMetadataException,
-        // it gets converted to InvalidProtectedResourceException (which returns 400 instead of potentially 500)
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
-
-        UpdateMcpTool tool = new UpdateMcpTool();
-        tool.setKey("tool1");
-        tool.setDescription("Tool 1");
-        tool.setScopes(List.of("invalid_scope"));
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("Name"));
-        patchRequest.setResourceIdentifiers(Optional.of(List.of("https://example.com")));
-        patchRequest.setFeatures(Optional.of(List.of(tool)));
+        patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI)));
+        patchRequest.setFeatures(Optional.of(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("invalid_scope")))));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        // Mock validateScope to throw InvalidClientMetadataException (actual behavior in production)
-        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(
                 Single.error(new InvalidClientMetadataException("scope invalid_scope is not valid.")));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
-                .assertError(throwable -> {
-                    // Verify it was converted to InvalidProtectedResourceException
-                    return throwable instanceof InvalidProtectedResourceException &&
-                           throwable.getMessage().equals("scope invalid_scope is not valid.");
-                });
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
+                        throwable.getMessage().equals("scope invalid_scope is not valid."));
 
-        // Verify validation was called but no update occurred
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(scopeService, Mockito.times(1)).validateScope(any(), any());
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(auditService, Mockito.never()).report(any());
-        Mockito.verify(eventService, Mockito.never()).create(any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(scopeService, times(1)).validateScope(any(), any());
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
     }
 
     @Test
     public void shouldConvertInvalidClientMetadataExceptionToInvalidProtectedResourceExceptionOnUpdate() {
-        // This test verifies that when scopeService.validateScope() throws InvalidClientMetadataException,
-        // it gets converted to InvalidProtectedResourceException (which returns 400 instead of potentially 500)
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
-
-        UpdateMcpTool tool = new UpdateMcpTool();
-        tool.setKey("tool1");
-        tool.setDescription("Tool 1");
-        tool.setScopes(List.of("invalid_scope"));
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("Name");
-        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
-        updateRequest.setFeatures(List.of(tool));
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
+        updateRequest.setFeatures(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("invalid_scope"))));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        // Mock validateScope to throw InvalidClientMetadataException (actual behavior in production)
-        Mockito.when(scopeService.validateScope(any(), any())).thenReturn(
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(
                 Single.error(new InvalidClientMetadataException("scope invalid_scope is not valid.")));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.update(domain, "resource-id", updateRequest, user)
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
-                .assertError(throwable -> {
-                    // Verify it was converted to InvalidProtectedResourceException
-                    return throwable instanceof InvalidProtectedResourceException &&
-                           throwable.getMessage().equals("scope invalid_scope is not valid.");
-                });
+                .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
+                        throwable.getMessage().equals("scope invalid_scope is not valid."));
 
-        // Verify validation was called but no update occurred
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(scopeService, Mockito.times(1)).validateScope(any(), any());
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(auditService, Mockito.never()).report(any());
-        Mockito.verify(eventService, Mockito.never()).create(any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(scopeService, times(1)).validateScope(any(), any());
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
+    }
+
+    @Test
+    public void shouldPreserveOAuth2ExceptionWhenBubblingUpFromUpdate() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+
+        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
+        updateRequest.setName("Name");
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI));
+        updateRequest.setFeatures(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("scope1"))));
+
+        io.gravitee.am.common.exception.oauth2.InvalidRequestException oauthException =
+                new io.gravitee.am.common.exception.oauth2.InvalidRequestException("Invalid OAuth2 request");
+
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.error(oauthException));
+
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
+                .test()
+                .assertError(throwable -> throwable instanceof io.gravitee.am.common.exception.oauth2.OAuth2Exception &&
+                        !(throwable instanceof TechnicalManagementException) &&
+                        throwable.getMessage().equals("Invalid OAuth2 request"));
+
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(scopeService, times(1)).validateScope(any(), any());
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
+    }
+
+    @Test
+    public void shouldPreserveOAuth2ExceptionWhenBubblingUpFromPatch() {
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setName(Optional.of("Name"));
+        patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI)));
+        patchRequest.setFeatures(Optional.of(List.of(createUpdateMcpTool("tool1", "Tool 1", List.of("scope1")))));
+
+        io.gravitee.am.common.exception.oauth2.InvalidRequestException oauthException =
+                new io.gravitee.am.common.exception.oauth2.InvalidRequestException("Invalid OAuth2 request");
+
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(scopeService.validateScope(any(), any())).thenReturn(Single.error(oauthException));
+
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
+                .test()
+                .assertError(throwable -> throwable instanceof io.gravitee.am.common.exception.oauth2.OAuth2Exception &&
+                        !(throwable instanceof TechnicalManagementException) &&
+                        throwable.getMessage().equals("Invalid OAuth2 request"));
+
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(scopeService, times(1)).validateScope(any(), any());
+        verify(repository, never()).update(any());
+        verify(auditService, never()).report(any());
+        verify(eventService, never()).create(any(), any());
     }
 
     @Test
     public void shouldPatchProtectedResourceWithPartialFields() {
-        // Setup existing resource
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
         existingResource.setName("Old Name");
         existingResource.setDescription("Old Description");
         existingResource.setResourceIdentifiers(List.of("https://old.example.com"));
 
-        // Setup patch request - only update name, leave description unchanged
         PatchProtectedResource patchRequest = new PatchProtectedResource();
         patchRequest.setName(Optional.of("New Name"));
-        // Description not provided, should remain unchanged
 
-        // Mock dependencies
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        // scopeService.validateScope is not called because no features exist
-        // repository.existsByResourceIdentifiers is not called because resourceIdentifiers don't change
-        Mockito.when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
-        Mockito.when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.update(any())).thenAnswer(a -> Single.just(a.getArgument(0)));
+        when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        // Execute patch
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertComplete()
-                .assertValue(v -> v.name().equals("New Name") && 
-                             v.description().equals("Old Description")); // Description unchanged
+                .assertValue(v -> v.name().equals("New Name") &&
+                        v.description().equals("Old Description"));
 
-        // Verify interactions
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(repository, Mockito.times(1)).update(any());
-        Mockito.verify(auditService, Mockito.times(1)).report(any());
-        Mockito.verify(eventService, Mockito.times(1)).create(any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, times(1)).update(any());
+        verify(auditService, times(1)).report(any());
+        verify(eventService, times(1)).create(any(), any());
     }
 
     @Test
     public void shouldNotUpdateProtectedResourceWhenIdentifierTakenByAnotherResource() {
-        // Test the race condition fix: when a resource identifier that was previously owned
-        // by this resource has been taken by another resource in the meantime
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com", "https://example2.com"));
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        existingResource.setResourceIdentifiers(List.of(RESOURCE_URI, "https://example2.com"));
 
-        // Update request that keeps "https://example.com" (which was in old list)
-        // but this identifier has been taken by another resource in the meantime
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("New Name");
-        updateRequest.setResourceIdentifiers(List.of("https://example.com", "https://example3.com"));
+        updateRequest.setResourceIdentifiers(List.of(RESOURCE_URI, "https://example3.com"));
         updateRequest.setFeatures(new ArrayList<>());
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        // The identifier "https://example.com" exists in another resource (not this one)
-        Mockito.when(repository.existsByResourceIdentifiersExcludingId(Mockito.eq("domainId"), Mockito.anyList(), Mockito.eq("resource-id")))
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.existsByResourceIdentifiersExcludingId(eq(DOMAIN_ID), any(), eq(RESOURCE_ID)))
                 .thenReturn(Single.just(true));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.update(domain, "resource-id", updateRequest, user)
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Resource identifier already exists"));
 
-        // Verify the new method was called (not the old one)
-        Mockito.verify(repository, Mockito.times(1)).existsByResourceIdentifiersExcludingId(
-                Mockito.eq("domainId"),
-                Mockito.argThat(identifiers -> identifiers.contains("https://example.com") && identifiers.contains("https://example3.com")),
-                Mockito.eq("resource-id"));
-        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiers(Mockito.anyString(), Mockito.anyList());
-        Mockito.verify(repository, Mockito.never()).update(Mockito.any());
+        verify(repository, times(1)).existsByResourceIdentifiersExcludingId(
+                eq(DOMAIN_ID),
+                argThat(identifiers -> identifiers.contains(RESOURCE_URI) && identifiers.contains("https://example3.com")),
+                eq(RESOURCE_ID));
+        verify(repository, never()).existsByResourceIdentifiers(any(), any());
+        verify(repository, never()).update(any());
     }
 
     @Test
     public void shouldNotPatchProtectedResourceWhenIdentifierTakenByAnotherResource() {
-        // Test the race condition fix for patch operation
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com", "https://example2.com"));
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
+        existingResource.setResourceIdentifiers(List.of(RESOURCE_URI, "https://example2.com"));
 
-        // Patch request that keeps "https://example.com" (which was in old list)
-        // but this identifier has been taken by another resource in the meantime
         PatchProtectedResource patchRequest = new PatchProtectedResource();
-        patchRequest.setResourceIdentifiers(Optional.of(List.of("https://example.com", "https://example3.com")));
+        patchRequest.setResourceIdentifiers(Optional.of(List.of(RESOURCE_URI, "https://example3.com")));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
-        // The identifier "https://example.com" exists in another resource (not this one)
-        Mockito.when(repository.existsByResourceIdentifiersExcludingId(Mockito.eq("domainId"), Mockito.anyList(), Mockito.eq("resource-id")))
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
+        when(repository.existsByResourceIdentifiersExcludingId(eq(DOMAIN_ID), any(), eq(RESOURCE_ID)))
                 .thenReturn(Single.just(true));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Resource identifier already exists"));
 
-        // Verify the new method was called (not the old one)
-        Mockito.verify(repository, Mockito.times(1)).existsByResourceIdentifiersExcludingId(
-                Mockito.eq("domainId"),
-                Mockito.argThat(identifiers -> identifiers.contains("https://example.com") && identifiers.contains("https://example3.com")),
-                Mockito.eq("resource-id"));
-        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiers(Mockito.anyString(), Mockito.anyList());
-        Mockito.verify(repository, Mockito.never()).update(Mockito.any());
+        verify(repository, times(1)).existsByResourceIdentifiersExcludingId(
+                eq(DOMAIN_ID),
+                argThat(identifiers -> identifiers.contains(RESOURCE_URI) && identifiers.contains("https://example3.com")),
+                eq(RESOURCE_ID));
+        verify(repository, never()).existsByResourceIdentifiers(any(), any());
+        verify(repository, never()).update(any());
     }
 
     @Test
     public void shouldNotPatchProtectedResourceWhenResourceIdentifiersIsNull() {
-        // Test null-safety: patching with Optional.empty() resourceIdentifiers should fail
-        // SetterUtils.safeSet sets field to null when Optional.empty() is provided
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
         PatchProtectedResource patchRequest = new PatchProtectedResource();
-        patchRequest.setResourceIdentifiers(Optional.empty()); // This will set resourceIdentifiers to null after patching
+        patchRequest.setResourceIdentifiers(Optional.empty());
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        // Create a patch that results in null resourceIdentifiers
-        // When Optional.empty() is used, SetterUtils.safeSet sets the field to null
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
 
-        // Verify validation failed before any update
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, never()).update(any());
+        verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
     }
 
     @Test
     public void shouldNotPatchProtectedResourceWhenResourceIdentifiersIsEmpty() {
-        // Test validation: patching with empty resourceIdentifiers list should fail
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
         PatchProtectedResource patchRequest = new PatchProtectedResource();
-        patchRequest.setResourceIdentifiers(Optional.of(new ArrayList<>())); // Empty list
+        patchRequest.setResourceIdentifiers(Optional.of(new ArrayList<>()));
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.patch(domain, "resource-id", patchRequest, user)
+        service.patch(createDomain(), RESOURCE_ID, patchRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
 
-        // Verify validation failed before any update
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, never()).update(any());
+        verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
     }
 
     @Test
     public void shouldNotUpdateProtectedResourceWhenResourceIdentifiersIsNull() {
-        // Test null-safety: updating with null resourceIdentifiers should fail
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("New Name");
-        updateRequest.setResourceIdentifiers(null); // Null list
+        updateRequest.setResourceIdentifiers(null);
         updateRequest.setFeatures(new ArrayList<>());
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.update(domain, "resource-id", updateRequest, user)
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
 
-        // Verify validation failed before any update
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, never()).update(any());
+        verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
     }
 
     @Test
     public void shouldNotUpdateProtectedResourceWhenResourceIdentifiersIsEmpty() {
-        // Test validation: updating with empty resourceIdentifiers list should fail
-        ProtectedResource existingResource = new ProtectedResource();
-        existingResource.setId("resource-id");
-        existingResource.setDomainId("domainId");
-        existingResource.setResourceIdentifiers(List.of("https://example.com"));
-        existingResource.setFeatures(new ArrayList<>());
+        ProtectedResource existingResource = createProtectedResource(RESOURCE_ID, DOMAIN_ID);
 
         UpdateProtectedResource updateRequest = new UpdateProtectedResource();
         updateRequest.setName("New Name");
-        updateRequest.setResourceIdentifiers(new ArrayList<>()); // Empty list
+        updateRequest.setResourceIdentifiers(new ArrayList<>());
         updateRequest.setFeatures(new ArrayList<>());
 
-        Mockito.when(repository.findById("resource-id")).thenReturn(Maybe.just(existingResource));
+        when(repository.findById(RESOURCE_ID)).thenReturn(Maybe.just(existingResource));
 
-        Domain domain = new Domain();
-        domain.setId("domainId");
-
-        User user = new DefaultUser();
-
-        service.update(domain, "resource-id", updateRequest, user)
+        service.update(createDomain(), RESOURCE_ID, updateRequest, createUser())
                 .test()
                 .assertError(throwable -> throwable instanceof InvalidProtectedResourceException &&
                         throwable.getMessage().equals("Field [resourceIdentifiers] must not be empty"));
 
-        // Verify validation failed before any update
-        Mockito.verify(repository, Mockito.times(1)).findById("resource-id");
-        Mockito.verify(repository, Mockito.never()).update(any());
-        Mockito.verify(repository, Mockito.never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
+        verify(repository, times(1)).findById(RESOURCE_ID);
+        verify(repository, never()).update(any());
+        verify(repository, never()).existsByResourceIdentifiersExcludingId(any(), any(), any());
     }
 }

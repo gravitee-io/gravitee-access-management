@@ -33,6 +33,7 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.*;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
@@ -129,7 +130,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).protectedResource(resource).principal(principal).type(EventType.PROTECTED_RESOURCE_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Completable.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to delete protected resource: {}", id, ex);
@@ -236,7 +237,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                             .map(ProtectedResourcePrimaryData::of);
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
@@ -291,7 +292,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                             .map(ProtectedResourcePrimaryData::of);
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Single.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to patch protected resource {}", id, ex);
