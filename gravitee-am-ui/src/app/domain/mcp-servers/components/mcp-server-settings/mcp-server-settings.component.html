@@ -49,13 +49,10 @@
           [(ngModel)]="name"
           (ngModelChange)="onNameChange()"
           required
-          [pattern]="NAME_PATTERN"
           [disabled]="readonly"
         />
         <mat-hint>The MCP server's name</mat-hint>
         <mat-error *ngIf="nameField.errors?.required">Name is required</mat-error>
-        <mat-error *ngIf="nameField.errors?.pattern">Name can only contain letters, numbers, hyphens, and underscores</mat-error>
-        <mat-error *ngIf="nameField.errors?.duplicate">A MCP Server with this name already exists</mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>MCP Resource Identifier</mat-label>

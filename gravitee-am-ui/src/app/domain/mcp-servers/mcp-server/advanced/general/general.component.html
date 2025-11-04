@@ -26,8 +26,6 @@
           [resourceIdentifier]="resourceUri"
           [description]="protectedResource.description"
           [readonly]="!editMode"
-          [existingResourceId]="protectedResource.id"
-          [domainId]="domainId"
           (onSettingsChange)="onSettingsChange($event)"
         ></app-mcp-server-settings>
 

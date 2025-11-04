@@ -172,6 +172,6 @@ export class DomainMcpServerGeneralComponent implements OnInit {
   }
 
   hasFormChanges(): boolean {
-    return this.formChanged && !this.settingsComponent?.nameDuplicateError;
+    return this.formChanged;
   }
 }
