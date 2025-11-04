@@ -32,7 +32,6 @@ import java.util.Objects;
 public class NewProtectedResource {
 
     @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9_-]+$", message = "MCP Server name can only contain letters, numbers, hyphens, and underscores")
     private String name;
 
     private String description;

@@ -36,16 +36,12 @@ import java.io.IOException;
 import static jakarta.ws.rs.HttpMethod.PATCH;
 import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -302,150 +298,6 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
     }
 
     @Test
-    public void shouldPatchProtectedResource_withInvalidPattern_400() {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        PatchProtectedResource patchRequest = new PatchProtectedResource();
-        patchRequest.setName(Optional.of("test server"));
-
-        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
-        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-
-        final Response response = patch(target("domains")
-                .path(domainId)
-                .path("protected-resources")
-                .path("resource-id"), patchRequest);
-
-        assertEquals("Invalid pattern 'test server' should return 400", HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    @ParameterizedTest
-    @MethodSource("invalidNamePatterns")
-    public void shouldPatchProtectedResource_withInvalidPattern_SpecialChars_400(String invalidName) {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        PatchProtectedResource patchRequest = new PatchProtectedResource();
-        patchRequest.setName(Optional.of(invalidName));
-
-        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
-        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-
-        final Response response = patch(target("domains")
-                .path(domainId)
-                .path("protected-resources")
-                .path("resource-id"), patchRequest);
-
-        assertEquals("Invalid pattern '" + invalidName + "' should return 400", HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    private static Stream<Arguments> invalidNamePatterns() {
-        return Stream.of(
-                Arguments.of("invalid@name"),
-                Arguments.of("invalid#name"),
-                Arguments.of("invalid$name"),
-                Arguments.of("invalid%name"),
-                Arguments.of("invalid^name"),
-                Arguments.of("invalid&name"),
-                Arguments.of("invalid*name"),
-                Arguments.of("invalid(name"),
-                Arguments.of("invalid)name"),
-                Arguments.of("invalid+name"),
-                Arguments.of("invalid=name"),
-                Arguments.of("invalid{name"),
-                Arguments.of("invalid}name"),
-                Arguments.of("invalid[name"),
-                Arguments.of("invalid]name"),
-                Arguments.of("invalid|name"),
-                Arguments.of("invalid\\name"),
-                Arguments.of("invalid/name"),
-                Arguments.of("invalid:name"),
-                Arguments.of("invalid;name"),
-                Arguments.of("invalid\"name"),
-                Arguments.of("invalid'name"),
-                Arguments.of("invalid<name"),
-                Arguments.of("invalid>name"),
-                Arguments.of("invalid,name"),
-                Arguments.of("invalid.name"),
-                Arguments.of("invalid?name"),
-                Arguments.of("invalid!name"),
-                Arguments.of("test!@#$%^&*()name"),
-                Arguments.of("test@server#123"),
-                Arguments.of("invalid name with spaces"),
-                Arguments.of("invalid\tname"),
-                Arguments.of("invalid\nname"),
-                Arguments.of(" name"),
-                Arguments.of("name "),
-                Arguments.of(" name ")
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource("validNamePatterns")
-    public void shouldPatchProtectedResource_withValidPattern_200(String validName) {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        ProtectedResource updatedResource = new ProtectedResource();
-        updatedResource.setId("resource-id");
-        updatedResource.setDomainId(domainId);
-        updatedResource.setName(validName);
-        updatedResource.setResourceIdentifiers(List.of("https://example.com"));
-
-        PatchProtectedResource patchRequest = new PatchProtectedResource();
-        patchRequest.setName(Optional.of(validName));
-
-        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
-        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(ProtectedResourcePrimaryData.of(updatedResource)))
-                .when(protectedResourceService).patch(any(Domain.class), eq("resource-id"), any(PatchProtectedResource.class), any());
-
-        final Response response = patch(target("domains")
-                .path(domainId)
-                .path("protected-resources")
-                .path("resource-id"), patchRequest);
-
-        assertEquals("Valid pattern '" + validName + "' should return 200", HttpStatusCode.OK_200, response.getStatus());
-    }
-
-    private static Stream<Arguments> validNamePatterns() {
-        return Stream.of(
-                Arguments.of("a"),
-                Arguments.of("A"),
-                Arguments.of("1"),
-                Arguments.of("test"),
-                Arguments.of("TEST"),
-                Arguments.of("Test123"),
-                Arguments.of("test-server"),
-                Arguments.of("test-server-name"),
-                Arguments.of("test_server"),
-                Arguments.of("test_server_name"),
-                Arguments.of("test_server-name"),
-                Arguments.of("Test123_Server-456"),
-                Arguments.of("a1-b2_c3"),
-                Arguments.of("Test_Server-123"),
-                Arguments.of("123_test-456"),
-                Arguments.of("_test"),
-                Arguments.of("test_"),
-                Arguments.of("-test"),
-                Arguments.of("test-"),
-                Arguments.of("test_123"),
-                Arguments.of("test-456"),
-                Arguments.of("very_long_name_with_hyphens_and_underscores_123-456"),
-                Arguments.of("A1B2C3"),
-                Arguments.of("a1b2c3"),
-                Arguments.of("MixedCase_With-Numbers123")
-        );
-    }
-
-    @Test
     public void shouldPatchProtectedResource_withEmptyOptional_200() {
         final String domainId = "domain-1";
         final Domain mockDomain = new Domain();
@@ -505,88 +357,6 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 .put(Entity.json(updateRequest));
 
         assertEquals("Valid name 'test-server' should return 200", HttpStatusCode.OK_200, response.getStatus());
-    }
-
-    @Test
-    public void shouldUpdateProtectedResource_withInvalidPattern_400() {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
-        updateRequest.setName("test server");
-        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
-
-        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
-        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("protected-resources")
-                .path("resource-id")
-                .request()
-                .put(Entity.json(updateRequest));
-
-        assertEquals("Invalid pattern 'test server' should return 400", HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    @ParameterizedTest
-    @MethodSource("invalidNamePatterns")
-    public void shouldUpdateProtectedResource_withInvalidPattern_SpecialChars_400(String invalidName) {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
-        updateRequest.setName(invalidName);
-        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
-
-        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
-        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("protected-resources")
-                .path("resource-id")
-                .request()
-                .put(Entity.json(updateRequest));
-
-        assertEquals("Invalid pattern '" + invalidName + "' should return 400", HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-    }
-
-    @ParameterizedTest
-    @MethodSource("validNamePatterns")
-    public void shouldUpdateProtectedResource_withValidPattern_200(String validName) {
-        final String domainId = "domain-1";
-        final Domain mockDomain = new Domain();
-        mockDomain.setId(domainId);
-
-        ProtectedResource updatedResource = new ProtectedResource();
-        updatedResource.setId("resource-id");
-        updatedResource.setDomainId(domainId);
-        updatedResource.setName(validName);
-        updatedResource.setResourceIdentifiers(List.of("https://example.com"));
-
-        UpdateProtectedResource updateRequest = new UpdateProtectedResource();
-        updateRequest.setName(validName);
-        updateRequest.setResourceIdentifiers(List.of("https://example.com"));
-
-        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
-        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(ProtectedResourcePrimaryData.of(updatedResource)))
-                .when(protectedResourceService).update(any(Domain.class), eq("resource-id"), any(UpdateProtectedResource.class), any());
-
-        final Response response = target("domains")
-                .path(domainId)
-                .path("protected-resources")
-                .path("resource-id")
-                .request()
-                .put(Entity.json(updateRequest));
-
-        assertEquals("Valid pattern '" + validName + "' should return 200", HttpStatusCode.OK_200, response.getStatus());
     }
 
     @Test

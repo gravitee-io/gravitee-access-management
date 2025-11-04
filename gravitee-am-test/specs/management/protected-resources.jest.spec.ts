@@ -44,7 +44,7 @@ import {uniqueName} from "@utils-commands/misc";
 import { retryUntil } from '@utils-commands/retry';
 
 function generateValidProtectedResourceName(): string {
-    return `test-${faker.datatype.number({min: 1000, max: 9999})}-${faker.helpers.slugify(faker.commerce.productName()).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+    return `test-${faker.datatype.number({min: 1000, max: 9999})}-${faker.commerce.productName()}`;
 }
 
 function isMcpToolFeature(feature: ProtectedResourceFeature): feature is McpToolFeature {
@@ -79,7 +79,7 @@ afterAll(async () => {
 describe('When creating protected resource', () => {
     it('New Protected Resource should be created', async () => {
         const request = {
-            name: generateValidProtectedResourceName(),
+            name: `Test MCP Server ${faker.datatype.number({min: 1000, max: 9999})}`,
             type: "MCP_SERVER",
             resourceIdentifiers: ["https://something.com", "https://something2.com"],
             features: [
@@ -552,7 +552,7 @@ describe('When updating protected resource', () => {
 
         // Create a protected resource to update
         const request = {
-            name: generateValidProtectedResourceName(),
+            name: `Test Protected Resource ${faker.datatype.number({min: 1000, max: 9999})}`,
             type: "MCP_SERVER",
             resourceIdentifiers: ["https://update-test.com"],
             description: "Original description",
@@ -585,7 +585,7 @@ describe('When updating protected resource', () => {
 
     it('Should update protected resource name and description', async () => {
         const updateRequest = {
-            name: "Updated_Name_123",
+            name: "Updated Protected Resource Name",
             description: "Updated description",
             resourceIdentifiers: createdResource.resourceIdentifiers,
             features: createdResource.features.map(f => ({
@@ -600,7 +600,7 @@ describe('When updating protected resource', () => {
 
         expect(updated).toBeDefined();
         expect(updated.id).toEqual(createdResource.id);
-        expect(updated.name).toEqual("Updated_Name_123");
+        expect(updated.name).toEqual("Updated Protected Resource Name");
         expect(updated.description).toEqual("Updated description");
         expect(updated.updatedAt).not.toEqual(createdResource.updatedAt);
 
