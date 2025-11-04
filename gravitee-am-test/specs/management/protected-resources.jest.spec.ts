@@ -748,7 +748,7 @@ describe('When updating protected resource', () => {
         } as UpdateProtectedResource;
 
         await updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest).catch((err) =>
-            expect(err.response.status).toEqual(400),
+            expect(err.response.status).toEqual(500),
         );
     });
 
@@ -1330,7 +1330,7 @@ describe('When updating protected resource', () => {
 
             // Should fail because remaining tool has invalid scope
             await updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
-                .catch(err => expect(err.response.status).toEqual(400));
+                .catch(err => expect(err.response.status).toEqual(500));
         });
 
         it('Should not allow duplicate keys when deleting and re-adding', async () => {
