@@ -22,7 +22,7 @@
     <span style="gap: 4px">{{ text }}</span>
   </div>
   <div fxFlex="initial" fxLayoutGap="5" fxLayoutAlign="end center">
-    <button (click)="gotoLink($event)" mat-raised-button class="more-info-button">
+    <button (click)="gotoLink($event)" mat-raised-button class="more-info-button" *ngIf="showButton">
       {{ buttonName }}
     </button>
   </div>

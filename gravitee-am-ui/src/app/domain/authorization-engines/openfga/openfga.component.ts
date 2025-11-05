@@ -84,7 +84,8 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
   storeInfo: StoreInfo | null = null;
 
   configuration: Record<string, any> = {};
-  originalConfiguration: string = '';
+  draftConfiguration: Record<string, any> = {};
+
   originalName: string = '';
   configurationSchema: Record<string, any> = {};
   configurationIsValid = false;
@@ -97,6 +98,11 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
   originalModelId: string = '';
   editingModelDsl: string = '';
   private networkInstance: Network | null = null;
+  hasLoadError = false;
+
+  get selectedTabIndex(): number {
+    return this.hasLoadError ? 3 : 0;
+  }
 
   get codeMirrorOptions() {
     return {
@@ -187,12 +193,17 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
           this.authorizationModelId = config.authorizationModelId;
 
           this.configuration = { ...config };
-          this.originalConfiguration = JSON.stringify(config);
+          this.draftConfiguration = { ...config };
           this.originalName = engine.name;
 
           this.loadAuthorizationEngineSchema(engine.type);
-          this.loadAuthorizationModel();
-          this.loadTuples();
+
+          const onLoadFailure = () => {
+            this.hasLoadError = true;
+          };
+
+          this.loadAuthorizationModel(undefined, onLoadFailure);
+          this.loadTuples(undefined, onLoadFailure);
         },
         error: () => {
           this.snackbarService.open('Failed to load authorization engine');
@@ -214,7 +225,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
     );
   }
 
-  loadAuthorizationModel(continuationToken?: string) {
+  loadAuthorizationModel(continuationToken?: string, onLoadFailure?: () => void) {
     this.modelPagination.setLoading(true);
     this.subscriptions.add(
       this.openFGAService
@@ -255,11 +266,15 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
           },
           error: () => {
             this.modelPagination.setLoading(false);
-            this.snackbarService.open('Failed to load store or authorization models');
             this.modelPagination.setItems([], null, this.modelPageSize);
             this.authorizationModelDsl = '';
             this.authorizationModelJson = null;
             this.modelGraph = null;
+            if (onLoadFailure) {
+              onLoadFailure();
+            } else {
+              this.snackbarService.open('Failed to load store or authorization models');
+            }
           },
         }),
     );
@@ -416,7 +431,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
             this.authorizationEngine = engine;
             const config = JSON.parse(engine.configuration || '{}');
             this.configuration = { ...config };
-            this.originalConfiguration = JSON.stringify(config);
+            this.draftConfiguration = { ...config };
             this.storeId = config.storeId;
             this.authorizationModelId = config.authorizationModelId;
             this.snackbarService.open('Authorization model applied successfully');
@@ -433,7 +448,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
     }
   }
 
-  loadTuples(continuationToken?: string) {
+  loadTuples(continuationToken?: string, onLoadFailure?: () => void) {
     this.tuplePagination.setLoading(true);
     this.subscriptions.add(
       this.openFGAService.listTuples(this.domainId, this.engineId, this.tuplePageSize, continuationToken).subscribe({
@@ -450,7 +465,11 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
         },
         error: () => {
           this.tuplePagination.setLoading(false);
-          this.snackbarService.open('Failed to load tuples');
+          if (onLoadFailure) {
+            onLoadFailure();
+          } else {
+            this.snackbarService.open('Failed to load tuples');
+          }
         },
       }),
     );
@@ -671,14 +690,14 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
   }
 
   isConfigurationDirty(): boolean {
-    const configChanged = JSON.stringify(this.configuration) !== this.originalConfiguration;
+    const configChanged = JSON.stringify(this.draftConfiguration) !== JSON.stringify(this.configuration);
     const nameChanged = this.authorizationEngine?.name !== this.originalName;
     return configChanged || nameChanged;
   }
 
   onConfigurationChanged(configurationWrapper: { isValid: boolean; configuration: Record<string, any> }) {
     this.configurationIsValid = configurationWrapper.isValid;
-    this.configuration = configurationWrapper.configuration;
+    this.draftConfiguration = configurationWrapper.configuration || {};
   }
 
   isSaving = false;
@@ -693,7 +712,7 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
     const updatedEngine: AuthorizationEngine = {
       ...this.authorizationEngine,
       name: this.authorizationEngine.name,
-      configuration: JSON.stringify(this.configuration),
+      configuration: JSON.stringify(this.draftConfiguration),
     };
 
     this.subscriptions.add(
@@ -709,16 +728,18 @@ export class OpenFGAComponent implements OnInit, OnDestroy {
             this.authorizationEngine = engine;
             const config = JSON.parse(engine.configuration || '{}');
             this.configuration = { ...config };
-            this.originalConfiguration = JSON.stringify(config);
+            this.draftConfiguration = { ...config };
             this.originalName = engine.name;
             this.storeId = config.storeId;
             this.authorizationModelId = config.authorizationModelId;
+            this.selectedModelId = null;
             this.snackbarService.open('Configuration saved successfully');
 
             this.tuplePagination.reset();
             this.modelPagination.reset();
             this.loadAuthorizationModel();
             this.loadTuples();
+            this.hasLoadError = false;
           },
         }),
     );

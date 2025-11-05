@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { SKIP_404_REDIRECT } from 'app/interceptors/http-request.interceptor';
 
 import type { AuthorizationModel } from '@openfga/sdk';
 
@@ -47,7 +48,8 @@ export class OpenFGAService {
   }
 
   getStore(domainId: string, engineId: string): Observable<any> {
-    return this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/store`);
+    const context = new HttpContext().set(SKIP_404_REDIRECT, true);
+    return this.http.get<any>(`${this.domainsURL}${domainId}/authorization-engines/${engineId}/settings/store`, { context });
   }
 
   listTuples(domainId: string, engineId: string, pageSize: number, continuationToken?: string): Observable<any> {
