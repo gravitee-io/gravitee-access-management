@@ -47,3 +47,7 @@ helm/charts/
 # docker compose local volume
 docker/compose/data/
 docker/compose/mongo/data/
+
+# AI/Development documentation - plan files (temporary work files)
+.cursorrules.md 
+docs/ai-guidelines
