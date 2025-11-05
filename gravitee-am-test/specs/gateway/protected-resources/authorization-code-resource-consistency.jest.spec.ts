@@ -150,4 +150,19 @@ describe('Authorization Code Flow - Resource Parameter Consistency (RFC 8707)', 
       expect(refreshTokenDecoded.orig_resources).toContain(resource);
     });
   });
+
+  it('should reject resource with fragment in token request', async () => {
+    // Step 1: Authorization request with valid resources (no fragment)
+    const authResources = ['https://api.example.com/photos'];
+    const authCode = await fixture.completeAuthorizationFlow(authResources);
+
+    // Step 2: Token request with fragment in resource parameter
+    // Fragments are not allowed in resource identifiers per @Url(allowFragment = false)
+    const resourceWithFragment = 'https://api.example.com/photos#section';
+    const tokenResponse = await fixture.exchangeAuthCodeForToken(authCode, [resourceWithFragment]).expect(400);
+
+    // Should reject with invalid_target error
+    expect(tokenResponse.body.error).toBe('invalid_target');
+    expect(tokenResponse.body.error_description).toContain('not recognized');
+  });
 });

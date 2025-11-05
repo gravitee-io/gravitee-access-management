@@ -314,6 +314,17 @@ describe('When creating protected resource', () => {
     await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
   });
 
+    it('Protected Resource must not be created with fragment in resource identifier', async () => {
+        // Fragments are not allowed in resource identifiers per @Url(allowFragment = false)
+        const request = {
+            name: generateValidProtectedResourceName(),
+            type: 'MCP_SERVER',
+            resourceIdentifiers: ["https://something.com#fragment"]
+        } as NewProtectedResource;
+
+        await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    });
+
     it('Protected Resource must not be created if resourceIdentifier already exists', async () => {
         const request = {
             name: generateValidProtectedResourceName(),
@@ -1550,6 +1561,18 @@ describe('When patching protected resource', () => {
     it('Should fail when resource identifier is not a valid URL', async () => {
         const patchRequest = {
             resourceIdentifiers: ["not-a-valid-url"]
+        };
+
+        await expectErrorStatus(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
+            400,
+        );
+    });
+
+    it('Should fail when patching with fragment in resource identifier', async () => {
+        // Fragments are not allowed in resource identifiers per @Url(allowFragment = false)
+        const patchRequest = {
+            resourceIdentifiers: ["https://patched-resource.com#fragment"]
         };
 
         await expectErrorStatus(

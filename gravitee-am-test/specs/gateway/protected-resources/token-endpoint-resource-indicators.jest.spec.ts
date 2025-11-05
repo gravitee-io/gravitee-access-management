@@ -88,6 +88,14 @@ describe('Token Endpoint - Resource Indicators (RFC 8707)', () => {
       const response = await makeTokenRequest(`&resource=${encodeURIComponent(meta)}`);
       validateSuccessfulTokenResponse(response, [meta]);
     });
+
+    it('should reject resource with fragment', async () => {
+      // Fragments are not allowed in resource identifiers per @Url(allowFragment = false)
+      // This test verifies that fragments in resource parameter are rejected
+      const resourceWithFragment = 'https://api.example.com/photos#section';
+      const response = await makeTokenRequest(`&resource=${encodeURIComponent(resourceWithFragment)}`, 400);
+      validateErrorResponse(response);
+    });
   });
 
   describe('Invalid Resource Scenarios', () => {
