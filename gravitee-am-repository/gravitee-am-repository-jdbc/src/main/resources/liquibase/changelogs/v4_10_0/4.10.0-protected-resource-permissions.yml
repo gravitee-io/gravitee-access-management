@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.0-protected-resource-permissions
+      author: GraviteeSource Team
+      changes:
+        # Upgrade permissions on roles for protected resource
+        ##############
+        - sql:
+            dbms: postgresql
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{PROTECTED_RESOURCE}', '[\"CREATE\",\"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_OWNER','ORGANIZATION_PRIMARY_OWNER','DOMAIN_OWNER','DOMAIN_PRIMARY_OWNER','ENVIRONMENT_OWNER','ENVIRONMENT_PRIMARY_OWNER');"
+
+        - sql:
+            dbms: mysql, mariadb
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.PROTECTED_RESOURCE', JSON_ARRAY('CREATE', 'READ', 'UPDATE', 'DELETE', 'LIST')) WHERE name in ('ORGANIZATION_OWNER','ORGANIZATION_PRIMARY_OWNER','DOMAIN_OWNER','DOMAIN_PRIMARY_OWNER','ENVIRONMENT_OWNER','ENVIRONMENT_PRIMARY_OWNER');"
+
+        - sql:
+            dbms: mssql
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.PROTECTED_RESOURCE', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_OWNER','ORGANIZATION_PRIMARY_OWNER','DOMAIN_OWNER','DOMAIN_PRIMARY_OWNER','ENVIRONMENT_OWNER','ENVIRONMENT_PRIMARY_OWNER');"
