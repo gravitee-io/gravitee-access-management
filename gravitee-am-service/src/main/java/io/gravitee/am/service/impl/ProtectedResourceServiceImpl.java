@@ -204,38 +204,21 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     toUpdate.setName(StringUtils.trimToNull(updateProtectedResource.getName()));
                     toUpdate.setDescription(StringUtils.trimToNull(updateProtectedResource.getDescription()));
                     toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers());
-                    toUpdate.setUpdatedAt(new Date());
 
                     // Map features (update has special handling for UpdateMcpTool)
-                    Map<String, Date> oldFeatureCreationDates = oldProtectedResource.getFeatures().stream()
-                            .collect(Collectors.toMap(ProtectedResourceFeature::getKey, ProtectedResourceFeature::getCreatedAt));
+                    // Note: Feature timestamps will be preserved by innerUpdate()
                     toUpdate.setFeatures(updateProtectedResource.getFeatures().stream().map(f -> {
                         ProtectedResourceFeature feature = f.asFeature();
-                        // Keep original createdAt if feature key matches, otherwise set new date
-                        Date createdAt = oldFeatureCreationDates.getOrDefault(feature.getKey(), toUpdate.getUpdatedAt());
-                        feature.setCreatedAt(createdAt);
-                        feature.setUpdatedAt(toUpdate.getUpdatedAt());
                         return switch (f) {
                             case UpdateMcpTool tool -> new McpTool(feature, tool.getScopes());
                             default -> feature;
                         };
                     }).toList());
 
-                    // Normalize resourceIdentifiers and preserve feature timestamps
-                    // Note: Feature timestamps already preserved above, but normalizeResourceIdentifiers still needed
-                    normalizeResourceIdentifiers(toUpdate);
-
-                    // Use common processing method for validation and update
-                    return processUpdate(domain, id, toUpdate, oldProtectedResource, principal);
+                    // Use common innerUpdate method for normalization, timestamp preservation, validation, and update
+                    return innerUpdate(domain, id, oldProtectedResource, toUpdate, principal);
                 })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to update protected resource %s", id), ex));
-                });
+                .onErrorResumeNext(ex -> handleUpdateError(id, ex));
     }
 
     @Override
@@ -248,23 +231,53 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                 .flatMap(oldProtectedResource -> {
                     // Apply patch
                     ProtectedResource toPatch = patchProtectedResource.patch(oldProtectedResource);
-                    toPatch.setUpdatedAt(new Date());
 
-                    // Normalize resourceIdentifiers and preserve feature timestamps
-                    normalizeResourceIdentifiers(toPatch);
-                    preserveFeatureTimestamps(toPatch, oldProtectedResource);
-
-                    // Use common processing method for validation and update
-                    return processUpdate(domain, id, toPatch, oldProtectedResource, principal);
+                    // Use common innerUpdate method for normalization, timestamp preservation, validation, and update
+                    return innerUpdate(domain, id, oldProtectedResource, toPatch, principal);
                 })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to patch protected resource {}", id, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to patch protected resource %s", id), ex));
-                });
+                .onErrorResumeNext(ex -> handleUpdateError(id, ex));
+    }
+
+    /**
+     * Handles error cases for update and patch operations.
+     * Preserves business exceptions and wraps technical exceptions.
+     *
+     * @param id the resource ID (for error messages)
+     * @param ex the exception to handle
+     * @return Single error with appropriate exception type
+     */
+    private Single<ProtectedResourcePrimaryData> handleUpdateError(String id, Throwable ex) {
+        if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
+            return Single.error(ex);
+        }
+        LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
+        return Single.error(new TechnicalManagementException(
+                String.format("An error occurs while trying to update protected resource %s", id), ex));
+    }
+
+    /**
+     * Common update logic for both update and patch operations.
+     * Handles normalization, timestamp preservation, validation, and persistence.
+     *
+     * @param domain the domain
+     * @param id the resource ID (for error messages)
+     * @param oldResource the original resource before update
+     * @param resourceToUpdate the prepared resource to update
+     * @param principal the user performing the operation
+     * @return the updated resource primary data
+     */
+    private Single<ProtectedResourcePrimaryData> innerUpdate(Domain domain, String id, ProtectedResource oldResource, ProtectedResource resourceToUpdate, User principal) {
+        // Set updated timestamp
+        resourceToUpdate.setUpdatedAt(new Date());
+
+        // Normalize resource identifiers
+        normalizeResourceIdentifiers(resourceToUpdate);
+
+        // Preserve feature timestamps
+        preserveFeatureTimestamps(resourceToUpdate, oldResource);
+
+        // Validate and update (processUpdate handles validation and calls doUpdate)
+        return processUpdate(domain, id, resourceToUpdate, oldResource, principal);
     }
 
     /**
