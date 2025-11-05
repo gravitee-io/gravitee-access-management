@@ -49,5 +49,5 @@ docker/compose/data/
 docker/compose/mongo/data/
 
 # AI/Development documentation - plan files (temporary work files)
-.cursorrules.md 
+.cursor/ 
 docs/ai-guidelines
