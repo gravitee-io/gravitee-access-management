@@ -17,7 +17,6 @@ package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourceFeature;
-import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.utils.SetterUtils;
 import io.gravitee.am.service.validators.url.Url;
 import jakarta.validation.constraints.NotBlank;
@@ -27,7 +26,6 @@ import lombok.Setter;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * @author GraviteeSource Team
@@ -42,9 +40,9 @@ public class PatchProtectedResource {
     private Optional<List<@NotBlank @Url String>> resourceIdentifiers;
     private Optional<List<UpdateProtectedResourceFeature>> features;
 
-    public ProtectedResource patch(ProtectedResource _toPatch) {
+    public ProtectedResource patch(ProtectedResource protectedResource) {
         // create new object for audit purpose (patch json result)
-        ProtectedResource toPatch = new ProtectedResource(_toPatch);
+        ProtectedResource toPatch = new ProtectedResource(protectedResource);
 
         SetterUtils.safeSet(toPatch::setName, this.getName());
         SetterUtils.safeSet(toPatch::setDescription, this.getDescription());
@@ -70,16 +68,14 @@ public class PatchProtectedResource {
                 .toList();
     }
 
-    public Set<Permission> getRequiredPermissions() {
-        Set<Permission> requiredPermissions = new java.util.HashSet<>();
-
-        if ((getName() != null && getName().isPresent())
+    /**
+     * Indicates whether this patch contains at least one field to update.
+     * This is used to validate empty PATCH requests early at the resource layer.
+     */
+    public boolean hasAnyField() {
+        return (getName() != null && getName().isPresent())
                 || (getDescription() != null && getDescription().isPresent())
                 || (getResourceIdentifiers() != null && getResourceIdentifiers().isPresent())
-                || (getFeatures() != null && getFeatures().isPresent())) {
-            requiredPermissions.add(Permission.PROTECTED_RESOURCE);
-        }
-
-        return requiredPermissions;
+                || (getFeatures() != null && getFeatures().isPresent());
     }
 }

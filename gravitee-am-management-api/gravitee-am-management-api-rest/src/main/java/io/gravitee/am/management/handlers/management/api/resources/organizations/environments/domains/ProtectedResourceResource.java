@@ -26,9 +26,7 @@ import jakarta.ws.rs.BadRequestException;
 import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.common.http.MediaType;
-import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Maybe;
-import java.util.Set;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -106,20 +104,17 @@ public class ProtectedResourceResource extends AbstractDomainResource {
             @Valid @NotNull final PatchProtectedResource patchProtectedResource,
             @Suspended final AsyncResponse response) {
         User authenticatedUser = getAuthenticatedUser();
-        Set<Permission> requiredPermissions = patchProtectedResource.getRequiredPermissions();
 
-        if (requiredPermissions.isEmpty()) {
-            // If there is no required permission, it means there is nothing to update. This is not a valid request.
+        if (!patchProtectedResource.hasAnyField()) {
             response.resume(new BadRequestException("You need to specify at least one value to update."));
-        } else {
-            Completable.merge(requiredPermissions.stream()
-                    .map(permission -> checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, permission, UPDATE))
-                    .toList())
-                    .andThen(domainService.findById(domainId)
-                            .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                            .flatMapSingle(domain -> service.patch(domain, protectedResourceId, patchProtectedResource, authenticatedUser)))
-                    .subscribe(response::resume, response::resume);
+            return;
         }
+
+        checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, Permission.PROTECTED_RESOURCE, UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> service.patch(domain, protectedResourceId, patchProtectedResource, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
     }
 
     @PUT

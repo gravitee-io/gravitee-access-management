@@ -16,12 +16,9 @@
 package io.gravitee.am.service.model;
 
 import io.gravitee.am.model.ProtectedResource;
-import io.gravitee.am.model.permissions.Permission;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,40 +52,40 @@ public class PatchProtectedResourceTest {
 
     @Test
     public void patchDescriptionOnly() {
-        final var NEW_DESCRIPTION = "MyNewDescription";
-        final var DESCRIPTION = "MyDescription";
+        final var newDescription = "MyNewDescription";
+        final var description = "MyDescription";
 
         final var resource = new ProtectedResource();
         resource.setName("Old Name");
-        resource.setDescription(DESCRIPTION);
+        resource.setDescription(description);
         resource.setResourceIdentifiers(List.of("https://old.example.com"));
 
         final var patchResource = new PatchProtectedResource();
-        patchResource.setDescription(Optional.of(NEW_DESCRIPTION));
+        patchResource.setDescription(Optional.of(newDescription));
 
         final var updatedResource = patchResource.patch(resource);
         assertEquals("Old Name", updatedResource.getName());
-        assertEquals(NEW_DESCRIPTION, updatedResource.getDescription());
+        assertEquals(newDescription, updatedResource.getDescription());
         assertEquals(List.of("https://old.example.com"), updatedResource.getResourceIdentifiers());
     }
 
     @Test
     public void patchResourceIdentifiersOnly() {
-        final var NEW_RESOURCE_IDENTIFIERS = List.of("https://new.example.com");
-        final var OLD_RESOURCE_IDENTIFIERS = List.of("https://old.example.com");
+        final var newResourceIdentifiersOnly = List.of("https://new.example.com");
+        final var oldResourceIdentifiersOnly = List.of("https://old.example.com");
 
         final var resource = new ProtectedResource();
         resource.setName("Old Name");
         resource.setDescription("Old Description");
-        resource.setResourceIdentifiers(OLD_RESOURCE_IDENTIFIERS);
+        resource.setResourceIdentifiers(oldResourceIdentifiersOnly);
 
         final var patchResource = new PatchProtectedResource();
-        patchResource.setResourceIdentifiers(Optional.of(NEW_RESOURCE_IDENTIFIERS));
+        patchResource.setResourceIdentifiers(Optional.of(newResourceIdentifiersOnly));
 
         final var updatedResource = patchResource.patch(resource);
         assertEquals("Old Name", updatedResource.getName());
         assertEquals("Old Description", updatedResource.getDescription());
-        assertEquals(NEW_RESOURCE_IDENTIFIERS, updatedResource.getResourceIdentifiers());
+        assertEquals(newResourceIdentifiersOnly, updatedResource.getResourceIdentifiers());
     }
 
     @Test
@@ -117,9 +114,9 @@ public class PatchProtectedResourceTest {
 
     @Test
     public void patchAllFields() {
-        final var NEW_NAME = "MyNewName";
-        final var NEW_DESCRIPTION = "MyNewDescription";
-        final var NEW_RESOURCE_IDENTIFIERS = List.of("https://new.example.com");
+        final var newName = "MyNewName";
+        final var newDescription2 = "MyNewDescription";
+        final var newResourceIdentifiers = List.of("https://new.example.com");
         final var updateFeature = new UpdateProtectedResourceFeature();
         updateFeature.setKey("new_feature");
         updateFeature.setDescription("New Feature");
@@ -131,15 +128,15 @@ public class PatchProtectedResourceTest {
         resource.setFeatures(Collections.emptyList());
 
         final var patchResource = new PatchProtectedResource();
-        patchResource.setName(Optional.of(NEW_NAME));
-        patchResource.setDescription(Optional.of(NEW_DESCRIPTION));
-        patchResource.setResourceIdentifiers(Optional.of(NEW_RESOURCE_IDENTIFIERS));
+        patchResource.setName(Optional.of(newName));
+        patchResource.setDescription(Optional.of(newDescription2));
+        patchResource.setResourceIdentifiers(Optional.of(newResourceIdentifiers));
         patchResource.setFeatures(Optional.of(List.of(updateFeature)));
 
         final var updatedResource = patchResource.patch(resource);
-        assertEquals(NEW_NAME, updatedResource.getName());
-        assertEquals(NEW_DESCRIPTION, updatedResource.getDescription());
-        assertEquals(NEW_RESOURCE_IDENTIFIERS, updatedResource.getResourceIdentifiers());
+        assertEquals(newName, updatedResource.getName());
+        assertEquals(newDescription2, updatedResource.getDescription());
+        assertEquals(newResourceIdentifiers, updatedResource.getResourceIdentifiers());
         assertNotNull(updatedResource.getFeatures());
         assertEquals(1, updatedResource.getFeatures().size());
         assertEquals("new_feature", updatedResource.getFeatures().get(0).getKey());
@@ -147,14 +144,14 @@ public class PatchProtectedResourceTest {
 
     @Test
     public void patchWithEmptyOptional_shouldSetToNull() {
-        final var ORIGINAL_NAME = "OriginalName";
-        final var ORIGINAL_DESCRIPTION = "OriginalDescription";
-        final var ORIGINAL_RESOURCE_IDENTIFIERS = List.of("https://original.example.com");
+        final var originalName = "OriginalName";
+        final var originalDescription = "OriginalDescription";
+        final var originalResourceIdentifiers = List.of("https://original.example.com");
 
         final var resource = new ProtectedResource();
-        resource.setName(ORIGINAL_NAME);
-        resource.setDescription(ORIGINAL_DESCRIPTION);
-        resource.setResourceIdentifiers(ORIGINAL_RESOURCE_IDENTIFIERS);
+        resource.setName(originalName);
+        resource.setDescription(originalDescription);
+        resource.setResourceIdentifiers(originalResourceIdentifiers);
 
         final var patchResource = new PatchProtectedResource();
         patchResource.setName(Optional.empty());
@@ -169,14 +166,14 @@ public class PatchProtectedResourceTest {
 
     @Test
     public void patchWithNullOptional_shouldNotUpdate() {
-        final var ORIGINAL_NAME = "OriginalName";
-        final var ORIGINAL_DESCRIPTION = "OriginalDescription";
-        final var ORIGINAL_RESOURCE_IDENTIFIERS = List.of("https://original.example.com");
+        final var originalName2 = "OriginalName";
+        final var originalDescription2 = "OriginalDescription";
+        final var originalResourceIdentifiers2 = List.of("https://original.example.com");
 
         final var resource = new ProtectedResource();
-        resource.setName(ORIGINAL_NAME);
-        resource.setDescription(ORIGINAL_DESCRIPTION);
-        resource.setResourceIdentifiers(ORIGINAL_RESOURCE_IDENTIFIERS);
+        resource.setName(originalName2);
+        resource.setDescription(originalDescription2);
+        resource.setResourceIdentifiers(originalResourceIdentifiers2);
 
         final var patchResource = new PatchProtectedResource();
         patchResource.setName(null);
@@ -184,9 +181,9 @@ public class PatchProtectedResourceTest {
         patchResource.setResourceIdentifiers(null);
 
         final var updatedResource = patchResource.patch(resource);
-        assertEquals(ORIGINAL_NAME, updatedResource.getName());
-        assertEquals(ORIGINAL_DESCRIPTION, updatedResource.getDescription());
-        assertEquals(ORIGINAL_RESOURCE_IDENTIFIERS, updatedResource.getResourceIdentifiers());
+        assertEquals(originalName2, updatedResource.getName());
+        assertEquals(originalDescription2, updatedResource.getDescription());
+        assertEquals(originalResourceIdentifiers2, updatedResource.getResourceIdentifiers());
     }
 
     @Test
@@ -203,55 +200,34 @@ public class PatchProtectedResourceTest {
     }
 
     @Test
-    public void getRequiredPermissions_emptyPatch() {
-        PatchProtectedResource patchResource = new PatchProtectedResource();
-        assertEquals(Collections.emptySet(), patchResource.getRequiredPermissions());
+    public void hasAnyField_emptyPatch_returnsFalse() {
+        final var patch = new PatchProtectedResource();
+        assertEquals(false, patch.hasAnyField());
     }
 
     @Test
-    public void getRequiredPermissions_withName() {
-        PatchProtectedResource patchResource = new PatchProtectedResource();
-        patchResource.setName(Optional.of("patchName"));
-        assertEquals(new HashSet<>(Arrays.asList(Permission.PROTECTED_RESOURCE)), patchResource.getRequiredPermissions());
+    public void hasAnyField_withAnyField_returnsTrue() {
+        // name only
+        var patch = new PatchProtectedResource();
+        patch.setName(Optional.of("n"));
+        assertEquals(true, patch.hasAnyField());
+
+        // description only
+        patch = new PatchProtectedResource();
+        patch.setDescription(Optional.of("d"));
+        assertEquals(true, patch.hasAnyField());
+
+        // resourceIdentifiers only
+        patch = new PatchProtectedResource();
+        patch.setResourceIdentifiers(Optional.of(List.of("https://example.com")));
+        assertEquals(true, patch.hasAnyField());
+
+        // features only
+        patch = new PatchProtectedResource();
+        final var updateFeature = new UpdateProtectedResourceFeature();
+        updateFeature.setKey("k");
+        updateFeature.setDescription("desc");
+        patch.setFeatures(Optional.of(List.of(updateFeature)));
+        assertEquals(true, patch.hasAnyField());
     }
-
-    @Test
-    public void getRequiredPermissions_withDescription() {
-        PatchProtectedResource patchResource = new PatchProtectedResource();
-        patchResource.setDescription(Optional.of("patchDescription"));
-        assertEquals(new HashSet<>(Arrays.asList(Permission.PROTECTED_RESOURCE)), patchResource.getRequiredPermissions());
-    }
-
-    @Test
-    public void getRequiredPermissions_withResourceIdentifiers() {
-        PatchProtectedResource patchResource = new PatchProtectedResource();
-        patchResource.setResourceIdentifiers(Optional.of(List.of("https://example.com")));
-        assertEquals(new HashSet<>(Arrays.asList(Permission.PROTECTED_RESOURCE)), patchResource.getRequiredPermissions());
-    }
-
-    @Test
-    public void getRequiredPermissions_withFeatures() {
-        PatchProtectedResource patchResource = new PatchProtectedResource();
-        UpdateProtectedResourceFeature updateFeature = new UpdateProtectedResourceFeature();
-        updateFeature.setKey("test_feature");
-        updateFeature.setDescription("Test Feature");
-        patchResource.setFeatures(Optional.of(List.of(updateFeature)));
-        assertEquals(new HashSet<>(Arrays.asList(Permission.PROTECTED_RESOURCE)), patchResource.getRequiredPermissions());
-    }
-
-    @Test
-    public void getRequiredPermissions_multipleFields() {
-        PatchProtectedResource patchResource = new PatchProtectedResource();
-        patchResource.setName(Optional.of("patchName"));
-        patchResource.setDescription(Optional.of("patchDescription"));
-        patchResource.setResourceIdentifiers(Optional.of(List.of("https://example.com")));
-        UpdateProtectedResourceFeature updateFeature = new UpdateProtectedResourceFeature();
-        updateFeature.setKey("test_feature");
-        updateFeature.setDescription("Test Feature");
-        patchResource.setFeatures(Optional.of(List.of(updateFeature)));
-
-        assertEquals(new HashSet<>(Arrays.asList(Permission.PROTECTED_RESOURCE)), patchResource.getRequiredPermissions());
-    }
-
-
 }
