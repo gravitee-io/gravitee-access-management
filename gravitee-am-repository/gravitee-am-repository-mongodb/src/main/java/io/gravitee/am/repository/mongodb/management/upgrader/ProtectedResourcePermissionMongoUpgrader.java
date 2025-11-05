@@ -27,9 +27,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Filters.in;
+import static io.gravitee.am.model.permissions.DefaultRole.DOMAIN_OWNER;
+import static io.gravitee.am.model.permissions.DefaultRole.ENVIRONMENT_OWNER;
+import static io.gravitee.am.model.permissions.DefaultRole.ORGANIZATION_OWNER;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -37,17 +42,19 @@ import static com.mongodb.client.model.Filters.in;
 @ManagementRepositoryScope
 public class ProtectedResourcePermissionMongoUpgrader implements Upgrader {
     private final MongoDatabase mongo;
+    private final String ProtectedResourceFieldName = "permissionAcls." + Permission.PROTECTED_RESOURCE.name();
+    private final Set<String> roles = Set.of(ORGANIZATION_OWNER.name(), DOMAIN_OWNER.name(), ENVIRONMENT_OWNER.name());
 
     @Override
     public boolean upgrade() {
         var rolesCollection = mongo.getCollection("roles", RoleMongo.class);
-        var filter = and(in("name", "ORGANIZATION_OWNER"), exists("permissionAcls.PROTECTED_RESOURCE", false));
-        var update = Updates.set("permissionAcls." + Permission.PROTECTED_RESOURCE.name(), Acl.all());
+        var filter = and(in("name", roles), exists(ProtectedResourceFieldName, false));
+        var update = Updates.set(ProtectedResourceFieldName, Acl.all());
 
         return Completable.fromPublisher(rolesCollection.updateMany(filter, update))
                 .toSingleDefault(true)
                 .onErrorReturn(ex -> {
-                    log.error("Error adding PROTECTED_RESOURCE permission on ORGANIZATION_OWNER", ex);
+                    log.error("Error adding PROTECTED_RESOURCE permissions on {}", roles, ex);
                     return false;
                 })
                 .blockingGet();

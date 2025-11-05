@@ -7,12 +7,12 @@ databaseChangeLog:
         ##############
         - sql:
             dbms: postgresql
-            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{PROTECTED_RESOURCE}', '[\"CREATE\",\"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_OWNER');"
+            sql: "UPDATE roles SET permission_acls = jsonb_set(cast(permission_acls as jsonb), '{PROTECTED_RESOURCE}', '[\"CREATE\",\"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', true)  WHERE name in ('ORGANIZATION_OWNER','DOMAIN_OWNER','ENVIRONMENT_OWNER');"
 
         - sql:
             dbms: mysql, mariadb
-            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.PROTECTED_RESOURCE', JSON_ARRAY('CREATE', 'READ', 'UPDATE', 'DELETE', 'LIST')) WHERE name in ('ORGANIZATION_OWNER');"
+            sql: "UPDATE roles SET permission_acls = JSON_SET(permission_acls, '$.PROTECTED_RESOURCE', JSON_ARRAY('CREATE', 'READ', 'UPDATE', 'DELETE', 'LIST')) WHERE name in ('ORGANIZATION_OWNER','DOMAIN_OWNER','ENVIRONMENT_OWNER');"
 
         - sql:
             dbms: mssql
-            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.PROTECTED_RESOURCE', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_OWNER');"
+            sql: "UPDATE roles SET permission_acls = JSON_MODIFY(permission_acls, '$.PROTECTED_RESOURCE', JSON_QUERY('[\"CREATE\", \"READ\", \"UPDATE\", \"DELETE\", \"LIST\"]', '$')) WHERE name in ('ORGANIZATION_OWNER','DOMAIN_OWNER','ENVIRONMENT_OWNER');"
