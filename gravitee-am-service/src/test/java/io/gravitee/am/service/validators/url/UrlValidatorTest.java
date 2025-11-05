@@ -15,17 +15,29 @@
  */
 package io.gravitee.am.service.validators.url;
 
+import jakarta.validation.ConstraintValidatorContext;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.lang.annotation.Annotation;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 public class UrlValidatorTest {
 
-    private final UrlValidator validator = new UrlValidator();
+    private UrlValidator validator;
+    private ConstraintValidatorContext context;
+
+    @BeforeEach
+    void setUp() {
+        validator = new UrlValidator();
+        context = mock(ConstraintValidatorContext.class);
+    }
 
     @Nested
     @DisplayName("Valid URLs")
@@ -44,7 +56,6 @@ public class UrlValidatorTest {
                 "git+ssh://github.com/user/repo.git",
                 "s3://my-bucket.s3.amazonaws.com/file.txt",
                 "http://example.co.uk",
-                "http://example.pl?x=1#frag",
                 "custom+proto://a-b.c-d123.io/some/path"
         })
         void shouldAcceptValidUrls(String url) {
@@ -81,6 +92,63 @@ public class UrlValidatorTest {
         String wrapped = "prefix https://example.com suffix";
         assertFalse(validator.isValid(wrapped, null));
         assertTrue(validator.isValid("https://example.com", null));
+    }
+
+    @Nested
+    @DisplayName("Fragment validation")
+    class FragmentValidation {
+
+        @Test
+        @DisplayName("Should accept URLs with fragments when allowFragment is true")
+        void shouldAcceptFragmentsWhenAllowed() {
+            validator.initialize(createUrlAnnotation(true));
+
+            assertTrue(validator.isValid("http://example.com#fragment", context));
+            assertTrue(validator.isValid("https://example.com/path#section", context));
+        }
+
+        @Test
+        @DisplayName("Should reject URLs with fragments when allowFragment is false")
+        void shouldRejectFragmentsWhenDisallowed() {
+            validator.initialize(createUrlAnnotation(false));
+
+            assertFalse(validator.isValid("http://example.com#fragment", context));
+            assertFalse(validator.isValid("https://example.com/path#section", context));
+            assertFalse(validator.isValid("http://example.com?query=1#frag", context));
+            assertTrue(validator.isValid("http://example.com", context));
+            assertTrue(validator.isValid("https://example.com/path", context));
+            assertTrue(validator.isValid("http://example.com?query=1", context));
+        }
+
+        private Url createUrlAnnotation(boolean allowFragment) {
+            return new Url() {
+                @Override
+                public Class<? extends Annotation> annotationType() {
+                    return Url.class;
+                }
+        
+                @Override
+                public String message() {
+                    return "Invalid URL";
+                }
+        
+                @Override
+                public Class<?>[] groups() {
+                    return new Class[0];
+                }
+        
+                @Override
+                @SuppressWarnings("unchecked")
+                public Class<? extends jakarta.validation.Payload>[] payload() {
+                    return (Class<? extends jakarta.validation.Payload>[]) new Class[0];
+                }
+        
+                @Override
+                public boolean allowFragment() {
+                    return allowFragment;
+                }
+            };
+        }
     }
 
 }
