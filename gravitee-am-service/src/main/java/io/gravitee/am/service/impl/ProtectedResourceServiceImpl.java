@@ -203,14 +203,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     ProtectedResource toUpdate = new ProtectedResource(oldProtectedResource);
                     toUpdate.setName(StringUtils.trimToNull(updateProtectedResource.getName()));
                     toUpdate.setDescription(StringUtils.trimToNull(updateProtectedResource.getDescription()));
-                    toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers().stream()
-                            .map(String::trim)
-                            .map(String::toLowerCase)
-                            .toList());
+                    toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers());
                     toUpdate.setUpdatedAt(new Date());
 
-                    // Map features
-
+                    // Map features (update has special handling for UpdateMcpTool)
                     Map<String, Date> oldFeatureCreationDates = oldProtectedResource.getFeatures().stream()
                             .collect(Collectors.toMap(ProtectedResourceFeature::getKey, ProtectedResourceFeature::getCreatedAt));
                     toUpdate.setFeatures(updateProtectedResource.getFeatures().stream().map(f -> {
@@ -225,12 +221,12 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         };
                     }).toList());
 
-                    // Validations
-                    return checkFeatureKeyUniqueness(toUpdate)
-                            .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldProtectedResource.getResourceIdentifiers(), toUpdate.getResourceIdentifiers()))
-                            .andThen(validateFeatureScopes(domain.getId(), toUpdate))
-                            .andThen(Single.defer(() -> doUpdate(toUpdate, oldProtectedResource, principal, domain)))
-                            .map(ProtectedResourcePrimaryData::of);
+                    // Normalize resourceIdentifiers and preserve feature timestamps
+                    // Note: Feature timestamps already preserved above, but normalizeResourceIdentifiers still needed
+                    normalizeResourceIdentifiers(toUpdate);
+
+                    // Use common processing method for validation and update
+                    return processUpdate(domain, id, toUpdate, oldProtectedResource, principal);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
@@ -254,33 +250,12 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     ProtectedResource toPatch = patchProtectedResource.patch(oldProtectedResource);
                     toPatch.setUpdatedAt(new Date());
 
-                    // Normalize resourceIdentifiers if they were updated (trim and lowercase)
-                    if (toPatch.getResourceIdentifiers() != null) {
-                        toPatch.setResourceIdentifiers(toPatch.getResourceIdentifiers().stream()
-                                .map(String::trim)
-                                .map(String::toLowerCase)
-                                .toList());
-                    }
+                    // Normalize resourceIdentifiers and preserve feature timestamps
+                    normalizeResourceIdentifiers(toPatch);
+                    preserveFeatureTimestamps(toPatch, oldProtectedResource);
 
-                    // Handle features with createdAt preservation if features were updated
-                    if (toPatch.getFeatures() != null && oldProtectedResource.getFeatures() != null) {
-                        Map<String, Date> oldFeatureCreationDates = oldProtectedResource.getFeatures().stream()
-                                .collect(Collectors.toMap(ProtectedResourceFeature::getKey, ProtectedResourceFeature::getCreatedAt));
-                        toPatch.setFeatures(toPatch.getFeatures().stream().map(feature -> {
-                            // Keep original createdAt if feature key matches, otherwise set new date
-                            Date createdAt = oldFeatureCreationDates.getOrDefault(feature.getKey(), toPatch.getUpdatedAt());
-                            feature.setCreatedAt(createdAt);
-                            feature.setUpdatedAt(toPatch.getUpdatedAt());
-                            return feature;
-                        }).toList());
-                    }
-
-                    // Validations
-                    return checkFeatureKeyUniqueness(toPatch)
-                            .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldProtectedResource.getResourceIdentifiers(), toPatch.getResourceIdentifiers()))
-                            .andThen(validateFeatureScopes(domain.getId(), toPatch))
-                            .andThen(Single.defer(() -> doUpdate(toPatch, oldProtectedResource, principal, domain)))
-                            .map(ProtectedResourcePrimaryData::of);
+                    // Use common processing method for validation and update
+                    return processUpdate(domain, id, toPatch, oldProtectedResource, principal);
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
@@ -290,6 +265,62 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     return Single.error(new TechnicalManagementException(
                             String.format("An error occurs while trying to patch protected resource %s", id), ex));
                 });
+    }
+
+    /**
+     * Normalizes resource identifiers by trimming whitespace and converting to lowercase.
+     * This ensures consistent storage format across all resource identifiers.
+     *
+     * @param resource the resource to normalize
+     */
+    private void normalizeResourceIdentifiers(ProtectedResource resource) {
+        if (resource.getResourceIdentifiers() != null) {
+            resource.setResourceIdentifiers(resource.getResourceIdentifiers().stream()
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .toList());
+        }
+    }
+
+    /**
+     * Preserves feature creation timestamps when features are updated.
+     * If a feature with the same key exists in the old resource, its original createdAt is preserved.
+     * New features get the current update timestamp as their createdAt.
+     *
+     * @param resource the resource with updated features
+     * @param oldResource the original resource to preserve timestamps from
+     */
+    private void preserveFeatureTimestamps(ProtectedResource resource, ProtectedResource oldResource) {
+        if (resource.getFeatures() != null && oldResource.getFeatures() != null) {
+            Map<String, Date> oldFeatureCreationDates = oldResource.getFeatures().stream()
+                    .collect(Collectors.toMap(ProtectedResourceFeature::getKey, ProtectedResourceFeature::getCreatedAt));
+            resource.setFeatures(resource.getFeatures().stream().map(feature -> {
+                // Keep original createdAt if feature key matches, otherwise set new date
+                Date createdAt = oldFeatureCreationDates.getOrDefault(feature.getKey(), resource.getUpdatedAt());
+                feature.setCreatedAt(createdAt);
+                feature.setUpdatedAt(resource.getUpdatedAt());
+                return feature;
+            }).toList());
+        }
+    }
+
+    /**
+     * Common processing method for both update and patch operations.
+     * Performs validation and executes the update operation.
+     *
+     * @param domain the domain
+     * @param id the resource ID
+     * @param resource the resource to update (already normalized and prepared)
+     * @param oldResource the original resource for comparison
+     * @param principal the user performing the operation
+     * @return the updated resource primary data
+     */
+    private Single<ProtectedResourcePrimaryData> processUpdate(Domain domain, String id, ProtectedResource resource, ProtectedResource oldResource, User principal) {
+        return checkFeatureKeyUniqueness(resource)
+                .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldResource.getResourceIdentifiers(), resource.getResourceIdentifiers()))
+                .andThen(validateFeatureScopes(domain.getId(), resource))
+                .andThen(Single.defer(() -> doUpdate(resource, oldResource, principal, domain)))
+                .map(ProtectedResourcePrimaryData::of);
     }
 
     private Completable checkFeatureKeyUniqueness(ProtectedResource resource) {
