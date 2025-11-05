@@ -31,9 +31,9 @@ import {
   NewProtectedResource,
   NewProtectedResourceFromJSON,
   NewProtectedResourceToJSON,
-  ProtectedResource,
-  ProtectedResourceFromJSON,
-  ProtectedResourceToJSON,
+  PatchProtectedResource,
+  PatchProtectedResourceFromJSON,
+  PatchProtectedResourceToJSON,
   ProtectedResourcePage,
   ProtectedResourcePageFromJSON,
   ProtectedResourcePageToJSON,
@@ -79,6 +79,14 @@ export interface ListProtectedResourcesRequest {
   page?: number;
   size?: number;
   sort?: string;
+}
+
+export interface PatchProtectedResourceRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  protectedResource: string;
+  patchProtectedResource: PatchProtectedResource;
 }
 
 export interface UpdateProtectedResourceRequest {
@@ -420,12 +428,99 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
 
   /**
    * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
+   * Patch a Protected Resource
+   */
+  async patchProtectedResourceRaw(
+    requestParameters: PatchProtectedResourceRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<ProtectedResourcePrimaryData>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling patchProtectedResource.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling patchProtectedResource.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling patchProtectedResource.',
+      );
+    }
+
+    if (requestParameters.protectedResource === null || requestParameters.protectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'protectedResource',
+        'Required parameter requestParameters.protectedResource was null or undefined when calling patchProtectedResource.',
+      );
+    }
+
+    if (requestParameters.patchProtectedResource === null || requestParameters.patchProtectedResource === undefined) {
+      throw new runtime.RequiredError(
+        'patchProtectedResource',
+        'Required parameter requestParameters.patchProtectedResource was null or undefined when calling patchProtectedResource.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/protected-resources/{protected-resource}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'protected-resource'}}`, encodeURIComponent(String(requestParameters.protectedResource))),
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: PatchProtectedResourceToJSON(requestParameters.patchProtectedResource),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => ProtectedResourcePrimaryDataFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
+   * Patch a Protected Resource
+   */
+  async patchProtectedResource(
+    requestParameters: PatchProtectedResourceRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<ProtectedResourcePrimaryData> {
+    const response = await this.patchProtectedResourceRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource or PROTECTED_RESOURCE[UPDATE] permission on the specified domain or PROTECTED_RESOURCE[UPDATE] permission on the specified environment or PROTECTED_RESOURCE[UPDATE] permission on the specified organization.
    * Update a Protected Resource
    */
   async updateProtectedResourceRaw(
     requestParameters: UpdateProtectedResourceRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<runtime.ApiResponse<ProtectedResource>> {
+  ): Promise<runtime.ApiResponse<ProtectedResourcePrimaryData>> {
     if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
       throw new runtime.RequiredError(
         'organizationId',
@@ -490,7 +585,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse(response, (jsonValue) => ProtectedResourceFromJSON(jsonValue));
+    return new runtime.JSONApiResponse(response, (jsonValue) => ProtectedResourcePrimaryDataFromJSON(jsonValue));
   }
 
   /**
@@ -500,7 +595,7 @@ export class ProtectedResourceApi extends runtime.BaseAPI {
   async updateProtectedResource(
     requestParameters: UpdateProtectedResourceRequest,
     initOverrides?: RequestInit | runtime.InitOverideFunction,
-  ): Promise<ProtectedResource> {
+  ): Promise<ProtectedResourcePrimaryData> {
     const response = await this.updateProtectedResourceRaw(requestParameters, initOverrides);
     return await response.value();
   }

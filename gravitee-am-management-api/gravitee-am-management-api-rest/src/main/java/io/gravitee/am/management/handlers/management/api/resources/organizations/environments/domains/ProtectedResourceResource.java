@@ -22,6 +22,8 @@ import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.ProtectedResourceService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
+import jakarta.ws.rs.BadRequestException;
+import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
@@ -78,6 +80,43 @@ public class ProtectedResourceResource extends AbstractDomainResource {
                 .subscribe(response::resume, response::resume);
     }
 
+    @PATCH
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            operationId = "patchProtectedResource",
+            summary = "Patch a Protected Resource",
+            description = "User must have the PROTECTED_RESOURCE[UPDATE] permission on the specified resource " +
+                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified domain " +
+                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified environment " +
+                    "or PROTECTED_RESOURCE[UPDATE] permission on the specified organization. ")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Protected Resource successfully patched",
+                    content = @Content(mediaType = "application/json",
+                            schema = @Schema(implementation = ProtectedResourcePrimaryData.class))),
+            @ApiResponse(responseCode = "500", description = "Internal server error")})
+    public void patch(
+            @PathParam("organizationId") String organizationId,
+            @PathParam("environmentId") String environmentId,
+            @PathParam("domain") String domainId,
+            @PathParam("protected-resource") String protectedResourceId,
+            @Parameter(name = "protected-resource", required = true)
+            @Valid @NotNull final PatchProtectedResource patchProtectedResource,
+            @Suspended final AsyncResponse response) {
+        User authenticatedUser = getAuthenticatedUser();
+
+        if (!patchProtectedResource.hasAnyField()) {
+            response.resume(new BadRequestException("You need to specify at least one value to update."));
+            return;
+        }
+
+        checkAnyPermission(organizationId, environmentId, domainId, protectedResourceId, Permission.PROTECTED_RESOURCE, UPDATE)
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapSingle(domain -> service.patch(domain, protectedResourceId, patchProtectedResource, authenticatedUser)))
+                .subscribe(response::resume, response::resume);
+    }
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -91,7 +130,7 @@ public class ProtectedResourceResource extends AbstractDomainResource {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Protected Resource successfully updated",
                     content = @Content(mediaType = "application/json",
-                            schema = @Schema(implementation = ProtectedResource.class))),
+                            schema = @Schema(implementation = ProtectedResourcePrimaryData.class))),
             @ApiResponse(responseCode = "500", description = "Internal server error")})
     public void update(
             @PathParam("organizationId") String organizationId,

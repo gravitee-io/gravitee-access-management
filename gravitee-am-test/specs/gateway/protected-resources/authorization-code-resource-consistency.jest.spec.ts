@@ -84,10 +84,10 @@ describe('Authorization Code Flow - Resource Parameter Consistency (RFC 8707)', 
     expect(tokenResponse.body.refresh_token).toBeDefined();
 
     // Verify access token aud claim contains subset resources from token request
+    validateAudienceClaim(tokenResponse.body.access_token, tokenResources);
+    // Should NOT contain resources not in token request
     const accessTokenDecoded = decodeJwt(tokenResponse.body.access_token);
     const audArray: string[] = Array.isArray(accessTokenDecoded.aud) ? accessTokenDecoded.aud : [accessTokenDecoded.aud];
-    tokenResources.forEach((r) => expect(audArray).toContain(r));
-    // Should NOT contain resources not in token request
     expect(audArray).not.toContain('https://api.example.com/albums');
 
     // Verify refresh token orig_resources claim contains original authorization resources
@@ -149,5 +149,20 @@ describe('Authorization Code Flow - Resource Parameter Consistency (RFC 8707)', 
     authResources.forEach((resource) => {
       expect(refreshTokenDecoded.orig_resources).toContain(resource);
     });
+  });
+
+  it('should reject resource with fragment in token request', async () => {
+    // Step 1: Authorization request with valid resources (no fragment)
+    const authResources = ['https://api.example.com/photos'];
+    const authCode = await fixture.completeAuthorizationFlow(authResources);
+
+    // Step 2: Token request with fragment in resource parameter
+    // Fragments are not allowed in resource identifiers per @Url(allowFragment = false)
+    const resourceWithFragment = 'https://api.example.com/photos#section';
+    const tokenResponse = await fixture.exchangeAuthCodeForToken(authCode, [resourceWithFragment]).expect(400);
+
+    // Should reject with invalid_target error
+    expect(tokenResponse.body.error).toBe('invalid_target');
+    expect(tokenResponse.body.error_description).toContain('not recognized');
   });
 });

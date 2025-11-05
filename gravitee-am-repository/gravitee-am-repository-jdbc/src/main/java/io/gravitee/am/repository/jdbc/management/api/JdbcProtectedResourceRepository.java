@@ -96,6 +96,14 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
     }
 
     @Override
+    public Maybe<ProtectedResource> findByDomainAndId(String domainId, String id) {
+        LOGGER.debug("findByDomainAndId({}, {})", domainId, id);
+        return spring.findByDomainIdAndId(domainId, id)
+                .map(this::toEntity)
+                .flatMapSingle(this::complete);
+    }
+
+    @Override
     public Single<ProtectedResource> create(ProtectedResource item) {
         item.setId(item.getId() == null ? RandomString.generate() : item.getId());
         LOGGER.debug("Create ProtectedResource with id {}", item.getId());
@@ -300,6 +308,22 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
     public Single<Boolean> existsByResourceIdentifiers(String domainId, List<String> resourceIdentifiers) {
         List<Single<Boolean>> checks = resourceIdentifiers.stream()
                 .map(uri -> spring.existsByDomainIdAndResourceIdentifiersContainsIgnoreCase(domainId, uri))
+                .toList();
+        return Single.concat(checks)
+                .any(Boolean::booleanValue);
+    }
+
+    @Override
+    public Single<Boolean> existsByResourceIdentifiersExcludingId(String domainId, List<String> resourceIdentifiers, String excludeId) {
+        if (resourceIdentifiers == null || resourceIdentifiers.isEmpty()) {
+            return Single.just(false);
+        }
+        
+        // Use Spring Data repository methods for cross-database compatibility
+        // This follows the same pattern as existsByResourceIdentifiers for consistency
+        // Spring Data automatically translates these to database-specific SQL
+        List<Single<Boolean>> checks = resourceIdentifiers.stream()
+                .map(identifier -> spring.existsByDomainIdAndResourceIdentifiersContainsIgnoreCaseAndIdNot(domainId, identifier, excludeId))
                 .toList();
         return Single.concat(checks)
                 .any(Boolean::booleanValue);

@@ -90,12 +90,21 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
 
     @Override
     public Completable delete(String s) {
-        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, s)));
+        return Completable.fromPublisher(collection.deleteOne(eq(FIELD_ID, s)))
+                .observeOn(Schedulers.computation());
     }
 
     @Override
     public Maybe<ProtectedResource> findByDomainAndClient(String domainId, String clientId) {
         return Observable.fromPublisher(collection.find(and(eq(DOMAIN_ID_FIELD, domainId), eq(CLIENT_ID_FIELD, clientId))).first())
+                .firstElement()
+                .map(this::convert)
+                .observeOn(Schedulers.computation());
+    }
+
+    @Override
+    public Maybe<ProtectedResource> findByDomainAndId(String domainId, String id) {
+        return Observable.fromPublisher(collection.find(and(eq(DOMAIN_ID_FIELD, domainId), eq(FIELD_ID, id))).first())
                 .firstElement()
                 .map(this::convert)
                 .observeOn(Schedulers.computation());
@@ -132,6 +141,18 @@ public class MongoProtectedResourceRepository extends AbstractManagementMongoRep
             return Single.just(false);
         }
         return Single.fromPublisher(collection.countDocuments(and(eq(DOMAIN_ID_FIELD, domainId), in(RESOURCE_IDENTIFIERS_FIELD, resourceIdentifiers))))
+                .map(count -> count > 0);
+    }
+
+    @Override
+    public Single<Boolean> existsByResourceIdentifiersExcludingId(String domainId, List<String> resourceIdentifiers, String excludeId) {
+        if(resourceIdentifiers.isEmpty()){
+            return Single.just(false);
+        }
+        return Single.fromPublisher(collection.countDocuments(and(
+                eq(DOMAIN_ID_FIELD, domainId),
+                in(RESOURCE_IDENTIFIERS_FIELD, resourceIdentifiers),
+                ne(FIELD_ID, excludeId))))
                 .map(count -> count > 0);
     }
 

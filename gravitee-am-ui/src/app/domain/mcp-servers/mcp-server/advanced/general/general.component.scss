@@ -1,0 +1,25 @@
+.mcp-server-settings-delete-zone {
+  padding: 20px;
+  border: 1px solid #e2e5e7;
+  border-radius: 2px;
+  margin-top: 20px;
+  color: #f44336;
+  font-size: 75%;
+
+  mat-list-item {
+    h3 {
+      color: #f44336;
+    }
+
+    p {
+      color: grey;
+      white-space: normal;
+    }
+
+    .action {
+      display: flex;
+      height: 100%;
+      align-items: center;
+    }
+  }
+}

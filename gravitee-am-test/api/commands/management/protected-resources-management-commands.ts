@@ -19,6 +19,7 @@ import { NewProtectedResource } from '@management-models/NewProtectedResource';
 import { UpdateProtectedResource } from '@management-models/UpdateProtectedResource';
 import { ProtectedResourcePrimaryData, ProtectedResourceSecret } from '@management-models/index';
 import { ProtectedResourcePage } from '@management-models/ProtectedResourcePage';
+import { PatchProtectedResource } from '@management-models/PatchProtectedResource';
 import { retryUntil } from '@utils-commands/retry';
 
 export const createProtectedResource = (
@@ -45,6 +46,20 @@ export const updateProtectedResource = (
     domain: domainId,
     protectedResource: resourceId,
     updateProtectedResource: body,
+  });
+
+export const patchProtectedResource = (
+  domainId: string,
+  accessToken: string,
+  resourceId: string,
+  body: PatchProtectedResource,
+): Promise<ProtectedResourcePrimaryData> =>
+  getProtectedResourcesApi(accessToken).patchProtectedResource({
+    organizationId: process.env.AM_DEF_ORG_ID,
+    environmentId: process.env.AM_DEF_ENV_ID,
+    domain: domainId,
+    protectedResource: resourceId,
+    patchProtectedResource: body,
   });
 
 export const getMcpServers = (domainId: string, accessToken: string, size = 10, page = 0, sort?: string): Promise<ProtectedResourcePage> =>
@@ -77,33 +92,6 @@ export const deleteProtectedResource = (domainId: string, accessToken: string, i
   });
 
 /**
- * Polls until a protected resource appears in the list (useful for waiting for gateway sync)
- * @param domainId Domain ID
- * @param accessToken Access token
- * @param resourceId Resource ID to find
- * @param timeoutMillis Maximum time to wait in milliseconds
- * @returns Promise that resolves when resource is found or rejects on timeout
- */
-export const waitForProtectedResourceInList = async (
-  domainId: string,
-  accessToken: string,
-  resourceId: string,
-  timeoutMillis: number = 10000
-): Promise<void> => {
-  const start = Date.now();
-  await retryUntil(
-    () => getMcpServers(domainId, accessToken, 100, 0),
-    (page) => page.data.some((r: any) => r.id === resourceId),
-    {
-      timeoutMillis,
-      intervalMillis: 250,
-      onDone: () => console.log(`protected resource "${resourceId}" found in list after ${(Date.now() - start) / 1000}s`),
-      onRetry: () => console.debug(`protected resource "${resourceId}" not found in list yet`),
-    }
-  );
-};
-
-/**
  * Polls until a protected resource is removed from the list
  * @param domainId Domain ID
  * @param accessToken Access token
@@ -115,7 +103,7 @@ export const waitForProtectedResourceRemovedFromList = async (
   domainId: string,
   accessToken: string,
   resourceId: string,
-  timeoutMillis: number = 10000
+  timeoutMillis: number = 10000,
 ): Promise<void> => {
   const start = Date.now();
   await retryUntil(
@@ -126,7 +114,7 @@ export const waitForProtectedResourceRemovedFromList = async (
       intervalMillis: 250,
       onDone: () => console.log(`protected resource "${resourceId}" removed from list after ${(Date.now() - start) / 1000}s`),
       onRetry: () => console.debug(`protected resource "${resourceId}" still in list`),
-    }
+    },
   );
 };
 

@@ -1,6 +1,8 @@
 .doc-content {
   max-width: 748px;
   padding: 20px 0 0 30px;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 .mcp-details {
@@ -12,12 +14,17 @@
   }
 
   p {
+    max-width: 100%;
     margin: 0;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    word-wrap: break-word;
   }
 
   .link {
     display: flex;
     height: 100%;
+    align-items: flex-start;
 
     button {
       padding: 0;
@@ -26,12 +33,18 @@
     mat-icon {
       width: 20px;
       height: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
       cursor: pointer;
       font-size: 18px;
     }
 
     p {
+      max-width: 100%;
       margin: 0 10px 0 0;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      word-wrap: break-word;
     }
   }
 }

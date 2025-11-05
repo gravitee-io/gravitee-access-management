@@ -159,6 +159,39 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     @Test
+    public void testFindByDomainAndId() {
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(clientSecret, secretSettings, List.of());
+        resource.setDomainId("DomainTestFindByDomainAndId");
+        ProtectedResource created = repository.create(resource).blockingGet();
+
+        TestObserver<ProtectedResource> testObserver = repository.findByDomainAndId("DomainTestFindByDomainAndId", created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(r -> r.getId().equals(created.getId()));
+        testObserver.assertValue(r -> r.getDomainId().equals("DomainTestFindByDomainAndId"));
+    }
+
+    @Test
+    public void testFindByDomainAndId_whenDomainMismatch() {
+        ClientSecret clientSecret = generateClientSecret();
+        ApplicationSecretSettings secretSettings = generateApplicationSecretSettings();
+        ProtectedResource resource = generateResource(clientSecret, secretSettings, List.of());
+        resource.setDomainId("domain-1");
+        ProtectedResource created = repository.create(resource).blockingGet();
+
+        TestObserver<ProtectedResource> testObserver = repository.findByDomainAndId("domain-2", created.getId()).test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertNoValues(); // Should return empty Maybe
+    }
+
+    @Test
     public void testCreateWithMultipleSecrets() {
         // Create resource with 3 client secrets
         ClientSecret clientSecret1 = generateClientSecret();
@@ -385,6 +418,89 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .test().awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertValue(true);
+    }
+
+    @Test
+    public void shouldTellIfExistsByResourceIdentifiersExcludingId() {
+        ProtectedResource toSave1 = generateResource("abc", "domainSearchExclude1", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
+        ProtectedResource toSave2 = generateResource("dcf", "domainSearchExclude1", "client2", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key2")));
+        ProtectedResource toSave3 = generateResource("ggg", "domainSearchExclude1", "client3", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key3")));
+
+        toSave1.setResourceIdentifiers(List.of("https://exclude.one", "https://exclude.two"));
+        toSave2.setResourceIdentifiers(List.of("https://exclude.three"));
+        toSave3.setResourceIdentifiers(List.of("https://exclude.four"));
+
+        zip(repository.create(toSave1), repository.create(toSave2), repository.create(toSave3), List::of)
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertNoErrors();
+
+        ProtectedResource created1 = repository.findById(toSave1.getId()).blockingGet();
+        ProtectedResource created2 = repository.findById(toSave2.getId()).blockingGet();
+        ProtectedResource created3 = repository.findById(toSave3.getId()).blockingGet();
+
+        // Test: Exclude created1, check for created1's identifiers - should return false (only created1 has them)
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.one"), created1.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
+
+        // Test: Exclude created1, check for created2's identifiers - should return true (created2 has them)
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.three"), created1.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true);
+
+        // Test: Exclude created1, check for identifiers that exist in both created1 and created2 - should return true (created2 has them)
+        created2.setResourceIdentifiers(List.of("https://exclude.one", "https://exclude.three"));
+        ProtectedResource updated2 = repository.update(created2).blockingGet();
+
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.one"), created1.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true); // created2 now has "https://exclude.one"
+
+        // Test: Exclude updated2, check for updated2's identifiers - should return false (only updated2 has them)
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.three"), updated2.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
+
+        // Test: Exclude updated2, check for created1's identifiers - should return true (created1 has them)
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.two"), updated2.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true);
+
+        // Test: Exclude created3, check for created3's identifiers - should return false (only created3 has them)
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.four"), created3.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
+
+        // Test: Exclude created3, check for identifiers that don't exist - should return false
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.nonexistent"), created3.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
+
+        // Test: Exclude created3, check for empty list - should return false
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of(), created3.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
+
+        // Test: Exclude created3, check for multiple identifiers where one exists in another resource - should return true
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.nonexistent", "https://exclude.one"), created3.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true); // created1 or created2 has "https://exclude.one"
+
+        // Test: Different domain - should return false (identifiers don't exist in that domain)
+        repository.existsByResourceIdentifiersExcludingId("differentDomain", List.of("https://exclude.one"), created1.getId())
+                .test().awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false);
     }
 
     @Test

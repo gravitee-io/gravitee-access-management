@@ -33,13 +33,16 @@ import io.gravitee.am.model.membership.MemberType;
 import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.gravitee.am.service.*;
+import io.gravitee.am.common.exception.oauth2.OAuth2Exception;
 import io.gravitee.am.service.exception.AbstractManagementException;
+import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.gravitee.am.service.exception.InvalidProtectedResourceException;
 import io.gravitee.am.service.exception.InvalidRoleException;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewMcpTool;
 import io.gravitee.am.service.model.NewProtectedResource;
+import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateMcpTool;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
@@ -59,6 +62,8 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static io.gravitee.am.model.ProtectedResource.Type.valueOf;
 import static org.springframework.util.StringUtils.hasLength;
@@ -110,10 +115,10 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     @Override
     public Completable delete(Domain domain, String id, ProtectedResource.Type expectedType, User principal) {
         LOGGER.debug("Delete protected resource {} with domain/type validation", id);
-        return repository.findById(id)
+        return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .flatMapCompletable(resource -> {
-                    if (!resource.getDomainId().equals(domain.getId()) || (expectedType != null && resource.getType() != expectedType)) {
+                    if (expectedType != null && resource.getType() != expectedType) {
                         return Completable.error(new ProtectedResourceNotFoundException(id));
                     }
                     Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.DELETE));
@@ -126,7 +131,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(ProtectedResourceAuditBuilder.class).protectedResource(resource).principal(principal).type(EventType.PROTECTED_RESOURCE_DELETED).throwable(throwable)));
                 })
                 .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
+                    if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
                         return Completable.error(ex);
                     }
                     LOGGER.error("An error occurs while trying to delete protected resource: {}", id, ex);
@@ -182,62 +187,159 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     }
 
     @Override
-    public Single<ProtectedResource> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal) {
+    public Single<ProtectedResourcePrimaryData> update(Domain domain, String id, UpdateProtectedResource updateProtectedResource, User principal) {
         LOGGER.debug("Update ProtectedResource {} for domain {}", id, domain.getId());
 
-        return repository.findById(id)
+        return repository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
                 .toSingle()
                 .flatMap(oldProtectedResource -> {
-                    // Verify resource belongs to the domain
-                    if (!oldProtectedResource.getDomainId().equals(domain.getId())) {
-                        return Single.error(new ProtectedResourceNotFoundException(id));
+                    // Validate input before building resource (defensive check - @NotEmpty should catch this at API layer)
+                    if (updateProtectedResource.getResourceIdentifiers() == null || updateProtectedResource.getResourceIdentifiers().isEmpty()) {
+                        return Single.error(new InvalidProtectedResourceException("Field [resourceIdentifiers] must not be empty"));
                     }
 
                     // Build the updated resource
                     ProtectedResource toUpdate = new ProtectedResource(oldProtectedResource);
                     toUpdate.setName(StringUtils.trimToNull(updateProtectedResource.getName()));
                     toUpdate.setDescription(StringUtils.trimToNull(updateProtectedResource.getDescription()));
-                    toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers().stream()
-                            .map(String::trim)
-                            .map(String::toLowerCase)
-                            .toList());
-                    toUpdate.setUpdatedAt(new Date());
+                    toUpdate.setResourceIdentifiers(updateProtectedResource.getResourceIdentifiers());
 
-                    // Map features
+                    // Map features (update has special handling for UpdateMcpTool)
+                    // Note: Feature timestamps will be preserved by innerUpdate()
                     toUpdate.setFeatures(updateProtectedResource.getFeatures().stream().map(f -> {
                         ProtectedResourceFeature feature = f.asFeature();
-                        // Keep original createdAt if feature key matches, otherwise set new date
-                        Date createdAt = oldProtectedResource.getFeatures().stream()
-                                .filter(old -> old.getKey().equals(feature.getKey()))
-                                .findFirst()
-                                .map(ProtectedResourceFeature::getCreatedAt)
-                                .orElse(toUpdate.getUpdatedAt());
-                        feature.setCreatedAt(createdAt);
-                        feature.setUpdatedAt(toUpdate.getUpdatedAt());
                         return switch (f) {
                             case UpdateMcpTool tool -> new McpTool(feature, tool.getScopes());
                             default -> feature;
                         };
                     }).toList());
 
-                    // Validations
-                    return checkFeatureKeyUniqueness(toUpdate)
-                            .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldProtectedResource.getResourceIdentifiers(), toUpdate.getResourceIdentifiers()))
-                            .andThen(validateFeatureScopes(domain.getId(), toUpdate))
-                            .andThen(Single.defer(() -> doUpdate(toUpdate, oldProtectedResource, principal, domain)));
+                    // Use common innerUpdate method for normalization, timestamp preservation, validation, and update
+                    return innerUpdate(domain, id, oldProtectedResource, toUpdate, principal);
                 })
-                .onErrorResumeNext(ex -> {
-                    if (ex instanceof AbstractManagementException) {
-                        return Single.error(ex);
-                    }
-                    LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
-                    return Single.error(new TechnicalManagementException(
-                            String.format("An error occurs while trying to update protected resource %s", id), ex));
-                });
+                .onErrorResumeNext(ex -> handleUpdateError(id, ex));
+    }
+
+    @Override
+    public Single<ProtectedResourcePrimaryData> patch(Domain domain, String id, PatchProtectedResource patchProtectedResource, User principal) {
+        LOGGER.debug("Patch ProtectedResource {} for domain {}", id, domain.getId());
+
+        return repository.findByDomainAndId(domain.getId(), id)
+                .switchIfEmpty(Maybe.error(new ProtectedResourceNotFoundException(id)))
+                .toSingle()
+                .flatMap(oldProtectedResource -> {
+                    // Apply patch
+                    ProtectedResource toPatch = patchProtectedResource.patch(oldProtectedResource);
+
+                    // Use common innerUpdate method for normalization, timestamp preservation, validation, and update
+                    return innerUpdate(domain, id, oldProtectedResource, toPatch, principal);
+                })
+                .onErrorResumeNext(ex -> handleUpdateError(id, ex));
+    }
+
+    /**
+     * Handles error cases for update and patch operations.
+     * Preserves business exceptions and wraps technical exceptions.
+     *
+     * @param id the resource ID (for error messages)
+     * @param ex the exception to handle
+     * @return Single error with appropriate exception type
+     */
+    private Single<ProtectedResourcePrimaryData> handleUpdateError(String id, Throwable ex) {
+        if (ex instanceof AbstractManagementException || ex instanceof OAuth2Exception) {
+            return Single.error(ex);
+        }
+        LOGGER.error("An error occurs while trying to update protected resource {}", id, ex);
+        return Single.error(new TechnicalManagementException(
+                String.format("An error occurs while trying to update protected resource %s", id), ex));
+    }
+
+    /**
+     * Common update logic for both update and patch operations.
+     * Handles normalization, timestamp preservation, validation, and persistence.
+     *
+     * @param domain the domain
+     * @param id the resource ID (for error messages)
+     * @param oldResource the original resource before update
+     * @param resourceToUpdate the prepared resource to update
+     * @param principal the user performing the operation
+     * @return the updated resource primary data
+     */
+    private Single<ProtectedResourcePrimaryData> innerUpdate(Domain domain, String id, ProtectedResource oldResource, ProtectedResource resourceToUpdate, User principal) {
+        // Set updated timestamp
+        resourceToUpdate.setUpdatedAt(new Date());
+
+        // Normalize resource identifiers
+        normalizeResourceIdentifiers(resourceToUpdate);
+
+        // Preserve feature timestamps
+        preserveFeatureTimestamps(resourceToUpdate, oldResource);
+
+        // Validate and update (processUpdate handles validation and calls doUpdate)
+        return processUpdate(domain, id, resourceToUpdate, oldResource, principal);
+    }
+
+    /**
+     * Normalizes resource identifiers by trimming whitespace and converting to lowercase.
+     * This ensures consistent storage format across all resource identifiers.
+     *
+     * @param resource the resource to normalize
+     */
+    private void normalizeResourceIdentifiers(ProtectedResource resource) {
+        if (resource.getResourceIdentifiers() != null) {
+            resource.setResourceIdentifiers(resource.getResourceIdentifiers().stream()
+                    .map(String::trim)
+                    .map(String::toLowerCase)
+                    .toList());
+        }
+    }
+
+    /**
+     * Preserves feature creation timestamps when features are updated.
+     * If a feature with the same key exists in the old resource, its original createdAt is preserved.
+     * New features get the current update timestamp as their createdAt.
+     *
+     * @param resource the resource with updated features
+     * @param oldResource the original resource to preserve timestamps from
+     */
+    private void preserveFeatureTimestamps(ProtectedResource resource, ProtectedResource oldResource) {
+        if (resource.getFeatures() != null && oldResource.getFeatures() != null) {
+            Map<String, Date> oldFeatureCreationDates = oldResource.getFeatures().stream()
+                    .collect(Collectors.toMap(ProtectedResourceFeature::getKey, ProtectedResourceFeature::getCreatedAt));
+            resource.setFeatures(resource.getFeatures().stream().map(feature -> {
+                // Keep original createdAt if feature key matches, otherwise set new date
+                Date createdAt = oldFeatureCreationDates.getOrDefault(feature.getKey(), resource.getUpdatedAt());
+                feature.setCreatedAt(createdAt);
+                feature.setUpdatedAt(resource.getUpdatedAt());
+                return feature;
+            }).toList());
+        }
+    }
+
+    /**
+     * Common processing method for both update and patch operations.
+     * Performs validation and executes the update operation.
+     *
+     * @param domain the domain
+     * @param id the resource ID
+     * @param resource the resource to update (already normalized and prepared)
+     * @param oldResource the original resource for comparison
+     * @param principal the user performing the operation
+     * @return the updated resource primary data
+     */
+    private Single<ProtectedResourcePrimaryData> processUpdate(Domain domain, String id, ProtectedResource resource, ProtectedResource oldResource, User principal) {
+        return checkFeatureKeyUniqueness(resource)
+                .andThen(validateResourceIdentifiersUniqueness(domain.getId(), id, oldResource.getResourceIdentifiers(), resource.getResourceIdentifiers()))
+                .andThen(validateFeatureScopes(domain.getId(), resource))
+                .andThen(Single.defer(() -> doUpdate(resource, oldResource, principal, domain)))
+                .map(ProtectedResourcePrimaryData::of);
     }
 
     private Completable checkFeatureKeyUniqueness(ProtectedResource resource) {
+        if (resource.getFeatures() == null || resource.getFeatures().isEmpty()) {
+            return Completable.complete();
+        }
         List<String> featureKeys = resource.getFeatures().stream()
                 .map(ProtectedResourceFeature::getKey)
                 .map(String::trim)
@@ -252,21 +354,33 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
     private Completable validateResourceIdentifiersUniqueness(String domainId, String resourceId, 
                                                                List<String> oldIdentifiers, 
                                                                List<String> newIdentifiers) {
+        // A protected resource must have at least one identifier (enforced on create/update)
+        if (newIdentifiers == null || newIdentifiers.isEmpty()) {
+            return Completable.error(new InvalidProtectedResourceException("Field [resourceIdentifiers] must not be empty"));
+        }
+        
         // Check if identifiers changed (order-insensitive comparison)
         if (new HashSet<>(oldIdentifiers).equals(new HashSet<>(newIdentifiers))) {
             return Completable.complete();
         }
-        // Only check new identifiers that weren't in the old list
-        List<String> identifiersToCheck = newIdentifiers.stream()
-                .filter(identifier -> !oldIdentifiers.contains(identifier))
-                .toList();
-        if (identifiersToCheck.isEmpty()) {
-            return Completable.complete();
-        }
-        return checkResourceIdentifierUniqueness(domainId, identifiersToCheck);
+        
+        // Check all new identifiers for uniqueness against other resources (excluding current resource)
+        // This ensures we catch cases where an identifier that was previously owned by this resource
+        // has been taken by another resource in the meantime
+        return repository.existsByResourceIdentifiersExcludingId(domainId, newIdentifiers, resourceId)
+                .flatMapCompletable(exists -> {
+                    if(exists) {
+                        return Completable.error(new InvalidProtectedResourceException("Resource identifier already exists"));
+                    } else {
+                        return Completable.complete();
+                    }
+                });
     }
 
     private Completable validateFeatureScopes(String domainId, ProtectedResource resource) {
+        if (resource.getFeatures() == null || resource.getFeatures().isEmpty()) {
+            return Completable.complete();
+        }
         // Collect all scopes from all features
         List<String> allScopes = resource.getFeatures().stream()
                 .filter(f -> f instanceof McpTool)
@@ -280,12 +394,21 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
         }
 
         // Validate scopes exist in domain
+        // Note: scopeService.validateScope() returns Single.error(InvalidClientMetadataException) when invalid
+        // We need to catch it and convert to InvalidProtectedResourceException for consistency
         return scopeService.validateScope(domainId, allScopes)
                 .flatMapCompletable(valid -> {
                     if (!valid) {
                         return Completable.error(new InvalidProtectedResourceException("One or more scopes are not valid"));
                     }
                     return Completable.complete();
+                })
+                .onErrorResumeNext(ex -> {
+                    // Convert InvalidClientMetadataException from scope validation to InvalidProtectedResourceException
+                    if (ex instanceof InvalidClientMetadataException) {
+                        return Completable.error(new InvalidProtectedResourceException(ex.getMessage()));
+                    }
+                    return Completable.error(ex);
                 });
     }
 

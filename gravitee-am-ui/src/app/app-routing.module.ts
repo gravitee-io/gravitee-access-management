@@ -260,6 +260,8 @@ import { DomainMcpServerComponent } from './domain/mcp-servers/mcp-server/domain
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
+import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
+import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
 
 const applyOnLabel = (label) => label.toLowerCase().replace(/_/g, ' ');
 
@@ -1529,6 +1531,37 @@ export const routes: Routes = [
                             resolve: {
                               entrypoint: DomainEntrypointResolver,
                             },
+                          },
+                          {
+                            path: 'settings',
+                            component: DomainMcpServerAdvancedComponent,
+                            data: {
+                              menu: {
+                                label: 'Settings',
+                                section: 'Settings',
+                                level: 'level2',
+                              },
+                              perms: {
+                                only: ['protected_resource_read', 'protected_resource_update'],
+                              },
+                            },
+                            children: [
+                              {
+                                path: 'general',
+                                component: DomainMcpServerGeneralComponent,
+                                canActivate: [AuthGuard],
+                                data: {
+                                  menu: {
+                                    label: 'General',
+                                    section: 'Settings',
+                                    level: 'level3',
+                                  },
+                                  perms: {
+                                    only: ['protected_resource_read'],
+                                  },
+                                },
+                              },
+                            ],
                           },
                         ],
                       },

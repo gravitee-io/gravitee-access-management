@@ -257,6 +257,7 @@ import { EntrypointsComponent } from './settings/management/entrypoints/entrypoi
 import { EntrypointCreationComponent } from './settings/management/entrypoints/creation/entrypoint-creation.component';
 import { EntrypointComponent } from './settings/management/entrypoints/entrypoint/entrypoint.component';
 import { AccountSettingsComponent } from './domain/components/account/account-settings.component';
+import { McpServerSettingsComponent } from './domain/mcp-servers/components/mcp-server-settings/mcp-server-settings.component';
 import { HttpRequestInterceptor } from './interceptors/http-request.interceptor';
 import { PolicyService } from './services/policy.service';
 import { ScopeSelectionComponent } from './domain/components/scope-selection/scope-selection.component';
@@ -473,6 +474,8 @@ import { OpenFGAComponent } from './domain/authorization-engines/openfga/openfga
 import { McpServerResolver } from './resolvers/mcp-server.resolver';
 import { DomainMcpServerOverviewComponent } from './domain/mcp-servers/mcp-server/overview/overview.component';
 import { DomainMcpServerToolsComponent } from './domain/mcp-servers/mcp-server/tools/tools.component';
+import { DomainMcpServerAdvancedComponent } from './domain/mcp-servers/mcp-server/advanced/advanced.component';
+import { DomainMcpServerGeneralComponent } from './domain/mcp-servers/mcp-server/advanced/general/general.component';
 import {
   DomainNewMcpServerToolDialogComponent,
   DomainNewMcpServerToolDialogFactory,
@@ -526,6 +529,8 @@ import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-
     DomainNewMcpServerComponent,
     DomainMcpServerOverviewComponent,
     DomainMcpServerToolsComponent,
+    DomainMcpServerAdvancedComponent,
+    DomainMcpServerGeneralComponent,
     DomainNewMcpServerToolDialogComponent,
     DomainMcpServerToolEditDialogComponent,
     ConfirmComponent,
@@ -634,6 +639,7 @@ import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-
     EntrypointCreationComponent,
     EntrypointComponent,
     AccountSettingsComponent,
+    McpServerSettingsComponent,
     ScopeSelectionComponent,
     ClaimsInfoDialogComponent,
     RoleSelectionComponent,

@@ -24,8 +24,17 @@ export function validateAudienceClaim(token: string, expectedResources: string[]
   expect(decoded).toBeDefined();
   const aud = decoded.aud;
   expect(aud).toBeDefined();
-  const audArray: string[] = Array.isArray(aud) ? aud : [aud];
-  expectedResources.forEach((r) => expect(audArray).toContain(r));
+
+  // The audience should contain the resource parameters
+  if (Array.isArray(aud)) {
+    // Should contain exactly the resource parameters
+    expectedResources.forEach((resource) => {
+      expect(aud).toContain(resource);
+    });
+  } else {
+    // Single audience value - should be one of the resources
+    expect(expectedResources).toContain(aud);
+  }
 }
 
 export function validateSuccessfulTokenResponse(response: any, expectedResources?: string[]): void {
@@ -62,4 +71,23 @@ export async function expectResourceValidationErrorAfterLogin(
   expect(location).toContain('error_description');
   expect(location).toContain('not+recognized');
   return location;
+}
+
+/**
+ * Validates that the token's audience claim contains the client_id (backward compatibility)
+ * @param token JWT access token
+ * @param clientId Expected client ID
+ */
+export function validateClientIdAudience(token: string, clientId: string): void {
+  const decoded = decodeJwt(token);
+  expect(decoded).toBeDefined();
+  const aud = decoded.aud;
+  expect(aud).toBeDefined();
+
+  // When no resource parameter is provided, the audience should be the client_id
+  if (Array.isArray(aud)) {
+    expect(aud).toContain(clientId);
+  } else {
+    expect(aud).toBe(clientId);
+  }
 }

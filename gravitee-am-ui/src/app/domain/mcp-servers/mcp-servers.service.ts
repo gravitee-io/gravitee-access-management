@@ -21,6 +21,8 @@ import { Page, Sort } from '../../services/api.model';
 import {
   NewProtectedResourceRequest,
   NewProtectedResourceResponse,
+  PatchProtectedResourceRequest,
+  ProtectedResource,
   ProtectedResourceFeatureType,
   ProtectedResourceService,
   ProtectedResourceType,
@@ -72,6 +74,10 @@ export class McpServersService {
       })),
     } as NewProtectedResourceRequest;
     return this.service.create(domainId, request);
+  }
+
+  patch(domainId: string, id: string, patchProtectedResource: PatchProtectedResourceRequest): Observable<ProtectedResource> {
+    return this.service.patch(domainId, id, patchProtectedResource);
   }
 
   delete(domainId: string, id: string): Observable<any> {
