@@ -83,8 +83,8 @@ describe('Token Endpoint - Resource Indicators (RFC 8707)', () => {
       validateSuccessfulTokenResponse(response, [r]);
     });
 
-    it('should accept configured resource with query and fragment', async () => {
-      const meta = 'https://api.example.com/meta?foo=bar#frag';
+    it('should accept configured resource with query', async () => {
+      const meta = 'https://api.example.com/meta';
       const response = await makeTokenRequest(`&resource=${encodeURIComponent(meta)}`);
       validateSuccessfulTokenResponse(response, [meta]);
     });

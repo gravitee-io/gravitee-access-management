@@ -19,10 +19,15 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 import java.net.URI;
-import java.net.URL;
-import java.util.regex.Pattern;
 
 public class UrlValidator implements ConstraintValidator<Url, String> {
+
+    private boolean allowFragment = true;
+
+    @Override
+    public void initialize(Url constraintAnnotation) {
+        this.allowFragment = constraintAnnotation.allowFragment();
+    }
 
     @Override
     public boolean isValid(String url, ConstraintValidatorContext constraintValidatorContext) {
@@ -31,7 +36,10 @@ public class UrlValidator implements ConstraintValidator<Url, String> {
         }
         try {
             URI uri = URI.create(url);
-            return uri.getScheme() != null && uri.getHost() != null;
+            if (uri.getScheme() == null || uri.getHost() == null) {
+                return false;
+            }
+            return allowFragment || uri.getFragment() == null;
         } catch (Exception e) {
             return false;
         }

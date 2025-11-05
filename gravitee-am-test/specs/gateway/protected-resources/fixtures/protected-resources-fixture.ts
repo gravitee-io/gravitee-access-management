@@ -199,8 +199,8 @@ async function createTestProtectedResources(domain: Domain, accessToken: string)
     },
     {
       name: 'Meta API',
-      resourceIdentifiers: ['https://api.example.com/meta?foo=bar#frag'],
-      description: 'Meta API with query/fragment',
+      resourceIdentifiers: ['https://api.example.com/meta?foo=bar'],
+      description: 'Meta API with query',
       type: 'MCP_SERVER',
     },
   ];

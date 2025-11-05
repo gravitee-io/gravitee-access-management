@@ -36,7 +36,7 @@ public class UpdateProtectedResource {
     private String description;
 
     @NotEmpty
-    private List<@NotBlank @Url String> resourceIdentifiers;
+    private List<@NotBlank @Url(allowFragment = false) String> resourceIdentifiers;
 
     private List<@Valid UpdateProtectedResourceFeature> features;
 
