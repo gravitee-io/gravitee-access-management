@@ -28,11 +28,13 @@ import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.monitoring.provider.GatewayMetricProvider;
 import io.gravitee.am.plugins.idp.core.AuthenticationProviderConfiguration;
 import io.gravitee.am.plugins.idp.core.IdentityProviderPluginManager;
+import io.gravitee.am.repository.exceptions.RepositoryConnectionException;
 import io.gravitee.am.repository.management.api.IdentityProviderRepository;
 import io.gravitee.common.event.Event;
 import io.gravitee.common.event.EventListener;
 import io.gravitee.common.service.AbstractService;
 import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -107,15 +109,32 @@ public class IdentityProviderManagerImpl extends AbstractService implements Iden
 
         try {
             identityProviderRepository.findAll(ReferenceType.DOMAIN, domain.getId())
-                    .flatMapSingle(this::updateAuthenticationProvider)
+                    .onErrorResumeNext(error -> {
+                        logger.error("Repository error while loading identity providers for domain {}", domain.getName(), error);
+                        if (error instanceof RepositoryConnectionException) {
+                            return Flowable.error(error);
+                        } else {
+                            return Flowable.empty();
+                        }
+                    })
+                    .flatMapMaybe(identityProvider ->
+                            updateAuthenticationProvider(identityProvider)
+                                    .toMaybe()
+                                    .onErrorResumeNext(error -> {
+                                        logger.error("Unable to initialize identity provider {} for domain {}, skipping", 
+                                                identityProvider.getId(), domain.getName(), error);
+                                        return Maybe.empty(); // skip but continue with other providers
+                                    })
+                    )
                     .map(provider -> {
                         gatewayMetricProvider.incrementIdp();
                         return provider;
                     })
-                    .blockingLast();
+                    .toList()
+                    .blockingGet();
             logger.info("Identity providers loaded for domain {}", domain.getName());
         } catch (Exception e) {
-            logger.error("Unable to initialize identity providers for domain {}", domain.getName(), e);
+            throw new IllegalStateException("Failed to initialize identity providers for domain " + domain.getName(), e);
         }
     }
 

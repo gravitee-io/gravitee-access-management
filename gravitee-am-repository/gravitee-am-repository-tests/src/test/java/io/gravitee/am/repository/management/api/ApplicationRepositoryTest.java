@@ -64,6 +64,28 @@ public class ApplicationRepositoryTest extends AbstractManagementTest {
     private ApplicationRepository applicationRepository;
 
     @Test
+    public void testFindAll() {
+        // create applications
+        Application application = new Application();
+        application.setName("testApp");
+        application.setDomain("testDomain");
+        applicationRepository.create(application).blockingGet();
+        Application application2 = new Application();
+        application2.setName("testApp2");
+        application2.setDomain("testDomain");
+        applicationRepository.create(application2).blockingGet();
+
+        // fetch applications
+        TestObserver<List<Application>> testObserver = applicationRepository.findAll().toList().test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        testObserver.assertValue(applications -> applications.size() == 2);
+        testObserver.assertValue(applications -> applications.stream().allMatch(a -> a.getName().equals("testApp") || a.getName().equals("testApp2")));
+    }
+
+    @Test
     public void testFindByDomain() {
         // create application
         Application application = new Application();

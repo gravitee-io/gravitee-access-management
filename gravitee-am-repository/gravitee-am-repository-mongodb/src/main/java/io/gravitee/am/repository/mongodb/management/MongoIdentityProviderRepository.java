@@ -76,7 +76,8 @@ public class MongoIdentityProviderRepository extends AbstractManagementMongoRepo
     public Flowable<IdentityProvider> findAll(ReferenceType referenceType, String referenceId) {
         return Flowable.fromPublisher(withMaxTime(identitiesCollection.find(and(eq(FIELD_REFERENCE_TYPE, referenceType.name()), eq(FIELD_REFERENCE_ID, referenceId)))))
                 .map(this::convert)
-                .observeOn(Schedulers.computation());
+                .observeOn(Schedulers.computation())
+                .onErrorResumeNext(this::mapExceptionAsFlowable);
     }
 
     @Override
