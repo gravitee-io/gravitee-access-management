@@ -19,7 +19,9 @@ import com.mongodb.client.model.Updates;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import io.gravitee.am.common.scope.ManagementRepositoryScope;
 import io.gravitee.am.model.Acl;
+import io.gravitee.am.model.permissions.DefaultRole;
 import io.gravitee.am.model.permissions.Permission;
+import io.gravitee.am.model.permissions.SystemRole;
 import io.gravitee.am.repository.mongodb.management.internal.model.RoleMongo;
 import io.gravitee.node.api.upgrader.Upgrader;
 import io.reactivex.rxjava3.core.Completable;
@@ -32,9 +34,6 @@ import java.util.Set;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.Filters.in;
-import static io.gravitee.am.model.permissions.DefaultRole.DOMAIN_OWNER;
-import static io.gravitee.am.model.permissions.DefaultRole.ENVIRONMENT_OWNER;
-import static io.gravitee.am.model.permissions.DefaultRole.ORGANIZATION_OWNER;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -43,7 +42,13 @@ import static io.gravitee.am.model.permissions.DefaultRole.ORGANIZATION_OWNER;
 public class ProtectedResourcePermissionMongoUpgrader implements Upgrader {
     private final MongoDatabase mongo;
     private final String ProtectedResourceFieldName = "permissionAcls." + Permission.PROTECTED_RESOURCE.name();
-    private final Set<String> roles = Set.of(ORGANIZATION_OWNER.name(), DOMAIN_OWNER.name(), ENVIRONMENT_OWNER.name());
+    private final Set<String> roles = Set.of(
+            DefaultRole.ORGANIZATION_OWNER.name(),
+            SystemRole.ORGANIZATION_PRIMARY_OWNER.name(),
+            DefaultRole.DOMAIN_OWNER.name(),
+            SystemRole.DOMAIN_PRIMARY_OWNER.name(),
+            DefaultRole.ENVIRONMENT_OWNER.name(),
+            SystemRole.ENVIRONMENT_PRIMARY_OWNER.name());
 
     @Override
     public boolean upgrade() {
