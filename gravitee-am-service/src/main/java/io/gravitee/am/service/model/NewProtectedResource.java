@@ -37,7 +37,7 @@ public class NewProtectedResource {
     private String description;
 
     @NotEmpty
-    private List<@NotBlank @Url String> resourceIdentifiers;
+    private List<@NotBlank @Url(allowFragment = false) String> resourceIdentifiers;
 
     private String clientId;
 

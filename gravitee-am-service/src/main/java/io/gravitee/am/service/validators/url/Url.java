@@ -31,4 +31,9 @@ public @interface Url {
     String message() default "Invalid URL";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
+    
+    /**
+     * Whether to allow URL fragments (the part after #).
+     */
+    boolean allowFragment() default true;
 }
