@@ -76,6 +76,7 @@ import io.gravitee.am.gateway.handler.oidc.service.idtoken.IDTokenService;
 import io.gravitee.am.gateway.handler.oidc.service.jwe.JWEService;
 import io.gravitee.am.gateway.handler.oidc.service.jwk.JWKService;
 import io.gravitee.am.gateway.handler.oidc.service.request.RequestObjectService;
+import io.gravitee.am.gateway.handler.root.handler.LoggerJsonMessageTokenHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.LocaleHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.RedirectUriValidationHandler;
 import io.gravitee.am.gateway.handler.root.resources.handler.common.ReturnUrlValidationHandler;
@@ -99,11 +100,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 
+import static io.gravitee.am.gateway.handler.root.handler.LoggerJsonMessageTokenHandler.PROPERTY_REQUEST_JSON_LOGGER_ENABLED;
+
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
 public class OAuth2Provider extends AbstractProtocolProvider {
+
 
     @Autowired
     private Domain domain;
@@ -259,6 +263,10 @@ public class OAuth2Provider extends AbstractProtocolProvider {
         // static handler
         staticHandler(oauth2Router);
 
+        // register Logger handler first to have Response log
+        // whatever the processing result
+        loggerHandler(oauth2Router);
+
         // session cookie handler
         sessionAndCookieHandler(oauth2Router);
 
@@ -413,6 +421,13 @@ public class OAuth2Provider extends AbstractProtocolProvider {
 
     private void errorHandler(Router router) {
         router.route().failureHandler(new ExceptionHandler());
+    }
+
+    private void loggerHandler(Router router) {
+        if (environment.getProperty(PROPERTY_REQUEST_JSON_LOGGER_ENABLED, Boolean.class, false)) {
+            router.route()
+                    .handler(new LoggerJsonMessageTokenHandler(environment));
+        }
     }
 
 }
