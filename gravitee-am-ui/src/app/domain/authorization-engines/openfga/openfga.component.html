@@ -25,7 +25,7 @@
       <div class="page-header__details-item" *ngIf="storeInfo?.name || storeId">
         <span class="label">Store</span>
         <span class="value">
-          <span class="primary">{{ storeInfo?.name || 'Unnamed store' }}</span>
+          <span class="primary">{{ storeInfo?.name || '⚠️ Unknown store' }}</span>
           <span *ngIf="storeId" class="badge">ID: {{ storeId }}</span>
         </span>
       </div>
@@ -34,9 +34,9 @@
 
   <div class="gv-page-description">Manage your OpenFGA settings.</div>
 
-  <mat-tab-group [dynamicHeight]="true">
+  <mat-tab-group [dynamicHeight]="true" [selectedIndex]="selectedTabIndex">
     <!-- Authorization Model Tab -->
-    <mat-tab label="Authorization Model">
+    <mat-tab label="Authorization Model" [disabled]="hasLoadError">
       <div fxLayout="row" fxLayoutGap="20px">
         <div fxLayout="column" fxFlex="70">
           <div class="gv-form-section">
@@ -131,7 +131,7 @@ type document
     </mat-tab>
 
     <!-- Relationship Tuples Tab -->
-    <mat-tab label="Relationship Tuples">
+    <mat-tab label="Relationship Tuples" [disabled]="hasLoadError">
       <div fxLayout="row" fxLayoutGap="20px">
         <div fxLayout="column" fxFlex="70">
           <div class="gv-form-section">
@@ -247,7 +247,7 @@ type document
     </mat-tab>
 
     <!-- Test Permissions Tab -->
-    <mat-tab label="Test Permissions">
+    <mat-tab label="Test Permissions" [disabled]="hasLoadError">
       <div fxLayout="row" fxLayoutGap="20px">
         <div fxLayout="column" fxFlex="70">
           <div class="gv-form-section">
@@ -339,6 +339,13 @@ type document
               <mat-hint>Authorization engine name</mat-hint>
             </mat-form-field>
           </div>
+
+          <info-banner
+            type="warning"
+            text="OpenFGA instance is currently not reachable. Please review the configuration."
+            [showButton]="false"
+            *ngIf="hasLoadError"
+          ></info-banner>
 
           <div class="gv-form-section">
             <div class="gv-form-section-title">

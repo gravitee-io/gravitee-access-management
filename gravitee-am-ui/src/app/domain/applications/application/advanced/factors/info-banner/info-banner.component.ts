@@ -27,6 +27,7 @@ export class InfoBannerComponent {
   @Input() type: 'warning' | 'info' | undefined;
   @Input() buttonName = 'More info';
   @Input() isRouterLink = true;
+  @Input() showButton = true;
 
   constructor(private router: Router) {}
   getColors(): string {
