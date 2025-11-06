@@ -267,6 +267,30 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
     }
 
     @Test
+    public void shouldPatchProtectedResource_400_fragmentInResourceIdentifier() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        // PATCH request with fragment in resource identifier (should be rejected)
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        patchRequest.setResourceIdentifiers(Optional.of(List.of("https://api.example.com/resource#fragment")));
+
+        // permission ok
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = patch(target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("resource-id"), patchRequest);
+
+        // Fragment should be rejected by @Url(allowFragment = false) validation
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
     public void shouldPatchProtectedResource_400_badRequest() {
         PatchProtectedResource patchRequest = new PatchProtectedResource();
 

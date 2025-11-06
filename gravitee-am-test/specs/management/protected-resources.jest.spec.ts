@@ -55,14 +55,6 @@ function isMcpToolFeature(feature: ProtectedResourceFeature): feature is McpTool
 // Constants
 const RESOURCE_SYNC_WAIT_MS = 2000;
 
-// Helper function for error handling
-async function expectErrorStatus(promise: Promise<any>, expectedStatus: number): Promise<void> {
-    await promise.catch((err) => {
-        // Use toEqual for consistent comparison (works for both toEqual and toBe cases)
-        expect(err.response.status).toEqual(expectedStatus);
-    });
-}
-
 // Helper function to create and sync a protected resource
 async function createAndSyncProtectedResource(
     domainId: string,
@@ -261,7 +253,9 @@ describe('When creating protected resource', () => {
     expect(createdResource.clientId).toEqual(request.clientId);
     expect(createdResource.clientId.length).toBeGreaterThan(0);
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created with same clientId in application', async () => {
@@ -282,7 +276,9 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://something6.com"]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created without type', async () => {
@@ -291,7 +287,9 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://something7.com", "https://something8.com"]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created with wrong type', async () => {
@@ -301,7 +299,9 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://something9.com", "https://something10.com"]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created with wrong resource identifier', async () => {
@@ -311,7 +311,9 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["something", "https://something11.com"]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created with fragment in resource identifier', async () => {
@@ -322,7 +324,9 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://something.com#fragment"]
         } as NewProtectedResource;
 
-        await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+        await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
     });
 
     it('Protected Resource must not be created if resourceIdentifier already exists', async () => {
@@ -335,7 +339,9 @@ describe('When creating protected resource', () => {
     const first = await createProtectedResource(domain.id, accessToken, request);
     expect(first.id).toBeDefined();
 
-        await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400)
+        await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
     it('Protected Resource resource identifier http(s)://localhost is correct', async () => {
         const httpsRequest = {
@@ -364,7 +370,9 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: [" https://toTrimDomain.com   "]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, badRequest), 400);
+    await expect(createProtectedResource(domain.id, accessToken, badRequest)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
 
         const correctRequest = {
             name: generateValidProtectedResourceName(),
@@ -381,7 +389,9 @@ describe('When creating protected resource', () => {
             resourceIdentifiers: ["https://tolowercasedomain.com"]
         } as NewProtectedResource;
 
-        await expectErrorStatus(createProtectedResource(domain.id, accessToken, anotherCorrectRequest), 400);
+        await expect(createProtectedResource(domain.id, accessToken, anotherCorrectRequest)).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
   it('Protected Resource can introspect token', async () => {
@@ -461,7 +471,9 @@ describe('When creating protected resource', () => {
             ]
         } as unknown as NewProtectedResource; // Type assertion needed to bypass TypeScript's enum validation for testing invalid data
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created when feature type is missing', async () => {
@@ -476,7 +488,9 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created when keys are duplicated', async () => {
@@ -496,7 +510,9 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created when key is missing', async () => {
@@ -515,7 +531,9 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 
     it('Protected Resource must not be created when key doesnt follow regex pattern', async () => {
@@ -534,7 +552,9 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
 
         const request2 = {
             name: generateValidProtectedResourceName(),
@@ -551,7 +571,9 @@ describe('When creating protected resource', () => {
             ]
         } as NewProtectedResource;
 
-    await expectErrorStatus(createProtectedResource(domain.id, accessToken, request2), 400);
+    await expect(createProtectedResource(domain.id, accessToken, request2)).rejects.toMatchObject({
+        response: { status: 400 }
+    });
   });
 });
 
@@ -835,10 +857,11 @@ describe('When updating protected resource', () => {
             ],
         } as UpdateProtectedResource;
 
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when updating with invalid scope', async () => {
@@ -858,10 +881,11 @@ describe('When updating protected resource', () => {
 
         // Invalid scope should return 400 (Bad Request) - InvalidProtectedResourceException
         // This is correct behavior after OAuth2Exception fix
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when updating non-existent resource', async () => {
@@ -875,10 +899,11 @@ describe('When updating protected resource', () => {
         // If user lacks permission: 403 (Forbidden) - permission check fails first
         // If user has permission but resource doesn't exist: 404 (Not Found) - would be returned after permission check passes
         // In this test, we expect 403 because permission check happens before existence check
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest),
-            403,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, 'non-existent-id', updateRequest)
+        ).rejects.toMatchObject({
+            response: { status: 403 }
+        });
     });
 
     it('Should fail when updating with duplicate resource identifier', async () => {
@@ -899,10 +924,11 @@ describe('When updating protected resource', () => {
             features: mapFeaturesForUpdate(createdResource.features)
         } as UpdateProtectedResource;
 
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should update resource identifier to lowercase', async () => {
@@ -1000,10 +1026,11 @@ describe('When updating protected resource', () => {
             ],
         } as UpdateProtectedResource;
 
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpaces),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpaces)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
     it('Should fail when updating with special characters in tool key', async () => {
         // Test with special characters in key
@@ -1021,10 +1048,11 @@ describe('When updating protected resource', () => {
             ],
         } as UpdateProtectedResource;
 
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpecialChars),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, requestWithSpecialChars)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should allow update with empty scopes array', async () => {
@@ -1100,10 +1128,11 @@ describe('When updating protected resource', () => {
             features: [],
         } as any;
 
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, createdResource.id, missingName),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, missingName)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should validate required resourceIdentifiers field', async () => {
@@ -1113,10 +1142,11 @@ describe('When updating protected resource', () => {
             features: [],
         } as any;
 
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, createdResource.id, missingIdentifiers),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, missingIdentifiers)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when resourceIdentifier is not a valid URL', async () => {
@@ -1127,10 +1157,11 @@ describe('When updating protected resource', () => {
             features: [],
         } as UpdateProtectedResource;
 
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, createdResource.id, updateRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     describe('When deleting tools from protected resource', () => {
@@ -1426,10 +1457,11 @@ describe('When updating protected resource', () => {
             // Should fail because remaining tool has invalid scope
             // Invalid scope should return 400 (Bad Request) - InvalidProtectedResourceException
             // This is correct behavior after OAuth2Exception fix
-            await expectErrorStatus(
-                updateProtectedResource(domain.id, accessToken, created.id, updateRequest),
-                400,
-            );
+            await expect(
+                updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
+            ).rejects.toMatchObject({
+                response: { status: 400 }
+            });
         });
 
         it('Should not allow duplicate keys when deleting and re-adding', async () => {
@@ -1481,10 +1513,11 @@ describe('When updating protected resource', () => {
             } as UpdateProtectedResource;
 
         // Should fail due to duplicate keys
-        await expectErrorStatus(
-            updateProtectedResource(domain.id, accessToken, created.id, updateRequest),
-            400,
-        );
+        await expect(
+            updateProtectedResource(domain.id, accessToken, created.id, updateRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
     });
 });
@@ -1552,10 +1585,11 @@ describe('When patching protected resource', () => {
     it('Should fail when patching with empty request body', async () => {
         const patchRequest = {};
 
-        await expectErrorStatus(
-            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
-            400,
-        );
+        await expect(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when resource identifier is not a valid URL', async () => {
@@ -1563,10 +1597,11 @@ describe('When patching protected resource', () => {
             resourceIdentifiers: ["not-a-valid-url"]
         };
 
-        await expectErrorStatus(
-            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
-            400,
-        );
+        await expect(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when patching with fragment in resource identifier', async () => {
@@ -1575,10 +1610,12 @@ describe('When patching protected resource', () => {
             resourceIdentifiers: ["https://patched-resource.com#fragment"]
         };
 
-        await expectErrorStatus(
-            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
-            400,
-        );
+        // Using Jest's .rejects matcher - idiomatic pattern for testing promise rejections
+        await expect(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when patching with duplicate resource identifier', async () => {
@@ -1596,10 +1633,11 @@ describe('When patching protected resource', () => {
             resourceIdentifiers: ["https://duplicate-test.com"]
         };
 
-        await expectErrorStatus(
-            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
-            400,
-        );
+        await expect(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when patching resource from another domain', async () => {
@@ -1787,10 +1825,11 @@ describe('When patching protected resource', () => {
             ]
         };
 
-        await expectErrorStatus(
-            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
-            400,
-        );
+        await expect(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when patching with invalid scope in feature', async () => {
@@ -1806,10 +1845,11 @@ describe('When patching protected resource', () => {
         };
 
         // Invalid scope should return 400 (Bad Request) - InvalidProtectedResourceException
-        await expectErrorStatus(
-            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
-            400,
-        );
+        await expect(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 
     it('Should fail when patching with invalid feature key pattern', async () => {
@@ -1823,10 +1863,11 @@ describe('When patching protected resource', () => {
             ]
         };
 
-        await expectErrorStatus(
-            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest),
-            400,
-        );
+        await expect(
+            patchProtectedResource(domain.id, accessToken, createdResource.id, patchRequest)
+        ).rejects.toMatchObject({
+            response: { status: 400 }
+        });
     });
 });
 
@@ -1906,7 +1947,11 @@ describe('When deleting protected resource', () => {
         expect(exists).toBeFalsy();
 
         // Verify we cannot get it by ID (resource is completely deleted)
-        await expectErrorStatus(getMcpServer(domain.id, accessToken, created.id), 404);
+        await expect(
+            getMcpServer(domain.id, accessToken, created.id)
+        ).rejects.toMatchObject({
+            response: { status: 404 }
+        });
     });
 
     it('Should delete protected resources when domain is deleted', async () => {
@@ -1943,7 +1988,11 @@ describe('When deleting protected resource', () => {
 
         // Verify protected resources no longer exist by trying to list them
         // Since the domain is deleted, checkDomainExists will throw DomainNotFoundException (404)
-        await expectErrorStatus(getMcpServers(testDomain.domain.id, accessToken, 100, 0), 404);
+        await expect(
+            getMcpServers(testDomain.domain.id, accessToken, 100, 0)
+        ).rejects.toMatchObject({
+            response: { status: 404 }
+        });
     });
 
     it('Deleted protected resource cannot introspect token', async () => {

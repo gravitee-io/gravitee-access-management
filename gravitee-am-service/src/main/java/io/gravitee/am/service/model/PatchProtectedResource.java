@@ -40,7 +40,7 @@ public class PatchProtectedResource {
 
     private Optional<@Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters") String> name;
     private Optional<String> description;
-    private Optional<List<@NotBlank @Url String>> resourceIdentifiers;
+    private Optional<List<@NotBlank @Url(allowFragment = false) String>> resourceIdentifiers;
     private Optional<List<UpdateProtectedResourceFeature>> features;
 
     public ProtectedResource patch(ProtectedResource protectedResource) {
