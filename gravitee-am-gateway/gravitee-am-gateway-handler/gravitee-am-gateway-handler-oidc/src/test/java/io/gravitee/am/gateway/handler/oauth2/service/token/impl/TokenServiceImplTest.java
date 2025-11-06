@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.service.token.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.gravitee.am.common.jwt.JWT;
 import io.gravitee.am.common.oauth2.GrantType;
 import io.gravitee.am.common.oauth2.TokenTypeHint;
@@ -24,6 +25,8 @@ import io.gravitee.am.gateway.handler.common.oauth2.IntrospectionTokenFacade;
 import io.gravitee.am.gateway.handler.oauth2.service.token.TokenManager;
 import io.gravitee.am.gateway.handler.oidc.service.discovery.OpenIDDiscoveryService;
 import io.gravitee.am.gateway.handler.context.ExecutionContextFactory;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.ClientTokenAuditBuilder;
 import io.gravitee.gateway.api.context.SimpleExecutionContext;
 import io.gravitee.am.gateway.handler.oauth2.service.request.AuthorizationRequest;
 import io.gravitee.am.gateway.handler.oauth2.service.token.Token;
@@ -374,5 +377,36 @@ public class TokenServiceImplTest {
         verifyRefreshTokenOrigResources(newRefreshJWT, Set.of(), "test-client");
     }
 
+    @Test
+    public void when_creating_token_with_resources_should_include_resources_in_audit_log() {
+        // Request with MCP resource server URIs
+        Set<String> mcpResources = Set.of("https://mcp.example.com/api/v1", "https://mcp2.example.com/api/v1");
+
+        AuthorizationRequest request = createAuthorizationRequest("mcp-client", mcpResources, null);
+        Client client = createClient("mcp-client");
+        client.setDomain("test-domain");
+        User user = createUser("user-456");
+        setupCommonMocks(request);
+
+        executeTokenCreation(request, client, user);
+
+        // Verify audit service was called with the resource parameters
+        ArgumentCaptor<AuditBuilder> auditCaptor = ArgumentCaptor.forClass(AuditBuilder.class);
+        verify(auditService, Mockito.atLeastOnce()).report(auditCaptor.capture());
+
+        // Get the successful audit report (not the error one)
+        AuditBuilder capturedBuilder = auditCaptor.getAllValues().stream()
+                .filter(builder -> builder instanceof ClientTokenAuditBuilder)
+                .findFirst()
+                .orElse(null);
+
+        assertThat(capturedBuilder).isNotNull();
+
+        // Verify the audit contains the resource parameter
+        String auditMessage = capturedBuilder.build(new ObjectMapper()).getOutcome().getMessage();
+        assertThat(auditMessage).contains("resource");
+        assertThat(auditMessage).contains("https://mcp.example.com/api/v1");
+        assertThat(auditMessage).contains("https://mcp2.example.com/api/v1");
+    }
 
 }

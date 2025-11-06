@@ -201,4 +201,21 @@ class ClientTokenAuditBuilderTest {
         assertEquals(message, audit.getOutcome().getMessage());
         assertEquals(TOKEN_CREATED, audit.getType());
     }
+
+    @Test
+    void shouldBuildWithResourceParameter() {
+        var resources = "https://mcp.example.com/api/v1 https://mcp2.example.com/api/v1";
+        var audit = AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .withParams(() -> {
+                    var params = new java.util.HashMap<String, Object>();
+                    params.put("resource", resources);
+                    return params;
+                })
+                .build(objectMapper);
+        
+        assertTrue(audit.getOutcome().getMessage().contains("resource"));
+        assertTrue(audit.getOutcome().getMessage().contains(resources));
+        assertEquals(SUCCESS, audit.getOutcome().getStatus());
+        assertEquals(TOKEN_CREATED, audit.getType());
+    }
 }
