@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { deleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import {
   createExtensionGrant,
   deleteExtensionGrant,
@@ -47,7 +47,7 @@ jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  const startedDomain = await setupDomainForTest(uniqueName('domain-extension-grant'), { accessToken, waitForStart: true });
+  const startedDomain = await setupDomainForTest(uniqueName('extension-grant', true), { accessToken, waitForStart: true });
   domain = startedDomain.domain;
   tokenEndpoint = startedDomain.oidcConfig.token_endpoint;
 
@@ -224,6 +224,6 @@ describe('when user creation', () => {
 afterAll(async () => {
   if (domain && domain.id) {
     await deleteUser(domain.id, accessToken, user.id);
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

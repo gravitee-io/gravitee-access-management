@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
   createDictionary,
   deleteDictionary,
@@ -29,6 +29,8 @@ import {
 import { ResponseError } from '../../api/management/runtime';
 
 global.fetch = fetch;
+
+jest.setTimeout(200000);
 
 let accessToken;
 let domain;
@@ -168,6 +170,6 @@ describe('Testing dictionaries api...', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

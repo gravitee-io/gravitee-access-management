@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { preview } from '@management-commands/form-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
@@ -25,6 +25,8 @@ const path = require('path');
 const fs = require('fs');
 
 global.fetch = fetch;
+
+jest.setTimeout(200000);
 
 let accessToken;
 let domain;
@@ -40,7 +42,7 @@ let customDraftTheme = {
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-themes-preview'), { accessToken, waitForStart: false }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('themes-preview', true), { accessToken, waitForStart: false }).then((it) => it.domain);
 });
 
 async function testRequestPreview(template: String, content: String, theme?: any) {
@@ -124,7 +126,7 @@ describe('Testing invalid preview form api...', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
 

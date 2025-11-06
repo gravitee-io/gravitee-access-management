@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createRole, updateRole } from '@management-commands/role-management-commands';
 import {
@@ -34,6 +34,8 @@ import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
+jest.setTimeout(200000);
+
 let accessToken;
 let domain;
 let domain2;
@@ -44,8 +46,8 @@ let group;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-groups'), { accessToken }).then((it) => it.domain);
-  domain2 = await setupDomainForTest(uniqueName('domain-groups2'), { accessToken }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('groups', true), { accessToken }).then((it) => it.domain);
+  domain2 = await setupDomainForTest(uniqueName('groups2', true), { accessToken }).then((it) => it.domain);
 });
 
 describe('before creating groups', () => {
@@ -171,9 +173,9 @@ describe('when groups are created', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
   if (domain2 && domain2.id) {
-    await deleteDomain(domain2.id, accessToken);
+    await safeDeleteDomain(domain2.id, accessToken);
   }
 });

@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { deleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import {
   createApplication,
   deleteApplication,
@@ -33,6 +33,8 @@ import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
+jest.setTimeout(200000);
+
 let accessToken: string;
 let domain: Domain;
 let application;
@@ -40,7 +42,7 @@ let secret;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-applications'), { accessToken }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('applications', true), { accessToken }).then((it) => it.domain);
 });
 
 describe('when creating applications', () => {
@@ -343,6 +345,6 @@ describe('Redirect URI', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

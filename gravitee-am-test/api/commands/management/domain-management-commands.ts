@@ -72,6 +72,36 @@ export const deleteDomain = (domainId, accessToken): Promise<void> =>
     domain: domainId,
   });
 
+/**
+ * Safely deletes a domain, handling common errors gracefully.
+ * Logs success/failure but never throws - ensures cleanup continues.
+ * Use this in afterAll() blocks to ensure all domains are cleaned up even if one fails.
+ * 
+ * @param domainId - The domain ID to delete
+ * @param accessToken - Admin access token
+ * @returns Promise<void> - Always resolves (never rejects)
+ */
+export const safeDeleteDomain = async (domainId: string, accessToken: string): Promise<void> => {
+  if (!domainId) {
+    console.warn('⚠️  Cannot delete domain: domainId is undefined or empty');
+    return;
+  }
+  
+  try {
+    await deleteDomain(domainId, accessToken);
+    console.log(`✅ Deleted domain: ${domainId}`);
+  } catch (err: any) {
+    if (err.response?.status === 404) {
+      console.log(`ℹ️  Domain already deleted: ${domainId}`);
+    } else if (err.response?.status) {
+      console.warn(`⚠️  Failed to delete domain ${domainId} - HTTP ${err.response.status}: ${err.message}`);
+    } else {
+      console.warn(`⚠️  Failed to delete domain ${domainId}: ${err.message}`);
+    }
+    // Never throw - allow cleanup to continue
+  }
+};
+
 export const patchDomain = (domainId, accessToken, body): Promise<Domain> =>
   getDomainApi(accessToken).patchDomain({
     organizationId: process.env.AM_DEF_ORG_ID,

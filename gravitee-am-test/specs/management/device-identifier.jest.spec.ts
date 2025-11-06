@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain, waitFor } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain, waitFor } from '@management-commands/domain-management-commands';
 import {
   createDevice,
   deleteDevice,
@@ -38,7 +38,7 @@ jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-device-id'), { accessToken }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('device-id', true), { accessToken }).then((it) => it.domain);
 });
 
 describe('when creating device identifier', () => {
@@ -92,6 +92,6 @@ describe('after creating device identifier', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, patchDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser, resetUserPassword } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -34,7 +34,7 @@ let user;
 describe('Testing password history...', () => {
   beforeAll(async () => {
     accessToken = await requestAdminAccessToken();
-    domain = await setupDomainForTest(uniqueName('domain-ph-users'), { accessToken, waitForStart: false }).then((it) => it.domain);
+    domain = await setupDomainForTest(uniqueName('ph-users', true), { accessToken, waitForStart: false }).then((it) => it.domain);
 
     await createPasswordPolicy(domain.id, accessToken, {
       name: 'default',
@@ -97,7 +97,7 @@ describe('Testing password history...', () => {
   afterAll(async () => {
     await new Promise((r) => setTimeout(r, 1000)); //Delay to prevent domain being cleaned up before reset completes
     if (domain && domain.id) {
-      await deleteDomain(domain.id, accessToken);
+      await safeDeleteDomain(domain.id, accessToken);
     }
   });
 });

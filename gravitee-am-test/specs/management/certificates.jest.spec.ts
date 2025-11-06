@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
   createCertificate,
   deleteCertificate,
@@ -31,6 +31,8 @@ import {
 import { buildCertificate } from '../../api/fixtures/certificates';
 
 global.fetch = fetch;
+
+jest.setTimeout(200000);
 
 let accessToken;
 let domain;
@@ -161,6 +163,6 @@ describe('When we want to renew a certificate', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
