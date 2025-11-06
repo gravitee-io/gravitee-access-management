@@ -16,6 +16,8 @@
 package io.gravitee.am.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
 import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.reporter.AuditReporterService;
@@ -25,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
@@ -43,6 +44,7 @@ import java.util.concurrent.Executors;
 public class AuditServiceImpl implements AuditService, InitializingBean, DisposableBean {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuditServiceImpl.class);
     private static final String AUDIT_TO_EXCLUDE_KEY = "reporters.audits.excluded_audit_types[%d]";
+    public static final String PROPERTY_AUDITS_EXCLUDE_CLIENT_AUTH_SUCCESS = "reporters.audits.exclude.clientAuthentication.success";
 
     @Autowired
     private AuditReporterService auditReporterService;
@@ -54,6 +56,7 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
     private Environment environment;
 
     private Set<String> auditsToExclude = Collections.synchronizedSet(new HashSet<>());
+    private boolean excludeSuccessfulAudits;
 
     private ExecutorService executorService;
 
@@ -61,15 +64,28 @@ public class AuditServiceImpl implements AuditService, InitializingBean, Disposa
     public void report(AuditBuilder<?> auditBuilder) {
         executorService.execute(() -> {
             final var audit = auditBuilder.build(objectMapper);
-            if (!auditsToExclude.contains(audit.getType())) {
+            if (canReport(audit)) {
                 auditReporterService.report(audit);
             }
         });
     }
 
+    private boolean canReport(Audit audit) {
+        return isAllowedAuditType(audit) && statusNotFiltered(audit);
+    }
+
+    private boolean statusNotFiltered(Audit audit) {
+        return !audit.getType().equals(EventType.CLIENT_AUTHENTICATION) || (audit.getOutcome().getStatus().equals(Status.FAILURE) || !excludeSuccessfulAudits);
+    }
+
+    private boolean isAllowedAuditType(Audit audit) {
+        return !auditsToExclude.contains(audit.getType());
+    }
+
     @Override
     public void afterPropertiesSet() {
         executorService = Executors.newCachedThreadPool();
+        excludeSuccessfulAudits = environment.getProperty(PROPERTY_AUDITS_EXCLUDE_CLIENT_AUTH_SUCCESS, Boolean.class, Boolean.TRUE);
         int i = 0;
         do {
             final var auditType = environment.getProperty(AUDIT_TO_EXCLUDE_KEY.formatted(i), String.class);
