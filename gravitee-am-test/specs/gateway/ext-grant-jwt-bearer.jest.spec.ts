@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createServiceApplication } from './fixtures/rate-limit-fixture';
@@ -77,12 +77,10 @@ beforeAll(async () => {
     ),
   );
   basicAuth = getBase64BasicAuth('app', 'app');
-  await startDomain(domain.id, accessToken);
-  // Wait for domain to be ready
-  await new Promise((r) => setTimeout(r, 10000));
-
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  const domainStarted = await startDomain(domain.id, accessToken);
+  const domainWithOidc = await waitForDomainStart(domainStarted);
+  domain = domainWithOidc.domain;
+  openIdConfiguration = domainWithOidc.oidcConfig || (await getWellKnownOpenIdConfiguration(domain.hrid).expect(200)).body;
 });
 
 afterAll(async () => {

@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import {
@@ -47,17 +47,14 @@ beforeAll(async () => {
 
   const createdDomain = await createDomain(accessToken, uniqueName('rate-limiting', true), 'Rate limiting test domain');
   const domainStarted = await startDomain(createdDomain.id, accessToken);
-  domain = domainStarted;
-
-  // Wait for domain to be ready
-  await new Promise((r) => setTimeout(r, 10000));
+  const domainWithOidc = await waitForDomainStart(domainStarted);
+  domain = domainWithOidc.domain;
 
   // Create backend-to-backend application using fixture
   application = await createServiceApplication(domain.id, accessToken, 'rate-limit-b2b-app', 'rate-limit-app', 'rate-limit-app');
 
   // Get OpenID configuration
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  openIdConfiguration = domainWithOidc.oidcConfig || (await getWellKnownOpenIdConfiguration(domain.hrid).expect(200)).body;
 });
 
 afterAll(async () => {

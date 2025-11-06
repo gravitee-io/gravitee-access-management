@@ -23,3 +23,5 @@ process.env.AM_DEF_ENV_ID = 'DEFAULT';
 process.env.AM_ADMIN_USERNAME = 'admin';
 process.env.AM_ADMIN_PASSWORD = 'adminadmin';
 process.env.FAKE_SMTP = 'http://localhost:5080';
+process.env.AM_DOMAIN_START_TIMEOUT = '30000';
+process.env.AM_DOMAIN_SYNC_TIMEOUT = '30000';

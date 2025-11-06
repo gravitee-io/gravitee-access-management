@@ -17,7 +17,7 @@
 import fetch from 'cross-fetch';
 import { expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, patchDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { getWellKnownOpenIdConfiguration, logoutUser } from '@gateway-commands/oauth-oidc-commands';
@@ -299,10 +299,9 @@ async function initEnv(applicationConfiguration, domainConfiguration = null) {
     identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
-  await new Promise((r) => setTimeout(r, 10000));
-
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  const domainWithOidc = await waitForDomainStart(domain);
+  domain = domainWithOidc.domain;
+  openIdConfiguration = domainWithOidc.oidcConfig || (await getWellKnownOpenIdConfiguration(domain.hrid).expect(200)).body;
 
   const firstname = faker.name.firstName();
   const lastname = faker.name.lastName();

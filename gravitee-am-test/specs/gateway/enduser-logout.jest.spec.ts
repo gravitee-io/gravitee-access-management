@@ -19,11 +19,11 @@ global.fetch = fetch;
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart, waitForDomainSync, waitForDomainSyncWithVerification } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { getAllIdps } from '@management-commands/idp-management-commands';
-import { createUser } from '@management-commands/user-management-commands';
-import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
+import { createUser, getUser } from '@management-commands/user-management-commands';
+import { createApplication, getApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
 import {
   extractXsrfTokenAndActionResponse,
   getWellKnownOpenIdConfiguration,
@@ -53,7 +53,9 @@ beforeAll(async () => {
   domain = await createDomain(managementApiAccessToken, uniqueName('enduser-logout', true), 'test end-user logout');
   expect(domain).toBeDefined();
 
-  await startDomain(domain.id, managementApiAccessToken);
+  const domainStarted = await startDomain(domain.id, managementApiAccessToken);
+  const domainWithOidc = await waitForDomainStart(domainStarted);
+  domain = domainWithOidc.domain;
 
   // Create the application
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
@@ -86,11 +88,16 @@ beforeAll(async () => {
   expect(application).toBeDefined();
 
   // Create a User
-  await createUser(domain.id, managementApiAccessToken, user);
-  await waitForDomainSync();
+  const createdUser = await createUser(domain.id, managementApiAccessToken, user);
+  // Wait for user to be synced by verifying user exists
+  await waitForDomainSyncWithVerification(
+    () => getUser(domain.id, managementApiAccessToken, createdUser.id),
+    (user) => user !== null && user.id === createdUser.id,
+    { timeoutMillis: 30000, intervalMillis: 500 }
+  );
 
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  // Use the OIDC config from waitForDomainStart if available, otherwise fetch it
+  openIdConfiguration = domainWithOidc.oidcConfig || (await getWellKnownOpenIdConfiguration(domain.hrid).expect(200)).body;
   expect(openIdConfiguration).toBeDefined();
 });
 
@@ -116,6 +123,7 @@ describe('OAuth2 - Logout tests', () => {
           postLogoutRedirectUris: ['https://somewhere/after/logout'],
         },
       });
+      // Wait for domain settings to sync (configurable timeout should be sufficient)
       await waitForDomainSync();
     });
 
@@ -153,7 +161,12 @@ describe('OAuth2 - Logout tests', () => {
         },
         application.id,
       );
-      await waitForDomainSync();
+      // Wait for application settings to sync by verifying settings are updated
+      await waitForDomainSyncWithVerification(
+        () => getApplication(domain.id, managementApiAccessToken, application.id),
+        (app) => app.settings?.oauth?.postLogoutRedirectUris?.includes('https://somewhere/after/app/logout') === true,
+        { timeoutMillis: 30000, intervalMillis: 500 }
+      );
     });
 
     it('After sign-in a user can logout without target_uri', async () => {

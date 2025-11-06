@@ -18,7 +18,7 @@ import { afterAll, beforeAll, describe, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
-import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { BulkRequest } from '../../../api/gateway/models/scim/BulkRequest/BulkRequest';
@@ -74,13 +74,13 @@ beforeAll(async function () {
   // NOTE: we do not override the scimClient to keep reference of the clientSecret
   await updateApplication(domain.id, mngAccessToken, applicationDefinition, scimClient.id);
 
-  await startDomain(domain.id, mngAccessToken);
-
-  await waitForDomainSync();
-  const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
+  const domainStarted = await startDomain(domain.id, mngAccessToken);
+  const domainWithOidc = await waitForDomainStart(domainStarted);
+  domain = domainWithOidc.domain;
+  const openIdConfiguration = domainWithOidc.oidcConfig || (await getWellKnownOpenIdConfiguration(domain.hrid).expect(200)).body;
 
   // generate SCIM access token
-  const response = await performPost(openIdConfiguration.body.token_endpoint, '', 'grant_type=client_credentials', {
+  const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
     'Content-type': 'application/x-www-form-urlencoded',
     Authorization: 'Basic ' + applicationBase64Token(scimClient),
   });
