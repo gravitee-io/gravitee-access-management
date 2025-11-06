@@ -179,17 +179,17 @@ describe('Redirect URI', () => {
 
     const createdApp = await createApplication(domain.id, accessToken, app);
 
-    try {
-      await patchDomain(domain.id, accessToken, {
+    await expect(
+      patchDomain(domain.id, accessToken, {
         oidc: {
           clientRegistrationSettings: {
             allowRedirectUriParamsExpressionLanguage: true,
           },
         },
-      });
-    } catch (ex) {
-      expect(ex.response.status).toEqual(400);
-    }
+      })
+    ).rejects.toMatchObject({
+      response: { status: 400 }
+    });
 
     expect(domain.oidc.clientRegistrationSettings.allowRedirectUriParamsExpressionLanguage).toBe(false);
 

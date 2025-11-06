@@ -88,8 +88,8 @@ describe('Testing preview form api...', () => {
 describe('Testing invalid preview form api...', () => {
   describe('With unknown variable into the template', () => {
     it('must return an error', async () => {
-      try {
-        await testRequestPreview(
+      await expect(
+        testRequestPreview(
           'login',
           `<!DOCTYPE html>
                 <html lang="en" xmlns:th="http://www.thymeleaf.org">
@@ -104,20 +104,20 @@ describe('Testing invalid preview form api...', () => {
                 </body>
                 </html>
                     `,
-        );
-      } catch (e) {
-        expect(e.response.status).toEqual(400);
-      }
+        )
+      ).rejects.toMatchObject({
+        response: { status: 400 }
+      });
     });
   });
 
   describe('With unknown template', () => {
     it('must return an error', async () => {
-      try {
-        await testRequestPreview('unknown', 'content');
-      } catch (e) {
-        expect(e.response.status).toEqual(400);
-      }
+      await expect(
+        testRequestPreview('unknown', 'content')
+      ).rejects.toMatchObject({
+        response: { status: 400 }
+      });
     });
   });
 });
