@@ -164,8 +164,8 @@
         <gravitee-am-idp-azure-ad.version>2.0.0</gravitee-am-idp-azure-ad.version>
         <gravitee-am-idp-franceconnect.version>3.1.1</gravitee-am-idp-franceconnect.version>
         <gravitee-am-idp-salesforce.version>2.0.0</gravitee-am-idp-salesforce.version>
-        <gravitee-am-factor-call.version>1.0.1</gravitee-am-factor-call.version>
-        <gravitee-am-factor-sms.version>1.0.2</gravitee-am-factor-sms.version>
+        <gravitee-am-factor-call.version>1.0.2</gravitee-am-factor-call.version>
+        <gravitee-am-factor-sms.version>1.0.3</gravitee-am-factor-sms.version>
         <gravitee-am-factor-fido2.version>3.0.0</gravitee-am-factor-fido2.version>
         <gravitee-am-factor-http.version>3.0.0</gravitee-am-factor-http.version>
         <gravitee-am-factor-recovery-code.version>1.0.1</gravitee-am-factor-recovery-code.version>
