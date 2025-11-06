@@ -181,6 +181,10 @@ services:
 #reporters:
 #  # settings about audit common to all reporters
 #  audits:
+#    # exclusion of some audit types based on the status
+#    exclude:
+#      clientAuthentication:
+#        success: false
 #    # List of audit types to exclude from audit generation
 #    excluded_audit_types:
 #    - CLIENT_AUTHENTICATION
