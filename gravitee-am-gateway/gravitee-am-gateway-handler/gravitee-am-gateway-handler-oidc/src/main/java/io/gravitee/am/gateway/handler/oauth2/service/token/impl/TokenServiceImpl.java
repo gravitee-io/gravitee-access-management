@@ -183,25 +183,7 @@ public class TokenServiceImpl implements TokenService {
                                     (encodedAccessToken, optionalEncodedRefreshToken) -> convert(accessToken, encodedAccessToken, optionalEncodedRefreshToken.orElse(null), oAuth2Request))
                             .flatMap(accessToken1 -> tokenEnhancer.enhance(accessToken1, oAuth2Request, client, endUser, executionContext))
                             .flatMap(enhancedToken -> storeTokens(accessToken, refreshToken, oAuth2Request, endUser).toSingle(() -> enhancedToken))
-                            .doOnSuccess(enhancedToken -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class)
-                                    .accessToken(accessToken.getJti())
-                                    .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
-                                    .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
-                                    .tokenActor(client)
-                                    .withParams(() -> {
-                                        var params = new HashMap<String, Object>();
-                                        params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE, oAuth2Request.getGrantType());
-                                        params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE, oAuth2Request.getResponseType());
-                                        if (!isEmpty(oAuth2Request.getScopes())) {
-                                            params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE, String.join(" ", oAuth2Request.getScopes()));
-                                        }
-                                        if (!isEmpty(oAuth2Request.getResources())) {
-                                            params.put(io.gravitee.am.common.oauth2.Parameters.RESOURCE, String.join(" ", oAuth2Request.getResources()));
-                                        }
-                                        return params;
-                                    })
-                                    .tokenTarget(endUser)
-                                    .accessTokenSubject(enhancedToken.getSubject())));
+                            .doOnSuccess(enhancedToken -> auditService.report(buildTokenCreatedAudit(oAuth2Request, client, endUser, accessToken, refreshToken, enhancedToken)));
                 })
                 .doOnError(error -> auditService.report(AuditBuilder.builder(ClientTokenAuditBuilder.class).tokenActor(client).tokenTarget(endUser).throwable(error)));
     }
@@ -538,5 +520,33 @@ public class TokenServiceImpl implements TokenService {
         Set<String> originalResources = request.getResources();
         logger.debug("Falling back to request resources: {}", originalResources);
         return originalResources == null ? java.util.Set.of() : new java.util.LinkedHashSet<>(originalResources);
+    }
+
+    private ClientTokenAuditBuilder buildTokenCreatedAudit(OAuth2Request oAuth2Request, Client client, User endUser, 
+                                                           JWT accessToken, JWT refreshToken, Token enhancedToken) {
+        return AuditBuilder.builder(ClientTokenAuditBuilder.class)
+                .accessToken(accessToken.getJti())
+                .refreshToken(refreshToken != null ? refreshToken.getJti() : null)
+                .idTokenFor(enhancedToken.getAdditionalInformation().getOrDefault("id_token", null) != null ? endUser : null)
+                .tokenActor(client)
+                .withParams(() -> buildAuditParams(oAuth2Request))
+                .tokenTarget(endUser)
+                .accessTokenSubject(enhancedToken.getSubject());
+    }
+
+    private Map<String, Object> buildAuditParams(OAuth2Request oAuth2Request) {
+        var params = new HashMap<String, Object>();
+        params.put(io.gravitee.am.common.oauth2.Parameters.GRANT_TYPE, oAuth2Request.getGrantType());
+        params.put(io.gravitee.am.common.oauth2.Parameters.RESPONSE_TYPE, oAuth2Request.getResponseType());
+        
+        if (!isEmpty(oAuth2Request.getScopes())) {
+            params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE, String.join(" ", oAuth2Request.getScopes()));
+        }
+        
+        if (!isEmpty(oAuth2Request.getResources())) {
+            params.put(io.gravitee.am.common.oauth2.Parameters.RESOURCE, String.join(" ", oAuth2Request.getResources()));
+        }
+        
+        return params;
     }
 }
