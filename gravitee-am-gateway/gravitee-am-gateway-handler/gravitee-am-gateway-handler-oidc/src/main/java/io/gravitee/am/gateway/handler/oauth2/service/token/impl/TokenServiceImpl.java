@@ -195,6 +195,9 @@ public class TokenServiceImpl implements TokenService {
                                         if (!isEmpty(oAuth2Request.getScopes())) {
                                             params.put(io.gravitee.am.common.oauth2.Parameters.SCOPE, String.join(" ", oAuth2Request.getScopes()));
                                         }
+                                        if (!isEmpty(oAuth2Request.getResources())) {
+                                            params.put(io.gravitee.am.common.oauth2.Parameters.RESOURCE, String.join(" ", oAuth2Request.getResources()));
+                                        }
                                         return params;
                                     })
                                     .tokenTarget(endUser)
