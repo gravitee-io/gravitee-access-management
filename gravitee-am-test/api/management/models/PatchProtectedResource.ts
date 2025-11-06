@@ -64,85 +64,7 @@ export interface PatchProtectedResource {
    * @memberof PatchProtectedResource
    */
   features?: Array<UpdateProtectedResourceFeature>;
-  /**
-   *
-   * @type {Set<string>}
-   * @memberof PatchProtectedResource
-   */
-  requiredPermissions?: Set<PatchProtectedResourceRequiredPermissionsEnum>;
 }
-
-/**
- * @export
- */
-export const PatchProtectedResourceRequiredPermissionsEnum = {
-  Organization: 'ORGANIZATION',
-  OrganizationSettings: 'ORGANIZATION_SETTINGS',
-  OrganizationIdentityProvider: 'ORGANIZATION_IDENTITY_PROVIDER',
-  OrganizationAudit: 'ORGANIZATION_AUDIT',
-  OrganizationReporter: 'ORGANIZATION_REPORTER',
-  OrganizationScope: 'ORGANIZATION_SCOPE',
-  OrganizationUser: 'ORGANIZATION_USER',
-  OrganizationGroup: 'ORGANIZATION_GROUP',
-  OrganizationRole: 'ORGANIZATION_ROLE',
-  OrganizationTag: 'ORGANIZATION_TAG',
-  OrganizationEntrypoint: 'ORGANIZATION_ENTRYPOINT',
-  OrganizationForm: 'ORGANIZATION_FORM',
-  OrganizationMember: 'ORGANIZATION_MEMBER',
-  Environment: 'ENVIRONMENT',
-  DataPlane: 'DATA_PLANE',
-  Domain: 'DOMAIN',
-  DomainSettings: 'DOMAIN_SETTINGS',
-  DomainForm: 'DOMAIN_FORM',
-  DomainEmailTemplate: 'DOMAIN_EMAIL_TEMPLATE',
-  DomainExtensionPoint: 'DOMAIN_EXTENSION_POINT',
-  DomainIdentityProvider: 'DOMAIN_IDENTITY_PROVIDER',
-  DomainAuthorizationEngine: 'DOMAIN_AUTHORIZATION_ENGINE',
-  DomainAudit: 'DOMAIN_AUDIT',
-  DomainCertificate: 'DOMAIN_CERTIFICATE',
-  DomainUser: 'DOMAIN_USER',
-  DomainUserDevice: 'DOMAIN_USER_DEVICE',
-  DomainGroup: 'DOMAIN_GROUP',
-  DomainRole: 'DOMAIN_ROLE',
-  DomainScim: 'DOMAIN_SCIM',
-  DomainScope: 'DOMAIN_SCOPE',
-  DomainExtensionGrant: 'DOMAIN_EXTENSION_GRANT',
-  DomainOpenid: 'DOMAIN_OPENID',
-  DomainSaml: 'DOMAIN_SAML',
-  DomainUma: 'DOMAIN_UMA',
-  DomainUmaScope: 'DOMAIN_UMA_SCOPE',
-  DomainReporter: 'DOMAIN_REPORTER',
-  DomainMember: 'DOMAIN_MEMBER',
-  DomainAnalytics: 'DOMAIN_ANALYTICS',
-  DomainFactor: 'DOMAIN_FACTOR',
-  DomainResource: 'DOMAIN_RESOURCE',
-  DomainFlow: 'DOMAIN_FLOW',
-  DomainAlert: 'DOMAIN_ALERT',
-  DomainAlertNotifier: 'DOMAIN_ALERT_NOTIFIER',
-  DomainBotDetection: 'DOMAIN_BOT_DETECTION',
-  DomainDeviceIdentifier: 'DOMAIN_DEVICE_IDENTIFIER',
-  DomainAuthdeviceNotifier: 'DOMAIN_AUTHDEVICE_NOTIFIER',
-  DomainI18NDictionary: 'DOMAIN_I18N_DICTIONARY',
-  DomainTheme: 'DOMAIN_THEME',
-  Application: 'APPLICATION',
-  ApplicationSettings: 'APPLICATION_SETTINGS',
-  ApplicationIdentityProvider: 'APPLICATION_IDENTITY_PROVIDER',
-  ApplicationForm: 'APPLICATION_FORM',
-  ApplicationEmailTemplate: 'APPLICATION_EMAIL_TEMPLATE',
-  ApplicationOpenid: 'APPLICATION_OPENID',
-  ApplicationSaml: 'APPLICATION_SAML',
-  ApplicationCertificate: 'APPLICATION_CERTIFICATE',
-  ApplicationMember: 'APPLICATION_MEMBER',
-  ApplicationFactor: 'APPLICATION_FACTOR',
-  ApplicationResource: 'APPLICATION_RESOURCE',
-  ApplicationAnalytics: 'APPLICATION_ANALYTICS',
-  ApplicationFlow: 'APPLICATION_FLOW',
-  ProtectedResource: 'PROTECTED_RESOURCE',
-  LicenseNotification: 'LICENSE_NOTIFICATION',
-  Installation: 'INSTALLATION',
-} as const;
-export type PatchProtectedResourceRequiredPermissionsEnum =
-  typeof PatchProtectedResourceRequiredPermissionsEnum[keyof typeof PatchProtectedResourceRequiredPermissionsEnum];
 
 /**
  * Check if a given object implements the PatchProtectedResource interface.
@@ -164,7 +86,6 @@ export function PatchProtectedResourceFromJSONTyped(json: any, ignoreDiscriminat
     description: json['description'] == null ? undefined : json['description'],
     resourceIdentifiers: json['resourceIdentifiers'] == null ? undefined : json['resourceIdentifiers'],
     features: json['features'] == null ? undefined : (json['features'] as Array<any>).map(UpdateProtectedResourceFeatureFromJSON),
-    requiredPermissions: json['requiredPermissions'] == null ? undefined : new Set(json['requiredPermissions']),
   };
 }
 
@@ -182,6 +103,5 @@ export function PatchProtectedResourceToJSONTyped(value?: PatchProtectedResource
     description: value['description'],
     resourceIdentifiers: value['resourceIdentifiers'],
     features: value['features'] == null ? undefined : (value['features'] as Array<any>).map(UpdateProtectedResourceFeatureToJSON),
-    requiredPermissions: value['requiredPermissions'] == null ? undefined : Array.from(value['requiredPermissions'] as Set<any>),
   };
 }

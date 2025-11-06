@@ -19,6 +19,7 @@ import io.gravitee.am.service.validators.url.Url;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,11 +27,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static io.gravitee.am.service.model.NewProtectedResource.NAME_MAX_LENGTH;
+
 @Getter
 @Setter
 public class UpdateProtectedResource {
 
     @NotBlank
+    @Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters")
     private String name;
 
     private String description;

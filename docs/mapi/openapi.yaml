@@ -12480,15 +12480,15 @@ components:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
+        redirectUriStrictMatching:
+          type: boolean
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
           type: boolean
-        redirectUriStrictMatching:
+        dynamicClientRegistrationTemplateEnabled:
           type: boolean
         redirectUriUnsecuredHttpSchemeAllowed:
-          type: boolean
-        dynamicClientRegistrationTemplateEnabled:
           type: boolean
     DomainPage:
       type: object
@@ -13762,6 +13762,7 @@ components:
       type: object
       properties:
         name:
+          maxLength: 64
           minLength: 1
           type: string
         description:
@@ -14951,6 +14952,8 @@ components:
       type: object
       properties:
         name:
+          maxLength: 64
+          minLength: 1
           type: string
         description:
           type: string
@@ -14962,76 +14965,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/UpdateProtectedResourceFeature"
-        requiredPermissions:
-          uniqueItems: true
-          type: array
-          items:
-            type: string
-            enum:
-            - ORGANIZATION
-            - ORGANIZATION_SETTINGS
-            - ORGANIZATION_IDENTITY_PROVIDER
-            - ORGANIZATION_AUDIT
-            - ORGANIZATION_REPORTER
-            - ORGANIZATION_SCOPE
-            - ORGANIZATION_USER
-            - ORGANIZATION_GROUP
-            - ORGANIZATION_ROLE
-            - ORGANIZATION_TAG
-            - ORGANIZATION_ENTRYPOINT
-            - ORGANIZATION_FORM
-            - ORGANIZATION_MEMBER
-            - ENVIRONMENT
-            - DATA_PLANE
-            - DOMAIN
-            - DOMAIN_SETTINGS
-            - DOMAIN_FORM
-            - DOMAIN_EMAIL_TEMPLATE
-            - DOMAIN_EXTENSION_POINT
-            - DOMAIN_IDENTITY_PROVIDER
-            - DOMAIN_AUTHORIZATION_ENGINE
-            - DOMAIN_AUDIT
-            - DOMAIN_CERTIFICATE
-            - DOMAIN_USER
-            - DOMAIN_USER_DEVICE
-            - DOMAIN_GROUP
-            - DOMAIN_ROLE
-            - DOMAIN_SCIM
-            - DOMAIN_SCOPE
-            - DOMAIN_EXTENSION_GRANT
-            - DOMAIN_OPENID
-            - DOMAIN_SAML
-            - DOMAIN_UMA
-            - DOMAIN_UMA_SCOPE
-            - DOMAIN_REPORTER
-            - DOMAIN_MEMBER
-            - DOMAIN_ANALYTICS
-            - DOMAIN_FACTOR
-            - DOMAIN_RESOURCE
-            - DOMAIN_FLOW
-            - DOMAIN_ALERT
-            - DOMAIN_ALERT_NOTIFIER
-            - DOMAIN_BOT_DETECTION
-            - DOMAIN_DEVICE_IDENTIFIER
-            - DOMAIN_AUTHDEVICE_NOTIFIER
-            - DOMAIN_I18N_DICTIONARY
-            - DOMAIN_THEME
-            - APPLICATION
-            - APPLICATION_SETTINGS
-            - APPLICATION_IDENTITY_PROVIDER
-            - APPLICATION_FORM
-            - APPLICATION_EMAIL_TEMPLATE
-            - APPLICATION_OPENID
-            - APPLICATION_SAML
-            - APPLICATION_CERTIFICATE
-            - APPLICATION_MEMBER
-            - APPLICATION_FACTOR
-            - APPLICATION_RESOURCE
-            - APPLICATION_ANALYTICS
-            - APPLICATION_FLOW
-            - PROTECTED_RESOURCE
-            - LICENSE_NOTIFICATION
-            - INSTALLATION
     PatchRememberDeviceSettings:
       type: object
       properties:
@@ -16101,6 +16034,7 @@ components:
       type: object
       properties:
         name:
+          maxLength: 64
           minLength: 1
           type: string
         description:
@@ -16487,8 +16421,10 @@ components:
           type: object
           additionalProperties:
             type: object
-        fullId:
-          $ref: "#/components/schemas/UserId"
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
         middleName:
           type: string
         inactive:
@@ -16503,10 +16439,8 @@ components:
           type: string
         disabled:
           type: boolean
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
     UserEntity:
       type: object
       properties:
@@ -16686,8 +16620,10 @@ components:
           type: object
           additionalProperties:
             type: object
-        fullId:
-          $ref: "#/components/schemas/UserId"
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
         middleName:
           type: string
         inactive:
@@ -16702,10 +16638,8 @@ components:
           type: string
         disabled:
           type: boolean
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
+        fullId:
+          $ref: "#/components/schemas/UserId"
     UserId:
       type: object
       properties:
