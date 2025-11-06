@@ -1661,10 +1661,13 @@ describe('When patching protected resource', () => {
         // - If user lacks permission on the resource/domain: 403 (Forbidden) - permission check fails first
         // - If user has permission but resource belongs to another domain: 404 (Not Found) - returned after permission check passes
         // We accept both status codes because the actual response depends on the test user's permission setup
-        await patchProtectedResource(domain.id, accessToken, created.id, patchRequest)
-            .catch(err => {
-                expect([403, 404]).toContain(err.response.status);
-            });
+        try {
+            await patchProtectedResource(domain.id, accessToken, created.id, patchRequest);
+            throw new Error('Expected request to fail with 403 or 404, but it succeeded');
+        } catch (err: any) {
+            expect(err.response).toBeDefined();
+            expect([403, 404]).toContain(err.response.status);
+        }
     });
 
     it('Should patch features only (update existing tool)', async () => {
@@ -1908,10 +1911,13 @@ describe('When deleting protected resource', () => {
         // - If user lacks permission on the resource/domain: 403 (Forbidden) - permission check fails first
         // - If user has permission but resource belongs to another domain: 404 (Not Found) - returned after permission check passes
         // We accept both status codes because the actual response depends on the test user's permission setup
-        await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER')
-            .catch(err => {
-                expect([403, 404]).toContain(err.response.status);
-            });
+        try {
+            await deleteProtectedResource(domain.id, accessToken, created.id, 'MCP_SERVER');
+            throw new Error('Expected request to fail with 403 or 404, but it succeeded');
+        } catch (err: any) {
+            expect(err.response).toBeDefined();
+            expect([403, 404]).toContain(err.response.status);
+        }
     });
 
     it('Should delete protected resource with client secrets and features', async () => {

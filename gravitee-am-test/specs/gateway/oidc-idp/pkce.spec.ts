@@ -56,7 +56,11 @@ describe('The OIDC provider', () => {
         .then((code) => expect(code).not.toBeNull());
     });
     it('should fail with challenge unsupported by provider', async () => {
-      await fixture.idpPluginInClient.setPkceMethod('non-existing-method').catch((e) => expect(e.response.status).toBe(400));
+      await expect(
+        fixture.idpPluginInClient.setPkceMethod('non-existing-method')
+      ).rejects.toMatchObject({
+        response: { status: 400 }
+      });
     });
   });
 

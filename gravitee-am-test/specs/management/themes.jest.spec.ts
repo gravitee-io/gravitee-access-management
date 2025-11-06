@@ -47,11 +47,9 @@ describe('Testing themes api...', () => {
   describe('When creating many themes', () => {
     it('must only create one theme maximum ', async () => {
       theme = await testCreate();
-      try {
-        await testCreate();
-      } catch (e) {
-        expect(e.response.status).toEqual(400);
-      }
+      await expect(testCreate()).rejects.toMatchObject({
+        response: { status: 400 }
+      });
     });
 
     it('should find only one theme', async () => {
