@@ -18,7 +18,7 @@ import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitFor,
@@ -104,10 +104,10 @@ async function initDomain(resetPasswordOnExpiration: boolean) {
 
 afterAll(async () => {
   if (withoutReset?.domain?.id) {
-    await deleteDomain(withoutReset?.domain?.id, accessToken);
+    await safeDeleteDomain(withoutReset?.domain?.id, accessToken);
   }
   if (withReset?.domain?.id) {
-    await deleteDomain(withReset?.domain?.id, accessToken);
+    await safeDeleteDomain(withReset?.domain?.id, accessToken);
   }
 });
 

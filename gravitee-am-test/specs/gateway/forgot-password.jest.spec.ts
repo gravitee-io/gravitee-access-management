@@ -19,7 +19,7 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitFor,
@@ -410,7 +410,7 @@ settings.forEach((setting) => {
 
 afterAll(async () => {
   for await (const domainId of domainIds) {
-    await deleteDomain(domainId, accessToken);
+    await safeDeleteDomain(domainId, accessToken);
   }
 });
 

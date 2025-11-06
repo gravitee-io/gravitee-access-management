@@ -17,7 +17,8 @@
 import fetch from 'cross-fetch';
 import { expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain } from '@management-commands/domain-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { getWellKnownOpenIdConfiguration, logoutUser } from '@gateway-commands/oauth-oidc-commands';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
@@ -142,7 +143,7 @@ describe('remember me', () => {
     afterEach(async () => {
       await deleteUser(domain.id, accessToken, user.id);
       if (domain.id) {
-        await deleteDomain(domain.id, accessToken);
+        await safeDeleteDomain(domain.id, accessToken);
       }
     });
   });
@@ -263,7 +264,7 @@ describe('remember me', () => {
     afterEach(async () => {
       await deleteUser(domain.id, accessToken, user.id);
       if (domain.id) {
-        await deleteDomain(domain.id, accessToken);
+        await safeDeleteDomain(domain.id, accessToken);
       }
     });
   });
@@ -279,7 +280,7 @@ async function validateMaxAgeCookie(cookieName: string, maxAgeExpected: string, 
 
 async function initEnv(applicationConfiguration, domainConfiguration = null) {
   accessToken = await requestAdminAccessToken();
-  domain = await createDomain(accessToken, faker.company.companyName(), 'test remember me option')
+  domain = await createDomain(accessToken, uniqueName('remember-me', true), 'test remember me option')
     .then((domain) => startDomain(domain.id, accessToken))
     .then((domain) => {
       if (domainConfiguration != null) {

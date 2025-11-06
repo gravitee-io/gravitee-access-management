@@ -19,7 +19,8 @@ global.fetch = fetch;
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -56,7 +57,7 @@ const waitForDomainSync = () => new Promise((r) => setTimeout(r, 10000));
 beforeAll(async () => {
   managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
-  domain = await createDomain(managementApiAccessToken, 'self-account-change-password', 'test Change Password through SelfAccount API');
+  domain = await createDomain(managementApiAccessToken, uniqueName('self-account-change-password', true), 'test Change Password through SelfAccount API');
   expect(domain).toBeDefined();
 
   await startDomain(domain.id, managementApiAccessToken);
@@ -240,7 +241,7 @@ describe('SelfAccount - Change Password', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, managementApiAccessToken);
+    await safeDeleteDomain(domain.id, managementApiAccessToken);
   }
 });
 

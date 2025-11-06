@@ -28,6 +28,7 @@ import {
   processMfaEnrollment,
 } from './fixture/mfa-flow-fixture';
 import { waitFor } from '@management-commands/domain-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
@@ -39,7 +40,7 @@ const domain: Domain = {
     password: 'adminadmin',
   },
   domain: {
-    domainHrid: 'mfa-test-domain-general',
+    domainHrid: uniqueName('mfa-general', true),
   },
 } as Domain;
 

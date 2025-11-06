@@ -16,7 +16,7 @@
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   getDomainFlows,
   patchDomain,
   startDomain,
@@ -31,7 +31,7 @@ import { createIdp, getAllIdps } from '@management-commands/idp-management-comma
 import { createUser, deleteUser, getAllUsers } from '@management-commands/user-management-commands';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
-import { delay } from '@utils-commands/misc';
+import { delay, uniqueName } from '@utils-commands/misc';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
 
 jest.setTimeout(200000);
@@ -55,7 +55,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
 
   // Configure domainOIDC
-  domainOIDC = await createDomain(accessToken, 'oidc-domain', 'OIDC provider domain.');
+  domainOIDC = await createDomain(accessToken, uniqueName('oidc', true), 'OIDC provider domain.');
   const idpSet = await getAllIdps(domainOIDC.id, accessToken);
   await patchDomain(domainOIDC.id, accessToken, {
     oidc: {
@@ -98,7 +98,7 @@ beforeAll(async () => {
   await createUser(domainOIDC.id, accessToken, oidcUser);
 
   // Configure domainAccLinking
-  domainAccLinking = await createDomain(accessToken, 'account-linking-domain', 'Account Linking test domain.');
+  domainAccLinking = await createDomain(accessToken, uniqueName('account-linking', true), 'Account Linking test domain.');
 
   //Enable bruteforce
   await patchDomain(domainAccLinking.id, accessToken, {
@@ -328,10 +328,10 @@ function getUser(username: string) {
 
 afterAll(async () => {
   if (domainAccLinking && domainAccLinking.id) {
-    await deleteDomain(domainAccLinking.id, accessToken);
+    await safeDeleteDomain(domainAccLinking.id, accessToken);
   }
 
   if (domainOIDC && domainOIDC.id) {
-    await deleteDomain(domainOIDC.id, accessToken);
+    await safeDeleteDomain(domainOIDC.id, accessToken);
   }
 });

@@ -21,12 +21,13 @@ import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   startDomain,
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { getAllUsers, listUsers } from '@management-commands/user-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { createIdp, getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -50,7 +51,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  domain = await createDomain(accessToken, 'user-registration', faker.company.catchPhraseDescriptor());
+  domain = await createDomain(accessToken, uniqueName('user-registration', true), faker.company.catchPhraseDescriptor());
   expect(domain).toBeDefined();
 
   await startDomain(domain.id, accessToken);
@@ -277,7 +278,7 @@ describe('Register User on domain', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
 

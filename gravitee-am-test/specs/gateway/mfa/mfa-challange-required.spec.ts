@@ -21,6 +21,7 @@ import { followUpGet, get, postForm, processLoginFromContext, processMfaEndToEnd
 import { extractDomAttr, extractDomValue } from './fixture/mfa-extract-fixture';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { waitFor } from '@management-commands/domain-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 jest.setTimeout(200000);
@@ -53,7 +54,7 @@ function defaultApplicationSettings(domain: Domain) {
 
 const domain = {
   admin: { username: 'admin', password: 'adminadmin' },
-  domain: { domainHrid: 'mfa-test-domain-challenge-req' },
+  domain: { domainHrid: uniqueName('mfa-challenge-required', true) },
 } as Domain;
 
 beforeAll(async () => {

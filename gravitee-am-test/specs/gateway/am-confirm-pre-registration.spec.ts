@@ -21,13 +21,14 @@ import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   startDomain,
   waitFor,
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { createUser, getUser } from '@management-commands/user-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { extractXsrfToken, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -49,7 +50,7 @@ jest.setTimeout(200000);
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
-  const createdDomain = await createDomain(accessToken, 'pre-registration', 'test user pre-registration');
+  const createdDomain = await createDomain(accessToken, uniqueName('pre-registration', true), 'test user pre-registration');
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
   domain = createdDomain;
@@ -286,7 +287,7 @@ describe('AM - User Pre-Registration - Dynamic User Registration', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
 

@@ -18,13 +18,14 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { createScope } from '@management-commands/scope-management-commands';
 import { createCertificate } from '@management-commands/certificate-management-commands';
 import { buildCertificate } from '@api-fixtures/certificates';
@@ -63,7 +64,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  masterDomain = await createDomain(accessToken, 'oauth2-app-version', 'test oauth2 authorization framework specifications');
+  masterDomain = await createDomain(accessToken, uniqueName('oauth2-app-version', true), 'test oauth2 authorization framework specifications');
   expect(masterDomain).toBeDefined();
   expect(masterDomain.id).toBeDefined();
 
@@ -959,7 +960,7 @@ describe('OAuth2 - App version', () => {
 
 afterAll(async () => {
   if (masterDomain && masterDomain.id) {
-    await deleteDomain(masterDomain.id, accessToken);
+    await safeDeleteDomain(masterDomain.id, accessToken);
   }
 });
 

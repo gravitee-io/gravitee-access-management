@@ -16,8 +16,8 @@
 
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
-import { delay } from '@utils-commands/misc';
+import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { delay, uniqueName } from '@utils-commands/misc';
 import fetch from 'cross-fetch';
 import {
   createBotDetection,
@@ -36,7 +36,7 @@ let botDetection;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest('bot-detection-domain', { waitForStart: true }).then((started) => started.domain);
+  domain = await setupDomainForTest(uniqueName('bot-detection', true), { accessToken, waitForStart: true }).then((started) => started.domain);
 });
 
 describe('CRUD Bot detection', () => {
@@ -86,6 +86,6 @@ describe('CRUD Bot detection', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
