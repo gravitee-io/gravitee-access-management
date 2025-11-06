@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,7 +32,13 @@ import java.util.Objects;
 @Setter
 public class NewProtectedResource {
 
+    /**
+     * Maximum length for MCP Server name (based on MCP specification and practical compatibility)
+     */
+    public static final int NAME_MAX_LENGTH = 64;
+
     @NotBlank
+    @Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters")
     private String name;
 
     private String description;

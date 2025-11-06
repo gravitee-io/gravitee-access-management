@@ -19,6 +19,7 @@ import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
+import io.gravitee.am.model.ProtectedResourceSecret;
 import io.gravitee.am.service.model.PatchProtectedResource;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.common.http.HttpStatusCode;
@@ -36,15 +37,24 @@ import java.io.IOException;
 import static jakarta.ws.rs.HttpMethod.PATCH;
 import static org.glassfish.jersey.client.HttpUrlConnectorProvider.SET_METHOD_WORKAROUND;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import io.gravitee.am.service.exception.ProtectedResourceNotFoundException;
+import io.gravitee.am.service.model.NewProtectedResource;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
@@ -462,6 +472,288 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         assertEquals("test-server", result.name());
         assertEquals("description", result.description());
         assertEquals(ProtectedResource.Type.MCP_SERVER, result.type());
+    }
+
+    /**
+     * MCP Server Name Length Validation Tests
+     * Following TDD approach - these tests will FAIL until @Size annotations are added to models
+     */
+    @Nested
+    @DisplayName("MCP Server Name Length Validation")
+    class ServerNameLengthValidation {
+
+        /**
+         * Operation types for testing
+         */
+        enum Operation {
+            CREATE, UPDATE, PATCH
+        }
+
+        /**
+         * Unified test data: covers all operations and all length scenarios
+         * Format: [operation, nameLength, expectedHttpStatus]
+         */
+        static Collection<Object[]> nameLengthValidationData() {
+            return Arrays.asList(new Object[][]{
+                    // Valid lengths - should succeed (will fail initially in TDD)
+                    {Operation.CREATE, 1, HttpStatusCode.CREATED_201},
+                    {Operation.CREATE, 32, HttpStatusCode.CREATED_201},
+                    {Operation.CREATE, 64, HttpStatusCode.CREATED_201},  // Boundary - exactly at limit
+                    {Operation.UPDATE, 1, HttpStatusCode.OK_200},
+                    {Operation.UPDATE, 64, HttpStatusCode.OK_200},       // Boundary - exactly at limit
+                    {Operation.PATCH, 1, HttpStatusCode.OK_200},
+                    {Operation.PATCH, 64, HttpStatusCode.OK_200},        // Boundary - exactly at limit
+
+                    // Invalid lengths - should fail (will pass initially in TDD - wrong behavior)
+                    {Operation.CREATE, 65, HttpStatusCode.BAD_REQUEST_400},  // Boundary - one over
+                    {Operation.CREATE, 100, HttpStatusCode.BAD_REQUEST_400},
+                    {Operation.UPDATE, 65, HttpStatusCode.BAD_REQUEST_400},  // Boundary - one over
+                    {Operation.PATCH, 65, HttpStatusCode.BAD_REQUEST_400},   // Boundary - one over
+            });
+        }
+
+        /**
+         * Single parameterized test covering ALL operations and lengths
+         * Zero duplication - add new test case = add one line to data
+         */
+        @ParameterizedTest(name = "[{index}] {0} with name length {1} should return {2}")
+        @MethodSource("nameLengthValidationData")
+        void shouldValidateNameLengthForAllOperations(
+                Operation operation,
+                int nameLength,
+                int expectedStatusCode) {
+
+            // Arrange
+            String name = "x".repeat(nameLength);
+
+            // Act
+            Response response = performOperation(operation, name);
+
+            // Assert
+            assertEquals(
+                    String.format("%s with name length %d should return %d",
+                            operation, nameLength, expectedStatusCode),
+                    expectedStatusCode,
+                    response.getStatus());
+
+            // Additional assertion for error cases
+            if (expectedStatusCode == HttpStatusCode.BAD_REQUEST_400) {
+                verifyErrorMessage(response, "Name must be between 1 and 64 characters");
+            }
+        }
+
+        /**
+         * Unified operation executor - eliminates duplicate setup code
+         */
+        private Response performOperation(Operation operation, String name) {
+            final String domainId = "domain-1";
+            final Domain mockDomain = new Domain();
+            mockDomain.setId(domainId);
+
+            // Setup common mocks
+            doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+            doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+            doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+            return switch (operation) {
+                case CREATE -> {
+                    NewProtectedResource resource = createValidNewProtectedResource();
+                    resource.setName(name);
+
+                    ProtectedResource createdResource = new ProtectedResource();
+                    createdResource.setId("new-id");
+                    createdResource.setDomainId(domainId);
+                    createdResource.setName(name);
+                    createdResource.setResourceIdentifiers(List.of("https://example.com"));
+
+                    // CREATE returns ProtectedResourceSecret (which includes the secret)
+                    ProtectedResourceSecret secretResponse = ProtectedResourceSecret.from(createdResource, "test-secret");
+                    doReturn(Single.just(secretResponse))
+                            .when(protectedResourceService).create(any(Domain.class), any(), any(NewProtectedResource.class));
+
+                    yield target("domains")
+                            .path(domainId)
+                            .path("protected-resources")
+                            .request()
+                            .post(Entity.json(resource));
+                }
+                case UPDATE -> {
+                    UpdateProtectedResource resource = createValidUpdateProtectedResource();
+                    resource.setName(name);
+
+                    ProtectedResource updatedResource = new ProtectedResource();
+                    updatedResource.setId("resource-id");
+                    updatedResource.setDomainId(domainId);
+                    updatedResource.setName(name);
+                    updatedResource.setResourceIdentifiers(List.of("https://example.com"));
+
+                    doReturn(Single.just(ProtectedResourcePrimaryData.of(updatedResource)))
+                            .when(protectedResourceService).update(any(Domain.class), eq("resource-id"), any(UpdateProtectedResource.class), any());
+
+                    yield target("domains")
+                            .path(domainId)
+                            .path("protected-resources")
+                            .path("resource-id")
+                            .request()
+                            .put(Entity.json(resource));
+                }
+                case PATCH -> {
+                    PatchProtectedResource resource = new PatchProtectedResource();
+                    resource.setName(Optional.of(name));
+
+                    ProtectedResource patchedResource = new ProtectedResource();
+                    patchedResource.setId("resource-id");
+                    patchedResource.setDomainId(domainId);
+                    patchedResource.setName(name);
+                    patchedResource.setResourceIdentifiers(List.of("https://example.com"));
+
+                    doReturn(Single.just(ProtectedResourcePrimaryData.of(patchedResource)))
+                            .when(protectedResourceService).patch(any(Domain.class), eq("resource-id"), any(PatchProtectedResource.class), any());
+
+                    yield patch(target("domains")
+                            .path(domainId)
+                            .path("protected-resources")
+                            .path("resource-id"), resource);
+                }
+            };
+        }
+
+        /**
+         * Verify error message format - reusable assertion
+         */
+        private void verifyErrorMessage(Response response, String expectedMessage) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> error = response.readEntity(Map.class);
+            assertNotNull("Error response should have message", error.get("message"));
+            assertThat(error.get("message").toString())
+                    .contains(expectedMessage);
+        }
+
+        /**
+         * Factory methods - single source of valid test objects
+         */
+        private NewProtectedResource createValidNewProtectedResource() {
+            NewProtectedResource resource = new NewProtectedResource();
+            resource.setName("default-name");  // Will be overridden in test
+            resource.setResourceIdentifiers(List.of("https://example.com"));
+            resource.setType("MCP_SERVER");
+            return resource;
+        }
+
+        private UpdateProtectedResource createValidUpdateProtectedResource() {
+            UpdateProtectedResource resource = new UpdateProtectedResource();
+            resource.setName("default-name");  // Will be overridden in test
+            resource.setResourceIdentifiers(List.of("https://example.com"));
+            return resource;
+        }
+
+        /**
+         * Test @NotBlank validation (separate concern from @Size)
+         * Name is a REQUIRED field - cannot be empty or null
+         */
+        @Nested
+        @DisplayName("Empty/Null Name Validation (@NotBlank)")
+        class EmptyNullNameValidation {
+
+            /**
+             * Test data for empty/null validation
+             * Format: [operation, nameValue, description]
+             * Note: PATCH is tested separately due to different semantics
+             */
+            static Collection<Object[]> emptyNullNameData() {
+                return Arrays.asList(new Object[][]{
+                        {Operation.CREATE, "", "empty string"},
+                        {Operation.CREATE, null, "null"},
+                        {Operation.UPDATE, "", "empty string"},
+                        {Operation.UPDATE, null, "null"},
+                });
+            }
+
+            @ParameterizedTest(name = "[{index}] {0} with {2} name should be rejected")
+            @MethodSource("emptyNullNameData")
+            void shouldRejectEmptyOrNullName(Operation operation, String name, String description) {
+                // Act
+                Response response = performOperation(operation, name);
+
+                // Assert - Name is required, so empty/null must be rejected
+                assertEquals(operation + " with " + description + " name should return 400",
+                        HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+
+                // Verify error message contains validation error
+                @SuppressWarnings("unchecked")
+                Map<String, Object> error = response.readEntity(Map.class);
+                assertNotNull("Error response should have message", error.get("message"));
+                assertThat(error.get("message").toString())
+                        .contains("must not be blank");
+            }
+
+            /**
+             * PATCH-specific tests: Optional semantics
+             */
+            @Test
+            @DisplayName("PATCH with null Optional should succeed (don't update name)")
+            void patchWithNullOptionalShouldSucceed() {
+                // null Optional = "field not provided, don't update"
+                final String domainId = "domain-1";
+                final Domain mockDomain = new Domain();
+                mockDomain.setId(domainId);
+
+                PatchProtectedResource resource = new PatchProtectedResource();
+                resource.setName(null);  // null Optional = don't update
+                resource.setDescription(Optional.of("Update description only"));
+
+                ProtectedResource patchedResource = new ProtectedResource();
+                patchedResource.setId("resource-id");
+                patchedResource.setDomainId(domainId);
+                patchedResource.setName("ExistingName");  // Name unchanged
+                patchedResource.setResourceIdentifiers(List.of("https://example.com"));
+
+                doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+                doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+                doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+                doReturn(Single.just(ProtectedResourcePrimaryData.of(patchedResource)))
+                        .when(protectedResourceService).patch(any(Domain.class), eq("resource-id"), any(PatchProtectedResource.class), any());
+
+                Response response = patch(target("domains")
+                        .path(domainId)
+                        .path("protected-resources")
+                        .path("resource-id"), resource);
+
+                assertEquals("PATCH with null Optional (don't update name) should succeed",
+                        HttpStatusCode.OK_200, response.getStatus());
+            }
+
+            @Test
+            @DisplayName("PATCH with Optional.of('') should be rejected (name is required)")
+            void patchWithEmptyStringShouldBeRejected() {
+                // Optional.of("") = "set name to empty string" → should be REJECTED
+                // Name is required (@NotBlank), so we can't patch it to empty
+                final String domainId = "domain-1";
+                final Domain mockDomain = new Domain();
+                mockDomain.setId(domainId);
+
+                PatchProtectedResource resource = new PatchProtectedResource();
+                resource.setName(Optional.of(""));  // Try to set to empty - should be rejected
+
+                doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+                doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+                doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+                Response response = patch(target("domains")
+                        .path(domainId)
+                        .path("protected-resources")
+                        .path("resource-id"), resource);
+
+                assertEquals("PATCH with Optional.of('') should be rejected - name is required",
+                        HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+
+                @SuppressWarnings("unchecked")
+                Map<String, Object> error = response.readEntity(Map.class);
+                assertNotNull("Error response should have message", error.get("message"));
+                assertThat(error.get("message").toString())
+                        .contains("Name must be between 1 and 64 characters");
+            }
+        }
     }
 
 }
