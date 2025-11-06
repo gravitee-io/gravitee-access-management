@@ -11,6 +11,8 @@
     "ci:management:parallel": "jest --maxWorkers=2 --no-cache --config=api/config/ci.config.js specs/management",
     "ci:gateway": "jest --runInBand --no-cache --config=api/config/ci.config.js specs/gateway",
     "ci:gateway:parallel": "jest --maxWorkers=2 --no-cache --config=api/config/ci.config.js specs/gateway",
+    "ci:gateway:parallel:stable": "jest --maxWorkers=2 --no-cache --config=api/config/ci.config.js specs/gateway --testPathIgnorePatterns='account-link\\.jest\\.spec\\.ts|mfa/mfa-challange-conditional\\.spec\\.ts|mfa/mfa-challange-required\\.spec\\.ts|mfa/mfa-enrollment-conditional\\.spec\\.ts|mfa/mfa-enrollment-required\\.spec\\.ts|mfa/mfa-general\\.spec\\.ts'",
+    "ci:gateway:sequential:fragile": "jest --runInBand --no-cache --config=api/config/ci.config.js specs/gateway/account-link.jest.spec.ts specs/gateway/mfa/mfa-challange-conditional.spec.ts specs/gateway/mfa/mfa-challange-required.spec.ts specs/gateway/mfa/mfa-enrollment-conditional.spec.ts specs/gateway/mfa/mfa-enrollment-required.spec.ts specs/gateway/mfa/mfa-general.spec.ts",
     "ui-test": "cypress open",
     "typecheck": "tsc --noEmit",
     "lint": "npm run prettier && npm run lint:license",

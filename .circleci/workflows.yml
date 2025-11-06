@@ -575,8 +575,11 @@ jobs:
           name: Run Management Jest tests (parallel)
           command: npm --prefix gravitee-am-test run ci:management:parallel
       - run:
-          name: Run Gateway Jest tests (parallel)
-          command: npm --prefix gravitee-am-test run ci:gateway:parallel
+          name: Run Gateway Jest tests (parallel - stable)
+          command: npm --prefix gravitee-am-test run ci:gateway:parallel:stable
+      - run:
+          name: Run Gateway Jest tests (sequential - fragile)
+          command: npm --prefix gravitee-am-test run ci:gateway:sequential:fragile
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -760,8 +763,11 @@ jobs:
           name: Run Management Jest tests (parallel)
           command: npm --prefix gravitee-am-test run ci:management:parallel
       - run:
-          name: Run Gateway Jest tests (parallel)
-          command: npm --prefix gravitee-am-test run ci:gateway:parallel
+          name: Run Gateway Jest tests (parallel - stable)
+          command: npm --prefix gravitee-am-test run ci:gateway:parallel:stable
+      - run:
+          name: Run Gateway Jest tests (sequential - fragile)
+          command: npm --prefix gravitee-am-test run ci:gateway:sequential:fragile
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
