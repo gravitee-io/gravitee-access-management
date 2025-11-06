@@ -396,11 +396,9 @@ public class TokenServiceImplTest {
 
         // Get the successful audit report (not the error one)
         AuditBuilder capturedBuilder = auditCaptor.getAllValues().stream()
-                .filter(builder -> builder instanceof ClientTokenAuditBuilder)
+                .filter(ClientTokenAuditBuilder.class::isInstance)
                 .findFirst()
-                .orElse(null);
-
-        assertThat(capturedBuilder).isNotNull();
+                .orElseThrow(() -> new AssertionError("Expected to find a ClientTokenAuditBuilder in audit reports"));
 
         // Verify the audit contains the resource parameter
         String auditMessage = capturedBuilder.build(new ObjectMapper()).getOutcome().getMessage();
