@@ -21,6 +21,7 @@ import io.gravitee.am.model.ProtectedResource;
 import io.gravitee.am.model.ProtectedResourcePrimaryData;
 import io.gravitee.am.model.ProtectedResourceSecret;
 import io.gravitee.am.service.model.PatchProtectedResource;
+import io.gravitee.am.service.model.UpdateMcpTool;
 import io.gravitee.am.service.model.UpdateProtectedResource;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Completable;
@@ -287,6 +288,33 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 .path("resource-id"), patchRequest);
 
         // Fragment should be rejected by @Url(allowFragment = false) validation
+        assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+    }
+
+    @Test
+    public void shouldPatchProtectedResource_400_invalidFeatureKeyPattern() {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        // PATCH request with invalid feature key (contains spaces)
+        PatchProtectedResource patchRequest = new PatchProtectedResource();
+        UpdateMcpTool invalidKeyTool = new UpdateMcpTool();
+        invalidKeyTool.setKey("invalid key with spaces"); // Should be rejected by @Pattern
+        invalidKeyTool.setDescription("Tool with invalid key");
+        patchRequest.setFeatures(Optional.of(List.of(invalidKeyTool)));
+
+        // permission ok
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        final Response response = patch(target("domains")
+                .path(domainId)
+                .path("protected-resources")
+                .path("resource-id"), patchRequest);
+
+        // Invalid feature key pattern should be rejected by @Pattern validation
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
     }
 
