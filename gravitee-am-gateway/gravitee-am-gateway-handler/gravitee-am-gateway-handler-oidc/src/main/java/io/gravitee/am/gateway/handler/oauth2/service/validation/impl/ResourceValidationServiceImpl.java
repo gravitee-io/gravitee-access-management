@@ -20,24 +20,50 @@ import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.OAuth2Request;
 import io.gravitee.am.gateway.handler.oauth2.service.validation.ResourceValidationService;
 import io.reactivex.rxjava3.core.Completable;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of {@link ResourceValidationService} that validates resource parameters
+ * according to RFC 8707 (Resource Indicators for OAuth 2.0).
+ * <p>
+ * The validation can be controlled via the {@code legacy.rfc8707.enabled} configuration property.
+ * When disabled ({@code false}), validation is skipped to allow backward compatibility with
+ * existing integrations that use arbitrary resource parameter values.
+ * <p>
+ * Default behaviour: validation is enabled ({@code true}) to maintain RFC 8707 compliance
+ * and security by default.
+ *
+ * @author GraviteeSource Team
+ */
+@Slf4j
 @Component
 public class ResourceValidationServiceImpl implements ResourceValidationService {
 
+    static final String LEGACY_RFC8707_ENABLED = "legacy.rfc8707.enabled";
+
     private final ProtectedResourceManager protectedResourceManager;
+    private final boolean validationEnabled;
 
     @Autowired
-    public ResourceValidationServiceImpl(ProtectedResourceManager protectedResourceManager) {
+    public ResourceValidationServiceImpl(ProtectedResourceManager protectedResourceManager, Environment environment) {
         this.protectedResourceManager = protectedResourceManager;
+        this.validationEnabled = environment.getProperty(LEGACY_RFC8707_ENABLED, Boolean.class, true);
     }
 
     @Override
     public Completable validate(OAuth2Request request) {
+        // Check feature flag: if disabled, skip validation
+        if (!validationEnabled) {
+            log.debug("Resource parameter validation skipped (legacy.rfc8707.enabled=false)");
+            return Completable.complete();
+        }
+
         return Completable.fromCallable(() -> {
             Set<String> requestedResources = request.getResources();
 
@@ -62,5 +88,4 @@ public class ResourceValidationServiceImpl implements ResourceValidationService 
         });
     }
 }
-
 
