@@ -6,7 +6,10 @@
   "scripts": {
     "update:sdk:mapi": "bash scripts/update-management-api-sdk.sh $*",
     "test": "jest --runInBand --no-cache --config=api/config/dev.config.js",
+    "test:parallel": "jest --maxWorkers=2 --no-cache --config=api/config/dev.config.js",
     "ci": "jest --runInBand --no-cache --config=api/config/ci.config.js",
+    "ci:management:parallel": "jest --maxWorkers=2 --no-cache --config=api/config/ci.config.js specs/management",
+    "ci:gateway": "jest --runInBand --no-cache --config=api/config/ci.config.js specs/gateway",
     "ui-test": "cypress open",
     "typecheck": "tsc --noEmit",
     "lint": "npm run prettier && npm run lint:license",
