@@ -527,19 +527,123 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
     }
 
     /**
+     * Operation types for testing (shared across validation test classes)
+     */
+    enum Operation {
+        CREATE, UPDATE, PATCH
+    }
+
+    /**
+     * Shared helper methods for validation tests
+     */
+    private Response performOperation(Operation operation, String name) {
+        final String domainId = "domain-1";
+        final Domain mockDomain = new Domain();
+        mockDomain.setId(domainId);
+
+        // Setup common mocks
+        doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
+        doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
+        doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
+
+        return switch (operation) {
+            case CREATE -> {
+                NewProtectedResource resource = createValidNewProtectedResource();
+                resource.setName(name);
+
+                ProtectedResource createdResource = new ProtectedResource();
+                createdResource.setId("new-id");
+                createdResource.setDomainId(domainId);
+                createdResource.setName(name);
+                createdResource.setResourceIdentifiers(List.of("https://example.com"));
+
+                // CREATE returns ProtectedResourceSecret (which includes the secret)
+                ProtectedResourceSecret secretResponse = ProtectedResourceSecret.from(createdResource, "test-secret");
+                doReturn(Single.just(secretResponse))
+                        .when(protectedResourceService).create(any(Domain.class), any(), any(NewProtectedResource.class));
+
+                yield target("domains")
+                        .path(domainId)
+                        .path("protected-resources")
+                        .request()
+                        .post(Entity.json(resource));
+            }
+            case UPDATE -> {
+                UpdateProtectedResource resource = createValidUpdateProtectedResource();
+                resource.setName(name);
+
+                ProtectedResource updatedResource = new ProtectedResource();
+                updatedResource.setId("resource-id");
+                updatedResource.setDomainId(domainId);
+                updatedResource.setName(name);
+                updatedResource.setResourceIdentifiers(List.of("https://example.com"));
+
+                doReturn(Single.just(ProtectedResourcePrimaryData.of(updatedResource)))
+                        .when(protectedResourceService).update(any(Domain.class), eq("resource-id"), any(UpdateProtectedResource.class), any());
+
+                yield target("domains")
+                        .path(domainId)
+                        .path("protected-resources")
+                        .path("resource-id")
+                        .request()
+                        .put(Entity.json(resource));
+            }
+            case PATCH -> {
+                PatchProtectedResource resource = new PatchProtectedResource();
+                resource.setName(Optional.of(name));
+
+                ProtectedResource patchedResource = new ProtectedResource();
+                patchedResource.setId("resource-id");
+                patchedResource.setDomainId(domainId);
+                patchedResource.setName(name);
+                patchedResource.setResourceIdentifiers(List.of("https://example.com"));
+
+                doReturn(Single.just(ProtectedResourcePrimaryData.of(patchedResource)))
+                        .when(protectedResourceService).patch(any(Domain.class), eq("resource-id"), any(PatchProtectedResource.class), any());
+
+                yield patch(target("domains")
+                        .path(domainId)
+                        .path("protected-resources")
+                        .path("resource-id"), resource);
+            }
+        };
+    }
+
+    /**
+     * Verify error message format - reusable assertion for validation tests
+     */
+    private void verifyErrorMessage(Response response, String expectedMessage) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> error = response.readEntity(Map.class);
+        assertNotNull("Error response should not be null", error);
+        assertNotNull("Error response should have message", error.get("message"));
+        assertThat(error.get("message").toString())
+                .as("Error message should contain expected text")
+                .contains(expectedMessage);
+    }
+
+    private NewProtectedResource createValidNewProtectedResource() {
+        NewProtectedResource resource = new NewProtectedResource();
+        resource.setName("default-name");  // Will be overridden in test
+        resource.setResourceIdentifiers(List.of("https://example.com"));
+        resource.setType("MCP_SERVER");
+        return resource;
+    }
+
+    private UpdateProtectedResource createValidUpdateProtectedResource() {
+        UpdateProtectedResource resource = new UpdateProtectedResource();
+        resource.setName("default-name");  // Will be overridden in test
+        resource.setResourceIdentifiers(List.of("https://example.com"));
+        return resource;
+    }
+
+    /**
      * MCP Server Name Length Validation Tests
      * Following TDD approach - these tests will FAIL until @Size annotations are added to models
      */
     @Nested
     @DisplayName("MCP Server Name Length Validation")
     class ServerNameLengthValidation {
-
-        /**
-         * Operation types for testing
-         */
-        enum Operation {
-            CREATE, UPDATE, PATCH
-        }
 
         /**
          * Unified test data: covers all operations and all length scenarios
@@ -595,111 +699,6 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
         }
 
         /**
-         * Unified operation executor - eliminates duplicate setup code
-         */
-        private Response performOperation(Operation operation, String name) {
-            final String domainId = "domain-1";
-            final Domain mockDomain = new Domain();
-            mockDomain.setId(domainId);
-
-            // Setup common mocks
-            doReturn(Single.just(true)).when(permissionService).hasPermission(any(), any());
-            doReturn(Flowable.empty()).when(permissionService).getReferenceIdsWithPermission(any(), any(), any(), anySet());
-            doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-
-            return switch (operation) {
-                case CREATE -> {
-                    NewProtectedResource resource = createValidNewProtectedResource();
-                    resource.setName(name);
-
-                    ProtectedResource createdResource = new ProtectedResource();
-                    createdResource.setId("new-id");
-                    createdResource.setDomainId(domainId);
-                    createdResource.setName(name);
-                    createdResource.setResourceIdentifiers(List.of("https://example.com"));
-
-                    // CREATE returns ProtectedResourceSecret (which includes the secret)
-                    ProtectedResourceSecret secretResponse = ProtectedResourceSecret.from(createdResource, "test-secret");
-                    doReturn(Single.just(secretResponse))
-                            .when(protectedResourceService).create(any(Domain.class), any(), any(NewProtectedResource.class));
-
-                    yield target("domains")
-                            .path(domainId)
-                            .path("protected-resources")
-                            .request()
-                            .post(Entity.json(resource));
-                }
-                case UPDATE -> {
-                    UpdateProtectedResource resource = createValidUpdateProtectedResource();
-                    resource.setName(name);
-
-                    ProtectedResource updatedResource = new ProtectedResource();
-                    updatedResource.setId("resource-id");
-                    updatedResource.setDomainId(domainId);
-                    updatedResource.setName(name);
-                    updatedResource.setResourceIdentifiers(List.of("https://example.com"));
-
-                    doReturn(Single.just(ProtectedResourcePrimaryData.of(updatedResource)))
-                            .when(protectedResourceService).update(any(Domain.class), eq("resource-id"), any(UpdateProtectedResource.class), any());
-
-                    yield target("domains")
-                            .path(domainId)
-                            .path("protected-resources")
-                            .path("resource-id")
-                            .request()
-                            .put(Entity.json(resource));
-                }
-                case PATCH -> {
-                    PatchProtectedResource resource = new PatchProtectedResource();
-                    resource.setName(Optional.of(name));
-
-                    ProtectedResource patchedResource = new ProtectedResource();
-                    patchedResource.setId("resource-id");
-                    patchedResource.setDomainId(domainId);
-                    patchedResource.setName(name);
-                    patchedResource.setResourceIdentifiers(List.of("https://example.com"));
-
-                    doReturn(Single.just(ProtectedResourcePrimaryData.of(patchedResource)))
-                            .when(protectedResourceService).patch(any(Domain.class), eq("resource-id"), any(PatchProtectedResource.class), any());
-
-                    yield patch(target("domains")
-                            .path(domainId)
-                            .path("protected-resources")
-                            .path("resource-id"), resource);
-                }
-            };
-        }
-
-        /**
-         * Verify error message format - reusable assertion
-         */
-        private void verifyErrorMessage(Response response, String expectedMessage) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> error = response.readEntity(Map.class);
-            assertNotNull("Error response should have message", error.get("message"));
-            assertThat(error.get("message").toString())
-                    .contains(expectedMessage);
-        }
-
-        /**
-         * Factory methods - single source of valid test objects
-         */
-        private NewProtectedResource createValidNewProtectedResource() {
-            NewProtectedResource resource = new NewProtectedResource();
-            resource.setName("default-name");  // Will be overridden in test
-            resource.setResourceIdentifiers(List.of("https://example.com"));
-            resource.setType("MCP_SERVER");
-            return resource;
-        }
-
-        private UpdateProtectedResource createValidUpdateProtectedResource() {
-            UpdateProtectedResource resource = new UpdateProtectedResource();
-            resource.setName("default-name");  // Will be overridden in test
-            resource.setResourceIdentifiers(List.of("https://example.com"));
-            return resource;
-        }
-
-        /**
          * Test @NotBlank validation (separate concern from @Size)
          * Name is a REQUIRED field - cannot be empty or null
          */
@@ -716,8 +715,10 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 return Arrays.asList(new Object[][]{
                         {Operation.CREATE, "", "empty string"},
                         {Operation.CREATE, null, "null"},
+                        {Operation.CREATE, "   ", "whitespace-only"},  // @NotBlank rejects whitespace-only
                         {Operation.UPDATE, "", "empty string"},
                         {Operation.UPDATE, null, "null"},
+                        {Operation.UPDATE, "   ", "whitespace-only"},  // @NotBlank rejects whitespace-only
                 });
             }
 
@@ -732,11 +733,7 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                         HttpStatusCode.BAD_REQUEST_400, response.getStatus());
 
                 // Verify error message contains validation error
-                @SuppressWarnings("unchecked")
-                Map<String, Object> error = response.readEntity(Map.class);
-                assertNotNull("Error response should have message", error.get("message"));
-                assertThat(error.get("message").toString())
-                        .contains("must not be blank");
+                verifyErrorMessage(response, "must not be blank");
             }
 
             /**
@@ -799,11 +796,79 @@ class ProtectedResourceResourceTest extends JerseySpringTest {
                 assertEquals("PATCH with Optional.of('') should be rejected - name is required",
                         HttpStatusCode.BAD_REQUEST_400, response.getStatus());
 
-                @SuppressWarnings("unchecked")
-                Map<String, Object> error = response.readEntity(Map.class);
-                assertNotNull("Error response should have message", error.get("message"));
-                assertThat(error.get("message").toString())
-                        .contains("Name must be between 1 and 64 characters");
+                verifyErrorMessage(response, "Name must be between 1 and 64 characters");
+            }
+
+        }
+    }
+
+    /**
+     * MCP Server Name Pattern Validation Tests
+     * Tests that names must begin with a non-whitespace character
+     */
+    @Nested
+    @DisplayName("MCP Server Name Pattern Validation")
+    class ServerNamePatternValidation {
+
+        /**
+         * Unified test data: covers all operations and pattern scenarios
+         * Format: [operation, name, expectedHttpStatus, description]
+         */
+        static Collection<Object[]> namePatternValidationData() {
+            return Arrays.asList(new Object[][]{
+                    // Invalid patterns - should fail (leading whitespace)
+                    // Note: whitespace-only cases are tested in @NotBlank validation (EmptyNullNameValidation)
+                    {Operation.CREATE, "  My Server", HttpStatusCode.BAD_REQUEST_400, "leading spaces"},
+                    {Operation.CREATE, "\tMy Server", HttpStatusCode.BAD_REQUEST_400, "leading tab"},
+                    {Operation.CREATE, "\nMy Server", HttpStatusCode.BAD_REQUEST_400, "leading newline"},
+                    {Operation.CREATE, " \t\nMy Server", HttpStatusCode.BAD_REQUEST_400, "leading mixed whitespace"},
+                    {Operation.UPDATE, "  My Server", HttpStatusCode.BAD_REQUEST_400, "leading spaces"},
+                    {Operation.UPDATE, "\tMy Server", HttpStatusCode.BAD_REQUEST_400, "leading tab"},
+                    {Operation.UPDATE, "\nMy Server", HttpStatusCode.BAD_REQUEST_400, "leading newline"},
+                    {Operation.UPDATE, " \t\nMy Server", HttpStatusCode.BAD_REQUEST_400, "leading mixed whitespace"},
+                    {Operation.PATCH, "   ", HttpStatusCode.BAD_REQUEST_400, "whitespace-only"},
+                    {Operation.PATCH, "  My Server", HttpStatusCode.BAD_REQUEST_400, "leading spaces"},
+                    {Operation.PATCH, "\tMy Server", HttpStatusCode.BAD_REQUEST_400, "leading tab"},
+                    {Operation.PATCH, "\nMy Server", HttpStatusCode.BAD_REQUEST_400, "leading newline"},
+                    {Operation.PATCH, " \t\nMy Server", HttpStatusCode.BAD_REQUEST_400, "leading mixed whitespace"},
+
+                    // Valid patterns - should succeed (starts with non-whitespace)
+                    {Operation.CREATE, "My Server", HttpStatusCode.CREATED_201, "valid name"},
+                    {Operation.CREATE, "My  Server", HttpStatusCode.CREATED_201, "valid name with spaces in middle"},
+                    {Operation.CREATE, "Server123", HttpStatusCode.CREATED_201, "valid name with numbers"},
+                    {Operation.CREATE, "A", HttpStatusCode.CREATED_201, "valid single character"},
+                    {Operation.UPDATE, "My Server", HttpStatusCode.OK_200, "valid name"},
+                    {Operation.UPDATE, "My  Server", HttpStatusCode.OK_200, "valid name with spaces in middle"},
+                    {Operation.PATCH, "My Server", HttpStatusCode.OK_200, "valid name"},
+                    {Operation.PATCH, "My  Server", HttpStatusCode.OK_200, "valid name with spaces in middle"},
+            });
+        }
+
+        /**
+         * Single parameterized test covering ALL operations and patterns
+         * Zero duplication - add new test case = add one line to data
+         */
+        @ParameterizedTest(name = "[{index}] {0} with {3} name should return {2}")
+        @MethodSource("namePatternValidationData")
+        void shouldValidateNamePatternForAllOperations(
+                Operation operation,
+                String name,
+                int expectedStatusCode,
+                String description) {
+
+            // Act
+            Response response = performOperation(operation, name);
+
+            // Assert
+            assertEquals(
+                    String.format("%s with %s name should return %d",
+                            operation, description, expectedStatusCode),
+                    expectedStatusCode,
+                    response.getStatus());
+
+            // Additional assertion for error cases
+            if (expectedStatusCode == HttpStatusCode.BAD_REQUEST_400) {
+                verifyErrorMessage(response, "Name must begin with a non-whitespace character");
             }
         }
     }

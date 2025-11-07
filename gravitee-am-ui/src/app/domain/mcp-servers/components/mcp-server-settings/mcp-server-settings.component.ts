@@ -30,6 +30,10 @@ export class McpServerSettingsComponent {
   @Output() onSettingsChange = new EventEmitter<{ name: string; resourceIdentifier: string; description: string }>();
   @ViewChild('settingsForm', { static: true }) form: any;
 
+  // Validation constants - must match backend validation
+  public readonly namePattern = String.raw`^[^\s].*`;
+  public readonly nameMaxlength = 64;
+
   onNameChange(): void {
     this.emitChange();
   }

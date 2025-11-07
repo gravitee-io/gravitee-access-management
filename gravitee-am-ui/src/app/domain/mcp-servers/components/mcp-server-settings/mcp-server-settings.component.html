@@ -49,10 +49,13 @@
           [(ngModel)]="name"
           (ngModelChange)="onNameChange()"
           required
+          [pattern]="namePattern"
+          [maxlength]="nameMaxlength"
           [disabled]="readonly"
         />
-        <mat-hint>The MCP server's name</mat-hint>
+        <mat-hint>The MCP server's name (1-64 characters)</mat-hint>
         <mat-error *ngIf="nameField.errors?.required">Name is required</mat-error>
+        <mat-error *ngIf="nameField.errors?.pattern">Name must begin with a non-whitespace character</mat-error>
       </mat-form-field>
       <mat-form-field appearance="outline" floatLabel="always">
         <mat-label>MCP Resource Identifier</mat-label>
