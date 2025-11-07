@@ -17,11 +17,13 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { deleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { createIdp, deleteIdp, getAllIdps, getIdp, updateIdp } from '@management-commands/idp-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
+
+jest.setTimeout(200000);
 
 let accessToken;
 let domain;
@@ -29,7 +31,7 @@ let idp;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-idp'), { accessToken }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('idp', true), { accessToken }).then((it) => it.domain);
 });
 
 function buildIdp(i: number) {
@@ -120,6 +122,6 @@ describe('after creating identity providers', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

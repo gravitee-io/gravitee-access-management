@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, afterEach, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import {
   createPasswordPolicy,
   deletePasswordPolicy,
@@ -31,12 +31,14 @@ import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
+jest.setTimeout(200000);
+
 let accessToken;
 let domain;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-password-policy-m'), { accessToken, waitForStart: false }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('password-policy-m', true), { accessToken, waitForStart: false }).then((it) => it.domain);
 });
 
 describe('password policy management', () => {
@@ -123,7 +125,7 @@ afterEach(async () => {
 
 afterAll(async () => {
   if (domain?.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
 

@@ -15,7 +15,7 @@
  */
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { deleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { delay, uniqueName } from '@utils-commands/misc';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
 import { performDelete, performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -37,7 +37,7 @@ const managementUrl = `${process.env.AM_MANAGEMENT_URL}/management/organizations
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  await setupDomainForTest(uniqueName('client-secret-domain'), { accessToken, waitForStart: true }).then((it) => {
+  await setupDomainForTest(uniqueName('client-secret-domain', true), { accessToken, waitForStart: true }).then((it) => {
     domain = it.domain;
     openIdConfiguration = it.oidcConfig;
   });
@@ -434,6 +434,6 @@ function assetTime(now: number, received: number, delta: number) {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
