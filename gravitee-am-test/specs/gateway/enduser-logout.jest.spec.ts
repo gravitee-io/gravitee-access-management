@@ -87,7 +87,7 @@ beforeAll(async () => {
 
   // Create a User
   await createUser(domain.id, managementApiAccessToken, user);
-  await waitForDomainSync();
+  await waitForDomainSync(domain.id, managementApiAccessToken);
 
   const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
   openIdConfiguration = result.body;
@@ -116,7 +116,7 @@ describe('OAuth2 - Logout tests', () => {
           postLogoutRedirectUris: ['https://somewhere/after/logout'],
         },
       });
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After sign-in a user can logout without target_uri', async () => {
@@ -153,7 +153,7 @@ describe('OAuth2 - Logout tests', () => {
         },
         application.id,
       );
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After sign-in a user can logout without target_uri', async () => {

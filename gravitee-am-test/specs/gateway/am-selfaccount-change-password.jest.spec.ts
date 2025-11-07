@@ -19,7 +19,7 @@ global.fetch = fetch;
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -51,8 +51,6 @@ const PATCH_DOMAIN_SEFLACCOUNT_SETTINGS = {
 };
 
 jest.setTimeout(200000);
-
-const waitForDomainSync = () => new Promise((r) => setTimeout(r, 10000));
 
 beforeAll(async () => {
   managementApiAccessToken = await requestAdminAccessToken();
@@ -163,7 +161,7 @@ describe('SelfAccount - Change Password', () => {
       it('domain settings have to be updated', async () => {
         PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.oldPasswordRequired = true;
         await patchDomain(domain.id, managementApiAccessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
-        await waitForDomainSync();
+        await waitForDomainSync(domain.id, managementApiAccessToken);
       });
     });
 
@@ -216,7 +214,7 @@ describe('SelfAccount - Change Password', () => {
       it('domain settings have to be updated', async () => {
         PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.tokenAge = 10;
         await patchDomain(domain.id, managementApiAccessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
-        await waitForDomainSync();
+        await waitForDomainSync(domain.id, managementApiAccessToken);
       });
     });
 

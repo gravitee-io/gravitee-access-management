@@ -204,7 +204,7 @@ describe('Register User on domain', () => {
         application.id,
       );
 
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, accessToken);
     });
 
     it('When a user register, he should be linked to the custom idp', async () => {
@@ -253,7 +253,7 @@ describe('Register User on domain', () => {
         application.id,
       );
 
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, accessToken);
     });
 
     it('When a user register, he should have userId into the session and be redirected to specific URL', async () => {

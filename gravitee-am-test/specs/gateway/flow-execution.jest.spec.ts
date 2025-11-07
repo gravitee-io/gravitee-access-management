@@ -27,6 +27,7 @@ import {
   startDomain,
   updateDomainFlows,
   waitForDomainStart,
+  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
@@ -60,8 +61,6 @@ let user = {
 };
 
 jest.setTimeout(200000);
-
-const waitForDomainSync = () => new Promise((r) => setTimeout(r, 10000));
 
 beforeAll(async () => {
   managementApiAccessToken = await requestAdminAccessToken();
@@ -177,7 +176,7 @@ describe('Flows Execution - authorization_code flow', () => {
         },
       ];
       await patchApplication(domain.id, managementApiAccessToken, application, application.id);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After LOGIN, flow has been executed', async () => {
@@ -240,7 +239,7 @@ describe('Flows Execution - authorization_code flow', () => {
         },
       ]);
       await updateDomainFlows(domain.id, managementApiAccessToken, flows);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After LOGIN, flow has been executed', async () => {
@@ -347,7 +346,7 @@ describe('Flows Execution - authorization_code flow', () => {
         },
       ];
       await patchApplication(domain.id, managementApiAccessToken, application, application.id);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After LOGIN, App & domain flows has been executed', async () => {
@@ -389,7 +388,7 @@ describe('Flows Execution - authorization_code flow', () => {
       // Define Groovy policy set attribute into the context on ALL flow
       application.settings.advanced.flowsInherited = false;
       await patchApplication(domain.id, managementApiAccessToken, application, application.id);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After LOGIN, Only App has been executed', async () => {
@@ -458,7 +457,7 @@ describe('Flows Execution - authorization_code flow', () => {
       });
 
       await updateApplicationFlows(domain.id, managementApiAccessToken, application.id, appFlows);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it("After LOGIN without the callout parameter, email isn't received ", async () => {

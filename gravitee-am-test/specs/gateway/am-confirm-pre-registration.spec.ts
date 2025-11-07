@@ -203,7 +203,7 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
         },
         application.id,
       );
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, accessToken);
     });
 
     it('Can reset the password', async () => {
@@ -241,7 +241,7 @@ describe('AM - User Pre-Registration - Dynamic User Registration', () => {
       },
       application.id,
     );
-    await waitForDomainSync();
+    await waitForDomainSync(domain.id, accessToken);
   });
 
   it('Pre-Registered user without application id MUST NOT have registration contact point information', async () => {
