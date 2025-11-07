@@ -123,7 +123,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     }
                     Event event = new Event(Type.PROTECTED_RESOURCE, new Payload(resource.getId(), ReferenceType.DOMAIN, resource.getDomainId(), Action.DELETE));
                     // Delete dependencies first to avoid orphaned references if resource deletion fails
-                    return membershipService.findByReference(resource.getId(), ReferenceType.APPLICATION)
+                    return membershipService.findByReference(resource.getId(), ReferenceType.PROTECTED_RESOURCE)
                             .flatMapCompletable(membership -> membershipService.delete(membership.getId()))
                             .andThen(repository.delete(id))
                             .andThen(Completable.fromSingle(eventService.create(event, domain)))
@@ -473,7 +473,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                         return Single.just(protectedResource);
                     }
 
-                    return roleService.findSystemRole(SystemRole.APPLICATION_PRIMARY_OWNER, ReferenceType.APPLICATION)
+                    return roleService.findSystemRole(SystemRole.PROTECTED_RESOURCE_PRIMARY_OWNER, ReferenceType.PROTECTED_RESOURCE)
                             .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the application, owner role does not exist")))
                             .flatMap(role -> {
                                 Membership membership = new Membership();
@@ -481,7 +481,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                                 membership.setMemberId(principal.getId());
                                 membership.setMemberType(MemberType.USER);
                                 membership.setReferenceId(protectedResource.getId());
-                                membership.setReferenceType(ReferenceType.APPLICATION);
+                                membership.setReferenceType(ReferenceType.PROTECTED_RESOURCE);
                                 membership.setRoleId(role.getId());
                                 return membershipService.addOrUpdate((String) principal.getAdditionalInformation().get(Claims.ORGANIZATION), membership)
                                         .map(updatedMembership -> protectedResource);
