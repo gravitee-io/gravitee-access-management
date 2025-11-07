@@ -83,7 +83,7 @@
         <gravitee-platform-repository-api.version>1.4.0</gravitee-platform-repository-api.version>
         <gravitee-cockpit-api.version>3.0.51</gravitee-cockpit-api.version>
         <gravitee-kubernetes-client-version>3.1.0</gravitee-kubernetes-client-version>
-        <gravitee-plugin-validator.version>2.0.1</gravitee-plugin-validator.version>
+        <gravitee-plugin-validator.version>2.0.2</gravitee-plugin-validator.version>
         <nimbus.version>10.4</nimbus.version>
         <json-smart.version>2.5.2</json-smart.version>
         <tink.version>1.16.0</tink.version>
