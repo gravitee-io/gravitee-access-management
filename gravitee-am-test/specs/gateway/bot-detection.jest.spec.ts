@@ -16,7 +16,7 @@
 
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { delay } from '@utils-commands/misc';
 import fetch from 'cross-fetch';
 import {
@@ -86,6 +86,6 @@ describe('CRUD Bot detection', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

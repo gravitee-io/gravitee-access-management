@@ -19,7 +19,7 @@ global.fetch = fetch;
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -30,6 +30,7 @@ import {
   performFormPost,
   performGet,
 } from '@gateway-commands/oauth-oidc-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 let domain;
 let managementApiAccessToken;
@@ -49,7 +50,7 @@ jest.setTimeout(200000);
 beforeAll(async () => {
   managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
-  domain = await createDomain(managementApiAccessToken, 'jest-logout', 'test end-user logout');
+  domain = await createDomain(managementApiAccessToken, uniqueName('enduser-logout', true), 'test end-user logout');
   expect(domain).toBeDefined();
 
   await startDomain(domain.id, managementApiAccessToken);
@@ -185,7 +186,7 @@ describe('OAuth2 - Logout tests', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, managementApiAccessToken);
+    await safeDeleteDomain(domain.id, managementApiAccessToken);
   }
 });
 

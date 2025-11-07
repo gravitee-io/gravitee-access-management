@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser, updateUserStatus } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -24,6 +24,7 @@ import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/
 import { createTestApp } from '@utils-commands/application-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -40,7 +41,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const createdDomain = await createDomain(accessToken, 'refresh-tokens-domain', faker.company.catchPhraseDescriptor());
+  const createdDomain = await createDomain(accessToken, uniqueName('refresh-tokens', true), faker.company.catchPhraseDescriptor());
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
 
@@ -77,7 +78,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (domain?.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
 

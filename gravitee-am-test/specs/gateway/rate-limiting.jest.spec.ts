@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import {
   configureRateLimitPolicy,
@@ -29,6 +29,7 @@ import {
   waitForRateLimitReset,
   RateLimitConfig,
 } from './fixtures/rate-limit-fixture';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -44,7 +45,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const createdDomain = await createDomain(accessToken, 'rate-limit-test-domain', 'Rate limiting test domain');
+  const createdDomain = await createDomain(accessToken, uniqueName('rate-limit', true), 'Rate limiting test domain');
   const domainStarted = await startDomain(createdDomain.id, accessToken);
   domain = domainStarted;
 
@@ -61,7 +62,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
 

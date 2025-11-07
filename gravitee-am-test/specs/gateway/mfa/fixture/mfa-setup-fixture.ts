@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { requestAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
@@ -141,7 +141,7 @@ export async function createCookieDevice(ctx: Domain) {
 
 export async function removeDomain(ctx: Domain) {
   if (ctx.domain?.domainId) {
-    await deleteDomain(ctx.domain.domainId, ctx.admin.accessToken);
+    await safeDeleteDomain(ctx.domain.domainId, ctx.admin.accessToken);
   }
 }
 

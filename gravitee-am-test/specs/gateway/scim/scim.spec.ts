@@ -17,12 +17,13 @@ import { afterAll, beforeAll, describe, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
-import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { getUser } from '@management-commands/user-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 let mngAccessToken: string;
 let scimAccessToken: string;
@@ -38,7 +39,7 @@ beforeAll(async function () {
   mngAccessToken = await requestAdminAccessToken();
   expect(mngAccessToken).toBeDefined();
 
-  domain = await createDomain(mngAccessToken, 'scim', 'Domain used to test SCIM requests');
+  domain = await createDomain(mngAccessToken, uniqueName('scim', true), 'Domain used to test SCIM requests');
   expect(domain).toBeDefined();
 
   // enable SCIM
@@ -87,7 +88,7 @@ beforeAll(async function () {
 
 afterAll(async function () {
   if (domain) {
-    await deleteDomain(domain.id, mngAccessToken);
+    await safeDeleteDomain(domain.id, mngAccessToken);
   }
 });
 describe('SCIM with preRegistration', () => {

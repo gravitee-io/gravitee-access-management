@@ -18,7 +18,7 @@ import { afterAll, beforeAll, describe, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
-import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { BulkRequest } from '../../../api/gateway/models/scim/BulkRequest/BulkRequest';
 import { getWellKnownOpenIdConfiguration, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
@@ -27,6 +27,7 @@ import { BulkOperation } from '../../../api/gateway/models/scim/BulkRequest/Bulk
 import { BulkResponse } from '../../../api/gateway/models/scim/BulkRequest/BulkResponse';
 import { Error } from '../../../api/gateway/models/scim/BulkRequest/Error';
 import { random } from 'faker';
+import { uniqueName } from '@utils-commands/misc';
 
 let mngAccessToken: string;
 let scimAccessToken: string;
@@ -40,7 +41,7 @@ beforeAll(async function () {
   mngAccessToken = await requestAdminAccessToken();
   expect(mngAccessToken).toBeDefined();
 
-  domain = await createDomain(mngAccessToken, 'bulk-scim', 'Domain used to test Bulk SCIM requests');
+  domain = await createDomain(mngAccessToken, uniqueName('bulk-scim', true), 'Domain used to test Bulk SCIM requests');
   expect(domain).toBeDefined();
 
   // enable SCIM
@@ -89,7 +90,7 @@ beforeAll(async function () {
 
 afterAll(async function () {
   if (domain) {
-    await deleteDomain(domain.id, mngAccessToken);
+    await safeDeleteDomain(domain.id, mngAccessToken);
   }
 });
 

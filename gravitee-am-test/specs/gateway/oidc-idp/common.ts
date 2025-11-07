@@ -16,7 +16,7 @@
 import {
   allowHttpLocalhostRedirects,
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   DomainWithOidcConfig,
   startDomain,
   waitFor,
@@ -242,7 +242,7 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
     },
     cleanup: async () => {
       console.log(`Cleaning up domains: ${clientDomain.hrid}, ${providerDomain.hrid}`);
-      return Promise.all([deleteDomain(clientDomain.id, accessToken), deleteDomain(providerDomain.id, accessToken)]).then((ok) =>
+      return Promise.all([safeDeleteDomain(clientDomain.id, accessToken), safeDeleteDomain(providerDomain.id, accessToken)]).then((ok) =>
         console.log('Cleanup complete'),
       );
     },

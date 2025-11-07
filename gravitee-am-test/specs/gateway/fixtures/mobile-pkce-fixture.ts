@@ -16,7 +16,7 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -241,7 +241,7 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
   // Cleanup function
   const cleanup = async () => {
     if (readyDomain && accessToken) {
-      await deleteDomain(readyDomain.id, accessToken);
+      await safeDeleteDomain(readyDomain.id, accessToken);
     }
   };
 

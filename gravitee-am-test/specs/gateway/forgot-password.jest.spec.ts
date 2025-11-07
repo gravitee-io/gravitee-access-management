@@ -19,7 +19,7 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitFor,
@@ -39,6 +39,7 @@ import { createUser } from '@management-commands/user-management-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { createPasswordPolicy } from '@management-commands/password-policy-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -165,7 +166,7 @@ settings.forEach((setting) => {
   describe('Gateway reset password', () => {
     beforeAll(async () => {
       accessToken = await requestAdminAccessToken();
-      domain = await createDomain(accessToken, faker.company.companyName(0), 'test Gateway reset password with password history');
+      domain = await createDomain(accessToken, uniqueName('forgot-password', true), 'test Gateway reset password with password history');
       domainIds.add(domain.id);
       domain = await patchDomain(domain.id, accessToken, {
         master: true,
@@ -410,7 +411,7 @@ settings.forEach((setting) => {
 
 afterAll(async () => {
   for await (const domainId of domainIds) {
-    await deleteDomain(domainId, accessToken);
+    await safeDeleteDomain(domainId, accessToken);
   }
 });
 

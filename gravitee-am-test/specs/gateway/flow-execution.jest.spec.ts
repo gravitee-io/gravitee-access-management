@@ -21,7 +21,7 @@ import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   DomainOidcConfig,
   getDomainFlows,
   startDomain,
@@ -38,6 +38,7 @@ import {
   updateApplicationFlows,
 } from '@management-commands/application-management-commands';
 import { logoutUser, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 import { Domain, FlowEntityTypeEnum } from '../../api/management/models';
 import { assertGeneratedTokenAndGet } from '@gateway-commands/utils';
@@ -66,7 +67,7 @@ beforeAll(async () => {
   managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
 
-  const createdDomain = await createDomain(managementApiAccessToken, 'jest-flow-exec', 'test end-user logout');
+  const createdDomain = await createDomain(managementApiAccessToken, uniqueName('flow-execution', true), 'test end-user logout');
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
   domain = createdDomain;
@@ -496,6 +497,6 @@ describe("Flows Execution - Register", () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, managementApiAccessToken);
+    await safeDeleteDomain(domain.id, managementApiAccessToken);
   }
 });

@@ -18,7 +18,7 @@ import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitFor,
@@ -40,6 +40,7 @@ import { initiateLoginFlow, login } from '@gateway-commands/login-commands';
 import { TEST_USER } from './oidc-idp/common';
 import { enableDomain } from './mfa/fixture/mfa-setup-fixture';
 import { withRetry } from '@utils-commands/retry';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -58,7 +59,7 @@ beforeAll(async () => {
 });
 
 async function initDomain(resetPasswordOnExpiration: boolean) {
-  const createdDomain = await createDomain(accessToken, faker.random.word(), faker.company.catchPhraseDescriptor());
+  const createdDomain = await createDomain(accessToken, uniqueName('force-reset-password', true), faker.company.catchPhraseDescriptor());
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
 
@@ -104,10 +105,10 @@ async function initDomain(resetPasswordOnExpiration: boolean) {
 
 afterAll(async () => {
   if (withoutReset?.domain?.id) {
-    await deleteDomain(withoutReset?.domain?.id, accessToken);
+    await safeDeleteDomain(withoutReset?.domain?.id, accessToken);
   }
   if (withReset?.domain?.id) {
-    await deleteDomain(withReset?.domain?.id, accessToken);
+    await safeDeleteDomain(withReset?.domain?.id, accessToken);
   }
 });
 

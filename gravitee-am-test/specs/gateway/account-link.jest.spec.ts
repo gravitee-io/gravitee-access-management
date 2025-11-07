@@ -16,7 +16,7 @@
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   getDomainFlows,
   patchDomain,
   startDomain,
@@ -328,10 +328,10 @@ function getUser(username: string) {
 
 afterAll(async () => {
   if (domainAccLinking && domainAccLinking.id) {
-    await deleteDomain(domainAccLinking.id, accessToken);
+    await safeDeleteDomain(domainAccLinking.id, accessToken);
   }
 
   if (domainOIDC && domainOIDC.id) {
-    await deleteDomain(domainOIDC.id, accessToken);
+    await safeDeleteDomain(domainOIDC.id, accessToken);
   }
 });

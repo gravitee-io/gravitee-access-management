@@ -16,13 +16,14 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { createServiceApplication } from './fixtures/rate-limit-fixture';
 import { createExtensionGrant } from '@management-commands/extension-grant-commands';
 import { updateApplication } from '@management-commands/application-management-commands';
 import { getBase64BasicAuth } from '@gateway-commands/utils';
 import { parseJwt } from '@api-fixtures/jwt';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -51,7 +52,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  domain = await createDomain(accessToken, 'ext-grant-domain', 'Domain with JWT bearer ext grant');
+  domain = await createDomain(accessToken, uniqueName('ext-grant', true), 'Domain with JWT bearer ext grant');
 
   const extGrantRequest = {
     type: 'jwtbearer-am-extension-grant',
@@ -86,7 +87,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
 

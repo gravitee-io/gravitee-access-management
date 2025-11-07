@@ -18,7 +18,7 @@ import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   startDomain,
   waitForDomainStart,
   waitForDomainSync,
@@ -277,7 +277,7 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
 
     const cleanup = async () => {
       if (readyDomain && accessToken) {
-        await deleteDomain(readyDomain.id, accessToken);
+        await safeDeleteDomain(readyDomain.id, accessToken);
       }
     };
 
@@ -301,7 +301,7 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     // Cleanup domain if setup fails partway through
     if (domain && accessToken) {
       try {
-        await deleteDomain(domain.id, accessToken);
+        await safeDeleteDomain(domain.id, accessToken);
       } catch (cleanupError) {
         console.error('Failed to cleanup domain after setup failure:', cleanupError);
       }
