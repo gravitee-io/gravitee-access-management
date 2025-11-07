@@ -230,7 +230,7 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     const readyDomain = domainReady.domain;
     const openIdConfiguration = domainReady.oidcConfig;
     expect(openIdConfiguration).toBeDefined();
-    await waitForDomainSync();
+    await waitForDomainSync(domain.id, accessToken);
 
   const completeAuthorizationFlowWithResources = async (resources: string[]): Promise<string> => {
     const clientId = application.settings.oauth.clientId;

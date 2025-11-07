@@ -164,7 +164,118 @@ export const waitForDomainStart: (domain: Domain) => Promise<DomainWithOidcConfi
   ).then((response) => ({ domain, oidcConfig: response.body }));
 };
 
-export const waitForDomainSync = () => waitFor(10000);
+/**
+ * Wait for domain sync to complete.
+ * 
+ * This function polls the domain's updatedAt timestamp to detect when sync is complete.
+ * Sync is considered complete when the domain's updatedAt timestamp has been stable
+ * for a short period (indicating no new updates are in progress).
+ * 
+ * Uses the existing `retryUntil` utility for consistency with other wait operations.
+ * 
+ * Note: This is a heuristic approach - without a direct sync status API, we infer sync
+ * completion by checking if the domain's updatedAt timestamp has been stable. This works
+ * because domain updates trigger sync operations, and once updatedAt stabilizes, sync is
+ * typically complete.
+ * 
+ * @param domainId - Optional domain ID to poll. If not provided, uses a shorter fixed wait.
+ * @param accessToken - Optional access token for polling. Required if domainId is provided.
+ * @param options - Optional configuration:
+ *   - timeoutMillis: Maximum time to wait (default: 30000ms)
+ *   - intervalMillis: Polling interval (default: 500ms)
+ *   - stabilityMillis: Time domain must be stable before considering sync complete (default: 2000ms)
+ * 
+ * @returns Promise that resolves when sync is complete
+ */
+export const waitForDomainSync = async (
+  domainId?: string,
+  accessToken?: string,
+  options?: {
+    timeoutMillis?: number;
+    intervalMillis?: number;
+    stabilityMillis?: number;
+  }
+): Promise<void> => {
+  const {
+    timeoutMillis = 30000,
+    intervalMillis = 500,
+    stabilityMillis = 2000,
+  } = options || {};
+
+  // If domainId and accessToken are provided, use polling with retryUntil
+  if (domainId && accessToken) {
+    // State tracking for stability check
+    const state = {
+      lastUpdatedAt: null as number | null,
+      stableSince: null as number | null,
+    };
+
+    try {
+      await retryUntil(
+        async () => {
+          try {
+            const domain = await getDomain(domainId, accessToken);
+            const currentUpdatedAt = domain.updatedAt ? new Date(domain.updatedAt).getTime() : null;
+            return { updatedAt: currentUpdatedAt, timestamp: Date.now() };
+          } catch (error: any) {
+            // If domain fetch fails, return null as fallback
+            // This allows retry logic to continue (domain might not be ready yet)
+            // Log at debug level to handle the exception while avoiding log spam
+            console.debug(`Error fetching domain ${domainId} for sync check: ${error.message}`);
+            return { updatedAt: null, timestamp: Date.now() };
+          }
+        },
+        (result) => {
+          const { updatedAt, timestamp } = result;
+
+          // If updatedAt is null, domain is not ready or has no timestamp. Continue polling.
+          if (updatedAt === null) {
+            return false;
+          }
+
+          // First check - initialize state
+          if (state.lastUpdatedAt === null) {
+            state.lastUpdatedAt = updatedAt;
+            state.stableSince = timestamp;
+            return false;
+          }
+
+          // Domain was updated - reset stability timer
+          if (updatedAt !== state.lastUpdatedAt) {
+            state.lastUpdatedAt = updatedAt;
+            state.stableSince = timestamp;
+            return false;
+          }
+
+          // Domain hasn't been updated - check if stable long enough
+          const stableDuration = timestamp - (state.stableSince || timestamp);
+          return stableDuration >= stabilityMillis;
+        },
+        {
+          timeoutMillis,
+          intervalMillis,
+          onDone: () => {
+            const duration = state.stableSince ? Date.now() - (state.stableSince || 0) : 0;
+            console.debug(`Domain ${domainId} sync complete (stable for ${duration}ms)`);
+          },
+          onRetry: () => {
+            // Silent retry - avoid log spam
+          },
+        }
+      );
+    } catch (error: any) {
+      // Timeout or error - log warning but don't throw (backward compatibility)
+      console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${error.message}`);
+    }
+    return;
+  }
+
+  // Fallback: Use shorter fixed wait (2 seconds instead of 10)
+  // This is a conservative improvement that maintains backward compatibility
+  // while still providing significant time savings
+  await waitFor(2000);
+};
+
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));
 
 export async function allowHttpLocalhostRedirects(domain: Domain, accessToken: string) {

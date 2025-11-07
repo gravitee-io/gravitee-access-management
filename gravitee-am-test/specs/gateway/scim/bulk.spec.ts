@@ -76,7 +76,7 @@ beforeAll(async function () {
 
   await startDomain(domain.id, mngAccessToken);
 
-  await waitForDomainSync();
+  await waitForDomainSync(domain.id, mngAccessToken);
   const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
 
   // generate SCIM access token

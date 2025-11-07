@@ -235,7 +235,7 @@ describe('Account Linking - local IDP and OIDC', () => {
       },
     ]);
     await updateDomainFlows(domainAccLinking.id, accessToken, flows);
-    await waitForDomainSync();
+    await waitForDomainSync(domainAccLinking.id, accessToken);
 
     const user1TokenResponse = await loginUserNameAndPassword(
       applicationAccLinking.settings.oauth.clientId,

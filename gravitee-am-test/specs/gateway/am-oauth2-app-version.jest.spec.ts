@@ -200,7 +200,7 @@ describe('OAuth2 - App version', () => {
       it('renew client - must renew secrets and test token', async () => {
         const newSecret = await renewApplicationSecrets(masterDomain.id, accessToken, application3.id, application3.secrets[0].id).then(
           async (clintSecret) => {
-            await waitForDomainSync();
+            await waitForDomainSync(masterDomain.id, accessToken);
             await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
               'Content-type': 'application/x-www-form-urlencoded',
               Authorization: 'Basic ' + applicationBase64Token(application3),
@@ -444,7 +444,7 @@ describe('OAuth2 - App version', () => {
               application2.id,
             ),
           )
-          .then((_) => waitForDomainSync())
+          .then((_) => waitForDomainSync(masterDomain.id, accessToken))
           .then((_) => performGet(openIdConfiguration.authorization_endpoint, params).expect(302));
 
         expect(authResponse.headers['location']).toBeDefined();
@@ -507,7 +507,7 @@ describe('OAuth2 - App version', () => {
         expect(postConsentRedirect.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+&?/);
 
         // Initiate the Login Flow again
-        const authResponse2 = await waitForDomainSync().then((_) =>
+        const authResponse2 = await waitForDomainSync(masterDomain.id, accessToken).then((_) =>
           performGet(openIdConfiguration.authorization_endpoint, params, {
             Cookie: postConsentRedirect.headers['set-cookie'],
           }).expect(302),
@@ -518,7 +518,7 @@ describe('OAuth2 - App version', () => {
 
         await logoutUser(openIdConfiguration.end_session_endpoint, postConsentRedirect)
           .then((_) => patchApplication(masterDomain.id, accessToken, { settings: application2.settings }, application2.id))
-          .then((_) => waitForDomainSync());
+          .then((_) => waitForDomainSync(masterDomain.id, accessToken));
       });
 
       it('must handle invalid client', async () => {
@@ -899,7 +899,7 @@ describe('OAuth2 - App version', () => {
                   redirectUriStrictMatching: true,
                 },
               })
-                .then((_) => waitForDomainSync())
+                .then((_) => waitForDomainSync(masterDomain.id, accessToken))
                 .then((_) => performGet(openIdConfiguration.authorization_endpoint, actual.params).expect(302));
             } else {
               authResponse = await performGet(openIdConfiguration.authorization_endpoint, actual.params).expect(302);
