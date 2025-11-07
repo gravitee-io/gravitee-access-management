@@ -474,7 +474,7 @@ public class ProtectedResourceServiceImpl implements ProtectedResourceService {
                     }
 
                     return roleService.findSystemRole(SystemRole.PROTECTED_RESOURCE_PRIMARY_OWNER, ReferenceType.PROTECTED_RESOURCE)
-                            .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the application, owner role does not exist")))
+                            .switchIfEmpty(Single.error(new InvalidRoleException("Cannot assign owner to the protected resource, owner role does not exist")))
                             .flatMap(role -> {
                                 Membership membership = new Membership();
                                 membership.setDomain(protectedResource.getDomainId());
