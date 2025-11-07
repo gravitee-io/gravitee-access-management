@@ -17,86 +17,129 @@ package io.gravitee.am.gateway.handler.oauth2.service.validation.impl;
 
 import io.gravitee.am.gateway.handler.oauth2.exception.InvalidResourceException;
 import io.gravitee.am.gateway.handler.oauth2.service.request.TokenRequest;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.env.Environment;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class ResourceConsistencyValidationServiceImplTest {
+@ExtendWith(MockitoExtension.class)
+class ResourceConsistencyValidationServiceImplTest {
+
+    @Mock
+    private Environment environment;
 
     private ResourceConsistencyValidationServiceImpl service;
 
-    @Before
-    public void setUp() {
-        service = new ResourceConsistencyValidationServiceImpl();
+    @BeforeEach
+    void setUp() {
+        // Default: feature flag enabled (true)
+        when(environment.getProperty(ResourceConsistencyValidationServiceImpl.LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(true);
+        service = new ResourceConsistencyValidationServiceImpl(environment);
     }
 
-    @Test
-    public void shouldReturnAuthorizationResourcesWhenTokenRequestHasNoResources() {
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setResources(Collections.emptySet());
-        Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
-
-        Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
-
-        assertThat(result).isEqualTo(authorizationResources);
+    // Helper methods to reduce duplication
+    private ResourceConsistencyValidationServiceImpl createServiceWithFeatureFlag(boolean enabled) {
+        when(environment.getProperty(ResourceConsistencyValidationServiceImpl.LEGACY_RFC8707_ENABLED, Boolean.class, true)).thenReturn(enabled);
+        return new ResourceConsistencyValidationServiceImpl(environment);
     }
 
-    @Test
-    public void shouldReturnTokenRequestResourcesWhenSubsetOfAuthorizationResources() {
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos")));
-        Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
+    @Nested
+    class WhenValidationEnabled {
 
-        Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
+        @Test
+        void shouldReturnAuthorizationResourcesWhenTokenRequestHasNoResources() {
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setResources(Collections.emptySet());
+            Set<String> authorizationResources = Set.of("https://api.example.com/photos", "https://api.example.com/albums");
 
-        assertThat(result).isEqualTo(new HashSet<>(Arrays.asList("https://api.example.com/photos")));
+            Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
+
+            assertThat(result).isEqualTo(authorizationResources);
+        }
+
+        @Test
+        void shouldReturnTokenRequestResourcesWhenSubsetOfAuthorizationResources() {
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setResources(Set.of("https://api.example.com/photos"));
+            Set<String> authorizationResources = Set.of("https://api.example.com/photos", "https://api.example.com/albums");
+
+            Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
+
+            assertThat(result).isEqualTo(Set.of("https://api.example.com/photos"));
+        }
+
+        @Test
+        void shouldReturnTokenRequestResourcesWhenIdenticalToAuthorizationResources() {
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setResources(Set.of("https://api.example.com/photos", "https://api.example.com/albums"));
+            Set<String> authorizationResources = Set.of("https://api.example.com/photos", "https://api.example.com/albums");
+
+            Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
+
+            assertThat(result).isEqualTo(Set.of("https://api.example.com/photos", "https://api.example.com/albums"));
+        }
+
+        @Test
+        void shouldThrowWhenTokenRequestHasResourcesNotInAuthorization() {
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setResources(Set.of("https://api.example.com/photos", "https://api.example.com/unknown"));
+            Set<String> authorizationResources = Set.of("https://api.example.com/photos", "https://api.example.com/albums");
+
+            assertThatThrownBy(() -> service.resolveFinalResources(tokenRequest, authorizationResources))
+                    .isInstanceOf(InvalidResourceException.class);
+        }
+
+        @Test
+        void shouldThrowWhenAuthorizationHasNoResources() {
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setResources(Set.of("https://api.example.com/photos"));
+            Set<String> authorizationResources = Collections.emptySet();
+
+            assertThatThrownBy(() -> service.resolveFinalResources(tokenRequest, authorizationResources))
+                    .isInstanceOf(InvalidResourceException.class);
+        }
+
+        @Test
+        void shouldReturnEmptyWhenBothTokenRequestAndAuthorizationHaveNoResources() {
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setResources(Collections.emptySet());
+            Set<String> authorizationResources = Collections.emptySet();
+
+            Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
+
+            assertThat(result).isEmpty();
+        }
     }
 
-    @Test
-    public void shouldReturnTokenRequestResourcesWhenIdenticalToAuthorizationResources() {
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums")));
-        Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
+    @Nested
+    class WhenValidationDisabled {
 
-        Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
+        @Test
+        void shouldSkipConsistencyValidation_whenFeatureFlagDisabled_andResourcesMismatch() {
+            // Setup: feature flag disabled
+            ResourceConsistencyValidationServiceImpl serviceWithFlagDisabled = createServiceWithFeatureFlag(false);
 
-        assertThat(result).isEqualTo(new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums")));
+            TokenRequest tokenRequest = new TokenRequest();
+            tokenRequest.setResources(Set.of("https://api.example.com/photos", "https://api.example.com/unknown"));
+            Set<String> authorizationResources = Set.of("https://api.example.com/photos", "https://api.example.com/albums");
+
+            // Should not throw exception, should return requested resources
+            Set<String> result = serviceWithFlagDisabled.resolveFinalResources(tokenRequest, authorizationResources);
+
+            assertThat(result).isEqualTo(Set.of("https://api.example.com/photos", "https://api.example.com/unknown"));
+        }
     }
 
-    @Test(expected = InvalidResourceException.class)
-    public void shouldThrowWhenTokenRequestHasResourcesNotInAuthorization() {
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/unknown")));
-        Set<String> authorizationResources = new HashSet<>(Arrays.asList("https://api.example.com/photos", "https://api.example.com/albums"));
-
-        service.resolveFinalResources(tokenRequest, authorizationResources);
-    }
-
-    @Test(expected = InvalidResourceException.class)
-    public void shouldThrowWhenAuthorizationHasNoResources() {
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setResources(new HashSet<>(Arrays.asList("https://api.example.com/photos")));
-        Set<String> authorizationResources = Collections.emptySet();
-
-        service.resolveFinalResources(tokenRequest, authorizationResources);
-    }
-
-    @Test
-    public void shouldReturnEmptyWhenBothTokenRequestAndAuthorizationHaveNoResources() {
-        TokenRequest tokenRequest = new TokenRequest();
-        tokenRequest.setResources(Collections.emptySet());
-        Set<String> authorizationResources = Collections.emptySet();
-
-        Set<String> result = service.resolveFinalResources(tokenRequest, authorizationResources);
-
-        assertThat(result).isEmpty();
-    }
 }
 
 

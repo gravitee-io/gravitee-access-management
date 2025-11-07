@@ -50,6 +50,7 @@ import io.gravitee.am.gateway.handler.common.protectedresource.ProtectedResource
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
@@ -116,13 +117,13 @@ public class OAuth2Configuration implements ProtocolConfiguration {
     }
 
         @Bean
-        public ResourceValidationService resourceValidationService(ProtectedResourceManager protectedResourceManager) {
-            return new ResourceValidationServiceImpl(protectedResourceManager);
+        public ResourceValidationService resourceValidationService(ProtectedResourceManager protectedResourceManager, Environment environment) {
+            return new ResourceValidationServiceImpl(protectedResourceManager, environment);
         }
 
         @Bean
-        public ResourceConsistencyValidationService resourceConsistencyValidationService() {
-            return new ResourceConsistencyValidationServiceImpl();
+        public ResourceConsistencyValidationService resourceConsistencyValidationService(Environment environment) {
+            return new ResourceConsistencyValidationServiceImpl(environment);
         }
 
     @Bean
