@@ -317,7 +317,7 @@ public class ProtectedResourceServiceImplTest {
         when(repository.findByDomainAndId(DOMAIN_ID, "res-1")).thenReturn(Maybe.just(resource));
         when(repository.delete("res-1")).thenReturn(Completable.complete());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
-        when(membershipService.findByReference(eq("res-1"), eq(ReferenceType.APPLICATION)))
+        when(membershipService.findByReference(eq("res-1"), eq(ReferenceType.PROTECTED_RESOURCE)))
                 .thenReturn(Flowable.empty());
 
         Domain domain = createDomain();
@@ -338,7 +338,7 @@ public class ProtectedResourceServiceImplTest {
         when(repository.findByDomainAndId(DOMAIN_ID, "res-2")).thenReturn(Maybe.just(resource));
         when(repository.delete("res-2")).thenReturn(Completable.complete());
         when(eventService.create(any(), any())).thenReturn(Single.just(new Event()));
-        when(membershipService.findByReference(eq("res-2"), eq(ReferenceType.APPLICATION)))
+        when(membershipService.findByReference(eq("res-2"), eq(ReferenceType.PROTECTED_RESOURCE)))
                 .thenReturn(Flowable.just(new Membership()));
         when(membershipService.delete(any())).thenReturn(Completable.complete());
 
