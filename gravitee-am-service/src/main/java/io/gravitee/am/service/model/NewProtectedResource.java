@@ -37,8 +37,14 @@ public class NewProtectedResource {
      */
     public static final int NAME_MAX_LENGTH = 64;
 
+    /**
+     * Pattern for protected resource name: must begin with a non-whitespace character
+     */
+    public static final String NAME_PATTERN = "^[^\\s].*";
+
     @NotBlank
     @Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters")
+    @Pattern(regexp = NAME_PATTERN, message = "Name must begin with a non-whitespace character")
     private String name;
 
     private String description;

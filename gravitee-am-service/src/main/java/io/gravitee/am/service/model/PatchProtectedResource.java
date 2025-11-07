@@ -21,6 +21,7 @@ import io.gravitee.am.service.utils.SetterUtils;
 import io.gravitee.am.service.validators.url.Url;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,7 +40,8 @@ import static io.gravitee.am.service.model.NewProtectedResource.NAME_MAX_LENGTH;
 @Setter
 public class PatchProtectedResource {
 
-    private Optional<@Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters") String> name;
+    private Optional<@Size(min = 1, max = NAME_MAX_LENGTH, message = "Name must be between 1 and 64 characters")
+            @Pattern(regexp = NewProtectedResource.NAME_PATTERN, message = "Name must begin with a non-whitespace character") String> name;
     private Optional<String> description;
     private Optional<List<@NotBlank @Url(allowFragment = false) String>> resourceIdentifiers;
     private Optional<List<@Valid UpdateProtectedResourceFeature>> features;
