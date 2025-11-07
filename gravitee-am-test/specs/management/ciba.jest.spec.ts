@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { deleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { delay, uniqueName } from '@utils-commands/misc';
 import { buildTestUser, createUser } from '@management-commands/user-management-commands';
 import { patchApplication } from '@management-commands/application-management-commands';
@@ -41,8 +41,8 @@ jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  cibaDomain = await setupDomainForTest(uniqueName('ciba1'), { accessToken }).then((it) => it.domain);
-  nonCibaDomain = await setupDomainForTest(uniqueName('notciba1'), { accessToken }).then((it) => it.domain);
+  cibaDomain = await setupDomainForTest(uniqueName('ciba', true), { accessToken }).then((it) => it.domain);
+  nonCibaDomain = await setupDomainForTest(uniqueName('ciba-disabled', true), { accessToken }).then((it) => it.domain);
   cibaDomain = await patchDomain(cibaDomain.id, accessToken, {
     oidc: {
       clientRegistrationSettings: {
@@ -561,9 +561,9 @@ describe('CIBA valid Flow', () => {
 
 afterAll(async () => {
   if (cibaDomain && cibaDomain.id) {
-    await deleteDomain(cibaDomain.id, accessToken);
+    await safeDeleteDomain(cibaDomain.id, accessToken);
   }
   if (nonCibaDomain && nonCibaDomain.id) {
-    await deleteDomain(nonCibaDomain.id, accessToken);
+    await safeDeleteDomain(nonCibaDomain.id, accessToken);
   }
 });

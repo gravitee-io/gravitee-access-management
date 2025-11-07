@@ -27,7 +27,7 @@ import {ProtectedResourceFeature} from "@management-models/ProtectedResourceFeat
 import {McpTool} from "@management-models/McpTool";
 
 import {requestAdminAccessToken} from "@management-commands/token-management-commands";
-import { deleteDomain, setupDomainForTest, waitFor } from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, setupDomainForTest, waitFor } from '@management-commands/domain-management-commands';
 import {createApplication, updateApplication} from "@management-commands/application-management-commands";
 import {
     createProtectedResource,
@@ -109,18 +109,18 @@ let openIdConfiguration: any;
 
 beforeAll(async () => {
     accessToken = await requestAdminAccessToken();
-    const domainResult = await setupDomainForTest(uniqueName('domain-protected-resources', true), { accessToken, waitForStart:true });
+    const domainResult = await setupDomainForTest(uniqueName('protected-resources', true), { accessToken, waitForStart:true });
     domain = domainResult.domain;
     openIdConfiguration = domainResult.oidcConfig;
-    domainTestSearch = await setupDomainForTest(uniqueName('domain-protected-resources-search', true), { accessToken, waitForStart:true}).then((it) => it.domain);
+    domainTestSearch = await setupDomainForTest(uniqueName('protected-resources-search', true), { accessToken, waitForStart:true}).then((it) => it.domain);
 });
 
 afterAll(async () => {
     if (domain?.id) {
-        await deleteDomain(domain.id, accessToken);
+        await safeDeleteDomain(domain.id, accessToken);
     }
     if (domainTestSearch?.id) {
-        await deleteDomain(domainTestSearch.id, accessToken);
+        await safeDeleteDomain(domainTestSearch.id, accessToken);
     }
 });
 
@@ -1961,7 +1961,7 @@ describe('When deleting protected resource', () => {
     });
 
     it('Should delete protected resources when domain is deleted', async () => {
-        const testDomain = await setupDomainForTest(uniqueName('domain-delete-cascade', true), { accessToken, waitForStart: true });
+        const testDomain = await setupDomainForTest(uniqueName('delete-cascade', true), { accessToken, waitForStart: true });
 
         // Create protected resources in the test domain
         const resources = [];
@@ -1990,7 +1990,7 @@ describe('When deleting protected resource', () => {
         }
 
         // Delete the domain (should cascade delete protected resources)
-        await deleteDomain(testDomain.domain.id, accessToken);
+        await safeDeleteDomain(testDomain.domain.id, accessToken);
 
         // Verify protected resources no longer exist by trying to list them
         // Since the domain is deleted, checkDomainExists will throw DomainNotFoundException (404)

@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, setupDomainForTest, startDomain } from '@management-commands/domain-management-commands';
 import { createTheme, deleteTheme, getAllThemes, getTheme, updateTheme } from '@management-commands/theme-management-commands';
 import { getAllDictionaries } from '@management-commands/dictionary-management-commands';
 import { ResponseError } from '../../api/management/runtime';
@@ -25,13 +25,15 @@ import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
+jest.setTimeout(200000);
+
 let accessToken;
 let domain;
 let theme;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-themes'), { accessToken, waitForStart: false }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('themes', true), { accessToken, waitForStart: false }).then((it) => it.domain);
 });
 
 async function testCreate() {
@@ -99,6 +101,6 @@ describe('Testing themes api...', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

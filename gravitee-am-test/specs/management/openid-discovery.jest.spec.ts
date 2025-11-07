@@ -18,7 +18,7 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   setupDomainForTest,
   startDomain,
   waitForDomainStart,
@@ -39,7 +39,7 @@ jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('oidc-discovery'), { accessToken }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('oidc-discovery', true), { accessToken }).then((it) => it.domain);
 
   const builtCertificate = buildRSA512Certificate();
   const certificateResponse = await createCertificate(domain.id, accessToken, builtCertificate);
@@ -121,6 +121,6 @@ describe('well-known/openid-configuration', () => {
 
 afterAll(async () => {
   if (domain?.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

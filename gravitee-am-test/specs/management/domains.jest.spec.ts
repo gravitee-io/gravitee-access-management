@@ -19,14 +19,14 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   getDomain,
   patchDomain,
   setupDomainForTest,
   startDomain,
 } from '@management-commands/domain-management-commands';
 import { getWellKnownOpenIdConfiguration, performOptions } from '@gateway-commands/oauth-oidc-commands';
-import { delay } from '@utils-commands/misc';
+import { delay, uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -38,7 +38,7 @@ jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  let startedDomain = await setupDomainForTest('domain-device-id', { accessToken, waitForStart: true });
+  let startedDomain = await setupDomainForTest(uniqueName('domains-test', true), { accessToken, waitForStart: true });
   domain = startedDomain.domain;
   userInfo = startedDomain.oidcConfig['userinfo_endpoint'];
 });
@@ -213,6 +213,6 @@ describe('Entrypoints: User accounts', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

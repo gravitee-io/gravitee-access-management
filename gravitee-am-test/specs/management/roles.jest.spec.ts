@@ -18,11 +18,13 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { deleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { createRole, deleteRole, getAllRoles, getRole, getRolePage, updateRole } from '@management-commands/role-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
+
+jest.setTimeout(200000);
 
 let accessToken;
 let domain;
@@ -30,7 +32,7 @@ let role;
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await setupDomainForTest(uniqueName('domain-roles'), { accessToken, waitForStart: false }).then((it) => it.domain);
+  domain = await setupDomainForTest(uniqueName('roles', true), { accessToken, waitForStart: false }).then((it) => it.domain);
 });
 
 describe('when using the roles commands', () => {
@@ -110,6 +112,6 @@ describe('after creating roles', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });
