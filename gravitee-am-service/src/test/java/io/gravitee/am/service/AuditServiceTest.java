@@ -84,36 +84,33 @@ public class AuditServiceTest {
     public void should_publish_audit() {
         auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED));
         auditService.report(AuditBuilder.builder(UserAuditBuilder.class).type(EventType.USER_CREATED).throwable(new RuntimeException("User creation failed")));
-        while(((ThreadPoolExecutor)auditService.getExecutorService()).getCompletedTaskCount() <= completedTasks) {
-            Awaitility.await().during(1, TimeUnit.SECONDS);
-        }
+        waitForExecutorTasks(2);
         Mockito.verify(auditReporterService, Mockito.times(2)).report(Mockito.any());
     }
 
     @Test
     public void should_publish_audit_client_auth_success() {
         auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).type(EventType.CLIENT_AUTHENTICATION));
-        while(((ThreadPoolExecutor)auditService.getExecutorService()).getCompletedTaskCount() <= completedTasks) {
-            Awaitility.await().during(1, TimeUnit.SECONDS);
-        }
+        waitForExecutorTasks(1);
         Mockito.verify(auditReporterService, excludeClientAuthSuccess ? Mockito.never() : Mockito.times(1)).report(Mockito.any());
     }
 
     @Test
     public void should_publish_audit_client_auth_failure() {
         auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).type(EventType.CLIENT_AUTHENTICATION).throwable(new RuntimeException("Client authentication failed")));
-        while(((ThreadPoolExecutor)auditService.getExecutorService()).getCompletedTaskCount() <= completedTasks) {
-            Awaitility.await().during(1, TimeUnit.SECONDS);
-        }
+        waitForExecutorTasks(1);
         Mockito.verify(auditReporterService).report(Mockito.any());
     }
 
     @Test
     public void should_filter_audit() {
         auditService.report(AuditBuilder.builder(ClientAuthAuditBuilder.class).type(EventType.TOKEN_CREATED));
-        while(((ThreadPoolExecutor)auditService.getExecutorService()).getCompletedTaskCount() <= completedTasks) {
-            Awaitility.await().during(1, TimeUnit.SECONDS);
-        }
+        waitForExecutorTasks(1);
         Mockito.verify(auditReporterService, Mockito.never()).report(Mockito.any());
+    }
+
+    private void waitForExecutorTasks(long expectedIncrement) {
+        final var executor = (ThreadPoolExecutor) auditService.getExecutorService();
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).until(() -> executor.getCompletedTaskCount() >= completedTasks + expectedIncrement);
     }
 }
