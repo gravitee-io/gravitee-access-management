@@ -572,8 +572,11 @@ jobs:
             # Start AM Gateway
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
       - run:
-          name: Run Jest tests
-          command: npm --prefix gravitee-am-test run ci
+          name: Run Management Jest tests (parallel)
+          command: npm --prefix gravitee-am-test run ci:management:parallel
+      - run:
+          name: Run Gateway Jest tests (sequential)
+          command: npm --prefix gravitee-am-test run ci:gateway
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
@@ -754,8 +757,11 @@ jobs:
             # Start AM Gateway
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
       - run:
-          name: Run Jest tests
-          command: npm --prefix gravitee-am-test run ci
+          name: Run Management Jest tests (parallel)
+          command: npm --prefix gravitee-am-test run ci:management:parallel
+      - run:
+          name: Run Gateway Jest tests (sequential)
+          command: npm --prefix gravitee-am-test run ci:gateway
       - keeper/env-export:
           secret-url: keeper://ZOz4db245GNaETVwmPBk8w/field/password
           var-name: SLACK_ACCESS_TOKEN
