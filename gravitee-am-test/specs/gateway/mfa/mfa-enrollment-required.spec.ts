@@ -72,13 +72,11 @@ beforeAll(async () => {
   settings.settings.mfa.challenge = { active: true, challengeRule: '', type: 'required' };
   const defaultClient3 = await initClient(domain, 'enroll-with-challenge-1', settings);
 
-  const oidc = await enableDomain(domain)
-    .then(() => waitFor(3000))
-    .then(() => withRetry(() => getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200)));
+  const oidc = await enableDomain(domain);
 
-  enrollDefaultCtx1 = new TestSuiteContext(domain, defaultClient1, domain.domain.users[0], oidc.body.authorization_endpoint);
-  enrollDefaultCtx2 = new TestSuiteContext(domain, defaultClient2, domain.domain.users[1], oidc.body.authorization_endpoint);
-  enrollDefaultCtx3 = new TestSuiteContext(domain, defaultClient3, domain.domain.users[2], oidc.body.authorization_endpoint);
+  enrollDefaultCtx1 = new TestSuiteContext(domain, defaultClient1, domain.domain.users[0], oidc.authorization_endpoint);
+  enrollDefaultCtx2 = new TestSuiteContext(domain, defaultClient2, domain.domain.users[1], oidc.authorization_endpoint);
+  enrollDefaultCtx3 = new TestSuiteContext(domain, defaultClient3, domain.domain.users[2], oidc.authorization_endpoint);
 });
 
 afterAll(async () => {

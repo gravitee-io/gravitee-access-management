@@ -74,27 +74,25 @@ beforeAll(async () => {
   settings.settings.mfa.challenge.challengeRule = '{{ false }}';
   const challengeRuleNegativeClient2 = await initClient(domain, 'challenge-rule-negative2', settings);
 
-  const oidc = await enableDomain(domain)
-    .then(() => waitFor(3000))
-    .then(() => withRetry(() => getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200)));
+  const oidc = await enableDomain(domain);
 
   challengeRulePositiveCtx = new TestSuiteContext(
     domain,
     challengeRulePositiveClient,
     domain.domain.users[0],
-    oidc.body.authorization_endpoint,
+    oidc.authorization_endpoint,
   );
   challengeRuleNegativeCtx1 = new TestSuiteContext(
     domain,
     challengeRuleNegativeClient1,
     domain.domain.users[1],
-    oidc.body.authorization_endpoint,
+    oidc.authorization_endpoint,
   );
   challengeRuleNegativeCtx2 = new TestSuiteContext(
     domain,
     challengeRuleNegativeClient2,
     domain.domain.users[2],
-    oidc.body.authorization_endpoint,
+    oidc.authorization_endpoint,
   );
 });
 

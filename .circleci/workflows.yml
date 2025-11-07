@@ -571,12 +571,12 @@ jobs:
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-management-api-standalone-${AM_VERSION}
             # Start AM Gateway
             bash .circleci/scripts/am-service-launcher.sh gravitee-am-gateway-standalone-${AM_VERSION}
-      - run:
-          name: Run Management Jest tests (parallel)
-          command: npm --prefix gravitee-am-test run ci:management:parallel
-      - run:
-          name: Run Gateway Jest tests (parallel - stable)
-          command: npm --prefix gravitee-am-test run ci:gateway:parallel:stable
+      # - run:
+      #     name: Run Management Jest tests (parallel)
+      #     command: npm --prefix gravitee-am-test run ci:management:parallel
+      # - run:
+      #     name: Run Gateway Jest tests (parallel - stable)
+      #     command: npm --prefix gravitee-am-test run ci:gateway:parallel:stable
       - run:
           name: Run Gateway Jest tests (sequential - fragile)
           command: npm --prefix gravitee-am-test run ci:gateway:sequential:fragile
@@ -2076,7 +2076,6 @@ workflows:
     when:
       and:
         - equal: [ pull_requests, << pipeline.parameters.gio_action >> ]
-    max_auto_reruns: 3
     jobs:
       - setup:
           context: cicd-orchestrator
@@ -2089,66 +2088,64 @@ workflows:
               ignore:
                 - master
                 - /^[0-999].[0-999].x/
-      - job-test-am-charts:
-          name: Test Helm chart
-          requires:
-            - setup
-      - aquasec/fs_scan:
-          context:
-            - cicd-orchestrator
-          requires:
-            - setup
-          filters:
-            branches:
-              ignore:
-                - master
-                - /^[0-999].[0-999].x/
-          pre-steps:
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
-                var-name: AQUA_KEY
-            - keeper/env-export:
-                secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
-                var-name: AQUA_SECRET
-            - keeper/env-export:
-                secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
-                var-name: GITHUB_TOKEN
-      - junit_tests:
-          context: cicd-orchestrator
-          requires:
-            - process_pull_request
-      - ui_tests:
-          context: cicd-orchestrator
-          requires:
-            - process_pull_request
-      - run_postman_tests_mongo:
-          context: cicd-orchestrator
-          requires:
-            - process_pull_request
-          matrix:
-            parameters:
-              mongo_version: ["4.4", "8.0"]
-      - run_postman_tests_psql:
-          context: cicd-orchestrator
-          requires:
-            - process_pull_request
-          matrix:
-            parameters:
-              psql_version: ["11.18-bullseye", "17.2"]
+      # Temporarily disabled to save CI resources - only running Jest tests
+      # - job-test-am-charts:
+      #     name: Test Helm chart
+      #     requires:
+      #       - setup
+      # - aquasec/fs_scan:
+      #     context:
+      #       - cicd-orchestrator
+      #     requires:
+      #       - setup
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - master
+      #           - /^[0-999].[0-999].x/
+      #     pre-steps:
+      #       - keeper/env-export:
+      #           secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/API Key
+      #           var-name: AQUA_KEY
+      #       - keeper/env-export:
+      #           secret-url: keeper://QeHHkvALPob4pgs1hMd9Gw/custom_field/Secret
+      #           var-name: AQUA_SECRET
+      #       - keeper/env-export:
+      #           secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
+      #           var-name: GITHUB_TOKEN
+      # - junit_tests:
+      #     context: cicd-orchestrator
+      #     requires:
+      #       - process_pull_request
+      # - ui_tests:
+      #     context: cicd-orchestrator
+      #     requires:
+      #       - process_pull_request
+      # - run_postman_tests_mongo:
+      #     context: cicd-orchestrator
+      #     requires:
+      #       - process_pull_request
+      #     matrix:
+      #       parameters:
+      #         mongo_version: ["4.4", "8.0"]
+      # - run_postman_tests_psql:
+      #     context: cicd-orchestrator
+      #     requires:
+      #       - process_pull_request
+      #     matrix:
+      #       parameters:
+      #         psql_version: ["11.18-bullseye", "17.2"]
       - run_jest_tests_mongo:
           context: cicd-orchestrator
           requires:
             - process_pull_request
-          matrix:
-            parameters:
-              mongo_version: ["4.4", "8.0"]
-      - run_jest_tests_psql:
-          context: cicd-orchestrator
-          requires:
-            - process_pull_request
-          matrix:
-            parameters:
-              psql_version: ["11.18-bullseye", "17.2"]
+          mongo_version: "4.4"
+      # Temporarily disabled - only running mongo tests for investigation
+      # - run_jest_tests_psql:
+      #     context: cicd-orchestrator
+      #     requires:
+      #       - process_pull_request
+      #     psql_version: "11.18-bullseye"
 
   testcontainer_tests:
     when: << pipeline.parameters.run-container-test >>

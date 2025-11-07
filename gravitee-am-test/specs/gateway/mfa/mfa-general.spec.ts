@@ -183,24 +183,22 @@ beforeAll(async () => {
   settings.settings.mfa.stepUpAuthenticationRule = '{{ true }}';
   const stepUpTrueClient3 = await initClient(domain, 'step-up-positive-3', settings);
 
-  const oidc = await enableDomain(domain)
-    .then(() => waitFor(3000))
-    .then(() => withRetry(() => getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200)));
+  const oidc = await enableDomain(domain);
 
-  noFactorsCtx = new TestSuiteContext(domain, noFactorClient, domain.domain.users[0], oidc.body.authorization_endpoint);
-  stepUpNegativeCtx = new TestSuiteContext(domain, stepUpNegativeClient1, domain.domain.users[1], oidc.body.authorization_endpoint);
-  stepUpOffCtx = new TestSuiteContext(domain, stepUpOffClient, domain.domain.users[2], oidc.body.authorization_endpoint);
-  stepUpPositiveCtx2 = new TestSuiteContext(domain, stepUpTrueClient2, domain.domain.users[3], oidc.body.authorization_endpoint);
-  withFactorsCtx = new TestSuiteContext(domain, withFactorsClient, domain.domain.users[4], oidc.body.authorization_endpoint);
-  enrollmentTrueCtx = new TestSuiteContext(domain, enrollmentTrueClient, domain.domain.users[5], oidc.body.authorization_endpoint);
+  noFactorsCtx = new TestSuiteContext(domain, noFactorClient, domain.domain.users[0], oidc.authorization_endpoint);
+  stepUpNegativeCtx = new TestSuiteContext(domain, stepUpNegativeClient1, domain.domain.users[1], oidc.authorization_endpoint);
+  stepUpOffCtx = new TestSuiteContext(domain, stepUpOffClient, domain.domain.users[2], oidc.authorization_endpoint);
+  stepUpPositiveCtx2 = new TestSuiteContext(domain, stepUpTrueClient2, domain.domain.users[3], oidc.authorization_endpoint);
+  withFactorsCtx = new TestSuiteContext(domain, withFactorsClient, domain.domain.users[4], oidc.authorization_endpoint);
+  enrollmentTrueCtx = new TestSuiteContext(domain, enrollmentTrueClient, domain.domain.users[5], oidc.authorization_endpoint);
   stepUpPositiveChallengeDisabledCtx = new TestSuiteContext(
     domain,
     stepUpTrueClient3,
     domain.domain.users[6],
-    oidc.body.authorization_endpoint,
+    oidc.authorization_endpoint,
   );
-  rateLimitCtx = new TestSuiteContext(domain, rateLimitClient, domain.domain.users[7], oidc.body.authorization_endpoint);
-  bruteForceCtx = new TestSuiteContext(domain, bruteForceClient, domain.domain.users[8], oidc.body.authorization_endpoint);
+  rateLimitCtx = new TestSuiteContext(domain, rateLimitClient, domain.domain.users[7], oidc.authorization_endpoint);
+  bruteForceCtx = new TestSuiteContext(domain, bruteForceClient, domain.domain.users[8], oidc.authorization_endpoint);
 });
 
 let noFactorsCtx: TestSuiteContext;

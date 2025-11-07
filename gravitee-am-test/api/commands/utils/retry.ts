@@ -71,26 +71,67 @@ export type RetryOptions<T> = {
 export async function retryUntil<T>(f: () => Promise<T>, cond: (t: T) => boolean, options: RetryOptions<T> = {}): Promise<T> {
   const { timeoutMillis = 0, maxAttempts = 100, intervalMillis = 250, onDone = () => {}, onRetry = () => {} } = options;
   let attempts = 0;
+  let isTimedOut = false;
+  let timeoutId: NodeJS.Timeout | null = null;
+  let intervalTimerId: NodeJS.Timeout | null = null;
+  const startTime = timeoutMillis > 0 ? Date.now() : 0;
+  
+  // Set up timeout if specified
+  if (timeoutMillis > 0) {
+    timeoutId = setTimeout(() => {
+      isTimedOut = true;
+      if (intervalTimerId) {
+        clearTimeout(intervalTimerId);
+      }
+    }, timeoutMillis);
+  }
+  
   const promise = new Promise<T>(async (resolve, reject) => {
-    while (true) {
-      let result = await f();
-      attempts += 1;
-      if (cond(result)) {
-        onDone(result);
-        resolve(result);
-        break;
-      } else if (timeoutMillis <= 0 && attempts > maxAttempts) {
-        reject(result);
-        break;
-      } else {
-        onRetry(result);
-        await waitFor(intervalMillis);
+    try {
+      while (true) {
+        // Check if timed out
+        if (isTimedOut) {
+          reject(new Error('timeout after ' + timeoutMillis + 'ms'));
+          break;
+        }
+        
+        // Check timeout by elapsed time
+        if (timeoutMillis > 0 && Date.now() - startTime >= timeoutMillis) {
+          isTimedOut = true;
+          reject(new Error('timeout after ' + timeoutMillis + 'ms'));
+          break;
+        }
+        
+        let result = await f();
+        attempts += 1;
+        if (cond(result)) {
+          onDone(result);
+          resolve(result);
+          break;
+        } else if (timeoutMillis <= 0 && attempts > maxAttempts) {
+          reject(result);
+          break;
+        } else {
+          onRetry(result);
+          // Use cancellable wait
+          await new Promise<void>((resolve) => {
+            intervalTimerId = setTimeout(() => {
+              intervalTimerId = null;
+              resolve();
+            }, intervalMillis);
+          });
+        }
+      }
+    } finally {
+      // Clean up all timers
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (intervalTimerId) {
+        clearTimeout(intervalTimerId);
       }
     }
   });
-  if (timeoutMillis > 0) {
-    return timeout(timeoutMillis, promise);
-  } else {
-    return promise;
-  }
+  
+  return promise;
 }

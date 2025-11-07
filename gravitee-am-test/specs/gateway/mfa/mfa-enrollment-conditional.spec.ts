@@ -85,13 +85,11 @@ beforeAll(async () => {
   settings.settings.mfa.enroll.enrollmentSkipRule = '{{ false }}';
   const ruleNegativeClient2 = await initClient(domain, 'enroll-rule-negative-2', settings);
 
-  const oidc = await enableDomain(domain)
-    .then(() => waitFor(3000))
-    .then(() => withRetry(() => getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200)));
+  const oidc = await enableDomain(domain);
 
-  rulePositiveCtx = new TestSuiteContext(domain, rulePositiveClient, domain.domain.users[0], oidc.body.authorization_endpoint);
-  ruleNegativeCtx = new TestSuiteContext(domain, ruleNegativeClient, domain.domain.users[1], oidc.body.authorization_endpoint);
-  ruleNegativeCtx2 = new TestSuiteContext(domain, ruleNegativeClient2, domain.domain.users[2], oidc.body.authorization_endpoint);
+  rulePositiveCtx = new TestSuiteContext(domain, rulePositiveClient, domain.domain.users[0], oidc.authorization_endpoint);
+  ruleNegativeCtx = new TestSuiteContext(domain, ruleNegativeClient, domain.domain.users[1], oidc.authorization_endpoint);
+  ruleNegativeCtx2 = new TestSuiteContext(domain, ruleNegativeClient2, domain.domain.users[2], oidc.authorization_endpoint);
 });
 
 afterAll(async () => {

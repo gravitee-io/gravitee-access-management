@@ -241,7 +241,13 @@ export async function waitForTokenRevocation(
         if (err.response?.status === 400 && err.response?.body?.error === 'invalid_grant') {
           return { status: 400, revoked: true, error: 'invalid_grant' };
         }
-        // Other errors should be re-thrown
+        // If we get 400 with a different error, it's a test setup issue - fail early
+        if (err.response?.status === 400) {
+          const errorMsg = err.response?.body?.error || 'unknown';
+          const errorDesc = err.response?.body?.error_description || 'no description';
+          throw new Error(`Token refresh failed with 400: ${errorMsg} - ${errorDesc}. This indicates a test setup issue, not token revocation.`);
+        }
+        // Other errors (network, 500, etc.) should be re-thrown
         throw err;
       }
     },

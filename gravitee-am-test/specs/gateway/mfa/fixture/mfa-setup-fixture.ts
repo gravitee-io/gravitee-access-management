@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { requestAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
@@ -94,7 +94,9 @@ export async function createTestDomain(domain: Domain): Promise<any> {
 }
 
 export async function enableDomain(domain: Domain): Promise<any> {
-  await startDomain(domain.domain.domainId, domain.admin.accessToken);
+  const domainStarted = await startDomain(domain.domain.domainId, domain.admin.accessToken);
+  const domainWithOidc = await waitForDomainStart(domainStarted);
+  return domainWithOidc.oidcConfig;
 }
 
 export async function createTestUser(ctx: Domain): Promise<any> {

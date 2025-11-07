@@ -86,26 +86,24 @@ beforeAll(async () => {
   const rememberDeviceCookieClient1 = await initClient(domain, 'cookie-1', rememberDeviceCookieClientSettings);
   const rememberDeviceCookieClient2 = await initClient(domain, 'cookie-2', rememberDeviceCookieClientSettings);
 
-  const oidc = await enableDomain(domain)
-    .then(() => waitFor(3000))
-    .then(() => withRetry(() => getWellKnownOpenIdConfiguration(domain.domain.domainHrid).expect(200)));
+  const oidc = await enableDomain(domain);
 
-  defaultClientCtx1 = new TestSuiteContext(domain, defaultClient1, domain.domain.users[0], oidc.body.authorization_endpoint);
-  defaultClientCtx2 = new TestSuiteContext(domain, defaultClient2, domain.domain.users[1], oidc.body.authorization_endpoint);
-  defaultClientCtx3 = new TestSuiteContext(domain, defaultClient3, domain.domain.users[2], oidc.body.authorization_endpoint);
-  rememberMeCtx1 = new TestSuiteContext(domain, rememberDeviceClient1, domain.domain.users[3], oidc.body.authorization_endpoint);
-  rememberMeCtx2 = new TestSuiteContext(domain, rememberDeviceClient2, domain.domain.users[4], oidc.body.authorization_endpoint);
+  defaultClientCtx1 = new TestSuiteContext(domain, defaultClient1, domain.domain.users[0], oidc.authorization_endpoint);
+  defaultClientCtx2 = new TestSuiteContext(domain, defaultClient2, domain.domain.users[1], oidc.authorization_endpoint);
+  defaultClientCtx3 = new TestSuiteContext(domain, defaultClient3, domain.domain.users[2], oidc.authorization_endpoint);
+  rememberMeCtx1 = new TestSuiteContext(domain, rememberDeviceClient1, domain.domain.users[3], oidc.authorization_endpoint);
+  rememberMeCtx2 = new TestSuiteContext(domain, rememberDeviceClient2, domain.domain.users[4], oidc.authorization_endpoint);
   rememberMeCookieCtx1 = new TestSuiteContext(
     domain,
     rememberDeviceCookieClient1,
     domain.domain.users[5],
-    oidc.body.authorization_endpoint,
+    oidc.authorization_endpoint,
   );
   rememberMeCookieCtx2 = new TestSuiteContext(
     domain,
     rememberDeviceCookieClient2,
     domain.domain.users[6],
-    oidc.body.authorization_endpoint,
+    oidc.authorization_endpoint,
   );
 });
 
