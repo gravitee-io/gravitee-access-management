@@ -24,7 +24,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class UpdateAuthorizationEngine implements PluginConfigurationPayload {
+public class UpdateAuthorizationEngine implements PluginConfigurationPayload, PluginConfigurableUpdate {
 
     @NotNull
     private String name;

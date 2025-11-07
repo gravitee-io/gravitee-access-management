@@ -17,9 +17,15 @@
 package io.gravitee.am.management.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Strings;
+import io.gravitee.am.model.PluginConfigurableEntity;
+import io.gravitee.am.service.AuditService;
+import io.gravitee.am.service.model.PluginConfigurableUpdate;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -34,6 +40,10 @@ import static java.util.regex.Pattern.quote;
  * @author GraviteeSource Team
  */
 public abstract class AbstractSensitiveProxy {
+
+    protected PluginService pluginService;
+    protected AuditService auditService;
+    protected ObjectMapper objectMapper;
 
     protected static final String DEFAULT_SCHEMA_CONFIG = "{}";
 
@@ -163,5 +173,93 @@ public abstract class AbstractSensitiveProxy {
         var value = valueNode == null ? null : valueNode.asText();
         var safeValue = value == null ? "" : value.trim();
         return !SENSITIVE_VALUE_PATTERN.matcher(safeValue).matches();
+    }
+
+    /**
+     * Filter sensitive data from a plugin-configurable entity.
+     *
+     * @param entity The entity to filter (must implement PluginConfigurableEntity)
+     * @param <T> Entity type that extends PluginConfigurableEntity&lt;T&gt;
+     * @return Single containing filtered entity
+     */
+    protected <T extends PluginConfigurableEntity<T>> Single<T> filterSensitiveData(
+            T entity) {
+        String type = entity.getType();
+        return pluginService.getSchema(type)
+                .map(Optional::ofNullable)
+                .switchIfEmpty(Maybe.just(Optional.empty()))
+                .toSingle()
+                .map(schema -> {
+                    // Duplicate the object to avoid side effect
+                    var filteredEntity = entity.copy();
+                    if (schema.isPresent()) {
+                        var schemaNode = objectMapper.readTree(schema.get());
+                        var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+
+                        // TODO template method to filter additional sensitive data for read operations
+
+                        filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    } else {
+                        // no schema: remove all the configuration to avoid sensitive data leak
+                        // this case may happen when the plugin zip file has been removed from the plugins directory
+                        // (set empty object to avoid NullPointer on the UI)
+                        filteredEntity.setConfiguration(DEFAULT_SCHEMA_CONFIG);
+                    }
+                    return filteredEntity;
+                });
+    }
+
+    /**
+     * Filter sensitive data for create operations.
+     *
+     * @param entity The entity to filter (must implement PluginConfigurableEntity)
+     * @param <T> Entity type that extends PluginConfigurableEntity&lt;T&gt;
+     * @return Single containing filtered entity
+     */
+    protected <T extends PluginConfigurableEntity<T>> Single<T> filterSensitiveDataForCreate(T entity) {
+        String type = entity.getType();
+        return pluginService.getSchema(type)
+                .switchIfEmpty(Single.error(() -> getSchemaNotFoundException(type)))
+                .map(schema -> {
+                    var filteredEntity = entity.copy();
+                    var schemaNode = objectMapper.readTree(schema);
+                    var configurationNode = objectMapper.readTree(filteredEntity.getConfiguration());
+
+                    // TODO template method to filter additional sensitive data for create operations
+                    
+                    filterSensitiveData(schemaNode, configurationNode, filteredEntity::setConfiguration);
+                    return filteredEntity;
+                });
+    }
+
+    /**
+     * Update sensitive data in an update object.
+     *
+     * @param updateEntity The update entity containing new configuration (must implement PluginConfigurableUpdate)
+     * @param oldEntity The old entity containing existing configuration (must implement PluginConfigurableEntity)
+     * @param <T> Update entity type that extends PluginConfigurableUpdate
+     * @param <U> Old entity type that extends PluginConfigurableEntity&lt;U&gt;
+     * @return Single containing update entity with sensitive data updated
+     */
+    protected <T extends PluginConfigurableUpdate, U extends PluginConfigurableEntity<U>> Single<T> updateSensitiveData(
+            T updateEntity,
+            U oldEntity) {
+        String type = oldEntity.getType();
+        return pluginService.getSchema(type)
+                .switchIfEmpty(Single.error(() -> getSchemaNotFoundException(type)))
+                .map(schema -> {
+                    var updateConfig = objectMapper.readTree(updateEntity.getConfiguration());
+                    var oldConfig = objectMapper.readTree(oldEntity.getConfiguration());
+                    var schemaConfig = objectMapper.readTree(schema);
+
+                    // TODO template method to filter additional sensitive data for update operations
+                    
+                    updateSensitiveData(updateConfig, oldConfig, schemaConfig, updateEntity::setConfiguration);
+                    return updateEntity;
+                });
+    }
+
+    protected RuntimeException getSchemaNotFoundException(String type) {
+        return new RuntimeException("Schema not found for type: " + type);
     }
 }

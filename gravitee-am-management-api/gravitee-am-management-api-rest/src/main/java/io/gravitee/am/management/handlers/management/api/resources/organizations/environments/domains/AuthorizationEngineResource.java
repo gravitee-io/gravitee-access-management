@@ -18,11 +18,11 @@ package io.gravitee.am.management.handlers.management.api.resources.organization
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.service.AuthorizationEngineManager;
+import io.gravitee.am.management.service.AuthorizationEngineServiceProxy;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.AuthorizationEngine;
 import io.gravitee.am.model.permissions.Permission;
-import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.exception.AuthorizationEngineNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.model.UpdateAuthorizationEngine;
@@ -54,7 +54,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class AuthorizationEngineResource extends AbstractResource {
 
     @Autowired
-    private AuthorizationEngineService authorizationEngineService;
+    private AuthorizationEngineServiceProxy authorizationEngineService;
 
     @Autowired
     private DomainService domainService;

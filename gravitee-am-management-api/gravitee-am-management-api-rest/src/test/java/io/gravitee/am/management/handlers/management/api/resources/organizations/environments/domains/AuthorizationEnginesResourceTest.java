@@ -57,7 +57,7 @@ public class AuthorizationEnginesResourceTest extends JerseySpringTest {
         engine2.setType("openfga");
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.just(engine1, engine2)).when(authorizationEngineService).findByDomain(domainId);
+        doReturn(Flowable.just(engine1, engine2)).when(authorizationEngineServiceProxy).findByDomain(domainId);
 
         final Response response = target("domains")
                 .path(domainId)
@@ -68,7 +68,7 @@ public class AuthorizationEnginesResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
 
         // Verify the list is sorted by name
-        verify(authorizationEngineService, times(1)).findByDomain(domainId);
+        verify(authorizationEngineServiceProxy, times(1)).findByDomain(domainId);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class AuthorizationEnginesResourceTest extends JerseySpringTest {
         mockDomain.setId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Flowable.empty()).when(authorizationEngineService).findByDomain(domainId);
+        doReturn(Flowable.empty()).when(authorizationEngineServiceProxy).findByDomain(domainId);
 
         final Response response = target("domains")
                 .path(domainId)
@@ -124,7 +124,7 @@ public class AuthorizationEnginesResourceTest extends JerseySpringTest {
         createdEngine.setReferenceId(domainId);
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
-        doReturn(Single.just(createdEngine)).when(authorizationEngineService)
+        doReturn(Single.just(createdEngine)).when(authorizationEngineServiceProxy)
                 .create(eq(domainId), any(NewAuthorizationEngine.class), any());
 
         final Response response = post(
@@ -136,7 +136,7 @@ public class AuthorizationEnginesResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
 
-        verify(authorizationEngineService, times(1))
+        verify(authorizationEngineServiceProxy, times(1))
                 .create(eq(domainId), any(NewAuthorizationEngine.class), any());
     }
 
@@ -159,7 +159,7 @@ public class AuthorizationEnginesResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
 
-        verify(authorizationEngineService, never()).create(any(), any(), any());
+        verify(authorizationEngineServiceProxy, never()).create(any(), any(), any());
     }
 
     @Test

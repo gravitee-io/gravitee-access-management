@@ -30,6 +30,7 @@ import io.gravitee.am.management.service.AuditReporterManager;
 import io.gravitee.am.management.service.AuthenticationDeviceNotifierPluginService;
 import io.gravitee.am.management.service.AuthorizationEngineManager;
 import io.gravitee.am.management.service.AuthorizationEnginePluginService;
+import io.gravitee.am.management.service.AuthorizationEngineServiceProxy;
 import io.gravitee.am.management.service.BotDetectionPluginService;
 import io.gravitee.am.management.service.BotDetectionServiceProxy;
 import io.gravitee.am.management.service.CertificateManager;
@@ -286,6 +287,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected AuthorizationEngineService authorizationEngineService;
+
+    @Autowired
+    protected AuthorizationEngineServiceProxy authorizationEngineServiceProxy;
 
     @Autowired
     protected AuthorizationEngineManager authorizationEngineManager;
@@ -655,6 +659,11 @@ public abstract class JerseySpringTest {
         @Bean
         public AuthorizationEngineService authorizationEngineService() {
             return mock(AuthorizationEngineService.class);
+        }
+
+        @Bean
+        public AuthorizationEngineServiceProxy authorizationEngineServiceProxy() {
+            return mock(AuthorizationEngineServiceProxy.class);
         }
 
         @Bean

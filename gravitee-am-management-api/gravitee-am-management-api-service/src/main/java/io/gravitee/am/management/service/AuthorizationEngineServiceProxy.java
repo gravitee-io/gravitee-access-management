@@ -15,15 +15,10 @@
  */
 package io.gravitee.am.management.service;
 
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
+import io.gravitee.am.service.AuthorizationEngineService;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
  * @author GraviteeSource Team
  */
-public interface PluginService {
-    Completable checkPluginDeployment(String type);
-
-    Maybe<String> getSchema(String id);
+public interface AuthorizationEngineServiceProxy extends AuthorizationEngineService {
 }

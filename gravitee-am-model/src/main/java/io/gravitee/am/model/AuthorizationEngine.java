@@ -29,7 +29,7 @@ import java.util.Objects;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AuthorizationEngine {
+public class AuthorizationEngine implements PluginConfigurableEntity<AuthorizationEngine> {
 
     private String id;
 
@@ -58,6 +58,11 @@ public class AuthorizationEngine {
         this.referenceId = other.referenceId;
         this.createdAt = other.createdAt;
         this.updatedAt = other.updatedAt;
+    }
+
+    @Override
+    public AuthorizationEngine copy() {
+        return new AuthorizationEngine(this);
     }
 
     @Override

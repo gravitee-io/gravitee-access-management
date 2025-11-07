@@ -15,21 +15,18 @@
  */
 package io.gravitee.am.service.impl;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.common.event.Action;
 import io.gravitee.am.common.event.Type;
 import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationEngine;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.plugins.handlers.api.provider.ProviderConfiguration;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthorizationEngineService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AbstractManagementException;
@@ -39,8 +36,6 @@ import io.gravitee.am.service.exception.AuthorizationEngineNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationEngine;
 import io.gravitee.am.service.model.UpdateAuthorizationEngine;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.management.AuthorizationEngineAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -48,6 +43,7 @@ import io.reactivex.rxjava3.core.Single;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -56,22 +52,20 @@ import java.util.Date;
  * @author GraviteeSource Team
  */
 @Component
+@Primary
 public class AuthorizationEngineServiceImpl implements AuthorizationEngineService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(AuthorizationEngineServiceImpl.class);
 
     private final AuthorizationEngineRepository authorizationEngineRepository;
     private final EventService eventService;
-    private final AuditService auditService;
     private final AuthorizationEnginePluginManager authorizationEnginePluginManager;
 
     public AuthorizationEngineServiceImpl(@Lazy AuthorizationEngineRepository authorizationEngineRepository,
                                          EventService eventService,
-                                         AuditService auditService,
                                          AuthorizationEnginePluginManager authorizationEnginePluginManager) {
         this.authorizationEngineRepository = authorizationEngineRepository;
         this.eventService = eventService;
-        this.auditService = auditService;
         this.authorizationEnginePluginManager = authorizationEnginePluginManager;
     }
 
@@ -138,15 +132,6 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                     Event event = new Event(Type.AUTHORIZATION_ENGINE, new Payload(createdEngine.getId(), createdEngine.getReferenceType(), createdEngine.getReferenceId(), Action.CREATE));
                     return eventService.create(event).flatMap(__ -> Single.just(createdEngine));
                 })
-                .doOnSuccess(createdEngine -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.AUTHORIZATION_ENGINE_CREATED)
-                        .authorizationEngine(createdEngine)))
-                .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
-                        .principal(principal)
-                        .type(EventType.AUTHORIZATION_ENGINE_CREATED)
-                        .reference(new Reference(ReferenceType.DOMAIN, domainId))
-                        .throwable(throwable)))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
                         return Single.error(ex);
@@ -174,18 +159,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                                 // create event for sync process
                                 Event event = new Event(Type.AUTHORIZATION_ENGINE, new Payload(updatedEngine.getId(), updatedEngine.getReferenceType(), updatedEngine.getReferenceId(), Action.UPDATE));
                                 return eventService.create(event).flatMap(__ -> Single.just(updatedEngine));
-                            })
-                            .doOnSuccess(updatedEngine -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.AUTHORIZATION_ENGINE_UPDATED)
-                                    .oldValue(oldEngine)
-                                    .authorizationEngine(updatedEngine)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.AUTHORIZATION_ENGINE_UPDATED)
-                                    .reference(new Reference(oldEngine.getReferenceType(), oldEngine.getReferenceId()))
-                                    .authorizationEngine(oldEngine)
-                                    .throwable(throwable)));
+                            });
                 })))
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -209,17 +183,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
 
                     return authorizationEngineRepository.delete(authorizationEngineId)
                             .andThen(eventService.create(event))
-                            .ignoreElement()
-                            .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.AUTHORIZATION_ENGINE_DELETED)
-                                    .authorizationEngine(authorizationEngine)))
-                            .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
-                                    .principal(principal)
-                                    .type(EventType.AUTHORIZATION_ENGINE_DELETED)
-                                    .reference(new Reference(ReferenceType.DOMAIN, domainId))
-                                    .authorizationEngine(authorizationEngine)
-                                    .throwable(throwable)));
+                            .ignoreElement();
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
