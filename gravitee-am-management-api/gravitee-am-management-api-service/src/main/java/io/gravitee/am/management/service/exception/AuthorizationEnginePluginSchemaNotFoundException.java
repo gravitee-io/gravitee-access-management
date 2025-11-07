@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
+package io.gravitee.am.management.service.exception;
 
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
+import io.gravitee.am.service.exception.AbstractNotFoundException;
 
-/**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
- * @author GraviteeSource Team
- */
-public interface PluginService {
-    Completable checkPluginDeployment(String type);
+public class AuthorizationEnginePluginSchemaNotFoundException extends AbstractNotFoundException {
 
-    Maybe<String> getSchema(String id);
+    private final String authorizationEngineType;
+
+    public AuthorizationEnginePluginSchemaNotFoundException(String authorizationEngineType) {
+        this.authorizationEngineType = authorizationEngineType;
+    }
+
+    @Override
+    public String getMessage() {
+        return "Authorization engine plugin schema for [" + authorizationEngineType + "] can not be found.";
+    }
 }

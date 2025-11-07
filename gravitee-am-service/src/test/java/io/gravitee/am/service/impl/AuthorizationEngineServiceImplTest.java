@@ -23,7 +23,6 @@ import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
 import io.gravitee.am.repository.management.api.AuthorizationEngineRepository;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.exception.AuthorizationEngineAlreadyExistsException;
 import io.gravitee.am.service.exception.AuthorizationEngineInvalidConfigurationException;
@@ -31,7 +30,6 @@ import io.gravitee.am.service.exception.AuthorizationEngineNotFoundException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
 import io.gravitee.am.service.model.NewAuthorizationEngine;
 import io.gravitee.am.service.model.UpdateAuthorizationEngine;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -50,7 +48,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -67,9 +64,6 @@ class AuthorizationEngineServiceImplTest {
 
     @Mock
     private EventService eventService;
-
-    @Mock
-    private AuditService auditService;
 
     @Mock
     private AuthorizationEnginePluginManager authorizationEnginePluginManager;
@@ -94,7 +88,6 @@ class AuthorizationEngineServiceImplTest {
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
@@ -135,7 +128,6 @@ class AuthorizationEngineServiceImplTest {
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
@@ -168,7 +160,6 @@ class AuthorizationEngineServiceImplTest {
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
@@ -201,7 +192,6 @@ class AuthorizationEngineServiceImplTest {
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         service.create("domain-id", newEngine, principal).test();
@@ -233,7 +223,6 @@ class AuthorizationEngineServiceImplTest {
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         service.create("domain-id", newEngine, principal).test();
@@ -259,7 +248,6 @@ class AuthorizationEngineServiceImplTest {
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenReturn(Single.error(new RuntimeException("Database error")));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
@@ -371,7 +359,6 @@ class AuthorizationEngineServiceImplTest {
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
@@ -422,7 +409,6 @@ class AuthorizationEngineServiceImplTest {
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         TestObserver<AuthorizationEngine> observer = service.update(
@@ -464,7 +450,6 @@ class AuthorizationEngineServiceImplTest {
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         service.update("domain-id", engineId, updateEngine, principal).test();
@@ -514,7 +499,6 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Completable.complete());
         when(eventService.create(any(Event.class)))
                 .thenReturn(Single.just(new Event()));
-        doNothing().when(auditService).report(any(AuditBuilder.class));
 
         // when
         TestObserver<Void> observer = service.delete(

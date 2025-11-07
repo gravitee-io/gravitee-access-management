@@ -13,17 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.am.management.service;
-
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Maybe;
+package io.gravitee.am.service.model;
 
 /**
- * @author Eric LELEU (eric.leleu at graviteesource.com)
+ * Interface for update objects that have plugin-based configuration.
+ * Update objects implementing this interface can be used with AbstractSensitiveProxy
+ * for updating sensitive data.
+ *
  * @author GraviteeSource Team
  */
-public interface PluginService {
-    Completable checkPluginDeployment(String type);
+public interface PluginConfigurableUpdate {
 
-    Maybe<String> getSchema(String id);
+    /**
+     * Get the configuration as a JSON string.
+     *
+     * @return the configuration JSON string
+     */
+    String getConfiguration();
+
+    /**
+     * Set the configuration from a JSON string.
+     *
+     * @param configuration the configuration JSON string
+     */
+    void setConfiguration(String configuration);
 }
+
