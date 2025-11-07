@@ -53,7 +53,7 @@ beforeAll(async function () {
   });
 
   const applicationDefinition: Application = {
-    name: 'SCIM App',
+    name: uniqueName('SCIM App', true),
     type: 'SERVICE',
     settings: {
       oauth: {
