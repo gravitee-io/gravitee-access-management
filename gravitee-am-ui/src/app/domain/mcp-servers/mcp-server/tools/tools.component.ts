@@ -68,6 +68,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
   protectedResource: ProtectedResource;
   features: McpTool[];
   canUpdate: boolean = false;
+  canDelete: boolean = false;
   domainScopes: any[] = [];
 
   constructor(
@@ -87,6 +88,7 @@ export class DomainMcpServerToolsComponent implements OnInit {
     this.protectedResource = this.route.snapshot.data['mcpServer'];
     this.features = this.mapFeaturesToTools(this.protectedResource.features ?? []);
     this.canUpdate = this.authService.hasPermissions(['protected_resource_update']);
+    this.canDelete = this.authService.hasPermissions(['protected_resource_delete']);
 
     // Load domain scopes for the edit dialog
     this.loadDomainScopes();
