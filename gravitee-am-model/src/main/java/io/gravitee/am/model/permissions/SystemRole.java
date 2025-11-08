@@ -26,7 +26,8 @@ public enum SystemRole {
     ORGANIZATION_PRIMARY_OWNER(false),
     DOMAIN_PRIMARY_OWNER(false),
     ENVIRONMENT_PRIMARY_OWNER(false),
-    APPLICATION_PRIMARY_OWNER(false);
+    APPLICATION_PRIMARY_OWNER(false),
+    PROTECTED_RESOURCE_PRIMARY_OWNER(false);
 
     private boolean internalOnly;
 
