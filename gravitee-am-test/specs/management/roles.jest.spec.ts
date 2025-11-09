@@ -38,8 +38,10 @@ beforeAll(async () => {
 describe('when using the roles commands', () => {
   for (let i = 0; i < 10; i++) {
     it('must create new roles ' + i, async () => {
+      // Use uniqueName to ensure role names are unique in parallel execution
+      const roleName = uniqueName('role', true).toUpperCase();
       const payload = {
-        name: 'ROLE_' + faker.name.jobTitle().toUpperCase(),
+        name: `ROLE_${roleName}`,
         assignableType: 'domain',
         description: faker.lorem.paragraph(),
       };

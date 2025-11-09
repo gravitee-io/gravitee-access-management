@@ -15,17 +15,16 @@
  */
 import fetch from 'cross-fetch';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
-import { jest, afterAll, beforeAll, expect } from '@jest/globals';
+import { jest, afterAll, afterEach, beforeAll, beforeEach, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart, waitForDomainSync, waitForApplicationSync } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
-import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
+import { createApplication, deleteApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
 import {
   extractXsrfTokenAndActionResponse,
-  getWellKnownOpenIdConfiguration,
   logoutUser,
   performFormPost,
   performGet,
@@ -37,6 +36,7 @@ let managementApiAccessToken;
 let openIdConfiguration;
 let application;
 let user;
+let defaultIdp;
 
 jest.setTimeout(200000);
 
@@ -46,43 +46,10 @@ beforeAll(async () => {
   domain = await createDomain(managementApiAccessToken, uniqueName('enduser-logout', true), 'test end-user logout');
   expect(domain).toBeDefined();
 
-  await startDomain(domain.id, managementApiAccessToken);
-
-  // Create the application
+  // Get default IDP for application creation
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
-  const appClientId = uniqueName('app-logout', true);
-  const appClientSecret = uniqueName('app-logout', true);
-  const appName = uniqueName('my-client', true);
-  application = await createApplication(domain.id, managementApiAccessToken, {
-    name: appName,
-    type: 'WEB',
-    clientId: appClientId,
-    clientSecret: appClientSecret,
-    redirectUris: ['https://callback'],
-  }).then((app) =>
-    updateApplication(
-      domain.id,
-      managementApiAccessToken,
-      {
-        settings: {
-          oauth: {
-            redirectUris: ['https://callback'],
-            grantTypes: ['authorization_code'],
-          },
-        },
-        identityProviders: [{ identity: idpSet.values().next().value.id, priority: -1 }],
-      },
-      app.id,
-    ).then((updatedApp) => {
-      // restore the clientSecret coming from the create order
-      updatedApp.settings.oauth.clientSecret = app.settings.oauth.clientSecret;
-      return updatedApp;
-    }),
-  );
-  expect(application).toBeDefined();
-
-  // Wait for application to sync to gateway
-  await waitForDomainSync(domain.id, managementApiAccessToken);
+  defaultIdp = idpSet.values().next().value;
+  expect(defaultIdp).toBeDefined();
 
   // Create a User
   const username = uniqueName('LogoutUser', true);
@@ -97,13 +64,63 @@ beforeAll(async () => {
   await createUser(domain.id, managementApiAccessToken, user);
   await waitForDomainSync(domain.id, managementApiAccessToken);
 
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  // Start domain and wait for it to be ready to serve requests
+  // This ensures the OpenID configuration endpoint is available
+  const started = await startDomain(domain.id, managementApiAccessToken).then(waitForDomainStart);
+  domain = started.domain;
+  openIdConfiguration = started.oidcConfig;
   expect(openIdConfiguration).toBeDefined();
 });
 
+// Helper function to create a fresh application for each test
+async function createTestApplication() {
+  const appClientId = uniqueName('app-logout', true);
+  const appClientSecret = uniqueName('app-logout', true);
+  const appName = uniqueName('my-client', true);
+  const app = await createApplication(domain.id, managementApiAccessToken, {
+    name: appName,
+    type: 'WEB',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
+    redirectUris: ['https://callback'],
+  }).then((createdApp) =>
+    updateApplication(
+      domain.id,
+      managementApiAccessToken,
+      {
+        settings: {
+          oauth: {
+            redirectUris: ['https://callback'],
+            grantTypes: ['authorization_code'],
+          },
+        },
+        identityProviders: [{ identity: defaultIdp.id, priority: -1 }],
+      },
+      createdApp.id,
+    ).then((updatedApp) => {
+      // restore the clientSecret coming from the create order
+      updatedApp.settings.oauth.clientSecret = createdApp.settings.oauth.clientSecret;
+      return updatedApp;
+    }),
+  );
+  await waitForDomainSync(domain.id, managementApiAccessToken);
+  return app;
+}
+
 describe('OAuth2 - Logout tests', () => {
   describe('Default settings - target_uri is not restricted', () => {
+    beforeEach(async () => {
+      // Create a fresh application for each test to ensure isolation
+      application = await createTestApplication();
+    });
+
+    afterEach(async () => {
+      // Clean up application after each test
+      if (application?.id) {
+        await deleteApplication(domain.id, managementApiAccessToken, application.id);
+        await waitForDomainSync(domain.id, managementApiAccessToken);
+      }
+    });
     it('After sign-in a user can logout without target_uri', async () => {
       const postLoginRedirect = await signInUser();
       const response = await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
@@ -118,6 +135,19 @@ describe('OAuth2 - Logout tests', () => {
   });
 
   describe('Domain Settings - target_uri is restricted', () => {
+    beforeEach(async () => {
+      // Create a fresh application for each test to ensure isolation
+      application = await createTestApplication();
+    });
+
+    afterEach(async () => {
+      // Clean up application after each test
+      if (application?.id) {
+        await deleteApplication(domain.id, managementApiAccessToken, application.id);
+        await waitForDomainSync(domain.id, managementApiAccessToken);
+      }
+    });
+
     it('Update domain settings', async () => {
       await patchDomain(domain.id, managementApiAccessToken, {
         oidc: {
@@ -148,6 +178,37 @@ describe('OAuth2 - Logout tests', () => {
   });
 
   describe('Application Settings - target_uri is restricted', () => {
+    beforeAll(async () => {
+      // Create the application once for all tests in this describe block
+      // Set postLogoutRedirectUris to empty array initially so gateway knows
+      // app-level restrictions are in place (won't fall back to domain-level)
+      // When app-level postLogoutRedirectUris is set (even as empty array),
+      // the gateway will use only app-level URIs and NOT fall back to domain-level
+      application = await createTestApplication();
+      // Set empty array to ensure app-level restrictions are active
+      await patchApplication(
+        domain.id,
+        managementApiAccessToken,
+        {
+          settings: {
+            oauth: {
+              postLogoutRedirectUris: [],
+            },
+          },
+        },
+        application.id,
+      );
+      await waitForApplicationSync(domain.id, managementApiAccessToken, application.id);
+    });
+
+    afterAll(async () => {
+      // Clean up application after all tests in this describe block
+      if (application?.id) {
+        await deleteApplication(domain.id, managementApiAccessToken, application.id);
+        await waitForDomainSync(domain.id, managementApiAccessToken);
+      }
+    });
+
     it('Update application settings', async () => {
       await patchApplication(
         domain.id,
@@ -161,7 +222,10 @@ describe('OAuth2 - Logout tests', () => {
         },
         application.id,
       );
-      await waitForDomainSync(domain.id, managementApiAccessToken);
+      // Wait for application sync to ensure ApplicationEvent has been processed
+      // This avoids race conditions where domain sync completes but the Client object
+      // in the gateway hasn't been updated yet
+      await waitForApplicationSync(domain.id, managementApiAccessToken, application.id);
     });
 
     it('After sign-in a user can logout without target_uri', async () => {
@@ -193,7 +257,7 @@ describe('OAuth2 - Logout tests', () => {
 });
 
 afterAll(async () => {
-  if (domain && domain.id) {
+  if (domain?.id) {
     await safeDeleteDomain(domain.id, managementApiAccessToken);
   }
 });

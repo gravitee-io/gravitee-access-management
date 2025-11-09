@@ -23,6 +23,7 @@ import {
   updateDomainFlows,
   waitForDomainStart,
   waitForDomainSync,
+  waitForApplicationSync,
 } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
@@ -47,9 +48,10 @@ let cookies: any;
 let localIdpApp: any;
 let oidcIdp: any;
 
-// How this tests works:
+// How this test works:
 // 1. Two domains - one acts as OIDC provider (domainOIDC), the second is for testing (domainAccLinking)
-// 2. domainAccLinking has two apps - one with a hidden login form and OICD as a default idp to redirect directly to OIDC provider, the second is using the local idp provider (mongo/JDBC).
+// 2. domainAccLinking has two apps - one with a hidden login form and OIDC as a default idp to redirect directly to OIDC provider,
+//    the second is using the local idp provider (mongo/JDBC).
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
@@ -98,10 +100,13 @@ beforeAll(async () => {
   // Create user in oidc
   oidcUser = getUser('oidc');
   await createUser(domainOIDC.id, accessToken, oidcUser);
+  await waitForDomainSync(domainOIDC.id, accessToken);
+
+  // Wait for OIDC application to be synced to gateway before starting domain
+  await waitForApplicationSync(domainOIDC.id, accessToken, oidcApp.id);
 
   // Configure domainAccLinking
   domainAccLinking = await createDomain(accessToken, uniqueName('account-linking-domain', true), 'Account Linking test domain.');
-  
   // Update OIDC application redirectUri with actual domainAccLinking hrid
   await updateApplication(
     domainOIDC.id,
@@ -115,8 +120,10 @@ beforeAll(async () => {
     },
     oidcApp.id,
   );
+  // Wait for OIDC application to be synced to gateway
+  await waitForApplicationSync(domainOIDC.id, accessToken, oidcApp.id);
 
-  //Enable bruteforce
+  // Enable brute force protection
   await patchDomain(domainAccLinking.id, accessToken, {
     accountSettings: {
       maxLoginAttempts: 3,
@@ -125,8 +132,9 @@ beforeAll(async () => {
       loginAttemptsResetTime: 120,
     },
   });
+  await waitForDomainSync(domainAccLinking.id, accessToken);
 
-  //Create oidc provider
+  // Create OIDC provider
   const idpConfig = {
     clientId: oidcClientId,
     clientSecret: oidcClientSecret,
@@ -147,13 +155,15 @@ beforeAll(async () => {
     maxPoolSize: 200,
     storeOriginalTokens: false,
   };
-  let openIdIdp = {
+  const openIdIdp = {
     configuration: `${JSON.stringify(idpConfig)}`,
     name: 'oidc',
     type: 'oauth2-generic-am-idp',
     external: true,
   };
   oidcIdp = await createIdp(domainAccLinking.id, accessToken, openIdIdp);
+  // Wait for OIDC IDP to be synced to gateway
+  await waitForDomainSync(domainAccLinking.id, accessToken);
 
   // Create an application with oidc provider
   const appClientId = uniqueName('app', true);
@@ -180,10 +190,12 @@ beforeAll(async () => {
       app.id,
     ),
   );
+  // Wait for application to be synced to gateway
+  await waitForApplicationSync(domainAccLinking.id, accessToken, applicationAccLinking.id);
 
   // Create an application with an internal provider
   const idpSetAccountLinkingDomain = await getAllIdps(domainAccLinking.id, accessToken);
-  const localIdp = idpSetAccountLinkingDomain.filter((idp) => idp.type === 'mongo-am-idp' || 'jdbc-am-idp');
+  const localIdp = idpSetAccountLinkingDomain.filter((idp) => idp.type === 'mongo-am-idp' || idp.type === 'jdbc-am-idp');
   const appLocalClientId = uniqueName('app-local', true);
   const appLocalClientSecret = uniqueName('app-local', true);
   localIdpApp = await createApplication(domainAccLinking.id, accessToken, {
@@ -202,18 +214,29 @@ beforeAll(async () => {
       app.id,
     ),
   );
+  // Wait for application to be synced to gateway
+  await waitForApplicationSync(domainAccLinking.id, accessToken, localIdpApp.id);
+
   domainUser = getUser('domain-user');
   // Create the same user
   await createUser(domainAccLinking.id, accessToken, domainUser);
+  await waitForDomainSync(domainAccLinking.id, accessToken);
 
-  //Start OIDC Domain
+  // Start OIDC Domain
   const domainOIDCStarted = await startDomain(domainOIDC.id, accessToken).then(() => waitForDomainStart(domainOIDC));
   domainOIDC = domainOIDCStarted.domain;
+  // Wait for OIDC application to be synced after domain start
+  await waitForApplicationSync(domainOIDC.id, accessToken, oidcApp.id);
+  await waitForDomainSync(domainOIDC.id, accessToken);
 
-  //Start Master Domain
+  // Start Master Domain
   const masterDomainStarted = await startDomain(domainAccLinking.id, accessToken).then(() => waitForDomainStart(domainAccLinking));
   domainAccLinking = masterDomainStarted.domain;
   domainAccLinkingConfiguration = masterDomainStarted.oidcConfig;
+  // Wait for applications to be synced after domain start
+  await waitForApplicationSync(domainAccLinking.id, accessToken, applicationAccLinking.id);
+  await waitForApplicationSync(domainAccLinking.id, accessToken, localIdpApp.id);
+  await waitForDomainSync(domainAccLinking.id, accessToken);
 });
 
 describe('Account Linking - local IDP and OIDC', () => {
@@ -276,6 +299,23 @@ describe('Account Linking - local IDP and OIDC', () => {
   });
 
   it('Should login to second app with local idp', async () => {
+    // Ensure cookies are available from previous test
+    if (!cookies) {
+      // If cookies are not available, we need to login first
+      const loginResponse = await loginUserNameAndPassword(
+        applicationAccLinking.settings.oauth.clientId,
+        oidcUser,
+        'Test1234567!',
+        false,
+        domainAccLinkingConfiguration,
+        domainAccLinking,
+        'https://test.com',
+        'code',
+        true,
+      );
+      cookies = loginResponse.headers['set-cookie'];
+    }
+
     const authResponse = await performGet(
       domainAccLinkingConfiguration.authorization_endpoint,
       `?response_type=code&client_id=${localIdpApp.settings.oauth.clientId}&redirect_uri=https://test.com`,
@@ -285,7 +325,7 @@ describe('Account Linking - local IDP and OIDC', () => {
   });
 
   it('Should execute brute force not allow to login with domain user', async () => {
-    //Attempt fail login
+    // Attempt failed logins
     for (let i = 0; i < 5; i++) {
       const failResponse = await loginUserNameAndPassword(
         localIdpApp.settings.oauth.clientId,
@@ -306,7 +346,7 @@ describe('Account Linking - local IDP and OIDC', () => {
     const lockedUser = allUsers.data.find((u) => u.username === domainUser.username);
     expect(lockedUser.accountNonLocked).toBe(false);
 
-    // Try to log in with OIDC
+    // Try to log in with OIDC (should succeed)
     const user1TokenResponse = await loginUserNameAndPassword(
       applicationAccLinking.settings.oauth.clientId,
       oidcUser,
@@ -320,7 +360,7 @@ describe('Account Linking - local IDP and OIDC', () => {
     );
     expect(user1TokenResponse.headers['location']).toContain('test.com?code=');
 
-    //Try to log in with OIDC (user still locked)
+    // Try to log in with local IDP (user still locked)
     const lockedAttempt = await loginUserNameAndPassword(
       localIdpApp.settings.oauth.clientId,
       domainUser,

@@ -16,7 +16,7 @@
 
 import { expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart, waitForDomainSync, waitForApplicationSync } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
@@ -191,8 +191,13 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
   // Create test application
   const application = await createTestApplication(domain, defaultIdp, accessToken, redirectUri, clientId, clientSecret, appName);
 
+  // Wait for application to be synced to gateway
+  // This ensures the application is available before tests run
+  await waitForApplicationSync(domain.id, accessToken, application.id);
+
   // Create test user
   const user = await createTestUser(domain, application, defaultIdp, accessToken, username);
+  await waitForDomainSync(domain.id, accessToken);
 
   // Wait for domain to be ready and get OIDC configuration
   const domainReady = await waitForDomainStart(domain);

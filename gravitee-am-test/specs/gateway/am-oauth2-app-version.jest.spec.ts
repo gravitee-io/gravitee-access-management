@@ -23,6 +23,7 @@ import {
   startDomain,
   waitForDomainStart,
   waitForDomainSync,
+  waitForApplicationSync,
 } from '@management-commands/domain-management-commands';
 import { createIdp, deleteIdp, getAllIdps } from '@management-commands/idp-management-commands';
 import { createScope } from '@management-commands/scope-management-commands';
@@ -457,6 +458,7 @@ describe('OAuth2 - App version', () => {
               application2.id,
             ),
           )
+          .then((_) => waitForApplicationSync(masterDomain.id, accessToken, application2.id))
           .then((_) => waitForDomainSync(masterDomain.id, accessToken))
           .then((_) => performGet(openIdConfiguration.authorization_endpoint, params).expect(302));
 

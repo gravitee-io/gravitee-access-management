@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 import { expect } from '@jest/globals';
-import { getDomainFlows, updateDomainFlows, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { getDomainFlows, updateDomainFlows, startDomain, waitForDomainStart, waitForDomainSync, waitForApplicationSync } from '@management-commands/domain-management-commands';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
+import { retryUntil } from '@utils-commands/retry';
 
 export interface RateLimitConfig {
   keyExpression: string;
@@ -80,8 +81,12 @@ export const createServiceApplication = async (
 
 /**
  * Configure rate limiting policy on a domain
+ * @param domainId - Domain ID
+ * @param accessToken - Access token
+ * @param config - Rate limit configuration
+ * @param applicationId - Optional application ID to wait for sync after restart
  */
-export const configureRateLimitPolicy = async (domainId: string, accessToken: string, config: RateLimitConfig) => {
+export const configureRateLimitPolicy = async (domainId: string, accessToken: string, config: RateLimitConfig, applicationId?: string) => {
   const flows = await getDomainFlows(domainId, accessToken);
   const rateLimitConfig = {
     async: config.async ?? false,
@@ -108,16 +113,32 @@ export const configureRateLimitPolicy = async (domainId: string, accessToken: st
   ]);
 
   await updateDomainFlows(domainId, accessToken, flows);
-
-  // Restart domain to apply policy
-  const restartedDomain = await startDomain(domainId, accessToken);
   await waitForDomainSync(domainId, accessToken);
+
+  // Restart domain to apply policy and wait for it to be ready
+  const restartedDomain = await startDomain(domainId, accessToken);
+  const domainReady = await waitForDomainStart(restartedDomain);
+  
+  // Wait for domain sync after restart to ensure flows are synced
+  await waitForDomainSync(domainId, accessToken);
+  
+  // If application ID is provided, wait for application sync after restart
+  // This ensures the application is available in the gateway after domain restart
+  if (applicationId) {
+    await waitForApplicationSync(domainId, accessToken, applicationId);
+  }
   
   // Additional delay to ensure rate limit policy is fully applied
   // Domain sync doesn't guarantee policy application is complete
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Flows need time to be loaded after domain restart
+  // This is especially important for async mode
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 
-  return restartedDomain;
+  // Verify the token endpoint is accessible before returning
+  // This ensures the domain is fully ready to serve requests
+  await verifyTokenEndpointReady(domainReady.oidcConfig.token_endpoint);
+
+  return domainReady.domain;
 };
 
 /**
@@ -212,17 +233,52 @@ export const verifyRateLimitHeadersMissing = (requests: any[]) => {
 };
 
 /**
+ * Verify token endpoint is accessible and ready to serve requests
+ * @param tokenEndpoint - Token endpoint URL
+ */
+const verifyTokenEndpointReady = async (tokenEndpoint: string | undefined): Promise<void> => {
+  if (!tokenEndpoint) {
+    return;
+  }
+
+  try {
+    await retryUntil(
+      async () => {
+        // Try a simple request to verify the endpoint is accessible
+        // We expect it to fail with 401 (unauthorized) rather than 404 (not found)
+        // This confirms the endpoint exists and is ready
+        const testRequest = await performPost(tokenEndpoint, '', 'grant_type=client_credentials', {
+          'Content-type': 'application/x-www-form-urlencoded',
+          Authorization: 'Basic invalid',
+        });
+        // If we get 401, the endpoint is ready (it's rejecting due to invalid auth, not because it doesn't exist)
+        // If we get 404, the endpoint isn't ready yet
+        return testRequest.status === 401 || testRequest.status === 400;
+      },
+      (isReady) => isReady === true,
+      {
+        timeoutMillis: 10000,
+        intervalMillis: 500,
+        onRetry: () => console.debug('Token endpoint not ready yet, retrying...'),
+      },
+    );
+  } catch (error: any) {
+    // If verification fails, log a warning but don't throw
+    // The test will fail if the endpoint isn't actually ready
+    console.warn(`Token endpoint verification failed: ${error.message}`);
+  }
+};
+
+/**
  * Wait for rate limit window to reset
  * Uses time-based wait with a buffer to avoid consuming rate limit quota
  * @param periodSeconds - Rate limit period in seconds (default: 2)
- * @param bufferSeconds - Additional buffer time in seconds (default: 1.0)
+ * @param bufferSeconds - Additional buffer time in seconds (default: 1)
  */
 export const waitForRateLimitReset = async (
   periodSeconds: number = 2,
-  bufferSeconds: number = 1.0
+  bufferSeconds: number = 1
 ): Promise<void> => {
   const waitTime = (periodSeconds + bufferSeconds) * 1000;
-  console.log(`⏳ Waiting ${periodSeconds + bufferSeconds}s for rate limit window to reset (period: ${periodSeconds}s)...`);
   await new Promise((resolve) => setTimeout(resolve, waitTime));
-  console.log('✅ Rate limit window reset');
 };

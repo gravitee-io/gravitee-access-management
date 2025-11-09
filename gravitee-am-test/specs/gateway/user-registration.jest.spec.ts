@@ -23,7 +23,9 @@ import {
   createDomain,
   safeDeleteDomain,
   startDomain,
+  waitForDomainStart,
   waitForDomainSync,
+  waitForApplicationSync,
 } from '@management-commands/domain-management-commands';
 import { getAllUsers, listUsers } from '@management-commands/user-management-commands';
 import { extractXsrfToken, performFormPost } from '@gateway-commands/oauth-oidc-commands';
@@ -51,8 +53,6 @@ beforeAll(async () => {
 
   domain = await createDomain(accessToken, uniqueName('user-registration', true), faker.company.catchPhraseDescriptor());
   expect(domain).toBeDefined();
-
-  await startDomain(domain.id, accessToken);
 
   // Get the default idp and create a new one.
   const idpSet = await getAllIdps(domain.id, accessToken);
@@ -97,7 +97,13 @@ beforeAll(async () => {
   clientId = application.settings.oauth.clientId;
 
   // Wait for application to sync to gateway
+  await waitForApplicationSync(domain.id, accessToken, application.id);
   await waitForDomainSync(domain.id, accessToken);
+
+  // Start domain and wait for it to be ready to serve requests
+  // This ensures the registration page is available before tests run
+  const started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
+  domain = started.domain;
 });
 
 describe('Register User on domain', () => {

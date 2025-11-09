@@ -21,6 +21,7 @@ import { getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-co
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { expect } from '@jest/globals';
 import faker from 'faker';
+import { getApplication } from './application-management-commands';
 
 const request = require('supertest');
 
@@ -276,6 +277,116 @@ export const waitForDomainSync = async (
 };
 
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));
+
+/**
+ * Wait for application sync to complete after an update.
+ * 
+ * This function ensures that application changes have been synced to the gateway.
+ * It works by:
+ * 1. Waiting for domain sync to complete (domain updatedAt is stable)
+ * 2. Verifying that the application's updatedAt timestamp is stable
+ * 3. Adding an additional delay to allow ApplicationEvent to be processed by ClientManagerImpl
+ * 
+ * This helps avoid race conditions where domain sync completes but the ApplicationEvent
+ * hasn't been processed yet, causing the Client object in the gateway to have stale data.
+ * 
+ * @param domainId - Domain ID
+ * @param accessToken - Access token for API calls
+ * @param applicationId - Application ID to verify sync
+ * @param options - Optional configuration:
+ *   - timeoutMillis: Maximum time to wait (default: 30000ms)
+ *   - intervalMillis: Polling interval (default: 500ms)
+ *   - stabilityMillis: Time application must be stable before considering sync complete (default: 2000ms)
+ *   - eventProcessingDelay: Additional delay to allow events to process (default: 1000ms)
+ * 
+ * @returns Promise that resolves when application sync is complete
+ */
+export const waitForApplicationSync = async (
+  domainId: string,
+  accessToken: string,
+  applicationId: string,
+  options?: {
+    timeoutMillis?: number;
+    intervalMillis?: number;
+    stabilityMillis?: number;
+    eventProcessingDelay?: number;
+  }
+): Promise<void> => {
+  const {
+    timeoutMillis = 30000,
+    intervalMillis = 500,
+    stabilityMillis = 2000,
+    eventProcessingDelay = 1000,
+  } = options || {};
+
+  // First, wait for domain sync to complete
+  await waitForDomainSync(domainId, accessToken, {
+    timeoutMillis: timeoutMillis * 0.7, // Use 70% of timeout for domain sync
+    intervalMillis,
+    stabilityMillis,
+  });
+
+  // Wait for application's updatedAt to be stable
+  const state = {
+    lastUpdatedAt: null as number | null,
+    stableSince: null as number | null,
+  };
+
+  try {
+    await retryUntil(
+      async () => {
+        try {
+          const app = await getApplication(domainId, accessToken, applicationId);
+          const currentUpdatedAt = app.updatedAt ? new Date(app.updatedAt).getTime() : Date.now();
+          return { updatedAt: currentUpdatedAt, timestamp: Date.now() };
+        } catch (error: any) {
+          console.debug(`Error fetching application ${applicationId} for sync check: ${error.message}`);
+          return { updatedAt: Date.now(), timestamp: Date.now() };
+        }
+      },
+      (result) => {
+        const { updatedAt, timestamp } = result;
+
+        // First check - initialize state
+        if (state.lastUpdatedAt === null) {
+          state.lastUpdatedAt = updatedAt;
+          state.stableSince = timestamp;
+          return false;
+        }
+
+        // Application was updated - reset stability timer
+        if (updatedAt !== state.lastUpdatedAt) {
+          state.lastUpdatedAt = updatedAt;
+          state.stableSince = timestamp;
+          return false;
+        }
+
+        // Application hasn't been updated - check if stable long enough
+        const stableDuration = timestamp - (state.stableSince || timestamp);
+        return stableDuration >= stabilityMillis;
+      },
+      {
+        timeoutMillis: timeoutMillis * 0.3, // Use remaining 30% of timeout for application sync
+        intervalMillis,
+        onDone: () => {
+          const duration = state.stableSince ? Date.now() - (state.stableSince || 0) : 0;
+          console.debug(`Application ${applicationId} sync complete (stable for ${duration}ms)`);
+        },
+        onRetry: () => {
+          // Silent retry - avoid log spam
+        },
+      }
+    );
+
+    // Additional delay to allow ApplicationEvent to be processed by ClientManagerImpl
+    // This is necessary because domain sync completion doesn't guarantee that
+    // the ApplicationEvent has been processed yet
+    await waitFor(eventProcessingDelay);
+  } catch (error: any) {
+    // Timeout or error - log warning but don't throw (backward compatibility)
+    console.warn(`Application ${applicationId} sync timeout after ${timeoutMillis}ms: ${error.message}`);
+  }
+};
 
 export async function allowHttpLocalhostRedirects(domain: Domain, accessToken: string) {
   return patchDomain(domain.id, accessToken, {

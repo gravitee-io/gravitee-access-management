@@ -17,9 +17,9 @@ import { afterAll, beforeAll, describe, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
-import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { extractXsrfToken, performFormPost, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { getUser } from '@management-commands/user-management-commands';
@@ -73,13 +73,18 @@ beforeAll(async function () {
   // NOTE: we do not override the scimClient to keep reference of the clientSecret
   await updateApplication(domain.id, mngAccessToken, applicationDefinition, scimClient.id);
 
-  await startDomain(domain.id, mngAccessToken);
-
   await waitForDomainSync(domain.id, mngAccessToken);
-  const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
+
+  // Start domain and wait for it to be ready to serve requests
+  // This ensures the OpenID configuration endpoint is available
+  const started = await startDomain(domain.id, mngAccessToken).then(waitForDomainStart);
+  domain = started.domain;
+  const openIdConfiguration = started.oidcConfig;
+  expect(openIdConfiguration).toBeDefined();
+  expect(openIdConfiguration.token_endpoint).toBeDefined();
 
   // generate SCIM access token
-  const response = await performPost(openIdConfiguration.body.token_endpoint, '', 'grant_type=client_credentials', {
+  const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
     'Content-type': 'application/x-www-form-urlencoded',
     Authorization: 'Basic ' + applicationBase64Token(scimClient),
   });
