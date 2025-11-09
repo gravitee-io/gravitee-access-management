@@ -23,7 +23,7 @@ import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomain
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { uniqueName } from '@utils-commands/misc';
 
@@ -32,14 +32,7 @@ let managementApiAccessToken;
 let endUserAccessToken;
 let openIdConfiguration;
 let application;
-let user = {
-  username: 'SelfAccountUser',
-  password: 'SomeP@ssw0rd',
-  firstName: 'SelfAccount',
-  lastName: 'User',
-  email: 'selfaccountuser@acme.fr',
-  preRegistration: false,
-};
+let user;
 const PATCH_DOMAIN_SEFLACCOUNT_SETTINGS = {
   selfServiceAccountManagementSettings: {
     enabled: true,
@@ -63,12 +56,14 @@ beforeAll(async () => {
 
   // Create the application
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
-
+  const appClientId = uniqueName('selfaccount-changepwd', true);
+  const appClientSecret = uniqueName('selfaccount-changepwd', true);
+  const appName = uniqueName('my-client', true);
   application = await createApplication(domain.id, managementApiAccessToken, {
-    name: 'my-client',
+    name: appName,
     type: 'WEB',
-    clientId: 'selfaccount-changepwd',
-    clientSecret: 'selfaccount-changepwd',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
@@ -106,7 +101,19 @@ beforeAll(async () => {
   );
   expect(application).toBeDefined();
 
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, managementApiAccessToken);
+
   // Create a User
+  const username = uniqueName('SelfAccountUser', true);
+  user = {
+    username: username,
+    password: 'SomeP@ssw0rd',
+    firstName: 'SelfAccount',
+    lastName: 'User',
+    email: 'selfaccountuser@acme.fr',
+    preRegistration: false,
+  };
   await createUser(domain.id, managementApiAccessToken, user);
 
   await waitForDomainStart(domain).then((started) => {
@@ -215,6 +222,9 @@ describe('SelfAccount - Change Password', () => {
         PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.tokenAge = 10;
         await patchDomain(domain.id, managementApiAccessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
         await waitForDomainSync(domain.id, managementApiAccessToken);
+        // Wait for token to become older than tokenAge (10 seconds)
+        // The token was refreshed in the previous test, so we need to wait for it to age
+        await new Promise((resolve) => setTimeout(resolve, 11000)); // 10 seconds + 1 second buffer
       });
     });
 

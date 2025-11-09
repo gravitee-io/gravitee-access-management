@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { expect } from '@jest/globals';
-import { getDomainFlows, updateDomainFlows, startDomain } from '@management-commands/domain-management-commands';
+import { getDomainFlows, updateDomainFlows, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { FlowEntityTypeEnum } from '../../../api/management/models';
@@ -69,7 +69,6 @@ export const createServiceApplication = async (
     }),
   );
 
-  // Verify application was created successfully
   expect(application).toBeDefined();
   expect(application.id).toBeDefined();
   expect(application.settings.oauth.clientId).toBe(clientId);
@@ -89,7 +88,7 @@ export const configureRateLimitPolicy = async (domainId: string, accessToken: st
     addHeaders: config.addHeaders ?? true,
     rate: {
       useKeyOnly: true,
-      periodTime: config.periodSeconds ?? 3,
+      periodTime: config.periodSeconds ?? 2,
       periodTimeUnit: 'SECONDS',
       key: config.keyExpression,
       limit: config.limit ?? 2,
@@ -112,7 +111,11 @@ export const configureRateLimitPolicy = async (domainId: string, accessToken: st
 
   // Restart domain to apply policy
   const restartedDomain = await startDomain(domainId, accessToken);
-  await new Promise((r) => setTimeout(r, 10000));
+  await waitForDomainSync(domainId, accessToken);
+  
+  // Additional delay to ensure rate limit policy is fully applied
+  // Domain sync doesn't guarantee policy application is complete
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   return restartedDomain;
 };
@@ -184,7 +187,7 @@ export const verifyRateLimitHeaders = (requests: any[], expectedLimit: number) =
     const firstRequest = successfulRequests[0];
     expect(firstRequest.headers['x-rate-limit-limit']).toBe(expectedLimit.toString());
     expect(firstRequest.headers['x-rate-limit-remaining']).toBeDefined();
-    expect(parseInt(firstRequest.headers['x-rate-limit-remaining'])).toBeLessThanOrEqual(expectedLimit);
+    expect(Number.parseInt(firstRequest.headers['x-rate-limit-remaining'], 10)).toBeLessThanOrEqual(expectedLimit);
   }
 };
 
@@ -195,14 +198,12 @@ export const verifyRateLimitHeadersMissing = (requests: any[]) => {
   const successfulRequests = requests.filter((req) => req.status === 200);
   const rateLimitedRequests = requests.filter((req) => req.status === 429);
 
-  // Check that rate limit headers are missing from successful requests
   if (successfulRequests.length > 0) {
     expect(successfulRequests[0].headers['x-rate-limit-limit']).toBeUndefined();
     expect(successfulRequests[0].headers['x-rate-limit-remaining']).toBeUndefined();
     expect(successfulRequests[0].headers['x-rate-limit-reset']).toBeUndefined();
   }
 
-  // Check that rate limit headers are missing from rate limited requests
   if (rateLimitedRequests.length > 0) {
     expect(rateLimitedRequests[0].headers['x-rate-limit-limit']).toBeUndefined();
     expect(rateLimitedRequests[0].headers['x-rate-limit-remaining']).toBeUndefined();
@@ -212,9 +213,16 @@ export const verifyRateLimitHeadersMissing = (requests: any[]) => {
 
 /**
  * Wait for rate limit window to reset
+ * Uses time-based wait with a buffer to avoid consuming rate limit quota
+ * @param periodSeconds - Rate limit period in seconds (default: 2)
+ * @param bufferSeconds - Additional buffer time in seconds (default: 1.0)
  */
-export const waitForRateLimitReset = async (seconds: number) => {
-  console.log(`⏳ Waiting ${seconds} seconds for rate limit window to reset...`);
-  await new Promise((r) => setTimeout(r, seconds * 1000));
+export const waitForRateLimitReset = async (
+  periodSeconds: number = 2,
+  bufferSeconds: number = 1.0
+): Promise<void> => {
+  const waitTime = (periodSeconds + bufferSeconds) * 1000;
+  console.log(`⏳ Waiting ${periodSeconds + bufferSeconds}s for rate limit window to reset (period: ${periodSeconds}s)...`);
+  await new Promise((resolve) => setTimeout(resolve, waitTime));
   console.log('✅ Rate limit window reset');
 };

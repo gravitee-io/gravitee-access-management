@@ -23,17 +23,16 @@ import {
   createDomain,
   safeDeleteDomain,
   startDomain,
-  waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { getAllUsers, listUsers } from '@management-commands/user-management-commands';
-import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost } from '@gateway-commands/oauth-oidc-commands';
+import { extractXsrfToken, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { createIdp, getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { decodeJwt } from '@utils-commands/jwt';
 import { uniqueName } from '@utils-commands/misc';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 const jdbc = process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE;
 
@@ -43,7 +42,6 @@ let defaultIdp;
 let customIdp;
 let application;
 let clientId;
-let openIdConfiguration;
 
 jest.setTimeout(200000);
 
@@ -98,11 +96,8 @@ beforeAll(async () => {
   expect(application).toBeDefined();
   clientId = application.settings.oauth.clientId;
 
-  await waitForDomainStart(domain).then((started) => {
-    domain = started.domain;
-    openIdConfiguration = started.oidcConfig;
-    expect(openIdConfiguration).toBeDefined();
-  });
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, accessToken);
 });
 
 describe('Register User on domain', () => {
@@ -277,7 +272,7 @@ describe('Register User on domain', () => {
 });
 
 afterAll(async () => {
-  if (domain && domain.id) {
+  if (domain?.id) {
     await safeDeleteDomain(domain.id, accessToken);
   }
 });

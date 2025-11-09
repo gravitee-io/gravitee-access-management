@@ -68,7 +68,7 @@ beforeAll(async () => {
   expect(domainStarted.id).toEqual(createdDomain.id);
 
   domain = domainStarted;
-  await new Promise((r) => setTimeout(r, 10000));
+  await waitForDomainSync(domain.id, accessToken);
 
   const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
   oidc = result.body;

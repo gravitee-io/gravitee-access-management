@@ -116,12 +116,12 @@ async function setupTestEnvironment() {
   return { domain: startedDomain, defaultIdp, accessToken };
 }
 
-async function createTestApplication(domain: Domain, defaultIdp: IdentityProvider, accessToken: string, redirectUri: string) {
+async function createTestApplication(domain: Domain, defaultIdp: IdentityProvider, accessToken: string, redirectUri: string, clientId: string, clientSecret: string, appName: string) {
   const application = await createApplication(domain.id, accessToken, {
-    name: TEST_CONSTANTS.APP_NAME,
+    name: appName,
     type: TEST_CONSTANTS.APP_TYPE,
-    clientId: TEST_CONSTANTS.CLIENT_ID,
-    clientSecret: TEST_CONSTANTS.CLIENT_SECRET,
+    clientId: clientId,
+    clientSecret: clientSecret,
     redirectUris: [redirectUri],
   }).then((app) =>
     updateApplication(
@@ -152,19 +152,19 @@ async function createTestApplication(domain: Domain, defaultIdp: IdentityProvide
   // Verify application was created successfully
   expect(application).toBeDefined();
   expect(application.id).toBeDefined();
-  expect(application.settings.oauth.clientId).toBe(TEST_CONSTANTS.CLIENT_ID);
-  expect(application.settings.oauth.clientSecret).toBe(TEST_CONSTANTS.CLIENT_SECRET);
+  expect(application.settings.oauth.clientId).toBe(clientId);
+  expect(application.settings.oauth.clientSecret).toBe(clientSecret);
   expect(application.settings.oauth.grantTypes).toEqual(['authorization_code']);
 
   return application;
 }
 
-async function createTestUser(domain: Domain, application: Application, defaultIdp: IdentityProvider, accessToken: string) {
+async function createTestUser(domain: Domain, application: Application, defaultIdp: IdentityProvider, accessToken: string, username: string) {
   const testUser = await createUser(domain.id, accessToken, {
     firstName: TEST_CONSTANTS.USER_FIRST_NAME,
     lastName: TEST_CONSTANTS.USER_LAST_NAME,
     email: TEST_CONSTANTS.USER_EMAIL,
-    username: TEST_CONSTANTS.USER_USERNAME,
+    username: username,
     password: TEST_CONSTANTS.USER_PASSWORD,
     client: application.id,
     source: defaultIdp.id,
@@ -182,11 +182,17 @@ export const setupMobilePKCEFixture = async (redirectUri: string): Promise<Mobil
   // Setup test environment
   const { domain, defaultIdp, accessToken } = await setupTestEnvironment();
 
+  // Generate unique identifiers to avoid conflicts in parallel execution
+  const clientId = uniqueName('mobile-pkce-client', true);
+  const clientSecret = uniqueName('mobile-pkce-secret', true);
+  const appName = uniqueName('mobile-pkce-app', true);
+  const username = uniqueName('mobileuser', true);
+
   // Create test application
-  const application = await createTestApplication(domain, defaultIdp, accessToken, redirectUri);
+  const application = await createTestApplication(domain, defaultIdp, accessToken, redirectUri, clientId, clientSecret, appName);
 
   // Create test user
-  const user = await createTestUser(domain, application, defaultIdp, accessToken);
+  const user = await createTestUser(domain, application, defaultIdp, accessToken, username);
 
   // Wait for domain to be ready and get OIDC configuration
   const domainReady = await waitForDomainStart(domain);

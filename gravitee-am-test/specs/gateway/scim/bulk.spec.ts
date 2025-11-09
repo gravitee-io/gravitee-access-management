@@ -28,18 +28,35 @@ import { BulkResponse } from '../../../api/gateway/models/scim/BulkRequest/BulkR
 import { Error } from '../../../api/gateway/models/scim/BulkRequest/Error';
 import { random } from 'faker';
 import { uniqueName } from '@utils-commands/misc';
+import { retryUntil } from '@utils-commands/retry';
 
 let mngAccessToken: string;
 let scimAccessToken: string;
 let domain: Domain;
 let scimClient: Application;
 let scimEndpoint: string;
+let testUser01: string;
+let testUser02: string;
+let testRubble: string;
+let testSkye: string;
+let testMarshal: string;
+let testSky: string;
+let testChase: string;
 
 jest.setTimeout(200000);
 
 beforeAll(async function () {
   mngAccessToken = await requestAdminAccessToken();
   expect(mngAccessToken).toBeDefined();
+
+  // Generate unique usernames to avoid conflicts in parallel execution
+  testUser01 = uniqueName('user01', true);
+  testUser02 = uniqueName('user02', true);
+  testRubble = uniqueName('rubble', true);
+  testSkye = uniqueName('skye', true);
+  testMarshal = uniqueName('marshal', true);
+  testSky = uniqueName('sky', true);
+  testChase = uniqueName('chase', true);
 
   domain = await createDomain(mngAccessToken, uniqueName('bulk-scim', true), 'Domain used to test Bulk SCIM requests');
   expect(domain).toBeDefined();
@@ -52,8 +69,9 @@ beforeAll(async function () {
     },
   });
 
+  const appName = uniqueName('SCIM App', true);
   const applicationDefinition: Application = {
-    name: 'SCIM App',
+    name: appName,
     type: 'SERVICE',
     settings: {
       oauth: {
@@ -77,10 +95,21 @@ beforeAll(async function () {
   await startDomain(domain.id, mngAccessToken);
 
   await waitForDomainSync(domain.id, mngAccessToken);
-  const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
+  
+  // Verify domain is ready to serve requests by polling OpenID config endpoint
+  const result = await retryUntil(
+    () => getWellKnownOpenIdConfiguration(domain.hrid) as Promise<any>,
+    (res: any) => res.status === 200,
+    {
+      timeoutMillis: 10000,
+      intervalMillis: 200,
+      onRetry: () => console.debug(`Domain ${domain.hrid} not ready yet, retrying...`),
+    }
+  );
+  const openIdConfiguration = result.body;
 
   // generate SCIM access token
-  const response = await performPost(openIdConfiguration.body.token_endpoint, '', 'grant_type=client_credentials', {
+  const response = await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
     'Content-type': 'application/x-www-form-urlencoded',
     Authorization: 'Basic ' + applicationBase64Token(scimClient),
   });
@@ -89,7 +118,7 @@ beforeAll(async function () {
 });
 
 afterAll(async function () {
-  if (domain) {
+  if (domain?.id) {
     await safeDeleteDomain(domain.id, mngAccessToken);
   }
 });
@@ -150,7 +179,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'user01',
+        userName: testUser01,
       },
     };
     const operation2: BulkOperation = {
@@ -159,7 +188,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'user01',
+        userName: testUser01,
       },
     };
     const operation3: BulkOperation = {
@@ -168,7 +197,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'user02',
+        userName: testUser02,
       },
     };
 
@@ -291,7 +320,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'rubble',
+        userName: testRubble,
       },
     };
     const operation2: BulkOperation = {
@@ -300,7 +329,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'rubble',
+        userName: testRubble,
       },
     };
     const operation3: BulkOperation = {
@@ -309,7 +338,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'rubble',
+        userName: testRubble,
       },
     };
     const operation4: BulkOperation = {
@@ -318,7 +347,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'skye',
+        userName: testSkye,
       },
     };
 
@@ -366,7 +395,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'marshal',
+        userName: testMarshal,
       },
     };
     const operation2: BulkOperation = {
@@ -375,7 +404,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'marshal',
+        userName: testMarshal,
       },
     };
     const operation3: BulkOperation = {
@@ -384,7 +413,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'sky',
+        userName: testSky,
       },
     };
     const operation4: BulkOperation = {
@@ -393,7 +422,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: 'chase',
+        userName: testChase,
       },
     };
 
