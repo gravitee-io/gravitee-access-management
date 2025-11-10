@@ -58,7 +58,6 @@ let application2;
 let application3;
 let openIdConfiguration;
 let testUsername: string;
-let testUserEmail: string;
 let testJensenUsername: string;
 let testJensenEmail: string;
 
@@ -70,7 +69,6 @@ beforeAll(async () => {
 
   // Generate unique usernames to avoid conflicts in parallel execution
   testUsername = uniqueName('user', true);
-  testUserEmail = `${testUsername}@example.com`;
   testJensenUsername = uniqueName('jensen.barbara', true);
   testJensenEmail = `${testJensenUsername}@mail.com`;
 
@@ -79,7 +77,7 @@ beforeAll(async () => {
   expect(masterDomain.id).toBeDefined();
 
   masterDomain = await mustMakeDomainMaster(masterDomain, accessToken);
-  defaultInlineIdp = await createNewIdp(masterDomain, accessToken, testUsername, testUserEmail, testJensenUsername, testJensenEmail);
+  defaultInlineIdp = await createNewIdp(masterDomain, accessToken, testUsername, testJensenUsername, testJensenEmail);
   scope = await createApplicationScope(masterDomain, accessToken, 'scope1');
   await createDomainCertificate(masterDomain, accessToken);
   application1 = await createApp1(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
@@ -1034,7 +1032,6 @@ async function createNewIdp(
   domain: Domain,
   accessToken: string,
   username: string,
-  userEmail: string,
   jensenUsername: string,
   jensenEmail: string,
 ) {

@@ -217,11 +217,12 @@ export const waitForDomainSync = async (
             const domain = await getDomain(domainId, accessToken);
             const currentUpdatedAt = domain.updatedAt ? new Date(domain.updatedAt).getTime() : null;
             return { updatedAt: currentUpdatedAt, timestamp: Date.now() };
-          } catch (error: any) {
+          } catch (error: unknown) {
             // If domain fetch fails, return null as fallback
             // This allows retry logic to continue (domain might not be ready yet)
             // Log at debug level to handle the exception while avoiding log spam
-            console.debug(`Error fetching domain ${domainId} for sync check: ${error.message}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.debug(`Error fetching domain ${domainId} for sync check: ${errorMessage}`);
             return { updatedAt: null, timestamp: Date.now() };
           }
         },
@@ -267,9 +268,10 @@ export const waitForDomainSync = async (
       // Additional minimum wait to ensure domain is ready to serve requests
       // Stability check doesn't guarantee domain is ready to handle requests
       await waitFor(500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Timeout or error - log warning but don't throw (backward compatibility)
-      console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);
     }
     return;
   }

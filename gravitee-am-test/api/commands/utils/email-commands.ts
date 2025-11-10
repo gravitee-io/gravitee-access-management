@@ -88,11 +88,12 @@ export async function clearEmails(toAddress?: string) {
       for (const email of emailsToDelete) {
         try {
           await fetch(`${process.env.FAKE_SMTP}/api/email/${email['id']}`, { method: 'delete' });
-        } catch (error: any) {
+        } catch (error: unknown) {
           // If individual deletion fails, log and continue
           // This is a fallback for FAKE_SMTP versions that don't support DELETE by ID
           // In that case, we rely on filtering in getLastEmail() to avoid interference
-          console.debug(`Failed to delete email ${email['id']} for ${toAddress}, will rely on filtering: ${error.message}`);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.debug(`Failed to delete email ${email['id']} for ${toAddress}, will rely on filtering: ${errorMessage}`);
         }
       }
     }

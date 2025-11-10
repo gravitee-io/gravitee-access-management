@@ -183,7 +183,7 @@ beforeAll(async () => {
 
   // Create an application with an internal provider
   const idpSetAccountLinkingDomain = await getAllIdps(domainAccLinking.id, accessToken);
-  const localIdp = idpSetAccountLinkingDomain.filter((idp) => idp.type === 'mongo-am-idp' || 'jdbc-am-idp');
+  const localIdp = idpSetAccountLinkingDomain.filter((idp) => idp.type === 'mongo-am-idp' || idp.type === 'jdbc-am-idp');
   const appLocalClientId = uniqueName('app-local', true);
   const appLocalClientSecret = uniqueName('app-local', true);
   localIdpApp = await createApplication(domainAccLinking.id, accessToken, {

@@ -91,6 +91,8 @@ beforeAll(async function () {
   // we need to call update app as the CREATE order is not taking the scope settings into account
   // NOTE: we do not override the scimClient to keep reference of the clientSecret
   await updateApplication(domain.id, mngAccessToken, applicationDefinition, scimClient.id);
+  // Ensure application update is synced before starting domain
+  await waitForDomainSync(domain.id, mngAccessToken);
 
   await startDomain(domain.id, mngAccessToken);
 

@@ -31,7 +31,7 @@ import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
 import { IdentityProvider } from '@management-models/IdentityProvider';
 import { uniqueName } from '@utils-commands/misc';
-import { performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performGet, performPost, getWellKnownOpenIdConfiguration } from '@gateway-commands/oauth-oidc-commands';
 import { login } from '@gateway-commands/login-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 
@@ -77,7 +77,9 @@ export function buildAuthorizationUrlWithResources(endpoint: string, clientId: s
     redirect_uri: redirectUri,
     state: PROTECTED_RESOURCES_TEST.STATE,
   });
-  resources.forEach((resource) => params.append('resource', resource));
+  for (const resource of resources) {
+    params.append('resource', resource);
+  }
   return `${endpoint}?${params.toString()}`;
 }
 
@@ -102,12 +104,15 @@ async function setupTestEnvironment() {
   expect(domain.id).toBeDefined();
 
   const startedDomain = await startDomain(domain.id, accessToken);
+  // Wait for domain to be ready before getting IDPs
+  const domainReady = await waitForDomainStart(startedDomain);
+  await waitForDomainSync(domainReady.domain.id, accessToken);
 
-  const idpSet = await getAllIdps(startedDomain.id, accessToken);
+  const idpSet = await getAllIdps(domainReady.domain.id, accessToken);
   const defaultIdp = idpSet.values().next().value;
   expect(defaultIdp).toBeDefined();
 
-  return { domain: startedDomain, defaultIdp, accessToken };
+  return { domain: domainReady.domain, defaultIdp, accessToken };
 }
 
 async function createTestApplication(domain: Domain, defaultIdp: IdentityProvider, accessToken: string, redirectUri: string) {
@@ -224,13 +229,18 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     
     const application = await createTestApplication(domain, defaultIdp, accessToken, PROTECTED_RESOURCES_TEST.REDIRECT_URI);
     const serviceApplication = await createServiceApplication(domain, accessToken);
+    // Ensure IDP is synced before creating user (critical for user creation with source IDP)
+    await waitForDomainSync(domain.id, accessToken);
     const user = await createTestUser(domain, application, defaultIdp, accessToken);
     const protectedResources = await createTestProtectedResources(domain, accessToken);
-    const domainReady = await waitForDomainStart(domain);
-    const readyDomain = domainReady.domain;
-    const openIdConfiguration = domainReady.oidcConfig;
-    expect(openIdConfiguration).toBeDefined();
+    // Ensure protected resources are synced to gateway before using them
     await waitForDomainSync(domain.id, accessToken);
+    
+    // Domain is already ready from setupTestEnvironment, just get OIDC config
+    const openIdConfigurationResponse = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
+    const openIdConfiguration = openIdConfigurationResponse.body;
+    expect(openIdConfiguration).toBeDefined();
+    expect(openIdConfiguration.authorization_endpoint).toBeDefined();
 
   const completeAuthorizationFlowWithResources = async (resources: string[]): Promise<string> => {
     const clientId = application.settings.oauth.clientId;
@@ -257,7 +267,11 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
       code: authCode,
       redirect_uri: PROTECTED_RESOURCES_TEST.REDIRECT_URI,
     });
-    if (resources && resources.length > 0) resources.forEach((r) => tokenParams.append('resource', r));
+    if (resources && resources.length > 0) {
+      for (const r of resources) {
+        tokenParams.append('resource', r);
+      }
+    }
     return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
       'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: `Basic ${applicationBase64Token(application)}`,
@@ -268,7 +282,11 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
 
   const exchangeRefreshForTokenWithResources = (refreshToken: string, resources?: string[]) => {
     const tokenParams = new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken });
-    if (resources && resources.length > 0) resources.forEach((r) => tokenParams.append('resource', r));
+    if (resources && resources.length > 0) {
+      for (const r of resources) {
+        tokenParams.append('resource', r);
+      }
+    }
     return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
       'Content-Type': 'application/x-www-form-urlencoded',
       Authorization: `Basic ${applicationBase64Token(application)}`,
@@ -276,13 +294,23 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
   };
 
     const cleanup = async () => {
-      if (readyDomain && accessToken) {
-        await safeDeleteDomain(readyDomain.id, accessToken);
+      if (!domain || !accessToken) {
+        console.warn('⚠️  Cannot cleanup: domain or accessToken is missing');
+        return;
+      }
+
+      try {
+        // Delete domain (this will cascade delete applications, users, protected resources, etc.)
+        await safeDeleteDomain(domain.id, accessToken);
+        console.log('✅ Cleanup complete');
+      } catch (error: any) {
+        console.error('❌ Error during cleanup:', error.message);
+        // Don't throw - cleanup errors shouldn't fail tests
       }
     };
 
     return {
-      domain: readyDomain,
+      domain,
       application,
       serviceApplication,
       user,
