@@ -19,6 +19,7 @@ import { buildCreateAndTestUser } from '@management-commands/user-management-com
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { createDevice } from '@management-commands/device-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { expect } from '@jest/globals';
 
 export interface Domain {
@@ -146,11 +147,13 @@ export async function removeDomain(ctx: Domain) {
 }
 
 export async function initClient(domain: Domain, applicationName: string, applicationSettings: any) {
+  // Generate unique identifiers to avoid conflicts in parallel execution
+  const uniqueAppName = uniqueName(applicationName, true);
   const client = {
-    clientId: applicationName,
-    name: applicationName,
-    id: applicationName,
-    clientSecret: applicationName,
+    clientId: uniqueAppName,
+    name: uniqueAppName,
+    id: uniqueAppName,
+    clientSecret: uniqueAppName,
     redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   } as Application;
 

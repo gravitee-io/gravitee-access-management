@@ -30,7 +30,7 @@ export class Email {
       const dom = cheerio.load(this.contents[0].data);
       return dom('a').attr('href');
     } else {
-      throw 'Email content is missing';
+      throw new Error('Email content is missing');
     }
   }
 }
@@ -40,11 +40,25 @@ class Content {
   contentType: string;
 }
 
-export async function getLastEmail(delay = 1000) {
+export async function getLastEmail(delay = 1000, toAddress?: string) {
   await new Promise((r) => setTimeout(r, delay));
   const response = await fetch(process.env.FAKE_SMTP + '/api/email');
   const array = await response.json();
-  const jsonEmail = array[0];
+  if (!array || array.length === 0) {
+    throw new Error('No emails available');
+  }
+
+  // Filter by recipient address if provided
+  let jsonEmail;
+  if (toAddress) {
+    jsonEmail = array.find((email: any) => email['toAddress'] === toAddress);
+    if (!jsonEmail) {
+      throw new Error(`No email found for recipient: ${toAddress}`);
+    }
+  } else {
+    // If no filter, return the first (most recent) email
+    jsonEmail = array[0];
+  }
 
   const email = new Email();
   email.id = jsonEmail['id'];
@@ -61,13 +75,45 @@ export async function getLastEmail(delay = 1000) {
   return email;
 }
 
-export async function clearEmails() {
-  await fetch(process.env.FAKE_SMTP + '/api/email', { method: 'delete' });
+export async function clearEmails(toAddress?: string) {
+  if (toAddress) {
+    // Clear emails for a specific recipient only
+    // Fetch all emails, filter by recipient, and delete each one
+    const response = await fetch(process.env.FAKE_SMTP + '/api/email');
+    const array = await response.json();
+    if (array && array.length > 0) {
+      // Filter emails by recipient address
+      const emailsToDelete = array.filter((email: any) => email['toAddress'] === toAddress);
+      // Delete each email by ID (FAKE_SMTP typically supports DELETE /api/email/{id})
+      for (const email of emailsToDelete) {
+        try {
+          await fetch(`${process.env.FAKE_SMTP}/api/email/${email['id']}`, { method: 'delete' });
+        } catch (error: any) {
+          // If individual deletion fails, log and continue
+          // This is a fallback for FAKE_SMTP versions that don't support DELETE by ID
+          // In that case, we rely on filtering in getLastEmail() to avoid interference
+          console.debug(`Failed to delete email ${email['id']} for ${toAddress}, will rely on filtering: ${error.message}`);
+        }
+      }
+    }
+  } else {
+    // Clear all emails (backward compatible)
+    await fetch(process.env.FAKE_SMTP + '/api/email', { method: 'delete' });
+  }
 }
 
-export async function hasEmail(delay = 1000) {
+export async function hasEmail(delay = 1000, toAddress?: string) {
   await new Promise((r) => setTimeout(r, delay));
   const response = await fetch(process.env.FAKE_SMTP + '/api/email');
   const array = await response.json();
+  if (!array || array.length === 0) {
+    return false;
+  }
+
+  // Filter by recipient address if provided
+  if (toAddress) {
+    return array.some((email: any) => email['toAddress'] === toAddress);
+  }
+
   return array.length > 0;
 }

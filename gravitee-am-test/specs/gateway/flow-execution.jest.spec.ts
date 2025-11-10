@@ -15,7 +15,7 @@
  */
 import fetch from 'cross-fetch';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -75,11 +75,14 @@ beforeAll(async () => {
   // do the rest of the setup while the domain is starting
   // Create the application
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
+  const appClientId = uniqueName('flow-app', true);
+  const appClientSecret = uniqueName('flow-app', true);
+  const appName = uniqueName('my-client', true);
   application = await createApplication(domain.id, managementApiAccessToken, {
-    name: 'my-client',
+    name: appName,
     type: 'WEB',
-    clientId: 'flow-app',
-    clientSecret: 'flow-app',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
@@ -103,6 +106,9 @@ beforeAll(async () => {
   );
   expect(application).toBeDefined();
 
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, managementApiAccessToken);
+
   // Create a User
   await createUser(domain.id, managementApiAccessToken, user);
 
@@ -110,6 +116,9 @@ beforeAll(async () => {
     domain = result.domain;
     openIdConfiguration = result.oidcConfig;
   });
+
+  // Clear emails for this specific recipient at the start to avoid interference from other tests
+  await clearEmails(user.email);
 });
 
 describe('Flows Execution - authorization_code flow', () => {
@@ -461,26 +470,26 @@ describe('Flows Execution - authorization_code flow', () => {
     });
 
     it("After LOGIN without the callout parameter, email isn't received ", async () => {
-      await clearEmails();
+      await clearEmails(user.email);
 
       const postLoginRedirect = await signInUser(domain, application, user, openIdConfiguration);
       await new Promise((r) => setTimeout(r, 1000));
       await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
 
-      const emailReceived = await hasEmail();
+      const emailReceived = await hasEmail(1000, user.email);
       expect(emailReceived).toBeFalsy();
     });
 
     it('After LOGIN with the callout parameter, email is received ', async () => {
-      await clearEmails();
+      await clearEmails(user.email);
       const postLoginRedirect = await signInUser(domain, application, user, openIdConfiguration, 'callout=true');
       await new Promise((r) => setTimeout(r, 1000));
       await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
 
-      const emailReceived = await hasEmail();
+      const emailReceived = await hasEmail(1000, user.email);
       expect(emailReceived).toBeTruthy();
 
-      const email = await getLastEmail();
+      const email = await getLastEmail(1000, user.email);
       expect(email.subject).toBeDefined();
       expect(email.subject).toContain(EMAIL_SUBJECT);
       const jwks_uri = email.extractLink();
@@ -488,14 +497,9 @@ describe('Flows Execution - authorization_code flow', () => {
     });
   });
 });
-// Need to use Email and CalloutHTTP
-/*
-describe("Flows Execution - Register", () => {
-
-});*/
 
 afterAll(async () => {
-  if (domain && domain.id) {
+  if (domain?.id) {
     await safeDeleteDomain(domain.id, managementApiAccessToken);
   }
 });

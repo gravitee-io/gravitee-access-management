@@ -263,6 +263,10 @@ export const waitForDomainSync = async (
           },
         }
       );
+      
+      // Additional minimum wait to ensure domain is ready to serve requests
+      // Stability check doesn't guarantee domain is ready to handle requests
+      await waitFor(500);
     } catch (error: any) {
       // Timeout or error - log warning but don't throw (backward compatibility)
       console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${error.message}`);

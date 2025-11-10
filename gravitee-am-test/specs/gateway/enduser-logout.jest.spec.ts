@@ -36,14 +36,7 @@ let domain;
 let managementApiAccessToken;
 let openIdConfiguration;
 let application;
-let user = {
-  username: 'LogoutUser',
-  password: 'SomeP@ssw0rd',
-  firstName: 'Logout',
-  lastName: 'User',
-  email: 'logoutuser@acme.fr',
-  preRegistration: false,
-};
+let user;
 
 jest.setTimeout(200000);
 
@@ -57,11 +50,14 @@ beforeAll(async () => {
 
   // Create the application
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
+  const appClientId = uniqueName('app-logout', true);
+  const appClientSecret = uniqueName('app-logout', true);
+  const appName = uniqueName('my-client', true);
   application = await createApplication(domain.id, managementApiAccessToken, {
-    name: 'my-client',
+    name: appName,
     type: 'WEB',
-    clientId: 'app-logout',
-    clientSecret: 'app-logout',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
@@ -85,7 +81,19 @@ beforeAll(async () => {
   );
   expect(application).toBeDefined();
 
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, managementApiAccessToken);
+
   // Create a User
+  const username = uniqueName('LogoutUser', true);
+  user = {
+    username: username,
+    password: 'SomeP@ssw0rd',
+    firstName: 'Logout',
+    lastName: 'User',
+    email: 'logoutuser@acme.fr',
+    preRegistration: false,
+  };
   await createUser(domain.id, managementApiAccessToken, user);
   await waitForDomainSync(domain.id, managementApiAccessToken);
 

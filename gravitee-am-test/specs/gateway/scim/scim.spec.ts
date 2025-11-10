@@ -50,8 +50,9 @@ beforeAll(async function () {
     },
   });
 
+  const appName = uniqueName('SCIM App', true);
   const applicationDefinition: Application = {
-    name: 'SCIM App',
+    name: appName,
     type: 'SERVICE',
     settings: {
       oauth: {
@@ -87,7 +88,7 @@ beforeAll(async function () {
 });
 
 afterAll(async function () {
-  if (domain) {
+  if (domain?.id) {
     await safeDeleteDomain(domain.id, mngAccessToken);
   }
 });
@@ -110,7 +111,7 @@ describe('SCIM with preRegistration', () => {
       nickName: 'Babs',
       emails: [
         {
-          value: 'user@user.com',
+          value: `${uniqueName('user', true)}@user.com`,
           type: 'work',
           primary: true,
         },
@@ -127,6 +128,11 @@ describe('SCIM with preRegistration', () => {
       },
     };
 
+    // Get the email from the request before creating the user
+    const userEmail = request.emails[0].value;
+    // Clear emails for this specific recipient BEFORE creating the user to avoid interference from other tests
+    await clearEmails(userEmail);
+
     const response = await performPost(scimEndpoint, '/Users', JSON.stringify(request), {
       'Content-type': 'application/json',
       Authorization: `Bearer ${scimAccessToken}`,
@@ -142,14 +148,20 @@ describe('SCIM with preRegistration', () => {
   });
 
   it('must received an email', async () => {
-    confirmationLink = (await getLastEmail()).extractLink();
+    // Get the user's email from the created user (SCIM format)
+    const userEmail = createdUser.emails?.[0]?.value || createdUser.email;
+    expect(userEmail).toBeDefined();
+    // Email was already cleared before user creation, now wait for it to arrive
+    confirmationLink = (await getLastEmail(1000, userEmail)).extractLink();
     expect(confirmationLink).toBeDefined();
-    await clearEmails();
+    await clearEmails(userEmail);
   });
 
   it('must confirm the registration by providing a password', async () => {
+    expect(confirmationLink).toBeDefined();
     const url = new URL(confirmationLink);
     const resetPwdToken = url.searchParams.get('token');
+    expect(resetPwdToken).toBeDefined();
     const baseUrlConfirmRegister = confirmationLink.substring(0, confirmationLink.indexOf('?'));
 
     const { headers, token: xsrfToken } = await extractXsrfToken(baseUrlConfirmRegister, '?token=' + resetPwdToken);

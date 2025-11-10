@@ -31,7 +31,7 @@ import { createIdp, getAllIdps } from '@management-commands/idp-management-comma
 import { createUser, deleteUser, getAllUsers } from '@management-commands/user-management-commands';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
-import { delay } from '@utils-commands/misc';
+import { uniqueName } from '@utils-commands/misc';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
 
 jest.setTimeout(200000);
@@ -55,7 +55,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
 
   // Configure domainOIDC
-  domainOIDC = await createDomain(accessToken, 'oidc-domain', 'OIDC provider domain.');
+  domainOIDC = await createDomain(accessToken, uniqueName('oidc-domain', true), 'OIDC provider domain.');
   const idpSet = await getAllIdps(domainOIDC.id, accessToken);
   await patchDomain(domainOIDC.id, accessToken, {
     oidc: {
@@ -67,11 +67,13 @@ beforeAll(async () => {
   });
 
   // Create an oidc application with internal IDP
-  await createApplication(domainOIDC.id, accessToken, {
-    name: 'oidc',
+  const oidcClientId = uniqueName('oidc', true);
+  const oidcClientSecret = uniqueName('oidc', true);
+  const oidcApp = await createApplication(domainOIDC.id, accessToken, {
+    name: oidcClientId,
     type: 'WEB',
-    clientId: 'oidc',
-    clientSecret: 'oidc',
+    clientId: oidcClientId,
+    clientSecret: oidcClientSecret,
     redirectUris: ['http://localhost:8092/account-linking-domain/login/callback'],
   }).then((app) =>
     updateApplication(
@@ -98,7 +100,21 @@ beforeAll(async () => {
   await createUser(domainOIDC.id, accessToken, oidcUser);
 
   // Configure domainAccLinking
-  domainAccLinking = await createDomain(accessToken, 'account-linking-domain', 'Account Linking test domain.');
+  domainAccLinking = await createDomain(accessToken, uniqueName('account-linking-domain', true), 'Account Linking test domain.');
+  
+  // Update OIDC application redirectUri with actual domainAccLinking hrid
+  await updateApplication(
+    domainOIDC.id,
+    accessToken,
+    {
+      settings: {
+        oauth: {
+          redirectUris: [`http://localhost:8092/${domainAccLinking.hrid}/login/callback`],
+        },
+      },
+    },
+    oidcApp.id,
+  );
 
   //Enable bruteforce
   await patchDomain(domainAccLinking.id, accessToken, {
@@ -112,14 +128,14 @@ beforeAll(async () => {
 
   //Create oidc provider
   const idpConfig = {
-    clientId: 'oidc',
-    clientSecret: 'oidc',
+    clientId: oidcClientId,
+    clientSecret: oidcClientSecret,
     clientAuthenticationMethod: 'client_secret_basic',
-    wellKnownUri: 'http://localhost:8092/oidc-domain/oidc/.well-known/openid-configuration',
-    userAuthorizationUri: 'http://localhost:8092/oidc-domain/oauth/authorize',
-    accessTokenUri: 'http://localhost:8092/oidc-domain/oauth/token',
-    userProfileUri: 'http://localhost:8092/oidc-domain/oidc/userinfo',
-    logoutUri: 'http://localhost:8092/oidc-domain/logout',
+    wellKnownUri: `http://localhost:8092/${domainOIDC.hrid}/oidc/.well-known/openid-configuration`,
+    userAuthorizationUri: `http://localhost:8092/${domainOIDC.hrid}/oauth/authorize`,
+    accessTokenUri: `http://localhost:8092/${domainOIDC.hrid}/oauth/token`,
+    userProfileUri: `http://localhost:8092/${domainOIDC.hrid}/oidc/userinfo`,
+    logoutUri: `http://localhost:8092/${domainOIDC.hrid}/logout`,
     responseType: 'code',
     responseMode: 'default',
     encodeRedirectUri: false,
@@ -140,11 +156,13 @@ beforeAll(async () => {
   oidcIdp = await createIdp(domainAccLinking.id, accessToken, openIdIdp);
 
   // Create an application with oidc provider
+  const appClientId = uniqueName('app', true);
+  const appClientSecret = uniqueName('app', true);
   applicationAccLinking = await createApplication(domainAccLinking.id, accessToken, {
-    name: 'app',
+    name: appClientId,
     type: 'WEB',
-    clientId: 'app',
-    clientSecret: 'app',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
     redirectUris: ['https://test.com'],
   }).then((app) =>
     updateApplication(
@@ -166,11 +184,13 @@ beforeAll(async () => {
   // Create an application with an internal provider
   const idpSetAccountLinkingDomain = await getAllIdps(domainAccLinking.id, accessToken);
   const localIdp = idpSetAccountLinkingDomain.filter((idp) => idp.type === 'mongo-am-idp' || 'jdbc-am-idp');
+  const appLocalClientId = uniqueName('app-local', true);
+  const appLocalClientSecret = uniqueName('app-local', true);
   localIdpApp = await createApplication(domainAccLinking.id, accessToken, {
-    name: 'app-local',
+    name: appLocalClientId,
     type: 'WEB',
-    clientId: 'app-local',
-    clientSecret: 'app-local',
+    clientId: appLocalClientId,
+    clientSecret: appLocalClientSecret,
     redirectUris: ['https://test.com'],
   }).then((app) =>
     updateApplication(
@@ -327,11 +347,11 @@ function getUser(username: string) {
 }
 
 afterAll(async () => {
-  if (domainAccLinking && domainAccLinking.id) {
+  if (domainAccLinking?.id) {
     await safeDeleteDomain(domainAccLinking.id, accessToken);
   }
 
-  if (domainOIDC && domainOIDC.id) {
+  if (domainOIDC?.id) {
     await safeDeleteDomain(domainOIDC.id, accessToken);
   }
 });
