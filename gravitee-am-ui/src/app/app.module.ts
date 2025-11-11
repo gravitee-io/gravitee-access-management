@@ -189,6 +189,7 @@ import { UserIdentitiesComponent } from './domain/settings/users/user/identities
 import { UserIdentitiesResolver } from './resolvers/user-identities.resolver';
 import { UserCredentialsComponent } from './domain/settings/users/user/credentials/credentials.component';
 import { UserCredentialComponent } from './domain/settings/users/user/credentials/credential/credential.component';
+import { CertificateEnrollmentDialogComponent } from './domain/settings/users/user/credentials/certificate-enrollment/certificate-enrollment-dialog.component';
 import { UserCredentialsResolver } from './resolvers/user-credentials.resolver';
 import { UserCredentialResolver } from './resolvers/user-credential.resolver';
 import { UserService } from './services/user.service';
@@ -602,6 +603,7 @@ import { McpToolsTableComponent } from './domain/components/mcp-tools-table/mcp-
     UserIdentitiesComponent,
     UserCredentialsComponent,
     UserCredentialComponent,
+    CertificateEnrollmentDialogComponent,
     UserDevicesComponent,
     AddUserRolesComponent,
     ScopeCreationComponent,

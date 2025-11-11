@@ -15,12 +15,16 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { MatDialog } from '@angular/material/dialog';
+import { filter, switchMap, tap, mergeMap } from 'rxjs/operators';
+import { forkJoin } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
 import { UserService } from '../../../../../services/user.service';
 import { AuthService } from '../../../../../services/auth.service';
+
+import { CertificateEnrollmentDialogComponent } from './certificate-enrollment/certificate-enrollment-dialog.component';
 
 @Component({
   selector: 'app-user-credentials',
@@ -31,36 +35,56 @@ import { AuthService } from '../../../../../services/auth.service';
 export class UserCredentialsComponent implements OnInit {
   private domainId: string;
   private user: any;
-  credentials: any[];
+  webauthnCredentials: any[] = [];
+  certificateCredentials: any[] = [];
+  allCredentials: any[] = [];
   canRevoke: boolean;
+  canEnroll: boolean;
 
   constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private snackbarService: SnackbarService,
-    private dialogService: DialogService,
-    private userService: UserService,
-    private authService: AuthService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly snackbarService: SnackbarService,
+    private readonly dialogService: DialogService,
+    private readonly userService: UserService,
+    private readonly authService: AuthService,
+    private readonly dialog: MatDialog,
   ) {}
 
   ngOnInit() {
     this.domainId = this.route.snapshot.data['domain']?.id;
     this.user = this.route.snapshot.data['user'];
-    this.credentials = this.route.snapshot.data['credentials'];
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
+    this.canEnroll = this.authService.hasPermissions(['domain_user_update']);
+
+    // Load credentials from route data (for backward compatibility)
+    const routeCredentials = this.route.snapshot.data['credentials'] || [];
+    this.webauthnCredentials = routeCredentials;
+
+    // Load all credentials (WebAuthn and Certificate)
+    this.loadCredentials();
   }
 
   get isEmpty() {
-    return !this.credentials || this.credentials.length === 0;
+    return this.allCredentials.length === 0;
   }
 
   remove(event, credential) {
     event.preventDefault();
+    const isCertificate = credential.credentialType === 'certificate' || credential.certificatePem || credential.certificateThumbprint;
+    const credentialType = isCertificate ? 'Certificate' : 'WebAuthn';
+
     this.dialogService
-      .confirm('Remove WebAuthn credential', 'Are you sure you want to remove this credential ?')
+      .confirm(`Remove ${credentialType} credential`, 'Are you sure you want to remove this credential ?')
       .pipe(
         filter((res) => res),
-        switchMap(() => this.userService.removeCredential(this.domainId, this.user.id, credential.id)),
+        switchMap(() => {
+          if (isCertificate) {
+            return this.userService.removeCertificateCredential(this.domainId, this.user.id, credential.id);
+          } else {
+            return this.userService.removeCredential(this.domainId, this.user.id, credential.id);
+          }
+        }),
         tap(() => {
           this.snackbarService.open('Credential deleted');
           this.loadCredentials();
@@ -70,8 +94,57 @@ export class UserCredentialsComponent implements OnInit {
   }
 
   loadCredentials() {
-    this.userService.credentials(this.domainId, this.user.id).subscribe((credentials) => {
-      this.credentials = credentials;
+    forkJoin({
+      webauthn: this.userService.credentials(this.domainId, this.user.id),
+      certificates: this.userService.certificateCredentials(this.domainId, this.user.id),
+    }).subscribe({
+      next: ({ webauthn, certificates }) => {
+        this.webauthnCredentials = webauthn || [];
+        this.certificateCredentials = certificates || [];
+        this.combineCredentials();
+      },
+      error: (_error: unknown) => {
+        // Fallback to route data if API calls fail
+        this.webauthnCredentials = this.route.snapshot.data['credentials'] || [];
+        this.certificateCredentials = [];
+        this.combineCredentials();
+      },
     });
+  }
+
+  combineCredentials() {
+    // Combine and mark credential types
+    this.allCredentials = [
+      ...this.webauthnCredentials.map((c) => ({ ...c, credentialType: 'webauthn' })),
+      ...this.certificateCredentials.map((c) => ({ ...c, credentialType: 'certificate' })),
+    ];
+  }
+
+  openCertificateEnrollmentDialog() {
+    const dialogRef = this.dialog.open(CertificateEnrollmentDialogComponent, {
+      width: '600px',
+      data: {
+        domainId: this.domainId,
+        userId: this.user.id,
+      },
+    });
+
+    dialogRef
+      .afterClosed()
+      .pipe(
+        filter((result) => !!result),
+        mergeMap((result) => this.userService.enrollCertificate(this.domainId, this.user.id, result.certificatePem, result.deviceName)),
+        tap(() => {
+          this.snackbarService.open('Certificate enrolled successfully');
+          this.loadCredentials();
+        }),
+      )
+      .subscribe({
+        error: (error: unknown) => {
+          const httpError = error as { error?: { message?: string }; message?: string };
+          const errorMessage = httpError.error?.message || httpError.message || 'Failed to enroll certificate';
+          this.snackbarService.open(errorMessage);
+        },
+      });
   }
 }

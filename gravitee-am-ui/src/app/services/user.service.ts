@@ -159,6 +159,25 @@ export class UserService {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/credentials/' + credentialId);
   }
 
+  certificateCredentials(domainId, userId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/cert-credentials');
+  }
+
+  enrollCertificate(domainId, userId, certificatePem, deviceName?): Observable<any> {
+    return this.http.post<any>(this.usersURL + domainId + '/users/' + userId + '/cert-credentials', {
+      certificatePem,
+      deviceName,
+    });
+  }
+
+  certificateCredential(domainId, userId, credentialId): Observable<any> {
+    return this.http.get<any>(this.usersURL + domainId + '/users/' + userId + '/cert-credentials/' + credentialId);
+  }
+
+  removeCertificateCredential(domainId, userId, credentialId): Observable<any> {
+    return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/cert-credentials/' + credentialId);
+  }
+
   removeDevice(domainId, userId, deviceId): Observable<any> {
     return this.http.delete<any>(this.usersURL + domainId + '/users/' + userId + '/devices/' + deviceId);
   }
