@@ -79,6 +79,7 @@ models/BulkUpdateUser.ts
 models/CIBASettingNotifier.ts
 models/CIBASettings.ts
 models/Certificate.ts
+models/CertificateCredential.ts
 models/CertificateEntity.ts
 models/CertificateKey.ts
 models/ChallengeSettings.ts
@@ -133,6 +134,7 @@ models/NewAuthenticationDeviceNotifier.ts
 models/NewAuthorizationEngine.ts
 models/NewBotDetection.ts
 models/NewCertificate.ts
+models/NewCertificateCredential.ts
 models/NewClientSecret.ts
 models/NewDeviceIdentifier.ts
 models/NewDictionary.ts
