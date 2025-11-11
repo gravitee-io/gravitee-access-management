@@ -15,21 +15,23 @@
  */
 package io.gravitee.am.repository.jdbc.management.api.spring;
 
-import io.gravitee.am.model.ProtectedResource.Type;
-import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
-import io.reactivex.rxjava3.core.Maybe;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceIdentifier;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.springframework.data.repository.reactive.RxJava3CrudRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collection;
+import java.util.List;
 
 @Repository
-public interface SpringProtectedResourceRepository extends RxJava3CrudRepository<JdbcProtectedResource, String> {
+public interface SpringProtectedResourceIdentifierRepository extends RxJava3CrudRepository<JdbcProtectedResourceIdentifier, String> {
 
-    Maybe<JdbcProtectedResource> findByDomainIdAndId(String domainId, String id);
+    Flowable<JdbcProtectedResourceIdentifier> findAllByProtectedResourceId(String protectedResourceId);
 
-    Single<Long> countByDomainIdAndType(String domainId, Type type);
+    Flowable<JdbcProtectedResourceIdentifier> findAllByProtectedResourceIdIn(List<String> protectedResourceIds);
 
-    Single<Long> countByDomainIdAndTypeAndIdIn(String domainId, Type type, Collection<String> ids);
+    Single<Boolean> existsByDomainIdAndIdentifierIn(String domainId, List<String> identifiers);
+
+    Single<Boolean> existsByDomainIdAndIdentifierInAndProtectedResourceIdNot(String domainId, List<String> identifiers, String excludeProtectedResourceId);
 }
+

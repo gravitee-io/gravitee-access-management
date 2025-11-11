@@ -583,7 +583,7 @@ describe('When admin created bunch of Protected Resources', () => {
             const request = {
                 name: generateValidProtectedResourceName(),
                 type: "MCP_SERVER",
-                resourceIdentifiers: [`https://abc${i}.com`, `https://abc${i}a${i}.com`],
+                resourceIdentifiers: [`https://abc${i}.com`],
                 features: [
                     {
                         key: 'key',
