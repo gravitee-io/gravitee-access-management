@@ -1,0 +1,76 @@
+databaseChangeLog:
+  - changeSet:
+      id: 4.10.0-protected-resource-identifiers-table
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+          - tableExists:
+              tableName: protected_resource_identifiers
+      changes:
+        - createTable:
+            tableName: protected_resource_identifiers
+            columns:
+              - column: { name: id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: protected_resource_id, type: nvarchar(64), constraints: { nullable: false } }
+              - column: { name: identifier, type: nvarchar(2048), constraints: { nullable: false } }
+              - column: { name: domain_id, type: nvarchar(255), constraints: { nullable: false } }
+
+        - addPrimaryKey:
+            constraintName: pk_protected_resource_identifiers
+            columnNames: id
+            tableName: protected_resource_identifiers
+
+        - createIndex:
+            columns:
+              - column:
+                  name: protected_resource_id
+            indexName: idx_protected_resource_identifiers_prot_res_id
+            tableName: protected_resource_identifiers
+            unique: false
+
+        # PostgreSQL: use functional unique index
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: "CREATE UNIQUE INDEX uq_protected_resource_identifiers_domain_identifier ON protected_resource_identifiers(domain_id, md5(identifier))"
+
+        # SQL Server: add persisted computed column using HASHBYTES('SHA2_256', identifier)
+        - sql:
+            dbms: mssql
+            splitStatements: false
+            sql: "ALTER TABLE protected_resource_identifiers ADD identifier_hash AS LOWER(CONVERT(VARCHAR(64), HASHBYTES('SHA2_256', identifier), 2)) PERSISTED"
+
+        # MySQL/MariaDB: add generated column using SHA2(identifier, 256)
+        - sql:
+            dbms: mysql, mariadb
+            splitStatements: false
+            sql: "ALTER TABLE protected_resource_identifiers ADD COLUMN identifier_hash VARCHAR(64) GENERATED ALWAYS AS (SHA2(identifier, 256)) STORED"
+        
+        # Unique constraint for MySQL/MariaDB/MSSQL (PostgreSQL uses functional index above)
+        - sql:
+            dbms: mysql, mariadb, mssql
+            splitStatements: false
+            sql: "ALTER TABLE protected_resource_identifiers ADD CONSTRAINT uq_protected_resource_identifiers_domain_identifier UNIQUE (domain_id, identifier_hash)"
+
+        - addForeignKeyConstraint:
+            baseColumnNames: protected_resource_id
+            baseTableName: protected_resource_identifiers
+            constraintName: fk_protected_resource_identifiers_protresid
+            onDelete: CASCADE
+            onUpdate: NO ACTION
+            referencedColumnNames: id
+            referencedTableName: protected_resources
+
+  - changeSet:
+      id: 4.10.0-drop-resource-identifiers-column
+      author: GraviteeSource Team
+      preConditions:
+        - onFail: MARK_RAN
+        - columnExists:
+            tableName: protected_resources
+            columnName: resource_identifiers
+      changes:
+        - dropColumn:
+            tableName: protected_resources
+            columnName: resource_identifiers

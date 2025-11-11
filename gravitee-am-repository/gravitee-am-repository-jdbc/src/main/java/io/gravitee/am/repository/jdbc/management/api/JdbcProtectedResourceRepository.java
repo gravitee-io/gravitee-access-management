@@ -26,8 +26,11 @@ import io.gravitee.am.model.common.PageSortRequest;
 import io.gravitee.am.repository.jdbc.management.AbstractJdbcRepository;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource;
 import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceClientSecret;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceFeature;
+import io.gravitee.am.repository.jdbc.management.api.model.JdbcProtectedResource.JdbcProtectedResourceIdentifier;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceClientSecretRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceFeatureRepository;
+import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceIdentifierRepository;
 import io.gravitee.am.repository.jdbc.management.api.spring.SpringProtectedResourceRepository;
 import io.gravitee.am.repository.management.api.ProtectedResourceRepository;
 import io.reactivex.rxjava3.core.Completable;
@@ -68,6 +71,9 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
     @Autowired
     private SpringProtectedResourceFeatureRepository featuresSpring;
+
+    @Autowired
+    private SpringProtectedResourceIdentifierRepository identifierSpring;
 
     private interface Selects {
         String BY_DOMAIN_ID_AND_CLIENT_ID = """
@@ -118,6 +124,11 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                         })
                         .doOnNext(stored::setClientSecrets)
                         .then(Mono.just(stored)))
+                .flatMap(stored -> persistIdentifiers(item)
+                        .map(JdbcProtectedResourceIdentifier::getIdentifier)
+                        .collectList()
+                        .doOnNext(stored::setResourceIdentifiers)
+                        .then(Mono.just(stored)))
                 .flatMap(stored -> persistFeatures(item)
                         .reduceWith(() -> new ArrayList<ProtectedResourceFeature>(), (list, sec) -> {
                             list.add(sec);
@@ -137,6 +148,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
         Mono<Long> updateAction = getTemplate().update(toJdbcEntity(item)).map(updated -> 1L);
 
+        updateAction = deleteIdentifiers(item.getId()).then(updateAction);
+        updateAction = persistIdentifiers(updateAction, item);
         updateAction = deleteFeatures(item.getId()).then(updateAction);
         updateAction = persistFeatures(updateAction, item);
 
@@ -165,7 +178,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         TransactionalOperator trx = TransactionalOperator.create(tm);
         Mono<Long> deleteChildren = Mono.when(
                 getTemplate().delete(query(where(JdbcProtectedResourceClientSecret.FIELD_PROTECTED_RESOURCE_ID).is(s)), JdbcProtectedResourceClientSecret.class),
-                getTemplate().delete(query(where(JdbcProtectedResourceFeature.FIELD_PROTECTED_RESOURCE_ID).is(s)), JdbcProtectedResourceFeature.class)
+                getTemplate().delete(query(where(JdbcProtectedResourceFeature.FIELD_PROTECTED_RESOURCE_ID).is(s)), JdbcProtectedResourceFeature.class),
+                getTemplate().delete(query(where(JdbcProtectedResourceIdentifier.FIELD_PROTECTED_RESOURCE_ID).is(s)), JdbcProtectedResourceIdentifier.class)
         ).thenReturn(0L);
         Mono<Long> deleteParent = getTemplate().delete(JdbcProtectedResource.class)
                 .matching(query(where(COLUMN_ID).is(s))).all();
@@ -191,7 +205,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
     @Override
     public Flowable<ProtectedResource> findAll() {
         Flowable<ProtectedResource> resources = this.spring.findAll().map(this::toEntity);
-        return attachSecrets(resources);
+        return attachIdentifiers(attachSecrets(resources));
     }
 
     @Override
@@ -202,7 +216,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                 .map((row, rowMetadata) -> rowMapper.read(JdbcProtectedResource.class, row))
                 .all())
                 .map(this::toEntity);
-        return attachSecrets(resources);
+        return attachIdentifiers(attachSecrets(resources));
     }
 
     private Flowable<ProtectedResource> attachSecrets(Flowable<ProtectedResource> resourcesFlow) {
@@ -226,6 +240,33 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                                             .map(j -> mapper.map(j, ClientSecret.class))
                                             .toList();
                                     res.setClientSecrets(mapped);
+                                });
+                                return Flowable.fromIterable(resources);
+                            });
+                });
+    }
+
+    private Flowable<ProtectedResource> attachIdentifiers(Flowable<ProtectedResource> resourcesFlow) {
+        return resourcesFlow
+                .toList()
+                .flatMapPublisher(resources -> {
+                    if (resources.isEmpty()) {
+                        return Flowable.empty();
+                    }
+                    List<String> ids = resources.stream().map(ProtectedResource::getId).toList();
+                    return identifierSpring.findAllByProtectedResourceIdIn(ids)
+                            .toList()
+                            .flatMapPublisher(identifiers -> {
+                                Map<String, List<JdbcProtectedResourceIdentifier>> byResourceId = identifiers
+                                        .stream()
+                                        .collect(Collectors.groupingBy(JdbcProtectedResourceIdentifier::getProtectedResourceId));
+
+                                resources.forEach(res -> {
+                                    List<JdbcProtectedResourceIdentifier> identifiersForRes = byResourceId.get(res.getId());
+                                    List<String> mapped = identifiersForRes == null ? List.of() : identifiersForRes.stream()
+                                            .map(JdbcProtectedResourceIdentifier::getIdentifier)
+                                            .toList();
+                                    res.setResourceIdentifiers(mapped);
                                 });
                                 return Flowable.fromIterable(resources);
                             });
@@ -277,7 +318,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                         .with(PageRequest.of(pageSortRequest.getPage(), pageSortRequest.getSize(), sort)))
                 .all())
                 .map(this::toEntity);
-        return attachFeatures(mainFlowable)
+        return attachIdentifiers(attachFeatures(mainFlowable))
                 .map(ProtectedResourcePrimaryData::of)
                 .toList()
                 .flatMap(data -> spring.countByDomainIdAndType(domainId, type).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
@@ -297,7 +338,7 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                         .with(PageRequest.of(pageSortRequest.getPage(), pageSortRequest.getSize(), sort)))
                 .all())
                 .map(this::toEntity);
-        return attachFeatures(mainFlowable)
+        return attachIdentifiers(attachFeatures(mainFlowable))
                 .map(ProtectedResourcePrimaryData::of)
                 .toList()
                 .flatMap(data -> spring.countByDomainIdAndTypeAndIdIn(domainId, type, ids).map(total -> new Page<>(data, pageSortRequest.getPage(), total)))
@@ -306,11 +347,10 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
 
     @Override
     public Single<Boolean> existsByResourceIdentifiers(String domainId, List<String> resourceIdentifiers) {
-        List<Single<Boolean>> checks = resourceIdentifiers.stream()
-                .map(uri -> spring.existsByDomainIdAndResourceIdentifiersContainsIgnoreCase(domainId, uri))
-                .toList();
-        return Single.concat(checks)
-                .any(Boolean::booleanValue);
+        if (resourceIdentifiers == null || resourceIdentifiers.isEmpty()) {
+            return Single.just(false);
+        }
+        return identifierSpring.existsByDomainIdAndIdentifierIn(domainId, resourceIdentifiers);
     }
 
     @Override
@@ -318,17 +358,8 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         if (resourceIdentifiers == null || resourceIdentifiers.isEmpty()) {
             return Single.just(false);
         }
-        
-        // Use Spring Data repository methods for cross-database compatibility
-        // This follows the same pattern as existsByResourceIdentifiers for consistency
-        // Spring Data automatically translates these to database-specific SQL
-        List<Single<Boolean>> checks = resourceIdentifiers.stream()
-                .map(identifier -> spring.existsByDomainIdAndResourceIdentifiersContainsIgnoreCaseAndIdNot(domainId, identifier, excludeId))
-                .toList();
-        return Single.concat(checks)
-                .any(Boolean::booleanValue);
+        return identifierSpring.existsByDomainIdAndIdentifierInAndProtectedResourceIdNot(domainId, resourceIdentifiers, excludeId);
     }
-
 
     private Single<ProtectedResource> complete(ProtectedResource entity) {
         return Single.just(entity)
@@ -337,6 +368,13 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
                         .toList()
                         .map(secrets -> {
                             app.setClientSecrets(secrets);
+                            return app;
+                        }))
+                .flatMap(app -> identifierSpring.findAllByProtectedResourceId(app.getId())
+                        .map(JdbcProtectedResourceIdentifier::getIdentifier)
+                        .toList()
+                        .map(identifiers -> {
+                            app.setResourceIdentifiers(identifiers);
                             return app;
                         }))
                 .flatMap(app -> featuresSpring.findAllByProtectedResourceIdOrderByKeyName(app.getId())
@@ -360,6 +398,38 @@ public class JdbcProtectedResourceRepository extends AbstractJdbcRepository impl
         return Flux.fromIterable(jdbcSecrets)
                 .concatMap(jdbc -> getTemplate().insert(jdbc))
                 .map(jdbc -> mapper.map(jdbc, ClientSecret.class));
+    }
+
+    private Mono<Long> deleteIdentifiers(String protectedResourceId) {
+        final Query criteria = Query.query(where(JdbcProtectedResourceIdentifier.FIELD_PROTECTED_RESOURCE_ID).is(protectedResourceId));
+        return getTemplate().delete(criteria, JdbcProtectedResourceIdentifier.class);
+    }
+
+    private Mono<Long> persistIdentifiers(Mono<Long> actionFlow, ProtectedResource item) {
+        if (item.getResourceIdentifiers() != null && !item.getResourceIdentifiers().isEmpty()) {
+            return actionFlow.then(
+                    persistIdentifiers(item)
+                            .count()  // Count the identifiers persisted
+            );
+        }
+        return actionFlow;
+    }
+
+    private Flux<JdbcProtectedResourceIdentifier> persistIdentifiers(ProtectedResource protectedResource) {
+        List<JdbcProtectedResourceIdentifier> resourceIdentifiers = protectedResource.getResourceIdentifiers() == null ? List.of() : protectedResource.getResourceIdentifiers()
+                .stream()
+                .map(identifier -> {
+                    JdbcProtectedResourceIdentifier resourceIdentifier = new JdbcProtectedResourceIdentifier();
+                    resourceIdentifier.setId(RandomString.generate());
+                    resourceIdentifier.setProtectedResourceId(protectedResource.getId());
+                    resourceIdentifier.setIdentifier(identifier);
+                    resourceIdentifier.setDomainId(protectedResource.getDomainId());
+                    return resourceIdentifier;
+                })
+                .toList();
+
+        return Flux.fromIterable(resourceIdentifiers)
+                .concatMap(jdbc -> getTemplate().insert(jdbc));
     }
 
     private Flux<ProtectedResourceFeature> persistFeatures(ProtectedResource protectedResource) {

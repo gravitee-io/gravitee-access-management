@@ -34,7 +34,6 @@ public class JdbcProtectedResource {
     public static final String COLUMN_TYPE = "type";
     public static final String COLUMN_UPDATED_AT = "updated_at";
     public static final String COLUMN_NAME = "name";
-    public static final String COLUMN_RESOURCE_IDENTIFIERS = "resource_identifiers";
 
 
     @Id
@@ -54,9 +53,6 @@ public class JdbcProtectedResource {
 
     @Column(COLUMN_TYPE)
     private String type;
-
-    @Column(COLUMN_RESOURCE_IDENTIFIERS)
-    private String resourceIdentifiers;
 
     @Column("secret_settings")
     private String secretSettings;
@@ -121,6 +117,27 @@ public class JdbcProtectedResource {
 
         @Column("updated_at")
         private LocalDateTime updatedAt;
+
+    }
+
+    @Getter
+    @Setter
+    @Table(JdbcProtectedResourceIdentifier.TABLE_NAME)
+    public static class JdbcProtectedResourceIdentifier {
+        public static final String TABLE_NAME = "protected_resource_identifiers";
+        public static final String FIELD_PROTECTED_RESOURCE_ID = "protected_resource_id";
+
+        @Id
+        private String id;
+
+        @Column(FIELD_PROTECTED_RESOURCE_ID)
+        private String protectedResourceId;
+
+        @Column("identifier")
+        private String identifier;
+
+        @Column("domain_id")
+        private String domainId;
 
     }
 }

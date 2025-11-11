@@ -237,6 +237,7 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         return resources;
     }
 
+    @Test
     public void shouldFindBySearch() {
         ProtectedResource toSave1 = generateResource("abc", "domainSearch2", "client1", generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
         ProtectedResource toSave2 = generateResource("dcf", "domainSearch2", "client2",generateClientSecret(), generateApplicationSecretSettings(), List.of(generateMcpTool("key1")));
@@ -451,23 +452,14 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .assertComplete()
                 .assertValue(true);
 
-        // Test: Exclude created1, check for identifiers that exist in both created1 and created2 - should return true (created2 has them)
-        created2.setResourceIdentifiers(List.of("https://exclude.one", "https://exclude.three"));
-        ProtectedResource updated2 = repository.update(created2).blockingGet();
-
-        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.one"), created1.getId())
-                .test().awaitDone(10, TimeUnit.SECONDS)
-                .assertComplete()
-                .assertValue(true); // created2 now has "https://exclude.one"
-
-        // Test: Exclude updated2, check for updated2's identifiers - should return false (only updated2 has them)
-        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.three"), updated2.getId())
+        // Test: Exclude created2, check for created2's identifiers - should return false (only created2 has them)
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.three"), created2.getId())
                 .test().awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertValue(false);
 
-        // Test: Exclude updated2, check for created1's identifiers - should return true (created1 has them)
-        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.two"), updated2.getId())
+        // Test: Exclude created2, check for created1's identifiers - should return true (created1 has them)
+        repository.existsByResourceIdentifiersExcludingId("domainSearchExclude1", List.of("https://exclude.two"), created2.getId())
                 .test().awaitDone(10, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertValue(true);
@@ -595,6 +587,81 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
                 .assertComplete();
     }
 
+    @Test
+    public void shouldEnforceUniqueResourceIdentifiersPerDomain() {
+        // Create first resource with specific identifiers
+        ProtectedResource resource1 = generateResource("resource1", "unique-domain", "client1", 
+                generateClientSecret(), generateApplicationSecretSettings(), List.of());
+        resource1.setResourceIdentifiers(List.of("https://unique.example.com/resource1"));
+
+        ProtectedResource created1 = repository.create(resource1).blockingGet();
+
+        // Try to create second resource with same identifier in same domain - should fail uniqueness check
+        ProtectedResource resource2 = generateResource("resource2", "unique-domain", "client2", 
+                generateClientSecret(), generateApplicationSecretSettings(), List.of());
+        resource2.setResourceIdentifiers(List.of("https://unique.example.com/resource1")); // Same identifier
+
+        // The uniqueness check should detect this
+        repository.existsByResourceIdentifiers("unique-domain", List.of("https://unique.example.com/resource1"))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true); // Should exist
+
+        // But should return false when excluding the original resource
+        repository.existsByResourceIdentifiersExcludingId("unique-domain", 
+                List.of("https://unique.example.com/resource1"), created1.getId())
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(false); // Should not exist when excluding created1
+
+        // Different domain can have same identifier
+        ProtectedResource resource3 = generateResource("resource3", "different-domain", "client3", 
+                generateClientSecret(), generateApplicationSecretSettings(), List.of());
+        resource3.setResourceIdentifiers(List.of("https://unique.example.com/resource1")); // Same identifier, different domain
+
+        repository.create(resource3).blockingGet();
+        
+        // Should exist in different domain
+        repository.existsByResourceIdentifiers("different-domain", List.of("https://unique.example.com/resource1"))
+                .test()
+                .awaitDone(10, TimeUnit.SECONDS)
+                .assertComplete()
+                .assertValue(true);
+    }
+
+    @Test
+    public void shouldLoadMultipleResourceIdentifiers() {
+        // Create resource with multiple identifiers
+        ProtectedResource toSave = generateResource("multi-identifier", "load-test-domain", "client-load", 
+                generateClientSecret(), generateApplicationSecretSettings(), List.of());
+        toSave.setResourceIdentifiers(List.of(
+                "https://test.example.com/api/v1",
+                "https://test.example.com/api/v2",
+                "https://test.example.com/api/v3"
+        ));
+
+        TestObserver<ProtectedResource> testObserver = repository.create(toSave)
+                .flatMapMaybe(created -> repository.findById(created.getId()))
+                .test();
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+
+        testObserver.assertComplete();
+        testObserver.assertNoErrors();
+        
+        // Verify all identifiers are loaded correctly
+        testObserver.assertValue(a -> a.getResourceIdentifiers() != null);
+        testObserver.assertValue(a -> a.getResourceIdentifiers().size() == 3);
+        testObserver.assertValue(a -> a.getResourceIdentifiers().contains("https://test.example.com/api/v1"));
+        testObserver.assertValue(a -> a.getResourceIdentifiers().contains("https://test.example.com/api/v2"));
+        testObserver.assertValue(a -> a.getResourceIdentifiers().contains("https://test.example.com/api/v3"));
+        
+        // Verify all identifiers are present (order may vary depending on implementation)
+        testObserver.assertValue(a -> a.getResourceIdentifiers().containsAll(toSave.getResourceIdentifiers()));
+        testObserver.assertValue(a -> toSave.getResourceIdentifiers().containsAll(a.getResourceIdentifiers()));
+    }
+
     private McpTool generateMcpTool(String key) {
         McpTool tool = new McpTool();
         tool.setKey(key);
@@ -631,8 +698,9 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
     }
 
     private ProtectedResource generateResource(String name, String domainId, String clientId, ClientSecret clientSecret, ApplicationSecretSettings secretSettings, List<? extends ProtectedResourceFeature> features) {
+        String id = RandomString.generate();
         ProtectedResource toSave = new ProtectedResource();
-        toSave.setId(RandomString.generate());
+        toSave.setId(id);
         toSave.setName(name);
         toSave.setClientId(clientId);
         toSave.setDomainId(domainId);
@@ -640,7 +708,11 @@ public class ProtectedResourceRepositoryTest extends AbstractManagementTest {
         toSave.setCreatedAt(new Date());
         toSave.setUpdatedAt(new Date());
         toSave.setDescription("description");
-        toSave.setResourceIdentifiers(List.of("resource-identifier1", "resource-identifier2"));
+        String uniqueBase = "https://resource.example.com/" + id;
+        toSave.setResourceIdentifiers(List.of(
+                uniqueBase + "/identifier1",
+                uniqueBase + "/identifier2"
+        ));
         toSave.setSecretSettings(List.of(secretSettings));
         toSave.setClientSecrets(List.of(clientSecret));
         toSave.setFeatures(features);
