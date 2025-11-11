@@ -80,6 +80,33 @@
     </mapping>
 
     <mapping map-null="false">
+        <class-a>io.gravitee.am.model.CertificateCredential</class-a>
+        <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcCertificateCredential</class-b>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">
+            <a>metadata</a>
+            <b>metadata</b>
+            <!-- hint required otherwise generic Collection interface can't be mapped -->
+            <a-hint>java.util.Map</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter">
+            <a>createdAt</a>
+            <b>createdAt</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter">
+            <a>updatedAt</a>
+            <b>updatedAt</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter">
+            <a>accessedAt</a>
+            <b>accessedAt</b>
+        </field>
+        <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.LocalDateConverter">
+            <a>certificateExpiresAt</a>
+            <b>certificateExpiresAt</b>
+        </field>
+    </mapping>
+
+    <mapping map-null="false">
         <class-a>io.gravitee.am.model.IdentityProvider</class-a>
         <class-b>io.gravitee.am.repository.jdbc.management.api.model.JdbcIdentityProvider</class-b>
         <field custom-converter="io.gravitee.am.repository.jdbc.management.api.model.mapper.MapToStringConverter">

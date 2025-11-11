@@ -368,6 +368,11 @@ public class UserResource extends AbstractResource {
         return resourceContext.getResource(UserCredentialsResource.class);
     }
 
+    @Path("cert-credentials")
+    public UserCertCredentialsResource getUserCertCredentialsResource() {
+        return resourceContext.getResource(UserCertCredentialsResource.class);
+    }
+
     @Path("devices")
     public DevicesResource getUserDevicesResource() {
         return resourceContext.getResource(DevicesResource.class);

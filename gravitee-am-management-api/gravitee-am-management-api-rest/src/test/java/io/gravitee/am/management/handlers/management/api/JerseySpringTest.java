@@ -55,6 +55,7 @@ import io.gravitee.am.management.service.ResourcePluginService;
 import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.TagService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
+import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.management.service.dataplane.DeviceManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
 import io.gravitee.am.management.service.permissions.PermissionAcls;
@@ -227,6 +228,9 @@ public abstract class JerseySpringTest {
 
     @Autowired
     protected CredentialManagementService credentialService;
+
+    @Autowired
+    protected CertificateCredentialService certificateCredentialService;
 
     @Autowired
     protected FlowService flowService;
@@ -537,6 +541,11 @@ public abstract class JerseySpringTest {
         @Bean
         public CredentialManagementService credentialService() {
             return mock(CredentialManagementService.class);
+        }
+
+        @Bean
+        public CertificateCredentialService certificateCredentialService() {
+            return mock(CertificateCredentialService.class);
         }
 
         @Bean
