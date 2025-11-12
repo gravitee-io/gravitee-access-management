@@ -4942,7 +4942,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfga/frontend-utils@npm:^0.2.0-beta.11":
+"@openfga/frontend-utils@npm:0.2.0-beta.11":
   version: 0.2.0-beta.11
   resolution: "@openfga/frontend-utils@npm:0.2.0-beta.11"
   dependencies:
@@ -4951,7 +4951,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfga/sdk@npm:^0.2.0-beta.22":
+"@openfga/sdk@npm:0.2.10":
   version: 0.2.10
   resolution: "@openfga/sdk@npm:0.2.10"
   dependencies:
@@ -4961,7 +4961,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfga/syntax-transformer@npm:^0.2.0-beta.21, @openfga/syntax-transformer@npm:^0.2.0-beta.22":
+"@openfga/syntax-transformer@npm:0.2.0, @openfga/syntax-transformer@npm:^0.2.0-beta.21":
   version: 0.2.0
   resolution: "@openfga/syntax-transformer@npm:0.2.0"
   dependencies:
@@ -10628,9 +10628,9 @@ __metadata:
     "@gravitee/ui-particles-angular": "npm:14.2.3"
     "@ngx-formly/core": "npm:6.3.12"
     "@ngx-formly/material": "npm:6.3.12"
-    "@openfga/frontend-utils": "npm:^0.2.0-beta.11"
-    "@openfga/sdk": "npm:^0.2.0-beta.22"
-    "@openfga/syntax-transformer": "npm:^0.2.0-beta.22"
+    "@openfga/frontend-utils": "npm:0.2.0-beta.11"
+    "@openfga/sdk": "npm:0.2.10"
+    "@openfga/syntax-transformer": "npm:0.2.0"
     "@swimlane/ngx-datatable": "npm:20.1.0"
     "@types/jest": "npm:29.5.14"
     "@types/json-schema": "npm:7.0.15"
@@ -10673,9 +10673,9 @@ __metadata:
     ts-node: "npm:10.9.2"
     tslib: "npm:2.6.3"
     typescript: "npm:5.6.3"
-    ulid: "npm:^3.0.1"
-    vis-data: "npm:^8.0.3"
-    vis-network: "npm:^10.0.2"
+    ulid: "npm:3.0.1"
+    vis-data: "npm:8.0.3"
+    vis-network: "npm:10.0.2"
     webpack: "npm:5.99.9"
     zone.js: "npm:0.15.1"
   languageName: unknown
@@ -17315,7 +17315,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ulid@npm:^3.0.1":
+"ulid@npm:3.0.1":
   version: 3.0.1
   resolution: "ulid@npm:3.0.1"
   bin:
@@ -17555,7 +17555,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vis-data@npm:^8.0.3":
+"vis-data@npm:8.0.3":
   version: 8.0.3
   resolution: "vis-data@npm:8.0.3"
   peerDependencies:
@@ -17565,7 +17565,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vis-network@npm:^10.0.2":
+"vis-network@npm:10.0.2":
   version: 10.0.2
   resolution: "vis-network@npm:10.0.2"
   peerDependencies:
