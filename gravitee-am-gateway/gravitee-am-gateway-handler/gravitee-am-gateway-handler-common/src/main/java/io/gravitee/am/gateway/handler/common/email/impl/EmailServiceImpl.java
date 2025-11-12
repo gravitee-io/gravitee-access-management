@@ -203,6 +203,14 @@ public class EmailServiceImpl implements EmailService {
         try {
             final Locale preferredLanguage = preferredLanguage(user, Locale.ENGLISH);
 
+            // compute email - from
+            final Template fromTemplate = new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration);
+            final String from = processTemplate(fromTemplate, email.getParams(), preferredLanguage);
+
+            // compute email - fromName
+            final Template fromNameTemplate = new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration);
+            final String fromName = processTemplate(fromNameTemplate, email.getParams(), preferredLanguage);
+
             // compute email subject
             final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
             final String subject = processTemplate(plainTextTemplate, email.getParams(), preferredLanguage);
@@ -212,6 +220,8 @@ public class EmailServiceImpl implements EmailService {
             final String content = processTemplate(template, email.getParams(), preferredLanguage);
 
             final Email emailToSend = new Email(email);
+            emailToSend.setFrom(from);
+            emailToSend.setFromName(fromName);
             emailToSend.setSubject(subject);
             emailToSend.setContent(content);
             emailService.send(emailToSend);
