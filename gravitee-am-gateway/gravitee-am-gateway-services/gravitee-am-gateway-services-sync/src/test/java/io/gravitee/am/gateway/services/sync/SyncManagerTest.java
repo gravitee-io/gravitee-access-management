@@ -275,7 +275,7 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void shouldPropagateEvents() {
+    public void shouldPropagateEventsWithoutDuplication() {
         when(domainRepository.findAll()).thenReturn(Flowable.empty());
         syncManager.refresh();
 
