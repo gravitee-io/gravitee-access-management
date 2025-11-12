@@ -20,6 +20,7 @@ import io.gravitee.am.dataplane.api.DataPlaneDescription;
 import io.gravitee.am.dataplane.api.DataPlaneProvider;
 import io.gravitee.am.dataplane.api.repository.AccessPolicyRepository;
 import io.gravitee.am.dataplane.api.repository.CredentialRepository;
+import io.gravitee.am.dataplane.api.repository.CertificateCredentialRepository;
 import io.gravitee.am.dataplane.api.repository.DeviceRepository;
 import io.gravitee.am.dataplane.api.repository.GroupRepository;
 import io.gravitee.am.dataplane.api.repository.LoginAttemptRepository;
@@ -53,6 +54,9 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
 
     @Autowired
     private CredentialRepository credentialRepository;
+
+    @Autowired
+    private CertificateCredentialRepository certificateCredentialRepository;
 
     @Autowired
     private DeviceRepository deviceRepository;
@@ -113,5 +117,65 @@ public class MongoDataPlaneProvider implements DataPlaneProvider, InitializingBe
     @Override
     public ClientWrapper<MongoClient> getClientWrapper() {
         return this.mongoClientWrapper;
+    }
+
+    @Override
+    public CredentialRepository getCredentialRepository() {
+        return credentialRepository;
+    }
+
+    @Override
+    public CertificateCredentialRepository getCertificateCredentialRepository() {
+        return certificateCredentialRepository;
+    }
+
+    @Override
+    public DeviceRepository getDeviceRepository() {
+        return deviceRepository;
+    }
+
+    @Override
+    public GroupRepository getGroupRepository() {
+        return groupRepository;
+    }
+
+    @Override
+    public ScopeApprovalRepository getScopeApprovalRepository() {
+        return scopeApprovalRepository;
+    }
+
+    @Override
+    public UserActivityRepository getUserActivityRepository() {
+        return userActivityRepository;
+    }
+
+    @Override
+    public UserRepository getUserRepository() {
+        return userRepository;
+    }
+
+    @Override
+    public PasswordHistoryRepository getPasswordHistoryRepository() {
+        return passwordHistoryRepository;
+    }
+
+    @Override
+    public LoginAttemptRepository getLoginAttemptRepository() {
+        return loginAttemptRepository;
+    }
+
+    @Override
+    public AccessPolicyRepository getAccessPolicyRepository() {
+        return accessPolicyRepository;
+    }
+
+    @Override
+    public ResourceRepository getResourceRepository() {
+        return resourceRepository;
+    }
+
+    @Override
+    public PermissionTicketRepository getPermissionTicketRepository() {
+        return permissionTicketRepository;
     }
 }

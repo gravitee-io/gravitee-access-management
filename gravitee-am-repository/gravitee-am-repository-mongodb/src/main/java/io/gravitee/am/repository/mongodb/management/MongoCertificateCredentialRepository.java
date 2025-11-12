@@ -47,7 +47,7 @@ import static io.gravitee.am.repository.mongodb.common.MongoUtils.FIELD_REFERENC
  * @author GraviteeSource Team
  */
 @Component
-public class CertificateCredentialRepositoryImpl extends AbstractManagementMongoRepository implements CertificateCredentialRepository {
+public class MongoCertificateCredentialRepository extends AbstractManagementMongoRepository implements CertificateCredentialRepository {
 
     private static final String COLLECTION_NAME = "cert_credentials";
     private static final String FIELD_USER_ID = "userId";
