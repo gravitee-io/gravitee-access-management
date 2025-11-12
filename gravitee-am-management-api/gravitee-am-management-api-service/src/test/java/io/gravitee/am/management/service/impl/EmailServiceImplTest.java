@@ -42,6 +42,7 @@ import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.application.DomainReadServiceImpl;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import jakarta.mail.internet.InternetAddress;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -91,6 +92,7 @@ public class EmailServiceImplTest {
     private Environment environment;
 
 
+
     JavaMailSenderImpl mailSender;
 
     I18nDictionaryService i18nDictionaryService;
@@ -111,6 +113,58 @@ public class EmailServiceImplTest {
         freemarkerConfiguration.setTemplateConfigurations(
                 new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher("html"), tcHTML));
         freemarkerConfiguration.setTemplateLoader(new FileTemplateLoader(new File(TEMPLATES_PATH)));
+    }
+
+    @Test
+    void should_resolve_dynamic_from_and_from_name() throws Exception {
+
+        when(jwtBuilder.sign(any())).thenReturn("TOKEN");
+
+        this.i18nDictionaryService = mock(I18nDictionaryService.class);
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+        when(environment.getProperty("email.enabled", "false")).thenReturn("true");
+        when(environment.getProperty("user.registration.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
+        when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
+        when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
+
+        var cut = new EmailServiceImpl(
+                emailManager,
+                emailService,
+                freemarkerConfiguration,
+                auditService,
+                jwtBuilder,
+                new DomainReadServiceImpl(mock(), "http://localhost:1234/unittest"),
+                i18nDictionaryService,
+                environment
+        );
+
+        var emailTemplate = new Email();
+        emailTemplate.setFrom("${user.firstName}.${user.lastName}@gravitee.io");
+        emailTemplate.setFromName("${domain.id}-team");
+        emailTemplate.setSubject("Welcome ${user.firstName}");
+        emailTemplate.setTemplate(Template.REGISTRATION_CONFIRMATION.template());
+        emailTemplate.setExpiresAfter(86400);
+
+        when(emailManager.getEmail(any(), any(), any(), anyInt())).thenReturn(Maybe.just(emailTemplate));
+
+        var domain = createDomain();
+        domain.setId("unit-domain");
+
+        var user = createUser("en");
+
+        cut.send(domain, null, Template.REGISTRATION_CONFIRMATION, user).test().await().assertComplete();
+
+        var receivedMessages = greenMail.getReceivedMessages();
+        org.assertj.core.api.Assertions.assertThat(receivedMessages).hasSize(1);
+
+        var message = receivedMessages[0];
+        var parsedMessage = new MimeMessageParser(message).parse();
+
+        MimeMessageParserAssert.assertThat(parsedMessage).hasFrom("John.Doe@gravitee.io");
+        MimeMessageParserAssert.assertThat(parsedMessage).hasSubject("Welcome John");
+        org.assertj.core.api.Assertions.assertThat(((InternetAddress) message.getFrom()[0]).getPersonal()).isEqualTo("unit-domain-team");
     }
 
     @ParameterizedTest
