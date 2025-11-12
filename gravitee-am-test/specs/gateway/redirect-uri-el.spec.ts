@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { Domain } from '@management-models/Domain';
 import { createJdbcIdp, createMongoIdp } from '@utils-commands/idps-commands';
 import { createUser } from '@management-commands/user-management-commands';
@@ -24,6 +24,7 @@ import faker from 'faker';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { initiateLoginFlow, login } from '@gateway-commands/login-commands';
 import { performGet } from '@gateway-commands/oauth-oidc-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -76,7 +77,7 @@ const multiParamAndRegular = {
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  domain = await createDomain(accessToken, 'redirect-uri-domain', 'redirect uri with EL').then((d) =>
+  domain = await createDomain(accessToken, uniqueName('redirect-uri', true), 'redirect uri with EL').then((d) =>
     patchDomain(d.id, accessToken, {
       oidc: {
         clientRegistrationSettings: {
@@ -309,6 +310,6 @@ describe('Redirect URI', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

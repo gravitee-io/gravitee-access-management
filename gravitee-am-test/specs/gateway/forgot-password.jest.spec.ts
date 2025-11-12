@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as faker from 'faker';
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitFor,
   waitForDomainStart,
-  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import {
   extractXsrfTokenAndActionResponse,
-  getWellKnownOpenIdConfiguration,
   performFormPost,
   performGet,
   performPost,
@@ -39,6 +36,7 @@ import { createUser } from '@management-commands/user-management-commands';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { createPasswordPolicy } from '@management-commands/password-policy-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -164,8 +162,10 @@ settings.forEach((setting) => {
   const selectedSetting = selectSetting(setting);
   describe('Gateway reset password', () => {
     beforeAll(async () => {
+      // Clear emails for this specific recipient at the start to avoid interference from other tests
+      await clearEmails(userProps.email);
       accessToken = await requestAdminAccessToken();
-      domain = await createDomain(accessToken, faker.company.companyName(0), 'test Gateway reset password with password history');
+      domain = await createDomain(accessToken, uniqueName('forgot-password', true), 'test Gateway reset password with password history');
       domainIds.add(domain.id);
       domain = await patchDomain(domain.id, accessToken, {
         master: true,
@@ -187,9 +187,9 @@ settings.forEach((setting) => {
       }
 
       application = await createApplication(domain.id, accessToken, {
-        name: faker.company.bsBuzz(),
+        name: uniqueName('forgot-password-app', true),
         type: 'WEB',
-        clientId: faker.company.bsAdjective(),
+        clientId: uniqueName('forgot-password-app', true),
         redirectUris: ['http://localhost:4000'],
       }).then((app) =>
         updateApplication(
@@ -292,10 +292,6 @@ settings.forEach((setting) => {
             it(`${password} should return ${expectedMsg}`, async () => {
               await resetPassword(password, expectedMsg, selectedSetting);
             });
-
-            afterAll(async () => {
-              await waitFor(1000);
-            });
           });
         });
       });
@@ -303,6 +299,8 @@ settings.forEach((setting) => {
 
     describe('when a Password Policy has been configured', () => {
       beforeAll(async () => {
+        // Clear emails for this specific recipient at the start to avoid interference from other tests
+        await clearEmails(userProps.email);
         await forgotPassword(selectedSetting);
         await retrieveEmailLinkForReset();
       });
@@ -400,17 +398,13 @@ settings.forEach((setting) => {
             });
           });
       }
-
-      afterAll(async () => {
-        await waitFor(1000);
-      });
     });
   });
 });
 
 afterAll(async () => {
-  for await (const domainId of domainIds) {
-    await deleteDomain(domainId, accessToken);
+  for (const domainId of domainIds) {
+    await safeDeleteDomain(domainId as string, accessToken);
   }
 });
 
@@ -478,9 +472,9 @@ const forgotPassword = async (settings) => {
 };
 
 const retrieveEmailLinkForReset = async () => {
-  confirmationLink = (await getLastEmail()).extractLink();
+  confirmationLink = (await getLastEmail(1000, userProps.email)).extractLink();
   expect(confirmationLink).toBeDefined();
-  await clearEmails();
+  await clearEmails(userProps.email);
 };
 
 const callResetPasswordWithEmailLink = async () => {

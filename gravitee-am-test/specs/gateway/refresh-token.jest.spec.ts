@@ -16,7 +16,7 @@
 import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser, updateUserStatus } from '@management-commands/user-management-commands';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -24,6 +24,7 @@ import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/
 import { createTestApp } from '@utils-commands/application-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -40,7 +41,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  const createdDomain = await createDomain(accessToken, 'refresh-tokens-domain', faker.company.catchPhraseDescriptor());
+  const createdDomain = await createDomain(accessToken, uniqueName('refresh-tokens', true), faker.company.catchPhraseDescriptor());
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
 
@@ -67,7 +68,7 @@ beforeAll(async () => {
   expect(domainStarted.id).toEqual(createdDomain.id);
 
   domain = domainStarted;
-  await new Promise((r) => setTimeout(r, 10000));
+  await waitForDomainSync(domain.id, accessToken);
 
   const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
   oidc = result.body;
@@ -76,9 +77,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  if (domain?.id) {
-    await deleteDomain(domain.id, accessToken);
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
 });
 
 describe('when user is enabled', () => {
@@ -103,7 +102,7 @@ describe('when user is enabled', () => {
   describe('tokens will be revoked', () => {
     it('when user is disabled by MAPI', async () => {
       await updateUserStatus(domain.id, accessToken, user.id, false);
-      await waitForDomainSync(); // wait sync as since 4.7, token revocations are managed asynchornously
+      await waitForDomainSync(domain.id, accessToken); // wait sync as since 4.7, token revocations are managed asynchornously
       let response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refresh_token}`, {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + applicationBase64Token(client),
@@ -114,7 +113,7 @@ describe('when user is enabled', () => {
 
     it('and will remain revoked, when user is enabled back', async () => {
       await updateUserStatus(domain.id, accessToken, user.id, true);
-      await waitForDomainSync(); // wait sync as since 4.7, token revocations are managed asynchornously
+      await waitForDomainSync(domain.id, accessToken); // wait sync as since 4.7, token revocations are managed asynchornously
       let response = await performPost(oidc.token_endpoint, '', `grant_type=refresh_token&refresh_token=${tokens.refresh_token}`, {
         'Content-type': 'application/x-www-form-urlencoded',
         Authorization: 'Basic ' + applicationBase64Token(client),

@@ -21,18 +21,18 @@ import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   startDomain,
-  waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { getAllUsers, listUsers } from '@management-commands/user-management-commands';
-import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost } from '@gateway-commands/oauth-oidc-commands';
+import { extractXsrfToken, performFormPost } from '@gateway-commands/oauth-oidc-commands';
 import { createIdp, getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { decodeJwt } from '@utils-commands/jwt';
+import { uniqueName } from '@utils-commands/misc';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 const jdbc = process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE;
 
@@ -42,7 +42,6 @@ let defaultIdp;
 let customIdp;
 let application;
 let clientId;
-let openIdConfiguration;
 
 jest.setTimeout(200000);
 
@@ -50,7 +49,7 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  domain = await createDomain(accessToken, 'user-registration', faker.company.catchPhraseDescriptor());
+  domain = await createDomain(accessToken, uniqueName('user-registration', true), faker.company.catchPhraseDescriptor());
   expect(domain).toBeDefined();
 
   await startDomain(domain.id, accessToken);
@@ -97,11 +96,8 @@ beforeAll(async () => {
   expect(application).toBeDefined();
   clientId = application.settings.oauth.clientId;
 
-  await waitForDomainStart(domain).then((started) => {
-    domain = started.domain;
-    openIdConfiguration = started.oidcConfig;
-    expect(openIdConfiguration).toBeDefined();
-  });
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, accessToken);
 });
 
 describe('Register User on domain', () => {
@@ -203,7 +199,7 @@ describe('Register User on domain', () => {
         application.id,
       );
 
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, accessToken);
     });
 
     it('When a user register, he should be linked to the custom idp', async () => {
@@ -252,7 +248,7 @@ describe('Register User on domain', () => {
         application.id,
       );
 
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, accessToken);
     });
 
     it('When a user register, he should have userId into the session and be redirected to specific URL', async () => {
@@ -276,9 +272,7 @@ describe('Register User on domain', () => {
 });
 
 afterAll(async () => {
-  if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
 });
 
 const createMongoIdp = async (domainId, accessToken) => {

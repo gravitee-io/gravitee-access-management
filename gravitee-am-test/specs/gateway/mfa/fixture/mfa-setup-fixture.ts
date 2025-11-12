@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 import { requestAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain } from '@management-commands/domain-management-commands';
 import { buildCreateAndTestUser } from '@management-commands/user-management-commands';
 import { createFactor } from '@management-commands/factor-management-commands';
 import { createApplication, patchApplication } from '@management-commands/application-management-commands';
 import { createDevice } from '@management-commands/device-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 import { expect } from '@jest/globals';
 
 export interface Domain {
@@ -141,16 +142,18 @@ export async function createCookieDevice(ctx: Domain) {
 
 export async function removeDomain(ctx: Domain) {
   if (ctx.domain?.domainId) {
-    await deleteDomain(ctx.domain.domainId, ctx.admin.accessToken);
+    await safeDeleteDomain(ctx.domain.domainId, ctx.admin.accessToken);
   }
 }
 
 export async function initClient(domain: Domain, applicationName: string, applicationSettings: any) {
+  // Generate unique identifiers to avoid conflicts in parallel execution
+  const uniqueAppName = uniqueName(applicationName, true);
   const client = {
-    clientId: applicationName,
-    name: applicationName,
-    id: applicationName,
-    clientSecret: applicationName,
+    clientId: uniqueAppName,
+    name: uniqueAppName,
+    id: uniqueAppName,
+    clientSecret: uniqueAppName,
     redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   } as Application;
 

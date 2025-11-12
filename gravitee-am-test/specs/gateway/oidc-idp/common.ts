@@ -16,11 +16,11 @@
 import {
   allowHttpLocalhostRedirects,
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   DomainWithOidcConfig,
   startDomain,
-  waitFor,
   waitForDomainStart,
+  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { Domain } from '@management-models/Domain';
 import { createTestApp } from '@utils-commands/application-commands';
@@ -29,7 +29,7 @@ import { createIdp, deleteIdp, getAllIdps, updateIdp } from '@management-command
 import { Application } from '@management-models/Application';
 import { initiateLoginFlow, login, postConsent } from '@gateway-commands/login-commands';
 import { patchApplication } from '@management-commands/application-management-commands';
-import { BasicResponse, followRedirect, followRedirectTag } from '@utils-commands/misc';
+import { BasicResponse, followRedirect, followRedirectTag, uniqueName } from '@utils-commands/misc';
 import { performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import cheerio from 'cheerio';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
@@ -66,7 +66,6 @@ type LoginOpts = {
   oidcLoginFailureAssertions?: OidcLoginFailureAssertions;
   oidcIdpFlow?: 'code' | 'implicit';
 };
-const GATEWAY_SYNC_GRACE_PERIOD_MILLIS = process.env.AM_GATEWAY_SYNC_GRACE_PERIOD || 5000;
 
 /**
  *
@@ -107,8 +106,10 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
 
   let providerInlineIdp = await replaceDefaultIdpWithInline(providerDomain, accessToken);
 
+  // Generate unique application name to avoid conflicts in parallel execution
+  const providerAppName = uniqueName('oidc-pkce-test-provider', true);
   let providerIdpApplication = await createApp(
-    'oidc-pkce-test-provider',
+    providerAppName,
     providerDomain,
     accessToken,
     providerInlineIdp.id,
@@ -159,11 +160,15 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
     expect(location).toMatch(new RegExp(/^/.source + clientApp.settings.oauth.redirectUris[0]));
     otherAssertions(location);
 
-    return location.match(/\?code=([^&]+)/)[0];
+    const codeMatch = /\?code=([^&]+)/.exec(location);
+    return codeMatch ? codeMatch[1] : '';
   };
 
-  await waitFor(2000)
-    .then(() => initiateLoginFlow(clientApp.settings.oauth.clientId, clientOpenIdConfiguration, clientDomain))
+  // Wait for both domains to sync before starting login flow
+  await Promise.all([
+    waitForDomainSync(providerDomain.id, accessToken),
+    waitForDomainSync(clientDomain.id, accessToken),
+  ]).then(() => initiateLoginFlow(clientApp.settings.oauth.clientId, clientOpenIdConfiguration, clientDomain))
     .then((response) => navigateToOidcProviderLogin(response))
     .then((response) => login(response, TEST_USER.username, providerIdpApplication.settings.oauth.clientId, TEST_USER.password))
     .then(followRedirectTag('1'))
@@ -222,9 +227,10 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
             },
           },
         };
-        return patchApplication(providerDomain.id, accessToken, patch, providerIdpApplication.id).then((res) =>
-          waitFor(GATEWAY_SYNC_GRACE_PERIOD_MILLIS).then(() => res),
-        );
+        return patchApplication(providerDomain.id, accessToken, patch, providerIdpApplication.id).then(async (res) => {
+          await waitForDomainSync(providerDomain.id, accessToken);
+          return res;
+        });
       },
     },
     idpPluginInClient: {
@@ -242,7 +248,7 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
     },
     cleanup: async () => {
       console.log(`Cleaning up domains: ${clientDomain.hrid}, ${providerDomain.hrid}`);
-      return Promise.all([deleteDomain(clientDomain.id, accessToken), deleteDomain(providerDomain.id, accessToken)]).then((ok) =>
+      return Promise.all([safeDeleteDomain(clientDomain.id, accessToken), safeDeleteDomain(providerDomain.id, accessToken)]).then((ok) =>
         console.log('Cleanup complete'),
       );
     },
@@ -258,7 +264,7 @@ async function updateIdpConfiguration(idp: IdentityProvider, newConfig: any, dom
     roleMapper: idp.roleMapper,
     domainWhitelist: idp.domainWhitelist,
   };
-  return updateIdp(domain.id, accessToken, updatedIdp, idp.id).then(() => waitFor(GATEWAY_SYNC_GRACE_PERIOD_MILLIS));
+  return updateIdp(domain.id, accessToken, updatedIdp, idp.id).then(() => waitForDomainSync(domain.id, accessToken));
 }
 
 async function createApp(name: string, domain: Domain, accessToken: string, idpId: string, redirectUri: string) {

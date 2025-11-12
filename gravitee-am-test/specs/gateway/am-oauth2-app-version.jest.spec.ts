@@ -18,7 +18,7 @@ import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   patchDomain,
   startDomain,
   waitForDomainStart,
@@ -45,8 +45,9 @@ import {
 } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token, getBase64BasicAuth } from '@gateway-commands/utils';
 import { Domain } from '../../api/management/models';
+import { uniqueName } from '@utils-commands/misc';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 let masterDomain: Domain;
 let accessToken: string;
@@ -56,6 +57,9 @@ let application1;
 let application2;
 let application3;
 let openIdConfiguration;
+let testUsername: string;
+let testJensenUsername: string;
+let testJensenEmail: string;
 
 jest.setTimeout(200000);
 
@@ -63,17 +67,25 @@ beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
 
-  masterDomain = await createDomain(accessToken, 'oauth2-app-version', 'test oauth2 authorization framework specifications');
+  // Generate unique usernames to avoid conflicts in parallel execution
+  testUsername = uniqueName('user', true);
+  testJensenUsername = uniqueName('jensen.barbara', true);
+  testJensenEmail = `${testJensenUsername}@mail.com`;
+
+  masterDomain = await createDomain(accessToken, uniqueName('oauth2-app-version', true), 'test oauth2 authorization framework specifications');
   expect(masterDomain).toBeDefined();
   expect(masterDomain.id).toBeDefined();
 
   masterDomain = await mustMakeDomainMaster(masterDomain, accessToken);
-  defaultInlineIdp = await createNewIdp(masterDomain, accessToken);
+  defaultInlineIdp = await createNewIdp(masterDomain, accessToken, testUsername, testJensenUsername, testJensenEmail);
   scope = await createApplicationScope(masterDomain, accessToken, 'scope1');
   await createDomainCertificate(masterDomain, accessToken);
   application1 = await createApp1(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
   application2 = await createApp2(masterDomain, accessToken, scope.key, defaultInlineIdp.id);
   application3 = await createApp3(masterDomain, accessToken, scope.key);
+
+  // Wait for applications to sync to gateway
+  await waitForDomainSync(masterDomain.id, accessToken);
 
   const masterDomainStarted = await startDomain(masterDomain.id, accessToken).then(() => waitForDomainStart(masterDomain));
   masterDomain = masterDomainStarted.domain;
@@ -113,7 +125,7 @@ describe('OAuth2 - App version', () => {
         const response = await performPost(
           openIdConfiguration.token_endpoint,
           '',
-          'grant_type=password&username=user&password=#CoMpL3X-P@SsW0Rd',
+          `grant_type=password&username=${testUsername}&password=#CoMpL3X-P@SsW0Rd`,
           {
             'Content-type': 'application/x-www-form-urlencoded',
             Authorization: 'Basic ' + applicationBase64Token(application2),
@@ -129,7 +141,7 @@ describe('OAuth2 - App version', () => {
         await performPost(
           openIdConfiguration.token_endpoint,
           '',
-          'grant_type=password&username=user&password=#CoMpL3X-P@SsW0Rd&scope=unknown',
+          `grant_type=password&username=${testUsername}&password=#CoMpL3X-P@SsW0Rd&scope=unknown`,
           {
             'Content-type': 'application/x-www-form-urlencoded',
             Authorization: 'Basic ' + applicationBase64Token(application1),
@@ -141,7 +153,7 @@ describe('OAuth2 - App version', () => {
       });
 
       it('must perform a an empty scope token request', async () => {
-        await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=password&username=user&password=#CoMpL3X-P@SsW0Rd&scope=', {
+        await performPost(openIdConfiguration.token_endpoint, '', `grant_type=password&username=${testUsername}&password=#CoMpL3X-P@SsW0Rd&scope=`, {
           'Content-type': 'application/x-www-form-urlencoded',
           Authorization: 'Basic ' + applicationBase64Token(application1),
         }).expect(200);
@@ -161,7 +173,7 @@ describe('OAuth2 - App version', () => {
         const response = await performPost(
           openIdConfiguration.token_endpoint,
           '',
-          'grant_type=password&username=user&password=#CoMpL3X-P@SsW0Rd&scope=scope1',
+          `grant_type=password&username=${testUsername}&password=#CoMpL3X-P@SsW0Rd&scope=scope1`,
           {
             'Content-type': 'application/x-www-form-urlencoded',
             Authorization: 'Basic ' + applicationBase64Token(application1),
@@ -175,7 +187,7 @@ describe('OAuth2 - App version', () => {
         const response = await performPost(
           openIdConfiguration.token_endpoint,
           '',
-          'grant_type=password&username=user&password=#CoMpL3X-P@SsW0Rd&scope=scope1',
+          `grant_type=password&username=${testUsername}&password=#CoMpL3X-P@SsW0Rd&scope=scope1`,
           {
             'Content-type': 'application/x-www-form-urlencoded',
             Authorization: 'Basic ' + applicationBase64Token(application2),
@@ -199,7 +211,7 @@ describe('OAuth2 - App version', () => {
       it('renew client - must renew secrets and test token', async () => {
         const newSecret = await renewApplicationSecrets(masterDomain.id, accessToken, application3.id, application3.secrets[0].id).then(
           async (clintSecret) => {
-            await waitForDomainSync();
+            await waitForDomainSync(masterDomain.id, accessToken);
             await performPost(openIdConfiguration.token_endpoint, '', 'grant_type=client_credentials', {
               'Content-type': 'application/x-www-form-urlencoded',
               Authorization: 'Basic ' + applicationBase64Token(application3),
@@ -271,7 +283,7 @@ describe('OAuth2 - App version', () => {
           '',
           {
             'X-XSRF-TOKEN': token,
-            username: 'user',
+            username: testUsername,
             password: '#CoMpL3X-P@SsW0Rd',
             client_id: clientId,
           },
@@ -317,7 +329,7 @@ describe('OAuth2 - App version', () => {
           '',
           {
             'X-XSRF-TOKEN': loginResult.token,
-            username: 'user',
+            username: testUsername,
             password: '#CoMpL3X-P@SsW0Rd',
             client_id: clientId,
           },
@@ -386,7 +398,7 @@ describe('OAuth2 - App version', () => {
           '',
           {
             'X-XSRF-TOKEN': loginResult.token,
-            username: 'user',
+            username: testUsername,
             password: '#CoMpL3X-P@SsW0Rd',
             client_id: clientId,
           },
@@ -443,7 +455,7 @@ describe('OAuth2 - App version', () => {
               application2.id,
             ),
           )
-          .then((_) => waitForDomainSync())
+          .then((_) => waitForDomainSync(masterDomain.id, accessToken))
           .then((_) => performGet(openIdConfiguration.authorization_endpoint, params).expect(302));
 
         expect(authResponse.headers['location']).toBeDefined();
@@ -459,7 +471,7 @@ describe('OAuth2 - App version', () => {
           '',
           {
             'X-XSRF-TOKEN': loginResult.token,
-            username: 'user',
+            username: testUsername,
             password: '#CoMpL3X-P@SsW0Rd',
             client_id: clientId,
           },
@@ -506,7 +518,7 @@ describe('OAuth2 - App version', () => {
         expect(postConsentRedirect.headers['location']).toMatch(/code=[-_a-zA-Z0-9]+&?/);
 
         // Initiate the Login Flow again
-        const authResponse2 = await waitForDomainSync().then((_) =>
+        const authResponse2 = await waitForDomainSync(masterDomain.id, accessToken).then((_) =>
           performGet(openIdConfiguration.authorization_endpoint, params, {
             Cookie: postConsentRedirect.headers['set-cookie'],
           }).expect(302),
@@ -517,7 +529,7 @@ describe('OAuth2 - App version', () => {
 
         await logoutUser(openIdConfiguration.end_session_endpoint, postConsentRedirect)
           .then((_) => patchApplication(masterDomain.id, accessToken, { settings: application2.settings }, application2.id))
-          .then((_) => waitForDomainSync());
+          .then((_) => waitForDomainSync(masterDomain.id, accessToken));
       });
 
       it('must handle invalid client', async () => {
@@ -541,7 +553,7 @@ describe('OAuth2 - App version', () => {
           '',
           {
             'X-XSRF-TOKEN': loginResult.token,
-            username: 'user',
+            username: testUsername,
             password: '#CoMpL3X-P@SsW0Rd',
             client_id: clientId,
           },
@@ -600,7 +612,7 @@ describe('OAuth2 - App version', () => {
           '',
           {
             'X-XSRF-TOKEN': loginResult.token,
-            username: 'user',
+            username: testUsername,
             password: '#CoMpL3X-P@SsW0Rd',
             client_id: clientId,
           },
@@ -658,7 +670,7 @@ describe('OAuth2 - App version', () => {
           '',
           {
             'X-XSRF-TOKEN': loginResult.token,
-            username: 'user',
+            username: testUsername,
             password: '#CoMpL3X-P@SsW0Rd',
             client_id: clientId,
           },
@@ -723,7 +735,7 @@ describe('OAuth2 - App version', () => {
             '',
             {
               'X-XSRF-TOKEN': loginResult.token,
-              username: 'user',
+              username: testUsername,
               password: '#CoMpL3X-P@SsW0Rd',
               client_id: clientId,
             },
@@ -783,7 +795,7 @@ describe('OAuth2 - App version', () => {
             '',
             {
               'X-XSRF-TOKEN': loginResult.token,
-              username: 'user',
+              username: testUsername,
               password: '#CoMpL3X-P@SsW0Rd',
               client_id: clientId,
             },
@@ -849,7 +861,7 @@ describe('OAuth2 - App version', () => {
             '',
             {
               'X-XSRF-TOKEN': loginResult.token,
-              username: 'user',
+              username: testUsername,
               password: '#CoMpL3X-P@SsW0Rd',
               client_id: clientId,
             },
@@ -888,8 +900,15 @@ describe('OAuth2 - App version', () => {
       }
 
       describe('Authorize Request', () => {
-        for (const actual of getParamsInvalidAuthorizeRequests()) {
+        // Generate test cases - we'll use a placeholder that gets replaced at test time
+        const testCases = getParamsInvalidAuthorizeRequests('__CLIENT_ID_PLACEHOLDER__');
+
+        for (const actual of testCases) {
           it('must handle invalid Authorize requests - ' + actual.title, async () => {
+            // Get the actual client ID at test execution time
+            const clientId = application2.settings.oauth.clientId;
+            const params = actual.params.replace(/__CLIENT_ID_PLACEHOLDER__/g, clientId);
+
             // Initiate the Login Flow
             let authResponse;
             if (actual.patchDomain) {
@@ -898,10 +917,10 @@ describe('OAuth2 - App version', () => {
                   redirectUriStrictMatching: true,
                 },
               })
-                .then((_) => waitForDomainSync())
-                .then((_) => performGet(openIdConfiguration.authorization_endpoint, actual.params).expect(302));
+                .then((_) => waitForDomainSync(masterDomain.id, accessToken))
+                .then((_) => performGet(openIdConfiguration.authorization_endpoint, params).expect(302));
             } else {
-              authResponse = await performGet(openIdConfiguration.authorization_endpoint, actual.params).expect(302);
+              authResponse = await performGet(openIdConfiguration.authorization_endpoint, params).expect(302);
             }
 
             expect(authResponse.header['location']).toBeDefined();
@@ -958,8 +977,8 @@ describe('OAuth2 - App version', () => {
 });
 
 afterAll(async () => {
-  if (masterDomain && masterDomain.id) {
-    await deleteDomain(masterDomain.id, accessToken);
+  if (masterDomain?.id) {
+    await safeDeleteDomain(masterDomain.id, accessToken);
   }
 });
 
@@ -1008,14 +1027,36 @@ async function mustDeleteDefaultIdp(domain: Domain, accessToken: string) {
   expect(idpSet.length).toEqual(0);
 }
 
-async function createNewIdp(domain: Domain, accessToken: string) {
+async function createNewIdp(
+  domain: Domain,
+  accessToken: string,
+  username: string,
+  jensenUsername: string,
+  jensenEmail: string,
+) {
   await mustDeleteDefaultIdp(domain, accessToken);
+  const idpConfig = {
+    users: [
+      {
+        firstname: 'my-user',
+        lastname: 'my-user-lastname',
+        username: username,
+        password: '#CoMpL3X-P@SsW0Rd',
+      },
+      {
+        firstname: 'Jensen',
+        lastname: 'Barbara',
+        username: jensenUsername,
+        email: jensenEmail,
+        password: '#CoMpL3X-P@SsW0Rd',
+      },
+    ],
+  };
   const newIdp = await createIdp(domain.id, accessToken, {
     external: false,
     type: 'inline-am-idp',
     domainWhitelist: [],
-    configuration:
-      '{"users":[{"firstname":"my-user","lastname":"my-user-lastname","username":"user","password":"#CoMpL3X-P@SsW0Rd"},{"firstname":"Jensen","lastname":"Barbara","username":"jensen.barbara","email":"jensen.barbara@mail.com","password":"#CoMpL3X-P@SsW0Rd"}]}',
+    configuration: JSON.stringify(idpConfig),
     name: 'inmemory',
   });
   expect(newIdp).toBeDefined();
@@ -1040,10 +1081,12 @@ async function createDomainCertificate(domain: Domain, accessToken: string) {
 }
 
 async function createApp1(domain: Domain, accessToken: string, scopeKey: string, idpId: string) {
+  const appName = uniqueName('my-client-1', true);
+  const appClientId = uniqueName('clientId-test-1', true);
   const application = await createApplication(domain.id, accessToken, {
-    name: 'my-client 1',
+    name: appName,
     type: 'WEB',
-    clientId: 'clientId-test-1',
+    clientId: appClientId,
     redirectUris: ['http://localhost:4000/'],
   }).then((app) =>
     updateApplication(
@@ -1078,10 +1121,12 @@ async function createApp1(domain: Domain, accessToken: string, scopeKey: string,
 }
 
 async function createApp2(domain: Domain, accessToken: string, scopeKey: string, idpId: string) {
+  const appName = uniqueName('my-client-2', true);
+  const appClientId = uniqueName('client-test-2', true);
   const application = await createApplication(domain.id, accessToken, {
-    name: 'my-client 2',
+    name: appName,
     type: 'WEB',
-    clientId: 'client-test-2',
+    clientId: appClientId,
     redirectUris: ['http://localhost:4000/'],
   }).then((app) =>
     updateApplication(
@@ -1108,8 +1153,9 @@ async function createApp2(domain: Domain, accessToken: string, scopeKey: string,
 }
 
 async function createApp3(domain: Domain, accessToken: string, scopeKey: string) {
+  const appName = uniqueName('my-client-3', true);
   const application = await createApplication(domain.id, accessToken, {
-    name: 'my-client 3',
+    name: appName,
     type: 'SERVICE',
   }).then((app) =>
     updateApplication(
@@ -1157,7 +1203,7 @@ async function getOpenIDConfiguration(domain: Domain) {
   return openIdConfiguration;
 }
 
-function getParamsInvalidAuthorizeRequests() {
+function getParamsInvalidAuthorizeRequests(clientId: string) {
   return [
     {
       title: 'Unsupported response type',
@@ -1189,7 +1235,7 @@ function getParamsInvalidAuthorizeRequests() {
     },
     {
       title: 'Send a redirect_uri not configured in the client',
-      params: '?response_type=code&client_id=client-test-2&redirect_uri=http://my_bad_host:4000',
+      params: `?response_type=code&client_id=${clientId}&redirect_uri=http://my_bad_host:4000`,
       uri: `/oauth/error`,
       error: 'redirect_uri_mismatch',
       error_description: 'The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application',
@@ -1197,14 +1243,14 @@ function getParamsInvalidAuthorizeRequests() {
     {
       title: 'Send a bad redirect_uri strict matching',
       patchDomain: true,
-      params: '?response_type=code&client_id=client-test-2&redirect_uri=http://my_bad_host:4000?extraParam=test',
+      params: `?response_type=code&client_id=${clientId}&redirect_uri=http://my_bad_host:4000?extraParam=test`,
       uri: `/oauth/error`,
       error: 'redirect_uri_mismatch',
       error_description: 'The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application',
     },
     {
       title: 'Error with state parameters',
-      params: '?response_type=code&client_id=client-test-2&redirect_uri=http://my_bad_host:4000&state=xxx-yyy-zzz',
+      params: `?response_type=code&client_id=${clientId}&redirect_uri=http://my_bad_host:4000&state=xxx-yyy-zzz`,
       uri: `/oauth/error`,
       error: 'redirect_uri_mismatch',
       error_description: 'The+redirect_uri+MUST+match+the+registered+callback+URL+for+this+application',

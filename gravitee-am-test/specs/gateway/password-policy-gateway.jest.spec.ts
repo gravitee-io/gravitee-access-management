@@ -17,7 +17,7 @@ import fetch from 'cross-fetch';
 import * as faker from 'faker';
 import { afterAll, afterEach, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitFor, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { getIdp } from '@management-commands/idp-management-commands';
 import {
   assignPasswordPolicyToIdp,
@@ -267,9 +267,7 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-  if (domain?.id) {
-    await deleteDomain(domain.id, accessToken);
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
 });
 
 async function removeAllPasswordPolicies(): Promise<void> {

@@ -17,20 +17,21 @@ import { afterAll, beforeAll, describe, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import { Domain } from '@management-models/Domain';
 import { Application } from '@management-models/Application';
-import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
-import { getUser } from '@management-commands/user-management-commands';
+import { getUserPage } from '@management-commands/user-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 let mngAccessToken: string;
 let scimAccessToken: string;
 let domain: Domain;
 let scimClient: Application;
 let scimEndpoint: string;
-let confirmationLink: string;
-let createdUser;
+let testUserEmail: string;
+let testUserName: string;
 
 jest.setTimeout(200000);
 
@@ -38,7 +39,7 @@ beforeAll(async function () {
   mngAccessToken = await requestAdminAccessToken();
   expect(mngAccessToken).toBeDefined();
 
-  domain = await createDomain(mngAccessToken, 'scim', 'Domain used to test SCIM requests');
+  domain = await createDomain(mngAccessToken, uniqueName('scim', true), 'Domain used to test SCIM requests');
   expect(domain).toBeDefined();
 
   // enable SCIM
@@ -49,8 +50,9 @@ beforeAll(async function () {
     },
   });
 
+  const appName = uniqueName('SCIM App', true);
   const applicationDefinition: Application = {
-    name: 'SCIM App',
+    name: appName,
     type: 'SERVICE',
     settings: {
       oauth: {
@@ -73,7 +75,7 @@ beforeAll(async function () {
 
   await startDomain(domain.id, mngAccessToken);
 
-  await waitForDomainSync();
+  await waitForDomainSync(domain.id, mngAccessToken);
   const openIdConfiguration = await getWellKnownOpenIdConfiguration(domain.hrid);
 
   // generate SCIM access token
@@ -86,16 +88,18 @@ beforeAll(async function () {
 });
 
 afterAll(async function () {
-  if (domain) {
-    await deleteDomain(domain.id, mngAccessToken);
-  }
+  await safeDeleteDomain(domain?.id, mngAccessToken);
 });
 describe('SCIM with preRegistration', () => {
-  it('should create SCIM user with preRegistration', async () => {
+  it('should create SCIM user with preRegistration and confirm registration', async () => {
+    // Generate unique identifiers to avoid conflicts in parallel execution
+    testUserEmail = `${uniqueName('user', true)}@user.com`;
+    testUserName = uniqueName('barbara', true);
+
     const request = {
       schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
       externalId: '70198412321242223922423',
-      userName: 'barbara',
+      userName: testUserName,
       password: null,
       name: {
         formatted: 'Ms. Barbara J Jensen, III',
@@ -109,7 +113,7 @@ describe('SCIM with preRegistration', () => {
       nickName: 'Babs',
       emails: [
         {
-          value: 'user@user.com',
+          value: testUserEmail,
           type: 'work',
           primary: true,
         },
@@ -126,11 +130,14 @@ describe('SCIM with preRegistration', () => {
       },
     };
 
+    // Clear emails for this specific recipient BEFORE creating the user to avoid interference from other tests
+    await clearEmails(testUserEmail);
+
     const response = await performPost(scimEndpoint, '/Users', JSON.stringify(request), {
       'Content-type': 'application/json',
       Authorization: `Bearer ${scimAccessToken}`,
     }).expect(201);
-    createdUser = response.body;
+    const createdUser = response.body;
 
     expect(createdUser).toBeDefined();
     // Pre registered user are not enabled.
@@ -138,17 +145,16 @@ describe('SCIM with preRegistration', () => {
     expect(createdUser.enabled).toBeFalsy();
     expect(createdUser.registrationUserUri).not.toBeDefined();
     expect(createdUser.registrationAccessToken).not.toBeDefined();
-  });
 
-  it('must received an email', async () => {
-    confirmationLink = (await getLastEmail()).extractLink();
+    // Retrieve confirmation email and confirm registration in the same test
+    const confirmationLink = (await getLastEmail(1000, testUserEmail)).extractLink();
     expect(confirmationLink).toBeDefined();
-    await clearEmails();
-  });
+    await clearEmails(testUserEmail);
 
-  it('must confirm the registration by providing a password', async () => {
+    // Confirm registration
     const url = new URL(confirmationLink);
     const resetPwdToken = url.searchParams.get('token');
+    expect(resetPwdToken).toBeDefined();
     const baseUrlConfirmRegister = confirmationLink.substring(0, confirmationLink.indexOf('?'));
 
     const { headers, token: xsrfToken } = await extractXsrfToken(baseUrlConfirmRegister, '?token=' + resetPwdToken);
@@ -172,15 +178,18 @@ describe('SCIM with preRegistration', () => {
   });
 
   it('must be enabled', async () => {
-    let user = await getUser(domain.id, mngAccessToken, createdUser.id);
+    // Fetch user by email
+    const users = await getUserPage(domain.id, mngAccessToken);
+    const user = users.data.find((u) => u.email === testUserEmail || u.username === testUserName);
     expect(user).toBeDefined();
-    // Pre registered user are not enabled.
-    // They have to provide a password first.
     expect(user.enabled).toBeTruthy();
   });
 
   it('must contain forceResetPassword', async () => {
-    let user = await getUser(domain.id, mngAccessToken, createdUser.id);
+    // Fetch user by email
+    const users = await getUserPage(domain.id, mngAccessToken);
+    const user = users.data.find((u) => u.email === testUserEmail || u.username === testUserName);
+    expect(user).toBeDefined();
     expect(user.forceResetPassword).toBeTruthy();
   });
 });

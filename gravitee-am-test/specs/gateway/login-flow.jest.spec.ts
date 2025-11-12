@@ -17,7 +17,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
 import { createUser, updateUsername } from '@management-commands/user-management-commands';
 import { logoutUser, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { loginAdditionalInfoAndPassword, loginUserNameAndPassword } from '@gateway-commands/login-commands';
@@ -25,7 +25,7 @@ import { createJdbcIdp, createMongoIdp } from '@utils-commands/idps-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { uniqueName } from '@utils-commands/misc';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 const jdbc = process.env.GRAVITEE_REPOSITORIES_MANAGEMENT_TYPE;
 
@@ -72,21 +72,37 @@ describe('multiple user', () => {
   const user1Password = 'ZxcPrm7123!!';
   let user2;
   const commonPassword = 'AsdPrm7123!!';
-  const commonEmail = 'common@test.com';
+  let commonEmail: string;
   let user3; //user3 has same password as user2
   let user4;
   const user4Password = 'QwePrm7123!!';
   let user5;
   let user6;
   const secondCommonPassword = 'PhdPrm7123!!';
-  const secondCommonEmail = 'second.common@test.com';
+  let secondCommonEmail: string;
+  let testJohnDoe: string;
+  let testJensenBarbara: string;
+  let userFlipFlop: string;
+  let testSomeUser: string;
+  let testUserFive: string;
+  let testUserSix: string;
 
   beforeAll(async () => {
+    // Generate unique usernames to avoid conflicts in parallel execution
+    testJohnDoe = uniqueName('john.doe', true);
+    testJensenBarbara = uniqueName('jensen.barbara', true);
+    userFlipFlop = uniqueName('flip.flop', true);
+    testSomeUser = uniqueName('some.user', true);
+    testUserFive = uniqueName('user.five', true);
+    testUserSix = uniqueName('user.six', true);
+    commonEmail = `${uniqueName('common', true)}@test.com`;
+    secondCommonEmail = `${uniqueName('second.common', true)}@test.com`;
+
     user1 = await createUser(domain.id, accessToken, {
       firstName: 'john',
       lastName: 'doe',
-      email: 'john.doe@test.com',
-      username: 'john.doe',
+      email: `${testJohnDoe}@test.com`,
+      username: testJohnDoe,
       password: user1Password,
       client: multiUserLoginApp.id,
       source: customIdp.id,
@@ -101,8 +117,8 @@ describe('multiple user', () => {
     user2 = await createUser(domain.id, accessToken, {
       firstName: 'jensen',
       lastName: 'barbara',
-      username: 'jensen.barbara',
-      email: 'jensen.barbara@test.com',
+      username: testJensenBarbara,
+      email: `${testJensenBarbara}@test.com`,
       password: commonPassword,
       client: multiUserLoginApp.id,
       source: customIdp.id,
@@ -117,7 +133,7 @@ describe('multiple user', () => {
     user3 = await createUser(domain.id, accessToken, {
       firstName: 'flip',
       lastName: 'flop',
-      username: 'flip.flop',
+      username: userFlipFlop,
       email: commonEmail,
       password: commonPassword,
       client: multiUserLoginApp.id,
@@ -133,7 +149,7 @@ describe('multiple user', () => {
     user4 = await createUser(domain.id, accessToken, {
       firstName: 'some',
       lastName: 'user',
-      username: 'some.user',
+      username: testSomeUser,
       email: commonEmail,
       password: user4Password,
       client: multiUserLoginApp.id,
@@ -149,7 +165,7 @@ describe('multiple user', () => {
     user5 = await createUser(domain.id, accessToken, {
       firstName: 'alan',
       lastName: 'bull',
-      username: 'user.five',
+      username: testUserFive,
       email: secondCommonEmail,
       password: secondCommonPassword,
       client: multiUserLoginApp.id,
@@ -165,7 +181,7 @@ describe('multiple user', () => {
     user6 = await createUser(domain.id, accessToken, {
       firstName: 'james',
       lastName: 'hen',
-      username: 'user.six',
+      username: testUserSix,
       email: secondCommonEmail,
       password: secondCommonPassword,
       client: multiUserLoginApp.id,
@@ -326,17 +342,12 @@ describe('multiple user', () => {
   });
 
   afterAll(async () => {
-    // await deleteUser(domain.id, accessToken, user1.id);
-    // await deleteUser(domain.id, accessToken, user2.id);
-    // await deleteUser(domain.id, accessToken, user3.id);
-    // await deleteUser(domain.id, accessToken, user4.id);
-    // await deleteUser(domain.id, accessToken, user5.id);
-    // await deleteUser(domain.id, accessToken, user6.id);
+    // Users are cleaned up when domain is deleted
   });
 });
 
 afterAll(async () => {
   if (domain.id) {
-    await deleteDomain(domain.id, accessToken);
+    await safeDeleteDomain(domain.id, accessToken);
   }
 });

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, it, jest } from '@jest/globals';
-import { createDomain, deleteDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { afterAll, beforeAll, beforeEach, expect, it, jest } from '@jest/globals';
+import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createApplication,
@@ -27,7 +27,6 @@ import fetch from 'cross-fetch';
 import { buildCreateAndTestUser, deleteUser, deleteUserFactor, getUserFactors } from '@management-commands/user-management-commands';
 import { createResource } from '@management-commands/resource-management-commands';
 import { extractXsrfTokenAndActionResponse, performDelete, performGet, performPost } from '@gateway-commands/oauth-oidc-commands';
-import * as faker from 'faker';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { lookupFlowAndResetPolicies } from '@management-commands/flow-management-commands';
@@ -35,7 +34,7 @@ import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { extractSharedSecret, extractSmsCode } from './fixture/mfa-extract-fixture';
 import { createCallFactor, createSMSFactor } from './fixture/mfa-setup-fixture';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 let domain;
 let accessToken;
@@ -61,6 +60,9 @@ beforeAll(async () => {
 
   app = await createApp(domain, accessToken, smsFactor.id, callFactor.id);
 
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, accessToken);
+
   let started = await startDomain(domain.id, accessToken).then(waitForDomainStart);
   domain = started.domain;
   openIdConfiguration = started.oidcConfig;
@@ -69,9 +71,15 @@ beforeAll(async () => {
 describe('MFA double enrollment scenario', () => {
   let user;
 
+  beforeEach(async () => {
+    // Create user once and reuse across tests in this describe block
+    if (!user) {
+      user = await buildCreateAndTestUser(domain.id, accessToken, 1);
+      expect(user).toBeDefined();
+    }
+  });
+
   it('When user enrolls and verify SMS factor, the CALL factor is added along', async () => {
-    user = await buildCreateAndTestUser(domain.id, accessToken, 1);
-    expect(user).toBeDefined();
 
     const loginResponse = await loginUserNameAndPassword(
       app.settings.oauth.clientId,
@@ -126,10 +134,8 @@ describe('MFA double enrollment scenario', () => {
 });
 
 afterAll(async () => {
-  if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
-    await performDelete(sfrUrl, '/__admin/requests', {});
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
+  await performDelete(sfrUrl, '/__admin/requests', {});
 });
 
 const enrollSmsFactor = async (authResponse, factor, domain, phoneNumber) => {
@@ -196,9 +202,9 @@ const createTwilioResource = async (domain, accessToken) => {
 
 const createApp = async (domain, accessToken, smsFactorId, callFactorId) => {
   const application = await createApplication(domain.id, accessToken, {
-    name: 'mfaEnrollFlowApp',
+    name: uniqueName('mfaEnrollFlowApp', true),
     type: 'WEB',
-    clientId: faker.internet.domainWord(),
+    clientId: uniqueName('mfa-double-enroll-app', true),
     redirectUris: ['https://auth-nightly.gravitee.io/myApp/callback'],
   }).then((app) =>
     updateApplication(

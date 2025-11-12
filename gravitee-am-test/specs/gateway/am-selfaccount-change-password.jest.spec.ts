@@ -15,30 +15,24 @@
  */
 import fetch from 'cross-fetch';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
-import { jest, afterAll, beforeAll, expect } from '@jest/globals';
+import { jest, afterAll, beforeAll, beforeEach, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainStart } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, updateApplication } from '@management-commands/application-management-commands';
-import { getWellKnownOpenIdConfiguration, performPost } from '@gateway-commands/oauth-oidc-commands';
+import { performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
+import { uniqueName } from '@utils-commands/misc';
 
 let domain;
 let managementApiAccessToken;
-let endUserAccessToken;
 let openIdConfiguration;
 let application;
-let user = {
-  username: 'SelfAccountUser',
-  password: 'SomeP@ssw0rd',
-  firstName: 'SelfAccount',
-  lastName: 'User',
-  email: 'selfaccountuser@acme.fr',
-  preRegistration: false,
-};
+let user;
+let originalPassword: string;
 const PATCH_DOMAIN_SEFLACCOUNT_SETTINGS = {
   selfServiceAccountManagementSettings: {
     enabled: true,
@@ -51,12 +45,10 @@ const PATCH_DOMAIN_SEFLACCOUNT_SETTINGS = {
 
 jest.setTimeout(200000);
 
-const waitForDomainSync = () => new Promise((r) => setTimeout(r, 10000));
-
 beforeAll(async () => {
   managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
-  domain = await createDomain(managementApiAccessToken, 'self-account-change-password', 'test Change Password through SelfAccount API');
+  domain = await createDomain(managementApiAccessToken, uniqueName('self-account-change-password', true), 'test Change Password through SelfAccount API');
   expect(domain).toBeDefined();
 
   await startDomain(domain.id, managementApiAccessToken);
@@ -64,12 +56,14 @@ beforeAll(async () => {
 
   // Create the application
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
-
+  const appClientId = uniqueName('selfaccount-changepwd', true);
+  const appClientSecret = uniqueName('selfaccount-changepwd', true);
+  const appName = uniqueName('my-client', true);
   application = await createApplication(domain.id, managementApiAccessToken, {
-    name: 'my-client',
+    name: appName,
     type: 'WEB',
-    clientId: 'selfaccount-changepwd',
-    clientSecret: 'selfaccount-changepwd',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
@@ -107,8 +101,23 @@ beforeAll(async () => {
   );
   expect(application).toBeDefined();
 
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, managementApiAccessToken);
+
   // Create a User
+  const username = uniqueName('SelfAccountUser', true);
+  originalPassword = 'SomeP@ssw0rd';
+  user = {
+    username: username,
+    password: originalPassword,
+    firstName: 'SelfAccount',
+    lastName: 'User',
+    email: 'selfaccountuser@acme.fr',
+    preRegistration: false,
+  };
   await createUser(domain.id, managementApiAccessToken, user);
+  // Ensure user is synced to gateway before authentication
+  await waitForDomainSync(domain.id, managementApiAccessToken);
 
   await waitForDomainStart(domain).then((started) => {
     domain = started.domain;
@@ -118,56 +127,84 @@ beforeAll(async () => {
 });
 
 describe('SelfAccount - Change Password', () => {
-  describe('Prepare - Sign in user', () => {
-    it('must deliver an access_token', async () => {
-      let response = await performPost(
-        openIdConfiguration.token_endpoint,
-        '',
-        `grant_type=password&username=${user.username}&password=${user.password}`,
-        {
-          'Content-type': 'application/x-www-form-urlencoded',
-          Authorization: 'Basic ' + applicationBase64Token(application),
-        },
-      ).expect(200);
+  let currentPassword: string;
 
-      expect(response.body.access_token).toBeDefined();
-      endUserAccessToken = response.body.access_token;
-    });
+  beforeAll(() => {
+    // Initialize currentPassword after originalPassword is set in outer beforeAll
+    // This ensures currentPassword is set before any tests run
+    currentPassword = originalPassword;
+    expect(currentPassword).toBeDefined();
+    expect(currentPassword).toBe(originalPassword);
   });
-});
 
-describe('SelfAccount - Change Password', () => {
   describe('With default settings', () => {
     describe('End User', () => {
       it('must be able to change his password', async () => {
-        user.password = 'SomeP@ssw0rd!';
+        // Generate token with original password (user was created with this password)
+        const tokenResponse = await performPost(
+          openIdConfiguration.token_endpoint,
+          '',
+          `grant_type=password&username=${user.username}&password=${originalPassword}`,
+          {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+          },
+        ).expect(200);
+        const endUserAccessToken = tokenResponse.body.access_token;
+
+        currentPassword = 'SomeP@ssw0rd!';
 
         await performPost(
           `${process.env.AM_GATEWAY_URL}/${domain.hrid}/account/api/changePassword`,
           '',
-          `{"password": "${user.password}"}`,
+          `{"password": "${currentPassword}"}`,
           {
             'Content-type': 'application/json',
             Authorization: `Bearer ${endUserAccessToken}`,
           },
         ).expect(204);
+        
+        // Wait for password change to sync to gateway
+        await waitForDomainSync(domain.id, managementApiAccessToken);
       });
 
-      it('must be able to sign in using new password', checkUserSignIn());
+      it('must be able to sign in using new password', async () => {
+        const response = await performPost(
+          openIdConfiguration.token_endpoint,
+          '',
+          `grant_type=password&username=${user.username}&password=${currentPassword}`,
+          {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+          },
+        ).expect(200);
+        expect(response.body.access_token).toBeDefined();
+      });
     });
   });
 
   describe('When oldPassword is requried', () => {
-    describe('Prepare', () => {
-      it('domain settings have to be updated', async () => {
-        PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.oldPasswordRequired = true;
-        await patchDomain(domain.id, managementApiAccessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
-        await waitForDomainSync();
-      });
+    beforeAll(async () => {
+      // Update domain settings once for this test group
+      PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.oldPasswordRequired = true;
+      await patchDomain(domain.id, managementApiAccessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     describe('EndUser ', () => {
       it('must NOT be able to change his password if old one is missing', async () => {
+        // Generate token with current password
+        const tokenResponse = await performPost(
+          openIdConfiguration.token_endpoint,
+          '',
+          `grant_type=password&username=${user.username}&password=${currentPassword}`,
+          {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+          },
+        ).expect(200);
+        const endUserAccessToken = tokenResponse.body.access_token;
+
         await performPost(
           `${process.env.AM_GATEWAY_URL}/${domain.hrid}/account/api/changePassword`,
           '',
@@ -180,10 +217,22 @@ describe('SelfAccount - Change Password', () => {
       });
 
       it('must NOT be able to change his password if old one is invalid', async () => {
+        // Generate token with current password
+        const tokenResponse = await performPost(
+          openIdConfiguration.token_endpoint,
+          '',
+          `grant_type=password&username=${user.username}&password=${currentPassword}`,
+          {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+          },
+        ).expect(200);
+        const endUserAccessToken = tokenResponse.body.access_token;
+
         await performPost(
           `${process.env.AM_GATEWAY_URL}/${domain.hrid}/account/api/changePassword`,
           '',
-          `{"password": "${user.password}", "oldPassword": "invalidpassword"}`,
+          `{"password": "TestPassword123!", "oldPassword": "invalidpassword"}`,
           {
             'Content-type': 'application/json',
             Authorization: `Bearer ${endUserAccessToken}`,
@@ -192,36 +241,76 @@ describe('SelfAccount - Change Password', () => {
       });
 
       it('must be able to change his password if old one is present', async () => {
-        let oldPassword = user.password;
-        user.password = 'TestW1thOldP@ssw0rd';
+        // Generate token with current password
+        const tokenResponse = await performPost(
+          openIdConfiguration.token_endpoint,
+          '',
+          `grant_type=password&username=${user.username}&password=${currentPassword}`,
+          {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+          },
+        ).expect(200);
+        const endUserAccessToken = tokenResponse.body.access_token;
+
+        const oldPassword = currentPassword;
+        currentPassword = 'TestW1thOldP@ssw0rd';
 
         await performPost(
           `${process.env.AM_GATEWAY_URL}/${domain.hrid}/account/api/changePassword`,
           '',
-          `{"password": "${user.password}", "oldPassword": "${oldPassword}"}`,
+          `{"password": "${currentPassword}", "oldPassword": "${oldPassword}"}`,
           {
             'Content-type': 'application/json',
             Authorization: `Bearer ${endUserAccessToken}`,
           },
         ).expect(204);
+        
+        // Wait for password change to sync to gateway
+        await waitForDomainSync(domain.id, managementApiAccessToken);
       });
 
-      it('must be able to sign in using new password', checkUserSignIn());
+      it('must be able to sign in using new password', async () => {
+        const response = await performPost(
+          openIdConfiguration.token_endpoint,
+          '',
+          `grant_type=password&username=${user.username}&password=${currentPassword}`,
+          {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+          },
+        ).expect(200);
+        expect(response.body.access_token).toBeDefined();
+      });
     });
   });
 
   describe('When access_token is too old', () => {
-    describe('Prepare', () => {
-      it('domain settings have to be updated', async () => {
-        PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.tokenAge = 10;
-        await patchDomain(domain.id, managementApiAccessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
-        await waitForDomainSync();
-      });
+    beforeAll(async () => {
+      // Update domain settings once for this test group
+      PATCH_DOMAIN_SEFLACCOUNT_SETTINGS.selfServiceAccountManagementSettings.resetPassword.tokenAge = 10;
+      await patchDomain(domain.id, managementApiAccessToken, PATCH_DOMAIN_SEFLACCOUNT_SETTINGS);
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     describe('EndUser ', () => {
       it('must be able to change his password if old one is present', async () => {
-        let oldPassword = user.password;
+        // Generate token and wait for it to age (tokenAge = 10 seconds)
+        const tokenResponse = await performPost(
+          openIdConfiguration.token_endpoint,
+          '',
+          `grant_type=password&username=${user.username}&password=${currentPassword}`,
+          {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+          },
+        ).expect(200);
+        const endUserAccessToken = tokenResponse.body.access_token;
+
+        // Wait for token to become older than tokenAge (10 seconds)
+        await new Promise((resolve) => setTimeout(resolve, 11000)); // 10 seconds + 1 second buffer
+
+        const oldPassword = currentPassword;
         await performPost(
           `${process.env.AM_GATEWAY_URL}/${domain.hrid}/account/api/changePassword`,
           '',
@@ -233,30 +322,23 @@ describe('SelfAccount - Change Password', () => {
         ).expect(401);
       });
 
-      it('must be able to sign in using current password', checkUserSignIn());
+      it('must be able to sign in using current password', async () => {
+        const response = await performPost(
+          openIdConfiguration.token_endpoint,
+          '',
+          `grant_type=password&username=${user.username}&password=${currentPassword}`,
+          {
+            'Content-type': 'application/x-www-form-urlencoded',
+            Authorization: 'Basic ' + applicationBase64Token(application),
+          },
+        ).expect(200);
+        expect(response.body.access_token).toBeDefined();
+      });
     });
   });
 });
 
 afterAll(async () => {
-  if (domain && domain.id) {
-    await deleteDomain(domain.id, managementApiAccessToken);
-  }
+  await safeDeleteDomain(domain?.id, managementApiAccessToken);
 });
 
-function checkUserSignIn(): Mocha.Func {
-  return async () => {
-    let response = await performPost(
-      openIdConfiguration.token_endpoint,
-      '',
-      `grant_type=password&username=${user.username}&password=${user.password}`,
-      {
-        'Content-type': 'application/x-www-form-urlencoded',
-        Authorization: 'Basic ' + applicationBase64Token(application),
-      },
-    );
-    expect(200);
-    expect(response.body.access_token).toBeDefined();
-    endUserAccessToken = response.body.access_token;
-  };
-}

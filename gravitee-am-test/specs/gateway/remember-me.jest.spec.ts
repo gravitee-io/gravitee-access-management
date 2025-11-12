@@ -17,13 +17,14 @@
 import fetch from 'cross-fetch';
 import { expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, startDomain } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { createUser, deleteUser } from '@management-commands/user-management-commands';
 import { getWellKnownOpenIdConfiguration, logoutUser } from '@gateway-commands/oauth-oidc-commands';
 import { loginUserNameAndPassword } from '@gateway-commands/login-commands';
 import { createTestApp } from '@utils-commands/application-commands';
 import { createJdbcIdp, createMongoIdp } from '@utils-commands/idps-commands';
 import * as faker from 'faker';
+import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
 
@@ -140,10 +141,10 @@ describe('remember me', () => {
     });
 
     afterEach(async () => {
-      await deleteUser(domain.id, accessToken, user.id);
-      if (domain.id) {
-        await deleteDomain(domain.id, accessToken);
+      if (user?.id) {
+        await deleteUser(domain.id, accessToken, user.id);
       }
+      await safeDeleteDomain(domain?.id, accessToken);
     });
   });
 
@@ -261,10 +262,10 @@ describe('remember me', () => {
     });
 
     afterEach(async () => {
-      await deleteUser(domain.id, accessToken, user.id);
-      if (domain.id) {
-        await deleteDomain(domain.id, accessToken);
+      if (user?.id) {
+        await deleteUser(domain.id, accessToken, user.id);
       }
+      await safeDeleteDomain(domain?.id, accessToken);
     });
   });
 });
@@ -279,7 +280,7 @@ async function validateMaxAgeCookie(cookieName: string, maxAgeExpected: string, 
 
 async function initEnv(applicationConfiguration, domainConfiguration = null) {
   accessToken = await requestAdminAccessToken();
-  domain = await createDomain(accessToken, faker.company.companyName(), 'test remember me option')
+  domain = await createDomain(accessToken, uniqueName('remember-me', true), 'test remember me option')
     .then((domain) => startDomain(domain.id, accessToken))
     .then((domain) => {
       if (domainConfiguration != null) {
@@ -298,10 +299,13 @@ async function initEnv(applicationConfiguration, domainConfiguration = null) {
     identityProviders: new Set([{ identity: customIdp.id, priority: 0 }]),
   });
 
-  await new Promise((r) => setTimeout(r, 10000));
+  await waitForDomainSync(domain.id, accessToken);
 
-  const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
-  openIdConfiguration = result.body;
+  // Wait for domain to be ready to serve requests
+  await waitForDomainStart(domain).then((started) => {
+    domain = started.domain;
+    openIdConfiguration = started.oidcConfig;
+  });
 
   const firstname = faker.name.firstName();
   const lastname = faker.name.lastName();

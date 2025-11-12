@@ -19,7 +19,7 @@ global.fetch = fetch;
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
+import { createDomain, safeDeleteDomain, patchDomain, startDomain, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
@@ -30,37 +30,34 @@ import {
   performFormPost,
   performGet,
 } from '@gateway-commands/oauth-oidc-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 let domain;
 let managementApiAccessToken;
 let openIdConfiguration;
 let application;
-let user = {
-  username: 'LogoutUser',
-  password: 'SomeP@ssw0rd',
-  firstName: 'Logout',
-  lastName: 'User',
-  email: 'logoutuser@acme.fr',
-  preRegistration: false,
-};
+let user;
 
 jest.setTimeout(200000);
 
 beforeAll(async () => {
   managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
-  domain = await createDomain(managementApiAccessToken, 'jest-logout', 'test end-user logout');
+  domain = await createDomain(managementApiAccessToken, uniqueName('enduser-logout', true), 'test end-user logout');
   expect(domain).toBeDefined();
 
   await startDomain(domain.id, managementApiAccessToken);
 
   // Create the application
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
+  const appClientId = uniqueName('app-logout', true);
+  const appClientSecret = uniqueName('app-logout', true);
+  const appName = uniqueName('my-client', true);
   application = await createApplication(domain.id, managementApiAccessToken, {
-    name: 'my-client',
+    name: appName,
     type: 'WEB',
-    clientId: 'app-logout',
-    clientSecret: 'app-logout',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
@@ -84,9 +81,21 @@ beforeAll(async () => {
   );
   expect(application).toBeDefined();
 
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, managementApiAccessToken);
+
   // Create a User
+  const username = uniqueName('LogoutUser', true);
+  user = {
+    username: username,
+    password: 'SomeP@ssw0rd',
+    firstName: 'Logout',
+    lastName: 'User',
+    email: 'logoutuser@acme.fr',
+    preRegistration: false,
+  };
   await createUser(domain.id, managementApiAccessToken, user);
-  await waitForDomainSync();
+  await waitForDomainSync(domain.id, managementApiAccessToken);
 
   const result = await getWellKnownOpenIdConfiguration(domain.hrid).expect(200);
   openIdConfiguration = result.body;
@@ -115,7 +124,7 @@ describe('OAuth2 - Logout tests', () => {
           postLogoutRedirectUris: ['https://somewhere/after/logout'],
         },
       });
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After sign-in a user can logout without target_uri', async () => {
@@ -152,7 +161,7 @@ describe('OAuth2 - Logout tests', () => {
         },
         application.id,
       );
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After sign-in a user can logout without target_uri', async () => {
@@ -185,7 +194,7 @@ describe('OAuth2 - Logout tests', () => {
 
 afterAll(async () => {
   if (domain && domain.id) {
-    await deleteDomain(domain.id, managementApiAccessToken);
+    await safeDeleteDomain(domain.id, managementApiAccessToken);
   }
 });
 

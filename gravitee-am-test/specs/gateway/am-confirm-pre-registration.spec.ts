@@ -21,26 +21,24 @@ import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   startDomain,
-  waitFor,
   waitForDomainStart,
   waitForDomainSync,
 } from '@management-commands/domain-management-commands';
-import { createUser, getUser } from '@management-commands/user-management-commands';
+import { createUser, getUserPage } from '@management-commands/user-management-commands';
 import { extractXsrfToken, performFormPost, performGet } from '@gateway-commands/oauth-oidc-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createApplication, patchApplication, updateApplication } from '@management-commands/application-management-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 import cheerio from 'cheerio';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 let domain;
 let application;
 let accessToken;
-let confirmationLink;
-let createdUser;
 let clientId;
 let defaultIdp;
 
@@ -49,24 +47,24 @@ jest.setTimeout(200000);
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
   expect(accessToken).toBeDefined();
-  const createdDomain = await createDomain(accessToken, 'pre-registration', 'test user pre-registration');
+  const createdDomain = await createDomain(accessToken, uniqueName('pre-registration', true), 'test user pre-registration');
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
   domain = createdDomain;
 
-  const domainStarted = await startDomain(domain.id, accessToken);
-  expect(domainStarted).toBeDefined();
-  expect(domainStarted.id).toEqual(domain.id);
-  domain = domainStarted;
+  await startDomain(domain.id, accessToken);
 
   // Create the application
   const idpSet = await getAllIdps(domain.id, accessToken);
   defaultIdp = idpSet.values().next().value.id;
+  const appClientId = uniqueName('flow-app', true);
+  const appClientSecret = uniqueName('flow-app', true);
+  const appName = uniqueName('my-client', true);
   application = await createApplication(domain.id, accessToken, {
-    name: 'my-client',
+    name: appName,
     type: 'WEB',
-    clientId: 'flow-app',
-    clientSecret: 'flow-app',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
@@ -95,97 +93,112 @@ beforeAll(async () => {
   expect(application).toBeDefined();
   clientId = application.settings.oauth.clientId;
 
-  await waitForDomainStart(domain);
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, accessToken);
+
+  // Wait for domain to be ready to serve requests
+  await waitForDomainStart(domain).then((started) => {
+    domain = started.domain;
+  });
 });
 
 describe('AM - User Pre-Registration', () => {
+  // Generate unique username and email to avoid conflicts in parallel execution
+  const username = uniqueName('preregister', true);
   const preRegisteredUser = {
-    username: 'preregister',
+    username: username,
     firstName: 'preregister',
     lastName: 'preregister',
-    email: 'preregister@acme.fr',
+    email: `${username}@acme.fr`,
     preRegistration: true,
   };
 
-  it('must pre-register a user', async () => {
-    createdUser = await createUser(domain.id, accessToken, preRegisteredUser);
+  beforeAll(async () => {
+    // Clear emails for this specific recipient at the start to avoid interference from other tests
+    await clearEmails(preRegisteredUser.email);
+  });
+
+  it('must pre-register a user, receive email, and confirm registration', async () => {
+    // Create user
+    const createdUser = await createUser(domain.id, accessToken, preRegisteredUser);
     expect(createdUser).toBeDefined();
     // Pre registered user are not enabled.
     // They have to provide a password first.
     expect(createdUser.enabled).toBeFalsy();
     expect(createdUser.registrationUserUri).not.toBeDefined();
     expect(createdUser.registrationAccessToken).not.toBeDefined();
+
+    // Retrieve and use confirmation email in the same test
+    const confirmationLink = (await getLastEmail(1000, preRegisteredUser.email)).extractLink();
+    expect(confirmationLink).toBeDefined();
+    await clearEmails(preRegisteredUser.email);
+
+    // Confirm registration
+    const url = new URL(confirmationLink);
+    const resetPwdToken = url.searchParams.get('token');
+    const baseUrlConfirmRegister = confirmationLink.substring(0, confirmationLink.indexOf('?'));
+
+    const { headers, token: xsrfToken } = await extractXsrfToken(baseUrlConfirmRegister, '?token=' + resetPwdToken);
+
+    const postConfirmRegistration = await performFormPost(
+      baseUrlConfirmRegister,
+      '',
+      {
+        'X-XSRF-TOKEN': xsrfToken,
+        token: resetPwdToken,
+        password: '#CoMpL3X-P@SsW0Rd',
+      },
+      {
+        Cookie: headers['set-cookie'],
+        'Content-type': 'application/x-www-form-urlencoded',
+      },
+    ).expect(302);
+
+    expect(postConfirmRegistration.headers['location']).toBeDefined();
+    expect(postConfirmRegistration.headers['location']).toContain('success=registration_completed');
   });
 
-  describe('User', () => {
-    it('must received an email', async () => {
-      confirmationLink = (await getLastEmail()).extractLink();
-      expect(confirmationLink).toBeDefined();
-      await clearEmails();
-    });
-
-    it('must confirm the registration by providing a password', async () => {
-      const url = new URL(confirmationLink);
-      const resetPwdToken = url.searchParams.get('token');
-      const baseUrlConfirmRegister = confirmationLink.substring(0, confirmationLink.indexOf('?'));
-
-      const { headers, token: xsrfToken } = await extractXsrfToken(baseUrlConfirmRegister, '?token=' + resetPwdToken);
-
-      const postConfirmRegistration = await performFormPost(
-        baseUrlConfirmRegister,
-        '',
-        {
-          'X-XSRF-TOKEN': xsrfToken,
-          token: resetPwdToken,
-          password: '#CoMpL3X-P@SsW0Rd',
-        },
-        {
-          Cookie: headers['set-cookie'],
-          'Content-type': 'application/x-www-form-urlencoded',
-        },
-      ).expect(302);
-
-      expect(postConfirmRegistration.headers['location']).toBeDefined();
-      expect(postConfirmRegistration.headers['location']).toContain('success=registration_completed');
-    });
-
-    it('must be enabled', async () => {
-      let user = await getUser(domain.id, accessToken, createdUser.id);
-      expect(user).toBeDefined();
-      // Pre registered user are not enabled.
-      // They have to provide a password first.
-      expect(user.enabled).toBeTruthy();
-    });
+  it('must be enabled', async () => {
+    // Fetch user by email
+    const users = await getUserPage(domain.id, accessToken);
+    const user = users.data.find((u) => u.email === preRegisteredUser.email || u.username === preRegisteredUser.username);
+    expect(user).toBeDefined();
+    // Pre registered user are not enabled.
+    // They have to provide a password first.
+    expect(user.enabled).toBeTruthy();
   });
 });
 
 describe('AM - User Pre-Registration - Reset Password to confirm', () => {
+  // Generate unique username and email to avoid conflicts in parallel execution
+  const username = uniqueName('preregister2', true);
   const preRegisteredUser = {
-    username: 'preregister2',
+    username: username,
     firstName: 'preregister',
     lastName: 'preregister2',
-    email: 'preregister2@acme.fr',
+    email: `${username}@acme.fr`,
     preRegistration: true,
   };
 
+  beforeAll(async () => {
+    // Clear emails for this specific recipient at the start to avoid interference from other tests
+    await clearEmails(preRegisteredUser.email);
+  });
+
   it('must pre-register a user', async () => {
-    createdUser = await createUser(domain.id, accessToken, preRegisteredUser);
-    expect(createdUser).toBeDefined();
-    expect(createdUser.enabled).toBeFalsy();
-    expect(createdUser.registrationUserUri).not.toBeDefined();
-    expect(createdUser.registrationAccessToken).not.toBeDefined();
+    await createUser(domain.id, accessToken, preRegisteredUser);
   });
 
   describe('User', () => {
     it('must received an email', async () => {
-      const link = (await getLastEmail()).extractLink();
+      const link = (await getLastEmail(1000, preRegisteredUser.email)).extractLink();
       expect(link).toBeDefined();
-      await clearEmails();
+      await clearEmails(preRegisteredUser.email);
     });
 
     it("Can't request a new password", async () => {
       await forgotPassword(preRegisteredUser);
-      expect(await hasEmail()).toBeFalsy();
+      expect(await hasEmail(1000, preRegisteredUser.email)).toBeFalsy();
     });
 
     it('Update Application to allow account validation using forgot password', async () => {
@@ -202,20 +215,22 @@ describe('AM - User Pre-Registration - Reset Password to confirm', () => {
         },
         application.id,
       );
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, accessToken);
     });
 
     it('Can reset the password', async () => {
       await forgotPassword(preRegisteredUser);
-      confirmationLink = (await getLastEmail()).extractLink();
+      const confirmationLink = (await getLastEmail(1000, preRegisteredUser.email)).extractLink();
       expect(confirmationLink).toBeDefined();
-      await clearEmails();
+      await clearEmails(preRegisteredUser.email);
 
       await resetPassword(confirmationLink, 'SomeP@ssw0rd');
     });
 
     it('must be enabled', async () => {
-      let user = await getUser(domain.id, accessToken, createdUser.id);
+      // Fetch user by email
+      const users = await getUserPage(domain.id, accessToken);
+      const user = users.data.find((u) => u.email === preRegisteredUser.email || u.username === preRegisteredUser.username);
       expect(user).toBeDefined();
       // Pre registered user are not enabled.
       // They have to provide a password first.
@@ -240,54 +255,61 @@ describe('AM - User Pre-Registration - Dynamic User Registration', () => {
       },
       application.id,
     );
-    await waitForDomainSync();
+    await waitForDomainSync(domain.id, accessToken);
   });
 
   it('Pre-Registered user without application id MUST NOT have registration contact point information', async () => {
+    // Generate unique username and email to avoid conflicts in parallel execution
+    const username = uniqueName('preregister3', true);
     const preRegisteredUserWithoutApp = {
-      username: 'preregister3',
+      username: username,
       firstName: 'preregister',
       lastName: 'preregister3',
-      email: 'preregister3@acme.fr',
+      email: `${username}@acme.fr`,
       preRegistration: true,
     };
 
-    createdUser = await createUser(domain.id, accessToken, preRegisteredUserWithoutApp);
+    const createdUser = await createUser(domain.id, accessToken, preRegisteredUserWithoutApp);
     expect(createdUser).toBeDefined();
     expect(createdUser.enabled).toBeFalsy();
     expect(createdUser.registrationUserUri).not.toBeDefined();
     expect(createdUser.registrationAccessToken).not.toBeDefined();
 
-    expect(await hasEmail()).toBeTruthy();
-    await clearEmails();
+    expect(await hasEmail(1000, preRegisteredUserWithoutApp.email)).toBeTruthy();
+    await clearEmails(preRegisteredUserWithoutApp.email);
   });
 
   it('Pre-Registered user with application id MUST have registration contact point information', async () => {
+    // Generate unique username and email to avoid conflicts in parallel execution
+    const username = uniqueName('preregister4', true);
     const preRegisteredUserWithApp = {
-      username: 'preregister4',
+      username: username,
       firstName: 'preregister',
       lastName: 'preregister4',
-      email: 'preregister4@acme.fr',
+      email: `${username}@acme.fr`,
       preRegistration: true,
       client: application.id,
     };
 
-    createdUser = await createUser(domain.id, accessToken, preRegisteredUserWithApp);
+    // Clear emails before creating user
+    await clearEmails(preRegisteredUserWithApp.email);
+
+    const createdUser = await createUser(domain.id, accessToken, preRegisteredUserWithApp);
     expect(createdUser).toBeDefined();
     expect(createdUser.enabled).toBeFalsy();
     expect(createdUser.registrationUserUri).toBeDefined();
     expect(createdUser.registrationAccessToken).toBeDefined();
-  });
 
-  it("Pre-Registered user doesn't receive email", async () => {
-    expect(await hasEmail()).toBeFalsy();
+    // Check that no email was sent (dynamic registration enabled, so no email should be sent)
+    // Wait a bit to ensure no email is sent
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Check that no email exists for this user
+    expect(await hasEmail(1000, preRegisteredUserWithApp.email)).toBeFalsy();
   });
 });
 
 afterAll(async () => {
-  if (domain && domain.id) {
-    await deleteDomain(domain.id, accessToken);
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
 });
 
 const params = () => {

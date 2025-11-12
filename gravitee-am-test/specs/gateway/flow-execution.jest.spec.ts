@@ -15,18 +15,19 @@
  */
 import fetch from 'cross-fetch';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 import { jest, afterAll, beforeAll, expect } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   DomainOidcConfig,
   getDomainFlows,
   startDomain,
   updateDomainFlows,
   waitForDomainStart,
+  waitForDomainSync,
 } from '@management-commands/domain-management-commands';
 import { getAllIdps } from '@management-commands/idp-management-commands';
 import { createUser } from '@management-commands/user-management-commands';
@@ -38,6 +39,7 @@ import {
   updateApplicationFlows,
 } from '@management-commands/application-management-commands';
 import { logoutUser, requestToken, signInUser } from '@gateway-commands/oauth-oidc-commands';
+import { uniqueName } from '@utils-commands/misc';
 
 import { Domain, FlowEntityTypeEnum } from '../../api/management/models';
 import { assertGeneratedTokenAndGet } from '@gateway-commands/utils';
@@ -60,13 +62,11 @@ let user = {
 
 jest.setTimeout(200000);
 
-const waitForDomainSync = () => new Promise((r) => setTimeout(r, 10000));
-
 beforeAll(async () => {
   managementApiAccessToken = await requestAdminAccessToken();
   expect(managementApiAccessToken).toBeDefined();
 
-  const createdDomain = await createDomain(managementApiAccessToken, 'jest-flow-exec', 'test end-user logout');
+  const createdDomain = await createDomain(managementApiAccessToken, uniqueName('flow-execution', true), 'test end-user logout');
   expect(createdDomain).toBeDefined();
   expect(createdDomain.id).toBeDefined();
   domain = createdDomain;
@@ -75,11 +75,14 @@ beforeAll(async () => {
   // do the rest of the setup while the domain is starting
   // Create the application
   const idpSet = await getAllIdps(domain.id, managementApiAccessToken);
+  const appClientId = uniqueName('flow-app', true);
+  const appClientSecret = uniqueName('flow-app', true);
+  const appName = uniqueName('my-client', true);
   application = await createApplication(domain.id, managementApiAccessToken, {
-    name: 'my-client',
+    name: appName,
     type: 'WEB',
-    clientId: 'flow-app',
-    clientSecret: 'flow-app',
+    clientId: appClientId,
+    clientSecret: appClientSecret,
     redirectUris: ['https://callback'],
   }).then((app) =>
     updateApplication(
@@ -103,6 +106,9 @@ beforeAll(async () => {
   );
   expect(application).toBeDefined();
 
+  // Wait for application to sync to gateway
+  await waitForDomainSync(domain.id, managementApiAccessToken);
+
   // Create a User
   await createUser(domain.id, managementApiAccessToken, user);
 
@@ -110,6 +116,9 @@ beforeAll(async () => {
     domain = result.domain;
     openIdConfiguration = result.oidcConfig;
   });
+
+  // Clear emails for this specific recipient at the start to avoid interference from other tests
+  await clearEmails(user.email);
 });
 
 describe('Flows Execution - authorization_code flow', () => {
@@ -176,7 +185,7 @@ describe('Flows Execution - authorization_code flow', () => {
         },
       ];
       await patchApplication(domain.id, managementApiAccessToken, application, application.id);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After LOGIN, flow has been executed', async () => {
@@ -239,7 +248,7 @@ describe('Flows Execution - authorization_code flow', () => {
         },
       ]);
       await updateDomainFlows(domain.id, managementApiAccessToken, flows);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After LOGIN, flow has been executed', async () => {
@@ -346,7 +355,7 @@ describe('Flows Execution - authorization_code flow', () => {
         },
       ];
       await patchApplication(domain.id, managementApiAccessToken, application, application.id);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After LOGIN, App & domain flows has been executed', async () => {
@@ -388,7 +397,7 @@ describe('Flows Execution - authorization_code flow', () => {
       // Define Groovy policy set attribute into the context on ALL flow
       application.settings.advanced.flowsInherited = false;
       await patchApplication(domain.id, managementApiAccessToken, application, application.id);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it('After LOGIN, Only App has been executed', async () => {
@@ -457,30 +466,30 @@ describe('Flows Execution - authorization_code flow', () => {
       });
 
       await updateApplicationFlows(domain.id, managementApiAccessToken, application.id, appFlows);
-      await waitForDomainSync();
+      await waitForDomainSync(domain.id, managementApiAccessToken);
     });
 
     it("After LOGIN without the callout parameter, email isn't received ", async () => {
-      await clearEmails();
+      await clearEmails(user.email);
 
       const postLoginRedirect = await signInUser(domain, application, user, openIdConfiguration);
       await new Promise((r) => setTimeout(r, 1000));
       await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
 
-      const emailReceived = await hasEmail();
+      const emailReceived = await hasEmail(1000, user.email);
       expect(emailReceived).toBeFalsy();
     });
 
     it('After LOGIN with the callout parameter, email is received ', async () => {
-      await clearEmails();
+      await clearEmails(user.email);
       const postLoginRedirect = await signInUser(domain, application, user, openIdConfiguration, 'callout=true');
       await new Promise((r) => setTimeout(r, 1000));
       await logoutUser(openIdConfiguration.end_session_endpoint, postLoginRedirect);
 
-      const emailReceived = await hasEmail();
+      const emailReceived = await hasEmail(1000, user.email);
       expect(emailReceived).toBeTruthy();
 
-      const email = await getLastEmail();
+      const email = await getLastEmail(1000, user.email);
       expect(email.subject).toBeDefined();
       expect(email.subject).toContain(EMAIL_SUBJECT);
       const jwks_uri = email.extractLink();
@@ -488,14 +497,7 @@ describe('Flows Execution - authorization_code flow', () => {
     });
   });
 });
-// Need to use Email and CalloutHTTP
-/*
-describe("Flows Execution - Register", () => {
-
-});*/
 
 afterAll(async () => {
-  if (domain && domain.id) {
-    await deleteDomain(domain.id, managementApiAccessToken);
-  }
+  await safeDeleteDomain(domain?.id, managementApiAccessToken);
 });

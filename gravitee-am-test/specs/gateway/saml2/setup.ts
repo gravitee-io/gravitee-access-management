@@ -17,7 +17,7 @@
 import {
   allowHttpLocalhostRedirects,
   createDomain,
-  deleteDomain,
+  safeDeleteDomain,
   startDomain,
   waitForDomainStart,
   patchDomain,
@@ -322,7 +322,7 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
     },
     expectRedirectToClient,
     cleanup: async () => {
-      return Promise.all([deleteDomain(domains.clientDomain.id, accessToken), deleteDomain(domains.providerDomain.id, accessToken)]).then(
+      return Promise.all([safeDeleteDomain(domains.clientDomain.id, accessToken), safeDeleteDomain(domains.providerDomain.id, accessToken)]).then(
         () => {},
       );
     },
@@ -330,7 +330,7 @@ export async function setupSamlProviderTest(domainSuffix: string): Promise<SamlF
 }
 
 export async function cleanupSamlTestDomains(accessToken: string, domains: SamlTestDomains): Promise<void> {
-  return Promise.all([deleteDomain(domains.clientDomain.id, accessToken), deleteDomain(domains.providerDomain.id, accessToken)]).then(
+  return Promise.all([safeDeleteDomain(domains.clientDomain.id, accessToken), safeDeleteDomain(domains.providerDomain.id, accessToken)]).then(
     () => {},
   );
 }
