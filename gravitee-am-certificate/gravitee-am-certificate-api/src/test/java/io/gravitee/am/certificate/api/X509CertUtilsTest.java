@@ -98,7 +98,7 @@ public class X509CertUtilsTest {
     }
 
     @Test
-    public void shouldProduceDifferentThumbprintsForDifferentCertificates() throws Exception {
+    public void shouldProduceSameThumbprintForEqualCertificates() throws Exception {
         X509Certificate cert1 = X509CertUtils.parse(TEST_CERTIFICATE_PEM);
         Assertions.assertNotNull(cert1, "Certificate 1 should be parsed successfully");
 

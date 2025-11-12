@@ -93,6 +93,9 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
                     })
                     .switchIfEmpty(
                             // 4. Check certificate limit
+                            // Note: There is a small TOCTOU race condition window where concurrent enrollments
+                            // could exceed the limit by 1. This is acceptable for this use case and consistent
+                            // with similar patterns in the codebase (e.g., OrganizationUserServiceImpl.generateAccountAccessToken).
                             certificateCredentialRepository
                                     .findByUserId(ReferenceType.DOMAIN, domain.getId(), userId)
                                     .count()
@@ -163,6 +166,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
         log.debug("Find certificate credential by ID {} for domain {}", id, domain.getId());
         return certificateCredentialRepository
                 .findById(id)
+                .filter(cred -> cred.getReferenceType() == ReferenceType.DOMAIN && cred.getReferenceId().equals(domain.getId()))
                 .onErrorResumeNext(error -> {
                     log.error("Failed to find certificate credential {}", id, error);
                     return Maybe.error(new TechnicalManagementException("Failed to find certificate credential", error));

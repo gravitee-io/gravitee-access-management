@@ -84,6 +84,9 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
         LOGGER.debug("update certificate credential with id {}", item.getId());
         // Fetch existing record to preserve createdAt (required due to NOT NULL constraint on created_at column).
         // This is defensive programming - service layer should preserve createdAt, but this ensures data integrity.
+        // Note: This method performs a read-then-write operation which is not atomic. Concurrent updates could
+        // lead to lost updates. This method is not currently used by the service layer, but if it is used in the
+        // future, consider implementing optimistic locking with a version field to prevent race conditions.
         return findById(item.getId())
                 .toSingle()
                 .flatMap(existing -> {
