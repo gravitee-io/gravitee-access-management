@@ -23,6 +23,7 @@ import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.management.service.AuthorizationEnginePluginService;
 import io.gravitee.am.management.service.exception.AuthorizationEnginePluginSchemaNotFoundException;
 import io.gravitee.am.model.AuthorizationEngine;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthorizationEngineService;
@@ -74,6 +75,12 @@ class AuthorizationEngineServiceProxyImplTest {
     private AuthorizationEngineServiceProxyImpl proxy;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private Domain createMockDomain(String domainId) {
+        Domain domain = new Domain();
+        domain.setId(domainId);
+        return domain;
+    }
 
     private final User principal;
 
@@ -198,6 +205,7 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void create_shouldFilterSensitiveData() {
+        Domain domain = createMockDomain("domain");
         var newEngine = new NewAuthorizationEngine();
         newEngine.setName("n");
         newEngine.setType("t");
@@ -210,10 +218,10 @@ class AuthorizationEngineServiceProxyImplTest {
         created.setReferenceType(ReferenceType.DOMAIN);
         created.setReferenceId("domain");
 
-        when(service.create("domain", newEngine, principal)).thenReturn(Single.just(created));
+        when(service.create(domain, newEngine, principal)).thenReturn(Single.just(created));
         when(pluginService.getSchema("t")).thenReturn(Maybe.just(SCHEMA_WITH_SECRET));
 
-        TestObserver<AuthorizationEngine> obs = proxy.create("domain", newEngine, principal).test();
+        TestObserver<AuthorizationEngine> obs = proxy.create(domain, newEngine, principal).test();
 
         obs.assertComplete();
         obs.assertValue(e -> e.getId().equals(created.getId()));
@@ -222,6 +230,7 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void create_shouldThrow_whenNoSchema() {
+        Domain domain = createMockDomain("domain");
         var newEngine = new NewAuthorizationEngine();
         newEngine.setName("n");
         newEngine.setType("missing");
@@ -234,10 +243,10 @@ class AuthorizationEngineServiceProxyImplTest {
         created.setReferenceType(ReferenceType.DOMAIN);
         created.setReferenceId("domain");
 
-        when(service.create("domain", newEngine, principal)).thenReturn(Single.just(created));
+        when(service.create(domain, newEngine, principal)).thenReturn(Single.just(created));
         when(pluginService.getSchema("missing")).thenReturn(Maybe.empty());
 
-        TestObserver<AuthorizationEngine> obs = proxy.create("domain", newEngine, principal).test();
+        TestObserver<AuthorizationEngine> obs = proxy.create(domain, newEngine, principal).test();
 
         obs.assertError(AuthorizationEnginePluginSchemaNotFoundException.class);
         
@@ -255,6 +264,7 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void create_shouldAuditOnSuccess() {
+        Domain domain = createMockDomain("domain");
         var newEngine = new NewAuthorizationEngine();
         newEngine.setName("n");
         newEngine.setType("t");
@@ -269,10 +279,10 @@ class AuthorizationEngineServiceProxyImplTest {
         created.setReferenceId("domain");
         created.setName("n");
 
-        when(service.create("domain", newEngine, principal)).thenReturn(Single.just(created));
+        when(service.create(domain, newEngine, principal)).thenReturn(Single.just(created));
         when(pluginService.getSchema("t")).thenReturn(Maybe.just("{\"type\":\"object\"}"));
 
-        proxy.create("domain", newEngine, principal).test();
+        proxy.create(domain, newEngine, principal).test();
 
         ArgumentCaptor<AuthorizationEngineAuditBuilder> captor = ArgumentCaptor.forClass(AuthorizationEngineAuditBuilder.class);
         verify(auditService, times(1)).report(captor.capture());
@@ -291,15 +301,16 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void create_shouldAuditOnError() {
+        Domain domain = createMockDomain("domain");
         var newEngine = new NewAuthorizationEngine();
         newEngine.setName("n");
         newEngine.setType("t");
 
         var runtimeException = new RuntimeException("boom");
-        when(service.create("domain", newEngine, principal))
+        when(service.create(domain, newEngine, principal))
                 .thenReturn(Single.error(runtimeException));
 
-        TestObserver<AuthorizationEngine> obs = proxy.create("domain", newEngine, principal).test();
+        TestObserver<AuthorizationEngine> obs = proxy.create(domain, newEngine, principal).test();
 
         obs.assertError(RuntimeException.class);
 
@@ -318,6 +329,7 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void update_shouldFilterSensitiveData() {
+        Domain domain = createMockDomain("domain");
         var id = "eng1";
         var update = new UpdateAuthorizationEngine();
         update.setName("new");
@@ -339,9 +351,9 @@ class AuthorizationEngineServiceProxyImplTest {
 
         when(service.findById(id)).thenReturn(Maybe.just(oldEngine));
         when(pluginService.getSchema("t")).thenReturn(Maybe.just(SCHEMA_WITH_SECRET));
-        when(service.update("domain", id, update, principal)).thenReturn(Single.just(updated));
+        when(service.update(domain, id, update, principal)).thenReturn(Single.just(updated));
 
-        TestObserver<AuthorizationEngine> obs = proxy.update("domain", id, update, principal).test();
+        TestObserver<AuthorizationEngine> obs = proxy.update(domain, id, update, principal).test();
 
         obs.assertComplete();
         obs.assertValue(e -> e.getId().equals(id));
@@ -350,6 +362,7 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void update_shouldAuditOnSuccess() {
+        Domain domain = createMockDomain("domain");
         var id = "eng1";
         var update = new UpdateAuthorizationEngine();
         update.setName("new");
@@ -373,9 +386,9 @@ class AuthorizationEngineServiceProxyImplTest {
 
         when(service.findById(id)).thenReturn(Maybe.just(oldEngine));
         when(pluginService.getSchema("t")).thenReturn(Maybe.just("{\"type\":\"object\"}"));
-        when(service.update("domain", id, update, principal)).thenReturn(Single.just(updated));
+        when(service.update(domain, id, update, principal)).thenReturn(Single.just(updated));
 
-        proxy.update("domain", id, update, principal).test();
+        proxy.update(domain, id, update, principal).test();
 
         ArgumentCaptor<AuthorizationEngineAuditBuilder> captor = ArgumentCaptor.forClass(AuthorizationEngineAuditBuilder.class);
         verify(auditService, times(1)).report(captor.capture());
@@ -394,13 +407,14 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void update_shouldFail_whenNotFound() {
+        Domain domain = createMockDomain("domain");
         var id = "missing";
         var update = new UpdateAuthorizationEngine();
         update.setConfiguration("{}");
 
         when(service.findById(id)).thenReturn(Maybe.empty());
 
-        TestObserver<AuthorizationEngine> obs = proxy.update("domain", id, update, principal).test();
+        TestObserver<AuthorizationEngine> obs = proxy.update(domain, id, update, principal).test();
         obs.assertError(AuthorizationEngineNotFoundException.class);
 
         verify(auditService, never()).report(any());
@@ -408,6 +422,7 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void update_shouldAuditOnError_whenSchemaMissing() {
+        Domain domain = createMockDomain("domain");
         var id = "eng2";
         var update = new UpdateAuthorizationEngine();
         update.setConfiguration("{}");
@@ -423,7 +438,7 @@ class AuthorizationEngineServiceProxyImplTest {
         // filterSensitiveData path: no schema for old engine -> cleared config
         when(pluginService.getSchema("t")).thenReturn(Maybe.empty());
 
-        TestObserver<AuthorizationEngine> obs = proxy.update("domain", id, update, principal).test();
+        TestObserver<AuthorizationEngine> obs = proxy.update(domain, id, update, principal).test();
         obs.assertError(AuthorizationEnginePluginSchemaNotFoundException.class);
 
         ArgumentCaptor<AuthorizationEngineAuditBuilder> captor = ArgumentCaptor.forClass(AuthorizationEngineAuditBuilder.class);
@@ -443,6 +458,7 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void delete_shouldAuditOnComplete() {
+        Domain domain = createMockDomain("domain");
         var id = "del1";
         var engine = new AuthorizationEngine();
         engine.setId(id);
@@ -451,9 +467,9 @@ class AuthorizationEngineServiceProxyImplTest {
         engine.setName("test-engine");
 
         when(service.findById(id)).thenReturn(Maybe.just(engine));
-        when(service.delete("domain", id, principal)).thenReturn(Completable.complete());
+        when(service.delete(domain, id, principal)).thenReturn(Completable.complete());
 
-        TestObserver<Void> obs = proxy.delete("domain", id, principal).test();
+        TestObserver<Void> obs = proxy.delete(domain, id, principal).test();
 
         obs.assertComplete();
         
@@ -473,10 +489,11 @@ class AuthorizationEngineServiceProxyImplTest {
 
     @Test
     void delete_shouldThrow_whenNotFound_andNotAudit() {
+        Domain domain = createMockDomain("domain");
         var id = "missing";
         when(service.findById(id)).thenReturn(Maybe.empty());
 
-        TestObserver<Void> obs = proxy.delete("domain", id, principal).test();
+        TestObserver<Void> obs = proxy.delete(domain, id, principal).test();
 
         obs.assertError(AuthorizationEngineNotFoundException.class);
         verify(auditService, never()).report(any());

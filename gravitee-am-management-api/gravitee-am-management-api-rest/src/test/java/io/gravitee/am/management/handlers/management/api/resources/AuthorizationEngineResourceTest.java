@@ -134,7 +134,7 @@ public class AuthorizationEngineResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(updatedEngine)).when(authorizationEngineServiceProxy)
-                .update(eq(domainId), eq(engineId), any(UpdateAuthorizationEngine.class), any());
+                .update(eq(mockDomain), eq(engineId), any(UpdateAuthorizationEngine.class), any());
 
         final Response response = put(
                 target("domains")
@@ -150,7 +150,7 @@ public class AuthorizationEngineResourceTest extends JerseySpringTest {
         assertEquals("Updated Engine", engine.getName());
 
         verify(authorizationEngineServiceProxy, times(1))
-                .update(eq(domainId), eq(engineId), any(UpdateAuthorizationEngine.class), any());
+                .update(eq(mockDomain), eq(engineId), any(UpdateAuthorizationEngine.class), any());
     }
 
     @Test
@@ -167,7 +167,7 @@ public class AuthorizationEngineResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.error(new AuthorizationEngineNotFoundException(engineId)))
                 .when(authorizationEngineServiceProxy)
-                .update(eq(domainId), eq(engineId), any(UpdateAuthorizationEngine.class), any());
+                .update(eq(mockDomain), eq(engineId), any(UpdateAuthorizationEngine.class), any());
 
         final Response response = put(
                 target("domains")
@@ -214,7 +214,7 @@ public class AuthorizationEngineResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Completable.complete()).when(authorizationEngineServiceProxy)
-                .delete(eq(domainId), eq(engineId), any());
+                .delete(eq(mockDomain), eq(engineId), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -225,7 +225,7 @@ public class AuthorizationEngineResourceTest extends JerseySpringTest {
 
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
 
-        verify(authorizationEngineServiceProxy, times(1)).delete(eq(domainId), eq(engineId), any());
+        verify(authorizationEngineServiceProxy, times(1)).delete(eq(mockDomain), eq(engineId), any());
     }
 
     @Test
@@ -239,7 +239,7 @@ public class AuthorizationEngineResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Completable.error(new AuthorizationEngineNotFoundException(engineId)))
                 .when(authorizationEngineServiceProxy)
-                .delete(eq(domainId), eq(engineId), any());
+                .delete(eq(mockDomain), eq(engineId), any());
 
         final Response response = target("domains")
                 .path(domainId)
@@ -256,11 +256,7 @@ public class AuthorizationEngineResourceTest extends JerseySpringTest {
         final String domainId = "non-existent-domain";
         final String engineId = "engine-id";
 
-        // The delete endpoint doesn't check domain existence,
-        // so it will attempt to delete directly which will fail
-        doReturn(Completable.error(new RuntimeException("Domain validation failed")))
-                .when(authorizationEngineServiceProxy)
-                .delete(eq(domainId), eq(engineId), any());
+        doReturn(Maybe.empty()).when(domainService).findById(domainId);
 
         final Response response = target("domains")
                 .path(domainId)
@@ -269,6 +265,6 @@ public class AuthorizationEngineResourceTest extends JerseySpringTest {
                 .request()
                 .delete();
 
-        assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
+        assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
     }
 }

@@ -17,6 +17,7 @@ package io.gravitee.am.service;
 
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationEngine;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.model.NewAuthorizationEngine;
 import io.gravitee.am.service.model.UpdateAuthorizationEngine;
 import io.reactivex.rxjava3.core.Completable;
@@ -35,9 +36,9 @@ public interface AuthorizationEngineService {
 
     Flowable<AuthorizationEngine> findByDomain(String domain);
 
-    Single<AuthorizationEngine> create(String domainId, NewAuthorizationEngine newAuthorizationEngine, User principal);
+    Single<AuthorizationEngine> create(Domain domain, NewAuthorizationEngine newAuthorizationEngine, User principal);
 
-    Single<AuthorizationEngine> update(String domainId, String id, UpdateAuthorizationEngine updateAuthorizationEngine, User principal);
+    Single<AuthorizationEngine> update(Domain domain, String id, UpdateAuthorizationEngine updateAuthorizationEngine, User principal);
 
-    Completable delete(String domainId, String authorizationEngineId, User principal);
+    Completable delete(Domain domain, String authorizationEngineId, User principal);
 }

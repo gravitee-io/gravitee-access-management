@@ -118,7 +118,7 @@ public class AuthorizationEngineResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_AUTHORIZATION_ENGINE, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(__ -> authorizationEngineService.update(domainId, engineId, updateAuthorizationEngine, authenticatedUser)))
+                        .flatMapSingle(existingDomain -> authorizationEngineService.update(existingDomain, engineId, updateAuthorizationEngine, authenticatedUser)))
                 .subscribe(response::resume, response::resume);
     }
 
@@ -142,7 +142,9 @@ public class AuthorizationEngineResource extends AbstractResource {
         final User authenticatedUser = getAuthenticatedUser();
 
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_AUTHORIZATION_ENGINE, Acl.DELETE)
-                .andThen(authorizationEngineService.delete(domainId, engineId, authenticatedUser))
+                .andThen(domainService.findById(domainId)
+                        .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
+                        .flatMapCompletable(existingDomain -> authorizationEngineService.delete(existingDomain, engineId, authenticatedUser)))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }
 

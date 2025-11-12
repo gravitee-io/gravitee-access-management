@@ -23,6 +23,7 @@ import io.gravitee.am.management.service.AuthorizationEnginePluginService;
 import io.gravitee.am.management.service.AuthorizationEngineServiceProxy;
 import io.gravitee.am.management.service.exception.AuthorizationEnginePluginSchemaNotFoundException;
 import io.gravitee.am.model.AuthorizationEngine;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.service.AuditService;
@@ -72,8 +73,8 @@ public class AuthorizationEngineServiceProxyImpl extends AbstractSensitiveProxy 
     }
 
     @Override
-    public Single<AuthorizationEngine> create(String domainId, NewAuthorizationEngine newAuthorizationEngine, User principal) {
-        return service.create(domainId, newAuthorizationEngine, principal)
+    public Single<AuthorizationEngine> create(Domain domain, NewAuthorizationEngine newAuthorizationEngine, User principal) {
+        return service.create(domain, newAuthorizationEngine, principal)
                 .flatMap(this::filterSensitiveDataForCreate)
                 .doOnSuccess(createdEngine -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
                         .principal(principal)
@@ -82,18 +83,18 @@ public class AuthorizationEngineServiceProxyImpl extends AbstractSensitiveProxy 
                 .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
                         .principal(principal)
                         .type(EventType.AUTHORIZATION_ENGINE_CREATED)
-                        .reference(new Reference(ReferenceType.DOMAIN, domainId))
+                        .reference(new Reference(ReferenceType.DOMAIN, domain.getId()))
                         .throwable(throwable)));
     }
 
     @Override
-    public Single<AuthorizationEngine> update(String domainId, String id, UpdateAuthorizationEngine updateAuthorizationEngine, User principal) {
+    public Single<AuthorizationEngine> update(Domain domain, String id, UpdateAuthorizationEngine updateAuthorizationEngine, User principal) {
         return service.findById(id)
                 .switchIfEmpty(Single.error(new AuthorizationEngineNotFoundException(id)))
                 .flatMap(oldEngine -> filterSensitiveData(oldEngine)
                         .flatMap(safeOldEngine ->
                                 updateSensitiveData(updateAuthorizationEngine, oldEngine)
-                                    .flatMap(engineToUpdate -> service.update(domainId, id, engineToUpdate, principal))
+                                    .flatMap(engineToUpdate -> service.update(domain, id, engineToUpdate, principal))
                                     .flatMap(this::filterSensitiveData)
                                     .doOnSuccess(updatedEngine -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
                                             .principal(principal)
@@ -111,11 +112,11 @@ public class AuthorizationEngineServiceProxyImpl extends AbstractSensitiveProxy 
     }
 
     @Override
-    public Completable delete(String domainId, String authorizationEngineId, User principal) {
+    public Completable delete(Domain domain, String authorizationEngineId, User principal) {
         return service.findById(authorizationEngineId)
                 .switchIfEmpty(Maybe.error(new AuthorizationEngineNotFoundException(authorizationEngineId)))
                 .flatMapCompletable(authorizationEngine ->
-                        service.delete(domainId, authorizationEngineId, principal)
+                        service.delete(domain, authorizationEngineId, principal)
                             .doOnComplete(() -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.AUTHORIZATION_ENGINE_DELETED)
@@ -123,7 +124,7 @@ public class AuthorizationEngineServiceProxyImpl extends AbstractSensitiveProxy 
                             .doOnError(throwable -> auditService.report(AuditBuilder.builder(AuthorizationEngineAuditBuilder.class)
                                     .principal(principal)
                                     .type(EventType.AUTHORIZATION_ENGINE_DELETED)
-                                    .reference(new Reference(ReferenceType.DOMAIN, domainId))
+                                    .reference(new Reference(ReferenceType.DOMAIN, domain.getId()))
                                     .authorizationEngine(authorizationEngine)
                                     .throwable(throwable)))
                 );

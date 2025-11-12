@@ -19,6 +19,7 @@ import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.identityprovider.api.DefaultUser;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationEngine;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.plugins.authorizationengine.core.AuthorizationEnginePluginManager;
@@ -73,9 +74,16 @@ class AuthorizationEngineServiceImplTest {
 
     private final User principal = new DefaultUser("test-user");
 
+    private Domain createMockDomain(String domainId) {
+        Domain domain = new Domain();
+        domain.setId(domainId);
+        return domain;
+    }
+
     @Test
     void shouldCreateAuthorizationEngine() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setName("Test Engine");
         newEngine.setType("openfga");
@@ -85,13 +93,13 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
-                "domain-id",
+                domain,
                 newEngine,
                 principal
         ).test();
@@ -110,12 +118,13 @@ class AuthorizationEngineServiceImplTest {
         });
 
         verify(authorizationEngineRepository, times(1)).create(any(AuthorizationEngine.class));
-        verify(eventService, times(1)).create(any(Event.class));
+        verify(eventService, times(1)).create(any(Event.class), any(Domain.class));
     }
 
     @Test
     void shouldGenerateIdIfNotProvided() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setName("Test Engine");
         newEngine.setType("openfga");
@@ -125,13 +134,13 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
-                "domain-id",
+                domain,
                 newEngine,
                 principal
         ).test();
@@ -148,6 +157,7 @@ class AuthorizationEngineServiceImplTest {
     @Test
     void shouldUseProvidedId() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setId("custom-id");
         newEngine.setName("Test Engine");
@@ -157,13 +167,13 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
-                "domain-id",
+                domain,
                 newEngine,
                 principal
         ).test();
@@ -179,6 +189,7 @@ class AuthorizationEngineServiceImplTest {
     @Test
     void shouldSetTimestampsOnCreate() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setName("Test Engine");
         newEngine.setType("openfga");
@@ -189,12 +200,12 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
 
         // when
-        service.create("domain-id", newEngine, principal).test();
+        service.create(domain, newEngine, principal).test();
 
         // then
         verify(authorizationEngineRepository).create(captor.capture());
@@ -207,6 +218,7 @@ class AuthorizationEngineServiceImplTest {
     @Test
     void shouldCreateEventAfterCreation() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setName("Test Engine");
         newEngine.setType("openfga");
@@ -220,25 +232,28 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenReturn(Single.just(createdEngine));
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
 
         // when
-        service.create("domain-id", newEngine, principal).test();
+        service.create(domain, newEngine, principal).test();
 
         // then
         ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
-        verify(eventService).create(eventCaptor.capture());
+        ArgumentCaptor<Domain> domainCaptor = ArgumentCaptor.forClass(Domain.class);
+        verify(eventService).create(eventCaptor.capture(), domainCaptor.capture());
         Event capturedEvent = eventCaptor.getValue();
         assertEquals("engine-id", capturedEvent.getPayload().getId());
         assertEquals(ReferenceType.DOMAIN, capturedEvent.getPayload().getReferenceType());
         assertEquals("domain-id", capturedEvent.getPayload().getReferenceId());
+        assertEquals("domain-id", domainCaptor.getValue().getId());
     }
 
     @Test
     void shouldHandleRepositoryErrorOnCreate() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setName("Test Engine");
         newEngine.setType("openfga");
@@ -251,7 +266,7 @@ class AuthorizationEngineServiceImplTest {
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
-                "domain-id",
+                domain,
                 newEngine,
                 principal
         ).test();
@@ -259,12 +274,13 @@ class AuthorizationEngineServiceImplTest {
         // then
         observer.assertError(TechnicalManagementException.class);
         observer.assertError(ex -> ex.getMessage().contains("An error occurs while trying to create an authorization engine"));
-        verify(eventService, never()).create(any(Event.class));
+        verify(eventService, never()).create(any(Event.class), any(Domain.class));
     }
 
     @Test
     void shouldFailWhenValidationFails() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setName("Test Engine");
         newEngine.setType("openfga");
@@ -276,19 +292,20 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(ValidationResult.invalid("Failed to connect"));
 
         // when
-        TestObserver<AuthorizationEngine> observer = service.create("domain-id", newEngine, principal).test();
+        TestObserver<AuthorizationEngine> observer = service.create(domain, newEngine, principal).test();
 
         // then
         observer.assertError(AuthorizationEngineInvalidConfigurationException.class);
         observer.assertError(ex -> ex.getMessage().equals("Failed to connect"));
 
         verify(authorizationEngineRepository, never()).create(any());
-        verify(eventService, never()).create(any(Event.class));
+        verify(eventService, never()).create(any(Event.class), any(Domain.class));
     }
 
     @Test
     void shouldFailUpdateWhenValidationFails() {
         // given
+        Domain domain = createMockDomain("domain-id");
         String engineId = "engine-id";
         UpdateAuthorizationEngine updateEngine = new UpdateAuthorizationEngine();
         updateEngine.setName("Updated Engine");
@@ -306,19 +323,20 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(ValidationResult.invalid("Failed to connect"));
 
         // when
-        TestObserver<AuthorizationEngine> observer = service.update("domain-id", engineId, updateEngine, principal).test();
+        TestObserver<AuthorizationEngine> observer = service.update(domain, engineId, updateEngine, principal).test();
 
         // then
         observer.assertError(AuthorizationEngineInvalidConfigurationException.class);
         observer.assertError(ex -> ex.getMessage().equals("Failed to connect"));
 
         verify(authorizationEngineRepository, never()).update(any());
-        verify(eventService, never()).create(any(Event.class));
+        verify(eventService, never()).create(any(Event.class), any(Domain.class));
     }
 
     @Test
     void shouldThrowAlreadyExistsExceptionWhenTypeAlreadyExists() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setName("New OpenFGA Engine");
         newEngine.setType("openfga");
@@ -333,7 +351,7 @@ class AuthorizationEngineServiceImplTest {
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
-                "domain-id",
+                domain,
                 newEngine,
                 principal
         ).test();
@@ -342,12 +360,13 @@ class AuthorizationEngineServiceImplTest {
         observer.assertError(AuthorizationEngineAlreadyExistsException.class);
         observer.assertError(ex -> ex.getMessage().contains("Authorization engine of type [openfga] already exists for this domain"));
         verify(authorizationEngineRepository, never()).create(any(AuthorizationEngine.class));
-        verify(eventService, never()).create(any(Event.class));
+        verify(eventService, never()).create(any(Event.class), any(Domain.class));
     }
 
     @Test
     void shouldAllowCreationWhenDifferentTypeExists() {
         // given
+        Domain domain = createMockDomain("domain-id");
         NewAuthorizationEngine newEngine = new NewAuthorizationEngine();
         newEngine.setName("OpenFGA Engine");
         newEngine.setType("openfga");
@@ -356,13 +375,13 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.empty());
         when(authorizationEngineRepository.create(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
 
         // when
         TestObserver<AuthorizationEngine> observer = service.create(
-                "domain-id",
+                domain,
                 newEngine,
                 principal
         ).test();
@@ -374,7 +393,7 @@ class AuthorizationEngineServiceImplTest {
             return true;
         });
         verify(authorizationEngineRepository, times(1)).create(any(AuthorizationEngine.class));
-        verify(eventService, times(1)).create(any(Event.class));
+        verify(eventService, times(1)).create(any(Event.class), any(Domain.class));
         verify(authorizationEngineRepository, never()).findByDomainAndType("domain-id", "something");
         verify(authorizationEngineRepository, times(1)).findByDomainAndType("domain-id", "openfga");
 
@@ -383,6 +402,7 @@ class AuthorizationEngineServiceImplTest {
     @Test
     void shouldUpdateAuthorizationEngine() {
         // given
+        Domain domain = createMockDomain("domain-id");
         String engineId = "engine-id";
         UpdateAuthorizationEngine updateEngine = new UpdateAuthorizationEngine();
         updateEngine.setName("Updated Engine");
@@ -406,13 +426,13 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.just(existingEngine));
         when(authorizationEngineRepository.update(any(AuthorizationEngine.class)))
                 .thenReturn(Single.just(updatedEngine));
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
 
         // when
         TestObserver<AuthorizationEngine> observer = service.update(
-                "domain-id",
+                domain,
                 engineId,
                 updateEngine,
                 principal
@@ -426,12 +446,13 @@ class AuthorizationEngineServiceImplTest {
         });
 
         verify(authorizationEngineRepository, times(1)).update(any(AuthorizationEngine.class));
-        verify(eventService, times(1)).create(any(Event.class));
+        verify(eventService, times(1)).create(any(Event.class), any(Domain.class));
     }
 
     @Test
     void shouldUpdateTimestampOnUpdate() {
         // given
+        Domain domain = createMockDomain("domain-id");
         String engineId = "engine-id";
         UpdateAuthorizationEngine updateEngine = new UpdateAuthorizationEngine();
         updateEngine.setName("Updated Engine");
@@ -447,12 +468,12 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.just(existingEngine));
         when(authorizationEngineRepository.update(any(AuthorizationEngine.class)))
                 .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
         when(authorizationEnginePluginManager.validate(any())).thenReturn(ValidationResult.SUCCEEDED);
 
         // when
-        service.update("domain-id", engineId, updateEngine, principal).test();
+        service.update(domain, engineId, updateEngine, principal).test();
 
         // then
         verify(authorizationEngineRepository).update(captor.capture());
@@ -463,6 +484,7 @@ class AuthorizationEngineServiceImplTest {
     @Test
     void shouldThrowNotFoundWhenEngineDoesNotExistOnUpdate() {
         // given
+        Domain domain = createMockDomain("domain-id");
         String engineId = "non-existent-id";
         UpdateAuthorizationEngine updateEngine = new UpdateAuthorizationEngine();
         updateEngine.setName("Updated Engine");
@@ -472,7 +494,7 @@ class AuthorizationEngineServiceImplTest {
 
         // when
         TestObserver<AuthorizationEngine> observer = service.update(
-                "domain-id",
+                domain,
                 engineId,
                 updateEngine,
                 principal
@@ -481,12 +503,13 @@ class AuthorizationEngineServiceImplTest {
         // then
         observer.assertError(AuthorizationEngineNotFoundException.class);
         verify(authorizationEngineRepository, never()).update(any(AuthorizationEngine.class));
-        verify(eventService, never()).create(any(Event.class));
+        verify(eventService, never()).create(any(Event.class), any(Domain.class));
     }
 
     @Test
     void shouldDeleteAuthorizationEngine() {
         // given
+        Domain domain = createMockDomain("domain-id");
         String engineId = "engine-id";
         AuthorizationEngine engine = new AuthorizationEngine();
         engine.setId(engineId);
@@ -497,12 +520,12 @@ class AuthorizationEngineServiceImplTest {
                 .thenReturn(Maybe.just(engine));
         when(authorizationEngineRepository.delete(engineId))
                 .thenReturn(Completable.complete());
-        when(eventService.create(any(Event.class)))
+        when(eventService.create(any(Event.class), any(Domain.class)))
                 .thenReturn(Single.just(new Event()));
 
         // when
         TestObserver<Void> observer = service.delete(
-                "domain-id",
+                domain,
                 engineId,
                 principal
         ).test();
@@ -510,12 +533,13 @@ class AuthorizationEngineServiceImplTest {
         // then
         observer.assertComplete();
         verify(authorizationEngineRepository, times(1)).delete(engineId);
-        verify(eventService, times(1)).create(any(Event.class));
+        verify(eventService, times(1)).create(any(Event.class), any(Domain.class));
     }
 
     @Test
     void shouldThrowNotFoundOnDelete() {
         // given
+        Domain domain = createMockDomain("domain-id");
         String engineId = "non-existent-id";
 
         when(authorizationEngineRepository.findByDomainAndId("domain-id", engineId))
@@ -523,7 +547,7 @@ class AuthorizationEngineServiceImplTest {
 
         // when
         TestObserver<Void> observer = service.delete(
-                "domain-id",
+                domain,
                 engineId,
                 principal
         ).test();
@@ -531,7 +555,7 @@ class AuthorizationEngineServiceImplTest {
         // then
         observer.assertError(AuthorizationEngineNotFoundException.class);
         verify(authorizationEngineRepository, never()).delete(anyString());
-        verify(eventService, never()).create(any(Event.class));
+        verify(eventService, never()).create(any(Event.class), any(Domain.class));
     }
 
     @Test
