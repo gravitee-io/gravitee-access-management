@@ -229,11 +229,11 @@ public class SyncManager implements InitializingBean {
             if (Objects.requireNonNull(event.getType()) == Type.DOMAIN) {
                 synchronizeDomain(event);
             } else {
-                if (Objects.isNull(processedEventIds.getIfPresent(event.getId()))) {
+                String eventId = event.getId();
+                if (processedEventIds.asMap().putIfAbsent(eventId, eventId) == null) {
                     eventManager.publishEvent(io.gravitee.am.common.event.Event.valueOf(event.getType(), event.getPayload().getAction()), event.getPayload());
-                    processedEventIds.put(event.getId(), event.getId());
                 } else {
-                    logger.debug("Event id {} already processed", event.getId());
+                    logger.debug("Event id {} already processed", eventId);
                 }
             }
         });
