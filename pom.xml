@@ -54,6 +54,7 @@
         <module>gravitee-am-identityprovider</module>
         <module>gravitee-am-authorizationengine</module>
         <module>gravitee-am-certificate</module>
+        <module>gravitee-am-authenticator</module>
         <module>gravitee-am-extensiongrant</module>
         <module>gravitee-am-reporter</module>
         <module>gravitee-am-factor</module>

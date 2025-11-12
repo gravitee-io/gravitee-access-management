@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.vertx;
 
+import io.gravitee.am.authenticator.api.AuthenticatorProvider;
 import io.gravitee.am.gateway.handler.api.ProtocolProvider;
 import io.gravitee.am.gateway.handler.common.alert.AlertEventProcessor;
 import io.gravitee.am.gateway.handler.common.audit.AuditReporterManager;
@@ -40,6 +41,7 @@ import io.gravitee.am.gateway.handler.manager.resource.ResourceManager;
 import io.gravitee.am.gateway.handler.manager.theme.ThemeManager;
 import io.gravitee.am.gateway.handler.root.RootProvider;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.plugins.authenticator.core.AuthenticatorPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolPluginManager;
 import io.gravitee.am.plugins.protocol.core.ProtocolProviderConfiguration;
 import io.gravitee.common.component.LifecycleComponent;
@@ -73,12 +75,16 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
     private static final Logger logger = LoggerFactory.getLogger(VertxSecurityDomainHandler.class);
     private static final List<String> PROTOCOLS = Arrays.asList("discovery", "openid-connect", "scim", "users", "saml2", "account", "saml2-idp", "authzen");
     private List<ProtocolProvider> protocolProviders = new ArrayList<>();
+    private List<AuthenticatorProvider> authenticatorProviders = new ArrayList<>();
 
     @Autowired
     private Domain domain;
 
     @Autowired
     private ProtocolPluginManager protocolPluginManager;
+
+    @Autowired
+    private AuthenticatorPluginManager authenticatorPluginManager;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -107,6 +113,8 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         // start security domain protocols (openid-connect, scim, ...)
         startSecurityDomainProtocols();
 
+        startSecurityDomainAuthenticators();
+
         // set default 404 handler
         router.route().last().handler(this::sendNotFound);
     }
@@ -118,6 +126,7 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
 
         stopComponents();
         stopProtocols();
+        stopAuthenticators();
 
         super.doStop();
 
@@ -176,6 +185,20 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
         });
     }
 
+    private void startSecurityDomainAuthenticators() {
+        logger.info("Start security domain authenticators");
+        List<AuthenticatorProvider> providers = authenticatorPluginManager.createAll(applicationContext);
+        providers.forEach(provider -> {
+            try {
+                provider.start();
+                authenticatorProviders.add(provider);
+                logger.info("\t Authenticator {} loaded", provider.name());
+            } catch (Exception e) {
+                logger.error("\t An error occurs while loading {} authenticator", provider.name(), e);
+            }
+        });
+    }
+
     private void stopProtocols() {
         protocolProviders.forEach(protocolProvider -> {
             try {
@@ -183,6 +206,17 @@ public class VertxSecurityDomainHandler extends AbstractService<VertxSecurityDom
                 logger.info("\t Protocol {} stopped", protocolProvider.path());
             } catch (Exception e) {
                 logger.error("\t An error occurs while stopping {} protocol", protocolProvider.path(), e);
+            }
+        });
+    }
+
+    private void stopAuthenticators() {
+        authenticatorProviders.forEach(authenticatorProvider -> {
+            try {
+                authenticatorProvider.stop();
+                logger.info("\t Authenticator {} stopped", authenticatorProvider.name());
+            } catch (Exception e) {
+                logger.error("\t An error occurs while stopping {} authenticator", authenticatorProvider.name(), e);
             }
         });
     }
