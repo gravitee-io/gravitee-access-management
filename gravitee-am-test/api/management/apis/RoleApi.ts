@@ -790,5 +790,6 @@ export const ListRolesTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type ListRolesTypeEnum = typeof ListRolesTypeEnum[keyof typeof ListRolesTypeEnum];

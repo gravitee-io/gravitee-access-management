@@ -91,6 +91,7 @@ export const AuthenticationDeviceNotifierReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type AuthenticationDeviceNotifierReferenceTypeEnum =
   typeof AuthenticationDeviceNotifierReferenceTypeEnum[keyof typeof AuthenticationDeviceNotifierReferenceTypeEnum];

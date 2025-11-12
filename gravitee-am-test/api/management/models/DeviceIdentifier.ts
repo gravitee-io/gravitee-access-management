@@ -91,6 +91,7 @@ export const DeviceIdentifierReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type DeviceIdentifierReferenceTypeEnum = typeof DeviceIdentifierReferenceTypeEnum[keyof typeof DeviceIdentifierReferenceTypeEnum];
 

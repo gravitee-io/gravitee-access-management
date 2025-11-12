@@ -91,6 +91,7 @@ export const ServiceResourceReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type ServiceResourceReferenceTypeEnum = typeof ServiceResourceReferenceTypeEnum[keyof typeof ServiceResourceReferenceTypeEnum];
 

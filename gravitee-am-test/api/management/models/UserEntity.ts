@@ -422,18 +422,6 @@ export interface UserEntity {
   zoneInfo?: string;
   /**
    *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  lastIdentityInformation?: { [key: string]: any };
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof UserEntity
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
    * @type {string}
    * @memberof UserEntity
    */
@@ -480,6 +468,18 @@ export interface UserEntity {
    * @memberof UserEntity
    */
   fullId?: UserId;
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  identitiesAsMap?: { [key: string]: any };
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof UserEntity
+   */
+  lastIdentityInformation?: { [key: string]: any };
 }
 
 /**
@@ -491,6 +491,7 @@ export const UserEntityReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type UserEntityReferenceTypeEnum = typeof UserEntityReferenceTypeEnum[keyof typeof UserEntityReferenceTypeEnum];
 
@@ -571,8 +572,6 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     address: json['address'] == null ? undefined : json['address'],
     locale: json['locale'] == null ? undefined : json['locale'],
     zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
-    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
     middleName: json['middleName'] == null ? undefined : json['middleName'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
@@ -581,6 +580,8 @@ export function UserEntityFromJSONTyped(json: any, ignoreDiscriminator: boolean)
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
     fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
   };
 }
 
@@ -657,8 +658,6 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     address: value['address'],
     locale: value['locale'],
     zoneInfo: value['zoneInfo'],
-    lastIdentityInformation: value['lastIdentityInformation'],
-    identitiesAsMap: value['identitiesAsMap'],
     middleName: value['middleName'],
     inactive: value['inactive'],
     profile: value['profile'],
@@ -667,5 +666,7 @@ export function UserEntityToJSONTyped(value?: UserEntity | null, ignoreDiscrimin
     phoneNumber: value['phoneNumber'],
     disabled: value['disabled'],
     fullId: UserIdToJSON(value['fullId']),
+    identitiesAsMap: value['identitiesAsMap'],
+    lastIdentityInformation: value['lastIdentityInformation'],
   };
 }

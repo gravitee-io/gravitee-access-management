@@ -123,6 +123,7 @@ export const AuditReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type AuditReferenceTypeEnum = typeof AuditReferenceTypeEnum[keyof typeof AuditReferenceTypeEnum];
 

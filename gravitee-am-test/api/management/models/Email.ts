@@ -127,6 +127,7 @@ export const EmailReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type EmailReferenceTypeEnum = typeof EmailReferenceTypeEnum[keyof typeof EmailReferenceTypeEnum];
 

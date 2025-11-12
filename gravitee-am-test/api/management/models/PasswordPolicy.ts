@@ -157,6 +157,7 @@ export const PasswordPolicyReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type PasswordPolicyReferenceTypeEnum = typeof PasswordPolicyReferenceTypeEnum[keyof typeof PasswordPolicyReferenceTypeEnum];
 

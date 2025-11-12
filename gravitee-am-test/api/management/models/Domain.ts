@@ -261,6 +261,18 @@ export interface Domain {
    * @type {boolean}
    * @memberof Domain
    */
+  redirectUriUnsecuredHttpSchemeAllowed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  dynamicClientRegistrationTemplateEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
   redirectUriExpressionLanguageEnabled?: boolean;
   /**
    *
@@ -292,18 +304,6 @@ export interface Domain {
    * @memberof Domain
    */
   redirectUriWildcardAllowed?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
-  dynamicClientRegistrationTemplateEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
-  redirectUriUnsecuredHttpSchemeAllowed?: boolean;
 }
 
 /**
@@ -324,6 +324,7 @@ export const DomainReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type DomainReferenceTypeEnum = typeof DomainReferenceTypeEnum[keyof typeof DomainReferenceTypeEnum];
 
@@ -376,6 +377,10 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     dataPlaneId: json['dataPlaneId'] == null ? undefined : json['dataPlaneId'],
     secretExpirationSettings:
       json['secretExpirationSettings'] == null ? undefined : SecretExpirationSettingsFromJSON(json['secretExpirationSettings']),
+    redirectUriUnsecuredHttpSchemeAllowed:
+      json['redirectUriUnsecuredHttpSchemeAllowed'] == null ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
+    dynamicClientRegistrationTemplateEnabled:
+      json['dynamicClientRegistrationTemplateEnabled'] == null ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
     redirectUriExpressionLanguageEnabled:
       json['redirectUriExpressionLanguageEnabled'] == null ? undefined : json['redirectUriExpressionLanguageEnabled'],
     dynamicClientRegistrationEnabled:
@@ -385,10 +390,6 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
     redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     redirectUriLocalhostAllowed: json['redirectUriLocalhostAllowed'] == null ? undefined : json['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: json['redirectUriWildcardAllowed'] == null ? undefined : json['redirectUriWildcardAllowed'],
-    dynamicClientRegistrationTemplateEnabled:
-      json['dynamicClientRegistrationTemplateEnabled'] == null ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
-    redirectUriUnsecuredHttpSchemeAllowed:
-      json['redirectUriUnsecuredHttpSchemeAllowed'] == null ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
   };
 }
 
@@ -431,13 +432,13 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     corsSettings: CorsSettingsToJSON(value['corsSettings']),
     dataPlaneId: value['dataPlaneId'],
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
+    redirectUriUnsecuredHttpSchemeAllowed: value['redirectUriUnsecuredHttpSchemeAllowed'],
+    dynamicClientRegistrationTemplateEnabled: value['dynamicClientRegistrationTemplateEnabled'],
     redirectUriExpressionLanguageEnabled: value['redirectUriExpressionLanguageEnabled'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
     redirectUriStrictMatching: value['redirectUriStrictMatching'],
     redirectUriLocalhostAllowed: value['redirectUriLocalhostAllowed'],
     redirectUriWildcardAllowed: value['redirectUriWildcardAllowed'],
-    dynamicClientRegistrationTemplateEnabled: value['dynamicClientRegistrationTemplateEnabled'],
-    redirectUriUnsecuredHttpSchemeAllowed: value['redirectUriUnsecuredHttpSchemeAllowed'],
   };
 }
