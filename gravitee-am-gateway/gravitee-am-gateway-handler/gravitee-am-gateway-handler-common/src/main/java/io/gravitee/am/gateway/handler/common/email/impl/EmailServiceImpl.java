@@ -208,24 +208,24 @@ public class EmailServiceImpl implements EmailService {
             // compute email - from
             final Template fromTemplate = new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration);
             final String from = processTemplate(fromTemplate, params, preferredLanguage);
-            email.setFrom(from);
+            emailToSend.setFrom(from);
 
             if (!StringUtils.isEmpty(email.getFromName())) {
                 // compute email - fromName
                 final Template fromNameTemplate = new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration);
                 final String fromName = processTemplate(fromNameTemplate, params, preferredLanguage);
-                email.setFromName(fromName);
+                emailToSend.setFromName(fromName);
             }
 
             // compute email subject
             final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
             final String subject = processTemplate(plainTextTemplate, params, preferredLanguage);
-            email.setSubject(subject);
+            emailToSend.setSubject(subject);
 
             // compute email content
             final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
             final String content = processTemplate(template, params, preferredLanguage);
-            email.setContent(content);
+            emailToSend.setContent(content);
 
             emailService.send(emailToSend);
             auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
