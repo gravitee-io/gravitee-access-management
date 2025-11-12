@@ -229,8 +229,6 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
     
     const application = await createTestApplication(domain, defaultIdp, accessToken, PROTECTED_RESOURCES_TEST.REDIRECT_URI);
     const serviceApplication = await createServiceApplication(domain, accessToken);
-    // Ensure IDP is synced before creating user (critical for user creation with source IDP)
-    await waitForDomainSync(domain.id, accessToken);
     const user = await createTestUser(domain, application, defaultIdp, accessToken);
     const protectedResources = await createTestProtectedResources(domain, accessToken);
     // Ensure protected resources are synced to gateway before using them
@@ -267,10 +265,8 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
       code: authCode,
       redirect_uri: PROTECTED_RESOURCES_TEST.REDIRECT_URI,
     });
-    if (resources && resources.length > 0) {
-      for (const r of resources) {
-        tokenParams.append('resource', r);
-      }
+    for (const r of resources || []) {
+      tokenParams.append('resource', r);
     }
     return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -282,10 +278,8 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
 
   const exchangeRefreshForTokenWithResources = (refreshToken: string, resources?: string[]) => {
     const tokenParams = new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken });
-    if (resources && resources.length > 0) {
-      for (const r of resources) {
-        tokenParams.append('resource', r);
-      }
+    for (const r of resources || []) {
+      tokenParams.append('resource', r);
     }
     return performPost(openIdConfiguration.token_endpoint, '', tokenParams.toString(), {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -294,19 +288,8 @@ export const setupProtectedResourcesFixture = async (): Promise<ProtectedResourc
   };
 
     const cleanup = async () => {
-      if (!domain || !accessToken) {
-        console.warn('⚠️  Cannot cleanup: domain or accessToken is missing');
-        return;
-      }
-
-      try {
-        // Delete domain (this will cascade delete applications, users, protected resources, etc.)
-        await safeDeleteDomain(domain.id, accessToken);
-        console.log('✅ Cleanup complete');
-      } catch (error: any) {
-        console.error('❌ Error during cleanup:', error.message);
-        // Don't throw - cleanup errors shouldn't fail tests
-      }
+      // Delete domain (this will cascade delete applications, users, protected resources, etc.)
+      await safeDeleteDomain(domain?.id, accessToken);
     };
 
     return {

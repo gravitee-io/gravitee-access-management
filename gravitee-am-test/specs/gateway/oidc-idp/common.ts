@@ -105,8 +105,6 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
   expect(providerDomain.id).not.toBe(clientDomain.id);
 
   let providerInlineIdp = await replaceDefaultIdpWithInline(providerDomain, accessToken);
-  // Ensure IDP is synced before creating applications
-  await waitForDomainSync(providerDomain.id, accessToken);
 
   // Generate unique application name to avoid conflicts in parallel execution
   const providerAppName = uniqueName('oidc-pkce-test-provider', true);
@@ -117,10 +115,8 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
     providerInlineIdp.id,
     process.env.AM_GATEWAY_URL + '/' + clientDomain.hrid + '/login/callback',
   );
-  await waitForDomainSync(providerDomain.id, accessToken);
 
   let clientIdentityProvider = await createOidcProvider(clientDomain, providerDomain, accessToken, providerIdpApplication);
-  await waitForDomainSync(clientDomain.id, accessToken);
 
   let clientApp = await createApp(
     'oidc-pkce-test-client',
@@ -129,7 +125,6 @@ export async function setupOidcProviderTest(domainSuffix: string): Promise<OIDCF
     clientIdentityProvider.id,
     'https://auth-nightly.gravitee.io/myApp/callback',
   );
-  await waitForDomainSync(clientDomain.id, accessToken);
 
   const startProviderDomain = doStartDomain(providerDomain, accessToken);
   const startClientDomain = doStartDomain(clientDomain, accessToken).then((started) => {

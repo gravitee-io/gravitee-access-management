@@ -907,7 +907,6 @@ describe('OAuth2 - App version', () => {
           it('must handle invalid Authorize requests - ' + actual.title, async () => {
             // Get the actual client ID at test execution time
             const clientId = application2.settings.oauth.clientId;
-            // Replace the placeholder in params (using replace with global flag as replaceAll is not available in this TS version)
             const params = actual.params.replace(/__CLIENT_ID_PLACEHOLDER__/g, clientId);
 
             // Initiate the Login Flow

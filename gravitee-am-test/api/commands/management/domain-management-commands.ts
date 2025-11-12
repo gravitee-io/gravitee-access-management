@@ -81,9 +81,9 @@ export const deleteDomain = (domainId, accessToken): Promise<void> =>
  * @param accessToken - Admin access token
  * @returns Promise<void> - Always resolves (never rejects)
  */
-export const safeDeleteDomain = async (domainId: string, accessToken: string): Promise<void> => {
-  if (!domainId) {
-    console.warn('⚠️  Cannot delete domain: domainId is undefined or empty');
+export const safeDeleteDomain = async (domainId: string | null | undefined, accessToken: string | null | undefined): Promise<void> => {
+  if (!domainId || !accessToken) {
+    console.warn('⚠️  Cannot delete domain: domainId or accessToken is missing');
     return;
   }
   
@@ -187,6 +187,13 @@ export const waitForDomainStart: (domain: Domain) => Promise<DomainWithOidcConfi
  * 
  * @returns Promise that resolves when sync is complete
  */
+// Constants for domain sync timing
+const DEFAULT_DOMAIN_SYNC_TIMEOUT_MS = 30000;
+const DEFAULT_DOMAIN_SYNC_INTERVAL_MS = 500;
+const DEFAULT_DOMAIN_SYNC_STABILITY_MS = 2000;
+const DOMAIN_READY_MIN_WAIT_MS = 500;
+const DOMAIN_SYNC_FALLBACK_WAIT_MS = 2000;
+
 export const waitForDomainSync = async (
   domainId?: string,
   accessToken?: string,
@@ -197,13 +204,21 @@ export const waitForDomainSync = async (
   }
 ): Promise<void> => {
   const {
-    timeoutMillis = 30000,
-    intervalMillis = 500,
-    stabilityMillis = 2000,
+    timeoutMillis = DEFAULT_DOMAIN_SYNC_TIMEOUT_MS,
+    intervalMillis = DEFAULT_DOMAIN_SYNC_INTERVAL_MS,
+    stabilityMillis = DEFAULT_DOMAIN_SYNC_STABILITY_MS,
   } = options || {};
 
-  // If domainId and accessToken are provided, use polling with retryUntil
-  if (domainId && accessToken) {
+  // Early return for fallback case (no domainId or accessToken)
+  if (!domainId || !accessToken) {
+    // Fallback: Use shorter fixed wait (2 seconds instead of 10)
+    // This is a conservative improvement that maintains backward compatibility
+    // while still providing significant time savings
+    await waitFor(DOMAIN_SYNC_FALLBACK_WAIT_MS);
+    return;
+  }
+
+  // Use polling with retryUntil when domainId and accessToken are provided
     // State tracking for stability check
     const state = {
       lastUpdatedAt: null as number | null,
@@ -267,19 +282,12 @@ export const waitForDomainSync = async (
       
       // Additional minimum wait to ensure domain is ready to serve requests
       // Stability check doesn't guarantee domain is ready to handle requests
-      await waitFor(500);
+      await waitFor(DOMAIN_READY_MIN_WAIT_MS);
     } catch (error: unknown) {
       // Timeout or error - log warning but don't throw (backward compatibility)
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.warn(`Domain ${domainId} sync timeout after ${timeoutMillis}ms: ${errorMessage}`);
     }
-    return;
-  }
-
-  // Fallback: Use shorter fixed wait (2 seconds instead of 10)
-  // This is a conservative improvement that maintains backward compatibility
-  // while still providing significant time savings
-  await waitFor(2000);
 };
 
 export const waitFor = (duration) => new Promise((r) => setTimeout(r, duration));

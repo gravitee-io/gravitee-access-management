@@ -82,7 +82,7 @@ describe('multiple user', () => {
   let secondCommonEmail: string;
   let testJohnDoe: string;
   let testJensenBarbara: string;
-  let testFlipFlop: string;
+  let userFlipFlop: string;
   let testSomeUser: string;
   let testUserFive: string;
   let testUserSix: string;
@@ -91,7 +91,7 @@ describe('multiple user', () => {
     // Generate unique usernames to avoid conflicts in parallel execution
     testJohnDoe = uniqueName('john.doe', true);
     testJensenBarbara = uniqueName('jensen.barbara', true);
-    testFlipFlop = uniqueName('flip.flop', true);
+    userFlipFlop = uniqueName('flip.flop', true);
     testSomeUser = uniqueName('some.user', true);
     testUserFive = uniqueName('user.five', true);
     testUserSix = uniqueName('user.six', true);
@@ -133,7 +133,7 @@ describe('multiple user', () => {
     user3 = await createUser(domain.id, accessToken, {
       firstName: 'flip',
       lastName: 'flop',
-      username: testFlipFlop,
+      username: userFlipFlop,
       email: commonEmail,
       password: commonPassword,
       client: multiUserLoginApp.id,

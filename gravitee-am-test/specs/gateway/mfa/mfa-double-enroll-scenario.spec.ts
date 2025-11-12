@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { afterAll, beforeAll, expect, it, jest } from '@jest/globals';
+import { afterAll, beforeAll, beforeEach, expect, it, jest } from '@jest/globals';
 import { createDomain, safeDeleteDomain, startDomain, waitForDomainStart, waitForDomainSync } from '@management-commands/domain-management-commands';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
 import {
@@ -34,7 +34,7 @@ import { FlowEntityTypeEnum } from '../../../api/management/models';
 import { extractSharedSecret, extractSmsCode } from './fixture/mfa-extract-fixture';
 import { createCallFactor, createSMSFactor } from './fixture/mfa-setup-fixture';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 
 let domain;
 let accessToken;
@@ -71,9 +71,15 @@ beforeAll(async () => {
 describe('MFA double enrollment scenario', () => {
   let user;
 
+  beforeEach(async () => {
+    // Create user once and reuse across tests in this describe block
+    if (!user) {
+      user = await buildCreateAndTestUser(domain.id, accessToken, 1);
+      expect(user).toBeDefined();
+    }
+  });
+
   it('When user enrolls and verify SMS factor, the CALL factor is added along', async () => {
-    user = await buildCreateAndTestUser(domain.id, accessToken, 1);
-    expect(user).toBeDefined();
 
     const loginResponse = await loginUserNameAndPassword(
       app.settings.oauth.clientId,
@@ -128,10 +134,8 @@ describe('MFA double enrollment scenario', () => {
 });
 
 afterAll(async () => {
-  if (domain?.id) {
-    await safeDeleteDomain(domain.id, accessToken);
-    await performDelete(sfrUrl, '/__admin/requests', {});
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
+  await performDelete(sfrUrl, '/__admin/requests', {});
 });
 
 const enrollSmsFactor = async (authResponse, factor, domain, phoneNumber) => {

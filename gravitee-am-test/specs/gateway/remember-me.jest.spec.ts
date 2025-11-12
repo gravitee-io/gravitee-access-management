@@ -144,9 +144,7 @@ describe('remember me', () => {
       if (user?.id) {
         await deleteUser(domain.id, accessToken, user.id);
       }
-      if (domain?.id) {
-        await safeDeleteDomain(domain.id, accessToken);
-      }
+      await safeDeleteDomain(domain?.id, accessToken);
     });
   });
 
@@ -267,9 +265,7 @@ describe('remember me', () => {
       if (user?.id) {
         await deleteUser(domain.id, accessToken, user.id);
       }
-      if (domain?.id) {
-        await safeDeleteDomain(domain.id, accessToken);
-      }
+      await safeDeleteDomain(domain?.id, accessToken);
     });
   });
 });

@@ -22,7 +22,7 @@ import { createApplication, updateApplication } from '@management-commands/appli
 import { extractXsrfToken, getWellKnownOpenIdConfiguration, performFormPost, performPost } from '@gateway-commands/oauth-oidc-commands';
 import { applicationBase64Token } from '@gateway-commands/utils';
 import { clearEmails, getLastEmail } from '@utils-commands/email-commands';
-import { getUser } from '@management-commands/user-management-commands';
+import { getUserPage } from '@management-commands/user-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
 let mngAccessToken: string;
@@ -30,8 +30,8 @@ let scimAccessToken: string;
 let domain: Domain;
 let scimClient: Application;
 let scimEndpoint: string;
-let confirmationLink: string;
-let createdUser;
+let testUserEmail: string;
+let testUserName: string;
 
 jest.setTimeout(200000);
 
@@ -88,16 +88,18 @@ beforeAll(async function () {
 });
 
 afterAll(async function () {
-  if (domain?.id) {
-    await safeDeleteDomain(domain.id, mngAccessToken);
-  }
+  await safeDeleteDomain(domain?.id, mngAccessToken);
 });
 describe('SCIM with preRegistration', () => {
-  it('should create SCIM user with preRegistration', async () => {
+  it('should create SCIM user with preRegistration and confirm registration', async () => {
+    // Generate unique identifiers to avoid conflicts in parallel execution
+    testUserEmail = `${uniqueName('user', true)}@user.com`;
+    testUserName = uniqueName('barbara', true);
+
     const request = {
       schemas: ['urn:ietf:params:scim:schemas:extension:custom:2.0:User', 'urn:ietf:params:scim:schemas:core:2.0:User'],
       externalId: '70198412321242223922423',
-      userName: 'barbara',
+      userName: testUserName,
       password: null,
       name: {
         formatted: 'Ms. Barbara J Jensen, III',
@@ -111,7 +113,7 @@ describe('SCIM with preRegistration', () => {
       nickName: 'Babs',
       emails: [
         {
-          value: `${uniqueName('user', true)}@user.com`,
+          value: testUserEmail,
           type: 'work',
           primary: true,
         },
@@ -128,16 +130,14 @@ describe('SCIM with preRegistration', () => {
       },
     };
 
-    // Get the email from the request before creating the user
-    const userEmail = request.emails[0].value;
     // Clear emails for this specific recipient BEFORE creating the user to avoid interference from other tests
-    await clearEmails(userEmail);
+    await clearEmails(testUserEmail);
 
     const response = await performPost(scimEndpoint, '/Users', JSON.stringify(request), {
       'Content-type': 'application/json',
       Authorization: `Bearer ${scimAccessToken}`,
     }).expect(201);
-    createdUser = response.body;
+    const createdUser = response.body;
 
     expect(createdUser).toBeDefined();
     // Pre registered user are not enabled.
@@ -145,20 +145,13 @@ describe('SCIM with preRegistration', () => {
     expect(createdUser.enabled).toBeFalsy();
     expect(createdUser.registrationUserUri).not.toBeDefined();
     expect(createdUser.registrationAccessToken).not.toBeDefined();
-  });
 
-  it('must received an email', async () => {
-    // Get the user's email from the created user (SCIM format)
-    const userEmail = createdUser.emails?.[0]?.value || createdUser.email;
-    expect(userEmail).toBeDefined();
-    // Email was already cleared before user creation, now wait for it to arrive
-    confirmationLink = (await getLastEmail(1000, userEmail)).extractLink();
+    // Retrieve confirmation email and confirm registration in the same test
+    const confirmationLink = (await getLastEmail(1000, testUserEmail)).extractLink();
     expect(confirmationLink).toBeDefined();
-    await clearEmails(userEmail);
-  });
+    await clearEmails(testUserEmail);
 
-  it('must confirm the registration by providing a password', async () => {
-    expect(confirmationLink).toBeDefined();
+    // Confirm registration
     const url = new URL(confirmationLink);
     const resetPwdToken = url.searchParams.get('token');
     expect(resetPwdToken).toBeDefined();
@@ -185,15 +178,18 @@ describe('SCIM with preRegistration', () => {
   });
 
   it('must be enabled', async () => {
-    let user = await getUser(domain.id, mngAccessToken, createdUser.id);
+    // Fetch user by email
+    const users = await getUserPage(domain.id, mngAccessToken);
+    const user = users.data.find((u) => u.email === testUserEmail || u.username === testUserName);
     expect(user).toBeDefined();
-    // Pre registered user are not enabled.
-    // They have to provide a password first.
     expect(user.enabled).toBeTruthy();
   });
 
   it('must contain forceResetPassword', async () => {
-    let user = await getUser(domain.id, mngAccessToken, createdUser.id);
+    // Fetch user by email
+    const users = await getUserPage(domain.id, mngAccessToken);
+    const user = users.data.find((u) => u.email === testUserEmail || u.username === testUserName);
+    expect(user).toBeDefined();
     expect(user.forceResetPassword).toBeTruthy();
   });
 });

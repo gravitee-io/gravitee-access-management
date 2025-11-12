@@ -267,9 +267,7 @@ afterEach(async () => {
 });
 
 afterAll(async () => {
-  if (domain?.id) {
-    await safeDeleteDomain(domain.id, accessToken);
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
 });
 
 async function removeAllPasswordPolicies(): Promise<void> {

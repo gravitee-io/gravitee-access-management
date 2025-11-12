@@ -499,7 +499,5 @@ describe('Flows Execution - authorization_code flow', () => {
 });
 
 afterAll(async () => {
-  if (domain?.id) {
-    await safeDeleteDomain(domain.id, managementApiAccessToken);
-  }
+  await safeDeleteDomain(domain?.id, managementApiAccessToken);
 });

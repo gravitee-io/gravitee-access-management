@@ -272,9 +272,7 @@ describe('Register User on domain', () => {
 });
 
 afterAll(async () => {
-  if (domain?.id) {
-    await safeDeleteDomain(domain.id, accessToken);
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
 });
 
 const createMongoIdp = async (domainId, accessToken) => {

@@ -35,13 +35,13 @@ let scimAccessToken: string;
 let domain: Domain;
 let scimClient: Application;
 let scimEndpoint: string;
-let testUser01: string;
-let testUser02: string;
-let testRubble: string;
-let testSkye: string;
-let testMarshal: string;
-let testSky: string;
-let testChase: string;
+let user01: string;
+let user02: string;
+let userRubble: string;
+let userSkye: string;
+let userMarshal: string;
+let userSky: string;
+let userChase: string;
 
 jest.setTimeout(200000);
 
@@ -50,13 +50,13 @@ beforeAll(async function () {
   expect(mngAccessToken).toBeDefined();
 
   // Generate unique usernames to avoid conflicts in parallel execution
-  testUser01 = uniqueName('user01', true);
-  testUser02 = uniqueName('user02', true);
-  testRubble = uniqueName('rubble', true);
-  testSkye = uniqueName('skye', true);
-  testMarshal = uniqueName('marshal', true);
-  testSky = uniqueName('sky', true);
-  testChase = uniqueName('chase', true);
+  user01 = uniqueName('user01', true);
+  user02 = uniqueName('user02', true);
+  userRubble = uniqueName('rubble', true);
+  userSkye = uniqueName('skye', true);
+  userMarshal = uniqueName('marshal', true);
+  userSky = uniqueName('sky', true);
+  userChase = uniqueName('chase', true);
 
   domain = await createDomain(mngAccessToken, uniqueName('bulk-scim', true), 'Domain used to test Bulk SCIM requests');
   expect(domain).toBeDefined();
@@ -120,9 +120,7 @@ beforeAll(async function () {
 });
 
 afterAll(async function () {
-  if (domain?.id) {
-    await safeDeleteDomain(domain.id, mngAccessToken);
-  }
+  await safeDeleteDomain(domain?.id, mngAccessToken);
 });
 
 describe('SCIM Bulk endpoint', () => {
@@ -181,7 +179,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testUser01,
+        userName: user01,
       },
     };
     const operation2: BulkOperation = {
@@ -190,7 +188,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testUser01,
+        userName: user01,
       },
     };
     const operation3: BulkOperation = {
@@ -199,7 +197,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testUser02,
+        userName: user02,
       },
     };
 
@@ -322,7 +320,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testRubble,
+        userName: userRubble,
       },
     };
     const operation2: BulkOperation = {
@@ -331,7 +329,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testRubble,
+        userName: userRubble,
       },
     };
     const operation3: BulkOperation = {
@@ -340,7 +338,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testRubble,
+        userName: userRubble,
       },
     };
     const operation4: BulkOperation = {
@@ -349,7 +347,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testSkye,
+        userName: userSkye,
       },
     };
 
@@ -397,7 +395,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testMarshal,
+        userName: userMarshal,
       },
     };
     const operation2: BulkOperation = {
@@ -406,7 +404,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testMarshal,
+        userName: userMarshal,
       },
     };
     const operation3: BulkOperation = {
@@ -415,7 +413,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testSky,
+        userName: userSky,
       },
     };
     const operation4: BulkOperation = {
@@ -424,7 +422,7 @@ describe('SCIM Bulk endpoint', () => {
       bulkId: random.word(),
       data: {
         schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-        userName: testChase,
+        userName: userChase,
       },
     };
 

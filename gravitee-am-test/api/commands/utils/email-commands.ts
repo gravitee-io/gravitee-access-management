@@ -76,30 +76,37 @@ export async function getLastEmail(delay = 1000, toAddress?: string) {
 }
 
 export async function clearEmails(toAddress?: string) {
-  if (toAddress) {
-    // Clear emails for a specific recipient only
-    // Fetch all emails, filter by recipient, and delete each one
-    const response = await fetch(process.env.FAKE_SMTP + '/api/email');
-    const array = await response.json();
-    if (array && array.length > 0) {
-      // Filter emails by recipient address
-      const emailsToDelete = array.filter((email: any) => email['toAddress'] === toAddress);
-      // Delete each email by ID (FAKE_SMTP typically supports DELETE /api/email/{id})
-      for (const email of emailsToDelete) {
-        try {
-          await fetch(`${process.env.FAKE_SMTP}/api/email/${email['id']}`, { method: 'delete' });
-        } catch (error: unknown) {
-          // If individual deletion fails, log and continue
-          // This is a fallback for FAKE_SMTP versions that don't support DELETE by ID
-          // In that case, we rely on filtering in getLastEmail() to avoid interference
-          const errorMessage = error instanceof Error ? error.message : String(error);
-          console.debug(`Failed to delete email ${email['id']} for ${toAddress}, will rely on filtering: ${errorMessage}`);
-        }
-      }
-    }
-  } else {
+  if (!toAddress) {
     // Clear all emails (backward compatible)
     await fetch(process.env.FAKE_SMTP + '/api/email', { method: 'delete' });
+    return;
+  }
+
+  // Clear emails for a specific recipient only
+  // Fetch all emails, filter by recipient, and delete each one
+  const response = await fetch(process.env.FAKE_SMTP + '/api/email');
+  const array = await response.json();
+  if (!array || array.length === 0) {
+    return;
+  }
+
+  // Filter emails by recipient address
+  const emailsToDelete = array.filter((email: any) => email['toAddress'] === toAddress);
+  if (emailsToDelete.length === 0) {
+    return;
+  }
+
+  // Delete each email by ID (FAKE_SMTP typically supports DELETE /api/email/{id})
+  for (const email of emailsToDelete) {
+    try {
+      await fetch(`${process.env.FAKE_SMTP}/api/email/${email['id']}`, { method: 'delete' });
+    } catch (error: unknown) {
+      // If individual deletion fails, log and continue
+      // This is a fallback for FAKE_SMTP versions that don't support DELETE by ID
+      // In that case, we rely on filtering in getLastEmail() to avoid interference
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.debug(`Failed to delete email ${email['id']} for ${toAddress}, will rely on filtering: ${errorMessage}`);
+    }
   }
 }
 
