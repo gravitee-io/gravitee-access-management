@@ -214,9 +214,7 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
     @Test
     public void testDeleteByUserId() {
         // create credential
-        CertificateCredential credential = buildCertificateCredential();
-        credential.setReferenceId("domain-id");
-        credential.setUserId("user-id");
+        CertificateCredential credential = buildCertificateCredential("domain-id", "user-id");
         CertificateCredential credentialCreated = certificateCredentialRepository.create(credential).blockingGet();
 
         // fetch credential
@@ -241,26 +239,23 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
 
     @Test
     public void testDeleteByDomainAndUserAndId() {
+        // Use unique identifiers to avoid test isolation issues
+        TestIdentifiers ids = uniqueTestIdentifiers();
+
         // create credential for user1
-        CertificateCredential credential1 = buildCertificateCredential();
-        credential1.setReferenceId("domain-1");
-        credential1.setUserId("user-1");
+        CertificateCredential credential1 = buildCertificateCredential(ids.domain1, ids.user1);
         CertificateCredential credential1Created = certificateCredentialRepository.create(credential1).blockingGet();
 
         // create credential for user2 in same domain
-        CertificateCredential credential2 = buildCertificateCredential();
-        credential2.setReferenceId("domain-1");
-        credential2.setUserId("user-2");
+        CertificateCredential credential2 = buildCertificateCredential(ids.domain1, ids.user2);
         CertificateCredential credential2Created = certificateCredentialRepository.create(credential2).blockingGet();
 
         // create credential for user1 in different domain
-        CertificateCredential credential3 = buildCertificateCredential();
-        credential3.setReferenceId("domain-2");
-        credential3.setUserId("user-1");
+        CertificateCredential credential3 = buildCertificateCredential(ids.domain2, ids.user1);
         CertificateCredential credential3Created = certificateCredentialRepository.create(credential3).blockingGet();
 
         // Verify all credentials exist
-        TestSubscriber<CertificateCredential> testSubscriber = certificateCredentialRepository.findByUserId(ReferenceType.DOMAIN, "domain-1", "user-1").test();
+        TestSubscriber<CertificateCredential> testSubscriber = certificateCredentialRepository.findByUserId(ReferenceType.DOMAIN, ids.domain1, ids.user1).test();
         testSubscriber.awaitDone(10, TimeUnit.SECONDS);
         testSubscriber.assertComplete();
         testSubscriber.assertNoErrors();
@@ -268,12 +263,12 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
 
         // Delete credential1 for user1 in domain1
         TestObserver<CertificateCredential> deleteObserver = certificateCredentialRepository
-                .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, "domain-1", "user-1", credential1Created.getId()).test();
+                .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, ids.domain1, ids.user1, credential1Created.getId()).test();
         deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertComplete();
         deleteObserver.assertNoErrors();
         deleteObserver.assertValue(c -> c.getId().equals(credential1Created.getId()));
-        deleteObserver.assertValue(c -> c.getUserId().equals("user-1"));
+        deleteObserver.assertValue(c -> c.getUserId().equals(ids.user1));
 
         // Verify credential1 is deleted
         TestObserver<CertificateCredential> findObserver = certificateCredentialRepository.findById(credential1Created.getId()).test();
@@ -299,9 +294,12 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
 
     @Test
     public void testDeleteByDomainAndUserAndId_credentialNotFound() {
+        // Use unique identifiers to avoid test isolation issues
+        TestIdentifiers ids = uniqueTestIdentifiers();
+        
         // Try to delete non-existent credential
         TestObserver<CertificateCredential> deleteObserver = certificateCredentialRepository
-                .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, "domain-1", "user-1", "non-existent-id").test();
+                .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, ids.domain1, ids.user1, "non-existent-id").test();
         deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertComplete();
         deleteObserver.assertNoValues();
@@ -310,15 +308,16 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
 
     @Test
     public void testDeleteByDomainAndUserAndId_wrongUser() {
+        // Use unique identifiers to avoid test isolation issues
+        TestIdentifiers ids = uniqueTestIdentifiers();
+        
         // create credential for user1
-        CertificateCredential credential = buildCertificateCredential();
-        credential.setReferenceId("domain-1");
-        credential.setUserId("user-1");
+        CertificateCredential credential = buildCertificateCredential(ids.domain1, ids.user1);
         CertificateCredential credentialCreated = certificateCredentialRepository.create(credential).blockingGet();
 
         // Try to delete with wrong user ID
         TestObserver<CertificateCredential> deleteObserver = certificateCredentialRepository
-                .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, "domain-1", "user-2", credentialCreated.getId()).test();
+                .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, ids.domain1, ids.user2, credentialCreated.getId()).test();
         deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertComplete();
         deleteObserver.assertNoValues();
@@ -334,15 +333,16 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
 
     @Test
     public void testDeleteByDomainAndUserAndId_wrongDomain() {
+        // Use unique identifiers to avoid test isolation issues
+        TestIdentifiers ids = uniqueTestIdentifiers();
+        
         // create credential in domain1
-        CertificateCredential credential = buildCertificateCredential();
-        credential.setReferenceId("domain-1");
-        credential.setUserId("user-1");
+        CertificateCredential credential = buildCertificateCredential(ids.domain1, ids.user1);
         CertificateCredential credentialCreated = certificateCredentialRepository.create(credential).blockingGet();
 
         // Try to delete with wrong domain ID
         TestObserver<CertificateCredential> deleteObserver = certificateCredentialRepository
-                .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, "domain-2", "user-1", credentialCreated.getId()).test();
+                .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, ids.domain2, ids.user1, credentialCreated.getId()).test();
         deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertComplete();
         deleteObserver.assertNoValues();
@@ -358,16 +358,15 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
 
     @Test
     public void testDeleteByReference() {
+        // Use unique identifiers to avoid test isolation issues
+        TestIdentifiers ids = uniqueTestIdentifiers();
+        
         // create credential for domain1
-        CertificateCredential credential1 = buildCertificateCredential();
-        credential1.setReferenceId("domain-1");
-        credential1.setUserId("user-1");
+        CertificateCredential credential1 = buildCertificateCredential(ids.domain1, ids.user1);
         CertificateCredential credential1Created = certificateCredentialRepository.create(credential1).blockingGet();
 
         // create credential for domain2
-        CertificateCredential credential2 = buildCertificateCredential();
-        credential2.setReferenceId("domain-2");
-        credential2.setUserId("user-1");
+        CertificateCredential credential2 = buildCertificateCredential(ids.domain2, ids.user1);
         CertificateCredential credential2Created = certificateCredentialRepository.create(credential2).blockingGet();
 
         // Verify credentials exist
@@ -384,7 +383,7 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
         findObserver2.assertValue(c -> c.getId().equals(credential2Created.getId()));
 
         // Delete all credentials for domain1
-        TestObserver<?> deleteObserver = certificateCredentialRepository.deleteByReference(ReferenceType.DOMAIN, "domain-1").test();
+        TestObserver<?> deleteObserver = certificateCredentialRepository.deleteByReference(ReferenceType.DOMAIN, ids.domain1).test();
         deleteObserver.awaitDone(10, TimeUnit.SECONDS);
         deleteObserver.assertComplete();
         deleteObserver.assertNoErrors();
@@ -404,7 +403,15 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
         findObserver4.assertValue(c -> c.getId().equals(credential2Created.getId()));
     }
 
-    private CertificateCredential buildCertificateCredential() {
+    /**
+     * Build a certificate credential with unique identifiers.
+     * All identifiers use UUIDs to ensure test isolation.
+     *
+     * @param referenceId Optional reference ID. If null, a unique one will be generated.
+     * @param userId Optional user ID. If null, a unique one will be generated.
+     * @return A new CertificateCredential instance
+     */
+    private CertificateCredential buildCertificateCredential(String referenceId, String userId) {
         String randomStr = UUID.randomUUID().toString();
         Date expirationDate = new Date(System.currentTimeMillis() + 86400000); // Tomorrow
 
@@ -414,19 +421,60 @@ public class CertificateCredentialRepositoryTest extends AbstractManagementTest 
 
         CertificateCredential credential = new CertificateCredential();
         credential.setReferenceType(ReferenceType.DOMAIN);
-        credential.setReferenceId("domainId");
-        credential.setUserId("uid" + randomStr);
-        credential.setUsername("uname" + randomStr);
+        credential.setReferenceId(referenceId != null ? referenceId : "domain-" + randomStr);
+        credential.setUserId(userId != null ? userId : "uid-" + randomStr);
+        credential.setUsername("uname-" + randomStr);
         credential.setCertificatePem("-----BEGIN CERTIFICATE-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA" + randomStr + "\n-----END CERTIFICATE-----");
-        credential.setCertificateThumbprint("thumbprint" + randomStr);
+        credential.setCertificateThumbprint("thumbprint-" + randomStr);
         credential.setCertificateSubjectDN("CN=Test User " + randomStr);
-        credential.setCertificateSerialNumber("serial" + randomStr);
+        credential.setCertificateSerialNumber("serial-" + randomStr);
         credential.setCertificateExpiresAt(expirationDate);
         credential.setMetadata(metadata);
         credential.setAccessedAt(new Date());
-        credential.setUserAgent("uagent" + randomStr);
-        credential.setIpAddress("ip" + randomStr);
+        credential.setUserAgent("uagent-" + randomStr);
+        credential.setIpAddress("ip-" + randomStr);
         return credential;
+    }
+
+    /**
+     * Build a certificate credential with auto-generated unique identifiers.
+     * Convenience method for tests that don't need specific referenceId or userId.
+     */
+    private CertificateCredential buildCertificateCredential() {
+        return buildCertificateCredential(null, null);
+    }
+
+    /**
+     * Generate unique test identifiers for a test case.
+     * This ensures test isolation by using UUIDs for all identifiers.
+     *
+     * @return A TestIdentifiers object with unique domain and user IDs
+     */
+    private static TestIdentifiers uniqueTestIdentifiers() {
+        String uniqueId = UUID.randomUUID().toString();
+        return new TestIdentifiers(
+                "domain-1-" + uniqueId,
+                "domain-2-" + uniqueId,
+                "user-1-" + uniqueId,
+                "user-2-" + uniqueId
+        );
+    }
+
+    /**
+     * Helper class to hold unique test identifiers for a test case.
+     */
+    private static class TestIdentifiers {
+        final String domain1;
+        final String domain2;
+        final String user1;
+        final String user2;
+
+        TestIdentifiers(String domain1, String domain2, String user1, String user2) {
+            this.domain1 = domain1;
+            this.domain2 = domain2;
+            this.user1 = user1;
+            this.user2 = user2;
+        }
     }
 }
 

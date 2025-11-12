@@ -167,15 +167,23 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
     @Override
     public Maybe<CertificateCredential> deleteByDomainAndUserAndId(ReferenceType referenceType, String referenceId, String userId, String credentialId) {
         LOGGER.debug("deleteByDomainAndUserAndId({},{},{},{})", referenceType, referenceId, userId, credentialId);
-        // Find the credential first to validate it exists and belongs to the user
+        // Fetch the credential first to return it after deletion
         return certificateCredentialRepository.findByReferenceTypeAndReferenceIdAndUserIdAndId(
                         referenceType.name(), referenceId, userId, credentialId)
                 .map(this::toEntity)
                 .flatMap(credential -> {
-                    // Delete by ID (primary key, very fast)
-                    // deleteById returns Completable from RxJava3CrudRepository
-                    return certificateCredentialRepository.deleteById(credentialId)
-                            .andThen(Maybe.just(credential));
+                    // Delete atomically with all conditions in WHERE clause
+                    // This ensures we only delete if all conditions match (prevents race conditions)
+                    return monoToSingle(getTemplate().delete(JdbcCertificateCredential.class)
+                            .matching(Query.query(
+                                    where("reference_type").is(referenceType.name())
+                                            .and(where("reference_id").is(referenceId))
+                                            .and(where("user_id").is(userId))
+                                            .and(where("id").is(credentialId))))
+                            .all())
+                            .flatMapMaybe(rowsDeleted -> rowsDeleted == 0
+                                    ? Maybe.empty()  // Credential was already deleted (race condition)
+                                    : Maybe.just(credential));
                 })
                 .doOnError(error -> LOGGER.error("Unable to delete certificate credential {} for user {} in domain {}",
                         credentialId, userId, referenceId, error))

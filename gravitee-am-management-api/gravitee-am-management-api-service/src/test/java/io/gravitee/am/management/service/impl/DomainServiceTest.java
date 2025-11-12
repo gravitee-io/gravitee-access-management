@@ -68,6 +68,7 @@ import io.gravitee.am.service.AlertTriggerService;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.AuthenticationDeviceNotifierService;
+import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.CertificateService;
 import io.gravitee.am.service.DeviceIdentifierService;
 import io.gravitee.am.service.DomainReadService;
@@ -332,6 +333,8 @@ public class DomainServiceTest {
     @Mock
     private ProtectedResourceService protectedResourceService;
 
+    @Mock
+    private CertificateCredentialService certificateCredentialService;
 
     @Test
     public void shouldDelegateFindById() {
@@ -1099,6 +1102,7 @@ public class DomainServiceTest {
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         final var graviteeContext = GraviteeContext.defaultContext(DOMAIN_ID);
         final var testObserver = domainService.delete(graviteeContext, DOMAIN_ID, null).test();
@@ -1164,6 +1168,7 @@ public class DomainServiceTest {
         when(reporterService.notifyInheritedReporters(any(), any(), any())).thenReturn(Completable.complete());
         when(deviceIdentifierService.deleteByDomain(any())).thenReturn(Completable.complete());
         when(serviceResourceService.deleteByDomain(any())).thenReturn(Completable.complete());
+        when(certificateCredentialService.deleteByDomain(any())).thenReturn(Completable.complete());
 
         var testObserver = domainService.delete(GraviteeContext.defaultContext(DOMAIN_ID), DOMAIN_ID, null).test();
         testObserver.awaitDone(10, TimeUnit.SECONDS);

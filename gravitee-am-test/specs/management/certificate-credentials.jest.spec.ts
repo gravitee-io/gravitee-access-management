@@ -24,12 +24,11 @@ import {
   getCertificateCredential,
   deleteCertificateCredential,
   NewCertificateCredential,
-  CertificateCredential,
 } from '@management-commands/certificate-credential-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 import { generateUniqueCertificatePEM, generateExpiredCertificatePEM } from '@utils/certificate-utils';
 
-global.fetch = fetch;
+globalThis.fetch = fetch;
 jest.setTimeout(200000);
 
 let accessToken: string;
@@ -137,19 +136,14 @@ describe('Certificate Credential Enrollment', () => {
     });
   });
 
-  it('should enforce certificate limit', async () => {
-    // Given: A user has enrolled certificates up to the limit
-    // Note: We test limit enforcement by enrolling multiple unique certificates.
-    // The actual limit (default 20) is higher than our test limit, so we verify
-    // that multiple certificates can be enrolled successfully. The actual limit
-    // enforcement with higher limits is tested in unit tests.
+  it('should enforce certificate limit (20 per user)', async () => {
+    // Given: A user has enrolled 20 certificates (the limit)
     expect(user).toBeDefined();
 
-    // Enroll multiple unique certificates (up to a reasonable test limit)
-    const maxTestCertificates = 5; // Test with a small number for E2E tests
-    const credentials: CertificateCredential[] = [];
+    const CERTIFICATE_LIMIT = 20;
 
-    for (let i = 0; i < maxTestCertificates; i++) {
+    // Enroll certificates up to the limit
+    for (let i = 0; i < CERTIFICATE_LIMIT; i++) {
       const certPem = generateUniqueCertificatePEM(i);
       const newCredential: NewCertificateCredential = {
         certificatePem: certPem,
@@ -157,31 +151,27 @@ describe('Certificate Credential Enrollment', () => {
       };
       const credential = await enrollCertificate(domain.id, user.id, accessToken, newCredential);
       expect(credential.id).toBeDefined();
-      credentials.push(credential);
     }
 
-    // When: Admin attempts to enroll one more certificate (should succeed if under limit)
-    // Note: The actual limit (default 20) is higher than our test limit, so this should succeed
-    const additionalCertPem = generateUniqueCertificatePEM(maxTestCertificates);
-    const additionalCredential: NewCertificateCredential = {
-      certificatePem: additionalCertPem,
-      deviceName: 'Additional Device',
+    // Verify we have exactly 20 certificates
+    const allCredentials = await listCertificateCredentials(domain.id, user.id, accessToken);
+    expect(allCredentials.length).toBe(CERTIFICATE_LIMIT);
+
+    // When: Admin attempts to enroll a 21st certificate
+    const limitExceededCertPem = generateUniqueCertificatePEM(CERTIFICATE_LIMIT);
+    const limitExceededCredential: NewCertificateCredential = {
+      certificatePem: limitExceededCertPem,
+      deviceName: 'Limit Exceeded Device',
     };
 
-    // Then: Enrollment should succeed (we're under the actual limit)
-    const additionalCred = await enrollCertificate(domain.id, user.id, accessToken, additionalCredential);
-    expect(additionalCred.id).toBeDefined();
+    // Then: Enrollment fails with error (400 Bad Request)
+    await expect(enrollCertificate(domain.id, user.id, accessToken, limitExceededCredential)).rejects.toMatchObject({
+      message: expect.stringContaining('400'),
+    });
 
-    // Verify we can list all certificates
-    const allCredentials = await listCertificateCredentials(domain.id, user.id, accessToken);
-    expect(allCredentials.length).toBe(maxTestCertificates + 1);
-    
-    // Verify all certificates are present
-    const credentialIds = allCredentials.map((c) => c.id);
-    for (const cred of credentials) {
-      expect(credentialIds).toContain(cred.id);
-    }
-    expect(credentialIds).toContain(additionalCred.id);
+    // Verify the 21st certificate was NOT added
+    const credentialsAfterLimit = await listCertificateCredentials(domain.id, user.id, accessToken);
+    expect(credentialsAfterLimit.length).toBe(CERTIFICATE_LIMIT);
   });
 });
 

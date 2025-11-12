@@ -15,9 +15,14 @@
  */
 import { Component, Inject, ViewChild, ElementRef, OnInit, OnDestroy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
+
+interface EnrollmentForm {
+  certificatePem: FormControl<string>;
+  deviceName: FormControl<string | null>;
+}
 
 @Component({
   selector: 'app-certificate-enrollment-dialog',
@@ -26,7 +31,7 @@ import { debounceTime } from 'rxjs/operators';
   standalone: false,
 })
 export class CertificateEnrollmentDialogComponent implements OnInit, OnDestroy {
-  enrollmentForm: UntypedFormGroup;
+  enrollmentForm: FormGroup<EnrollmentForm>;
   certificateError: string = '';
   loading: boolean = false;
   private certificateValueSubscription?: Subscription;
@@ -37,9 +42,9 @@ export class CertificateEnrollmentDialogComponent implements OnInit, OnDestroy {
     @Inject(MAT_DIALOG_DATA) public readonly data: { domainId: string; userId: string },
     public readonly dialogRef: MatDialogRef<CertificateEnrollmentDialogComponent>,
   ) {
-    this.enrollmentForm = new UntypedFormGroup({
-      certificatePem: new UntypedFormControl('', [Validators.required]),
-      deviceName: new UntypedFormControl(''),
+    this.enrollmentForm = new FormGroup({
+      certificatePem: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+      deviceName: new FormControl(null),
     });
   }
 
@@ -92,7 +97,7 @@ export class CertificateEnrollmentDialogComponent implements OnInit, OnDestroy {
 
   validateCertificate(): void {
     const certificatePem = this.enrollmentForm.get('certificatePem')?.value || '';
-    
+
     if (!certificatePem) {
       this.certificateError = 'Certificate is required';
       return;
@@ -107,8 +112,8 @@ export class CertificateEnrollmentDialogComponent implements OnInit, OnDestroy {
 
     // Check for minimum required content
     const base64Content = certificatePem
-      .replaceAll('-----BEGIN CERTIFICATE-----', '')
-      .replaceAll('-----END CERTIFICATE-----', '')
+      .replace(/-----BEGIN CERTIFICATE-----/g, '')
+      .replace(/-----END CERTIFICATE-----/g, '')
       .replace(/\s/g, '');
 
     if (base64Content.length < 100) {

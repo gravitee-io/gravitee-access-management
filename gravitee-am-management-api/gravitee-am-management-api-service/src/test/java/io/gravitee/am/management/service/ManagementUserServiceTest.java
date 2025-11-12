@@ -54,6 +54,7 @@ import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.EventService;
 import io.gravitee.am.service.MembershipService;
+import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.PasswordPolicyService;
 import io.gravitee.am.service.PasswordService;
 import io.gravitee.am.service.RoleService;
@@ -191,6 +192,9 @@ public class ManagementUserServiceTest {
 
     @Mock
     private CredentialManagementService credentialService;
+
+    @Mock
+    private CertificateCredentialService certificateCredentialService;
 
     @Mock
     private PasswordPolicyService passwordPolicyService;
@@ -571,6 +575,7 @@ public class ManagementUserServiceTest {
         when(userActivityManagementService.deleteByDomainAndUser(any(), any())).thenReturn(Completable.complete());
         when(userRepository.delete(anyString())).thenReturn(Completable.complete());
         when(passwordHistoryService.deleteByUser(any(), anyString())).thenReturn(Completable.complete());
+        when(certificateCredentialService.deleteByUserId(any(), anyString())).thenReturn(Completable.complete());
 
         when(eventService.create(any())).thenAnswer(invocation -> Single.just(invocation.getArguments()[0]));
         when(tokenService.deleteByUser(any(), any())).thenReturn(Completable.complete());

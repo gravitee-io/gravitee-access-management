@@ -15,7 +15,7 @@
  */
 package io.gravitee.am.gateway.handler.oauth2.resources.auth.provider;
 
-import com.nimbusds.jose.util.Base64URL;
+import io.gravitee.am.certificate.api.X509CertUtils;
 import io.vertx.rxjava3.ext.web.RoutingContext;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -28,7 +28,6 @@ import javax.net.ssl.SSLSession;
 import java.io.ByteArrayInputStream;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.*;
 import java.util.Optional;
@@ -86,12 +85,18 @@ public class CertificateUtils {
         return certificate;
     }
 
+    /**
+     * Calculate certificate thumbprint using the specified algorithm.
+     * Delegates to X509CertUtils.getThumbprint for consistency across the codebase.
+     *
+     * @param cert the X.509 certificate
+     * @param algorithm the hash algorithm (e.g., "SHA-256")
+     * @return Base64URL-encoded thumbprint
+     * @throws NoSuchAlgorithmException if the algorithm is not available
+     * @throws CertificateEncodingException if the certificate cannot be encoded
+     */
     public static String getThumbprint(X509Certificate cert, String algorithm)
             throws NoSuchAlgorithmException, CertificateEncodingException {
-        MessageDigest md = MessageDigest.getInstance(algorithm);
-        byte[] der = cert.getEncoded();
-        md.update(der);
-        byte[] digest = md.digest();
-        return Base64URL.encode(digest).toString();
+        return X509CertUtils.getThumbprint(cert, algorithm);
     }
 }

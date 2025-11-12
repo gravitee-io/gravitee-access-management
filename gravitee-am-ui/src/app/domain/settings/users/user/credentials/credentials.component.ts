@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
-import { filter, switchMap, tap, mergeMap } from 'rxjs/operators';
-import { forkJoin } from 'rxjs';
+import { filter, switchMap, tap, mergeMap, catchError } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
 
 import { SnackbarService } from '../../../../../services/snackbar.service';
 import { DialogService } from '../../../../../services/dialog.service';
@@ -25,6 +25,31 @@ import { UserService } from '../../../../../services/user.service';
 import { AuthService } from '../../../../../services/auth.service';
 
 import { CertificateEnrollmentDialogComponent } from './certificate-enrollment/certificate-enrollment-dialog.component';
+
+export interface WebAuthnCredential {
+  id: string;
+  credentialId: string;
+  deviceName?: string;
+  publicKey: string;
+  attestationStatementFormat?: string;
+  createdAt?: string;
+  [key: string]: any;
+}
+
+export interface CertificateCredential {
+  id: string;
+  certificateSubjectDN?: string;
+  certificateThumbprint?: string;
+  certificatePem?: string;
+  certificateExpiresAt?: string;
+  deviceName?: string;
+  createdAt?: string;
+  [key: string]: any;
+}
+
+export interface CombinedCredential extends Partial<WebAuthnCredential>, Partial<CertificateCredential> {
+  credentialType: 'webauthn' | 'certificate';
+}
 
 @Component({
   selector: 'app-user-credentials',
@@ -35,15 +60,14 @@ import { CertificateEnrollmentDialogComponent } from './certificate-enrollment/c
 export class UserCredentialsComponent implements OnInit {
   private domainId: string;
   private user: any;
-  webauthnCredentials: any[] = [];
-  certificateCredentials: any[] = [];
-  allCredentials: any[] = [];
+  webauthnCredentials: WebAuthnCredential[] = [];
+  certificateCredentials: CertificateCredential[] = [];
+  allCredentials: CombinedCredential[] = [];
   canRevoke: boolean;
   canEnroll: boolean;
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly router: Router,
     private readonly snackbarService: SnackbarService,
     private readonly dialogService: DialogService,
     private readonly userService: UserService,
@@ -69,9 +93,9 @@ export class UserCredentialsComponent implements OnInit {
     return this.allCredentials.length === 0;
   }
 
-  remove(event, credential) {
+  remove(event, credential: CombinedCredential) {
     event.preventDefault();
-    const isCertificate = credential.credentialType === 'certificate' || credential.certificatePem || credential.certificateThumbprint;
+    const isCertificate = credential.credentialType === 'certificate';
     const credentialType = isCertificate ? 'Certificate' : 'WebAuthn';
 
     this.dialogService
@@ -95,18 +119,25 @@ export class UserCredentialsComponent implements OnInit {
 
   loadCredentials() {
     forkJoin({
-      webauthn: this.userService.credentials(this.domainId, this.user.id),
-      certificates: this.userService.certificateCredentials(this.domainId, this.user.id),
+      webauthn: this.userService.credentials(this.domainId, this.user.id).pipe(
+        catchError((error: unknown) => {
+          this.snackbarService.open('Failed to load WebAuthn credentials');
+          console.error('Error loading WebAuthn credentials:', error);
+          // Fallback to route data if API call fails
+          return of(this.route.snapshot.data['credentials'] || []);
+        }),
+      ),
+      certificates: this.userService.certificateCredentials(this.domainId, this.user.id).pipe(
+        catchError((error: unknown) => {
+          this.snackbarService.open('Failed to load certificate credentials');
+          console.error('Error loading certificate credentials:', error);
+          return of([]);
+        }),
+      ),
     }).subscribe({
       next: ({ webauthn, certificates }) => {
         this.webauthnCredentials = webauthn || [];
         this.certificateCredentials = certificates || [];
-        this.combineCredentials();
-      },
-      error: (_error: unknown) => {
-        // Fallback to route data if API calls fail
-        this.webauthnCredentials = this.route.snapshot.data['credentials'] || [];
-        this.certificateCredentials = [];
         this.combineCredentials();
       },
     });
@@ -115,8 +146,8 @@ export class UserCredentialsComponent implements OnInit {
   combineCredentials() {
     // Combine and mark credential types
     this.allCredentials = [
-      ...this.webauthnCredentials.map((c) => ({ ...c, credentialType: 'webauthn' })),
-      ...this.certificateCredentials.map((c) => ({ ...c, credentialType: 'certificate' })),
+      ...this.webauthnCredentials.map((c): CombinedCredential => ({ ...c, credentialType: 'webauthn' })),
+      ...this.certificateCredentials.map((c): CombinedCredential => ({ ...c, credentialType: 'certificate' })),
     ];
   }
 

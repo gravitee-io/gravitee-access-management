@@ -35,12 +35,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -71,7 +69,7 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
             }
 
             // 2. Extract certificate fields
-            String thumbprint = getThumbprint(cert, "SHA-256");
+            String thumbprint = X509CertUtils.getThumbprint(cert, "SHA-256");
             String subjectDN = cert.getSubjectX500Principal().getName();
             String serialNumber = cert.getSerialNumber().toString();
             Date expiresAt = cert.getNotAfter();
@@ -221,26 +219,6 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
                     log.error("Failed to delete certificate credentials for domain {}", domain.getId(), error);
                     return Completable.error(new TechnicalManagementException("Failed to delete certificate credentials", error));
                 });
-    }
-
-    /**
-     * Calculate certificate thumbprint using SHA-256 algorithm.
-     * Returns Base64URL-encoded thumbprint (same format as CertificateUtils.getThumbprint).
-     *
-     * @param cert the X.509 certificate
-     * @param algorithm the hash algorithm (e.g., "SHA-256")
-     * @return Base64URL-encoded thumbprint
-     * @throws NoSuchAlgorithmException if the algorithm is not available
-     * @throws CertificateEncodingException if the certificate cannot be encoded
-     */
-    private String getThumbprint(X509Certificate cert, String algorithm)
-            throws NoSuchAlgorithmException, CertificateEncodingException {
-        MessageDigest md = MessageDigest.getInstance(algorithm);
-        byte[] der = cert.getEncoded();
-        md.update(der);
-        byte[] digest = md.digest();
-        // Base64URL encoding: replace + with -, / with _, and remove padding =
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
     }
 }
 
