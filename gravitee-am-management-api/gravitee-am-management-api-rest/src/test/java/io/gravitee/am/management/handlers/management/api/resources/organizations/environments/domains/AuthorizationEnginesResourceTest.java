@@ -125,7 +125,7 @@ public class AuthorizationEnginesResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(domainId);
         doReturn(Single.just(createdEngine)).when(authorizationEngineServiceProxy)
-                .create(eq(domainId), any(NewAuthorizationEngine.class), any());
+                .create(eq(mockDomain), any(NewAuthorizationEngine.class), any());
 
         final Response response = post(
                 target("domains")
@@ -137,7 +137,7 @@ public class AuthorizationEnginesResourceTest extends JerseySpringTest {
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
 
         verify(authorizationEngineServiceProxy, times(1))
-                .create(eq(domainId), any(NewAuthorizationEngine.class), any());
+                .create(eq(mockDomain), any(NewAuthorizationEngine.class), any());
     }
 
     @Test

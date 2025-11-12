@@ -120,7 +120,7 @@ public class AuthorizationEnginesResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_AUTHORIZATION_ENGINE, Acl.CREATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapSingle(__ -> authorizationEngineService.create(domainId, newAuthorizationEngine, authenticatedUser))
+                        .flatMapSingle(existingDomain -> authorizationEngineService.create(existingDomain, newAuthorizationEngine, authenticatedUser))
                         .map(authorizationEngine -> Response.created(URI.create("/organizations/" + organizationId + "/environments/"
                                                     + environmentId + "/domains/" + domainId + "/authorization-engines/" + authorizationEngine.getId()))
                                             .entity(authorizationEngine)

@@ -21,6 +21,7 @@ import io.gravitee.am.common.plugin.ValidationResult;
 import io.gravitee.am.common.utils.RandomString;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.AuthorizationEngine;
+import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.common.event.Event;
 import io.gravitee.am.model.common.event.Payload;
@@ -101,11 +102,11 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
     }
 
     @Override
-    public Single<AuthorizationEngine> create(String domainId, NewAuthorizationEngine newAuthorizationEngine, User principal) {
-        LOGGER.debug("Create a new authorization engine {} for domain {}", newAuthorizationEngine, domainId);
+    public Single<AuthorizationEngine> create(Domain domain, NewAuthorizationEngine newAuthorizationEngine, User principal) {
+        LOGGER.debug("Create a new authorization engine {} for domain {}", newAuthorizationEngine, domain.getId());
 
         // Check if authorization engine of this type already exists in the domain
-        return authorizationEngineRepository.findByDomainAndType(domainId, newAuthorizationEngine.getType())
+        return authorizationEngineRepository.findByDomainAndType(domain.getId(), newAuthorizationEngine.getType())
                 .isEmpty()
                 .flatMap(isEmpty -> {
                     if (!isEmpty) {
@@ -117,7 +118,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                                 AuthorizationEngine authorizationEngine = new AuthorizationEngine();
                                 authorizationEngine.setId(newAuthorizationEngine.getId() == null ? RandomString.generate() : newAuthorizationEngine.getId());
                                 authorizationEngine.setReferenceType(ReferenceType.DOMAIN);
-                                authorizationEngine.setReferenceId(domainId);
+                                authorizationEngine.setReferenceId(domain.getId());
                                 authorizationEngine.setName(newAuthorizationEngine.getName());
                                 authorizationEngine.setType(newAuthorizationEngine.getType());
                                 authorizationEngine.setConfiguration(newAuthorizationEngine.getConfiguration());
@@ -130,7 +131,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                 .flatMap(createdEngine -> {
                     // create event for sync process
                     Event event = new Event(Type.AUTHORIZATION_ENGINE, new Payload(createdEngine.getId(), createdEngine.getReferenceType(), createdEngine.getReferenceId(), Action.CREATE));
-                    return eventService.create(event).flatMap(__ -> Single.just(createdEngine));
+                    return eventService.create(event, domain).flatMap(__ -> Single.just(createdEngine));
                 })
                 .onErrorResumeNext(ex -> {
                     if (ex instanceof AbstractManagementException) {
@@ -142,10 +143,10 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
     }
 
     @Override
-    public Single<AuthorizationEngine> update(String domainId, String id, UpdateAuthorizationEngine updateAuthorizationEngine, User principal) {
-        LOGGER.debug("Update an authorization engine {} for domain {}", id, domainId);
+    public Single<AuthorizationEngine> update(Domain domain, String id, UpdateAuthorizationEngine updateAuthorizationEngine, User principal) {
+        LOGGER.debug("Update an authorization engine {} for domain {}", id, domain.getId());
 
-        return authorizationEngineRepository.findByDomainAndId(domainId, id)
+        return authorizationEngineRepository.findByDomainAndId(domain.getId(), id)
                 .switchIfEmpty(Single.error(new AuthorizationEngineNotFoundException(id)))
                 .flatMap(oldEngine -> validateConfiguration(oldEngine.getType(), updateAuthorizationEngine.getConfiguration())
                         .andThen(Single.defer(() -> {
@@ -158,7 +159,7 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
                             .flatMap(updatedEngine -> {
                                 // create event for sync process
                                 Event event = new Event(Type.AUTHORIZATION_ENGINE, new Payload(updatedEngine.getId(), updatedEngine.getReferenceType(), updatedEngine.getReferenceId(), Action.UPDATE));
-                                return eventService.create(event).flatMap(__ -> Single.just(updatedEngine));
+                                return eventService.create(event, domain).flatMap(__ -> Single.just(updatedEngine));
                             });
                 })))
                 .onErrorResumeNext(ex -> {
@@ -172,17 +173,17 @@ public class AuthorizationEngineServiceImpl implements AuthorizationEngineServic
     }
 
     @Override
-    public Completable delete(String domainId, String authorizationEngineId, User principal) {
+    public Completable delete(Domain domain, String authorizationEngineId, User principal) {
         LOGGER.debug("Delete authorization engine {}", authorizationEngineId);
 
-        return authorizationEngineRepository.findByDomainAndId(domainId, authorizationEngineId)
+        return authorizationEngineRepository.findByDomainAndId(domain.getId(), authorizationEngineId)
                 .switchIfEmpty(Maybe.error(new AuthorizationEngineNotFoundException(authorizationEngineId)))
                 .flatMapCompletable(authorizationEngine -> {
                     // create event for sync process
-                    Event event = new Event(Type.AUTHORIZATION_ENGINE, new Payload(authorizationEngineId, ReferenceType.DOMAIN, domainId, Action.DELETE));
+                    Event event = new Event(Type.AUTHORIZATION_ENGINE, new Payload(authorizationEngineId, ReferenceType.DOMAIN, domain.getId(), Action.DELETE));
 
                     return authorizationEngineRepository.delete(authorizationEngineId)
-                            .andThen(eventService.create(event))
+                            .andThen(eventService.create(event, domain))
                             .ignoreElement();
                 })
                 .onErrorResumeNext(ex -> {
