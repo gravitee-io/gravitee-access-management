@@ -15,14 +15,20 @@
  */
 package io.gravitee.am.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.common.audit.Status;
+import io.gravitee.am.identityprovider.api.User;
+import io.gravitee.am.reporter.api.audit.model.Audit;
 import io.gravitee.am.model.CertificateCredential;
-import io.gravitee.am.repository.management.api.CertificateCredentialRepository;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.management.api.CertificateCredentialRepository;
 import io.gravitee.am.service.exception.CertificateExpiredException;
 import io.gravitee.am.service.exception.CertificateLimitExceededException;
 import io.gravitee.am.service.exception.DuplicateCertificateException;
 import io.gravitee.am.service.impl.CertificateCredentialServiceImpl;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.utils.CertificateCredentialTestFixtures;
 import io.gravitee.am.service.utils.CertificateTestUtils;
 import io.reactivex.rxjava3.core.Flowable;
@@ -45,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -76,12 +83,21 @@ public class CertificateCredentialServiceTest {
     @Mock
     private CertificateCredentialRepository certificateCredentialRepository;
 
+    @Mock
+    private AuditService auditService;
+
+    @Mock
+    private User principal;
+
+    private ObjectMapper objectMapper = new ObjectMapper();
+
     @Before
     public void setUp() {
         DOMAIN.setId(DOMAIN_ID);
         DOMAIN.setReferenceType(ReferenceType.DOMAIN);
         DOMAIN.setReferenceId(DOMAIN_ID);
         ReflectionTestUtils.setField(certificateCredentialService, "maxCertificatesPerUser", MAX_CERTIFICATES_PER_USER);
+        ReflectionTestUtils.setField(certificateCredentialService, "auditService", auditService);
     }
 
     @Test
@@ -95,7 +111,7 @@ public class CertificateCredentialServiceTest {
                 .thenReturn(Single.just(createdCredential));
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name")
+                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name", principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -109,6 +125,13 @@ public class CertificateCredentialServiceTest {
         });
 
         verify(certificateCredentialRepository, times(1)).create(any(CertificateCredential.class));
+        verify(auditService, times(1)).report(argThat(builder -> {
+            Audit audit = builder.build(objectMapper);
+            return EventType.CREDENTIAL_CREATED.equals(audit.getType()) &&
+                   ReferenceType.DOMAIN.equals(audit.getReferenceType()) &&
+                   DOMAIN_ID.equals(audit.getReferenceId()) &&
+                   Status.SUCCESS.equals(audit.getOutcome().getStatus());
+        }));
     }
 
 
@@ -117,7 +140,7 @@ public class CertificateCredentialServiceTest {
         // No mocks needed - service fails early on expiration check before repository calls
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .enrollCertificate(DOMAIN, USER_ID, EXPIRED_PEM_CERT, "device-name")
+                .enrollCertificate(DOMAIN, USER_ID, EXPIRED_PEM_CERT, "device-name", principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -128,6 +151,14 @@ public class CertificateCredentialServiceTest {
         verify(certificateCredentialRepository, never()).findByThumbprint(any(), anyString(), anyString());
         verify(certificateCredentialRepository, never()).findByUserId(any(), anyString(), anyString());
         verify(certificateCredentialRepository, never()).create(any(CertificateCredential.class));
+        // Verify audit logging was called even on error
+        verify(auditService, times(1)).report(argThat(builder -> {
+            Audit audit = builder.build(objectMapper);
+            return EventType.CREDENTIAL_CREATED.equals(audit.getType()) &&
+                   ReferenceType.DOMAIN.equals(audit.getReferenceType()) &&
+                   DOMAIN_ID.equals(audit.getReferenceId()) &&
+                   Status.FAILURE.equals(audit.getOutcome().getStatus());
+        }));
     }
 
     @Test
@@ -143,12 +174,20 @@ public class CertificateCredentialServiceTest {
                 .thenReturn(Flowable.empty());
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name")
+                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name", principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(DuplicateCertificateException.class);
         testObserver.assertNotComplete();
+        // Verify audit logging was called even on error
+        verify(auditService, times(1)).report(argThat(builder -> {
+            Audit audit = builder.build(objectMapper);
+            return EventType.CREDENTIAL_CREATED.equals(audit.getType()) &&
+                   ReferenceType.DOMAIN.equals(audit.getReferenceType()) &&
+                   DOMAIN_ID.equals(audit.getReferenceId()) &&
+                   Status.FAILURE.equals(audit.getOutcome().getStatus());
+        }));
     }
 
     @Test
@@ -164,12 +203,20 @@ public class CertificateCredentialServiceTest {
                 .thenReturn(Flowable.fromIterable(existingCredentials));
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name")
+                .enrollCertificate(DOMAIN, USER_ID, VALID_PEM_CERT, "device-name", principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
         testObserver.assertError(CertificateLimitExceededException.class);
         testObserver.assertNotComplete();
+        // Verify audit logging was called even on error
+        verify(auditService, times(1)).report(argThat(builder -> {
+            Audit audit = builder.build(objectMapper);
+            return EventType.CREDENTIAL_CREATED.equals(audit.getType()) &&
+                   ReferenceType.DOMAIN.equals(audit.getReferenceType()) &&
+                   DOMAIN_ID.equals(audit.getReferenceId()) &&
+                   Status.FAILURE.equals(audit.getOutcome().getStatus());
+        }));
     }
 
     @Test
@@ -197,6 +244,8 @@ public class CertificateCredentialServiceTest {
         CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
                 DOMAIN, USER_ID, VALID_PEM_CERT);
         credential.setId("credential-id");
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId(DOMAIN_ID);
 
         when(certificateCredentialRepository.findById("credential-id"))
                 .thenReturn(Maybe.just(credential));
@@ -209,6 +258,43 @@ public class CertificateCredentialServiceTest {
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(cred -> cred.getId().equals("credential-id"));
+    }
+
+    @Test
+    public void shouldFindById_wrongDomain() {
+        // Test domain tenancy check - credential belongs to different domain
+        CertificateCredential credential = CertificateCredentialTestFixtures.buildCertificateCredential(
+                DOMAIN, USER_ID, VALID_PEM_CERT);
+        credential.setId("credential-id");
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId("different-domain-id"); // Different domain
+
+        when(certificateCredentialRepository.findById("credential-id"))
+                .thenReturn(Maybe.just(credential));
+
+        TestObserver<CertificateCredential> testObserver = certificateCredentialService
+                .findById(DOMAIN, "credential-id")
+                .test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues(); // Should return empty due to domain tenancy check
+        testObserver.assertNoErrors();
+    }
+
+    @Test
+    public void shouldFindById_notFound() {
+        when(certificateCredentialRepository.findById("credential-id"))
+                .thenReturn(Maybe.empty());
+
+        TestObserver<CertificateCredential> testObserver = certificateCredentialService
+                .findById(DOMAIN, "credential-id")
+                .test();
+
+        testObserver.awaitDone(10, TimeUnit.SECONDS);
+        testObserver.assertComplete();
+        testObserver.assertNoValues();
+        testObserver.assertNoErrors();
     }
 
     @Test
@@ -238,7 +324,7 @@ public class CertificateCredentialServiceTest {
                 .thenReturn(Maybe.just(credential));
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .deleteByDomainAndUserAndId(DOMAIN, USER_ID, "credential-id")
+                .deleteByDomainAndUserAndId(DOMAIN, USER_ID, "credential-id", principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -249,6 +335,13 @@ public class CertificateCredentialServiceTest {
 
         verify(certificateCredentialRepository, times(1)).deleteByDomainAndUserAndId(
                 eq(ReferenceType.DOMAIN), eq(DOMAIN.getId()), eq(USER_ID), eq("credential-id"));
+        verify(auditService, times(1)).report(argThat(builder -> {
+            Audit audit = builder.build(objectMapper);
+            return EventType.CREDENTIAL_DELETED.equals(audit.getType()) &&
+                   ReferenceType.DOMAIN.equals(audit.getReferenceType()) &&
+                   DOMAIN_ID.equals(audit.getReferenceId()) &&
+                   Status.SUCCESS.equals(audit.getOutcome().getStatus());
+        }));
     }
 
     @Test
@@ -259,7 +352,7 @@ public class CertificateCredentialServiceTest {
                 .thenReturn(Maybe.empty());
 
         TestObserver<CertificateCredential> testObserver = certificateCredentialService
-                .deleteByDomainAndUserAndId(DOMAIN, USER_ID, "credential-id")
+                .deleteByDomainAndUserAndId(DOMAIN, USER_ID, "credential-id", principal)
                 .test();
 
         testObserver.awaitDone(10, TimeUnit.SECONDS);
@@ -269,6 +362,8 @@ public class CertificateCredentialServiceTest {
 
         verify(certificateCredentialRepository, times(1)).deleteByDomainAndUserAndId(
                 eq(ReferenceType.DOMAIN), eq(DOMAIN.getId()), eq(USER_ID), eq("credential-id"));
+        // Verify audit logging is NOT called when credential not found (client error)
+        verify(auditService, never()).report(any(AuditBuilder.class));
     }
 
     @Test

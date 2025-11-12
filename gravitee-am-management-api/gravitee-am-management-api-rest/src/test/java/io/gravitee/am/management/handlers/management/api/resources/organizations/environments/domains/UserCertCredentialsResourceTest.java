@@ -15,10 +15,8 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
 import io.gravitee.am.management.handlers.management.api.schemas.NewCertificateCredential;
-import io.gravitee.am.management.handlers.management.api.utils.AuditTestUtils;
 import io.gravitee.am.management.handlers.management.api.utils.CertificateCredentialTestFixtures;
 import io.gravitee.am.management.handlers.management.api.utils.CertificateTestUtils;
 import io.gravitee.am.management.handlers.management.api.utils.DomainTestFixtures;
@@ -28,7 +26,6 @@ import io.gravitee.am.service.exception.CertificateExpiredException;
 import io.gravitee.am.service.exception.CertificateLimitExceededException;
 import io.gravitee.am.service.exception.DuplicateCertificateException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -63,7 +60,7 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
     
     @BeforeEach
     void setUp() {
-        clearInvocations(auditService, domainService, certificateCredentialService);
+        clearInvocations(domainService, certificateCredentialService);
     }
 
     @Test
@@ -79,6 +76,8 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
         final Response response = buildCertCredentialsPath().request().get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        // Verify service was called
+        verify(certificateCredentialService, times(1)).findByUserId(any(Domain.class), eq(USER_ID));
     }
 
     @Test
@@ -110,14 +109,16 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.just(mockCredential)).when(certificateCredentialService).enrollCertificate(
-                any(Domain.class), eq(USER_ID), eq(VALID_PEM_CERT), eq(DEVICE_NAME));
+                any(Domain.class), eq(USER_ID), eq(VALID_PEM_CERT), eq(DEVICE_NAME), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.CREATED_201, response.getStatus());
         assertNotNull(response.getLocation());
-        verify(auditService, times(1)).report(AuditTestUtils.auditBuilderMatcher(EventType.CREDENTIAL_CREATED));
+        // Verify service was called with principal parameter (audit logging is tested in service layer tests)
+        verify(certificateCredentialService, times(1)).enrollCertificate(
+                any(Domain.class), eq(USER_ID), eq(VALID_PEM_CERT), eq(DEVICE_NAME), any());
     }
 
     @Test
@@ -130,7 +131,8 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
-        verify(auditService, never()).report(any(AuditBuilder.class));
+        // Verify service was not called (domain not found before service call)
+        verify(certificateCredentialService, never()).enrollCertificate(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -140,13 +142,14 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new CertificateExpiredException("Certificate has expired")))
-                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any());
+                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any(), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-        verify(auditService, times(1)).report(AuditTestUtils.auditBuilderMatcher(EventType.CREDENTIAL_CREATED));
+        // Verify service was called (audit logging is tested in service layer tests)
+        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -156,12 +159,14 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new DuplicateCertificateException("Certificate with this thumbprint already exists")))
-                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any());
+                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any(), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.CONFLICT_409, response.getStatus());
+        // Verify service was called (audit logging is tested in service layer tests)
+        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -171,12 +176,14 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new CertificateLimitExceededException("Maximum number of certificates exceeded")))
-                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any());
+                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any(), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
+        // Verify service was called (audit logging is tested in service layer tests)
+        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -187,7 +194,8 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.BAD_REQUEST_400, response.getStatus());
-        verify(auditService, never()).report(any(AuditBuilder.class));
+        // Verify service was not called (validation failed before service call)
+        verify(certificateCredentialService, never()).enrollCertificate(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -197,13 +205,14 @@ class UserCertCredentialsResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Single.error(new TechnicalManagementException("Technical error occurred")))
-                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any());
+                .when(certificateCredentialService).enrollCertificate(any(Domain.class), eq(USER_ID), anyString(), any(), any());
 
         final Response response = buildCertCredentialsPath().request()
                 .post(Entity.entity(newCredential, MediaType.APPLICATION_JSON_TYPE));
 
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
-        verify(auditService, times(1)).report(AuditTestUtils.auditBuilderMatcher(EventType.CREDENTIAL_CREATED));
+        // Verify service was called (audit logging is tested in service layer tests)
+        verify(certificateCredentialService, times(1)).enrollCertificate(any(), any(), any(), any(), any());
     }
 
     // Helper methods

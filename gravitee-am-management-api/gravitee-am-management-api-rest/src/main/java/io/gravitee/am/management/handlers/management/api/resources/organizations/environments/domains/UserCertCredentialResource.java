@@ -15,20 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.CertificateCredential;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.exception.CredentialNotFoundException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.management.CertificateCredentialAuditBuilder;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,9 +50,6 @@ public class UserCertCredentialResource extends AbstractResource {
 
     @Autowired
     private CertificateCredentialService certificateCredentialService;
-
-    @Autowired
-    private AuditService auditService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -112,22 +104,8 @@ public class UserCertCredentialResource extends AbstractResource {
         checkAnyPermission(organizationId, environmentId, domainId, Permission.DOMAIN_USER, Acl.UPDATE)
                 .andThen(domainService.findById(domainId)
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
-                        .flatMapCompletable(domain -> certificateCredentialService.deleteByDomainAndUserAndId(domain, user, credential)
+                        .flatMapCompletable(domain -> certificateCredentialService.deleteByDomainAndUserAndId(domain, user, credential, authenticatedUser)
                                 .switchIfEmpty(Maybe.error(new CredentialNotFoundException(credential)))
-                                .doOnSuccess(certificateCredential -> auditService.report(AuditBuilder.builder(CertificateCredentialAuditBuilder.class)
-                                        .principal(authenticatedUser)
-                                        .type(EventType.CREDENTIAL_DELETED)
-                                        .certificateCredential(certificateCredential)))
-                                .doOnError(throwable -> {
-                                    // Only log audit for technical errors, not for client errors like CredentialNotFoundException or DomainNotFoundException
-                                    if (!(throwable instanceof CredentialNotFoundException) && !(throwable instanceof DomainNotFoundException)) {
-                                        auditService.report(AuditBuilder.builder(CertificateCredentialAuditBuilder.class)
-                                                .principal(authenticatedUser)
-                                                .type(EventType.CREDENTIAL_DELETED)
-                                                .reference(Reference.domain(domain.getId()))
-                                                .throwable(throwable));
-                                    }
-                                })
                                 .ignoreElement()))
                 .subscribe(() -> response.resume(Response.noContent().build()), response::resume);
     }

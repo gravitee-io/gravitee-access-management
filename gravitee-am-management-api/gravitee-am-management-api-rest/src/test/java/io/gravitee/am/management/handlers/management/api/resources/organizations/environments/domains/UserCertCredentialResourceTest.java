@@ -15,26 +15,20 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.management.handlers.management.api.JerseySpringTest;
-import io.gravitee.am.management.handlers.management.api.utils.AuditTestUtils;
 import io.gravitee.am.management.handlers.management.api.utils.CertificateCredentialTestFixtures;
 import io.gravitee.am.management.handlers.management.api.utils.DomainTestFixtures;
 import io.gravitee.am.model.CertificateCredential;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.service.exception.TechnicalManagementException;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.management.CertificateCredentialAuditBuilder;
 import io.gravitee.common.http.HttpStatusCode;
 import io.reactivex.rxjava3.core.Maybe;
 import jakarta.ws.rs.core.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doReturn;
@@ -54,7 +48,7 @@ class UserCertCredentialResourceTest extends JerseySpringTest {
     
     @BeforeEach
     void setUp() {
-        clearInvocations(auditService, domainService, certificateCredentialService);
+        clearInvocations(domainService, certificateCredentialService);
     }
 
     @Test
@@ -70,6 +64,8 @@ class UserCertCredentialResourceTest extends JerseySpringTest {
         final Response response = buildCertCredentialPath().request().get();
 
         assertEquals(HttpStatusCode.OK_200, response.getStatus());
+        // Verify service was called
+        verify(certificateCredentialService, times(1)).findById(any(Domain.class), eq(CREDENTIAL_ID));
     }
 
     @Test
@@ -111,14 +107,14 @@ class UserCertCredentialResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Maybe.just(mockCredential)).when(certificateCredentialService)
-                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID));
+                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID), any());
 
         final Response response = buildCertCredentialPath().request().delete();
 
         assertEquals(HttpStatusCode.NO_CONTENT_204, response.getStatus());
+        // Verify service was called with principal parameter (audit logging is tested in service layer tests)
         verify(certificateCredentialService, times(1))
-                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID));
-        verify(auditService, times(1)).report(AuditTestUtils.auditBuilderMatcher(EventType.CREDENTIAL_DELETED));
+                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID), any());
     }
 
     @Test
@@ -136,14 +132,14 @@ class UserCertCredentialResourceTest extends JerseySpringTest {
 
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Maybe.empty()).when(certificateCredentialService)
-                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID));
+                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID), any());
 
         final Response response = buildCertCredentialPath().request().delete();
 
         assertEquals(HttpStatusCode.NOT_FOUND_404, response.getStatus());
+        // Verify service was called (audit logging is tested in service layer tests)
         verify(certificateCredentialService, times(1))
-                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID));
-        verify(auditService, never()).report(any(AuditBuilder.class));
+                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID), any());
     }
 
     @Test
@@ -153,7 +149,8 @@ class UserCertCredentialResourceTest extends JerseySpringTest {
         final Response response = buildCertCredentialPath().request().delete();
 
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
-        verify(auditService, never()).report(any(AuditBuilder.class));
+        // Verify service was not called (domain not found before service call)
+        verify(certificateCredentialService, never()).deleteByDomainAndUserAndId(any(), any(), any(), any());
     }
 
     @Test
@@ -166,20 +163,14 @@ class UserCertCredentialResourceTest extends JerseySpringTest {
         doReturn(Maybe.just(mockDomain)).when(domainService).findById(DOMAIN_ID);
         doReturn(Maybe.error(new TechnicalManagementException("Delete failed")))
                 .when(certificateCredentialService)
-                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID));
+                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID), any());
 
         final Response response = buildCertCredentialPath().request().delete();
 
         assertEquals(HttpStatusCode.INTERNAL_SERVER_ERROR_500, response.getStatus());
+        // Verify service was called (audit logging is tested in service layer tests)
         verify(certificateCredentialService, times(1))
-                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID));
-        verify(auditService, times(1)).report(argThat(builder -> {
-            if (builder instanceof CertificateCredentialAuditBuilder) {
-                String eventType = (String) ReflectionTestUtils.getField(builder, "type");
-                return EventType.CREDENTIAL_DELETED.equals(eventType);
-            }
-            return false;
-        }));
+                .deleteByDomainAndUserAndId(any(Domain.class), eq(USER_ID), eq(CREDENTIAL_ID), any());
     }
 
     // Helper methods

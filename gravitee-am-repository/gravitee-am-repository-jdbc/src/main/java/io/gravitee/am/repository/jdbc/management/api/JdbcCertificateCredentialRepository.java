@@ -91,11 +91,9 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
         return findById(item.getId())
                 .toSingle()
                 .flatMap(existing -> {
-                    // Preserve createdAt from existing record if not set in update
                     if (item.getCreatedAt() == null) {
                         item.setCreatedAt(existing.getCreatedAt());
                     }
-                    // Set updatedAt timestamp
                     item.setUpdatedAt(new Date());
                     return certificateCredentialRepository.save(toJdbcEntity(item))
                             .map(this::toEntity);
@@ -171,13 +169,11 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
     @Override
     public Maybe<CertificateCredential> deleteByDomainAndUserAndId(ReferenceType referenceType, String referenceId, String userId, String credentialId) {
         LOGGER.debug("deleteByDomainAndUserAndId({},{},{},{})", referenceType, referenceId, userId, credentialId);
-        // Fetch the credential first to return it after deletion
         return certificateCredentialRepository.findByReferenceTypeAndReferenceIdAndUserIdAndId(
                         referenceType.name(), referenceId, userId, credentialId)
                 .map(this::toEntity)
                 .flatMap(credential -> {
-                    // Delete atomically with all conditions in WHERE clause
-                    // This ensures we only delete if all conditions match (prevents race conditions)
+                    // Atomic delete with all conditions in WHERE clause to prevent race conditions
                     return monoToSingle(getTemplate().delete(JdbcCertificateCredential.class)
                             .matching(Query.query(
                                     where("reference_type").is(referenceType.name())
@@ -185,9 +181,7 @@ public class JdbcCertificateCredentialRepository extends AbstractJdbcRepository 
                                             .and(where("user_id").is(userId))
                                             .and(where("id").is(credentialId))))
                             .all())
-                            .flatMapMaybe(rowsDeleted -> rowsDeleted == 0
-                                    ? Maybe.empty()  // Credential was already deleted (race condition)
-                                    : Maybe.just(credential));
+                            .flatMapMaybe(rowsDeleted -> rowsDeleted == 0 ? Maybe.empty() : Maybe.just(credential));
                 })
                 .doOnError(error -> LOGGER.error("Unable to delete certificate credential {} for user {} in domain {}",
                         credentialId, userId, referenceId, error))

@@ -28,6 +28,13 @@ import java.util.Map;
 /**
  * Certificate Credential record for Certificate Based Authentication (CBA)
  *
+ * <p>This model is designed for X.509 certificates in PEM format. All certificate-specific
+ * fields (thumbprint, SubjectDN, serial number, etc.) are X.509-specific.</p>
+ *
+ * <p>If support for other certificate formats (e.g., DER, PKCS12) is needed in the future,
+ * a {@code certificateFormat} field should be added, and format-specific fields should be
+ * stored in the {@code metadata} map or as additional nullable fields.</p>
+ *
  * @author GraviteeSource Team
  */
 @Getter
@@ -37,7 +44,7 @@ import java.util.Map;
 @Builder
 public class CertificateCredential {
 
-    // Common fields
+    // Fields shared with other credential types (e.g., WebAuthn credentials)
     private String id;
     private ReferenceType referenceType;
     private String referenceId;
@@ -47,8 +54,8 @@ public class CertificateCredential {
     private String userAgent;
     private String deviceName;
 
-    // Certificate-specific fields (explicit for querying/indexing)
-    private String certificatePem; // PEM public key format (required)
+    // X.509 certificate-specific fields (PEM format)
+    private String certificatePem; // PEM-encoded certificate (required)
     private String certificateThumbprint; // SHA-256 thumbprint (required)
     private String certificateSubjectDN; // Subject Distinguished Name (required)
     private String certificateSerialNumber; // Certificate serial number (required)

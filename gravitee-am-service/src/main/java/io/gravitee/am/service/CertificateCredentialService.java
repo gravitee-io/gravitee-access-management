@@ -15,6 +15,7 @@
  */
 package io.gravitee.am.service;
 
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.CertificateCredential;
 import io.gravitee.am.model.Domain;
 import io.reactivex.rxjava3.core.Completable;
@@ -34,9 +35,10 @@ public interface CertificateCredentialService {
      * @param userId the user ID
      * @param certificatePem the PEM-encoded certificate
      * @param deviceName optional device name
+     * @param principal the authenticated user performing the action
      * @return the enrolled certificate credential
      */
-    Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, String deviceName);
+    Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, String deviceName, User principal);
 
     /**
      * Find all certificate credentials for a user.
@@ -73,9 +75,10 @@ public interface CertificateCredentialService {
      * @param domain the domain
      * @param userId the user ID
      * @param credentialId the credential ID
+     * @param principal the authenticated user performing the action
      * @return maybe containing the deleted credential if found and belongs to the user, empty otherwise
      */
-    Maybe<CertificateCredential> deleteByDomainAndUserAndId(Domain domain, String userId, String credentialId);
+    Maybe<CertificateCredential> deleteByDomainAndUserAndId(Domain domain, String userId, String credentialId, User principal);
 
     /**
      * Delete all certificate credentials for a user.

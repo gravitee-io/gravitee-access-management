@@ -47,9 +47,19 @@ export interface CertificateCredential {
   [key: string]: any;
 }
 
-export interface CombinedCredential extends Partial<WebAuthnCredential>, Partial<CertificateCredential> {
-  credentialType: 'webauthn' | 'certificate';
-}
+export const CREDENTIAL_TYPE = {
+  WEBAUTHN: 'webauthn',
+  CERTIFICATE: 'certificate',
+} as const;
+
+export const CREDENTIAL_DISPLAY_NAME = {
+  WEBAUTHN: 'WebAuthn',
+  CERTIFICATE: 'Certificate',
+} as const;
+
+export type Credential =
+  | (WebAuthnCredential & { credentialType: typeof CREDENTIAL_TYPE.WEBAUTHN })
+  | (CertificateCredential & { credentialType: typeof CREDENTIAL_TYPE.CERTIFICATE });
 
 @Component({
   selector: 'app-user-credentials',
@@ -60,11 +70,13 @@ export interface CombinedCredential extends Partial<WebAuthnCredential>, Partial
 export class UserCredentialsComponent implements OnInit {
   private domainId: string;
   private user: any;
-  webauthnCredentials: WebAuthnCredential[] = [];
-  certificateCredentials: CertificateCredential[] = [];
-  allCredentials: CombinedCredential[] = [];
+  allCredentials: Credential[] = [];
   canRevoke: boolean;
   canEnroll: boolean;
+
+  // Expose constants to template
+  readonly CREDENTIAL_TYPE = CREDENTIAL_TYPE;
+  readonly CREDENTIAL_DISPLAY_NAME = CREDENTIAL_DISPLAY_NAME;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -81,11 +93,6 @@ export class UserCredentialsComponent implements OnInit {
     this.canRevoke = this.authService.hasPermissions(['domain_user_update']);
     this.canEnroll = this.authService.hasPermissions(['domain_user_update']);
 
-    // Load credentials from route data (for backward compatibility)
-    const routeCredentials = this.route.snapshot.data['credentials'] || [];
-    this.webauthnCredentials = routeCredentials;
-
-    // Load all credentials (WebAuthn and Certificate)
     this.loadCredentials();
   }
 
@@ -93,17 +100,17 @@ export class UserCredentialsComponent implements OnInit {
     return this.allCredentials.length === 0;
   }
 
-  remove(event, credential: CombinedCredential) {
+  remove(event, credential: Credential) {
     event.preventDefault();
-    const isCertificate = credential.credentialType === 'certificate';
-    const credentialType = isCertificate ? 'Certificate' : 'WebAuthn';
+    const credentialType =
+      credential.credentialType === CREDENTIAL_TYPE.CERTIFICATE ? CREDENTIAL_DISPLAY_NAME.CERTIFICATE : CREDENTIAL_DISPLAY_NAME.WEBAUTHN;
 
     this.dialogService
       .confirm(`Remove ${credentialType} credential`, 'Are you sure you want to remove this credential ?')
       .pipe(
         filter((res) => res),
         switchMap(() => {
-          if (isCertificate) {
+          if (credential.credentialType === CREDENTIAL_TYPE.CERTIFICATE) {
             return this.userService.removeCertificateCredential(this.domainId, this.user.id, credential.id);
           } else {
             return this.userService.removeCredential(this.domainId, this.user.id, credential.id);
@@ -123,8 +130,7 @@ export class UserCredentialsComponent implements OnInit {
         catchError((error: unknown) => {
           this.snackbarService.open('Failed to load WebAuthn credentials');
           console.error('Error loading WebAuthn credentials:', error);
-          // Fallback to route data if API call fails
-          return of(this.route.snapshot.data['credentials'] || []);
+          return of([]);
         }),
       ),
       certificates: this.userService.certificateCredentials(this.domainId, this.user.id).pipe(
@@ -136,19 +142,12 @@ export class UserCredentialsComponent implements OnInit {
       ),
     }).subscribe({
       next: ({ webauthn, certificates }) => {
-        this.webauthnCredentials = webauthn || [];
-        this.certificateCredentials = certificates || [];
-        this.combineCredentials();
+        this.allCredentials = [
+          ...(webauthn || []).map((c): Credential => ({ ...c, credentialType: CREDENTIAL_TYPE.WEBAUTHN })),
+          ...(certificates || []).map((c): Credential => ({ ...c, credentialType: CREDENTIAL_TYPE.CERTIFICATE })),
+        ];
       },
     });
-  }
-
-  combineCredentials() {
-    // Combine and mark credential types
-    this.allCredentials = [
-      ...this.webauthnCredentials.map((c): CombinedCredential => ({ ...c, credentialType: 'webauthn' })),
-      ...this.certificateCredentials.map((c): CombinedCredential => ({ ...c, credentialType: 'certificate' })),
-    ];
   }
 
   openCertificateEnrollmentDialog() {

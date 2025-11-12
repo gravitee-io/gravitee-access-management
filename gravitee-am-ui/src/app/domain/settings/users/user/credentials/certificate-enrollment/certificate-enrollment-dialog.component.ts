@@ -82,8 +82,7 @@ export class CertificateEnrollmentDialogComponent implements OnInit, OnDestroy {
   }
 
   onCertificateInput(): void {
-    // Mark the control as touched when user types/pastes
-    // Validation will be triggered by valueChanges subscription
+    // Mark control as touched; validation triggered by valueChanges subscription
     this.enrollmentForm.get('certificatePem')?.markAsTouched();
   }
 

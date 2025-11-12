@@ -15,6 +15,8 @@
  */
 package io.gravitee.am.service.exception;
 
+import io.gravitee.common.http.HttpStatusCode;
+
 /**
  * @author GraviteeSource Team
  */
@@ -26,8 +28,7 @@ public class DuplicateCertificateException extends AbstractManagementException {
 
     @Override
     public int getHttpStatusCode() {
-        // HTTP 409 Conflict
-        return 409;
+        return HttpStatusCode.CONFLICT_409;
     }
 }
 

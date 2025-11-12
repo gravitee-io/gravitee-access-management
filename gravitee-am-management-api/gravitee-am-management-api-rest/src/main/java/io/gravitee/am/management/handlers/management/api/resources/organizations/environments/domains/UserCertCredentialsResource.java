@@ -15,20 +15,15 @@
  */
 package io.gravitee.am.management.handlers.management.api.resources.organizations.environments.domains;
 
-import io.gravitee.am.common.audit.EventType;
 import io.gravitee.am.management.handlers.management.api.resources.AbstractResource;
 import io.gravitee.am.management.handlers.management.api.schemas.NewCertificateCredential;
-import io.gravitee.am.service.AuditService;
 import io.gravitee.am.management.service.DomainService;
 import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.Acl;
 import io.gravitee.am.model.CertificateCredential;
-import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.permissions.Permission;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.exception.DomainNotFoundException;
-import io.gravitee.am.service.reporter.builder.AuditBuilder;
-import io.gravitee.am.service.reporter.builder.management.CertificateCredentialAuditBuilder;
 import io.gravitee.common.http.MediaType;
 import io.reactivex.rxjava3.core.Maybe;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,9 +63,6 @@ public class UserCertCredentialsResource extends AbstractResource {
 
     @Autowired
     private CertificateCredentialService certificateCredentialService;
-
-    @Autowired
-    private AuditService auditService;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -136,16 +128,8 @@ public class UserCertCredentialsResource extends AbstractResource {
                                 domain,
                                 user,
                                 newCertificateCredential.getCertificatePem(),
-                                newCertificateCredential.getDeviceName())
-                                .doOnSuccess(credential -> auditService.report(AuditBuilder.builder(CertificateCredentialAuditBuilder.class)
-                                        .principal(authenticatedUser)
-                                        .type(EventType.CREDENTIAL_CREATED)
-                                        .certificateCredential(credential)))
-                                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateCredentialAuditBuilder.class)
-                                        .principal(authenticatedUser)
-                                        .type(EventType.CREDENTIAL_CREATED)
-                                        .reference(Reference.domain(domainId))
-                                        .throwable(throwable))))
+                                newCertificateCredential.getDeviceName(),
+                                authenticatedUser))
                         .map(credential -> Response
                                 .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domainId + "/users/" + user + "/cert-credentials/" + credential.getId()))
                                 .entity(credential)

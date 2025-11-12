@@ -16,15 +16,23 @@
 package io.gravitee.am.service.impl;
 
 import io.gravitee.am.certificate.api.X509CertUtils;
+import io.gravitee.am.common.audit.EventType;
+import io.gravitee.am.identityprovider.api.User;
 import io.gravitee.am.model.CertificateCredential;
-import io.gravitee.am.repository.management.api.CertificateCredentialRepository;
 import io.gravitee.am.model.Domain;
+import io.gravitee.am.model.Reference;
 import io.gravitee.am.model.ReferenceType;
+import io.gravitee.am.repository.management.api.CertificateCredentialRepository;
+import io.gravitee.am.service.AuditService;
 import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.exception.CertificateExpiredException;
 import io.gravitee.am.service.exception.CertificateLimitExceededException;
+import io.gravitee.am.service.exception.CredentialNotFoundException;
+import io.gravitee.am.service.exception.DomainNotFoundException;
 import io.gravitee.am.service.exception.DuplicateCertificateException;
 import io.gravitee.am.service.exception.TechnicalManagementException;
+import io.gravitee.am.service.reporter.builder.AuditBuilder;
+import io.gravitee.am.service.reporter.builder.management.CertificateCredentialAuditBuilder;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -54,99 +62,173 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     @Autowired
     private CertificateCredentialRepository certificateCredentialRepository;
 
+    @Autowired
+    private AuditService auditService;
+
     @Value("${users.certificate.maxCertificatesPerUser:20}")
     private int maxCertificatesPerUser;
 
     @Override
-    public Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, String deviceName) {
+    public Single<CertificateCredential> enrollCertificate(Domain domain, String userId, String certificatePem, String deviceName, User principal) {
         log.debug("Enroll certificate for domain {} and user {}", domain.getId(), userId);
         try {
-            // 1. Parse PEM certificate
-            X509Certificate cert = X509CertUtils.parseWithException(certificatePem);
-            if (cert == null) {
-                log.error("Failed to parse certificate for domain {} and user {}", domain.getId(), userId);
-                return Single.error(new TechnicalManagementException("Failed to parse certificate"));
-            }
-
-            // 2. Extract certificate fields
-            String thumbprint = X509CertUtils.getThumbprint(cert, "SHA-256");
-            String subjectDN = cert.getSubjectX500Principal().getName();
-            String serialNumber = cert.getSerialNumber().toString();
-            Date expiresAt = cert.getNotAfter();
-            log.debug("Certificate parsed successfully - Subject DN: {}, Serial: {}, Thumbprint: {}", subjectDN, serialNumber, thumbprint);
-
-            // 3. Validate certificate
-            // Check if expired
-            if (expiresAt.before(new Date())) {
-                log.warn("Certificate enrollment rejected - certificate expired for domain {} and user {}", domain.getId(), userId);
-                return Single.error(new CertificateExpiredException("Certificate has expired"));
-            }
-
-            // Check if duplicate (by thumbprint)
-            return certificateCredentialRepository
-                    .findByThumbprint(ReferenceType.DOMAIN, domain.getId(), thumbprint)
-                    .flatMapSingle(existing -> {
-                        log.warn("Certificate enrollment rejected - duplicate thumbprint for domain {} and user {} (thumbprint: {})", 
-                                domain.getId(), userId, thumbprint);
-                        return Single.<CertificateCredential>error(
-                                new DuplicateCertificateException("Certificate with this thumbprint already exists"));
-                    })
-                    .switchIfEmpty(
-                            // 4. Check certificate limit
-                            // Note: There is a small TOCTOU race condition window where concurrent enrollments
-                            // could exceed the limit by 1. This is acceptable for this use case and consistent
-                            // with similar patterns in the codebase (e.g., OrganizationUserServiceImpl.generateAccountAccessToken).
-                            certificateCredentialRepository
-                                    .findByUserId(ReferenceType.DOMAIN, domain.getId(), userId)
-                                    .count()
-                                    .flatMap(count -> {
-                                        log.debug("Current certificate count for user {}: {}, limit: {}", userId, count, maxCertificatesPerUser);
-                                        if (count >= maxCertificatesPerUser) {
-                                            log.warn("Certificate enrollment rejected - limit exceeded for domain {} and user {} (count: {}, limit: {})", 
-                                                    domain.getId(), userId, count, maxCertificatesPerUser);
-                                            return Single.error(new CertificateLimitExceededException(
-                                                    String.format("Maximum number of certificates (%d) exceeded for user", maxCertificatesPerUser)));
-                                        }
-
-                                        // 5. Create CertificateCredential
-                                        CertificateCredential credential = new CertificateCredential();
-                                        credential.setReferenceType(ReferenceType.DOMAIN);
-                                        credential.setReferenceId(domain.getId());
-                                        credential.setUserId(userId);
-                                        credential.setCertificatePem(certificatePem);
-                                        credential.setCertificateThumbprint(thumbprint);
-                                        credential.setCertificateSubjectDN(subjectDN);
-                                        credential.setCertificateSerialNumber(serialNumber);
-                                        credential.setCertificateExpiresAt(expiresAt);
-                                        credential.setDeviceName(deviceName);
-
-                                        // Set metadata (optional fields)
-                                        Map<String, Object> metadata = new HashMap<>();
-                                        metadata.put("issuerDN", cert.getIssuerX500Principal().getName());
-                                        credential.setMetadata(metadata);
-
-                                        // Set timestamps
-                                        Date now = new Date();
-                                        credential.setCreatedAt(now);
-                                        credential.setUpdatedAt(now);
-
-                                        // 6. Store in repository
-                                        log.debug("Creating certificate credential for domain {} and user {} with thumbprint {}", 
-                                                domain.getId(), userId, thumbprint);
-                                        return certificateCredentialRepository.create(credential)
-                                                .doOnSuccess(created -> log.debug("Certificate credential created successfully with ID {} for domain {} and user {}", 
-                                                        created.getId(), domain.getId(), userId));
-                                    })
-                    );
-        } catch (CertificateEncodingException e) {
+            CertificateFields certFields = parseCertificate(certificatePem, domain.getId(), userId);
+            
+            return validateCertificateNotExpired(certFields.expiresAt, domain, userId)
+                    .andThen(Single.defer(() -> checkDuplicateCertificate(certFields.thumbprint, domain.getId())
+                            .switchIfEmpty(
+                                    checkCertificateLimit(domain.getId(), userId)
+                                            .flatMap(count -> createAndStoreCredential(
+                                                    domain, userId, certificatePem, deviceName, certFields))
+                                            .toMaybe()
+                            )
+                            .toSingle()))
+                    .doOnSuccess(credential -> reportAuditSuccess(principal, credential))
+                    .doOnError(throwable -> reportAuditError(principal, domain.getId(), throwable));
+        } catch (CertificateEncodingException | NoSuchAlgorithmException e) {
             log.error("Failed to calculate certificate thumbprint", e);
             return Single.error(new TechnicalManagementException("Failed to calculate certificate thumbprint: " + e.getMessage()));
         } catch (CertificateException e) {
             log.error("Failed to parse certificate", e);
             return Single.error(new TechnicalManagementException("Failed to parse certificate: " + e.getMessage()));
-        } catch (NoSuchAlgorithmException e) {
-            log.error("Failed to calculate certificate thumbprint", e);
-            return Single.error(new TechnicalManagementException("Failed to calculate certificate thumbprint: " + e.getMessage()));
+        }
+    }
+
+    private CertificateFields parseCertificate(String certificatePem, String domainId, String userId) throws CertificateException, NoSuchAlgorithmException {
+        X509Certificate cert = X509CertUtils.parseWithException(certificatePem);
+        if (cert == null) {
+            log.error("Failed to parse certificate for domain {} and user {}", domainId, userId);
+            throw new CertificateException("Failed to parse certificate");
+        }
+
+        String thumbprint = X509CertUtils.getThumbprint(cert, "SHA-256");
+        String subjectDN = cert.getSubjectX500Principal().getName();
+        String serialNumber = cert.getSerialNumber().toString();
+        Date expiresAt = cert.getNotAfter();
+        String issuerDN = cert.getIssuerX500Principal().getName();
+        
+        log.debug("Certificate parsed successfully - Subject DN: {}, Serial: {}, Thumbprint: {}", subjectDN, serialNumber, thumbprint);
+        
+        return new CertificateFields(thumbprint, subjectDN, serialNumber, expiresAt, issuerDN);
+    }
+
+    /**
+     * Validates that the certificate is not expired.
+     * Returns a Completable that completes if valid, or errors if expired.
+     */
+    private Completable validateCertificateNotExpired(Date expiresAt, Domain domain, String userId) {
+        if (expiresAt.before(new Date())) {
+            log.warn("Certificate enrollment rejected - certificate expired for domain {} and user {}", domain.getId(), userId);
+            return Completable.error(new CertificateExpiredException("Certificate has expired"));
+        }
+        return Completable.complete();
+    }
+
+    /**
+     * Checks if a certificate with the given thumbprint already exists.
+     * Returns Maybe.empty() if no duplicate (chain continues), or Maybe.error() if duplicate found.
+     */
+    private Maybe<CertificateCredential> checkDuplicateCertificate(String thumbprint, String domainId) {
+        return certificateCredentialRepository
+                .findByThumbprint(ReferenceType.DOMAIN, domainId, thumbprint)
+                .flatMapSingle(existing -> {
+                    log.warn("Certificate enrollment rejected - duplicate thumbprint for domain {} (thumbprint: {})", 
+                            domainId, thumbprint);
+                    return Single.<CertificateCredential>error(
+                            new DuplicateCertificateException("Certificate with this thumbprint already exists"));
+                });
+    }
+
+    /**
+     * Checks if the user has reached the certificate limit.
+     * Returns a Single with the current count if within limit, error otherwise.
+     * <p>
+     * Note: There is a small TOCTOU race condition window where concurrent enrollments
+     * could exceed the limit by 1. This is acceptable for this use case and consistent
+     * with similar patterns in the codebase (e.g., OrganizationUserServiceImpl.generateAccountAccessToken).
+     */
+    private Single<Long> checkCertificateLimit(String domainId, String userId) {
+        return certificateCredentialRepository
+                .findByUserId(ReferenceType.DOMAIN, domainId, userId)
+                .count()
+                .flatMap(count -> {
+                    log.debug("Current certificate count for user {}: {}, limit: {}", userId, count, maxCertificatesPerUser);
+                    if (count >= maxCertificatesPerUser) {
+                        log.warn("Certificate enrollment rejected - limit exceeded for domain {} and user {} (count: {}, limit: {})", 
+                                domainId, userId, count, maxCertificatesPerUser);
+                        return Single.error(new CertificateLimitExceededException(
+                                String.format("Maximum number of certificates (%d) exceeded for user", maxCertificatesPerUser)));
+                    }
+                    return Single.just(count);
+                });
+    }
+
+    private Single<CertificateCredential> createAndStoreCredential(
+            Domain domain, String userId, String certificatePem, String deviceName, CertificateFields certFields) {
+        CertificateCredential credential = buildCertificateCredential(
+                domain, userId, certificatePem, deviceName, certFields);
+        
+        log.debug("Creating certificate credential for domain {} and user {} with thumbprint {}", 
+                domain.getId(), userId, certFields.thumbprint);
+        
+        return certificateCredentialRepository.create(credential)
+                .doOnSuccess(created -> log.debug("Certificate credential created successfully with ID {} for domain {} and user {}", 
+                        created.getId(), domain.getId(), userId));
+    }
+
+    private CertificateCredential buildCertificateCredential(
+            Domain domain, String userId, String certificatePem, String deviceName, CertificateFields certFields) {
+        CertificateCredential credential = new CertificateCredential();
+        credential.setReferenceType(ReferenceType.DOMAIN);
+        credential.setReferenceId(domain.getId());
+        credential.setUserId(userId);
+        credential.setCertificatePem(certificatePem);
+        credential.setCertificateThumbprint(certFields.thumbprint);
+        credential.setCertificateSubjectDN(certFields.subjectDN);
+        credential.setCertificateSerialNumber(certFields.serialNumber);
+        credential.setCertificateExpiresAt(certFields.expiresAt);
+        credential.setDeviceName(deviceName);
+
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("issuerDN", certFields.issuerDN);
+        credential.setMetadata(metadata);
+
+        Date now = new Date();
+        credential.setCreatedAt(now);
+        credential.setUpdatedAt(now);
+
+        return credential;
+    }
+
+    private void reportAuditSuccess(User principal, CertificateCredential credential) {
+        auditService.report(AuditBuilder.builder(CertificateCredentialAuditBuilder.class)
+                .principal(principal)
+                .type(EventType.CREDENTIAL_CREATED)
+                .certificateCredential(credential));
+    }
+
+    private void reportAuditError(User principal, String domainId, Throwable throwable) {
+        auditService.report(AuditBuilder.builder(CertificateCredentialAuditBuilder.class)
+                .principal(principal)
+                .type(EventType.CREDENTIAL_CREATED)
+                .reference(Reference.domain(domainId))
+                .throwable(throwable));
+    }
+
+    private static class CertificateFields {
+        final String thumbprint;
+        final String subjectDN;
+        final String serialNumber;
+        final Date expiresAt;
+        final String issuerDN;
+
+        CertificateFields(String thumbprint, String subjectDN, 
+                         String serialNumber, Date expiresAt, String issuerDN) {
+            this.thumbprint = thumbprint;
+            this.subjectDN = subjectDN;
+            this.serialNumber = serialNumber;
+            this.expiresAt = expiresAt;
+            this.issuerDN = issuerDN;
         }
     }
 
@@ -186,14 +268,30 @@ public class CertificateCredentialServiceImpl implements CertificateCredentialSe
     }
 
     @Override
-    public Maybe<CertificateCredential> deleteByDomainAndUserAndId(Domain domain, String userId, String credentialId) {
+    public Maybe<CertificateCredential> deleteByDomainAndUserAndId(Domain domain, String userId, String credentialId, User principal) {
         log.debug("Delete certificate credential {} for domain {} and user {}", credentialId, domain.getId(), userId);
         return certificateCredentialRepository
                 .deleteByDomainAndUserAndId(ReferenceType.DOMAIN, domain.getId(), userId, credentialId)
-                .doOnSuccess(credential -> log.debug("Certificate credential {} deleted successfully for domain {} and user {}",
-                        credentialId, domain.getId(), userId))
+                .doOnSuccess(credential -> {
+                    log.debug("Certificate credential {} deleted successfully for domain {} and user {}",
+                            credentialId, domain.getId(), userId);
+                    auditService.report(AuditBuilder.builder(CertificateCredentialAuditBuilder.class)
+                            .principal(principal)
+                            .type(EventType.CREDENTIAL_DELETED)
+                            .certificateCredential(credential));
+                })
                 .doOnComplete(() -> log.debug("Certificate credential {} not found or does not belong to user {} in domain {}",
                         credentialId, userId, domain.getId()))
+                .doOnError(throwable -> {
+                    // Only log audit for technical errors, not for client errors
+                    if (!(throwable instanceof CredentialNotFoundException) && !(throwable instanceof DomainNotFoundException)) {
+                        auditService.report(AuditBuilder.builder(CertificateCredentialAuditBuilder.class)
+                                .principal(principal)
+                                .type(EventType.CREDENTIAL_DELETED)
+                                .reference(Reference.domain(domain.getId()))
+                                .throwable(throwable));
+                    }
+                })
                 .onErrorResumeNext(error -> {
                     log.error("Failed to delete certificate credential {} for user {} in domain {}", credentialId, userId, domain.getId(), error);
                     return Maybe.error(new TechnicalManagementException("Failed to delete certificate credential", error));
