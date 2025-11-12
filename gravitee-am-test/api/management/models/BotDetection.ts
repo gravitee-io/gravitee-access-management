@@ -97,6 +97,7 @@ export const BotDetectionReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type BotDetectionReferenceTypeEnum = typeof BotDetectionReferenceTypeEnum[keyof typeof BotDetectionReferenceTypeEnum];
 

@@ -100,6 +100,7 @@ export const AlertTriggerReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type AlertTriggerReferenceTypeEnum = typeof AlertTriggerReferenceTypeEnum[keyof typeof AlertTriggerReferenceTypeEnum];
 

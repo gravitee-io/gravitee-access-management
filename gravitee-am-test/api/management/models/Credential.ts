@@ -151,6 +151,7 @@ export const CredentialReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type CredentialReferenceTypeEnum = typeof CredentialReferenceTypeEnum[keyof typeof CredentialReferenceTypeEnum];
 

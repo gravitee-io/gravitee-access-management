@@ -97,6 +97,7 @@ export const GroupReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type GroupReferenceTypeEnum = typeof GroupReferenceTypeEnum[keyof typeof GroupReferenceTypeEnum];
 

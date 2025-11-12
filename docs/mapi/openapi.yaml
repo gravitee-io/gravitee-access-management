@@ -9636,6 +9636,7 @@ paths:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
       responses:
         "200":
           description: List registered roles of the organization
@@ -11332,6 +11333,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         userId:
@@ -11455,6 +11457,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         createdAt:
@@ -11488,6 +11491,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         alertNotifiers:
@@ -11884,6 +11888,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         accessPoint:
@@ -11932,6 +11937,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         attributes:
@@ -11969,6 +11975,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         createdAt:
           type: string
           format: date-time
@@ -11994,6 +12001,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         createdAt:
@@ -12027,6 +12035,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         createdAt:
           type: string
           format: date-time
@@ -12246,11 +12255,11 @@ components:
           type: array
           items:
             type: string
-        dynamicClientRegistrationEnabled:
+        allowedScopesEnabled:
           type: boolean
         openDynamicClientRegistrationEnabled:
           type: boolean
-        allowedScopesEnabled:
+        dynamicClientRegistrationEnabled:
           type: boolean
         clientTemplateEnabled:
           type: boolean
@@ -12316,6 +12325,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         userId:
@@ -12388,6 +12398,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         createdAt:
           type: string
           format: date-time
@@ -12418,6 +12429,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         enabled:
@@ -12474,6 +12486,10 @@ components:
           type: string
         secretExpirationSettings:
           $ref: "#/components/schemas/SecretExpirationSettings"
+        redirectUriUnsecuredHttpSchemeAllowed:
+          type: boolean
+        dynamicClientRegistrationTemplateEnabled:
+          type: boolean
         redirectUriExpressionLanguageEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
@@ -12485,10 +12501,6 @@ components:
         redirectUriLocalhostAllowed:
           type: boolean
         redirectUriWildcardAllowed:
-          type: boolean
-        dynamicClientRegistrationTemplateEnabled:
-          type: boolean
-        redirectUriUnsecuredHttpSchemeAllowed:
           type: boolean
     DomainPage:
       type: object
@@ -12548,6 +12560,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         client:
@@ -12935,6 +12948,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         client:
@@ -12973,6 +12987,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         name:
@@ -13021,6 +13036,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         name:
           type: string
         locale:
@@ -13074,6 +13090,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         external:
@@ -13226,6 +13243,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         roleId:
           type: string
         createdAt:
@@ -13764,6 +13782,7 @@ components:
         name:
           maxLength: 64
           minLength: 1
+          pattern: "^[^\\s].*"
           type: string
         description:
           type: string
@@ -13835,6 +13854,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         description:
           type: string
     NewScope:
@@ -14067,6 +14087,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         createdAt:
           type: string
           format: date-time
@@ -14622,13 +14643,13 @@ components:
             type: string
         allowRedirectUriParamsExpressionLanguage:
           type: boolean
+        openDynamicClientRegistrationEnabled:
+          type: boolean
+          writeOnly: true
         dynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         clientTemplateEnabled:
-          type: boolean
-          writeOnly: true
-        openDynamicClientRegistrationEnabled:
           type: boolean
           writeOnly: true
         isDynamicClientRegistrationEnabled:
@@ -14954,6 +14975,7 @@ components:
         name:
           maxLength: 64
           minLength: 1
+          pattern: "^[^\\s].*"
           type: string
         description:
           type: string
@@ -15199,6 +15221,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         id:
           type: string
     RememberDeviceSettings:
@@ -15354,6 +15377,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         assignableType:
@@ -15364,6 +15388,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         system:
           type: boolean
         defaultRole:
@@ -15410,6 +15435,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         assignableType:
@@ -15589,6 +15615,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         name:
@@ -15667,6 +15694,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         logoUrl:
           type: string
         logoWidth:
@@ -15705,6 +15733,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         logoUrl:
           type: string
         logoWidth:
@@ -16036,6 +16065,7 @@ components:
         name:
           maxLength: 64
           minLength: 1
+          pattern: "^[^\\s].*"
           type: string
         description:
           type: string
@@ -16358,6 +16388,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         source:
@@ -16417,14 +16448,6 @@ components:
           type: string
         zoneInfo:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         middleName:
           type: string
         inactive:
@@ -16441,6 +16464,14 @@ components:
           type: boolean
         fullId:
           $ref: "#/components/schemas/UserId"
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserEntity:
       type: object
       properties:
@@ -16553,6 +16584,7 @@ components:
           - APPLICATION
           - ORGANIZATION
           - ENVIRONMENT
+          - PROTECTED_RESOURCE
         referenceId:
           type: string
         source:
@@ -16616,14 +16648,6 @@ components:
           type: string
         zoneInfo:
           type: string
-        lastIdentityInformation:
-          type: object
-          additionalProperties:
-            type: object
-        identitiesAsMap:
-          type: object
-          additionalProperties:
-            type: object
         middleName:
           type: string
         inactive:
@@ -16640,6 +16664,14 @@ components:
           type: boolean
         fullId:
           $ref: "#/components/schemas/UserId"
+        identitiesAsMap:
+          type: object
+          additionalProperties:
+            type: object
+        lastIdentityInformation:
+          type: object
+          additionalProperties:
+            type: object
     UserId:
       type: object
       properties:

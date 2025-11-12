@@ -121,6 +121,7 @@ export const ThemeEntityReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type ThemeEntityReferenceTypeEnum = typeof ThemeEntityReferenceTypeEnum[keyof typeof ThemeEntityReferenceTypeEnum];
 

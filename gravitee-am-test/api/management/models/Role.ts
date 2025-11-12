@@ -121,6 +121,7 @@ export const RoleReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type RoleReferenceTypeEnum = typeof RoleReferenceTypeEnum[keyof typeof RoleReferenceTypeEnum];
 
@@ -133,6 +134,7 @@ export const RoleAssignableTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type RoleAssignableTypeEnum = typeof RoleAssignableTypeEnum[keyof typeof RoleAssignableTypeEnum];
 

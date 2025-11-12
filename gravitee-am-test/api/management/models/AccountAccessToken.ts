@@ -103,6 +103,7 @@ export const AccountAccessTokenReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type AccountAccessTokenReferenceTypeEnum =
   typeof AccountAccessTokenReferenceTypeEnum[keyof typeof AccountAccessTokenReferenceTypeEnum];

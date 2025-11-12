@@ -100,6 +100,7 @@ export const I18nDictionaryReferenceTypeEnum = {
   Application: 'APPLICATION',
   Organization: 'ORGANIZATION',
   Environment: 'ENVIRONMENT',
+  ProtectedResource: 'PROTECTED_RESOURCE',
 } as const;
 export type I18nDictionaryReferenceTypeEnum = typeof I18nDictionaryReferenceTypeEnum[keyof typeof I18nDictionaryReferenceTypeEnum];
 
