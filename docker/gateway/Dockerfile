@@ -18,7 +18,7 @@ FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
-ARG JATTACH_VERSION=1.6
+ARG JATTACH_VERSION=2.2
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-gateway
 ENV LD_PRELOAD /usr/lib/libjemalloc.so.2
 
@@ -33,7 +33,11 @@ RUN apk update \
     && wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz \
     && tar -xf /tmp/jattach.tar.gz -C /tmp/ \
     && make -C /tmp/jattach-${JATTACH_VERSION} \
-    && install -m 0755 /tmp/jattach-${JATTACH_VERSION}/jattach /usr/local/bin/jattach \
+    && JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/jattach" \
+    && if [ ! -f "${JATTACH_SRC}" ]; then \
+            JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
+       fi \
+    && install -m 0755 "${JATTACH_SRC}" /usr/local/bin/jattach \
     && ln -s /usr/local/bin/jattach /usr/local/bin/jeattach \
     && apk del .build-deps \
     && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
@@ -44,8 +48,7 @@ RUN apk update \
 RUN if [ -x "${JAVA_HOME}/bin/jcmd" ]; then \
         ln -sf "${JAVA_HOME}/bin/jcmd" /usr/local/bin/jcmd; \
     else \
-        echo "jcmd not found in ${JAVA_HOME}/bin" >&2; \
-        exit 1; \
+        echo "jcmd not found in ${JAVA_HOME}/bin; skipping symlink"; \
     fi
 
 WORKDIR ${GRAVITEEIO_HOME}

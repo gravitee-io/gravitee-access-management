@@ -17,7 +17,7 @@ FROM alpine:3.14 AS build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
-ARG JATTACH_VERSION=1.6
+ARG JATTACH_VERSION=2.2
 
 RUN apk add --update zip unzip
 
@@ -32,7 +32,7 @@ LABEL maintainer="contact@graviteesource.com"
 ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
 ENV LD_PRELOAD /usr/lib/libjemalloc.so.2
 
-ARG JATTACH_VERSION=1.6
+ARG JATTACH_VERSION=2.2
 
 # Upgrade libc6
 USER root
@@ -47,7 +47,11 @@ RUN apt-get update && \
     wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz && \
     tar -xf /tmp/jattach.tar.gz -C /tmp/ && \
     make -C /tmp/jattach-${JATTACH_VERSION} && \
-    install -m 0755 /tmp/jattach-${JATTACH_VERSION}/jattach /usr/local/bin/jattach && \
+    JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/jattach" && \
+    if [ ! -f "${JATTACH_SRC}" ]; then \
+        JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
+    fi && \
+    install -m 0755 "${JATTACH_SRC}" /usr/local/bin/jattach && \
     ln -s /usr/local/bin/jattach /usr/local/bin/jeattach && \
     ln -sf /usr/lib/$(dpkg-architecture --query DEB_BUILD_MULTIARCH)/libjemalloc.so.2 /usr/lib/libjemalloc.so.2 && \
     apt-get purge -y build-essential wget && \
@@ -62,8 +66,7 @@ COPY --from=build-env --chown=1001:1000 /tmp/gravitee-am-gateway-standalone-* /o
 RUN if [ -x "${JAVA_HOME}/bin/jcmd" ]; then \
         ln -sf "${JAVA_HOME}/bin/jcmd" /usr/local/bin/jcmd; \
     else \
-        echo "jcmd not found in ${JAVA_HOME}/bin" >&2; \
-        exit 1; \
+        echo "jcmd not found in ${JAVA_HOME}/bin; skipping symlink"; \
     fi
 
 WORKDIR ${GRAVITEE_AM_HOME}

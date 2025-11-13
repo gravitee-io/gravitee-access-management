@@ -17,13 +17,17 @@ FROM alpine:3.14 AS build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
-ARG JATTACH_VERSION=1.6
+ARG JATTACH_VERSION=2.2
 
 RUN apk add --no-cache --virtual .build-deps zip unzip build-base wget ca-certificates \
     && wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz \
     && tar -xf /tmp/jattach.tar.gz -C /tmp/ \
     && make -C /tmp/jattach-${JATTACH_VERSION} \
-    && install -m 0755 /tmp/jattach-${JATTACH_VERSION}/jattach /tmp/jattach \
+    && JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/jattach" \
+    && if [ ! -f "${JATTACH_SRC}" ]; then \
+            JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
+       fi \
+    && install -m 0755 "${JATTACH_SRC}" /tmp/jattach \
     && rm -rf /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz \
     && apk del .build-deps
 
@@ -50,8 +54,7 @@ RUN addgroup -g 1000 graviteeio \
 RUN if [ -x "${JAVA_HOME}/bin/jcmd" ]; then \
         ln -sf "${JAVA_HOME}/bin/jcmd" /usr/local/bin/jcmd; \
     else \
-        echo "jcmd not found in ${JAVA_HOME}/bin" >&2; \
-        exit 1; \
+        echo "jcmd not found in ${JAVA_HOME}/bin; skipping symlink"; \
     fi
 
 WORKDIR ${GRAVITEE_AM_HOME}
