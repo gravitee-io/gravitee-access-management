@@ -18,20 +18,36 @@ FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
+ARG JATTACH_VERSION=1.6
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-gateway
+ENV LD_PRELOAD /usr/lib/libjemalloc.so.2
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
 
 RUN apk update \
-	&& apk add --update --no-cache zip unzip netcat-openbsd wget \
+	&& apk add --update --no-cache zip unzip netcat-openbsd wget jemalloc \
+    && apk add --no-cache --virtual .build-deps build-base \
 	&& wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
+    && wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz \
+    && tar -xf /tmp/jattach.tar.gz -C /tmp/ \
+    && make -C /tmp/jattach-${JATTACH_VERSION} \
+    && install -m 0755 /tmp/jattach-${JATTACH_VERSION}/jattach /usr/local/bin/jattach \
+    && ln -s /usr/local/bin/jattach /usr/local/bin/jeattach \
 	&& apk del zip unzip netcat-openbsd wget \
+    && apk del .build-deps \
     && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
     && rm -rf /tmp/* \
 	&& chgrp -R graviteeio ${GRAVITEEIO_HOME} \
     && chmod -R g=u ${GRAVITEEIO_HOME}
+
+RUN if [ -x "${JAVA_HOME}/bin/jcmd" ]; then \
+        ln -sf "${JAVA_HOME}/bin/jcmd" /usr/local/bin/jcmd; \
+    else \
+        echo "jcmd not found in ${JAVA_HOME}/bin" >&2; \
+        exit 1; \
+    fi
 
 WORKDIR ${GRAVITEEIO_HOME}
 EXPOSE 8092
