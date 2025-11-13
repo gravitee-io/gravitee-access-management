@@ -137,7 +137,7 @@ object GatewayCalls {
   }
 
   def submitConsentForm(scopes: Set[String]) = {
-    val builder = http("Post Mfa Challenge Form")
+    val builder = http("Post Consent Form")
             .post("#{" + NEXT_ACTION_KEY + "}")
             .formParam("X-XSRF-TOKEN", "#{" + XSRF_TOKEN_KEY + "}")
             .formParam("client_id", APP_NAME)
@@ -196,6 +196,16 @@ object GatewayCalls {
       .formParam("token", "#{" + ACCESS_TOKEN_KEY + "}")
       .check(status.is(200))
       .check(jsonPath("$.active").is("true"))
+  }
+
+  def extensionGrantFlow() = {
+    http("Extension Grant Flow")
+            .post(s"${GATEWAY_BASE_URL}/#{domainName}/oauth/token")
+            .basicAuth(APP_NAME, APP_NAME)
+            .formParam("grant_type", "urn:ietf:params:oauth:grant-type:jwt-bearer")
+            .formParam("assertion", "#{" + ACCESS_TOKEN_KEY + "}")
+            .check(status.is(200))
+            .check(jsonPath("$.access_token").saveAs(GatewayCalls.ACCESS_TOKEN_KEY))
   }
 
   def getUserInfo() = {
