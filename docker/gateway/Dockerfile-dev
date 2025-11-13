@@ -19,13 +19,13 @@ LABEL maintainer="contact@graviteesource.com"
 ARG GRAVITEEAM_VERSION=0
 ARG JATTACH_VERSION=1.6
 
-RUN apk add --update zip unzip build-base wget \
+RUN apk add --no-cache --virtual .build-deps zip unzip build-base wget ca-certificates \
     && wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz \
     && tar -xf /tmp/jattach.tar.gz -C /tmp/ \
     && make -C /tmp/jattach-${JATTACH_VERSION} \
     && install -m 0755 /tmp/jattach-${JATTACH_VERSION}/jattach /tmp/jattach \
     && rm -rf /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz \
-    && apk del build-base wget
+    && apk del .build-deps
 
 ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 
@@ -42,7 +42,7 @@ COPY --from=build-env /tmp/jattach /usr/local/bin/jattach
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio \
-    && apk add --no-cache jemalloc \
+    && apk add --no-cache jemalloc ca-certificates \
     && ln -s /usr/local/bin/jattach /usr/local/bin/jeattach \
     && chgrp -R graviteeio ${GRAVITEE_AM_HOME} \
     && chmod -R g=u ${GRAVITEE_AM_HOME}

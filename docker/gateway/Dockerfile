@@ -26,16 +26,15 @@ RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
 
 RUN apk update \
-	&& apk add --update --no-cache zip unzip netcat-openbsd wget jemalloc \
-    && apk add --no-cache --virtual .build-deps build-base \
-	&& wget --no-check-certificate -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
+    && apk add --no-cache ca-certificates jemalloc \
+	&& apk add --no-cache --virtual .build-deps zip unzip netcat-openbsd wget build-base \
+	&& wget -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
     && wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz \
     && tar -xf /tmp/jattach.tar.gz -C /tmp/ \
     && make -C /tmp/jattach-${JATTACH_VERSION} \
     && install -m 0755 /tmp/jattach-${JATTACH_VERSION}/jattach /usr/local/bin/jattach \
     && ln -s /usr/local/bin/jattach /usr/local/bin/jeattach \
-	&& apk del zip unzip netcat-openbsd wget \
     && apk del .build-deps \
     && mv /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION} ${GRAVITEEIO_HOME} \
     && rm -rf /tmp/* \
