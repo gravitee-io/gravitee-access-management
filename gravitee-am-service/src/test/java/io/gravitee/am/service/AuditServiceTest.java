@@ -74,8 +74,8 @@
  
      @BeforeEach
      public void setup() {
-         Mockito.when(environment.getProperty("reporters.audits.excluded_audit_types[0]", String.class)).thenReturn(EventType.TOKEN_CREATED);
-         Mockito.when(environment.getProperty(PROPERTY_AUDITS_EXCLUDE_CLIENT_AUTH_SUCCESS, Boolean.class, Boolean.TRUE)).thenReturn(excludeClientAuthSuccess);
+        Mockito.when(environment.getProperty("reporters.audits.excluded_audit_types[0]", String.class)).thenReturn(EventType.TOKEN_CREATED);
+        Mockito.when(environment.getProperty(PROPERTY_AUDITS_EXCLUDE_CLIENT_AUTH_SUCCESS, Boolean.class, Boolean.FALSE)).thenReturn(excludeClientAuthSuccess);
          auditService.afterPropertiesSet();
          completedTasks = ((ThreadPoolExecutor)auditService.getExecutorService()).getCompletedTaskCount();
      }
@@ -114,3 +114,4 @@
          Awaitility.await().atMost(5, TimeUnit.SECONDS).until(() -> executor.getCompletedTaskCount() >= completedTasks + expectedIncrement);
      }
  }
+ 
