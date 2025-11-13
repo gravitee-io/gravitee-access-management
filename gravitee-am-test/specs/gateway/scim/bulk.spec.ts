@@ -650,9 +650,21 @@ describe('SCIM Bulk endpoint', () => {
     expect(op.location).toBeDefined();
     expect(op.location).toEqual(userLocation);
 
-    await performGet(userLocation, '', {
-      Authorization: `Bearer ${scimAccessToken}`,
-    }).expect(404);
+    // Verify user is deleted - poll until deletion is synced (should return 404)
+    await retryUntil(
+      async () => {
+        const response = await performGet(userLocation, '', {
+          Authorization: `Bearer ${scimAccessToken}`,
+        });
+        return { status: response.status };
+      },
+      (resp: any) => resp.status === 404,
+      {
+        timeoutMillis: 10000,
+        intervalMillis: 250,
+        onDone: () => console.log('user deletion synced, GET correctly returns 404'),
+      },
+    );
   });
 });
 
@@ -709,5 +721,9 @@ async function createRandomUser() {
   const bulkResponse: BulkResponse = scimResponse.body;
   expect(bulkResponse.Operations).toHaveLength(1);
 
-  return bulkResponse.Operations[0].location;
+  const location = bulkResponse.Operations[0].location;
+  expect(location).toBeDefined();
+  expect(location).toContain(scimEndpoint + '/Users/');
+
+  return location;
 }
