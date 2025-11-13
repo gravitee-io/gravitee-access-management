@@ -22,6 +22,7 @@ import org.junit.Test;
 import static io.gravitee.am.repository.mongodb.management.internal.model.LoginSettingsMongo.convert;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -115,5 +116,17 @@ public class LoginSettingsMongoTest {
     private void assertMongoResult(LoginSettingsMongo expectedSetting, boolean isHideForm, boolean isIdentifierFirstLoginEnabled) {
         assertEquals(expectedSetting.isHideForm(), isHideForm);
         assertEquals(expectedSetting.isIdentifierFirstLoginEnabled(), isIdentifierFirstLoginEnabled);
+    }
+
+    @Test
+    public void testConvertIncludesCertificateBasedAuthEnabled() {
+        LoginSettings settings = new LoginSettings();
+        settings.setCertificateBasedAuthEnabled(true);
+
+        LoginSettingsMongo mongo = convert(settings);
+        assertTrue(mongo.isCertificateBasedAuthEnabled());
+
+        LoginSettings converted = mongo.convert();
+        assertTrue(converted.isCertificateBasedAuthEnabled());
     }
 }

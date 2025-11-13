@@ -91,6 +91,12 @@ export interface LoginSettings {
    * @type {boolean}
    * @memberof LoginSettings
    */
+  certificateBasedAuthEnabled?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof LoginSettings
+   */
   hideForm?: boolean;
   /**
    *
@@ -140,6 +146,7 @@ export function LoginSettingsFromJSONTyped(json: any, ignoreDiscriminator: boole
     passwordlessEnforcePasswordMaxAge:
       json['passwordlessEnforcePasswordMaxAge'] == null ? undefined : json['passwordlessEnforcePasswordMaxAge'],
     passwordlessDeviceNamingEnabled: json['passwordlessDeviceNamingEnabled'] == null ? undefined : json['passwordlessDeviceNamingEnabled'],
+    certificateBasedAuthEnabled: json['certificateBasedAuthEnabled'] == null ? undefined : json['certificateBasedAuthEnabled'],
     hideForm: json['hideForm'] == null ? undefined : json['hideForm'],
     identifierFirstEnabled: json['identifierFirstEnabled'] == null ? undefined : json['identifierFirstEnabled'],
     resetPasswordOnExpiration: json['resetPasswordOnExpiration'] == null ? undefined : json['resetPasswordOnExpiration'],
@@ -166,6 +173,7 @@ export function LoginSettingsToJSONTyped(value?: LoginSettings | null, ignoreDis
     passwordlessEnforcePasswordEnabled: value['passwordlessEnforcePasswordEnabled'],
     passwordlessEnforcePasswordMaxAge: value['passwordlessEnforcePasswordMaxAge'],
     passwordlessDeviceNamingEnabled: value['passwordlessDeviceNamingEnabled'],
+    certificateBasedAuthEnabled: value['certificateBasedAuthEnabled'],
     hideForm: value['hideForm'],
     identifierFirstEnabled: value['identifierFirstEnabled'],
     resetPasswordOnExpiration: value['resetPasswordOnExpiration'],

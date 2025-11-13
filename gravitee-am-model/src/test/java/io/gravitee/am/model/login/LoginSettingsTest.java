@@ -19,6 +19,8 @@ package io.gravitee.am.model.login;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -67,5 +69,24 @@ public class LoginSettingsTest {
         var expectedSetting = new LoginSettings(loginSettings);
         assertEquals(expectedSetting.isHideForm(), isHideForm);
         assertEquals(expectedSetting.isIdentifierFirstEnabled(), isIdentifierFirstEnabled);
+    }
+
+    @Test
+    public void testCertificateBasedAuthEnabledGetterSetter() {
+        LoginSettings settings = new LoginSettings();
+        settings.setCertificateBasedAuthEnabled(true);
+        assertTrue(settings.isCertificateBasedAuthEnabled());
+
+        settings.setCertificateBasedAuthEnabled(false);
+        assertFalse(settings.isCertificateBasedAuthEnabled());
+    }
+
+    @Test
+    public void testCopyConstructorIncludesCertificateBasedAuthEnabled() {
+        LoginSettings original = new LoginSettings();
+        original.setCertificateBasedAuthEnabled(true);
+
+        LoginSettings copy = new LoginSettings(original);
+        assertTrue(copy.isCertificateBasedAuthEnabled());
     }
 }

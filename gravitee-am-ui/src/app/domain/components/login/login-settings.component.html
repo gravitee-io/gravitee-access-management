@@ -87,7 +87,8 @@
         <h5>Passwordless</h5>
         <mat-divider></mat-divider>
       </div>
-      <div fxLayout="column">
+      <div fxLayout="column" style="margin-top: 10px">
+        <h5 style="margin-bottom: 8px">WebAuthn</h5>
         <mat-slide-toggle (change)="enablePasswordless($event)" [checked]="isPasswordlessEnabled()" [disabled]="readonly">
           Enable passwordless
         </mat-slide-toggle>
@@ -144,6 +145,13 @@
           Passwordless Device Naming
         </mat-slide-toggle>
         <mat-hint style="font-size: 75%">Ask users to name their devices to later identify them.</mat-hint>
+      </div>
+      <div fxLayout="column" style="margin-top: 10px">
+        <h5 style="margin-bottom: 8px">Certificate Based Authentication</h5>
+        <mat-slide-toggle (change)="enableCertificateBasedAuth($event)" [checked]="isCertificateBasedAuthEnabled()" [disabled]="readonly">
+          Passwordless Certificate Based Authentication (CBA)
+        </mat-slide-toggle>
+        <mat-hint style="font-size: 75%">Allows users to enroll and sign in using a digital certificate stored on their device.</mat-hint>
       </div>
     </div>
   </div>

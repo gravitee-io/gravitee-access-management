@@ -61,6 +61,10 @@ public class LoginSettings {
      */
     private boolean passwordlessDeviceNamingEnabled;
     /**
+     * Enable/Disable Certificate Based Authentication feature
+     */
+    private boolean certificateBasedAuthEnabled;
+    /**
      * Enable/Disable hide login form
      */
     private boolean hideForm;
@@ -87,6 +91,7 @@ public class LoginSettings {
         this.passwordlessEnforcePasswordEnabled = other.passwordlessEnforcePasswordEnabled;
         this.passwordlessEnforcePasswordMaxAge = other.passwordlessEnforcePasswordMaxAge;
         this.passwordlessDeviceNamingEnabled = other.passwordlessDeviceNamingEnabled;
+        this.certificateBasedAuthEnabled = other.certificateBasedAuthEnabled;
         this.hideForm = !other.identifierFirstEnabled && other.hideForm;
         this.identifierFirstEnabled = other.identifierFirstEnabled;
         this.resetPasswordOnExpiration = other.resetPasswordOnExpiration;
@@ -162,6 +167,14 @@ public class LoginSettings {
 
     public void setPasswordlessDeviceNamingEnabled(boolean passwordlessDeviceNamingEnabled) {
         this.passwordlessDeviceNamingEnabled = passwordlessDeviceNamingEnabled;
+    }
+
+    public boolean isCertificateBasedAuthEnabled() {
+        return certificateBasedAuthEnabled;
+    }
+
+    public void setCertificateBasedAuthEnabled(boolean certificateBasedAuthEnabled) {
+        this.certificateBasedAuthEnabled = certificateBasedAuthEnabled;
     }
 
     public boolean isHideForm() {

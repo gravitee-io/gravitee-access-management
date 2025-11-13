@@ -92,6 +92,15 @@ export class LoginSettingsComponent implements OnChanges {
     return this.loginSettings?.passwordlessEnabled;
   }
 
+  enableCertificateBasedAuth(event) {
+    this.loginSettings.certificateBasedAuthEnabled = event.checked;
+    this.formChanged = true;
+  }
+
+  isCertificateBasedAuthEnabled() {
+    return this.loginSettings?.certificateBasedAuthEnabled;
+  }
+
   enablePasswordlessRememberDevice(event) {
     this.loginSettings.passwordlessRememberDeviceEnabled = event.checked;
     this.formChanged = true;
