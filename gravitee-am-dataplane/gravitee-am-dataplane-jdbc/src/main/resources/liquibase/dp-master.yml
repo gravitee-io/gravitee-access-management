@@ -35,3 +35,5 @@ databaseChangeLog:
       - file: liquibase/changelogs/v4_9_0/4.9.0-dataplane-sweep-redundant-indexes-users.yml
   - include:
       - file: liquibase/changelogs/v4_9_0/4.9.0-dataplane-sweep-redundant-indexes-webauth.yml
+  - include:
+      - file: liquibase/changelogs/v4_10_0/4.10.0-dataplane-cert-credentials-table.yml

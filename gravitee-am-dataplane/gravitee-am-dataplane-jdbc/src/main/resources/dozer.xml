@@ -30,4 +30,30 @@
             <a-hint>java.util.List</a-hint>
         </field>
     </mapping>
+
+    <mapping map-null="false">
+        <class-a>io.gravitee.am.model.CertificateCredential</class-a>
+        <class-b>io.gravitee.am.dataplane.jdbc.repository.model.JdbcCertificateCredential</class-b>
+        <field custom-converter="io.gravitee.am.dataplane.jdbc.mapper.MapToStringConverter">
+            <a>metadata</a>
+            <b>metadata</b>
+            <a-hint>java.util.Map</a-hint>
+        </field>
+        <field custom-converter="io.gravitee.am.dataplane.jdbc.mapper.LocalDateConverter">
+            <a>createdAt</a>
+            <b>createdAt</b>
+        </field>
+        <field custom-converter="io.gravitee.am.dataplane.jdbc.mapper.LocalDateConverter">
+            <a>updatedAt</a>
+            <b>updatedAt</b>
+        </field>
+        <field custom-converter="io.gravitee.am.dataplane.jdbc.mapper.LocalDateConverter">
+            <a>accessedAt</a>
+            <b>accessedAt</b>
+        </field>
+        <field custom-converter="io.gravitee.am.dataplane.jdbc.mapper.LocalDateConverter">
+            <a>certificateExpiresAt</a>
+            <b>certificateExpiresAt</b>
+        </field>
+    </mapping>
 </mappings>

@@ -36,6 +36,7 @@ import io.gravitee.am.management.service.RevokeTokenManagementService;
 import io.gravitee.am.management.service.dataplane.CredentialManagementService;
 import io.gravitee.am.management.service.dataplane.LoginAttemptManagementService;
 import io.gravitee.am.management.service.dataplane.UserActivityManagementService;
+import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.IdentityProvider;
@@ -148,6 +149,9 @@ public class ManagementUserServiceImpl implements ManagementUserService {
 
     @Autowired
     protected CredentialManagementService credentialService;
+
+    @Autowired
+    protected CertificateCredentialService certificateCredentialService;
 
     @Autowired
     protected UserActivityManagementService userActivityService;
@@ -778,6 +782,8 @@ public class ManagementUserServiceImpl implements ManagementUserService {
                         // Delete trace of user activity
                         .andThen(userActivityService.deleteByDomainAndUser(domain, userId))
                         .andThen(passwordHistoryService.deleteByUser(domain, userId))
+                        // Delete certificate credentials for the user
+                        .andThen(certificateCredentialService.deleteByUserId(domain, userId))
                         .andThen(repository.delete(userId))
                         .andThen(eventService.create(deleteUseEvent).ignoreElement())
                         .toSingleDefault(user))

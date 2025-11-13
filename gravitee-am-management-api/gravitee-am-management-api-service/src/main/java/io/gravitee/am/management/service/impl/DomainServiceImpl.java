@@ -75,6 +75,7 @@ import io.gravitee.am.service.RoleService;
 import io.gravitee.am.service.ScopeService;
 import io.gravitee.am.service.ServiceResourceService;
 import io.gravitee.am.service.ThemeService;
+import io.gravitee.am.service.CertificateCredentialService;
 import io.gravitee.am.service.exception.AbstractManagementException;
 import io.gravitee.am.service.exception.DomainAlreadyExistsException;
 import io.gravitee.am.service.exception.DomainNotFoundException;
@@ -246,6 +247,9 @@ public class DomainServiceImpl implements DomainService {
 
     @Autowired
     private PasswordPolicyService passwordPolicyService;
+
+    @Autowired
+    private CertificateCredentialService certificateCredentialService;
 
     @Autowired
     private EntrypointService entrypointService;
@@ -651,6 +655,8 @@ public class DomainServiceImpl implements DomainService {
                             .andThen(passwordPolicyService.deleteByReference(ReferenceType.DOMAIN, domainId))
                             .andThen(serviceResourceService.deleteByDomain(domainId))
                             .andThen(deviceIdentifierService.deleteByDomain(domainId))
+                            // delete certificate credentials
+                            .andThen(certificateCredentialService.deleteByDomain(domain))
                             .andThen(protectedResourceService.findByDomain(domainId)
                                     .flatMapCompletable(protectedResource -> protectedResourceService.delete(domain, protectedResource.getId(), null, principal))
                             )

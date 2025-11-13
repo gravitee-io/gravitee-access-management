@@ -49,6 +49,7 @@ public class JdbcRepositoriesTestInitializer implements DataPlaneTestInitializer
 
         var tables = List.of(
                 "webauthn_credentials",
+                "cert_credentials",
                 "devices",
                 "group_members",
                 "group_roles",

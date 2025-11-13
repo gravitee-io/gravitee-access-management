@@ -11,6 +11,7 @@
       "@management-commands/*": ["api/commands/management/*"],
       "@gateway-commands/*": ["api/commands/gateway/*"],
       "@utils-commands/*": ["api/commands/utils/*"],
+      "@utils/*": ["api/utils/*"],
       "@api-fixtures/*": ["api/fixtures/*"]
     },
     "allowSyntheticDefaultImports": true

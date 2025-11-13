@@ -328,6 +328,8 @@ user:
       #subject: Multiple verification attempt detected
   webAuthn:
     #maxAllowCredentials: 20 # number of credentials sent back to perform passwordless authentication. Keep in mind, Firefox handles max 20
+  certificate:
+    #maxCertificatesPerUser: 20 # number of certificates per user (default 20)
 
 handlers:
   request:

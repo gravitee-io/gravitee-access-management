@@ -67,6 +67,9 @@ import {
   BulkResponse,
   BulkResponseFromJSON,
   BulkResponseToJSON,
+  CertificateCredential,
+  CertificateCredentialFromJSON,
+  CertificateCredentialToJSON,
   CertificateEntity,
   CertificateEntityFromJSON,
   CertificateEntityToJSON,
@@ -154,6 +157,9 @@ import {
   NewCertificate,
   NewCertificateFromJSON,
   NewCertificateToJSON,
+  NewCertificateCredential,
+  NewCertificateCredentialFromJSON,
+  NewCertificateCredentialToJSON,
   NewClientSecret,
   NewClientSecretFromJSON,
   NewClientSecretToJSON,
@@ -820,6 +826,14 @@ export interface DeleteUserFactorRequest {
   factor: string;
 }
 
+export interface EnrollUserCertificateCredentialRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  newCertificateCredential: NewCertificateCredential;
+}
+
 export interface EvaluatePolicyRequest {
   organizationId: string;
   environmentId: string;
@@ -1154,6 +1168,14 @@ export interface GetUserAuditLogRequest {
   audit: string;
 }
 
+export interface GetUserCertificateCredentialRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  credential: string;
+}
+
 export interface GetUserConsentRequest {
   organizationId: string;
   environmentId: string;
@@ -1376,6 +1398,13 @@ export interface ListUserAuditLogsRequest {
   page?: number;
 }
 
+export interface ListUserCertificateCredentialsRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+}
+
 export interface ListUserConsentsRequest {
   organizationId: string;
   environmentId: string;
@@ -1544,6 +1573,14 @@ export interface RevokeRoleRequest {
   domain: string;
   group: string;
   role: string;
+}
+
+export interface RevokeUserCertificateCredentialRequest {
+  organizationId: string;
+  environmentId: string;
+  domain: string;
+  user: string;
+  credential: string;
 }
 
 export interface RevokeUserConsentRequest {
@@ -6767,6 +6804,93 @@ export class DomainApi extends runtime.BaseAPI {
   }
 
   /**
+   * User must have the DOMAIN_USER[CREATE] permission on the specified domain or DOMAIN_USER[CREATE] permission on the specified environment or DOMAIN_USER[CREATE] permission on the specified organization
+   * Enroll a certificate credential for a user
+   */
+  async enrollUserCertificateCredentialRaw(
+    requestParameters: EnrollUserCertificateCredentialRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<CertificateCredential>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling enrollUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling enrollUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling enrollUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling enrollUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.newCertificateCredential === null || requestParameters.newCertificateCredential === undefined) {
+      throw new runtime.RequiredError(
+        'newCertificateCredential',
+        'Required parameter requestParameters.newCertificateCredential was null or undefined when calling enrollUserCertificateCredential.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/cert-credentials`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: NewCertificateCredentialToJSON(requestParameters.newCertificateCredential),
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => CertificateCredentialFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_USER[CREATE] permission on the specified domain or DOMAIN_USER[CREATE] permission on the specified environment or DOMAIN_USER[CREATE] permission on the specified organization
+   * Enroll a certificate credential for a user
+   */
+  async enrollUserCertificateCredential(
+    requestParameters: EnrollUserCertificateCredentialRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<CertificateCredential> {
+    const response = await this.enrollUserCertificateCredentialRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    */
   async evaluatePolicyRaw(
     requestParameters: EvaluatePolicyRequest,
@@ -10256,6 +10380,91 @@ export class DomainApi extends runtime.BaseAPI {
 
   /**
    * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * Get a user certificate credential
+   */
+  async getUserCertificateCredentialRaw(
+    requestParameters: GetUserCertificateCredentialRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<CertificateCredential>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling getUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling getUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling getUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling getUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.credential === null || requestParameters.credential === undefined) {
+      throw new runtime.RequiredError(
+        'credential',
+        'Required parameter requestParameters.credential was null or undefined when calling getUserCertificateCredential.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/cert-credentials/{credential}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
+          .replace(`{${'credential'}}`, encodeURIComponent(String(requestParameters.credential))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => CertificateCredentialFromJSON(jsonValue));
+  }
+
+  /**
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * Get a user certificate credential
+   */
+  async getUserCertificateCredential(
+    requestParameters: GetUserCertificateCredentialRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<CertificateCredential> {
+    const response = await this.getUserCertificateCredentialRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
    * Get a user consent
    */
   async getUserConsentRaw(
@@ -12527,6 +12736,83 @@ export class DomainApi extends runtime.BaseAPI {
 
   /**
    * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * Get user certificate credentials
+   */
+  async listUserCertificateCredentialsRaw(
+    requestParameters: ListUserCertificateCredentialsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<Array<CertificateCredential>>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling listUserCertificateCredentials.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling listUserCertificateCredentials.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling listUserCertificateCredentials.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling listUserCertificateCredentials.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/cert-credentials`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user))),
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(CertificateCredentialFromJSON));
+  }
+
+  /**
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
+   * Get user certificate credentials
+   */
+  async listUserCertificateCredentials(
+    requestParameters: ListUserCertificateCredentialsRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<Array<CertificateCredential>> {
+    const response = await this.listUserCertificateCredentialsRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_USER[READ] permission on the specified domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ] permission on the specified organization
    * Get a user consents
    */
   async listUserConsentsRaw(
@@ -14301,6 +14587,90 @@ export class DomainApi extends runtime.BaseAPI {
   async revokeRole(requestParameters: RevokeRoleRequest, initOverrides?: RequestInit | runtime.InitOverideFunction): Promise<Group> {
     const response = await this.revokeRoleRaw(requestParameters, initOverrides);
     return await response.value();
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user certificate credential
+   */
+  async revokeUserCertificateCredentialRaw(
+    requestParameters: RevokeUserCertificateCredentialRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters.organizationId === null || requestParameters.organizationId === undefined) {
+      throw new runtime.RequiredError(
+        'organizationId',
+        'Required parameter requestParameters.organizationId was null or undefined when calling revokeUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.environmentId === null || requestParameters.environmentId === undefined) {
+      throw new runtime.RequiredError(
+        'environmentId',
+        'Required parameter requestParameters.environmentId was null or undefined when calling revokeUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.domain === null || requestParameters.domain === undefined) {
+      throw new runtime.RequiredError(
+        'domain',
+        'Required parameter requestParameters.domain was null or undefined when calling revokeUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.user === null || requestParameters.user === undefined) {
+      throw new runtime.RequiredError(
+        'user',
+        'Required parameter requestParameters.user was null or undefined when calling revokeUserCertificateCredential.',
+      );
+    }
+
+    if (requestParameters.credential === null || requestParameters.credential === undefined) {
+      throw new runtime.RequiredError(
+        'credential',
+        'Required parameter requestParameters.credential was null or undefined when calling revokeUserCertificateCredential.',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    if (this.configuration && this.configuration.accessToken) {
+      const token = this.configuration.accessToken;
+      const tokenString = await token('gravitee-auth', []);
+
+      if (tokenString) {
+        headerParameters['Authorization'] = `Bearer ${tokenString}`;
+      }
+    }
+    const response = await this.request(
+      {
+        path: `/organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/cert-credentials/{credential}`
+          .replace(`{${'organizationId'}}`, encodeURIComponent(String(requestParameters.organizationId)))
+          .replace(`{${'environmentId'}}`, encodeURIComponent(String(requestParameters.environmentId)))
+          .replace(`{${'domain'}}`, encodeURIComponent(String(requestParameters.domain)))
+          .replace(`{${'user'}}`, encodeURIComponent(String(requestParameters.user)))
+          .replace(`{${'credential'}}`, encodeURIComponent(String(requestParameters.credential))),
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * User must have the DOMAIN_USER[UPDATE] permission on the specified domain or DOMAIN_USER[UPDATE] permission on the specified environment or DOMAIN_USER[UPDATE] permission on the specified organization
+   * Revoke a user certificate credential
+   */
+  async revokeUserCertificateCredential(
+    requestParameters: RevokeUserCertificateCredentialRequest,
+    initOverrides?: RequestInit | runtime.InitOverideFunction,
+  ): Promise<void> {
+    await this.revokeUserCertificateCredentialRaw(requestParameters, initOverrides);
   }
 
   /**
