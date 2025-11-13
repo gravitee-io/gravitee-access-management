@@ -68,13 +68,13 @@ public class MongoCertificateCredentialRepository extends AbstractDataPlaneMongo
         // Index for findByUserId
         indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_USER_ID, 1), new IndexOptions().name("rt1ri1uid1"));
         // Index for findByThumbprint
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_THUMBPRINT, 1), new IndexOptions().name("rt1ri1thumb1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_THUMBPRINT, 1), new IndexOptions().name("rt1ri1ct1"));
         // Index for findBySubjectDN
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_SUBJECT_DN, 1), new IndexOptions().name("rt1ri1subjdn1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_SUBJECT_DN, 1), new IndexOptions().name("rt1ri1csdn1"));
         // Index for findBySerialNumber
-        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_SERIAL_NUMBER, 1), new IndexOptions().name("rt1ri1serial1"));
+        indexes.put(new Document(FIELD_REFERENCE_TYPE, 1).append(FIELD_REFERENCE_ID, 1).append(FIELD_CERTIFICATE_SERIAL_NUMBER, 1), new IndexOptions().name("rt1ri1csn1"));
         // Index for findExpiredCertificates
-        indexes.put(new Document(FIELD_CERTIFICATE_EXPIRES_AT, 1), new IndexOptions().name("expires1"));
+        indexes.put(new Document(FIELD_CERTIFICATE_EXPIRES_AT, 1), new IndexOptions().name("cea1"));
 
         super.createIndex(certificateCredentialsCollection, indexes);
     }
