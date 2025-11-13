@@ -403,6 +403,24 @@ export interface User {
   zoneInfo?: string;
   /**
    *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  lastIdentityInformation?: { [key: string]: any };
+  /**
+   *
+   * @type {{ [key: string]: any; }}
+   * @memberof User
+   */
+  identitiesAsMap?: { [key: string]: any };
+  /**
+   *
+   * @type {UserId}
+   * @memberof User
+   */
+  fullId?: UserId;
+  /**
+   *
    * @type {string}
    * @memberof User
    */
@@ -443,24 +461,6 @@ export interface User {
    * @memberof User
    */
   disabled?: boolean;
-  /**
-   *
-   * @type {UserId}
-   * @memberof User
-   */
-  fullId?: UserId;
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  identitiesAsMap?: { [key: string]: any };
-  /**
-   *
-   * @type {{ [key: string]: any; }}
-   * @memberof User
-   */
-  lastIdentityInformation?: { [key: string]: any };
 }
 
 /**
@@ -551,6 +551,9 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     address: json['address'] == null ? undefined : json['address'],
     locale: json['locale'] == null ? undefined : json['locale'],
     zoneInfo: json['zoneInfo'] == null ? undefined : json['zoneInfo'],
+    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
+    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
+    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
     middleName: json['middleName'] == null ? undefined : json['middleName'],
     inactive: json['inactive'] == null ? undefined : json['inactive'],
     profile: json['profile'] == null ? undefined : json['profile'],
@@ -558,9 +561,6 @@ export function UserFromJSONTyped(json: any, ignoreDiscriminator: boolean): User
     birthdate: json['birthdate'] == null ? undefined : json['birthdate'],
     phoneNumber: json['phoneNumber'] == null ? undefined : json['phoneNumber'],
     disabled: json['disabled'] == null ? undefined : json['disabled'],
-    fullId: json['fullId'] == null ? undefined : UserIdFromJSON(json['fullId']),
-    identitiesAsMap: json['identitiesAsMap'] == null ? undefined : json['identitiesAsMap'],
-    lastIdentityInformation: json['lastIdentityInformation'] == null ? undefined : json['lastIdentityInformation'],
   };
 }
 
@@ -635,6 +635,9 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
     address: value['address'],
     locale: value['locale'],
     zoneInfo: value['zoneInfo'],
+    lastIdentityInformation: value['lastIdentityInformation'],
+    identitiesAsMap: value['identitiesAsMap'],
+    fullId: UserIdToJSON(value['fullId']),
     middleName: value['middleName'],
     inactive: value['inactive'],
     profile: value['profile'],
@@ -642,8 +645,5 @@ export function UserToJSONTyped(value?: User | null, ignoreDiscriminator: boolea
     birthdate: value['birthdate'],
     phoneNumber: value['phoneNumber'],
     disabled: value['disabled'],
-    fullId: UserIdToJSON(value['fullId']),
-    identitiesAsMap: value['identitiesAsMap'],
-    lastIdentityInformation: value['lastIdentityInformation'],
   };
 }

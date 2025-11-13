@@ -273,6 +273,24 @@ export interface Domain {
    * @type {boolean}
    * @memberof Domain
    */
+  redirectUriLocalhostAllowed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriWildcardAllowed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
+  redirectUriStrictMatching?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof Domain
+   */
   redirectUriExpressionLanguageEnabled?: boolean;
   /**
    *
@@ -286,24 +304,6 @@ export interface Domain {
    * @memberof Domain
    */
   openDynamicClientRegistrationEnabled?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
-  redirectUriStrictMatching?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
-  redirectUriLocalhostAllowed?: boolean;
-  /**
-   *
-   * @type {boolean}
-   * @memberof Domain
-   */
-  redirectUriWildcardAllowed?: boolean;
 }
 
 /**
@@ -381,15 +381,15 @@ export function DomainFromJSONTyped(json: any, ignoreDiscriminator: boolean): Do
       json['redirectUriUnsecuredHttpSchemeAllowed'] == null ? undefined : json['redirectUriUnsecuredHttpSchemeAllowed'],
     dynamicClientRegistrationTemplateEnabled:
       json['dynamicClientRegistrationTemplateEnabled'] == null ? undefined : json['dynamicClientRegistrationTemplateEnabled'],
+    redirectUriLocalhostAllowed: json['redirectUriLocalhostAllowed'] == null ? undefined : json['redirectUriLocalhostAllowed'],
+    redirectUriWildcardAllowed: json['redirectUriWildcardAllowed'] == null ? undefined : json['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
     redirectUriExpressionLanguageEnabled:
       json['redirectUriExpressionLanguageEnabled'] == null ? undefined : json['redirectUriExpressionLanguageEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled:
       json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
-    redirectUriStrictMatching: json['redirectUriStrictMatching'] == null ? undefined : json['redirectUriStrictMatching'],
-    redirectUriLocalhostAllowed: json['redirectUriLocalhostAllowed'] == null ? undefined : json['redirectUriLocalhostAllowed'],
-    redirectUriWildcardAllowed: json['redirectUriWildcardAllowed'] == null ? undefined : json['redirectUriWildcardAllowed'],
   };
 }
 
@@ -434,11 +434,11 @@ export function DomainToJSONTyped(value?: Domain | null, ignoreDiscriminator: bo
     secretExpirationSettings: SecretExpirationSettingsToJSON(value['secretExpirationSettings']),
     redirectUriUnsecuredHttpSchemeAllowed: value['redirectUriUnsecuredHttpSchemeAllowed'],
     dynamicClientRegistrationTemplateEnabled: value['dynamicClientRegistrationTemplateEnabled'],
+    redirectUriLocalhostAllowed: value['redirectUriLocalhostAllowed'],
+    redirectUriWildcardAllowed: value['redirectUriWildcardAllowed'],
+    redirectUriStrictMatching: value['redirectUriStrictMatching'],
     redirectUriExpressionLanguageEnabled: value['redirectUriExpressionLanguageEnabled'],
     dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
-    redirectUriStrictMatching: value['redirectUriStrictMatching'],
-    redirectUriLocalhostAllowed: value['redirectUriLocalhostAllowed'],
-    redirectUriWildcardAllowed: value['redirectUriWildcardAllowed'],
   };
 }

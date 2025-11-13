@@ -79,13 +79,13 @@ export interface PatchClientRegistrationSettings {
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  dynamicClientRegistrationEnabled?: boolean;
+  clientTemplateEnabled?: boolean;
   /**
    *
    * @type {boolean}
    * @memberof PatchClientRegistrationSettings
    */
-  clientTemplateEnabled?: boolean;
+  dynamicClientRegistrationEnabled?: boolean;
   /**
    *
    * @type {boolean}
@@ -137,9 +137,9 @@ export function PatchClientRegistrationSettingsFromJSONTyped(json: any, ignoreDi
       json['allowRedirectUriParamsExpressionLanguage'] == null ? undefined : json['allowRedirectUriParamsExpressionLanguage'],
     openDynamicClientRegistrationEnabled:
       json['openDynamicClientRegistrationEnabled'] == null ? undefined : json['openDynamicClientRegistrationEnabled'],
+    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     dynamicClientRegistrationEnabled:
       json['dynamicClientRegistrationEnabled'] == null ? undefined : json['dynamicClientRegistrationEnabled'],
-    clientTemplateEnabled: json['clientTemplateEnabled'] == null ? undefined : json['clientTemplateEnabled'],
     isDynamicClientRegistrationEnabled:
       json['isDynamicClientRegistrationEnabled'] == null ? undefined : json['isDynamicClientRegistrationEnabled'],
     isOpenDynamicClientRegistrationEnabled:
@@ -169,8 +169,8 @@ export function PatchClientRegistrationSettingsToJSONTyped(
     allowedScopes: value['allowedScopes'],
     allowRedirectUriParamsExpressionLanguage: value['allowRedirectUriParamsExpressionLanguage'],
     openDynamicClientRegistrationEnabled: value['openDynamicClientRegistrationEnabled'],
-    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     clientTemplateEnabled: value['clientTemplateEnabled'],
+    dynamicClientRegistrationEnabled: value['dynamicClientRegistrationEnabled'],
     isDynamicClientRegistrationEnabled: value['isDynamicClientRegistrationEnabled'],
     isOpenDynamicClientRegistrationEnabled: value['isOpenDynamicClientRegistrationEnabled'],
     isAllowedScopesEnabled: value['isAllowedScopesEnabled'],
