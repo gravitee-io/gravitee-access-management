@@ -16,17 +16,33 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { UserService } from '../services/user.service';
 
 @Injectable()
 export class UserCredentialResolver {
-  constructor(private userService: UserService) {}
+  constructor(private readonly userService: UserService) {}
 
   resolve(route: ActivatedRouteSnapshot): Observable<any> {
     const credentialId = route.paramMap.get('credentialId');
     const userId = route.parent.paramMap.get('userId');
     const domainId = route.parent.data['domain'].id;
-    return this.userService.credential(domainId, userId, credentialId);
+
+    // Check if this is a certificate credential route
+    const isCertificateRoute = route.parent?.routeConfig?.path === 'cert-credentials';
+
+    const credential$ = isCertificateRoute
+      ? this.userService.certificateCredential(domainId, userId, credentialId)
+      : this.userService.credential(domainId, userId, credentialId);
+
+    const credentialType = isCertificateRoute ? 'certificate' : 'webauthn';
+
+    return credential$.pipe(
+      map((credential) => ({
+        ...credential,
+        credentialType,
+      })),
+    );
   }
 }

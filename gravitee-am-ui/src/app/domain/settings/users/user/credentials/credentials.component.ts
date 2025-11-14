@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { filter, switchMap, tap, mergeMap, catchError, takeUntil } from 'rxjs/operators';
 import { forkJoin, of, Subject } from 'rxjs';
@@ -85,6 +85,7 @@ export class UserCredentialsComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly snackbarService: SnackbarService,
     private readonly dialogService: DialogService,
     private readonly userService: UserService,
@@ -253,5 +254,55 @@ export class UserCredentialsComponent implements OnInit, OnDestroy {
           this.snackbarService.open(errorMessage);
         },
       });
+  }
+
+  viewCredential(credential: Credential) {
+    const credentialId = credential.id;
+    const credentialType = credential.credentialType;
+
+    if (credentialType === CREDENTIAL_TYPE.CERTIFICATE) {
+      this.router.navigate(['../cert-credentials', credentialId], { relativeTo: this.route });
+    } else {
+      this.router.navigate(['../credentials', credentialId], { relativeTo: this.route });
+    }
+  }
+
+  // Simple expiration check helpers
+  isExpired(credential: Credential): boolean {
+    if (credential.credentialType !== CREDENTIAL_TYPE.CERTIFICATE) {
+      return false;
+    }
+    if (!credential.certificateExpiresAt) {
+      return false;
+    }
+    // Direct date comparison - more reliable than using daysUntilExpiration
+    return new Date(credential.certificateExpiresAt).getTime() < Date.now();
+  }
+
+  isExpiringSoon(credential: Credential): boolean {
+    if (credential.credentialType !== CREDENTIAL_TYPE.CERTIFICATE || this.isExpired(credential)) {
+      return false;
+    }
+    const days = this.daysUntilExpiration(credential);
+    return days > 0 && days <= 30;
+  }
+
+  daysUntilExpiration(credential: Credential): number {
+    if (credential.credentialType !== CREDENTIAL_TYPE.CERTIFICATE) {
+      return 0;
+    }
+    if (!credential.certificateExpiresAt) {
+      return 0;
+    }
+    const expirationDate = new Date(credential.certificateExpiresAt).getTime();
+    const now = Date.now();
+    const diffMs = expirationDate - now;
+    // Use Math.floor for negative values (expired) to correctly round towards negative infinity
+    // e.g., -0.5 days should return -1, not 0
+    // Use Math.ceil for positive values (not expired) to round up partial days
+    if (diffMs < 0) {
+      return Math.floor(diffMs / (1000 * 3600 * 24));
+    }
+    return Math.ceil(diffMs / (1000 * 3600 * 24));
   }
 }

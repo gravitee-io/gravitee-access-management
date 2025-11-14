@@ -122,7 +122,7 @@ export class AuditsComponent implements OnInit {
 
   getTargetUrl(row): string[] {
     if (row.target.type === 'MEMBERSHIP') {
-      // Membership doesn't have link;
+      // Membership doesn't have link
       return [];
     }
     return this.buildLink(row);
@@ -172,6 +172,12 @@ export class AuditsComponent implements OnInit {
           routerLink.push('applications');
         } else if (row.target.type === 'PROTECTED_RESOURCE') {
           routerLink.push('mcp-servers');
+        } else if (row.target.type === 'CREDENTIAL') {
+          // Credentials are user-scoped, route path is stored in target.attributes (set by backend audit builders)
+          // The routePath is relative (e.g., ['users', userId, 'cert-credentials', credentialId])
+          // and will be prepended with domain path by buildLink()
+          const routePath = row.target.attributes?.routePath;
+          return Array.isArray(routePath) ? [...routePath] : [];
         } else {
           routerLink.push(row.target.type.toLowerCase() + 's');
         }
@@ -336,7 +342,8 @@ export class AuditsComponent implements OnInit {
 
   hasLinkableTarget(row: any) {
     const isSuccessfulDeleteEvent = row.outcome.status === 'success' && this.isDeletionEventType(row.type);
-    return !this.isDomainAuditOnOrganizationLevel(row) && !isSuccessfulDeleteEvent;
+    const hasValidUrl = this.getTargetUrl(row).length > 0;
+    return !this.isDomainAuditOnOrganizationLevel(row) && !isSuccessfulDeleteEvent && hasValidUrl;
   }
 
   private isDeletionEventType(type: string): boolean {
