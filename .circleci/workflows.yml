@@ -413,7 +413,7 @@ jobs:
             - .gravitee.settings.xml
   build:
     docker:
-      - image: cimg/openjdk:21.0.8
+      - image: cimg/openjdk:21.0.9
     resource_class: large
     steps:
       - attach_workspace:
@@ -438,7 +438,7 @@ jobs:
             - ./gravitee-am-webui-*.zip
   deploy-snapshot-on-nexus:
     docker:
-      - image: cimg/openjdk:21.0.8
+      - image: cimg/openjdk:21.0.9
     resource_class: medium+
     steps:
       - attach_workspace:
@@ -775,7 +775,7 @@ jobs:
       mongo_version:
         type: string
     docker:
-      - image: cimg/openjdk:21.0.8-node
+      - image: cimg/openjdk:21.0.9-node
       - image: mongo:<< parameters.mongo_version >>
     resource_class: large
     steps:
@@ -832,7 +832,7 @@ jobs:
       psql_version:
         type: string
     docker:
-      - image: cimg/openjdk:21.0.8-node
+      - image: cimg/openjdk:21.0.9-node
       - image: postgres:<< parameters.psql_version >>
         environment:
           POSTGRES_PASSWORD: T0pS3cr3t
@@ -993,7 +993,7 @@ jobs:
 
   publish-images-azure-registry:
     docker:
-      - image: cimg/openjdk:21.0.8
+      - image: cimg/openjdk:21.0.9
     resource_class: small
     steps:
       - checkout
@@ -1167,7 +1167,7 @@ jobs:
             done
   coverage_build:
     docker:
-      - image: cimg/openjdk:21.0.8
+      - image: cimg/openjdk:21.0.9
     resource_class: large
     steps:
       - attach_workspace:
@@ -1190,7 +1190,7 @@ jobs:
           jobName: coverage_build
   frontend_version_build:
     docker:
-      - image: cimg/openjdk:21.0.8
+      - image: cimg/openjdk:21.0.9
     resource_class: small
     steps:
       - attach_workspace:
