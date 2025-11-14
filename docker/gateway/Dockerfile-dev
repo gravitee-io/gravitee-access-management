@@ -39,7 +39,6 @@ FROM graviteeio/java:21
 LABEL maintainer="contact@graviteesource.com"
 
 ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
-ENV LD_PRELOAD /usr/lib/libjemalloc.so.2
 
 COPY --from=build-env /tmp/gravitee-am-gateway-standalone-* /opt/graviteeio-am-gateway/
 COPY --from=build-env /tmp/jattach /usr/local/bin/jattach

@@ -20,7 +20,6 @@ LABEL maintainer="contact@graviteesource.com"
 ARG GRAVITEEAM_VERSION=0
 ARG JATTACH_VERSION=2.2
 ENV GRAVITEEIO_HOME /opt/graviteeio-am-gateway
-ENV LD_PRELOAD /usr/lib/libjemalloc.so.2
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio

@@ -30,8 +30,6 @@ FROM eclipse-temurin:21.0.8_9-jdk-noble
 LABEL maintainer="contact@graviteesource.com"
 
 ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
-ENV LD_PRELOAD /usr/lib/libjemalloc.so.2
-
 ARG JATTACH_VERSION=2.2
 
 # Upgrade libc6
