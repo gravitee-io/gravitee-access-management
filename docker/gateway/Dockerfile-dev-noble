@@ -17,6 +17,7 @@ FROM alpine:3.14 AS build-env
 LABEL maintainer="contact@graviteesource.com"
 
 ARG GRAVITEEAM_VERSION=0
+ARG JATTACH_VERSION=2.2
 
 RUN apk add --update zip unzip
 
@@ -25,10 +26,11 @@ ADD ./gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip /tmp/
 RUN unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \
     && rm /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip
 
-FROM eclipse-temurin:21.0.8_9-jre-noble
+FROM eclipse-temurin:21.0.8_9-jdk-noble
 LABEL maintainer="contact@graviteesource.com"
 
 ENV GRAVITEE_AM_HOME /opt/graviteeio-am-gateway
+ARG JATTACH_VERSION=2.2
 
 # Upgrade libc6
 USER root
@@ -37,10 +39,33 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libjemalloc2 libjemalloc-dev ca-certificates && \
+    apt-get install -y --no-install-recommends build-essential wget && \
+    wget -O /tmp/jattach.tar.gz https://github.com/apangin/jattach/archive/refs/tags/v${JATTACH_VERSION}.tar.gz && \
+    tar -xf /tmp/jattach.tar.gz -C /tmp/ && \
+    make -C /tmp/jattach-${JATTACH_VERSION} && \
+    JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/jattach" && \
+    if [ ! -f "${JATTACH_SRC}" ]; then \
+        JATTACH_SRC="/tmp/jattach-${JATTACH_VERSION}/build/jattach"; \
+    fi && \
+    install -m 0755 "${JATTACH_SRC}" /usr/local/bin/jattach && \
+    ln -s /usr/local/bin/jattach /usr/local/bin/jeattach && \
+    ln -sf /usr/lib/$(dpkg-architecture --query DEB_BUILD_MULTIARCH)/libjemalloc.so.2 /usr/lib/libjemalloc.so.2 && \
+    apt-get purge -y build-essential wget && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/jattach-${JATTACH_VERSION} /tmp/jattach.tar.gz
+
 RUN groupmod --new-name graviteeio ubuntu && \
  adduser --disabled-password --no-create-home -uid 1001 graviteeio --ingroup graviteeio
 
 COPY --from=build-env --chown=1001:1000 /tmp/gravitee-am-gateway-standalone-* /opt/graviteeio-am-gateway/
+
+RUN if [ -x "${JAVA_HOME}/bin/jcmd" ]; then \
+        ln -sf "${JAVA_HOME}/bin/jcmd" /usr/local/bin/jcmd; \
+    else \
+        echo "jcmd not found in ${JAVA_HOME}/bin; skipping symlink"; \
+    fi
 
 WORKDIR ${GRAVITEE_AM_HOME}
 
