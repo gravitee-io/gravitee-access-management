@@ -62,7 +62,6 @@
             <version>${project.version}</version>
         </dependency>
 
-
         <!-- Gravitee.io Access Management -->
         <dependency>
             <groupId>io.gravitee.am.gateway</groupId>
@@ -89,6 +88,12 @@
         <dependency>
             <groupId>io.gravitee.am</groupId>
             <artifactId>gravitee-am-monitoring</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.gravitee.am.secrets</groupId>
+            <artifactId>gravitee-am-secrets</artifactId>
             <version>${project.version}</version>
         </dependency>
 
