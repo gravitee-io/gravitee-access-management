@@ -47,7 +47,7 @@
     "@swimlane/ngx-datatable": "20.1.0",
     "asciidoctor": "3.0.4",
     "asciidoctor-highlight.js": "0.4.0",
-    "bcryptjs": "3.0.2",
+    "bcryptjs": "3.0.3",
     "codemirror": "5.65.20",
     "highcharts": "9.3.3",
     "highcharts-angular": "3.0.0",
