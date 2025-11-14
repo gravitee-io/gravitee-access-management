@@ -47,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
@@ -569,7 +570,7 @@ public class JWKServiceTest {
 
 
     @Test
-    public void shouldGetJWKSet_singleKey() {
+    public void shouldGetJWKSet_singleKey() throws Exception  {
         io.gravitee.am.model.jose.JWK key = new io.gravitee.am.model.jose.RSAKey();
         key.setKid("my-test-key");
 
@@ -580,24 +581,25 @@ public class JWKServiceTest {
 
         TestObserver<JWKSet> testObserver = jwkService.getKeys().test();
 
+        testObserver.await(5, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(jwkSet -> "my-test-key".equals(jwkSet.getKeys().get(0).getKid()));
     }
 
     @Test
-    public void shouldGetJWKSet_noCertificateProvider() {
+    public void shouldGetJWKSet_noCertificateProvider() throws Exception  {
         when(certificateManager.providers()).thenReturn(Collections.emptySet());
 
         TestObserver<JWKSet> testObserver = jwkService.getKeys().test();
-
+        testObserver.await(5, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(jwkSet -> jwkSet.getKeys().isEmpty());
     }
 
     @Test
-    public void shouldGetJWKSet_multipleKeys() {
+    public void shouldGetJWKSet_multipleKeys() throws Exception {
         io.gravitee.am.model.jose.JWK key = new io.gravitee.am.model.jose.RSAKey();
         key.setKid("my-test-key");
         io.gravitee.am.model.jose.JWK key2 = new io.gravitee.am.model.jose.RSAKey();
@@ -615,6 +617,7 @@ public class JWKServiceTest {
         when(certificateManager.providers()).thenReturn(certificateProviders);
 
         TestObserver<JWKSet> testObserver = jwkService.getKeys().test();
+        testObserver.await(5, TimeUnit.SECONDS);
 
         testObserver.assertComplete();
         testObserver.assertNoErrors();
@@ -622,7 +625,7 @@ public class JWKServiceTest {
     }
 
     @Test
-    public void shouldGetJWKSet_filter_mtls() {
+    public void shouldGetJWKSet_filter_mtls() throws Exception {
         io.gravitee.am.model.jose.JWK key = new io.gravitee.am.model.jose.RSAKey();
         key.setKid("my-test-key");
         key.setUse("sig");
@@ -649,6 +652,7 @@ public class JWKServiceTest {
 
         TestObserver<JWKSet> testObserver = jwkService.getKeys().test();
 
+        testObserver.await(5, TimeUnit.SECONDS);
         testObserver.assertComplete();
         testObserver.assertNoErrors();
         testObserver.assertValue(jwkSet -> jwkSet.getKeys().size() == 2);
