@@ -25,7 +25,7 @@ RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio
 
 RUN apk update \
-    && apk add --no-cache ca-certificates jemalloc \
+    && apk add --no-cache ca-certificates jemalloc jemalloc-dev perl \
 	&& apk add --no-cache --virtual .build-deps zip unzip netcat-openbsd wget build-base \
 	&& wget -O /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip https://download.gravitee.io/graviteeio-am/components/gravitee-am-gateway/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip \
     && unzip /tmp/gravitee-am-gateway-standalone-${GRAVITEEAM_VERSION}.zip -d /tmp/ \

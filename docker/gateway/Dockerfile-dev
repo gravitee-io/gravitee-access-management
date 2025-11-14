@@ -45,7 +45,7 @@ COPY --from=build-env /tmp/jattach /usr/local/bin/jattach
 
 RUN addgroup -g 1000 graviteeio \
     && adduser -D -H -u 1001 graviteeio --ingroup graviteeio \
-    && apk add --no-cache jemalloc ca-certificates \
+    && apk add --no-cache jemalloc jemalloc-dev ca-certificates perl \
     && ln -s /usr/local/bin/jattach /usr/local/bin/jeattach \
     && chgrp -R graviteeio ${GRAVITEE_AM_HOME} \
     && chmod -R g=u ${GRAVITEE_AM_HOME}
