@@ -28,7 +28,6 @@ import io.gravitee.am.gateway.certificate.CertificateProvider;
 import io.gravitee.am.gateway.handler.common.certificate.CertificateManager;
 import io.gravitee.am.gateway.handler.common.jwt.JWTService;
 import io.gravitee.am.model.oidc.Client;
-import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.core.SingleEmitter;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -99,7 +98,7 @@ public class JWTServiceImpl implements JWTService {
     @Override
     public Single<EncodedJWT> encodeJwt(JWT jwt, Client client) {
         return certificateManager.get(client.getCertificate())
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
                 .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
     }
 
@@ -112,7 +111,7 @@ public class JWTServiceImpl implements JWTService {
 
         return certificateManager.findByAlgorithm(client.getUserinfoSignedResponseAlg())
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
                 .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
     }
 
@@ -130,7 +129,7 @@ public class JWTServiceImpl implements JWTService {
 
         return certificateManager.findByAlgorithm(signedResponseAlg)
                 .switchIfEmpty(certificateManager.get(client.getCertificate()))
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(fallbackToDefaultCertificateProvider(client))
                 .flatMap(certificateProvider -> encodeJwt(jwt, certificateProvider));
     }
 
@@ -141,7 +140,10 @@ public class JWTServiceImpl implements JWTService {
         }
         String certificateId = extractKid(jwt).orElse(getDefaultCertificateId.get());
         return certificateManager.get(certificateId)
-                .defaultIfEmpty(certificateManager.defaultCertificateProvider())
+                .switchIfEmpty(Single.defer(() -> {
+                    logger.warn("Falling back to default certificate provider for certificateId: {}", certificateId);
+                    return Single.just(certificateManager.defaultCertificateProvider());
+                }))
                 .flatMap(certificateProvider -> decodeAndVerify(jwt, certificateProvider, tokenType));
     }
 
@@ -161,6 +163,13 @@ public class JWTServiceImpl implements JWTService {
                 logger.debug("Failed to decode {} JWT", tokenType, ex);
                 emitter.onError(buildInvalidTokenException(tokenType, ex));
             }
+        });
+    }
+
+    private Single<CertificateProvider> fallbackToDefaultCertificateProvider(Client client) {
+        return Single.defer(() -> {
+            logger.warn("Falling back to default certificate provider for client: {}", client);
+            return Single.just(certificateManager.defaultCertificateProvider());
         });
     }
 

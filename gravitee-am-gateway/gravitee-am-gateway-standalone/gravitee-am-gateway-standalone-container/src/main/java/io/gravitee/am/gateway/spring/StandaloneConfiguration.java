@@ -43,6 +43,8 @@ import io.gravitee.am.plugins.dataplane.spring.DataPlaneSpringConfiguration;
 import io.gravitee.am.plugins.deviceidentifier.spring.DeviceIdentifierSpringConfiguration;
 import io.gravitee.am.plugins.extensiongrant.spring.ExtensionGrantSpringConfiguration;
 import io.gravitee.am.plugins.factor.spring.FactorSpringConfiguration;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluator;
+import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationEvaluatorsRegistry;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderSpringConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
@@ -50,6 +52,7 @@ import io.gravitee.am.plugins.authenticator.spring.AuthenticatorSpringConfigurat
 import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
+import io.gravitee.am.service.secrets.SecretsConfiguration;
 import io.gravitee.am.service.spring.ServiceConfiguration;
 import io.gravitee.el.ExpressionLanguageInitializer;
 import io.gravitee.node.api.Node;
@@ -71,6 +74,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 
+import java.util.List;
+
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
@@ -82,6 +87,7 @@ import org.springframework.core.env.Environment;
         DataPlaneSpringConfiguration.class,
         GatewayUpgraderConfiguration.class,
         ServiceConfiguration.class,
+        SecretsConfiguration.class,
         GatewayPurgeServiceConfiguration.class,
         IdentityProviderSpringConfiguration.class,
         AuthorizationEngineSpringConfiguration.class,
@@ -170,6 +176,11 @@ public class StandaloneConfiguration {
     @Bean
     public PluginConfigurationValidatorsRegistry pluginConfigurationValidatorsRegistry(){
         return new PluginConfigurationValidatorsRegistry();
+    }
+
+    @Bean
+    public PluginConfigurationEvaluatorsRegistry pluginConfigurationEvaluatorsRegistry(List<PluginConfigurationEvaluator> evaluators) {
+        return new PluginConfigurationEvaluatorsRegistry(evaluators);
     }
 
     @Bean
