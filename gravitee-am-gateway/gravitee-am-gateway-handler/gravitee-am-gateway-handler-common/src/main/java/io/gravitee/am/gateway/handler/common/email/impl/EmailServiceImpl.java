@@ -45,7 +45,7 @@ import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.gravitee.am.service.reporter.builder.AuditBuilder;
 import io.gravitee.am.service.reporter.builder.EmailAuditBuilder;
 import io.vertx.rxjava3.core.MultiMap;
-import org.springframework.beans.factory.InitializingBean;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
@@ -208,18 +208,26 @@ public class EmailServiceImpl implements EmailService {
     private void sendEmail(Email email, User user, Client client) {
         try {
             final Locale preferredLanguage = preferredLanguage(user, Locale.ENGLISH);
+            final Map<String, Object> params = email.getParams();
+            final Email emailToSend = new Email(email);
+
+            if (!StringUtils.isEmpty(email.getFromName())) {
+                // compute email - fromName
+                final Template fromNameTemplate = new Template("fromName", email.getFromName(), freemarkerConfiguration);
+                final String fromName = processTemplate(fromNameTemplate, params, preferredLanguage);
+                emailToSend.setFromName(fromName);
+            }
 
             // compute email subject
-            final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
-            final String subject = processTemplate(plainTextTemplate, email.getParams(), preferredLanguage);
+            final Template plainTextTemplate = new Template("subject", email.getSubject(), freemarkerConfiguration);
+            final String subject = processTemplate(plainTextTemplate, params, preferredLanguage);
+            emailToSend.setSubject(subject);
 
             // compute email content
             final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
-            final String content = processTemplate(template, email.getParams(), preferredLanguage);
-
-            final Email emailToSend = new Email(email);
-            emailToSend.setSubject(subject);
+            final String content = processTemplate(template, params, preferredLanguage);
             emailToSend.setContent(content);
+
             emailService.send(emailToSend);
             auditService.report(AuditBuilder.builder(EmailAuditBuilder.class)
                     .reference(Reference.domain(domain.getId()))

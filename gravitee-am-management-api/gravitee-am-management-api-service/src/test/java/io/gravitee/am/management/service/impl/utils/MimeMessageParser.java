@@ -141,6 +141,20 @@ public class MimeMessageParser
     }
 
     /**
+     * @return the 'fromName' field of the message
+     * @throws Exception parsing the mime message failed
+     */
+    public String getFromName() throws Exception
+    {
+        final Address[] addresses = this.mimeMessage.getFrom();
+        if (addresses == null || addresses.length == 0)
+        {
+            return null;
+        }
+        return ((InternetAddress) addresses[0]).getPersonal();
+    }
+
+    /**
      * @return the 'replyTo' address of the email
      * @throws Exception parsing the mime message failed
      */
