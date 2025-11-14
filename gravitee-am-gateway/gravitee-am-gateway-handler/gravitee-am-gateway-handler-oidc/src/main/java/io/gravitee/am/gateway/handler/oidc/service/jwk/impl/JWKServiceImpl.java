@@ -26,6 +26,7 @@ import io.gravitee.am.service.exception.InvalidClientMetadataException;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.rxjava3.ext.web.client.HttpResponse;
 import io.vertx.rxjava3.ext.web.client.WebClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,9 @@ public class JWKServiceImpl implements JWKService {
     @Override
     public Single<JWKSet> getKeys() {
         return Flowable.fromIterable(certificateManager.providers())
+                .subscribeOn(Schedulers.io())
                 .flatMap(certificateProvider -> certificateProvider.getProvider().keys())
+                .observeOn(Schedulers.computation())
                 .filter(jwk -> jwk.getUse() == null || JWK_USAGE.contains(jwk.getUse()))
                 .toList()
                 .map(keys -> {
@@ -77,7 +80,9 @@ public class JWKServiceImpl implements JWKService {
     @Override
     public Maybe<JWKSet> getDomainPrivateKeys() {
         return Flowable.fromIterable(certificateManager.providers())
+                .subscribeOn(Schedulers.io())
                 .flatMap(provider -> provider.getProvider().privateKey())
+                .subscribeOn(Schedulers.computation())
                 .toList()
                 .map(keys -> {
                     JWKSet jwkSet = new JWKSet();
