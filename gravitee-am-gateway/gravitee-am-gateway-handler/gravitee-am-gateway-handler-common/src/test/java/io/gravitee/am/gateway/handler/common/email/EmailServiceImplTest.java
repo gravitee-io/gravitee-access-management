@@ -22,6 +22,7 @@ import io.gravitee.am.gateway.handler.common.email.impl.EmailServiceImpl;
 import io.gravitee.am.jwt.JWTBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.Email;
+import io.gravitee.am.model.ReferenceType;
 import io.gravitee.am.model.Template;
 import io.gravitee.am.model.User;
 import io.gravitee.am.model.oidc.Client;
@@ -30,7 +31,9 @@ import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.vertx.rxjava3.core.MultiMap;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -47,11 +50,11 @@ import static java.util.concurrent.TimeUnit.DAYS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.anyInt;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -214,6 +217,68 @@ public class EmailServiceImplTest {
         verify(emailManager, times(1)).getEmail(any(), any(), anyInt());
         verify(auditService, times(1)).report(any());
         verify(this.emailService, times(1)).send(any());
+    }
+
+    @Test
+    public void send_with_dynamic_from_fromName_valid() throws IOException {
+        var emailService = new EmailServiceImpl(
+                true,
+                "Please reset your password",
+                300,
+                "Account has been locked",
+                86400,
+                "Verification Code",
+                300,
+                "Please verify Attempt",
+                "Complete your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue());
+        emailServiceSpy = Mockito.spy(emailService);
+        MockitoAnnotations.openMocks(this);
+
+        final Email email = new Email();
+        email.setEnabled(true);
+        email.setFrom("${user.firstName}.${user.lastName}@gravitee.io");
+        email.setFromName("${domain.id}-team");
+        email.setSubject("Subject ${user.firstName}");
+        email.setTemplate("dynamic_template");
+        email.setContent("Hello ${user.firstName}");
+        email.setExpiresAfter(300);
+
+        when(freemarkerConfiguration.getIncompatibleImprovements()).thenReturn(DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
+        when(freemarkerConfiguration.getNamingConvention()).thenReturn(AUTO_DETECT_NAMING_CONVENTION);
+        when(freemarkerConfiguration.getObjectWrapper()).thenReturn(new DefaultObjectWrapperBuilder(DEFAULT_INCOMPATIBLE_IMPROVEMENTS).build());
+        var templateMock = new freemarker.template.Template("content", new StringReader(email.getContent()), freemarkerConfiguration);
+        when(freemarkerConfiguration.getTemplate(eq(email.getTemplate() + ".html"))).thenReturn(templateMock);
+
+        final DictionaryProvider mockDictionaryProvider = Mockito.mock(DictionaryProvider.class);
+        when(this.emailService.getDefaultDictionaryProvider()).thenReturn(mockDictionaryProvider);
+        when(mockDictionaryProvider.getDictionaryFor(any())).thenReturn(new Properties());
+
+        when(graviteeMessageResolver.getDynamicDictionaryProvider()).thenReturn(null);
+        when(jwtBuilder.sign(any())).thenReturn("TOKEN");
+        when(domain.getId()).thenReturn("domain-id");
+        when(domainService.buildUrl(any(), any(), any())).thenReturn("http://localhost/reset");
+        when(emailManager.getEmail(anyString(), any(), anyInt())).thenReturn(email);
+
+        final User user = new User();
+        user.setId("user-id");
+        user.setEmail("john.doe@gravitee.io");
+        user.setFirstName("John");
+        user.setLastName("Doe");
+        user.setReferenceId("domain-id");
+        user.setReferenceType(ReferenceType.DOMAIN);
+
+        final Client client = new Client();
+        client.setId("client-id");
+        client.setClientId("client-id");
+
+        emailServiceSpy.send(Template.RESET_PASSWORD, user, client);
+
+        ArgumentCaptor<io.gravitee.am.common.email.Email> captor = ArgumentCaptor.forClass(io.gravitee.am.common.email.Email.class);
+        verify(this.emailService).send(captor.capture());
+
+        io.gravitee.am.common.email.Email sentEmail = captor.getValue();
+        assertThat(sentEmail.getFromName()).isEqualTo("domain-id-team");
     }
 
     private Email buildEmail() {
