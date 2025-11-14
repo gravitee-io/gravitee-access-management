@@ -66,6 +66,16 @@ public class MimeMessageParserAssert extends AbstractAssert<MimeMessageParserAss
         return this;
     }
 
+    public MimeMessageParserAssert hasFromName(String fromName) throws Exception {
+        isNotNull();
+        String assertjErrorMessage = "\nExpecting FromName to equal:\n  <%s>\nbut was:\n  <%s>";
+
+        if (!actual.getFromName().equals(fromName)) {
+            failWithMessage(assertjErrorMessage, fromName, actual.getFromName());
+        }
+        return this;
+    }
+
     public MimeMessageParserAssert hasSubject(String subject) throws Exception {
         isNotNull();
         String assertjErrorMessage = "\nExpecting Subject to be:\n  <%s>\nbut was:\n  <%s>";

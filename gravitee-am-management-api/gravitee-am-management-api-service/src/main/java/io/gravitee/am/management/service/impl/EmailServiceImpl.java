@@ -200,13 +200,21 @@ public class EmailServiceImpl implements EmailService {
 
     private Email processEmailTemplate(Email email, Locale locale, DomainBasedDictionaryProvider dictionaryProvider) throws IOException, TemplateException {
         final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
-        final Template plainTextTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
+        final Email emailToSend = new Email(email);
+
+        if (!StringUtils.isEmpty(email.getFromName())) {
+            final Template fromNameTemplate = new Template("fromName", email.getFromName(), freemarkerConfiguration);
+            final String fromName = processTemplate(fromNameTemplate, email.getParams(), locale, dictionaryProvider);
+            emailToSend.setFromName(fromName);
+        }
+
         // compute email subject
-        final String subject = processTemplate(plainTextTemplate, email.getParams(), locale, dictionaryProvider);
+        final Template subjectTemplate = new Template("subject", email.getSubject(), freemarkerConfiguration);
+        final String subject = processTemplate(subjectTemplate, email.getParams(), locale, dictionaryProvider);
+        emailToSend.setSubject(subject);
+        
         // compute email content
         final String content = processTemplate(template, email.getParams(), locale, dictionaryProvider);
-        final Email emailToSend = new Email(email);
-        emailToSend.setSubject(subject);
         emailToSend.setContent(content);
         return emailToSend;
     }
