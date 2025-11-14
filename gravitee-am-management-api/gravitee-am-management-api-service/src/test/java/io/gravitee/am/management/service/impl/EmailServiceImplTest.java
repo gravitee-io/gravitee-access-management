@@ -63,6 +63,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -116,7 +117,7 @@ public class EmailServiceImplTest {
     }
 
     @Test
-    void should_resolve_dynamic_from_and_from_name() throws Exception {
+    void should_resolve_dynamic_from_name() throws Exception {
 
         when(jwtBuilder.sign(any())).thenReturn("TOKEN");
 
@@ -141,7 +142,7 @@ public class EmailServiceImplTest {
         );
 
         var emailTemplate = new Email();
-        emailTemplate.setFrom("${user.firstName}.${user.lastName}@gravitee.io");
+        emailTemplate.setFrom("test@gravitee.io");
         emailTemplate.setFromName("${domain.id}-team");
         emailTemplate.setSubject("Welcome ${user.firstName}");
         emailTemplate.setTemplate(Template.REGISTRATION_CONFIRMATION.template());
@@ -157,14 +158,15 @@ public class EmailServiceImplTest {
         cut.send(domain, null, Template.REGISTRATION_CONFIRMATION, user).test().await().assertComplete();
 
         var receivedMessages = greenMail.getReceivedMessages();
-        org.assertj.core.api.Assertions.assertThat(receivedMessages).hasSize(1);
+        assertThat(receivedMessages).hasSize(1);
 
         var message = receivedMessages[0];
         var parsedMessage = new MimeMessageParser(message).parse();
 
-        MimeMessageParserAssert.assertThat(parsedMessage).hasFrom("John.Doe@gravitee.io");
+        MimeMessageParserAssert.assertThat(parsedMessage).hasFrom("test@gravitee.io");
+        MimeMessageParserAssert.assertThat(parsedMessage).hasFromName("unit-domain-team");
         MimeMessageParserAssert.assertThat(parsedMessage).hasSubject("Welcome John");
-        org.assertj.core.api.Assertions.assertThat(((InternetAddress) message.getFrom()[0]).getPersonal()).isEqualTo("unit-domain-team");
+        assertThat(((InternetAddress) message.getFrom()[0]).getPersonal()).isEqualTo("unit-domain-team");
     }
 
     @ParameterizedTest

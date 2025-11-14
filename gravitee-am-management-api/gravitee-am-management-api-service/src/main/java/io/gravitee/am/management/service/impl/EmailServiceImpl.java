@@ -200,18 +200,14 @@ public class EmailServiceImpl implements EmailService {
         final Template template = freemarkerConfiguration.getTemplate(email.getTemplate());
         final Email emailToSend = new Email(email);
 
-        final Template fromTemplate = new Template("from", new StringReader(email.getFrom()), freemarkerConfiguration);
-        final String from = processTemplate(fromTemplate, email.getParams(), locale, dictionaryProvider);
-        emailToSend.setFrom(from);
-
         if (!StringUtils.isEmpty(email.getFromName())) {
-            final Template fromNameTemplate = new Template("fromName", new StringReader(email.getFromName()), freemarkerConfiguration);
+            final Template fromNameTemplate = new Template("fromName", email.getFromName(), freemarkerConfiguration);
             final String fromName = processTemplate(fromNameTemplate, email.getParams(), locale, dictionaryProvider);
             emailToSend.setFromName(fromName);
         }
 
         // compute email subject
-        final Template subjectTemplate = new Template("subject", new StringReader(email.getSubject()), freemarkerConfiguration);
+        final Template subjectTemplate = new Template("subject", email.getSubject(), freemarkerConfiguration);
         final String subject = processTemplate(subjectTemplate, email.getParams(), locale, dictionaryProvider);
         emailToSend.setSubject(subject);
         

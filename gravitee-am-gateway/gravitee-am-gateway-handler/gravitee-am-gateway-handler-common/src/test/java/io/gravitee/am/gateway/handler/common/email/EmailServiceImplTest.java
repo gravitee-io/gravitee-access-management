@@ -31,6 +31,7 @@ import io.gravitee.am.service.DomainReadService;
 import io.gravitee.am.service.i18n.DictionaryProvider;
 import io.gravitee.am.service.i18n.GraviteeMessageResolver;
 import io.vertx.rxjava3.core.MultiMap;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -53,6 +54,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Rémi SULTAN (remi.sultan at graviteesource.com)
@@ -276,8 +278,7 @@ public class EmailServiceImplTest {
         verify(this.emailService).send(captor.capture());
 
         io.gravitee.am.common.email.Email sentEmail = captor.getValue();
-        org.assertj.core.api.Assertions.assertThat(sentEmail.getFrom()).isEqualTo("John.Doe@gravitee.io");
-        org.assertj.core.api.Assertions.assertThat(sentEmail.getFromName()).isEqualTo("domain-id-team");
+        assertThat(sentEmail.getFromName()).isEqualTo("domain-id-team");
     }
 
     private Email buildEmail() {
