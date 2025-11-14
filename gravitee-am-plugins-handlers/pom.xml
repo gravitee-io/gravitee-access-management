@@ -47,6 +47,7 @@
         <module>gravitee-am-plugins-handlers-deviceidentifier</module>
         <module>gravitee-am-plugins-handlers-authdevice-notifier</module>
         <module>gravitee-am-plugins-handlers-dataplane</module>
+        <module>gravitee-am-plugins-handlers-authenticator</module>
     </modules>
 
     <dependencies>

@@ -46,6 +46,7 @@ import io.gravitee.am.plugins.factor.spring.FactorSpringConfiguration;
 import io.gravitee.am.plugins.handlers.api.core.PluginConfigurationValidatorsRegistry;
 import io.gravitee.am.plugins.idp.spring.IdentityProviderSpringConfiguration;
 import io.gravitee.am.plugins.policy.spring.PolicySpringConfiguration;
+import io.gravitee.am.plugins.authenticator.spring.AuthenticatorSpringConfiguration;
 import io.gravitee.am.plugins.protocol.spring.ProtocolSpringConfiguration;
 import io.gravitee.am.plugins.reporter.spring.ReporterSpringConfiguration;
 import io.gravitee.am.plugins.resource.spring.ResourceSpringConfiguration;
@@ -87,6 +88,7 @@ import org.springframework.core.env.Environment;
         CertificateSpringConfiguration.class,
         ExtensionGrantSpringConfiguration.class,
         ReporterSpringConfiguration.class,
+        AuthenticatorSpringConfiguration.class,
         ProtocolSpringConfiguration.class,
         PolicySpringConfiguration.class,
         FactorSpringConfiguration.class,
