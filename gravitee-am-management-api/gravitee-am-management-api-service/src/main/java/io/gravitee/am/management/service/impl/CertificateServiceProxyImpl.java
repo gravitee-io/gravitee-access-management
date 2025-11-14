@@ -153,12 +153,12 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                     .doOnSuccess(certificate -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
                             .principal(principal)
                             .type(EventType.CERTIFICATE_CREATED)
-                            .certificate(certificate)))
-                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
-                            .principal(principal)
-                            .type(EventType.CERTIFICATE_CREATED)
-                            .reference(Reference.domain(cert.getDomain()))
-                            .throwable(throwable))));
+                            .certificate(certificate))))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.CERTIFICATE_CREATED)
+                        .reference(Reference.domain(domain.getId()))
+                        .throwable(throwable)));
     }
 
     @Override
@@ -173,13 +173,12 @@ public class CertificateServiceProxyImpl extends AbstractSensitiveProxy implemen
                                             .principal(principal)
                                             .type(EventType.CERTIFICATE_UPDATED)
                                             .oldValue(safeOldCert)
-                                            .certificate(certificate)))
-                                    .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
-                                            .principal(principal)
-                                            .type(EventType.CERTIFICATE_UPDATED)
-                                            .reference(Reference.domain(cert.getDomain()))
-                                            .throwable(throwable))))
-                ));
+                                            .certificate(certificate))))))
+                .doOnError(throwable -> auditService.report(AuditBuilder.builder(CertificateAuditBuilder.class)
+                        .principal(principal)
+                        .type(EventType.CERTIFICATE_UPDATED)
+                        .reference(Reference.domain(domain.getId()))
+                        .throwable(throwable)));
     }
 
     @Override
