@@ -24,7 +24,7 @@ import io.gravitee.am.model.Reference;
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class CredentialAuditBuilder extends ManagementAuditBuilder<CredentialAuditBuilder> {
+public class CredentialAuditBuilder extends CredentialAuditBuilderBase<CredentialAuditBuilder> {
 
     public CredentialAuditBuilder() {
         super();
@@ -37,6 +37,11 @@ public class CredentialAuditBuilder extends ManagementAuditBuilder<CredentialAud
             }
             reference(new Reference(credential.getReferenceType(), credential.getReferenceId()));
             setTarget(credential.getId(), EntityType.CREDENTIAL, credential.getAaguid(), credential.getCredentialId(), credential.getReferenceType(), credential.getReferenceId());
+            // Store route path in target attributes for UI navigation
+            // Format: ['users', userId, 'credentials', credentialId]
+            if (credential.getUserId() != null) {
+                setRoutePath(new String[]{"users", credential.getUserId(), "credentials", credential.getId()});
+            }
         }
         return this;
     }

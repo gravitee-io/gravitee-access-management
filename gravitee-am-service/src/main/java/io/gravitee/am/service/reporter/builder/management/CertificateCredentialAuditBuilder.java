@@ -23,7 +23,7 @@ import io.gravitee.am.model.Reference;
 /**
  * @author GraviteeSource Team
  */
-public class CertificateCredentialAuditBuilder extends ManagementAuditBuilder<CertificateCredentialAuditBuilder> {
+public class CertificateCredentialAuditBuilder extends CredentialAuditBuilderBase<CertificateCredentialAuditBuilder> {
 
     public CertificateCredentialAuditBuilder() {
         super();
@@ -37,6 +37,11 @@ public class CertificateCredentialAuditBuilder extends ManagementAuditBuilder<Ce
             reference(new Reference(credential.getReferenceType(), credential.getReferenceId()));
             // Use certificate thumbprint as alternative ID (similar to credentialId for WebAuthn)
             setTarget(credential.getId(), EntityType.CREDENTIAL, credential.getCertificateThumbprint(), credential.getCertificateSubjectDN(), credential.getReferenceType(), credential.getReferenceId());
+            // Store route path in target attributes for UI navigation
+            // Format: ['users', userId, 'cert-credentials', credentialId]
+            if (credential.getUserId() != null) {
+                setRoutePath(new String[]{"users", credential.getUserId(), "cert-credentials", credential.getId()});
+            }
         }
         return this;
     }

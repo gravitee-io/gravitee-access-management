@@ -2503,6 +2503,21 @@ export const routes: Routes = [
                                 ],
                               },
                               {
+                                path: 'cert-credentials',
+                                children: [
+                                  {
+                                    path: ':credentialId',
+                                    component: UserCredentialComponent,
+                                    resolve: { credential: UserCredentialResolver },
+                                    data: {
+                                      breadcrumb: {
+                                        label: 'detail',
+                                      },
+                                    },
+                                  },
+                                ],
+                              },
+                              {
                                 path: 'roles',
                                 component: UserRolesComponent,
                                 resolve: { roles: UserRolesResolver, dynamicRoles: DynamicUserRolesResolver },

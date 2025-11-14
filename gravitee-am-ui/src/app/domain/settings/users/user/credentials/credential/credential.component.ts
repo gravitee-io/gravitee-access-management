@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+
+import { CREDENTIAL_TYPE, Credential } from '../credentials.component';
 
 @Component({
   selector: 'app-user-credential',
@@ -23,11 +25,30 @@ import { ActivatedRoute } from '@angular/router';
   standalone: false,
 })
 export class UserCredentialComponent implements OnInit {
-  credential: any;
+  credential: Credential;
+  credentialType: string;
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+  ) {}
 
   ngOnInit() {
     this.credential = this.route.snapshot.data['credential'];
+    // Credential type is set by the resolver
+    this.credentialType = this.credential?.credentialType || CREDENTIAL_TYPE.WEBAUTHN;
+  }
+
+  isCertificate(): boolean {
+    return this.credentialType === CREDENTIAL_TYPE.CERTIFICATE;
+  }
+
+  isWebAuthn(): boolean {
+    return this.credentialType === CREDENTIAL_TYPE.WEBAUTHN;
+  }
+
+  goBackToCredentials(): void {
+    // Navigate to credentials list (sibling route)
+    this.router.navigate(['../credentials'], { relativeTo: this.route.parent });
   }
 }
