@@ -204,7 +204,7 @@ async function ensureIdp(domainId: string, accessToken: string, kind?: string) {
   return { idp: undefined };
 }
 
-async function provision(configPath: string, verify: boolean) {
+export async function provision(configPath: string, verify: boolean) {
   const startedAt = Date.now();
   const cfg = readConfig(configPath);
 
@@ -461,7 +461,7 @@ async function provision(configPath: string, verify: boolean) {
   }
 }
 
-async function purge(prefix: string, verify: boolean) {
+export async function purge(prefix: string, verify: boolean) {
   // Defaults aligned with provision()
   process.env.AM_MANAGEMENT_URL = process.env.AM_MANAGEMENT_URL || 'http://localhost:8093';
   process.env.AM_MANAGEMENT_ENDPOINT = process.env.AM_MANAGEMENT_ENDPOINT || `${process.env.AM_MANAGEMENT_URL}`;
