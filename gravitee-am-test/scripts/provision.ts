@@ -34,12 +34,9 @@ import path from 'path';
 import faker from 'faker';
 
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import { createDomain, deleteDomain, startDomain, getDomain, waitFor } from '@management-commands/domain-management-commands';
-import { createApplication, patchApplication } from '@management-commands/application-management-commands';
-import { createUser, bulkCreateUsers } from '@management-commands/user-management-commands';
 import { createMongoIdp } from '@utils-commands/idps-commands';
 import { createRandomString } from '@management-commands/service/utils';
-import { getDomainApi, getDomainManagerUrl } from '@management-commands/service/utils';
+import { getDomainApi, getDomainManagerUrl, getApplicationApi, getUserApi } from '@management-commands/service/utils';
 const request = require('supertest');
 
 // ---------- pretty logging helpers ----------
@@ -259,11 +256,24 @@ async function provision(configPath: string, verify: boolean) {
   for (let d = 1; d <= cfg.domains; d++) {
     const domainName = buildName(namePrefix, ['domain', runTag, d]);
     info(`Creating domain: ${domainName}`);
-    const domain = await createDomain(accessToken, domainName, 'Provisioned by provision.ts');
+    const domain = await getDomainApi(accessToken).createDomain({
+      organizationId: process.env.AM_DEF_ORG_ID!,
+      environmentId: process.env.AM_DEF_ENV_ID!,
+      newDomain: { name: domainName, description: 'Provisioned by provision.ts', dataPlaneId: 'default' },
+    });
     const domainId = (domain as any).id;
     info(`Starting domain: ${domainName} (${domainId})`);
-    await startDomain(domainId, accessToken);
-    const domainAfterStart = await getDomain(domainId, accessToken);
+    await getDomainApi(accessToken).patchDomain({
+      organizationId: process.env.AM_DEF_ORG_ID!,
+      environmentId: process.env.AM_DEF_ENV_ID!,
+      domain: domainId,
+      patchDomain: { enabled: true },
+    });
+    const domainAfterStart = await getDomainApi(accessToken).findDomain({
+      organizationId: process.env.AM_DEF_ORG_ID!,
+      environmentId: process.env.AM_DEF_ENV_ID!,
+      domain: domainId,
+    });
     if (!(domainAfterStart as any).enabled) {
       throw new Error(`Domain ${domainName} (${domainId}) failed to enable`);
     }
@@ -275,7 +285,7 @@ async function provision(configPath: string, verify: boolean) {
   section('Readiness wait');
   const waitText = `${ICON.hourglass} Waiting 10s for domains to be ready...`;
   const waitSpin = startSpinner(waitText);
-  await waitFor(10000);
+  await new Promise((r) => setTimeout(r, 10000));
   stopSpinner(waitSpin, `${ansi.green}${ICON.ok} Domains are ready${ansi.reset}`);
   success('Wait complete');
 
@@ -321,9 +331,20 @@ async function provision(configPath: string, verify: boolean) {
               },
             },
           } as any;
-          const created = await createApplication(domainId, accessToken, newAppBody);
+          const created = await getApplicationApi(accessToken).createApplication({
+            organizationId: process.env.AM_DEF_ORG_ID!,
+            environmentId: process.env.AM_DEF_ENV_ID!,
+            domain: domainId,
+            newApplication: newAppBody,
+          });
           if (idp) {
-            await patchApplication(domainId, accessToken, { identityProviders: [{ identity: idp, selectionRule: '', priority: 0 }] } as any, (created as any).id);
+            await getApplicationApi(accessToken).patchApplication({
+              organizationId: process.env.AM_DEF_ORG_ID!,
+              environmentId: process.env.AM_DEF_ENV_ID!,
+              domain: domainId,
+              application: (created as any).id,
+              patchApplication: { identityProviders: [{ identity: idp, selectionRule: '', priority: 0 }] } as any,
+            });
           }
           createdCount++;
           updateSpinner(appSpin, `Creating ${totalApps} application(s): ${createdCount}/${totalApps}`);
@@ -363,7 +384,12 @@ async function provision(configPath: string, verify: boolean) {
       for (let start = 0; start < total; start += batchSize) {
         const batch = allUsers.slice(start, start + batchSize);
         updateSpinner(userSpin, `Creating ${total} user(s): ${Math.min(start + batch.length, total)}/${total}`);
-        await bulkCreateUsers(domainId, accessToken, batch, 0);
+        await getUserApi(accessToken).bulkUserOperation({
+          organizationId: process.env.AM_DEF_ORG_ID!,
+          environmentId: process.env.AM_DEF_ENV_ID!,
+          domain: domainId,
+          domainUserBulkRequest: { action: 'CREATE', items: batch, failOnErrors: 0 },
+        });
         usersCreated += batch.length;
         updateSpinner(userSpin, `Creating ${total} user(s): ${usersCreated}/${total}`);
       }
@@ -471,7 +497,11 @@ async function purge(prefix: string, verify: boolean) {
       const name = d.name || '';
       if (name.startsWith(prefix)) {
         info(`Deleting domain ${name} (${d.id})`);
-        await deleteDomain(d.id as string, accessToken);
+        await api.deleteDomain({
+          organizationId: process.env.AM_DEF_ORG_ID!,
+          environmentId: process.env.AM_DEF_ENV_ID!,
+          domain: d.id as string,
+        });
         deleted++;
       }
     }
