@@ -18,6 +18,15 @@ import { section, info, success, ICON, ansi } from '../logger';
 
 export type CreatedDomain = { id: string; name: string; ordinal: number };
 
+/**
+ * Create and start a number of domains, returning their identifiers and ordinals.
+ * @param accessToken Management API access token
+ * @param orgId Organization id
+ * @param envId Environment id
+ * @param namePrefix Resource name prefix
+ * @param runTag Unique run tag to ensure predictable uniqueness
+ * @param domainCount Number of domains to create
+ */
 export async function createAndStartDomains(
   accessToken: string,
   orgId: string,
@@ -29,27 +38,39 @@ export async function createAndStartDomains(
   section('Create and start domains');
   const api = getDomainApi(accessToken);
   const created: CreatedDomain[] = [];
+
   for (let d = 1; d <= domainCount; d++) {
     const domainName = `${namePrefix}-domain-${runTag}-${d}`;
     info(`Creating domain: ${domainName}`);
+
     const domain = await api.createDomain({
       organizationId: orgId,
       environmentId: envId,
       newDomain: { name: domainName, description: 'Provisioned by provision.ts', dataPlaneId: 'default' },
     });
+
     const domainId = (domain as any).id;
     info(`Starting domain: ${domainName} (${domainId})`);
+
     await api.patchDomain({ organizationId: orgId, environmentId: envId, domain: domainId, patchDomain: { enabled: true } });
+
     const started = await api.findDomain({ organizationId: orgId, environmentId: envId, domain: domainId });
     if (!(started as any).enabled) {
       throw new Error(`Domain ${domainName} (${domainId}) failed to enable`);
     }
+
     success(`Domain ready: ${domainName} (${domainId})`);
     created.push({ id: domainId, name: domainName, ordinal: d });
   }
+
   return created;
 }
 
+/**
+ * Wait a fixed delay to allow newly started domains to become ready.
+ * Use this when you don't need to poll a health endpoint.
+ * @param ms Milliseconds to wait
+ */
 export async function waitForDomainsReady(ms: number) {
   section('Readiness wait');
 

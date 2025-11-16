@@ -39,6 +39,10 @@ export const ICON = {
   hourglass: '⌛',
 };
 
+/**
+ * Render a header-style banner with a title for major phases.
+ * @param title Title to display inside the banner
+ */
 export function banner(title: string) {
   const line = '─'.repeat(Math.max(10, title.length + 4));
   console.log(`${ansi.cyan}${'┌' + line + '┐'}${ansi.reset}`);
@@ -46,26 +50,50 @@ export function banner(title: string) {
   console.log(`${ansi.cyan}${'└' + line + '┘'}${ansi.reset}`);
 }
 
+/**
+ * Start a new logical section in the CLI output.
+ * @param label Section label
+ */
 export function section(label: string) {
   console.log(`\n${ansi.magenta}${ICON.gear} ${label}${ansi.reset}`);
 }
 
+/**
+ * Print an informational message line.
+ * @param msg Message to display
+ */
 export function info(msg: string) {
   console.log(`${ansi.blue}${ICON.info} ${msg}${ansi.reset}`);
 }
 
+/**
+ * Print a success message line (green check).
+ * @param msg Message to display
+ */
 export function success(msg: string) {
   console.log(`${ansi.green}${ICON.ok} ${msg}${ansi.reset}`);
 }
 
+/**
+ * Print a warning message line (yellow).
+ * @param msg Message to display
+ */
 export function warn(msg: string) {
   console.log(`${ansi.yellow}${ICON.warn} ${msg}${ansi.reset}`);
 }
 
+/**
+ * Print an error message line (red).
+ * @param msg Message to display
+ */
 export function errorLog(msg: string) {
   console.log(`${ansi.red}${ICON.fail} ${msg}${ansi.reset}`);
 }
 
+/**
+ * Print a small bullet line (gray), typically for details under a section.
+ * @param msg Message to display
+ */
 export function bullet(msg: string) {
   console.log(`${ansi.gray}  • ${msg}${ansi.reset}`);
 }
@@ -79,6 +107,11 @@ function stripAnsi(s: string): string {
   return s.replace(/\x1B\[[0-9;]*m/g, '');
 }
 
+/**
+ * Start a single-line animated spinner with text.
+ * Caller should later call stopSpinner to clear the line.
+ * @param text Initial spinner text
+ */
 export function startSpinner(text: string): Spinner {
   if (activeSpinner) {
     stopSpinner(activeSpinner);
@@ -98,6 +131,11 @@ export function updateSpinner(s: Spinner, text: string) {
   s.text = text;
 }
 
+/**
+ * Stop an active spinner, clear its line, and optionally print a final line.
+ * @param s Spinner handle returned by startSpinner
+ * @param finalText Optional final message to render after clearing
+ */
 export function stopSpinner(s: Spinner, finalText?: string) {
   if (s.timer) clearInterval(s.timer);
   const len = s.renderLen || 0;
