@@ -19,7 +19,10 @@
     "lint:license:fix": "license-check-and-add add -f license-check-config.json -r",
     "prettier": "prettier --check \"**/*.{js,ts,html,css,scss,json}\"",
     "prettier:fix": "prettier --write \"**/*.{js,ts,html,css,scss,json}\"",
-    "prettier:list": "prettier --list-different \"**/*.{js,ts,html,css,scss,json}\""
+    "prettier:list": "prettier --list-different \"**/*.{js,ts,html,css,scss,json}\"",
+    "provision": "TS_NODE_PROJECT=scripts/tsconfig.provision.json TS_NODE_TRANSPILE_ONLY=1 node -r ts-node/register -r tsconfig-paths/register scripts/provision.ts",
+    "purge": "TS_NODE_PROJECT=scripts/tsconfig.provision.json TS_NODE_TRANSPILE_ONLY=1 node -r ts-node/register -r tsconfig-paths/register scripts/provision.ts --purge",
+    "provision:check": "TS_NODE_PROJECT=scripts/tsconfig.provision.json tsc --noEmit -p scripts/tsconfig.provision.json"
   },
   "license": "MIT License",
   "devDependencies": {
@@ -43,7 +46,13 @@
     "prettier": "2.5.1",
     "supertest": "6.2.3",
     "test-jest": "1.0.1",
+<<<<<<< HEAD
     "typescript": "5.6.3"
+=======
+    "ts-node": "10.9.2",
+    "tsconfig-paths": "4.2.0",
+    "typescript": "5.6.2"
+>>>>>>> d714f2050 (Add provisioning CLI tool to automate Gravitee domain, application, and user creation)
   },
   "dependencies": {
     "cross-fetch": "3.1.8",
