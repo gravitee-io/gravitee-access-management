@@ -32,11 +32,29 @@ function pickGrantTypes(mode: GrantMode | undefined): string[] {
     const idx = Math.floor(Math.random() * choices.length);
     picked.push(choices.splice(idx, 1)[0]);
   }
-  if (!picked.includes('authorization_code')) picked.push('authorization_code');
-  if (!picked.includes('refresh_token')) picked.push('refresh_token');
+  if (!picked.includes('authorization_code')) {
+    picked.push('authorization_code');
+  }
+  if (!picked.includes('refresh_token')) {
+    picked.push('refresh_token');
+  }
   return Array.from(new Set(picked));
 }
 
+/**
+ * Create applications for a given domain with a concurrency limit and enable an IDP if provided.
+ * @param accessToken Management API access token
+ * @param orgId Organization id
+ * @param envId Environment id
+ * @param domainId Target domain id
+ * @param domainOrdinal Domain ordinal used to derive readable names
+ * @param namePrefix Resource name prefix
+ * @param runTag Unique run tag to ensure predictable uniqueness
+ * @param totalApps Number of applications to create
+ * @param grantMode Strategy to select OAuth grant types
+ * @param idpId Optional IDP id to enable on each application
+ * @returns Created apps with id, clientId and name
+ */
 export async function createAppsForDomain(
   accessToken: string,
   orgId: string,
@@ -53,8 +71,10 @@ export async function createAppsForDomain(
   const api = getApplicationApi(accessToken);
   const total = totalApps;
   let createdCount = 0;
+  
   const spin = startSpinner(`Creating ${total} application(s): 0/${total}`);
   const idxs = Array.from({ length: total }, (_, i) => i + 1);
+
   const apps = await runWithConcurrency(idxs, Math.min(5, total), async (a) => {
     const appName = `${namePrefix}app${domainOrdinal}${a}`;
     const clientId = appName;
@@ -74,12 +94,14 @@ export async function createAppsForDomain(
         },
       },
     } as any;
+
     const created = await api.createApplication({
       organizationId: orgId,
       environmentId: envId,
       domain: domainId,
       newApplication: newAppBody,
     });
+
     if (idpId) {
       await api.patchApplication({
         organizationId: orgId,
@@ -89,10 +111,12 @@ export async function createAppsForDomain(
         patchApplication: { identityProviders: [{ identity: idpId, selectionRule: '', priority: 0 }] } as any,
       });
     }
+
     createdCount++;
     updateSpinner(spin, `Creating ${total} application(s): ${createdCount}/${total}`);
     return { id: (created as any).id, clientId, name: appName };
   });
+
   stopSpinner(spin, `${ansi.green}${ICON.ok} Applications created: ${total}/${total}${ansi.reset}`);
   for (const app of apps) {
     bullet(`App ${app.name} id=${app.id} clientId=${app.clientId}`);
