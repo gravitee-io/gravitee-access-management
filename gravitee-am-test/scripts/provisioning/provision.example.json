@@ -1,0 +1,12 @@
+{
+  "namePrefix": "prov",
+  "domains": 50,
+  "applicationsPerDomain": 25,
+  "usersPerDomain": 250,
+  "idp": "mongo",
+  "features": ["mfa", "ciba", "ratelimit"],
+  "grantTypes": "random",
+  "scopes": ["openid", "profile", "email"]
+}
+*** End Patch***}```  Error: Invalid JSON (Expecting value: line 1 column 1 (char 0)) (function: functions.apply_patch)  This tool requires a single string argument with the patch content. Do not use JSON.  continuous_response: None  tool: apply_patch  tool_run_id: 504c24d1-c96d-45d4-92c4-6162b0c86a64  error: InvalidFormatting  message: Invalid tool call: The apply_patch tool expects a single string that obeys the patch grammar. Do not use JSON format. See the tool description for details.  continuous_tool_summaries: []  tool_name: apply_patch  did_finish: False  error_type: InvalidFormatting  failure_type: InvalidFormatting  retryable: True  tool_end_reason: Fail  tool_call_id: 504c24d1-c96d-45d4-92c4-6162b0c86a64  tags_to_use: None  }}}.  Let's call apply_patch again with proper string. We'll add the file.  ***!
+
