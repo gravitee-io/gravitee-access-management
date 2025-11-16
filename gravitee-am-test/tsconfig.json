@@ -4,6 +4,7 @@
     "lib": ["es2020", "dom"],
     "types": ["cypress", "node"],
     "baseUrl": ".",
+    "module": "commonjs",
     "moduleResolution": "node",
     "paths": {
       "@management-apis/*": ["api/management/apis/*"],
@@ -14,7 +15,8 @@
       "@utils/*": ["api/utils/*"],
       "@api-fixtures/*": ["api/fixtures/*"]
     },
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "include": ["**/*.ts", "support/commands.js", "plugins/index.js"],
   "exclude": ["node_modules"]
