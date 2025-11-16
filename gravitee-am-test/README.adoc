@@ -135,7 +135,7 @@ Usage:
 . Copy and edit the example config:
 +
 ----
-cp scripts/provision.example.json my-provision.json
+cp scripts/provisioning/provision.example.json my-provision.json
 ----
 . Run the provisioner:
 +

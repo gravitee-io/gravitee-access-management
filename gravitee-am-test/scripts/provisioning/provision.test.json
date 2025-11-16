@@ -1,0 +1,11 @@
+{
+  "namePrefix": "provtest",
+  "domains": 1,
+  "applicationsPerDomain": 1,
+  "usersPerDomain": 1,
+  "idp": "mongo",
+  "features": [],
+  "grantTypes": "code-only",
+  "scopes": ["openid"]
+}
+
