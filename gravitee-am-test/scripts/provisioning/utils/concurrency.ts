@@ -13,6 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/**
+ * Run an array of async tasks with a fixed concurrency limit and preserve result order.
+ * @param items Items to process
+ * @param limit Maximum number of concurrent workers
+ * @param worker Async worker function invoked with (item, index)
+ * @returns Array of results, in the same order as input items
+ */
 export async function runWithConcurrency<I, O>(items: I[], limit: number, worker: (item: I, index: number) => Promise<O>): Promise<O[]> {
   const results: O[] = new Array(items.length) as O[];
   let idx = 0;
