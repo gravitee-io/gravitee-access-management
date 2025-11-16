@@ -1,0 +1,10 @@
+{
+  "namePrefix": "prov",
+  "domains": 50,
+  "applicationsPerDomain": 25,
+  "usersPerDomain": 250,
+  "idp": "mongo",
+  "features": ["mfa", "ciba", "ratelimit"],
+  "grantTypes": "random",
+  "scopes": ["openid", "profile", "email"]
+}

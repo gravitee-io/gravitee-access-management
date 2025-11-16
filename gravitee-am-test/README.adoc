@@ -68,3 +68,36 @@ In order to update them, execute:
 ```
 $ npm run update:sdk:mapi `http://AM_MANAGEMENT_API/management`
 ```
+
+==== Provisioning CLI
+
+You can provision a predictable environment from a JSON file.
+
+Prerequisites:
+
+- AM_MANAGEMENT_URL, AM_MANAGEMENT_ENDPOINT, AM_DEF_ORG_ID, AM_DEF_ENV_ID, AM_ADMIN_USERNAME, AM_ADMIN_PASSWORD exported in your shell.
+- Install dev deps once: `npm i`
+
+Usage:
+
+. Copy and edit the example config:
++
+----
+cp scripts/provision.example.json my-provision.json
+----
+. Run the provisioner:
++
+----
+npm run provision -- ./my-provision.json
+----
+
+Config fields:
+
+- namePrefix: string prefix for all created resources
+- domains: number of domains to create
+- applicationsPerDomain: apps per domain
+- usersPerDomain: users per domain
+- idp: default or mongo
+- grantTypes: random | code-only | all
+- features: optional array; currently logged and skipped (mfa, ciba, ratelimit)
+- scopes: optional array; reserved for future use
