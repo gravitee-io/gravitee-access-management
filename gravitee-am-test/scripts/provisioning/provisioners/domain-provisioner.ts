@@ -40,7 +40,9 @@ export async function createAndStartDomains(
   const created: CreatedDomain[] = [];
 
   for (let d = 1; d <= domainCount; d++) {
-    const domainName = `${namePrefix}-domain-${runTag}-${d}`;
+    // Short, readable domain name: <prefix>-d<idx>-<shortTag>
+    const shortTag = (runTag || '').replace(/[^0-9A-Za-z]/g, '').slice(-6);
+    const domainName = `${namePrefix}-d${d}-${shortTag || d}`;
     info(`Creating domain: ${domainName}`);
 
     const domain = await api.createDomain({
