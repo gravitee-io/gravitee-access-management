@@ -254,7 +254,9 @@ export async function provision(configPath: string, verify: boolean) {
   section('Create and start domains');
   const createdDomains: Array<{ id: string; name: string; ordinal: number }> = [];
   for (let d = 1; d <= cfg.domains; d++) {
-    const domainName = buildName(namePrefix, ['domain', runTag, d]);
+    // Create a shorter, readable domain name: <prefix>-d<idx>-<shortTag>
+    const shortTag = (runTag || '').replace(/[^0-9A-Za-z]/g, '').slice(-6);
+    const domainName = `${namePrefix}-d${d}-${shortTag || d}`;
     info(`Creating domain: ${domainName}`);
     const domain = await getDomainApi(accessToken).createDomain({
       organizationId: process.env.AM_DEF_ORG_ID!,
