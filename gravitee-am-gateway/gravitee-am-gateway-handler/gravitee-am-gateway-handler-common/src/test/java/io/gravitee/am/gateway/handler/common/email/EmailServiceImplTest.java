@@ -237,6 +237,8 @@ public class EmailServiceImplTest {
                 300,
                 "Please verify Attempt",
                 "Complete your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue(),
+                "Verify your registration",
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
