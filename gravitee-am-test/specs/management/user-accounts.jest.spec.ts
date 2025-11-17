@@ -16,12 +16,7 @@
 import fetch from 'cross-fetch';
 import { afterAll, beforeAll, expect, jest } from '@jest/globals';
 import { requestAdminAccessToken } from '@management-commands/token-management-commands';
-import {
-  safeDeleteDomain,
-  getDomain,
-  setupDomainForTest,
-  startDomain,
-} from '@management-commands/domain-management-commands';
+import { safeDeleteDomain, patchDomain, setupDomainForTest } from '@management-commands/domain-management-commands';
 import { uniqueName } from '@utils-commands/misc';
 
 global.fetch = fetch;
@@ -33,26 +28,28 @@ jest.setTimeout(200000);
 
 beforeAll(async () => {
   accessToken = await requestAdminAccessToken();
-  let startedDomain = await setupDomainForTest(uniqueName('domains-test', true), { accessToken, waitForStart: true });
+  let startedDomain = await setupDomainForTest(uniqueName('user-accounts-test', true), { accessToken, waitForStart: true });
   domain = startedDomain.domain;
 });
 
-describe('when using the domains commands', () => {
-  it('Must Find a domain by id', async () => {
-    const foundDomain = await getDomain(domain.id, accessToken);
-    expect(foundDomain).toBeDefined();
-    expect(foundDomain.id).toEqual(foundDomain.id);
-  });
+describe('User Accounts', () => {
+  it('should define the "remember me" amount of time', async () => {
+    const patchedDomain = await patchDomain(domain.id, accessToken, {
+      path: `${domain.path}`,
+      vhostMode: false,
+      vhosts: [],
+      accountSettings: {
+        rememberMe: true,
+        rememberMeDuration: 10,
+      },
+    });
 
-  it('Must Start a domain', async () => {
-    const domainStarted = await startDomain(domain.id, accessToken);
-    expect(domainStarted).toBeDefined();
-    expect(domainStarted.id).toEqual(domain.id);
+    const accountSettings = patchedDomain.accountSettings;
+    expect(accountSettings.rememberMe).toBe(true);
+    expect(accountSettings.rememberMeDuration).toBe(10);
   });
 });
 
 afterAll(async () => {
-  if (domain && domain.id) {
-    await safeDeleteDomain(domain.id, accessToken);
-  }
+  await safeDeleteDomain(domain?.id, accessToken);
 });
