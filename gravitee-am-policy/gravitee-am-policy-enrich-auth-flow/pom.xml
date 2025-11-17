@@ -22,7 +22,7 @@
     <parent>
         <artifactId>gravitee-am-policy</artifactId>
         <groupId>io.gravitee.am.policy</groupId>
-        <version>4.7.21-SNAPSHOT</version>
+        <version>4.7.22-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
