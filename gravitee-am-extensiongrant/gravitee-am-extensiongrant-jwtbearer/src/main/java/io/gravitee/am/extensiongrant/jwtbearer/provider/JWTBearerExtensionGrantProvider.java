@@ -31,6 +31,7 @@ import io.gravitee.am.jwt.JWTParser;
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -108,7 +109,9 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider, 
                 LOGGER.error(ex.getMessage(), ex.getCause());
                 throw new InvalidGrantException(ex.getMessage(), ex);
             }
-        }).firstElement();
+        })
+        .subscribeOn(Schedulers.io())
+        .firstElement();
     }
 
     public User createUser(JWT jwt) {
