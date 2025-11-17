@@ -48,7 +48,9 @@ import static freemarker.template.Configuration.AUTO_DETECT_NAMING_CONVENTION;
 import static freemarker.template.Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.anyInt;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
@@ -237,6 +239,8 @@ public class EmailServiceImplTest {
                 300,
                 "Please verify Attempt",
                 "Complete your registration",
+                Long.valueOf(DAYS.toSeconds(7)).intValue(),
+                "Verify your registration",
                 Long.valueOf(DAYS.toSeconds(7)).intValue());
         emailServiceSpy = Mockito.spy(emailService);
         MockitoAnnotations.openMocks(this);
