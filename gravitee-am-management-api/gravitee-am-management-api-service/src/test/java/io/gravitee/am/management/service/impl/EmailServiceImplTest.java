@@ -44,6 +44,7 @@ import io.gravitee.am.service.impl.I18nDictionaryService;
 import io.gravitee.am.service.impl.application.DomainReadServiceImpl;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
+import jakarta.mail.internet.InternetAddress;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,6 +66,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -96,6 +98,7 @@ public class EmailServiceImplTest {
     @Mock
     private DataPlaneRegistry dataPlaneRegistry;
 
+
     JavaMailSenderImpl mailSender;
 
     I18nDictionaryService i18nDictionaryService;
@@ -116,6 +119,64 @@ public class EmailServiceImplTest {
         freemarkerConfiguration.setTemplateConfigurations(
                 new ConditionalTemplateConfigurationFactory(new FileExtensionMatcher("html"), tcHTML));
         freemarkerConfiguration.setTemplateLoader(new FileTemplateLoader(new File(TEMPLATES_PATH)));
+    }
+
+    @Test
+    void should_resolve_dynamic_from_name() throws Exception {
+
+        when(jwtBuilder.sign(any())).thenReturn("TOKEN");
+
+        this.i18nDictionaryService = mock(I18nDictionaryService.class);
+        when(i18nDictionaryService.findAll(any(), any())).thenReturn(Flowable.empty());
+        when(environment.getProperty("email.enabled", "false")).thenReturn("true");
+        when(environment.getProperty("user.registration.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.token.expire-after", "86400")).thenReturn("86400");
+        when(environment.getProperty("user.registration.verify.email.subject", "New user registration")).thenReturn("New user registration");
+        when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
+        when(environment.getProperty("services.notifier.certificate.expiryEmailSubject")).thenReturn(null);
+        when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
+        when(environment.getProperty("services.notifier.client-secret.expiryEmailSubject", "Client secret will expire soon")).thenReturn("Client secret will expire soon");
+
+        when(dataPlaneRegistry.getDescription(any()))
+                .thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", "http://localhost:1234/unittest"));
+
+        var cut = new EmailServiceImpl(
+                emailManager,
+                emailService,
+                freemarkerConfiguration,
+                auditService,
+                jwtBuilder,
+                new DomainReadServiceImpl(mock(), dataPlaneRegistry, "http://localhost:1234/unittest"),
+                i18nDictionaryService,
+                environment
+        );
+
+        var emailTemplate = new Email();
+        emailTemplate.setFrom("test@gravitee.io");
+        emailTemplate.setFromName("${domain.id}-team");
+        emailTemplate.setSubject("Welcome ${user.firstName}");
+        emailTemplate.setTemplate(Template.REGISTRATION_CONFIRMATION.template());
+        emailTemplate.setExpiresAfter(86400);
+
+        when(emailManager.getEmail(any(), any(), any(), anyInt())).thenReturn(Maybe.just(emailTemplate));
+
+        var domain = createDomain();
+        domain.setId("unit-domain");
+
+        var user = createUser("en");
+
+        cut.send(domain, null, Template.REGISTRATION_CONFIRMATION, user).test().await().assertComplete();
+
+        var receivedMessages = greenMail.getReceivedMessages();
+        assertThat(receivedMessages).hasSize(1);
+
+        var message = receivedMessages[0];
+        var parsedMessage = new MimeMessageParser(message).parse();
+
+        MimeMessageParserAssert.assertThat(parsedMessage).hasFrom("test@gravitee.io");
+        MimeMessageParserAssert.assertThat(parsedMessage).hasFromName("unit-domain-team");
+        MimeMessageParserAssert.assertThat(parsedMessage).hasSubject("Welcome John");
+        assertThat(((InternetAddress) message.getFrom()[0]).getPersonal()).isEqualTo("unit-domain-team");
     }
 
     @ParameterizedTest
