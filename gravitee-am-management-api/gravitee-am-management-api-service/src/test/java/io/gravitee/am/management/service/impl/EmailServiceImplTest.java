@@ -135,13 +135,16 @@ public class EmailServiceImplTest {
         when(environment.getProperty("user.registration.verify.token.expire-after", "604800")).thenReturn("604800");
         when(environment.getProperty("services.certificate.expiryEmailSubject", "Certificate will expire soon")).thenReturn("Certificate will expire soon");
 
+        when(dataPlaneRegistry.getDescription(any()))
+                .thenReturn(new DataPlaneDescription("default", "Legcay DataPlane", "mongo", "baseProp", "http://localhost:1234/unittest"));
+
         var cut = new EmailServiceImpl(
                 emailManager,
                 emailService,
                 freemarkerConfiguration,
                 auditService,
                 jwtBuilder,
-                new DomainReadServiceImpl(mock(), "http://localhost:1234/unittest"),
+                new DomainReadServiceImpl(mock(), dataPlaneRegistry, "http://localhost:1234/unittest"),
                 i18nDictionaryService,
                 environment
         );
