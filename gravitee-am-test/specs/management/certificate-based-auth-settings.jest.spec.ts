@@ -56,6 +56,8 @@ afterAll(async () => {
 });
 
 describe('Certificate Based Authentication Settings', () => {
+  const certificateBasedAuthUrl = 'https://cba-login.example.com/base';
+
   it('should enable certificate based authentication at domain level', async () => {
     // Given: A domain exists
     expect(domain).toBeDefined();
@@ -64,6 +66,7 @@ describe('Certificate Based Authentication Settings', () => {
     const patchedDomain = await patchDomain(domain.id, accessToken, {
       loginSettings: {
         certificateBasedAuthEnabled: true,
+        certificateBasedAuthUrl,
       },
     });
 
@@ -71,6 +74,7 @@ describe('Certificate Based Authentication Settings', () => {
     expect(patchedDomain).toBeDefined();
     expect(patchedDomain.loginSettings).toBeDefined();
     expect(patchedDomain.loginSettings?.certificateBasedAuthEnabled).toBe(true);
+    expect(patchedDomain.loginSettings?.certificateBasedAuthUrl).toBe(certificateBasedAuthUrl);
   });
 
   it('should disable certificate based authentication at domain level', async () => {
@@ -78,6 +82,7 @@ describe('Certificate Based Authentication Settings', () => {
     await patchDomain(domain.id, accessToken, {
       loginSettings: {
         certificateBasedAuthEnabled: true,
+        certificateBasedAuthUrl,
       },
     });
 
@@ -100,6 +105,7 @@ describe('Certificate Based Authentication Settings', () => {
     await patchDomain(domain.id, accessToken, {
       loginSettings: {
         certificateBasedAuthEnabled: true,
+        certificateBasedAuthUrl,
       },
     });
 
@@ -110,6 +116,7 @@ describe('Certificate Based Authentication Settings', () => {
     expect(retrievedDomain).toBeDefined();
     expect(retrievedDomain.loginSettings).toBeDefined();
     expect(retrievedDomain.loginSettings?.certificateBasedAuthEnabled).toBe(true);
+    expect(retrievedDomain.loginSettings?.certificateBasedAuthUrl).toBe(certificateBasedAuthUrl);
   });
 
   it('should allow combining certificate based authentication with other login settings', async () => {
@@ -120,6 +127,7 @@ describe('Certificate Based Authentication Settings', () => {
     await patchDomain(domain.id, accessToken, {
       loginSettings: {
         certificateBasedAuthEnabled: true,
+        certificateBasedAuthUrl,
         passwordlessEnabled: true,
         forgotPasswordEnabled: true,
       },
@@ -132,5 +140,31 @@ describe('Certificate Based Authentication Settings', () => {
     expect(retrievedDomain.loginSettings?.certificateBasedAuthEnabled).toBe(true);
     expect(retrievedDomain.loginSettings?.passwordlessEnabled).toBe(true);
     expect(retrievedDomain.loginSettings?.forgotPasswordEnabled).toBe(true);
+    expect(retrievedDomain.loginSettings?.certificateBasedAuthUrl).toBe(certificateBasedAuthUrl);
+  });
+
+  it('should reject enabling CBA without base URL', async () => {
+    await expect(
+      patchDomain(domain.id, accessToken, {
+        loginSettings: {
+          certificateBasedAuthEnabled: true,
+        },
+      })
+    ).rejects.toMatchObject({
+      response: { status: 400 }
+    });
+  });
+
+  it('should reject enabling CBA with non-HTTPS URL', async () => {
+    await expect(
+      patchDomain(domain.id, accessToken, {
+        loginSettings: {
+          certificateBasedAuthEnabled: true,
+          certificateBasedAuthUrl: 'http://cba-login.example.com',
+        },
+      })
+    ).rejects.toMatchObject({
+      response: { status: 400 }
+    });
   });
 });

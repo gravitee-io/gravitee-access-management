@@ -7939,6 +7939,190 @@ paths:
                 $ref: "#/components/schemas/Audit"
         "500":
           description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/cert-credentials:
+    get:
+      tags:
+      - user
+      - domain
+      summary: Get user certificate credentials
+      description: "User must have the DOMAIN_USER[READ] permission on the specified\
+        \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
+        \ permission on the specified organization"
+      operationId: listUserCertificateCredentials
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: user
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: User certificate credentials successfully fetched
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CertificateCredential"
+        "404":
+          description: Domain not found
+        "500":
+          description: Internal server error
+    post:
+      tags:
+      - user
+      - domain
+      summary: Enroll a certificate credential for a user
+      description: "User must have the DOMAIN_USER[CREATE] permission on the specified\
+        \ domain or DOMAIN_USER[CREATE] permission on the specified environment or\
+        \ DOMAIN_USER[CREATE] permission on the specified organization"
+      operationId: enrollUserCertificateCredential
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: user
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCertificateCredential"
+        required: true
+      responses:
+        "201":
+          description: Certificate credential successfully enrolled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateCredential"
+        "400":
+          description: Invalid certificate or limit exceeded
+        "404":
+          description: Domain not found
+        "409":
+          description: Duplicate certificate
+        "500":
+          description: Internal server error
+  /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/cert-credentials/{credential}:
+    get:
+      tags:
+      - user
+      - domain
+      summary: Get a user certificate credential
+      description: "User must have the DOMAIN_USER[READ] permission on the specified\
+        \ domain or DOMAIN_USER[READ] permission on the specified environment or DOMAIN_USER[READ]\
+        \ permission on the specified organization"
+      operationId: getUserCertificateCredential
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: user
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: credential
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: User certificate credential successfully fetched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateCredential"
+        "404":
+          description: Domain or certificate credential not found
+        "500":
+          description: Internal server error
+    delete:
+      tags:
+      - user
+      - domain
+      summary: Revoke a user certificate credential
+      description: "User must have the DOMAIN_USER[UPDATE] permission on the specified\
+        \ domain or DOMAIN_USER[UPDATE] permission on the specified environment or\
+        \ DOMAIN_USER[UPDATE] permission on the specified organization"
+      operationId: revokeUserCertificateCredential
+      parameters:
+      - name: organizationId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: environmentId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: domain
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: user
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: credential
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: Certificate credential successfully revoked
+        "404":
+          description: Domain or certificate credential not found
+        "500":
+          description: Internal server error
   /organizations/{organizationId}/environments/{environmentId}/domains/{domain}/users/{user}/consents:
     get:
       tags:
@@ -12176,6 +12360,56 @@ components:
       properties:
         value:
           type: string
+    CertificateCredential:
+      type: object
+      properties:
+        id:
+          type: string
+        referenceType:
+          type: string
+          enum:
+          - PLATFORM
+          - DOMAIN
+          - APPLICATION
+          - ORGANIZATION
+          - ENVIRONMENT
+          - PROTECTED_RESOURCE
+        referenceId:
+          type: string
+        userId:
+          type: string
+        username:
+          type: string
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        deviceName:
+          type: string
+        certificatePem:
+          type: string
+        certificateThumbprint:
+          type: string
+        certificateSubjectDN:
+          type: string
+        certificateSerialNumber:
+          type: string
+        certificateExpiresAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        accessedAt:
+          type: string
+          format: date-time
     CertificateEntity:
       type: object
       properties:
@@ -12255,9 +12489,9 @@ components:
           type: array
           items:
             type: string
-        allowedScopesEnabled:
-          type: boolean
         openDynamicClientRegistrationEnabled:
+          type: boolean
+        allowedScopesEnabled:
           type: boolean
         dynamicClientRegistrationEnabled:
           type: boolean
@@ -13180,6 +13414,10 @@ components:
           format: int32
         passwordlessDeviceNamingEnabled:
           type: boolean
+        certificateBasedAuthEnabled:
+          type: boolean
+        certificateBasedAuthUrl:
+          type: string
         hideForm:
           type: boolean
         identifierFirstEnabled:
@@ -13410,6 +13648,23 @@ components:
           type: string
         configuration:
           type: string
+    NewCertificateCredential:
+      required:
+      - certificatePem
+      type: object
+      properties:
+        certificatePem:
+          minLength: 1
+          type: string
+          description: The certificate in PEM format
+          example: |-
+            -----BEGIN CERTIFICATE-----
+            ...
+            -----END CERTIFICATE-----
+        deviceName:
+          type: string
+          description: Optional device name for the certificate
+          example: My Laptop
     NewClientSecret:
       required:
       - name
@@ -16440,14 +16695,12 @@ components:
           type: boolean
         serviceAccount:
           type: boolean
-        address:
+        identitiesAsMap:
           type: object
           additionalProperties:
             type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
+        fullId:
+          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
         inactive:
@@ -16458,20 +16711,22 @@ components:
           type: string
         birthdate:
           type: string
+        zoneInfo:
+          type: string
         phoneNumber:
           type: string
-        disabled:
-          type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        identitiesAsMap:
+        address:
           type: object
           additionalProperties:
             type: object
+        disabled:
+          type: boolean
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
+        locale:
+          type: string
     UserEntity:
       type: object
       properties:
@@ -16640,14 +16895,12 @@ components:
           $ref: "#/components/schemas/ApplicationEntity"
         sourceId:
           type: string
-        address:
+        identitiesAsMap:
           type: object
           additionalProperties:
             type: object
-        locale:
-          type: string
-        zoneInfo:
-          type: string
+        fullId:
+          $ref: "#/components/schemas/UserId"
         middleName:
           type: string
         inactive:
@@ -16658,20 +16911,22 @@ components:
           type: string
         birthdate:
           type: string
+        zoneInfo:
+          type: string
         phoneNumber:
           type: string
-        disabled:
-          type: boolean
-        fullId:
-          $ref: "#/components/schemas/UserId"
-        identitiesAsMap:
+        address:
           type: object
           additionalProperties:
             type: object
+        disabled:
+          type: boolean
         lastIdentityInformation:
           type: object
           additionalProperties:
             type: object
+        locale:
+          type: string
     UserId:
       type: object
       properties:

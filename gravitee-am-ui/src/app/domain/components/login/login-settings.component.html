@@ -153,6 +153,29 @@
         </mat-slide-toggle>
         <mat-hint style="font-size: 75%">Allows users to enroll and sign in using a digital certificate stored on their device.</mat-hint>
       </div>
+      <div fxLayout="column" style="margin-top: 10px">
+        <mat-form-field appearance="outline" floatLabel="always">
+          <mat-label>Certificate based authentication base URL</mat-label>
+          <input
+            matInput
+            type="url"
+            name="certificateBasedAuthUrl"
+            #certificateBasedAuthUrlCtrl="ngModel"
+            [ngModel]="loginSettings.certificateBasedAuthUrl"
+            (ngModelChange)="setCertificateBasedAuthUrl($event)"
+            [required]="isCertificateBasedAuthEnabled()"
+            [pattern]="httpsUrlPattern"
+            [disabled]="readonly || !isCertificateBasedAuthEnabled()"
+          />
+          <mat-hint>Base URL for certificate based logins. Must start with https://.</mat-hint>
+          <mat-error *ngIf="certificateBasedAuthUrlCtrl.hasError('required')">
+            Certificate based authentication URL is required when CBA is enabled.
+          </mat-error>
+          <mat-error *ngIf="!certificateBasedAuthUrlCtrl.hasError('required') && certificateBasedAuthUrlCtrl.invalid">
+            Provide a valid HTTPS URL (for example, https://cba.example.com/).
+          </mat-error>
+        </mat-form-field>
+      </div>
     </div>
   </div>
 

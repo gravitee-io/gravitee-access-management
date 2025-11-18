@@ -29,6 +29,7 @@ export class LoginSettingsComponent implements OnChanges {
   @Input() readonly = false;
   @ViewChild('loginForm', { static: true }) form: any;
   formChanged = false;
+  httpsUrlPattern = '^https://.+$';
 
   constructor() {}
 
@@ -99,6 +100,11 @@ export class LoginSettingsComponent implements OnChanges {
 
   isCertificateBasedAuthEnabled() {
     return this.loginSettings?.certificateBasedAuthEnabled;
+  }
+
+  setCertificateBasedAuthUrl(value: string) {
+    this.loginSettings.certificateBasedAuthUrl = value;
+    this.formChanged = true;
   }
 
   enablePasswordlessRememberDevice(event) {

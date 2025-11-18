@@ -89,4 +89,13 @@ public class LoginSettingsTest {
         LoginSettings copy = new LoginSettings(original);
         assertTrue(copy.isCertificateBasedAuthEnabled());
     }
+
+    @Test
+    public void testCopyConstructorIncludesCertificateBasedAuthUrl() {
+        LoginSettings settings = new LoginSettings();
+        settings.setCertificateBasedAuthUrl("https://cba.example.com");
+
+        LoginSettings copy = new LoginSettings(settings);        
+        assertEquals("https://cba.example.com", copy.getCertificateBasedAuthUrl());
+    }
 }

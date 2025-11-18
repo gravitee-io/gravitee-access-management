@@ -17,11 +17,15 @@ package io.gravitee.am.model.login;
 
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.oidc.Client;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author Titouan COMPIEGNE (titouan.compiegne at graviteesource.com)
  * @author GraviteeSource Team
  */
+@Getter
+@Setter
 public class LoginSettings {
 
     /**
@@ -53,7 +57,7 @@ public class LoginSettings {
      */
     private boolean passwordlessEnforcePasswordEnabled;
     /**
-     * Period of time (in secods) after which the user credentials (password or external IdP) is required to unlock passwordless feature
+     * Period of time (in seconds) after which the user credentials (password or external IdP) is required to unlock passwordless feature
      */
     private Integer passwordlessEnforcePasswordMaxAge;
     /**
@@ -64,6 +68,10 @@ public class LoginSettings {
      * Enable/Disable Certificate Based Authentication feature
      */
     private boolean certificateBasedAuthEnabled;
+    /**
+     * Certificate Based Authentication URL
+     */
+    private String certificateBasedAuthUrl;
     /**
      * Enable/Disable hide login form
      */
@@ -92,113 +100,10 @@ public class LoginSettings {
         this.passwordlessEnforcePasswordMaxAge = other.passwordlessEnforcePasswordMaxAge;
         this.passwordlessDeviceNamingEnabled = other.passwordlessDeviceNamingEnabled;
         this.certificateBasedAuthEnabled = other.certificateBasedAuthEnabled;
+        this.certificateBasedAuthUrl = other.certificateBasedAuthUrl;
         this.hideForm = !other.identifierFirstEnabled && other.hideForm;
         this.identifierFirstEnabled = other.identifierFirstEnabled;
         this.resetPasswordOnExpiration = other.resetPasswordOnExpiration;
-    }
-
-    public boolean isInherited() {
-        return inherited;
-    }
-
-    public void setInherited(boolean inherited) {
-        this.inherited = inherited;
-    }
-
-    public boolean isForgotPasswordEnabled() {
-        return forgotPasswordEnabled;
-    }
-
-    public void setForgotPasswordEnabled(boolean forgotPasswordEnabled) {
-        this.forgotPasswordEnabled = forgotPasswordEnabled;
-    }
-
-    public boolean isRegisterEnabled() {
-        return registerEnabled;
-    }
-
-    public void setRegisterEnabled(boolean registerEnabled) {
-        this.registerEnabled = registerEnabled;
-    }
-
-    public boolean isRememberMeEnabled() {
-        return rememberMeEnabled;
-    }
-
-    public void setRememberMeEnabled(boolean rememberMeEnabled) {
-        this.rememberMeEnabled = rememberMeEnabled;
-    }
-
-    public boolean isPasswordlessEnabled() {
-        return passwordlessEnabled;
-    }
-
-    public void setPasswordlessEnabled(boolean passwordlessEnabled) {
-        this.passwordlessEnabled = passwordlessEnabled;
-    }
-
-    public boolean isPasswordlessRememberDeviceEnabled() {
-        return passwordlessRememberDeviceEnabled;
-    }
-
-    public void setPasswordlessRememberDeviceEnabled(boolean passwordlessRememberDeviceEnabled) {
-        this.passwordlessRememberDeviceEnabled = passwordlessRememberDeviceEnabled;
-    }
-
-    public boolean isPasswordlessEnforcePasswordEnabled() {
-        return passwordlessEnforcePasswordEnabled;
-    }
-
-    public void setPasswordlessEnforcePasswordEnabled(boolean passwordlessEnforcePasswordEnabled) {
-        this.passwordlessEnforcePasswordEnabled = passwordlessEnforcePasswordEnabled;
-    }
-
-    public Integer getPasswordlessEnforcePasswordMaxAge() {
-        return passwordlessEnforcePasswordMaxAge;
-    }
-
-    public void setPasswordlessEnforcePasswordMaxAge(Integer passwordlessEnforcePasswordMaxAge) {
-        this.passwordlessEnforcePasswordMaxAge = passwordlessEnforcePasswordMaxAge;
-    }
-
-    public boolean isPasswordlessDeviceNamingEnabled() {
-        return passwordlessDeviceNamingEnabled;
-    }
-
-    public void setPasswordlessDeviceNamingEnabled(boolean passwordlessDeviceNamingEnabled) {
-        this.passwordlessDeviceNamingEnabled = passwordlessDeviceNamingEnabled;
-    }
-
-    public boolean isCertificateBasedAuthEnabled() {
-        return certificateBasedAuthEnabled;
-    }
-
-    public void setCertificateBasedAuthEnabled(boolean certificateBasedAuthEnabled) {
-        this.certificateBasedAuthEnabled = certificateBasedAuthEnabled;
-    }
-
-    public boolean isHideForm() {
-        return hideForm;
-    }
-
-    public void setHideForm(boolean hideForm) {
-        this.hideForm = hideForm;
-    }
-
-    public boolean isIdentifierFirstEnabled() {
-        return identifierFirstEnabled;
-    }
-
-    public void setIdentifierFirstEnabled(boolean identifierFirstEnabled) {
-        this.identifierFirstEnabled = identifierFirstEnabled;
-    }
-
-    public Boolean getResetPasswordOnExpiration() {
-        return resetPasswordOnExpiration;
-    }
-
-    public void setResetPasswordOnExpiration(Boolean resetPasswordOnExpiration) {
-        this.resetPasswordOnExpiration = resetPasswordOnExpiration;
     }
 
     public boolean isEnforcePasswordPolicyEnabled() {

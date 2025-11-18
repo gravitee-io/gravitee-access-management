@@ -15,9 +15,9 @@
  */
 package io.gravitee.am.service.validators;
 
-import io.gravitee.am.model.Application;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.service.ApplicationService;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.validators.domain.DomainValidator;
@@ -31,7 +31,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import java.util.ArrayList;
-import java.util.Optional;
 import java.util.Set;
 
 import static java.util.Collections.emptyList;
@@ -160,6 +159,38 @@ public class DomainValidatorTest {
     public void validate_vhosts() {
         Domain domain = getValidDomain();
         domain.setVhostMode(true);
+
+        domainValidator.validate(domain, emptyList()).test().assertNoErrors();
+    }
+
+    @Test
+    public void validate_certificateBasedAuthEnabledMissingUrl() {
+        Domain domain = getValidDomain();
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setCertificateBasedAuthEnabled(true);
+        domain.setLoginSettings(loginSettings);
+
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
+    }
+
+    @Test
+    public void validate_certificateBasedAuthEnabledWithInvalidScheme() {
+        Domain domain = getValidDomain();
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setCertificateBasedAuthEnabled(true);
+        loginSettings.setCertificateBasedAuthUrl("http://cba.example.com");
+        domain.setLoginSettings(loginSettings);
+
+        domainValidator.validate(domain, emptyList()).test().assertError(InvalidDomainException.class);
+    }
+
+    @Test
+    public void validate_certificateBasedAuthEnabledWithHttpsUrl() {
+        Domain domain = getValidDomain();
+        LoginSettings loginSettings = new LoginSettings();
+        loginSettings.setCertificateBasedAuthEnabled(true);
+        loginSettings.setCertificateBasedAuthUrl("https://cba.example.com");
+        domain.setLoginSettings(loginSettings);
 
         domainValidator.validate(domain, emptyList()).test().assertNoErrors();
     }
