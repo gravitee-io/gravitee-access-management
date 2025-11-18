@@ -33,6 +33,7 @@ public class LoginSettingsMongo {
     private Integer passwordlessEnforcePasswordMaxAge;
     private boolean passwordlessDeviceNamingEnabled;
     private boolean certificateBasedAuthEnabled;
+    private String certificateBasedAuthUrl;
     private boolean hideForm;
     private boolean identifierFirstLoginEnabled;
 
@@ -118,6 +119,14 @@ public class LoginSettingsMongo {
         this.certificateBasedAuthEnabled = certificateBasedAuthEnabled;
     }
 
+    public String getCertificateBasedAuthUrl() {
+        return certificateBasedAuthUrl;
+    }
+
+    public void setCertificateBasedAuthUrl(String certificateBasedAuthUrl) {
+        this.certificateBasedAuthUrl = certificateBasedAuthUrl;
+    }
+
     public boolean isHideForm() {
         return hideForm;
     }
@@ -154,6 +163,7 @@ public class LoginSettingsMongo {
         loginSettings.setPasswordlessEnforcePasswordMaxAge(getPasswordlessEnforcePasswordMaxAge());
         loginSettings.setPasswordlessDeviceNamingEnabled(isPasswordlessDeviceNamingEnabled());
         loginSettings.setCertificateBasedAuthEnabled(isCertificateBasedAuthEnabled());
+        loginSettings.setCertificateBasedAuthUrl(getCertificateBasedAuthUrl());
         loginSettings.setHideForm(!isIdentifierFirstLoginEnabled() && isHideForm());
         loginSettings.setIdentifierFirstEnabled(isIdentifierFirstLoginEnabled());
         loginSettings.setResetPasswordOnExpiration(getResetPasswordOnExpiration());
@@ -177,6 +187,7 @@ public class LoginSettingsMongo {
         loginSettingsMongo.setPasswordlessEnforcePasswordMaxAge(loginSettings.getPasswordlessEnforcePasswordMaxAge());
         loginSettingsMongo.setPasswordlessDeviceNamingEnabled(loginSettings.isPasswordlessDeviceNamingEnabled());
         loginSettingsMongo.setCertificateBasedAuthEnabled(loginSettings.isCertificateBasedAuthEnabled());
+        loginSettingsMongo.setCertificateBasedAuthUrl(loginSettings.getCertificateBasedAuthUrl());
         loginSettingsMongo.setHideForm(!loginSettings.isIdentifierFirstEnabled() && loginSettings.isHideForm());
         loginSettingsMongo.setIdentifierFirstLoginEnabled(loginSettings.isIdentifierFirstEnabled());
         loginSettingsMongo.setResetPasswordOnExpiration(loginSettings.getResetPasswordOnExpiration());

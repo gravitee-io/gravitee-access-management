@@ -15,18 +15,21 @@
  */
 package io.gravitee.am.service.validators.domain;
 
+import io.gravitee.am.common.web.UriBuilder;
 import io.gravitee.am.model.Domain;
 import io.gravitee.am.model.VirtualHost;
+import io.gravitee.am.model.login.LoginSettings;
 import io.gravitee.am.service.exception.InvalidDomainException;
 import io.gravitee.am.service.validators.dynamicparams.ClientRegistrationSettingsValidator;
 import io.gravitee.am.service.validators.path.PathValidator;
 import io.gravitee.am.service.validators.virtualhost.VirtualHostValidator;
 import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Single;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -110,7 +113,32 @@ public class DomainValidatorImpl implements DomainValidator {
             }
         }
 
+        chain.add(validateCertificateBasedAuthSettings(domain));
+
         return Completable.merge(chain);
+    }
+
+    private Completable validateCertificateBasedAuthSettings(Domain domain) {
+        LoginSettings loginSettings = domain.getLoginSettings();
+        if (loginSettings == null || !loginSettings.isCertificateBasedAuthEnabled()) {
+            return Completable.complete();
+        }
+
+        String cbaUrl = loginSettings.getCertificateBasedAuthUrl();
+        if (!StringUtils.hasText(cbaUrl)) {
+            return Completable.error(new InvalidDomainException("certificateBasedAuthUrl must be provided when certificate-based authentication is enabled"));
+        }
+
+        try {
+            var uri = UriBuilder.fromURIString(cbaUrl).build();
+            if (uri.getScheme() == null || !"https".equalsIgnoreCase(uri.getScheme())) {
+                return Completable.error(new InvalidDomainException("certificateBasedAuthUrl must be a valid HTTPS URL"));
+            }
+        } catch (IllegalArgumentException | URISyntaxException e) {
+            return Completable.error(new InvalidDomainException("certificateBasedAuthUrl must be a valid HTTPS URL"));
+        }
+
+        return Completable.complete();
     }
 
 }

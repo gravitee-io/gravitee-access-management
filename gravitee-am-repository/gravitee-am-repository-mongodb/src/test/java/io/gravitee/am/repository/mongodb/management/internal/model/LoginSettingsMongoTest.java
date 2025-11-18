@@ -119,14 +119,17 @@ public class LoginSettingsMongoTest {
     }
 
     @Test
-    public void testConvertIncludesCertificateBasedAuthEnabled() {
+    public void testConvertIncludesCertificateBasedAuthValues() {
         LoginSettings settings = new LoginSettings();
         settings.setCertificateBasedAuthEnabled(true);
+        settings.setCertificateBasedAuthUrl("https://cba.example.com/login");
 
         LoginSettingsMongo mongo = convert(settings);
         assertTrue(mongo.isCertificateBasedAuthEnabled());
+        assertEquals("https://cba.example.com/login", mongo.getCertificateBasedAuthUrl());
 
         LoginSettings converted = mongo.convert();
         assertTrue(converted.isCertificateBasedAuthEnabled());
+        assertEquals("https://cba.example.com/login", converted.getCertificateBasedAuthUrl());
     }
 }
