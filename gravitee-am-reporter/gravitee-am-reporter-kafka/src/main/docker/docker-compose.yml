@@ -48,7 +48,7 @@ services:
       gravitee_repositories_oauth2_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
       gravitee_dataPlanes_0_id: default
       gravitee_dataPlanes_0_type: mongodb
-      gravitee_dataPlanes_0_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeout
+      gravitee_dataPlanes_0_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
 
   am-gateway:
     image: 'graviteeio/am-gateway:${GRAVITEE_VERSION}'
