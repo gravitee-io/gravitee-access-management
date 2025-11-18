@@ -143,7 +143,7 @@ endif
 build: # Build docker images (require install to be run before)
 	cd .working/gateway && docker build --build-arg GRAVITEEAM_VERSION=$(GIO_AM_VERSION) -t $(GIO_AM_GATEWAY_IMAGE):$(GIO_AM_VERSION) .
 	cd .working/management-api && docker build --build-arg GRAVITEEAM_VERSION=$(GIO_AM_VERSION) -t $(GIO_AM_MANAGEMENT_API_IMAGE):$(GIO_AM_VERSION) .
-	cd gravitee-am-ciba-delegated-service && mvn compile com.google.cloud.tools:jib-maven-plugin:3.1.4:dockerBuild -Dimage=local/ciba-delegated-service:$(GIO_AM_VERSION)
+	cd gravitee-am-ciba-delegated-service && mvn compile com.google.cloud.tools:jib-maven-plugin:3.5.0:dockerBuild -Dimage=local/ciba-delegated-service:$(GIO_AM_VERSION)
 
 env: # Set up .env file for gravitee docker-compose
 	@mkdir -p .working/compose
