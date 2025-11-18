@@ -63,11 +63,11 @@ services:
     volumes:
     - ./logs/am-management-api:/etc/gravitee.io/log
     environment:
-      - gravitee_repositories_management_mongodb_uri=mongodb://demo-am-mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      - gravitee_repositories_oauth2_mongodb_uri=mongodb://demo-am-mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      - gravitee_dataPlanes_0_id=default
-      - gravitee_dataPlanes_0_type=mongodb
-      - gravitee_dataPlanes_0_mongodb_uri=mongodb://demo-am-mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+    - gravitee_repositories_management_mongodb_uri=mongodb://demo-am-mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+    - gravitee_repositories_oauth2_mongodb_uri=mongodb://demo-am-mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+    - gravitee_dataPlanes_0_id=default
+    - gravitee_dataPlanes_0_type=mongodb
+    - gravitee_dataPlanes_0_mongodb_uri=mongodb://demo-am-mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
     labels:
     - "traefik.backend=graviteeio-am-managementapi"
     - "traefik.frontend.rule=Host:auth.gravitee.io;PathPrefix:/management"
