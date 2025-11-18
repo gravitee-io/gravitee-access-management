@@ -75,7 +75,7 @@ services:
       - gravitee_dataPlanes_0_mongodb_uri=mongodb://mongodb:27017/graviteeam?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000      
 
   webui:
-    image: graviteeio/am-management-ui:4.7
+    image: graviteeio/am-management-ui:${GIO_AM_VERSION}
     container_name: gio_am_webui
     restart: always
     depends_on:
