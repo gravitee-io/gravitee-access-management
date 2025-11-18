@@ -44,8 +44,11 @@ services:
     environment:
       GIO_MIN_MEM: '256m'
       GIO_MAX_MEM: '256m'
-      gravitee_management_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      gravitee_oauth2_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      gravitee_repositories_management_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      gravitee_repositories_oauth2_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      gravitee_dataPlanes_0_id: default
+      gravitee_dataPlanes_0_type: mongodb
+      gravitee_dataPlanes_0_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
 
   am-gateway:
     image: 'graviteeio/am-gateway:${GRAVITEE_VERSION}'
@@ -56,8 +59,9 @@ services:
     environment:
       GIO_MIN_MEM: '256m'
       GIO_MAX_MEM: '256m'
-      gravitee_management_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
-      gravitee_oauth2_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      gravitee_repositories_management_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      gravitee_repositories_oauth2_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
+      gravitee_repositories_gateway_mongodb_uri: mongodb://mongodb:27017/gravitee-am?serverSelectionTimeoutMS=5000&connectTimeoutMS=5000&socketTimeoutMS=5000
 
   am-ui:
     image: 'graviteeio/am-management-ui:${GRAVITEE_VERSION}'
