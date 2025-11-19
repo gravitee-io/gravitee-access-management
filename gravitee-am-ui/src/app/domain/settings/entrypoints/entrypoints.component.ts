@@ -17,6 +17,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatInput } from '@angular/material/input';
 import { ActivatedRoute } from '@angular/router';
 import { deepClone } from '@gravitee/ui-components/src/lib/utils';
+import regexEscape from 'regex-escape';
 
 import { DomainService } from '../../../services/domain.service';
 import { SnackbarService } from '../../../services/snackbar.service';
@@ -110,17 +111,21 @@ export class DomainSettingsEntrypointsComponent implements OnInit {
       this.domainRestrictions = [];
     }
 
-    if (this.domainRestrictions.length === 0) {
-      this.hostPattern = '^(?:(?!-|[^.]+_)[A-Za-z0-9-_]{1,63}(?<!-)(?:\\.|((?:\\:[0-9]{1,5})?|$)))+$';
-    } else {
-      this.hostPattern =
-        '^' +
-        this.domainRestrictions.map((value) => '((?!-)[A-Za-z0-9-]{1,63}(?<!-)\\.)?' + value).join('|') +
-        '(?:\\.|((?:\\:[0-9]{1,5})?|$))+$';
-    }
+    this.hostPattern = this.buildHostPattern();
 
     // Prepare host regex (used to assist user when specifying an host).
     this.domainRestrictions.forEach((hostOption) => this.domainRegexList.push(new RegExp('\\.?' + hostOption + '$', 'i')));
+  }
+
+  private buildHostPattern(): string {
+    const domainLabelPattern = '(?!-)[A-Za-z0-9\\-_]{1,63}(?<![\\-_])' as const;
+    const portPattern = '(?::[0-9]{1,5})' as const;
+
+    if (this.domainRestrictions.length === 0) {
+      return `^(?:${domainLabelPattern})(?:\\.${domainLabelPattern})*${portPattern}?$`;
+    }
+
+    return `^(?:${domainLabelPattern}\\.)*(?:${this.domainRestrictions.map((value) => regexEscape(value)).join('|')})${portPattern}?$`;
   }
 
   update(): void {
