@@ -125,6 +125,7 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
                 throw new InvalidGrantException(ex.getMessage(), ex);
             }
         })
+        .subscribeOn(Schedulers.io())
         .firstElement()
         .observeOn(Schedulers.computation());
     }
