@@ -1188,6 +1188,7 @@ jobs:
       name: openjdk
       class: large
       version: "17.0.8"
+      with_node: true
     steps:
       - attach_workspace:
           at: /tmp
