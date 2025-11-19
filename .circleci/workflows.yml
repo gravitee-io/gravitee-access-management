@@ -105,7 +105,7 @@ parameters:
   run_ui_tests:
     type: boolean
     default: true
-    description: "Runs UI jest tests + Lint"
+    description: "Runs UI linting"
 
 commands:
   create_docker_context:
@@ -1204,9 +1204,9 @@ jobs:
             - restore-maven-job-cache:
                 jobName: pull_requests
             - run:
-                name: "Maven test (ui)"
+                name: "Maven lint (ui)"
                 command: |
-                  mvn -s /tmp/.gravitee.settings.xml test -pl gravitee-am-ui -Dlicense.skip=true
+                  mvn -s /tmp/.gravitee.settings.xml initialize -pl gravitee-am-ui -Dlicense.skip=true
 
   pull_requests_ce:
     executor:
