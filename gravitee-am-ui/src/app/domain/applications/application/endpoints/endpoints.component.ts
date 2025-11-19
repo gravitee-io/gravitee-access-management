@@ -57,7 +57,7 @@ export class ApplicationEndpointsComponent implements OnInit {
   }
 
   cibaEnabled(): boolean {
-    return !!this.domain.oidc?.cibaSettings?.enabled;
+    return !!(this.domain.oidc?.cibaSettings?.enabled);
   }
 
   scimEnabled(): boolean {
