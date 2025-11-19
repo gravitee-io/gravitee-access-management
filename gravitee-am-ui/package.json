@@ -7,6 +7,7 @@
     "serve": "ng serve",
     "build": "ng build",
     "test": "ng test",
+    "test:single": "jest --config=src/jest.config.js",
     "lint": "yarn run lint:eslint && yarn run lint:styles && yarn run lint:license && yarn run prettier",
     "lint:eslint": "ng lint",
     "lint:eslint:fix": "ng lint --fix",
@@ -62,6 +63,7 @@
     "monaco-editor": "0.46.0",
     "ngx-clipboard": "16.0.0",
     "ngx-file-helpers": "11.0.0",
+    "regex-escape": "3.4.11",
     "rxjs": "7.8.1",
     "zone.js": "0.14.4"
   },
@@ -81,6 +83,7 @@
     "@types/json-schema": "^7.0.15",
     "@types/lodash": "4.14.202",
     "@types/node": "20.11.23",
+    "@types/regex-escape": "^3",
     "@typescript-eslint/eslint-plugin": "7.1.0",
     "@typescript-eslint/parser": "7.1.0",
     "@webcomponents/webcomponentsjs": "2.8.0",

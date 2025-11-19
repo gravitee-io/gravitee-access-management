@@ -5659,6 +5659,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/regex-escape@npm:^3":
+  version: 3.4.1
+  resolution: "@types/regex-escape@npm:3.4.1"
+  checksum: 10c0/6f6d1a01a37df6c368dd6df9720b4e013cf40c76dc4c24688c2982260608821e0d1d8ddfe7335386a3393599dfbf343e0f3b9a08beac818c3ee7e8ab16f24f7a
+  languageName: node
+  linkType: hard
+
 "@types/retry@npm:0.12.0":
   version: 0.12.0
   resolution: "@types/retry@npm:0.12.0"
@@ -10325,6 +10332,7 @@ __metadata:
     "@types/json-schema": "npm:^7.0.15"
     "@types/lodash": "npm:4.14.202"
     "@types/node": "npm:20.11.23"
+    "@types/regex-escape": "npm:^3"
     "@typescript-eslint/eslint-plugin": "npm:7.1.0"
     "@typescript-eslint/parser": "npm:7.1.0"
     "@webcomponents/webcomponentsjs": "npm:2.8.0"
@@ -10357,6 +10365,7 @@ __metadata:
     ngx-file-helpers: "npm:11.0.0"
     node-polyfill-webpack-plugin: "npm:3.0.0"
     prettier: "npm:3.2.5"
+    regex-escape: "npm:3.4.11"
     rxjs: "npm:7.8.1"
     stylelint: "npm:16.2.1"
     stylelint-config-idiomatic-order: "npm:10.0.0"
@@ -14868,6 +14877,13 @@ __metadata:
   version: 0.14.1
   resolution: "regenerator-runtime@npm:0.14.1"
   checksum: 10c0/1b16eb2c4bceb1665c89de70dcb64126a22bc8eb958feef3cd68fe11ac6d2a4899b5cd1b80b0774c7c03591dc57d16631a7f69d2daa2ec98100e2f29f7ec4cc4
+  languageName: node
+  linkType: hard
+
+"regex-escape@npm:3.4.11":
+  version: 3.4.11
+  resolution: "regex-escape@npm:3.4.11"
+  checksum: 10c0/8eac8cec83709536001d00c5954988841e9b0c33939c4af435ff7876761488a80edfcff024fc0fa9afd1032a96041570c688407d28735fab44265a110f40fb41
   languageName: node
   linkType: hard
 
