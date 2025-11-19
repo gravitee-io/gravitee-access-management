@@ -67,6 +67,7 @@
         <executions>
           <execution>
             <id>install node and yarn</id>
+            <phase>validate</phase>
             <goals>
               <goal>install-node-and-yarn</goal>
             </goals>
@@ -77,6 +78,7 @@
           </execution>
           <execution>
             <id>yarn install</id>
+            <phase>initialize</phase>
             <goals>
               <goal>yarn</goal>
             </goals>
@@ -86,12 +88,22 @@
           </execution>
           <execution>
             <id>yarn lint</id>
-            <phase>test</phase>
+            <phase>initialize</phase>
             <goals>
               <goal>yarn</goal>
             </goals>
             <configuration>
               <arguments>run lint</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>yarn test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>yarn</goal>
+            </goals>
+            <configuration>
+              <arguments>run test</arguments>
             </configuration>
           </execution>
           <execution>
