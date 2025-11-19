@@ -268,7 +268,7 @@
             matSuffix
             matTooltip="Copy to clipboard"
             ngxClipboard
-            [cbContent]="endpoint('//ciba/authenticate')"
+            [cbContent]="endpoint('/oidc/ciba/authenticate')"
             (cbOnSuccess)="valueCopied('Copied to clipboard')"
             (click)="$event.preventDefault()"
           >
