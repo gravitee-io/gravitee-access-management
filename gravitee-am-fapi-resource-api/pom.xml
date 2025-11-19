@@ -34,7 +34,7 @@
     <name>Gravitee IO - Access Management - OIDC FAPI - Resource API</name>
 
     <properties>
-        <jib-maven-plugin.version>3.1.4</jib-maven-plugin.version>
+        <jib-maven-plugin.version>3.5.0</jib-maven-plugin.version>
     </properties>
 
     <dependencies>
@@ -65,6 +65,25 @@
             <artifactId>slf4j-api</artifactId>
             <scope>compile</scope>
         </dependency>
+        <!-- Bouncy Castle -->
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk18on</artifactId>
+            <version>${bouncycastle-extension.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk18on</artifactId>
+            <version>${bouncycastle-extension.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bctls-jdk18on</artifactId>
+            <version>${bouncycastle-extension.version}</version>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -79,6 +98,16 @@
                     </to>
                     <from>
                         <image>eclipse-temurin:21</image>
+                        <platforms>
+                            <platform>
+                                <architecture>amd64</architecture>
+                                <os>linux</os>
+                            </platform>
+                            <platform>
+                                <architecture>arm64</architecture>
+                                <os>linux</os>
+                            </platform>
+                        </platforms>
                     </from>
                     <container>
                         <jvmFlags>
