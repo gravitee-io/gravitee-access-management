@@ -65,6 +65,9 @@ public class CibaHttpNotifier {
     public static final String CONF_CLIENT_KEY_STORE_PATH = "clientKeyStorePath";
     public static final String CONF_CLIENT_KEY_STORE_TYPE = "clientKeyStoreType";
     public static final String CONF_CLIENT_KEY_STORE_PASSWORD = "clientKeyStorePassword";
+    public static final String CONF_CLIENT_TRUST_STORE_PATH = "clientTrustStorePath";
+    public static final String CONF_CLIENT_TRUST_STORE_TYPE = "clientTrustStoreType";
+    public static final String CONF_CLIENT_TRUST_STORE_PASSWORD = "clientTrustStorePassword";
     public static final String CONF_CERT_HEADER = "certificateHeader";
     public static final String PATH_CIBA_NOTIFY = "/ciba/notify";
     public static final String PATH_CIBA_DOMAINS = "/ciba/domains";
@@ -179,6 +182,20 @@ public class CibaHttpNotifier {
                         .setPath(cmd.getOptionValue(CONF_CLIENT_KEY_STORE_PATH))
                         .setPassword(cmd.getOptionValue(CONF_CLIENT_KEY_STORE_PASSWORD)));
             }
+
+            options.setTrustAll(cmd.getOptionValue(CONF_CLIENT_TRUST_STORE_TYPE) == null);
+
+            if (cmd.getOptionValue(CONF_CLIENT_TRUST_STORE_TYPE) != null) {
+                if (cmd.getOptionValue(CONF_CLIENT_TRUST_STORE_TYPE).equalsIgnoreCase("pkcs12")) {
+                    options.setPfxKeyCertOptions(new PfxOptions()
+                            .setPath(cmd.getOptionValue(CONF_CLIENT_TRUST_STORE_PATH))
+                            .setPassword(cmd.getOptionValue(CONF_CLIENT_TRUST_STORE_PASSWORD)));
+                } else {
+                    options.setKeyStoreOptions(new JksOptions()
+                            .setPath(cmd.getOptionValue(CONF_CLIENT_TRUST_STORE_PATH))
+                            .setPassword(cmd.getOptionValue(CONF_CLIENT_TRUST_STORE_PASSWORD)));
+                }
+            }
         }
 
         return options;
@@ -241,6 +258,18 @@ public class CibaHttpNotifier {
         final Option client_keystore_password = new Option(CONF_CLIENT_KEY_STORE_PASSWORD, true, "Client keystore password");
         client_keystore_password.setRequired(false);
         options.addOption(client_keystore_password);
+
+        final Option client_truststore_path = new Option(CONF_CLIENT_TRUST_STORE_PATH, true, "Client truststore path");
+        client_truststore_path.setRequired(false);
+        options.addOption(client_truststore_path);
+
+        final Option client_truststore_type = new Option(CONF_CLIENT_TRUST_STORE_TYPE, true, "Client truststore type");
+        client_truststore_type.setRequired(false);
+        options.addOption(client_truststore_type);
+
+        final Option client_truststore_password = new Option(CONF_CLIENT_TRUST_STORE_PASSWORD, true, "Client truststore password");
+        client_truststore_password.setRequired(false);
+        options.addOption(client_truststore_password);
 
         CommandLineParser parser = new DefaultParser();
         return parser.parse(options, args);
