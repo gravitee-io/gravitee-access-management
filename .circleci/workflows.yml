@@ -102,6 +102,10 @@ parameters:
     type: boolean
     default: false
     description: "Creates maintenance version branch"
+  run_ui_tests:
+    type: boolean
+    default: true
+    description: "Runs UI linting"
 
 commands:
   create_docker_context:
@@ -1281,6 +1285,27 @@ jobs:
           when: always
       - store_test_results:
           path: ~/test-results
+
+  ui_tests:
+    executor:
+      name: openjdk
+      class: large
+      version: "17.0.8"
+    steps:
+      - when:
+          condition:
+            equal: [ true, << pipeline.parameters.run_ui_tests >> ]
+          steps:
+            - attach_workspace:
+                at: /tmp
+            - checkout
+            - restore-maven-job-cache:
+                jobName: pull_requests
+            - run:
+                name: "Maven lint (ui)"
+                command: |
+                  mvn -s /tmp/.gravitee.settings.xml initialize -pl gravitee-am-ui -Dlicense.skip=true
+
   pull_requests_ce:
     executor:
       name: openjdk
@@ -2097,6 +2122,10 @@ workflows:
                 secret-url: keeper://TIlcGPFq4rN5GvgnZb9hng/field/password
                 var-name: GITHUB_TOKEN
       - junit_tests:
+          context: cicd-orchestrator
+          requires:
+            - process_pull_request
+      - ui_tests:
           context: cicd-orchestrator
           requires:
             - process_pull_request
