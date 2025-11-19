@@ -1200,6 +1200,11 @@ jobs:
           name: "Maven Package and install without tests"
           command: |
             mvn -s /tmp/.gravitee.settings.xml -P gio-artifactory-snapshot clean install -DskipTests
+      - run:
+          name: "Run UI linting"
+          command: |
+            cd gravitee-am-ui
+            yarn run lint
       - save-maven-job-cache:
           jobName: pull_requests
       - run:
