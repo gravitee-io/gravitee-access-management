@@ -73,10 +73,5 @@ workflows:
           mapping: |
             gravitee-am-reporter/.* run-container-test true
             gravitee-am-repository/.* run-container-test true
-<<<<<<< HEAD
-            gravitee-am-dataplane/.* run-container-test true
-            ^.*pom\.xml$ run-container-test true
-=======
             ^.*pom\.xml$ run-container-test true
             gravitee-am-ui/.* run_ui_tests true
->>>>>>> 909c03662 (lint: fix linting issue (#6898))
