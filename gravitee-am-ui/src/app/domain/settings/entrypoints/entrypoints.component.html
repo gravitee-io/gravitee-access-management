@@ -195,6 +195,7 @@
                   placeholder="Listening Host"
                   [name]="'host' + i"
                   [(ngModel)]="vhost.host"
+                  (ngModelChange)="updateFormState()"
                   required
                   [readonly]="readonly"
                   #input
@@ -216,6 +217,7 @@
                   placeholder="Listening path"
                   [name]="'path' + i"
                   [(ngModel)]="vhost.path"
+                  (ngModelChange)="updateFormState()"
                   required
                   [readonly]="readonly"
                 />
