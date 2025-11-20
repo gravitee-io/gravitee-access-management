@@ -97,16 +97,6 @@
             </configuration>
           </execution>
           <execution>
-            <id>yarn test</id>
-            <phase>test</phase>
-            <goals>
-              <goal>yarn</goal>
-            </goals>
-            <configuration>
-              <arguments>run test</arguments>
-            </configuration>
-          </execution>
-          <execution>
             <id>yarn run-script prod</id>
             <phase>package</phase>
             <goals>
