@@ -19,6 +19,7 @@ import com.google.common.collect.ImmutableMap;
 import io.gravitee.am.reporter.api.audit.model.AuditEntity;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Base class for credential audit builders that need to store route paths in audit attributes.
@@ -53,7 +54,7 @@ public abstract class CredentialAuditBuilderBase<T extends CredentialAuditBuilde
         AuditEntity target = super.createTarget();
         if (routePath != null) {
             HashMap<String, Object> attributes = new HashMap<>(target.getAttributes());
-            attributes.put(ROUTE_PATH_ATTRIBUTE_KEY, routePath);
+            attributes.put(ROUTE_PATH_ATTRIBUTE_KEY, List.of(routePath));
             target.setAttributes(ImmutableMap.copyOf(attributes));
         }
         return target;
