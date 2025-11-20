@@ -40,6 +40,8 @@ import io.gravitee.am.identityprovider.common.oauth2.jwt.processor.RSAKeyProcess
 import io.gravitee.am.repository.oauth2.model.request.TokenRequest;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -122,7 +124,10 @@ public class JWTBearerExtensionGrantProvider implements ExtensionGrantProvider {
                 LOGGER.error(ex.getMessage(), ex.getCause());
                 throw new InvalidGrantException(ex.getMessage(), ex);
             }
-        }).firstElement();
+        })
+        .subscribeOn(Schedulers.io())
+        .firstElement()
+        .observeOn(Schedulers.computation());
     }
 
     public User createUser(JWTClaimsSet claimsSet) {
