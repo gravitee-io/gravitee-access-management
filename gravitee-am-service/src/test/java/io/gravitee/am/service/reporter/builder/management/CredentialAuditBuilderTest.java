@@ -22,14 +22,15 @@ import io.gravitee.am.model.ReferenceType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Date;
+import java.util.List;
 
 import static io.gravitee.am.common.audit.EventType.CREDENTIAL_CREATED;
 import static io.gravitee.am.common.audit.EventType.CREDENTIAL_DELETED;
 import static io.gravitee.am.common.audit.EventType.CREDENTIAL_UPDATED;
 import static io.gravitee.am.common.audit.Status.SUCCESS;
 import static io.gravitee.am.service.reporter.builder.AuditBuilder.builder;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -79,9 +80,10 @@ class CredentialAuditBuilderTest {
         assertEquals("domain-id", audit.getTarget().getReferenceId());
 
         // Verify routePath is set in attributes
-        var routePath = (String[]) audit.getTarget().getAttributes().get("routePath");
+        @SuppressWarnings("unchecked")
+        var routePath = (List<String>) audit.getTarget().getAttributes().get("routePath");
         assertNotNull(routePath);
-        assertArrayEquals(new String[]{"users", "user-id", "credentials", "credential-id"}, routePath);
+        assertIterableEquals(List.of("users", "user-id", "credentials", "credential-id"), routePath);
     }
 
     @Test
@@ -110,9 +112,10 @@ class CredentialAuditBuilderTest {
         assertEquals(SUCCESS, audit.getOutcome().getStatus());
         assertNotNull(audit.getTarget());
         // routePath should still be set even for DELETE events
-        var routePath = (String[]) audit.getTarget().getAttributes().get("routePath");
+        @SuppressWarnings("unchecked")
+        var routePath = (List<String>) audit.getTarget().getAttributes().get("routePath");
         assertNotNull(routePath);
-        assertArrayEquals(new String[]{"users", "user-id", "credentials", "credential-id"}, routePath);
+        assertIterableEquals(List.of("users", "user-id", "credentials", "credential-id"), routePath);
     }
 
     @Test
@@ -143,9 +146,10 @@ class CredentialAuditBuilderTest {
         assertNotNull(audit.getTarget());
         assertNotNull(audit.getTarget().getAttributes());
         // routePath should be present
-        var routePath = (String[]) audit.getTarget().getAttributes().get("routePath");
+        @SuppressWarnings("unchecked")
+        var routePath = (List<String>) audit.getTarget().getAttributes().get("routePath");
         assertNotNull(routePath);
-        assertArrayEquals(new String[]{"users", "user-id", "credentials", "credential-id"}, routePath);
+        assertIterableEquals(List.of("users", "user-id", "credentials", "credential-id"), routePath);
         // Verify that routePath doesn't overwrite other attributes
         // The base class should preserve attributes from parent createTarget() method
         assertNotNull(audit.getTarget().getAttributes());
