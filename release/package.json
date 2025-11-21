@@ -10,7 +10,7 @@
     "pino": "^8.15.1",
     "pino-pretty": "^10.2.0",
     "xml2json": "0.12.0",
-    "zx": "^7.2.3"
+    "zx": "^8.1.1"
   },
   "scripts": {
     "prettier": "prettier --check \"**/*.{js,mjs,json}\"",
