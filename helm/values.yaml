@@ -172,8 +172,8 @@ jdbc:
     maxSize: 50
     maxIdleTime: 30000
     maxLifeTime: -1
-    maxAcquireTime: 3000
-    maxCreateConnectionTime: 5000
+    maxAcquireTime: 5000
+    maxCreateConnectionTime: 3000
 #  sslEnabled: false
 #  sslMode: verify-ca
 #  sslServerCert:
