@@ -73,8 +73,8 @@ tests:
                   driver: mysql
                   host: localhost
                   initialSize: 1
-                  maxAcquireTime: 3000
-                  maxCreateConnectionTime: 5000
+                  maxAcquireTime: 5000
+                  maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
                   maxLifeTime: -1
                   maxSize: 50
@@ -111,8 +111,8 @@ tests:
                   driver: mysql
                   host: localhost
                   initialSize: 1
-                  maxAcquireTime: 3000
-                  maxCreateConnectionTime: 5000
+                  maxAcquireTime: 5000
+                  maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
                   maxLifeTime: -1
                   maxSize: 50
@@ -126,8 +126,8 @@ tests:
                   driver: mysql
                   host: localhost
                   initialSize: 1
-                  maxAcquireTime: 3000
-                  maxCreateConnectionTime: 5000
+                  maxAcquireTime: 5000
+                  maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
                   maxLifeTime: -1
                   maxSize: 50
@@ -141,8 +141,8 @@ tests:
                   driver: mysql
                   host: localhost
                   initialSize: 1
-                  maxAcquireTime: 3000
-                  maxCreateConnectionTime: 5000
+                  maxAcquireTime: 5000
+                  maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
                   maxLifeTime: -1
                   maxSize: 50
@@ -156,8 +156,8 @@ tests:
                   driver: mysql
                   host: localhost
                   initialSize: 1
-                  maxAcquireTime: 3000
-                  maxCreateConnectionTime: 5000
+                  maxAcquireTime: 5000
+                  maxCreateConnectionTime: 3000
                   maxIdleTime: 30000
                   maxLifeTime: -1
                   maxSize: 50
