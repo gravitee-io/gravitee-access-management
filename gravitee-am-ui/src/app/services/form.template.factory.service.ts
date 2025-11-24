@@ -108,6 +108,12 @@ export class FormTemplateFactoryService {
       template: 'MFA_RECOVERY_CODE',
       icon: 'autorenew',
     },
+    cba_login: {
+      name: 'CBA Login',
+      description: 'Certificate based authentication login page',
+      template: 'CBA_LOGIN',
+      icon: 'fingerprint',
+    },
     error: {
       name: 'Error',
       description: 'Error page to display a message describing the problem',

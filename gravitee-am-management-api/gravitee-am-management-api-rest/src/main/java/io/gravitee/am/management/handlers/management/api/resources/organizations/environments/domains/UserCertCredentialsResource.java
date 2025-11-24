@@ -114,7 +114,7 @@ public class UserCertCredentialsResource extends AbstractResource {
             @PathParam("organizationId") String organizationId,
             @PathParam("environmentId") String environmentId,
             @PathParam("domain") String domainId,
-            @PathParam("user") String user,
+            @PathParam("user") String userId,
             @Parameter(name = "certificateCredential", required = true)
             @Valid @NotNull final NewCertificateCredential newCertificateCredential,
             @Suspended final AsyncResponse response) {
@@ -126,12 +126,12 @@ public class UserCertCredentialsResource extends AbstractResource {
                         .switchIfEmpty(Maybe.error(new DomainNotFoundException(domainId)))
                         .flatMapSingle(domain -> certificateCredentialService.enrollCertificate(
                                 domain,
-                                user,
+                                userId,
                                 newCertificateCredential.getCertificatePem(),
                                 newCertificateCredential.getDeviceName(),
                                 authenticatedUser))
                         .map(credential -> Response
-                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domainId + "/users/" + user + "/cert-credentials/" + credential.getId()))
+                                .created(URI.create("/organizations/" + organizationId + "/environments/" + environmentId + "/domains/" + domainId + "/users/" + userId + "/cert-credentials/" + credential.getId()))
                                 .entity(credential)
                                 .build()))
                 .subscribe(response::resume, response::resume);
