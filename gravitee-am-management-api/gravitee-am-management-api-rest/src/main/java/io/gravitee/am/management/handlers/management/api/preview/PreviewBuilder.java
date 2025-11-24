@@ -53,16 +53,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_RECOVERY_CODES_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_RECOVERY_CODES_URL_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.TOKEN_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USER_CONTEXT_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 
 /**
  * @author Eric LELEU (eric.leleu at graviteesource.com)
@@ -201,6 +192,7 @@ public class PreviewBuilder {
                 variables.put(ConstantKeys.SOCIAL_PROVIDER_CONTEXT_KEY, Collections.emptyList());
                 variables.put(ConstantKeys.TEMPLATE_KEY_FORGOT_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_WEBAUTHN_ACTION_KEY, EMPTY_STRING);
+                variables.put(ConstantKeys.TEMPLATE_KEY_CBA_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_REGISTER_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_BACK_LOGIN_IDENTIFIER_ACTION_KEY, EMPTY_STRING);
                 variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_PLUGIN, EMPTY_STRING);
@@ -209,6 +201,7 @@ public class PreviewBuilder {
                 variables.put(ConstantKeys.TEMPLATE_KEY_HIDE_FORM_CONTEXT_KEY, Boolean.FALSE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_REGISTER_CONTEXT_KEY, Boolean.TRUE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_PASSWORDLESS_CONTEXT_KEY, Boolean.TRUE.toString());
+                variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_CBA_CONTEXT_KEY, Boolean.TRUE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, Boolean.TRUE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_IDENTIFIER_FIRST_LOGIN_CONTEXT_KEY, Boolean.FALSE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_BOT_DETECTION_CONFIGURATION, Map.of(SITE_KEY, EMPTY_STRING));
@@ -271,6 +264,7 @@ public class PreviewBuilder {
                 break;
 
             case WEBAUTHN_LOGIN:
+            case CBA_LOGIN:
                 variables.put(ConstantKeys.REMEMBER_DEVICE_IS_ACTIVE, Boolean.FALSE.toString());
                 variables.put(ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY, Boolean.TRUE.toString());
                 break;

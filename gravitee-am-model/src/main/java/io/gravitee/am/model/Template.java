@@ -41,6 +41,7 @@ public enum Template {
     WEBAUTHN_REGISTER("webauthn_register", "/webauthn/register"),
     WEBAUTHN_REGISTER_SUCCESS("webauthn_register_success", "/webauthn/register/success"),
     WEBAUTHN_LOGIN("webauthn_login", "/webauthn/login"),
+    CBA_LOGIN("cba_login", "/cba/login"),
     IDENTIFIER_FIRST_LOGIN("identifier_first_login", "/login/identifier"),
     ERROR("error", "/error"),
     CERTIFICATE_EXPIRATION("certificate_expiration", null),

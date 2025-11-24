@@ -96,6 +96,11 @@
            class="button social">
             <span th:text="#{login.passwordless}"/>
         </a>
+        <a th:if="${allowCba}"
+           th:href="${cbaAction}"
+           class="button social">
+            <span th:text="#{login.cba}"/>
+        </a>
     </div>
 
     <div th:if="${socialProviders and !socialProviders.empty}" class="section">

@@ -43,22 +43,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static io.gravitee.am.common.oidc.Parameters.REMEMBER_ME_HINT;
-import static io.gravitee.am.common.utils.ConstantKeys.ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_FORGOT_PASSWORD_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_PASSWORDLESS_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ALLOW_REGISTER_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.CLIENT_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.DOMAIN_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ERROR_DESCRIPTION_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.ERROR_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.FORGOT_ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.PARAM_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REGISTER_ACTION_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REMEMBER_ME_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.REQUEST_CONTEXT_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.TEMPLATE_KEY_REMEMBER_ME_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.USERNAME_PARAM_KEY;
-import static io.gravitee.am.common.utils.ConstantKeys.WEBAUTHN_ACTION_KEY;
+import static io.gravitee.am.common.utils.ConstantKeys.*;
 import static io.gravitee.am.gateway.handler.common.utils.ThymeleafDataHelper.generateData;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.CONTEXT_PATH;
 import static io.gravitee.am.gateway.handler.common.vertx.utils.UriBuilderRequest.resolveProxyRequest;
@@ -117,6 +102,7 @@ public class IdentifierFirstLoginEndpoint extends AbstractEndpoint implements Ha
         routingContext.put(ALLOW_FORGOT_PASSWORD_CONTEXT_KEY, optionalSettings.map(LoginSettings::isForgotPasswordEnabled).orElse(false));
         routingContext.put(ALLOW_REGISTER_CONTEXT_KEY, optionalSettings.map(LoginSettings::isRegisterEnabled).orElse(false));
         routingContext.put(ALLOW_PASSWORDLESS_CONTEXT_KEY, optionalSettings.map(LoginSettings::isPasswordlessEnabled).orElse(false));
+        routingContext.put(TEMPLATE_KEY_ALLOW_CBA_CONTEXT_KEY, optionalSettings.map(LoginSettings::isCertificateBasedAuthEnabled).orElse(false));
         routingContext.put(TEMPLATE_KEY_REMEMBER_ME_KEY, accountSettingsOptionalSettings.map(AccountSettings::isRememberMe).orElse(false));
 
         // put error in context
